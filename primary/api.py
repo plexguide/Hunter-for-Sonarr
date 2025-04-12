@@ -20,7 +20,7 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None) -> Option
     """
     # Determine the API version based on app type
     if APP_TYPE == "sonarr":
-        api_base = "api/v5"
+        api_base = "api/v3"
     elif APP_TYPE == "radarr":
         api_base = "api/v3"
     elif APP_TYPE == "lidarr":
@@ -80,7 +80,7 @@ def check_connection() -> bool:
             
         # Determine the API version based on app type
         if APP_TYPE == "sonarr":
-            api_base = "api/v5"
+            api_base = "api/v3"
         elif APP_TYPE == "radarr":
             api_base = "api/v3"
         elif APP_TYPE == "lidarr":
