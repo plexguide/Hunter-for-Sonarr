@@ -17,17 +17,27 @@
         })();
     </script>
     <!-- Preload logo -->
-    <link rel="preload" href="https://github.com/plexguide/Huntarr/blob/main/logo/64.png?raw=true" as="image" fetchpriority="high">
+    <link rel="preload" href="/static/logo/64.png" as="image" fetchpriority="high">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="/static/favicon.ico">
+    <link rel="icon" href="/static/logo/16.png">
     <!-- Preload script to prevent flashing -->
     <script src="/static/js/theme-preload.js"></script>
+    <!-- Improve logo loading -->
+    <style>
+        .login-logo {
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .login-logo.loaded {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body class="login-page">
     <div class="login-container">
         <div class="login-header">
-            <img src="https://github.com/plexguide/Huntarr/blob/main/logo/64.png?raw=true" alt="Huntarr Logo" class="login-logo">
+            <img src="/static/logo/64.png" alt="Huntarr Logo" class="login-logo" onload="this.classList.add('loaded')">
             <h1>Huntarr</h1>
         </div>
         <div class="login-form">
@@ -71,6 +81,12 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Apply logo loaded class if image is already complete
+            const logoImg = document.querySelector('.login-logo');
+            if (logoImg && logoImg.complete) {
+                logoImg.classList.add('loaded');
+            }
+            
             // Theme toggle functionality
             const themeToggle = document.getElementById('themeToggle');
             
