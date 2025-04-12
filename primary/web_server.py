@@ -28,12 +28,8 @@ from primary.auth import (
     logout, SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret, 
     verify_2fa_code, disable_2fa, change_username, change_password
 )
-# Import blueprints for apps and common routes
+# Import blueprint for common routes
 from primary.routes.common import common_bp
-from primary.apps.sonarr import sonarr_bp
-from primary.apps.radarr import radarr_bp
-from primary.apps.lidarr import lidarr_bp
-from primary.apps.readarr import readarr_bp
 
 # Disable Flask default logging
 log = logging.getLogger('werkzeug')
@@ -45,10 +41,6 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev_key_for_sessions')
 
 # Register blueprints
 app.register_blueprint(common_bp, url_prefix="/")
-app.register_blueprint(sonarr_bp, url_prefix="/sonarr")
-app.register_blueprint(radarr_bp, url_prefix="/radarr")
-app.register_blueprint(lidarr_bp, url_prefix="/lidarr")
-app.register_blueprint(readarr_bp, url_prefix="/readarr")
 
 # Global main process PID
 MAIN_PID = os.getpid()
