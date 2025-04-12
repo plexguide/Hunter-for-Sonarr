@@ -199,10 +199,7 @@
                     </div>
                 </div>
                 <div class="buttons-container">
-                    <button type="button" id="twoFactorPrevButton" class="login-button secondary">
-                        <i class="fas fa-arrow-left"></i> Back
-                    </button>
-                    <button type="button" id="twoFactorNextButton" class="login-button">
+                    <button type="button" id="twoFactorNextButton" class="login-button" style="width: 100%;">
                         <i class="fas fa-check"></i> Verify & Continue
                     </button>
                 </div>
@@ -216,10 +213,7 @@
                     <p><i class="fas fa-cog"></i> Remember to test your API connections for each application.</p>
                 </div>
                 <div class="buttons-container">
-                    <button type="button" id="setupPrevButton" class="login-button secondary">
-                        <i class="fas fa-arrow-left"></i> Back
-                    </button>
-                    <button type="button" id="finishSetupButton" class="login-button">
+                    <button type="button" id="finishSetupButton" class="login-button" style="width: 100%;">
                         <i class="fas fa-home"></i> Go to Dashboard
                     </button>
                 </div>
@@ -253,11 +247,10 @@
             const secretKeyElement = document.getElementById('secretKey');
             const verificationCodeInput = document.getElementById('verificationCode');
             const skip2FALink = document.getElementById('skip2FALink');
-            const twoFactorPrevButton = document.getElementById('twoFactorPrevButton');
             const twoFactorNextButton = document.getElementById('twoFactorNextButton');
             
             // Complete setup elements
-            const setupPrevButton = document.getElementById('setupPrevButton');
+            const setupPrevButton = null; // Remove reference
             const finishSetupButton = document.getElementById('finishSetupButton');
             
             // Current step tracking
@@ -387,10 +380,6 @@
             });
             
             // 2FA setup navigation
-            twoFactorPrevButton.addEventListener('click', function() {
-                showStep(1);
-            });
-            
             twoFactorNextButton.addEventListener('click', function() {
                 const code = verificationCodeInput.value;
                 if (!code) {
@@ -427,10 +416,6 @@
             });
             
             // Complete setup navigation
-            setupPrevButton.addEventListener('click', function() {
-                showStep(2);
-            });
-            
             finishSetupButton.addEventListener('click', function() {
                 window.location.href = '/';
             });
