@@ -253,7 +253,7 @@
                     </div>
                 </div>
                 
-                <!-- Radarr Settings (placeholder) -->
+                <!-- Radarr Settings -->
                 <div id="radarrSettings" class="app-settings" style="display: none;">
                     <h2>Radarr Settings</h2>
                     
@@ -283,11 +283,113 @@
                     
                     <div class="settings-group">
                         <h3>Hunt Settings</h3>
-                        <p class="service-not-configured">Radarr integration is not fully implemented yet. Please configure the connection settings first.</p>
+                        <div class="setting-item">
+                            <label for="hunt_missing_movies">Hunt Missing Movies:</label>
+                            <input type="number" id="hunt_missing_movies" min="0" step="1">
+                            <p class="setting-help">Maximum number of missing movies to process per cycle. Set to 0 to disable.</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="hunt_upgrade_movies">Hunt Upgrade Movies:</label>
+                            <input type="number" id="hunt_upgrade_movies" min="0" step="1">
+                            <p class="setting-help">Maximum number of movies to upgrade per cycle. Set to 0 to disable.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3>Timing Settings</h3>
+                        <div class="setting-item">
+                            <label for="radarr_sleep_duration">Sleep Duration (seconds):</label>
+                            <div class="duration-input">
+                                <input type="number" id="radarr_sleep_duration" min="60" step="60">
+                                <span id="radarr_sleep_duration_hours"></span>
+                            </div>
+                            <p class="setting-help">Time to wait between processing cycles (minimum 60 seconds)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="radarr_state_reset_interval_hours">State Reset Interval (hours):</label>
+                            <input type="number" id="radarr_state_reset_interval_hours" min="1" step="1">
+                            <p class="setting-help">How often to reset the state tracking (for re-processing items)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3>Processing Settings</h3>
+                        <div class="setting-item">
+                            <label for="radarr_monitored_only">Monitored Items Only:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="radarr_monitored_only">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Process only monitored items</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="radarr_random_missing">Random Missing Selection:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="radarr_random_missing">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Select missing items randomly instead of sequentially</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="radarr_random_upgrades">Random Upgrades Selection:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="radarr_random_upgrades">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Select upgrade items randomly instead of sequentially</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="skip_future_releases">Skip Future Releases:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="skip_future_releases">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Skip processing movies with future release dates</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="skip_movie_refresh">Skip Movie Refresh:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="skip_movie_refresh">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Skip refreshing movie metadata before processing (reduces disk activity)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3>Advanced Settings</h3>
+                        <div class="setting-item">
+                            <label for="radarr_api_timeout">API Timeout (seconds):</label>
+                            <input type="number" id="radarr_api_timeout" min="10" step="1">
+                            <p class="setting-help">Timeout in seconds for API requests to Radarr (minimum 10 seconds)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="radarr_debug_mode">Debug Mode:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="radarr_debug_mode">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Enable detailed debug logging</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="radarr_command_wait_delay">Command Wait Delay (seconds):</label>
+                            <input type="number" id="radarr_command_wait_delay" min="1" step="1">
+                            <p class="setting-help">Delay between command status checks</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="radarr_command_wait_attempts">Command Wait Attempts:</label>
+                            <input type="number" id="radarr_command_wait_attempts" min="1" step="1">
+                            <p class="setting-help">Maximum number of attempts to check command status</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="radarr_minimum_download_queue_size">Minimum Download Queue Size:</label>
+                            <input type="number" id="radarr_minimum_download_queue_size" min="-1" step="1">
+                            <p class="setting-help">Minimum items in download queue before starting hunt. Set to -1 to disable check.</p>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Lidarr Settings (placeholder) -->
+                <!-- Lidarr Settings -->
                 <div id="lidarrSettings" class="app-settings" style="display: none;">
                     <h2>Lidarr Settings</h2>
                     
@@ -317,11 +419,113 @@
                     
                     <div class="settings-group">
                         <h3>Hunt Settings</h3>
-                        <p class="service-not-configured">Lidarr integration is not fully implemented yet. Please configure the connection settings first.</p>
+                        <div class="setting-item">
+                            <label for="hunt_missing_albums">Hunt Missing Albums:</label>
+                            <input type="number" id="hunt_missing_albums" min="0" step="1">
+                            <p class="setting-help">Maximum number of missing albums to process per cycle. Set to 0 to disable.</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="hunt_upgrade_tracks">Hunt Upgrade Tracks:</label>
+                            <input type="number" id="hunt_upgrade_tracks" min="0" step="1">
+                            <p class="setting-help">Maximum number of tracks to upgrade per cycle. Set to 0 to disable.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3>Timing Settings</h3>
+                        <div class="setting-item">
+                            <label for="lidarr_sleep_duration">Sleep Duration (seconds):</label>
+                            <div class="duration-input">
+                                <input type="number" id="lidarr_sleep_duration" min="60" step="60">
+                                <span id="lidarr_sleep_duration_hours"></span>
+                            </div>
+                            <p class="setting-help">Time to wait between processing cycles (minimum 60 seconds)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr_state_reset_interval_hours">State Reset Interval (hours):</label>
+                            <input type="number" id="lidarr_state_reset_interval_hours" min="1" step="1">
+                            <p class="setting-help">How often to reset the state tracking (for re-processing items)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3>Processing Settings</h3>
+                        <div class="setting-item">
+                            <label for="lidarr_monitored_only">Monitored Items Only:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="lidarr_monitored_only">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Process only monitored items</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr_random_missing">Random Missing Selection:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="lidarr_random_missing">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Select missing items randomly instead of sequentially</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr_random_upgrades">Random Upgrades Selection:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="lidarr_random_upgrades">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Select upgrade items randomly instead of sequentially</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr_skip_future_releases">Skip Future Releases:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="lidarr_skip_future_releases">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Skip processing albums with future release dates</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="skip_artist_refresh">Skip Artist Refresh:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="skip_artist_refresh">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Skip refreshing artist metadata before processing (reduces disk activity)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3>Advanced Settings</h3>
+                        <div class="setting-item">
+                            <label for="lidarr_api_timeout">API Timeout (seconds):</label>
+                            <input type="number" id="lidarr_api_timeout" min="10" step="1">
+                            <p class="setting-help">Timeout in seconds for API requests to Lidarr (minimum 10 seconds)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr_debug_mode">Debug Mode:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="lidarr_debug_mode">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Enable detailed debug logging</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr_command_wait_delay">Command Wait Delay (seconds):</label>
+                            <input type="number" id="lidarr_command_wait_delay" min="1" step="1">
+                            <p class="setting-help">Delay between command status checks</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr_command_wait_attempts">Command Wait Attempts:</label>
+                            <input type="number" id="lidarr_command_wait_attempts" min="1" step="1">
+                            <p class="setting-help">Maximum number of attempts to check command status</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr_minimum_download_queue_size">Minimum Download Queue Size:</label>
+                            <input type="number" id="lidarr_minimum_download_queue_size" min="-1" step="1">
+                            <p class="setting-help">Minimum items in download queue before starting hunt. Set to -1 to disable check.</p>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Readarr Settings (placeholder) -->
+                <!-- Readarr Settings -->
                 <div id="readarrSettings" class="app-settings" style="display: none;">
                     <h2>Readarr Settings</h2>
                     
@@ -351,7 +555,109 @@
                     
                     <div class="settings-group">
                         <h3>Hunt Settings</h3>
-                        <p class="service-not-configured">Readarr integration is not fully implemented yet. Please configure the connection settings first.</p>
+                        <div class="setting-item">
+                            <label for="hunt_missing_books">Hunt Missing Books:</label>
+                            <input type="number" id="hunt_missing_books" min="0" step="1">
+                            <p class="setting-help">Maximum number of missing books to process per cycle. Set to 0 to disable.</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="hunt_upgrade_books">Hunt Upgrade Books:</label>
+                            <input type="number" id="hunt_upgrade_books" min="0" step="1">
+                            <p class="setting-help">Maximum number of books to upgrade per cycle. Set to 0 to disable.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3>Timing Settings</h3>
+                        <div class="setting-item">
+                            <label for="readarr_sleep_duration">Sleep Duration (seconds):</label>
+                            <div class="duration-input">
+                                <input type="number" id="readarr_sleep_duration" min="60" step="60">
+                                <span id="readarr_sleep_duration_hours"></span>
+                            </div>
+                            <p class="setting-help">Time to wait between processing cycles (minimum 60 seconds)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="readarr_state_reset_interval_hours">State Reset Interval (hours):</label>
+                            <input type="number" id="readarr_state_reset_interval_hours" min="1" step="1">
+                            <p class="setting-help">How often to reset the state tracking (for re-processing items)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3>Processing Settings</h3>
+                        <div class="setting-item">
+                            <label for="readarr_monitored_only">Monitored Items Only:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="readarr_monitored_only">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Process only monitored items</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="readarr_random_missing">Random Missing Selection:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="readarr_random_missing">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Select missing items randomly instead of sequentially</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="readarr_random_upgrades">Random Upgrades Selection:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="readarr_random_upgrades">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Select upgrade items randomly instead of sequentially</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="readarr_skip_future_releases">Skip Future Releases:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="readarr_skip_future_releases">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Skip processing books with future release dates</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="skip_author_refresh">Skip Author Refresh:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="skip_author_refresh">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Skip refreshing author metadata before processing (reduces disk activity)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3>Advanced Settings</h3>
+                        <div class="setting-item">
+                            <label for="readarr_api_timeout">API Timeout (seconds):</label>
+                            <input type="number" id="readarr_api_timeout" min="10" step="1">
+                            <p class="setting-help">Timeout in seconds for API requests to Readarr (minimum 10 seconds)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="readarr_debug_mode">Debug Mode:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="readarr_debug_mode">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <p class="setting-help">Enable detailed debug logging</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="readarr_command_wait_delay">Command Wait Delay (seconds):</label>
+                            <input type="number" id="readarr_command_wait_delay" min="1" step="1">
+                            <p class="setting-help">Delay between command status checks</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="readarr_command_wait_attempts">Command Wait Attempts:</label>
+                            <input type="number" id="readarr_command_wait_attempts" min="1" step="1">
+                            <p class="setting-help">Maximum number of attempts to check command status</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="readarr_minimum_download_queue_size">Minimum Download Queue Size:</label>
+                            <input type="number" id="readarr_minimum_download_queue_size" min="-1" step="1">
+                            <p class="setting-help">Minimum items in download queue before starting hunt. Set to -1 to disable check.</p>
+                        </div>
                     </div>
                 </div>
                 
