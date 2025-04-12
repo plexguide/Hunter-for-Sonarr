@@ -4,16 +4,16 @@ app = Flask(__name__)
 
 # ...existing code...
 
-# Add routes for new UI
-@app.route('/new')
-def new_ui():
-    """Serve the new UI"""
-    return render_template('new-index.html')
+# Standard routes using the new UI files
+@app.route('/')
+def index():
+    """Serve the main UI"""
+    return render_template('index.html')
 
-@app.route('/user/new')
-def new_user_page():
-    """Serve the new user settings page"""
-    return render_template('new-user.html')
+@app.route('/user')
+def user_page():
+    """Serve the user settings page"""
+    return render_template('user.html')
 
 # ...existing code...
 
