@@ -8,6 +8,7 @@ import os
 import logging
 import importlib
 from primary import settings_manager
+from primary import keys_manager
 from primary.utils.logger import logger
 
 # Get app type

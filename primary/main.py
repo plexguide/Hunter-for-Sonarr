@@ -340,7 +340,7 @@ def app_specific_loop(app_type: str) -> None:
 def start_app_threads():
     """Start threads for all configured apps"""
     # Check which apps are configured
-    configured_apps = keys_manager.get_configured_apps()
+    configured_apps = keys_manager.list_configured_apps()
     
     for app_type, is_configured in configured_apps.items():
         if is_configured and app_type not in app_threads:
