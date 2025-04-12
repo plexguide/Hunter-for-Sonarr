@@ -10,12 +10,19 @@
             margin: 0 auto;
         }
         
+        /* Ensure main content area is scrollable */
+        .main-content {
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+        
         .user-card {
             background-color: var(--card-bg);
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
             margin-bottom: 20px;
+            overflow: hidden; /* Ensure content doesn't overflow the card */
         }
         
         .user-card h3 {
@@ -118,6 +125,13 @@
             border-radius: 4px;
             background-color: #333;
             color: #fff;
+        }
+        
+        /* Ensure setupTwoFactorSection content is scrollable */
+        #setupTwoFactorSection {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-bottom: 20px;
         }
     </style>
 </head>
