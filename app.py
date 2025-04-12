@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 # ...existing code...
 
-# Standard routes using the new UI files
+# Standard routes for the main UI
 @app.route('/')
 def index():
     """Serve the main UI"""

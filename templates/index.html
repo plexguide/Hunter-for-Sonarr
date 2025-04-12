@@ -3,686 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Huntarr</title>
+    <title>Huntarr - Media Management Assistant</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="/static/favicon.ico">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1><a href="/" class="title-link"><img src="https://github.com/plexguide/Huntarr/blob/main/logo/40.png?raw=true" alt="Huntarr Logo" class="huntarr-logo">Huntarr</a></h1>
-            <div class="buttons">
-                <button id="homeButton" class="active">Home</button>
-                <button id="logsButton">Logs</button>
-                <button id="settingsButton">Settings</button>
-                <button id="userButton">User</button>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="logo-container">
+                <img src="https://github.com/plexguide/Huntarr/blob/main/logo/40.png?raw=true" alt="Huntarr Logo" class="logo">
+                <h1>Huntarr</h1>
             </div>
-            <div class="theme-toggle">
+            
+            <nav class="nav-menu">
+                <a href="#home" class="nav-item active" id="homeNav">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#logs" class="nav-item" id="logsNav">
+                    <i class="fas fa-list-alt"></i>
+                    <span>Logs</span>
+                </a>
+                <a href="#settings" class="nav-item" id="settingsNav">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="/user" class="nav-item" id="userNav">
+                    <i class="fas fa-user"></i>
+                    <span>User</span>
+                </a>
+            </nav>
+            
+            <div class="theme-switcher">
+                <div class="switch-label">
+                    <i class="fas fa-sun light-icon"></i>
+                    <i class="fas fa-moon dark-icon"></i>
+                </div>
                 <label class="switch">
                     <input type="checkbox" id="themeToggle">
                     <span class="slider round"></span>
                 </label>
-                <span id="themeLabel">Light Mode</span>
-            </div>
-        </div>
-
-        <div id="homeContainer" class="content-section">
-            <div class="welcome-panel">
-                <h2>Welcome to Huntarr, <span id="username">User</span>!</h2>
-                <p>Huntarr helps you find missing media and upgrade quality across multiple Arr applications.</p>
-                
-                <h3>Connection Status</h3>
-                <div class="connection-list">
-                    <div class="connection-item">
-                        <span class="connection-name">Sonarr:</span>
-                        <span id="sonarrHomeStatus" class="connection-badge not-connected">Not Connected</span>
-                    </div>
-                    <div class="connection-item">
-                        <span class="connection-name">Radarr:</span>
-                        <span id="radarrHomeStatus" class="connection-badge not-connected">Not Connected</span>
-                    </div>
-                    <div class="connection-item">
-                        <span class="connection-name">Lidarr:</span>
-                        <span id="lidarrHomeStatus" class="connection-badge not-connected">Not Connected</span>
-                    </div>
-                    <div class="connection-item">
-                        <span class="connection-name">Readarr:</span>
-                        <span id="readarrHomeStatus" class="connection-badge not-connected">Not Connected</span>
-                    </div>
-                </div>
-                
-                <div class="info-box">
-                    <h3>Coming Soon</h3>
-                    <p>Huntarr.io with a Discord community for support and developers.</p>
-                    <p>To file issues, please visit: <a href="https://github.com/plexguide/Huntarr/issues" target="_blank">GitHub Issues</a></p>
-                    <p>For documentation, check our <a href="https://github.com/plexguide/Huntarr/wiki" target="_blank">Wiki</a></p>
-                </div>
-                
-                <div class="thank-you-box">
-                    <h3>Special Thanks</h3>
-                    <p>Thank you to <a href="https://github.com/zpatten" target="_blank">ZPatten</a> and <a href="https://github.com/MacaidenXIII" target="_blank">MacaidenXIII</a> for really getting this project kickstarted with great ideas!</p>
-                    <p>Thank you to <a href="https://ninjacentral.co.za" target="_blank">ninjacentral.co.za</a> for the original inspired insight on API indexer issues which also inspired the program.</p>
-                    <p>I thank my daughter who provides inspiration to do everything in life.</p>
-                    <p>Thank you for using Huntarr ~ <a href="https://github.com/Admin9705/" target="_blank">Admin9705</a></p>
-                </div>
-            </div>
-        </div>
-
-        <div id="logsContainer" class="content-section" style="display: none;">
-            <!-- App Selector Tabs (only for logs view) -->
-            <div class="app-selector">
-                <button class="app-tab active" data-app="sonarr">Sonarr</button>
-                <button class="app-tab" data-app="radarr">Radarr</button>
-                <button class="app-tab" data-app="lidarr">Lidarr</button>
-                <button class="app-tab" data-app="readarr">Readarr</button>
-            </div>
-            <!-- Removed the countdown timer from the logs area -->
-            <div class="logs-countdown" style="display: none;">
-                <!-- Removed countdown display -->
-            </div>
-            <!-- Add a countdown display element for the logs page -->
-            <div id="logCountdown" class="log-countdown"></div>
-            <div class="log-controls">
-                <div class="connection-status">
-                    Status: <span id="status" class="status-disconnected">Disconnected</span>
-                </div>
-                <div class="auto-scroll">
-                    <label>
-                        <input type="checkbox" id="autoScroll" checked>
-                        Auto-scroll
-                    </label>
-                </div>
-                <button id="clearLogs" class="clear-button">Clear Logs</button>
-            </div>
-            <div id="logs" class="logs"></div>
-        </div>
-
-        <div id="settingsContainer" class="content-section" style="display: none;">
-            <!-- App Selector Tabs (only for settings view) -->
-            <div class="app-selector">
-                <button class="app-tab active" data-app="sonarr">Sonarr</button>
-                <button class="app-tab" data-app="radarr">Radarr</button>
-                <button class="app-tab" data-app="lidarr">Lidarr</button>
-                <button class="app-tab" data-app="readarr">Readarr</button>
-            </div>
-
-            <div class="settings-form">
-                <div id="settingsApp" class="settings-app-content">
-                    <!-- App-specific settings will be loaded here -->
-                </div>
-                
-                <!-- Sonarr Settings -->
-                <div id="sonarrSettings" class="app-settings">
-                    <h2>Sonarr Settings</h2>
-                    
-                    <!-- Add buttons here near the top -->
-                    <div class="settings-buttons top-buttons">
-                        <button id="saveSettings" class="save-button">Save Settings</button>
-                        <button id="resetSettings" class="reset-button">Reset to Defaults</button>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Connection Settings</h3>
-                        <div class="setting-item">
-                            <label for="sonarr_api_url">Sonarr URL:</label>
-                            <input type="text" id="sonarr_api_url" placeholder="http://your-sonarr-address:8989">
-                            <p class="setting-help">URL to your Sonarr instance (e.g., http://localhost:8989)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="sonarr_api_key">API Key:</label>
-                            <input type="text" id="sonarr_api_key" placeholder="Enter your Sonarr API key">
-                            <p class="setting-help">Your Sonarr API key (found in Settings > General)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label>Connection Status:</label>
-                            <span id="sonarrConnectionStatus" class="connection-badge not-connected">Not Connected</span>
-                            <button id="testSonarrConnection" class="test-connection-button">Test Connection</button>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Hunt Settings</h3>
-                        <div class="setting-item">
-                            <label for="hunt_missing_shows">Hunt Missing Shows:</label>
-                            <input type="number" id="hunt_missing_shows" min="0" step="1">
-                            <p class="setting-help">Maximum number of missing shows to process per cycle. Set to 0 to disable.</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="hunt_upgrade_episodes">Hunt Upgrade Episodes:</label>
-                            <input type="number" id="hunt_upgrade_episodes" min="0" step="1">
-                            <p class="setting-help">Maximum number of episodes to upgrade per cycle. Set to 0 to disable.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Timing Settings</h3>
-                        <div class="setting-item">
-                            <label for="sleep_duration">Sleep Duration (seconds):</label>
-                            <div class="duration-input">
-                                <input type="number" id="sleep_duration" min="60" step="60">
-                                <span id="sleep_duration_hours">≈ 15 minutes</span>
-                            </div>
-                            <p class="setting-help">Time to wait between cycles in seconds (minimum 60 seconds)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="state_reset_interval_hours">State Reset Interval (hours):</label>
-                            <input type="number" id="state_reset_interval_hours" min="0" step="1">
-                            <p class="setting-help">Hours after which processed items will be forgotten. Set to 0 to never reset.</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="log_refresh_interval_seconds">Log Refresh Interval (seconds):</label>
-                            <input type="number" id="log_refresh_interval_seconds" min="0" step="1">
-                            <p class="setting-help">Time interval for log refresh countdown. Set to 0 to disable.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Processing Options</h3>
-                        <div class="setting-item">
-                            <label for="monitored_only">Monitored Only:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="monitored_only">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Only process monitored shows and episodes</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="random_missing">Random Missing Shows:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="random_missing">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Select missing shows randomly instead of sequentially</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="random_upgrades">Random Upgrades:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="random_upgrades">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Select upgrade episodes randomly instead of sequentially</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="skip_future_episodes">Skip Future Episodes:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="skip_future_episodes">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Skip processing episodes with future air dates</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="skip_series_refresh">Skip Series Refresh:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="skip_series_refresh">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Skip refreshing series metadata before processing (reduces disk activity)</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-group">
-                        <h3>Advanced Settings</h3>
-                        <div class="setting-item">
-                            <label for="api_timeout">API Timeout (seconds):</label>
-                            <input type="number" id="api_timeout" min="10" step="1">
-                            <p class="setting-help">Timeout in seconds for API requests to Sonarr (minimum 10 seconds)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="debug_mode">Debug Mode:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="debug_mode">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Enable detailed debug logging (takes effect immediately)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="command_wait_delay">Command Wait Delay:</label>
-                            <input type="number" id="command_wait_delay" min="1" step="1">
-                            <p class="setting-help">Delay in seconds between checking for command status</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="command_wait_attempts">Command Wait Attempts:</label>
-                            <input type="number" id="command_wait_attempts" min="10" step="1">
-                            <p class="setting-help">Number of attempts to check for command completion before giving up</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="minimum_download_queue_size">Minimum Queue Size:</label>
-                            <input type="number" id="minimum_download_queue_size" min="-1" step="1">
-                            <p class="setting-help">Minimum items in download queue before starting hunt. Set to -1 to disable check.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Radarr Settings -->
-                <div id="radarrSettings" class="app-settings" style="display: none;">
-                    <h2>Radarr Settings</h2>
-                    
-                    <div class="settings-buttons top-buttons">
-                        <button id="saveRadarrSettings" class="save-button">Save Settings</button>
-                        <button id="resetRadarrSettings" class="reset-button">Reset to Defaults</button>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Connection Settings</h3>
-                        <div class="setting-item">
-                            <label for="radarr_api_url">Radarr URL:</label>
-                            <input type="text" id="radarr_api_url" placeholder="http://your-radarr-address:7878">
-                            <p class="setting-help">URL to your Radarr instance (e.g., http://localhost:7878)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="radarr_api_key">API Key:</label>
-                            <input type="text" id="radarr_api_key" placeholder="Enter your Radarr API key">
-                            <p class="setting-help">Your Radarr API key (found in Settings > General)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label>Connection Status:</label>
-                            <span id="radarrConnectionStatus" class="connection-badge not-connected">Not Connected</span>
-                            <button id="testRadarrConnection" class="test-connection-button">Test Connection</button>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Hunt Settings</h3>
-                        <div class="setting-item">
-                            <label for="hunt_missing_movies">Hunt Missing Movies:</label>
-                            <input type="number" id="hunt_missing_movies" min="0" step="1">
-                            <p class="setting-help">Maximum number of missing movies to process per cycle. Set to 0 to disable.</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="hunt_upgrade_movies">Hunt Upgrade Movies:</label>
-                            <input type="number" id="hunt_upgrade_movies" min="0" step="1">
-                            <p class="setting-help">Maximum number of movies to upgrade per cycle. Set to 0 to disable.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Timing Settings</h3>
-                        <div class="setting-item">
-                            <label for="radarr_sleep_duration">Sleep Duration (seconds):</label>
-                            <div class="duration-input">
-                                <input type="number" id="radarr_sleep_duration" min="60" step="60">
-                                <span id="radarr_sleep_duration_hours"></span>
-                            </div>
-                            <p class="setting-help">Time to wait between processing cycles (minimum 60 seconds)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="radarr_state_reset_interval_hours">State Reset Interval (hours):</label>
-                            <input type="number" id="radarr_state_reset_interval_hours" min="1" step="1">
-                            <p class="setting-help">How often to reset the state tracking (for re-processing items)</p>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Processing Settings</h3>
-                        <div class="setting-item">
-                            <label for="radarr_monitored_only">Monitored Items Only:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="radarr_monitored_only">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Process only monitored items</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="radarr_random_missing">Random Missing Selection:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="radarr_random_missing">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Select missing items randomly instead of sequentially</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="radarr_random_upgrades">Random Upgrades Selection:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="radarr_random_upgrades">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Select upgrade items randomly instead of sequentially</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="skip_future_releases">Skip Future Releases:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="skip_future_releases">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Skip processing movies with future release dates</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="skip_movie_refresh">Skip Movie Refresh:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="skip_movie_refresh">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Skip refreshing movie metadata before processing (reduces disk activity)</p>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Advanced Settings</h3>
-                        <div class="setting-item">
-                            <label for="radarr_api_timeout">API Timeout (seconds):</label>
-                            <input type="number" id="radarr_api_timeout" min="10" step="1">
-                            <p class="setting-help">Timeout in seconds for API requests to Radarr (minimum 10 seconds)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="radarr_debug_mode">Debug Mode:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="radarr_debug_mode">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Enable detailed debug logging</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="radarr_command_wait_delay">Command Wait Delay (seconds):</label>
-                            <input type="number" id="radarr_command_wait_delay" min="1" step="1">
-                            <p class="setting-help">Delay between command status checks</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="radarr_command_wait_attempts">Command Wait Attempts:</label>
-                            <input type="number" id="radarr_command_wait_attempts" min="1" step="1">
-                            <p class="setting-help">Maximum number of attempts to check command status</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="radarr_minimum_download_queue_size">Minimum Download Queue Size:</label>
-                            <input type="number" id="radarr_minimum_download_queue_size" min="-1" step="1">
-                            <p class="setting-help">Minimum items in download queue before starting hunt. Set to -1 to disable check.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Lidarr Settings -->
-                <div id="lidarrSettings" class="app-settings" style="display: none;">
-                    <h2>Lidarr Settings</h2>
-                    
-                    <div class="settings-buttons top-buttons">
-                        <button id="saveLidarrSettings" class="save-button">Save Settings</button>
-                        <button id="resetLidarrSettings" class="reset-button">Reset to Defaults</button>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Connection Settings</h3>
-                        <div class="setting-item">
-                            <label for="lidarr_api_url">Lidarr URL:</label>
-                            <input type="text" id="lidarr_api_url" placeholder="http://your-lidarr-address:8686">
-                            <p class="setting-help">URL to your Lidarr instance (e.g., http://localhost:8686)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="lidarr_api_key">API Key:</label>
-                            <input type="text" id="lidarr_api_key" placeholder="Enter your Lidarr API key">
-                            <p class="setting-help">Your Lidarr API key (found in Settings > General)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label>Connection Status:</label>
-                            <span id="lidarrConnectionStatus" class="connection-badge not-connected">Not Connected</span>
-                            <button id="testLidarrConnection" class="test-connection-button">Test Connection</button>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Hunt Settings</h3>
-                        <div class="setting-item">
-                            <label for="hunt_missing_albums">Hunt Missing Albums:</label>
-                            <input type="number" id="hunt_missing_albums" min="0" step="1">
-                            <p class="setting-help">Maximum number of missing albums to process per cycle. Set to 0 to disable.</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="hunt_upgrade_tracks">Hunt Upgrade Tracks:</label>
-                            <input type="number" id="hunt_upgrade_tracks" min="0" step="1">
-                            <p class="setting-help">Maximum number of tracks to upgrade per cycle. Set to 0 to disable.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Timing Settings</h3>
-                        <div class="setting-item">
-                            <label for="lidarr_sleep_duration">Sleep Duration (seconds):</label>
-                            <div class="duration-input">
-                                <input type="number" id="lidarr_sleep_duration" min="60" step="60">
-                                <span id="lidarr_sleep_duration_hours"></span>
-                            </div>
-                            <p class="setting-help">Time to wait between processing cycles (minimum 60 seconds)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="lidarr_state_reset_interval_hours">State Reset Interval (hours):</label>
-                            <input type="number" id="lidarr_state_reset_interval_hours" min="1" step="1">
-                            <p class="setting-help">How often to reset the state tracking (for re-processing items)</p>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Processing Settings</h3>
-                        <div class="setting-item">
-                            <label for="lidarr_monitored_only">Monitored Items Only:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="lidarr_monitored_only">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Process only monitored items</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="lidarr_random_missing">Random Missing Selection:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="lidarr_random_missing">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Select missing items randomly instead of sequentially</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="lidarr_random_upgrades">Random Upgrades Selection:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="lidarr_random_upgrades">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Select upgrade items randomly instead of sequentially</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="lidarr_skip_future_releases">Skip Future Releases:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="lidarr_skip_future_releases">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Skip processing albums with future release dates</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="skip_artist_refresh">Skip Artist Refresh:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="skip_artist_refresh">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Skip refreshing artist metadata before processing (reduces disk activity)</p>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Advanced Settings</h3>
-                        <div class="setting-item">
-                            <label for="lidarr_api_timeout">API Timeout (seconds):</label>
-                            <input type="number" id="lidarr_api_timeout" min="10" step="1">
-                            <p class="setting-help">Timeout in seconds for API requests to Lidarr (minimum 10 seconds)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="lidarr_debug_mode">Debug Mode:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="lidarr_debug_mode">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Enable detailed debug logging</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="lidarr_command_wait_delay">Command Wait Delay (seconds):</label>
-                            <input type="number" id="lidarr_command_wait_delay" min="1" step="1">
-                            <p class="setting-help">Delay between command status checks</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="lidarr_command_wait_attempts">Command Wait Attempts:</label>
-                            <input type="number" id="lidarr_command_wait_attempts" min="1" step="1">
-                            <p class="setting-help">Maximum number of attempts to check command status</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="lidarr_minimum_download_queue_size">Minimum Download Queue Size:</label>
-                            <input type="number" id="lidarr_minimum_download_queue_size" min="-1" step="1">
-                            <p class="setting-help">Minimum items in download queue before starting hunt. Set to -1 to disable check.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Readarr Settings -->
-                <div id="readarrSettings" class="app-settings" style="display: none;">
-                    <h2>Readarr Settings</h2>
-                    
-                    <div class="settings-buttons top-buttons">
-                        <button id="saveReadarrSettings" class="save-button">Save Settings</button>
-                        <button id="resetReadarrSettings" class="reset-button">Reset to Defaults</button>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Connection Settings</h3>
-                        <div class="setting-item">
-                            <label for="readarr_api_url">Readarr URL:</label>
-                            <input type="text" id="readarr_api_url" placeholder="http://your-readarr-address:8787">
-                            <p class="setting-help">URL to your Readarr instance (e.g., http://localhost:8787)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="readarr_api_key">API Key:</label>
-                            <input type="text" id="readarr_api_key" placeholder="Enter your Readarr API key">
-                            <p class="setting-help">Your Readarr API key (found in Settings > General)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label>Connection Status:</label>
-                            <span id="readarrConnectionStatus" class="connection-badge not-connected">Not Connected</span>
-                            <button id="testReadarrConnection" class="test-connection-button">Test Connection</button>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Hunt Settings</h3>
-                        <div class="setting-item">
-                            <label for="hunt_missing_books">Hunt Missing Books:</label>
-                            <input type="number" id="hunt_missing_books" min="0" step="1">
-                            <p class="setting-help">Maximum number of missing books to process per cycle. Set to 0 to disable.</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="hunt_upgrade_books">Hunt Upgrade Books:</label>
-                            <input type="number" id="hunt_upgrade_books" min="0" step="1">
-                            <p class="setting-help">Maximum number of books to upgrade per cycle. Set to 0 to disable.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Timing Settings</h3>
-                        <div class="setting-item">
-                            <label for="readarr_sleep_duration">Sleep Duration (seconds):</label>
-                            <div class="duration-input">
-                                <input type="number" id="readarr_sleep_duration" min="60" step="60">
-                                <span id="readarr_sleep_duration_hours"></span>
-                            </div>
-                            <p class="setting-help">Time to wait between processing cycles (minimum 60 seconds)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="readarr_state_reset_interval_hours">State Reset Interval (hours):</label>
-                            <input type="number" id="readarr_state_reset_interval_hours" min="1" step="1">
-                            <p class="setting-help">How often to reset the state tracking (for re-processing items)</p>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Processing Settings</h3>
-                        <div class="setting-item">
-                            <label for="readarr_monitored_only">Monitored Items Only:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="readarr_monitored_only">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Process only monitored items</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="readarr_random_missing">Random Missing Selection:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="readarr_random_missing">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Select missing items randomly instead of sequentially</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="readarr_random_upgrades">Random Upgrades Selection:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="readarr_random_upgrades">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Select upgrade items randomly instead of sequentially</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="readarr_skip_future_releases">Skip Future Releases:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="readarr_skip_future_releases">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Skip processing books with future release dates</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="skip_author_refresh">Skip Author Refresh:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="skip_author_refresh">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Skip refreshing author metadata before processing (reduces disk activity)</p>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-group">
-                        <h3>Advanced Settings</h3>
-                        <div class="setting-item">
-                            <label for="readarr_api_timeout">API Timeout (seconds):</label>
-                            <input type="number" id="readarr_api_timeout" min="10" step="1">
-                            <p class="setting-help">Timeout in seconds for API requests to Readarr (minimum 10 seconds)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="readarr_debug_mode">Debug Mode:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="readarr_debug_mode">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <p class="setting-help">Enable detailed debug logging</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="readarr_command_wait_delay">Command Wait Delay (seconds):</label>
-                            <input type="number" id="readarr_command_wait_delay" min="1" step="1">
-                            <p class="setting-help">Delay between command status checks</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="readarr_command_wait_attempts">Command Wait Attempts:</label>
-                            <input type="number" id="readarr_command_wait_attempts" min="1" step="1">
-                            <p class="setting-help">Maximum number of attempts to check command status</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="readarr_minimum_download_queue_size">Minimum Download Queue Size:</label>
-                            <input type="number" id="readarr_minimum_download_queue_size" min="-1" step="1">
-                            <p class="setting-help">Minimum items in download queue before starting hunt. Set to -1 to disable check.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="settings-buttons">
-                    <button id="saveSettingsBottom" class="save-button">Save Settings</button>
-                    <button id="resetSettingsBottom" class="reset-button">Reset to Defaults</button>
-                </div>
             </div>
         </div>
         
-        <div class="footer">
-            <p>💰 Donate @ <a href="https://donate.plex.one" target="_blank">donate.plex.one</a> for Daughter's College Fund! ⭐ Also Star <a href="https://github.com/plexguide/huntarr" target="_blank">Huntarr on GitHub</a> if you find it useful!</p>
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="page-title" id="currentPageTitle">Home</div>
+                <div class="user-info">
+                    <span id="username">User</span>
+                    <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+                </div>
+            </div>
+            
+            <!-- Home Section -->
+            <section id="homeSection" class="content-section active">
+                <div class="dashboard-grid">
+                    <div class="card welcome-card">
+                        <h2>Welcome to Huntarr</h2>
+                        <p>Your media management assistant for Sonarr, Radarr, and Lidarr</p>
+                    </div>
+                    
+                    <div class="card status-card">
+                        <h3><i class="fas fa-server"></i> Connection Status</h3>
+                        <div class="status-list">
+                            <div class="status-item">
+                                <span class="status-label">Sonarr:</span>
+                                <span id="sonarrHomeStatus" class="status-badge not-connected">
+                                    <i class="fas fa-times-circle"></i> Not Connected
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Radarr:</span>
+                                <span id="radarrHomeStatus" class="status-badge not-connected">
+                                    <i class="fas fa-times-circle"></i> Not Connected
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Lidarr:</span>
+                                <span id="lidarrHomeStatus" class="status-badge not-connected">
+                                    <i class="fas fa-times-circle"></i> Not Connected
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card stats-card">
+                        <h3><i class="fas fa-chart-line"></i> Activity Stats</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalMissingCount">-</div>
+                                <div class="stat-label">Missing Media</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalUpgradeCount">-</div>
+                                <div class="stat-label">Upgradable</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalProcessedCount">-</div>
+                                <div class="stat-label">Processed</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card action-card">
+                        <h3><i class="fas fa-play-circle"></i> Quick Actions</h3>
+                        <div class="action-buttons">
+                            <button id="startHuntButton" class="action-button start">
+                                <i class="fas fa-play"></i> Start Hunt
+                            </button>
+                            <button id="stopHuntButton" class="action-button stop">
+                                <i class="fas fa-stop"></i> Stop Hunt
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Logs Section -->
+            <section id="logsSection" class="content-section">
+                <div class="section-header">
+                    <div class="app-tabs">
+                        <button class="app-tab active" data-app="sonarr">Sonarr</button>
+                        <button class="app-tab" data-app="radarr">Radarr</button>
+                        <button class="app-tab" data-app="lidarr">Lidarr</button>
+                    </div>
+                    
+                    <div class="log-controls">
+                        <div class="connection-status">
+                            Status: <span id="logConnectionStatus" class="status-disconnected">Disconnected</span>
+                        </div>
+                        <div class="log-options">
+                            <label class="auto-scroll">
+                                <input type="checkbox" id="autoScrollCheckbox" checked>
+                                <span>Auto-scroll</span>
+                            </label>
+                            <button id="clearLogsButton" class="clear-button">
+                                <i class="fas fa-trash-alt"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="logs" id="logsContainer"></div>
+            </section>
+            
+            <!-- Settings Section -->
+            <section id="settingsSection" class="content-section">
+                <div class="section-header">
+                    <div class="app-tabs">
+                        <button class="settings-tab active" data-settings="sonarr">Sonarr</button>
+                        <button class="settings-tab" data-settings="radarr">Radarr</button>
+                        <button class="settings-tab" data-settings="lidarr">Lidarr</button>
+                        <button class="settings-tab" data-settings="global">Global</button>
+                    </div>
+                    
+                    <div class="settings-actions">
+                        <button id="saveSettingsButton" class="save-button">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                        <button id="resetSettingsButton" class="reset-button">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="settings-form">
+                    <!-- Global Settings -->
+                    <div id="globalSettings" class="app-settings-panel">
+                        <div class="settings-group">
+                            <h3>General Settings</h3>
+                            <div class="setting-item">
+                                <label for="debug_mode">Debug Mode:</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="debug_mode">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <p class="setting-help">Enable detailed debug logging</p>
+                            </div>
+                            <div class="setting-item">
+                                <label for="command_wait_delay">Command Wait Delay:</label>
+                                <input type="number" id="command_wait_delay" min="1" step="1">
+                                <p class="setting-help">Delay in seconds between checking for command status</p>
+                            </div>
+                            <div class="setting-item">
+                                <label for="command_wait_attempts">Command Wait Attempts:</label>
+                                <input type="number" id="command_wait_attempts" min="10" step="1">
+                                <p class="setting-help">Number of attempts to check for command completion</p>
+                            </div>
+                            <div class="setting-item">
+                                <label for="minimum_download_queue_size">Minimum Queue Size:</label>
+                                <input type="number" id="minimum_download_queue_size" min="-1" step="1">
+                                <p class="setting-help">Minimum download queue size before stopping searches</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- App-specific settings panels will be filled by JavaScript -->
+                    <div id="sonarrSettings" class="app-settings-panel active"></div>
+                    <div id="radarrSettings" class="app-settings-panel"></div>
+                    <div id="lidarrSettings" class="app-settings-panel"></div>
+                </div>
+            </section>
         </div>
     </div>
-
-    <div class="try-new-ui">
-        <a href="/?ui=new" class="new-ui-button">Try New UI</a>
-    </div>
-
-    <!-- JavaScript files - load in correct order -->
-    <script src="/static/js/core.js"></script>
-    <script src="/static/js/apps/sonarr.js"></script>
-    <script src="/static/js/apps/radarr.js"></script>
-    <script src="/static/js/apps/lidarr.js"></script>
-    <script src="/static/js/apps/readarr.js"></script>
+    
     <script src="/static/js/main.js"></script>
 </body>
 </html>
