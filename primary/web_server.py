@@ -210,7 +210,7 @@ def api_app_settings():
 @app.route('/api/configured-apps', methods=['GET'])
 def api_configured_apps():
     # Return the configured status of all apps
-    configured_apps = keys_manager.get_configured_apps()
+    configured_apps = keys_manager.list_configured_apps()
     return jsonify(configured_apps)
 
 def start_web_server():
