@@ -453,13 +453,20 @@
                     fetch('/api/user/generate-2fa')
                         .then(response => response.json())
                         .then(data => {
+                            // Show QR code for scanning
                             if (document.getElementById('qrCode')) {
+                                // Make sure we're using the correct property from the API response
                                 document.getElementById('qrCode').src = data.qr_code_url;
-                            }
-                            if (document.getElementById('secretKey')) {
-                                document.getElementById('secretKey').textContent = data.secret;
+                                console.log("QR code URL set to:", data.qr_code_url);
                             }
                             
+                            // Show secret key for manual entry
+                            if (document.getElementById('secretKey')) {
+                                document.getElementById('secretKey').textContent = data.secret;
+                                console.log("Secret key set to:", data.secret);
+                            }
+                            
+                            // Switch from the enable section to the setup section
                             if (document.getElementById('enableTwoFactorSection')) {
                                 document.getElementById('enableTwoFactorSection').style.display = 'none';
                             }
@@ -469,7 +476,7 @@
                         })
                         .catch(error => {
                             console.error('Error setting up 2FA:', error);
-                            alert('Failed to set up 2FA. Please try again.');
+                            alert('Failed to set up 2FA. Please try again. Error: ' + error.message);
                         });
                 });
             }
