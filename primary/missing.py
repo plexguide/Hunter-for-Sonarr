@@ -7,7 +7,7 @@ Handles searching for missing episodes in Sonarr
 import random
 import time
 import datetime
-from typing import List, Callable
+from typing import List, Callable, Dict, Optional
 from primary.utils.logger import logger, debug_log
 from primary.config import (
     HUNT_MISSING_SHOWS, 
@@ -21,12 +21,66 @@ from primary.api import (
     get_episodes_for_series, 
     refresh_series, 
     episode_search_episodes, 
-    get_series_with_missing_episodes
+    get_series_with_missing_episodes,
+    arr_request,
+    get_missing_episodes
 )
 from primary.state import load_processed_ids, save_processed_id, truncate_processed_list, PROCESSED_MISSING_FILE
+import os
+import json
 
 # Ensure RANDOM_MISSING is dynamically reloaded at the start of each cycle
 # Updated logic to reload settings before processing missing episodes
+
+def get_missing_total_pages(pageSize: int = 200) -> int:
+    """
+    Calculates the total number of pages for missing episodes.
+    Returns the number of pages, or 0 if no missing episodes.
+    Returns -1 if there was an API error.
+    """
+    response = get_missing_episodes(pageSize=1)  # Get just 1 to get total count
+    if not response:
+        logger.error("Failed to get missing episodes data from API")
+        return -1
+    
+    if "totalRecords" not in response:
+        logger.error("Missing totalRecords in API response")
+        return -1
+    
+    total_records = response.get("totalRecords", 0)
+    if not isinstance(total_records, int) or total_records < 1:
+        logger.info("No missing episodes found")
+        return 0
+    
+    # Calculate total pages based on pageSize
+    total_pages = (total_records + pageSize - 1) // pageSize
+    logger.debug(f"Total missing episodes: {total_records}, pages: {total_pages}")
+    return max(total_pages, 1)
+
+def load_processed_ids(filepath: str) -> List[int]:
+    """Load the list of already processed episode IDs from a file."""
+    try:
+        if os.path.exists(filepath):
+            with open(filepath, "r") as f:
+                return json.load(f)
+        return []
+    except Exception as e:
+        logger.error(f"Error loading processed IDs: {e}")
+        return []
+
+def save_processed_ids(filepath: str, ids: List[int]) -> None:
+    """Save the list of processed episode IDs to a file."""
+    try:
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, "w") as f:
+            json.dump(ids, f)
+    except Exception as e:
+        logger.error(f"Error saving processed IDs: {e}")
+
+def get_missing(page: int) -> Optional[Dict]:
+    """Get a page of missing episodes."""
+    return get_missing_episodes(pageSize=200)
 
 def process_missing_episodes(restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
     """
