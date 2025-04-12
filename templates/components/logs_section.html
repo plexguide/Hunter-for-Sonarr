@@ -1,0 +1,26 @@
+<section id="logsSection" class="content-section">
+    <div class="section-header">
+        <div class="app-tabs">
+            <button class="app-tab active" data-app="sonarr">Sonarr</button>
+            <button class="app-tab" data-app="radarr">Radarr</button>
+            <button class="app-tab" data-app="lidarr">Lidarr</button>
+        </div>
+        
+        <div class="log-controls">
+            <div class="connection-status">
+                Status: <span id="logConnectionStatus" class="status-disconnected">Disconnected</span>
+            </div>
+            <div class="log-options">
+                <label class="auto-scroll">
+                    <input type="checkbox" id="autoScrollCheckbox" checked>
+                    <span>Auto-scroll</span>
+                </label>
+                <button id="clearLogsButton" class="clear-button">
+                    <i class="fas fa-trash-alt"></i> Clear
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="logs" id="logsContainer"></div>
+</section>

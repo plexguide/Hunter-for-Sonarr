@@ -1,0 +1,62 @@
+<section id="homeSection" class="content-section">
+    <div class="dashboard-grid">
+        <div class="card welcome-card">
+            <h2>Welcome to Huntarr</h2>
+            <p>Your media management assistant for Sonarr, Radarr, and Lidarr</p>
+        </div>
+        
+        <div class="card status-card">
+            <h3><i class="fas fa-server"></i> Connection Status</h3>
+            <div class="status-list">
+                <div class="status-item">
+                    <span class="status-label">Sonarr:</span>
+                    <span id="sonarrHomeStatus" class="status-badge not-connected">
+                        <i class="fas fa-times-circle"></i> Not Connected
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Radarr:</span>
+                    <span id="radarrHomeStatus" class="status-badge not-connected">
+                        <i class="fas fa-times-circle"></i> Not Connected
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Lidarr:</span>
+                    <span id="lidarrHomeStatus" class="status-badge not-connected">
+                        <i class="fas fa-times-circle"></i> Not Connected
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card stats-card">
+            <h3><i class="fas fa-chart-line"></i> Activity Stats</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalMissingCount">-</div>
+                    <div class="stat-label">Missing Media</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalUpgradeCount">-</div>
+                    <div class="stat-label">Upgradable</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalProcessedCount">-</div>
+                    <div class="stat-label">Processed</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card action-card">
+            <h3><i class="fas fa-play-circle"></i> Quick Actions</h3>
+            <div class="action-buttons">
+                <button id="startHuntButton" class="action-button start">
+                    <i class="fas fa-play"></i> Start Hunt
+                </button>
+                <button id="stopHuntButton" class="action-button stop">
+                    <i class="fas fa-stop"></i> Stop Hunt
+                </button>
+            </div>
+        </div>
+    </div>
+</section>

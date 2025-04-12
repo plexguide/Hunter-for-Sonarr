@@ -1,12 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Settings - Huntarr</title>
-    <link rel="stylesheet" href="/static/css/new-style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="/static/favicon.ico">
+    {% include 'components/head.html' %}
     <style>
         .user-section {
             padding: 20px;
@@ -27,32 +23,21 @@
             align-items: center;
             margin-top: 0;
             margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
         }
         
         .user-card h3 i {
             margin-right: 10px;
-        }
-        
-        .setting-item {
-            margin-bottom: 15px;
-        }
-        
-        .setting-item label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
+            color: var(--primary-color);
         }
         
         .user-button {
-            padding: 8px 15px;
-            border-radius: 5px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+            padding: 8px 16px;
             margin-top: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: all 0.2s;
         }
         
         .save-button {
@@ -60,18 +45,42 @@
             color: white;
         }
         
-        .save-button:hover {
-            background-color: var(--save-button-hover);
-        }
-        
-        .cancel-button {
-            background-color: var(--reset-button-bg);
+        .danger-button {
+            background-color: var(--delete-button-bg);
             color: white;
-            margin-left: 10px;
         }
         
-        .cancel-button:hover {
-            background-color: var(--reset-button-hover);
+        .user-button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        .qr-code-container {
+            margin: 15px auto;
+            text-align: center;
+        }
+        
+        .qr-code {
+            max-width: 160px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        
+        .qr-code img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .secret-key {
+            background-color: var(--bg-secondary);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: monospace;
+            word-break: break-all;
         }
         
         .status-success {
@@ -96,164 +105,72 @@
 <body>
     <div class="app-container">
         <!-- Sidebar Navigation -->
-        <div class="sidebar">
-            <div class="logo-container">
-                <img src="https://github.com/plexguide/Huntarr/blob/main/logo/40.png?raw=true" alt="Huntarr Logo" class="logo">
-                <h1>Huntarr</h1>
-            </div>
-            
-            <nav class="nav-menu">
-                <a href="/" class="nav-item" id="homeNav">
-                    <i class="fas fa-home"></i>
-                    <span>Home</span>
-                </a>
-                <a href="/#logs" class="nav-item" id="logsNav">
-                    <i class="fas fa-list-alt"></i>
-                    <span>Logs</span>
-                </a>
-                <a href="/#settings" class="nav-item" id="settingsNav">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-                <a href="/user" class="nav-item active" id="userNav">
-                    <i class="fas fa-user"></i>
-                    <span>User</span>
-                </a>
-            </nav>
-            
-            <div class="theme-switcher">
-                <div class="switch-label">
-                    <i class="fas fa-sun light-icon"></i>
-                    <i class="fas fa-moon dark-icon"></i>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="themeToggle">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-        </div>
+        {% include 'components/sidebar.html' %}
         
         <!-- Main Content Area -->
         <div class="main-content">
-            <div class="top-bar">
-                <div class="page-title">User Settings</div>
-                <div class="user-info">
-                    <span id="username">User</span>
-                    <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
-                </div>
-            </div>
+            {% include 'components/topbar.html' %}
             
-            <div class="user-section">
-                <div class="user-card">
-                    <h3><i class="fas fa-user-edit"></i> Change Username</h3>
-                    <div class="setting-item">
-                        <label for="currentUsername">Current Username:</label>
-                        <span id="currentUsername">Loading...</span>
-                    </div>
-                    <div class="setting-item">
-                        <label for="newUsername">New Username:</label>
-                        <input type="text" id="newUsername" class="form-control">
-                    </div>
-                    <button id="saveUsername" class="user-button save-button">Save Username</button>
-                    <div id="usernameStatus" style="display: none;"></div>
-                </div>
-                
-                <div class="user-card">
-                    <h3><i class="fas fa-key"></i> Change Password</h3>
-                    <div class="setting-item">
-                        <label for="currentPassword">Current Password:</label>
-                        <input type="password" id="currentPassword" class="form-control">
-                    </div>
-                    <div class="setting-item">
-                        <label for="newPassword">New Password:</label>
-                        <input type="password" id="newPassword" class="form-control">
-                    </div>
-                    <div class="setting-item">
-                        <label for="confirmPassword">Confirm New Password:</label>
-                        <input type="password" id="confirmPassword" class="form-control">
-                    </div>
-                    <button id="savePassword" class="user-button save-button">Save Password</button>
-                    <div id="passwordStatus" style="display: none;"></div>
-                </div>
-                
-                <div class="user-card">
-                    <h3><i class="fas fa-shield-alt"></i> Two-Factor Authentication</h3>
-                    <div id="2faSetupContainer">
-                        <div class="setting-item">
-                            <label>Status:</label>
-                            <span id="2faStatus">Loading...</span>
-                        </div>
-                        <button id="setup2faButton" class="user-button save-button">Setup 2FA</button>
-                        <button id="disable2faButton" class="user-button cancel-button" style="display: none;">Disable 2FA</button>
-                    </div>
-                    <div id="qrContainer" style="display: none;">
-                        <div class="qr-code-container">
-                            <div class="qr-code">
-                                <img id="qrCode" src="" alt="QR Code">
-                            </div>
-                            <div class="secret-key" id="secretKey"></div>
-                        </div>
-                        <div class="setting-item">
-                            <label for="verificationCode">Verification Code:</label>
-                            <input type="text" id="verificationCode" class="form-control">
-                        </div>
-                        <button id="verify2faButton" class="user-button save-button">Verify Code</button>
-                        <button id="cancel2faButton" class="user-button cancel-button">Cancel</button>
-                        <div id="2faStatus" style="display: none;"></div>
-                    </div>
-                </div>
-            </div>
+            {% include 'components/user_profile.html' %}
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Theme switcher
+            // Set active nav item
+            document.getElementById('homeNav').classList.remove('active');
+            document.getElementById('userNav').classList.add('active');
+            document.getElementById('currentPageTitle').textContent = 'User Settings';
+            
+            // Theme Toggle
             const themeToggle = document.getElementById('themeToggle');
+            const currentTheme = localStorage.getItem('theme');
             
-            // Check if user has a theme preference
-            const currentTheme = localStorage.getItem('theme') || 'light';
-            document.body.classList.add(currentTheme + '-theme');
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.checked = true;
+            }
             
-            // Set the toggle based on the current theme
-            themeToggle.checked = (currentTheme === 'dark');
-            
-            // Handle theme toggle
             themeToggle.addEventListener('change', function() {
                 if (this.checked) {
-                    document.body.classList.remove('light-theme');
                     document.body.classList.add('dark-theme');
                     localStorage.setItem('theme', 'dark');
                 } else {
                     document.body.classList.remove('dark-theme');
-                    document.body.classList.add('light-theme');
                     localStorage.setItem('theme', 'light');
                 }
             });
             
-            // Load current username
-            fetch('/api/user')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('currentUsername').textContent = data.username;
-                    document.getElementById('username').textContent = data.username;
+            // User Functions
+            const fetchUserData = async () => {
+                try {
+                    const response = await fetch('/api/user/profile');
+                    if (!response.ok) throw new Error('Failed to fetch user data');
                     
-                    // Update 2FA status
-                    document.getElementById('2faStatus').textContent = data.has_2fa ? 'Enabled' : 'Not Enabled';
-                    if (data.has_2fa) {
-                        document.getElementById('disable2faButton').style.display = 'inline-block';
-                        document.getElementById('setup2faButton').style.display = 'none';
+                    const data = await response.json();
+                    document.getElementById('username').textContent = data.username;
+                    document.getElementById('currentUsername').textContent = data.username;
+                    document.getElementById('twoFactorEnabled').textContent = data.two_factor_enabled ? 'Enabled' : 'Disabled';
+                    
+                    // Show appropriate 2FA sections
+                    if (data.two_factor_enabled) {
+                        document.getElementById('disableTwoFactorSection').style.display = 'block';
+                        document.getElementById('enableTwoFactorSection').style.display = 'none';
+                        document.getElementById('setupTwoFactorSection').style.display = 'none';
                     } else {
-                        document.getElementById('disable2faButton').style.display = 'none';
-                        document.getElementById('setup2faButton').style.display = 'inline-block';
+                        document.getElementById('disableTwoFactorSection').style.display = 'none';
+                        document.getElementById('enableTwoFactorSection').style.display = 'block';
+                        document.getElementById('setupTwoFactorSection').style.display = 'none';
                     }
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Error fetching user data:', error);
-                });
+                }
+            };
             
-            // Username change handling
-            document.getElementById('saveUsername').addEventListener('click', function() {
+            fetchUserData();
+            
+            // Username change
+            document.getElementById('saveUsername').addEventListener('click', async function() {
                 const newUsername = document.getElementById('newUsername').value.trim();
                 const statusElement = document.getElementById('usernameStatus');
                 
@@ -264,37 +181,43 @@
                     return;
                 }
                 
-                fetch('/api/user/username', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ username: newUsername })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
+                try {
+                    const response = await fetch('/api/user/username', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username: newUsername })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
                         statusElement.textContent = 'Username updated successfully';
                         statusElement.className = 'status-success';
-                        document.getElementById('currentUsername').textContent = newUsername;
                         document.getElementById('username').textContent = newUsername;
+                        document.getElementById('currentUsername').textContent = newUsername;
                         document.getElementById('newUsername').value = '';
                     } else {
-                        statusElement.textContent = data.message || 'Failed to update username';
+                        statusElement.textContent = data.error || 'Failed to update username';
                         statusElement.className = 'status-error';
                     }
+                    
                     statusElement.style.display = 'block';
-                })
-                .catch(error => {
-                    console.error('Error updating username:', error);
-                    statusElement.textContent = 'An error occurred while updating the username';
+                    setTimeout(() => {
+                        statusElement.style.display = 'none';
+                    }, 5000);
+                    
+                } catch (error) {
+                    statusElement.textContent = 'An error occurred';
                     statusElement.className = 'status-error';
                     statusElement.style.display = 'block';
-                });
+                    console.error('Error updating username:', error);
+                }
             });
             
-            // Password change handling
-            document.getElementById('savePassword').addEventListener('click', function() {
+            // Password change
+            document.getElementById('savePassword').addEventListener('click', async function() {
                 const currentPassword = document.getElementById('currentPassword').value;
                 const newPassword = document.getElementById('newPassword').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
@@ -314,134 +237,142 @@
                     return;
                 }
                 
-                fetch('/api/user/password', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        current_password: currentPassword,
-                        new_password: newPassword
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
+                try {
+                    const response = await fetch('/api/user/password', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            current_password: currentPassword,
+                            new_password: newPassword
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
                         statusElement.textContent = 'Password updated successfully';
                         statusElement.className = 'status-success';
                         document.getElementById('currentPassword').value = '';
                         document.getElementById('newPassword').value = '';
                         document.getElementById('confirmPassword').value = '';
                     } else {
-                        statusElement.textContent = data.message || 'Failed to update password';
+                        statusElement.textContent = data.error || 'Failed to update password';
                         statusElement.className = 'status-error';
                     }
+                    
                     statusElement.style.display = 'block';
-                })
-                .catch(error => {
-                    console.error('Error updating password:', error);
-                    statusElement.textContent = 'An error occurred while updating the password';
+                    setTimeout(() => {
+                        statusElement.style.display = 'none';
+                    }, 5000);
+                    
+                } catch (error) {
+                    statusElement.textContent = 'An error occurred';
                     statusElement.className = 'status-error';
                     statusElement.style.display = 'block';
-                });
+                    console.error('Error updating password:', error);
+                }
             });
             
-            // 2FA setup
-            document.getElementById('setup2faButton').addEventListener('click', function() {
-                fetch('/api/user/2fa/setup')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            document.getElementById('qrCode').src = data.qr_code;
-                            document.getElementById('secretKey').textContent = data.secret;
-                            document.getElementById('2faSetupContainer').style.display = 'none';
-                            document.getElementById('qrContainer').style.display = 'block';
-                        } else {
-                            const statusElement = document.getElementById('2faStatus');
-                            statusElement.textContent = data.message || 'Failed to setup 2FA';
-                            statusElement.className = 'status-error';
-                            statusElement.style.display = 'block';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error setting up 2FA:', error);
-                        const statusElement = document.getElementById('2faStatus');
-                        statusElement.textContent = 'An error occurred while setting up 2FA';
-                        statusElement.className = 'status-error';
-                        statusElement.style.display = 'block';
-                    });
+            // 2FA Setup
+            document.getElementById('enableTwoFactor').addEventListener('click', async function() {
+                try {
+                    const response = await fetch('/api/user/2fa/setup');
+                    if (!response.ok) throw new Error('Failed to setup 2FA');
+                    
+                    const data = await response.json();
+                    document.getElementById('qrCode').src = data.qr_code;
+                    document.getElementById('secretKey').textContent = data.secret;
+                    
+                    document.getElementById('enableTwoFactorSection').style.display = 'none';
+                    document.getElementById('setupTwoFactorSection').style.display = 'block';
+                } catch (error) {
+                    console.error('Error setting up 2FA:', error);
+                }
             });
             
-            // 2FA verification
-            document.getElementById('verify2faButton').addEventListener('click', function() {
+            document.getElementById('verifyTwoFactor').addEventListener('click', async function() {
                 const code = document.getElementById('verificationCode').value.trim();
-                const statusElement = document.getElementById('2faStatus');
+                const statusElement = document.getElementById('verifyStatus');
                 
-                if (!code) {
-                    statusElement.textContent = 'Verification code is required';
+                if (!code || code.length !== 6) {
+                    statusElement.textContent = 'Please enter a valid 6-digit code';
                     statusElement.className = 'status-error';
                     statusElement.style.display = 'block';
                     return;
                 }
                 
-                fetch('/api/user/2fa/verify', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ code: code })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('qrContainer').style.display = 'none';
-                        document.getElementById('2faSetupContainer').style.display = 'block';
-                        document.getElementById('2faStatus').textContent = 'Enabled';
-                        document.getElementById('disable2faButton').style.display = 'inline-block';
-                        document.getElementById('setup2faButton').style.display = 'none';
-                        document.getElementById('verificationCode').value = '';
+                try {
+                    const response = await fetch('/api/user/2fa/verify', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ code: code })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        statusElement.textContent = '2FA enabled successfully';
+                        statusElement.className = 'status-success';
+                        setTimeout(() => {
+                            fetchUserData(); // Refresh the page data
+                        }, 2000);
                     } else {
-                        statusElement.textContent = data.message || 'Failed to verify code';
+                        statusElement.textContent = data.error || 'Failed to verify code';
                         statusElement.className = 'status-error';
-                        statusElement.style.display = 'block';
                     }
-                })
-                .catch(error => {
-                    console.error('Error verifying 2FA code:', error);
-                    statusElement.textContent = 'An error occurred while verifying the code';
+                    
+                    statusElement.style.display = 'block';
+                } catch (error) {
+                    statusElement.textContent = 'An error occurred';
                     statusElement.className = 'status-error';
                     statusElement.style.display = 'block';
-                });
+                    console.error('Error verifying 2FA:', error);
+                }
             });
             
-            // Cancel 2FA setup
-            document.getElementById('cancel2faButton').addEventListener('click', function() {
-                document.getElementById('qrContainer').style.display = 'none';
-                document.getElementById('2faSetupContainer').style.display = 'block';
-                document.getElementById('verificationCode').value = '';
-                document.getElementById('2faStatus').style.display = 'none';
-            });
-            
-            // Disable 2FA
-            document.getElementById('disable2faButton').addEventListener('click', function() {
-                if (confirm('Are you sure you want to disable two-factor authentication? This will make your account less secure.')) {
-                    fetch('/api/user/2fa/disable', {
-                        method: 'POST'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            document.getElementById('2faStatus').textContent = 'Not Enabled';
-                            document.getElementById('disable2faButton').style.display = 'none';
-                            document.getElementById('setup2faButton').style.display = 'inline-block';
-                        } else {
-                            alert(data.message || 'Failed to disable 2FA');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error disabling 2FA:', error);
-                        alert('An error occurred while disabling 2FA');
+            document.getElementById('disableTwoFactor').addEventListener('click', async function() {
+                const code = document.getElementById('disableCode').value.trim();
+                const statusElement = document.getElementById('disableStatus');
+                
+                if (!code || code.length !== 6) {
+                    statusElement.textContent = 'Please enter a valid 6-digit code';
+                    statusElement.className = 'status-error';
+                    statusElement.style.display = 'block';
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/user/2fa/disable', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ code: code })
                     });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        statusElement.textContent = '2FA disabled successfully';
+                        statusElement.className = 'status-success';
+                        setTimeout(() => {
+                            fetchUserData(); // Refresh the page data
+                        }, 2000);
+                    } else {
+                        statusElement.textContent = data.error || 'Failed to disable 2FA';
+                        statusElement.className = 'status-error';
+                    }
+                    
+                    statusElement.style.display = 'block';
+                } catch (error) {
+                    statusElement.textContent = 'An error occurred';
+                    statusElement.className = 'status-error';
+                    statusElement.style.display = 'block';
+                    console.error('Error disabling 2FA:', error);
                 }
             });
         });
