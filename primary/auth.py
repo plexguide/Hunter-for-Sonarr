@@ -340,3 +340,16 @@ def change_password(current_password: str, new_password: str) -> bool:
     # Update password
     user_data["password"] = hash_password(new_password)
     return save_user_data(user_data)
+
+def get_app_url_and_key(app_type: str) -> Tuple[str, str]:
+    """
+    Get the API URL and API key for a specific app type
+    
+    Args:
+        app_type: The app type (sonarr, radarr, lidarr, readarr)
+    
+    Returns:
+        Tuple[str, str]: (api_url, api_key)
+    """
+    from primary import keys_manager
+    return keys_manager.get_api_keys(app_type)
