@@ -30,16 +30,27 @@ logger = None
 app_loggers: Dict[str, logging.Logger] = {}
 
 def setup_logger(debug_mode=None, app_type=None):
-    """Configure and return the application logger
+    """Set up the logging configuration for the application
     
     Args:
-        debug_mode (bool, optional): Override the DEBUG_MODE from config. Defaults to None.
-        app_type (str, optional): The app type to set up a logger for. Defaults to None (main logger).
-    
+        debug_mode: Whether to enable debug logging
+        app_type: The type of application (sonarr, radarr, etc.)
+        
     Returns:
-        logging.Logger: The configured logger
+        A configured Logger instance
     """
     global logger, app_loggers
+    
+    # Create a logger with the basic name "Huntarr" instead of app-specific
+    app_logger = logging.getLogger("Huntarr")
+    
+    # Set debug mode from parameter or fallback to config
+    if debug_mode is None:
+        try:
+            from primary import config
+            debug_mode = getattr(config, "DEBUG_MODE", False)
+        except ImportError:
+            debug_mode = False
     
     # Get DEBUG_MODE from config, but only if we haven't been given a value
     # Use a safe approach to avoid circular imports
