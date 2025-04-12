@@ -5,45 +5,126 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Huntarr</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="/static/favicon.ico">
 </head>
-<body class="dark-theme">
+<body class="login-page">
     <div class="login-container">
-        <div class="auth-header">
-            <img src="https://github.com/plexguide/Huntarr/blob/main/logo/40.png?raw=true" alt="Huntarr Logo" class="huntarr-logo">
+        <div class="login-header">
+            <img src="https://github.com/plexguide/Huntarr/blob/main/logo/40.png?raw=true" alt="Huntarr Logo" class="login-logo">
             <h1>Huntarr</h1>
         </div>
-        <div class="login-content">
-            <div class="login-header">
-                <h2>Login to Huntarr</h2>
-                {% if needs_2fa %}
-                <p>Please enter your verification code</p>
-                {% endif %}
-            </div>
-            <form class="login-form" method="POST" action="/login">
-                {% if needs_2fa %}
-                    <input type="hidden" name="username" value="{{ username }}">
-                    <input type="hidden" name="password" value="{{ password }}">
-                    <div class="form-group">
-                        <label for="otp_code">Verification Code</label>
-                        <input type="text" id="otp_code" name="otp_code" placeholder="Enter 6-digit code" maxlength="6" required>
-                    </div>
-                {% else %}
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" id="username" name="username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" required>
-                    </div>
-                {% endif %}
+        <div class="login-form">
+            <h2>Log in to your account</h2>
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <label for="username">
+                        <i class="fas fa-user"></i>
+                        <span>Username</span>
+                    </label>
+                    <input type="text" id="username" name="username" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i>
+                        <span>Password</span>
+                    </label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group" id="twoFactorGroup" style="display: none;">
+                    <label for="twoFactorCode">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>2FA Code</span>
+                    </label>
+                    <input type="text" id="twoFactorCode" name="twoFactorCode" placeholder="000000" maxlength="6">
+                </div>
+                <div class="error-message" id="loginError"></div>
                 <button type="submit" class="login-button">
-                    {% if needs_2fa %}Verify{% else %}Login{% endif %}
+                    <i class="fas fa-sign-in-alt"></i> Log In
                 </button>
-                <p id="errorMessage" class="error-message" {% if not error %}style="display: none;"{% endif %}>{{ error }}</p>
             </form>
+            <div class="theme-toggle">
+                <label class="switch">
+                    <input type="checkbox" id="themeToggle">
+                    <span class="slider round"></span>
+                </label>
+                <span>Dark Mode</span>
+            </div>
         </div>
     </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Theme toggle functionality
+            const themeToggle = document.getElementById('themeToggle');
+            
+            // Check for saved theme preference
+            const savedTheme = localStorage.getItem('darkTheme');
+            if (savedTheme === 'true') {
+                document.body.classList.add('dark-theme');
+                themeToggle.checked = true;
+            }
+            
+            // Theme toggle event listener
+            themeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    document.body.classList.add('dark-theme');
+                    localStorage.setItem('darkTheme', 'true');
+                } else {
+                    document.body.classList.remove('dark-theme');
+                    localStorage.setItem('darkTheme', 'false');
+                }
+            });
+            
+            // Form submission handling
+            const loginForm = document.querySelector('form');
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const twoFactorCode = document.getElementById('twoFactorCode').value;
+                const errorElement = document.getElementById('loginError');
+                
+                // Clear previous errors
+                errorElement.textContent = '';
+                
+                // Basic validation
+                if (!username || !password) {
+                    errorElement.textContent = 'Username and password are required';
+                    return;
+                }
+                
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                if (twoFactorCode) {
+                    formData.append('twoFactorCode', twoFactorCode);
+                }
+                
+                // Send login request
+                fetch('/login', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = data.redirect || '/';
+                    } else if (data.requires2fa) {
+                        document.getElementById('twoFactorGroup').style.display = 'block';
+                        errorElement.textContent = 'Please enter your 2FA code';
+                    } else {
+                        errorElement.textContent = data.message || 'Invalid username or password';
+                    }
+                })
+                .catch(error => {
+                    console.error('Login error:', error);
+                    errorElement.textContent = 'An error occurred during login';
+                });
+            });
+        });
+    </script>
 </body>
 </html>

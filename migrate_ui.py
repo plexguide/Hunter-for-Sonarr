@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-Migration script to help users switch to the new UI
+Migration script to replace old UI with new UI
+This script will:
+1. Create backups of old files
+2. Move new UI files to standard locations
+3. Clean up by removing "new-" files (optional)
 """
 import os
 import shutil
@@ -16,20 +20,20 @@ def backup_file(filepath):
 def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # List of files to check
-    files = [
-        'templates/new-index.html',
-        'templates/new-user.html',
-        'static/css/new-style.css',
-        'static/js/new-main.js',
-        'static/js/new-user.js'
-    ]
+    # Files to migrate: source -> destination
+    files_to_migrate = {
+        'templates/new-index.html': 'templates/index.html',
+        'templates/new-user.html': 'templates/user.html',
+        'static/css/new-style.css': 'static/css/style.css',
+        'static/js/new-main.js': 'static/js/main.js',
+        'static/js/new-user.js': 'static/js/user.js'
+    }
     
-    # Check if all required files exist
+    # Check if new UI files exist
     missing_files = []
-    for file in files:
-        if not os.path.exists(os.path.join(base_dir, file)):
-            missing_files.append(file)
+    for src_file in files_to_migrate.keys():
+        if not os.path.exists(os.path.join(base_dir, src_file)):
+            missing_files.append(src_file)
     
     if missing_files:
         print("Error: The following required files are missing:")
@@ -38,20 +42,43 @@ def main():
         print("\nPlease make sure all new UI files are in place before running this script.")
         sys.exit(1)
     
-    # Create a config file to enable the new UI by default
-    config_file = os.path.join(base_dir, 'config/ui_settings.json')
-    os.makedirs(os.path.dirname(config_file), exist_ok=True)
+    # Create backups and migrate files
+    print("Starting UI migration...")
     
-    with open(config_file, 'w') as f:
-        f.write('{"use_new_ui": true}')
+    for src_file, dest_file in files_to_migrate.items():
+        src_path = os.path.join(base_dir, src_file)
+        dest_path = os.path.join(base_dir, dest_file)
+        
+        # Backup destination file if it exists
+        if os.path.exists(dest_path):
+            backup_file(dest_path)
+        
+        # Copy the new file to the destination
+        shutil.copy2(src_path, dest_path)
+        print(f"Migrated: {src_file} -> {dest_file}")
     
+    # Ask about removing the original "new-" files
     print("\nMigration completed successfully!")
-    print("The new UI is now enabled by default.")
-    print("You can access it at:")
-    print("  - Main UI: http://your-server/new")
-    print("  - User Settings: http://your-server/user/new")
-    print("\nTo return to the old UI temporarily, visit:")
-    print("  - http://your-server/?ui=classic")
+    print("The new UI is now the default UI for Huntarr.")
+    
+    remove_originals = input("\nWould you like to remove the original 'new-' files? (y/n): ").lower()
+    if remove_originals == 'y' or remove_originals == 'yes':
+        for src_file in files_to_migrate.keys():
+            src_path = os.path.join(base_dir, src_file)
+            try:
+                os.remove(src_path)
+                print(f"Removed: {src_file}")
+            except Exception as e:
+                print(f"Could not remove {src_file}: {e}")
+        print("\nCleanup completed. All 'new-' files have been removed.")
+    else:
+        print("\nOriginal 'new-' files have been kept. You can manually remove them later if needed.")
+    
+    # Update app.py routes if needed
+    app_py_path = os.path.join(base_dir, 'app.py')
+    if os.path.exists(app_py_path):
+        print("\nNOTE: You may need to update routes in app.py to remove any '/new' routes.")
+        print("The standard routes (/, /user) should now point to the new UI files.")
 
 if __name__ == "__main__":
     main()
