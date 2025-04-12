@@ -22,12 +22,21 @@ const HuntarrUI = {
     
     // Initialize the application
     init: function() {
+        // Apply any preloaded theme immediately to avoid flashing
+        const prefersDarkMode = localStorage.getItem('huntarr-dark-mode') === 'true';
+        if (prefersDarkMode) {
+            document.body.classList.add('dark-theme');
+        }
+        
         this.cacheElements();
         this.setupEventListeners();
         this.loadTheme();
         this.loadUsername();
         this.checkAppConnections();
         this.handleHashNavigation();
+        
+        // Set up logo handling for navigation
+        this.setupLogoHandling();
     },
     
     // Cache DOM elements for better performance
@@ -129,6 +138,32 @@ const HuntarrUI = {
         window.addEventListener('hashchange', this.handleHashNavigation.bind(this));
     },
     
+    // Setup logo handling to prevent flashing during navigation
+    setupLogoHandling: function() {
+        // Get the logo image
+        const logoImg = document.querySelector('.sidebar .logo');
+        if (logoImg) {
+            // Cache the source
+            this.logoSrc = logoImg.src;
+            
+            // Ensure it's fully loaded
+            if (!logoImg.complete) {
+                logoImg.onload = () => {
+                    // Once loaded, store the source
+                    this.logoSrc = logoImg.src;
+                };
+            }
+        }
+        
+        // Also add event listener to ensure logo is preserved during navigation
+        window.addEventListener('beforeunload', () => {
+            // Store logo src in session storage to persist across page loads
+            if (this.logoSrc) {
+                sessionStorage.setItem('huntarr-logo-src', this.logoSrc);
+            }
+        });
+    },
+    
     // Navigation handling
     handleNavigation: function(e) {
         e.preventDefault();
@@ -138,7 +173,10 @@ const HuntarrUI = {
             // Internal navigation
             window.location.hash = href;
         } else {
-            // External navigation
+            // External navigation - preserve logo state
+            if (this.logoSrc) {
+                sessionStorage.setItem('huntarr-logo-src', this.logoSrc);
+            }
             window.location.href = href;
         }
     },
@@ -635,4 +673,13 @@ const HuntarrUI = {
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', function() {
     HuntarrUI.init();
+    
+    // Restore logo from session storage if available
+    const cachedLogoSrc = sessionStorage.getItem('huntarr-logo-src');
+    if (cachedLogoSrc) {
+        const logoImg = document.querySelector('.sidebar .logo');
+        if (logoImg) {
+            logoImg.src = cachedLogoSrc;
+        }
+    }
 });
