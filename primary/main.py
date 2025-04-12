@@ -68,7 +68,7 @@ def app_specific_loop(app_type: str) -> None:
     from primary.utils.logger import get_logger
     app_logger = get_logger(app_type)
     
-    app_logger.info(f"=== Huntarr [{app_type.title()} Edition] Starting ===")
+    app_logger.info(f"=== Huntarr starting component for {app_type.title()} interaction ===")
     
     server_ip = get_ip_address()
     app_logger.info(f"Web interface available at http://{server_ip}:9705")

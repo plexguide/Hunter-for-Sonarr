@@ -96,11 +96,13 @@ def setup_logger(debug_mode=None, app_type=None):
     file_handler = logging.FileHandler(log_file)
     file_handler.setLevel(logging.DEBUG if use_debug_mode else logging.INFO)
     
-    # Set format - include app_type in format if provided
+    # Set format - clearly indicate if this is a main log or app-specific log
     log_format = "%(asctime)s - "
     if app_type:
-        log_format += f"{app_type} - "
+        # For app-specific logs, show clearly it's about interaction with that app
+        log_format += f"huntarr-{app_type} - "
     else:
+        # For main logger, just show it's Huntarr
         log_format += "huntarr - "
     log_format += "%(levelname)s - %(message)s"
     
