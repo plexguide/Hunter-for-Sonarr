@@ -372,6 +372,15 @@ def shutdown_threads():
     
     logger.info("All threads stopped")
 
+def log_configuration(log):
+    """Log the current configuration settings"""
+    # Change the startup message to just say "Huntarr" instead of "Huntarr [Sonarr Edition]"
+    log.info("=" * 60)
+    log.info(f"Starting Huntarr v{__version__}")
+    log.info("=" * 60)
+    
+    # ...existing code...
+
 def main():
     """Main entry point for Huntarr"""
     # Log configuration settings

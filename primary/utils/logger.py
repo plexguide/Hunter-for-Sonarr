@@ -41,7 +41,7 @@ def setup_logger(debug_mode=None, app_type=None):
     """
     global logger, app_loggers
     
-    # Create a logger with the basic name "Huntarr" instead of app-specific
+    # Create a logger with the name "Huntarr" instead of including the edition
     app_logger = logging.getLogger("Huntarr")
     
     # Set debug mode from parameter or fallback to config
@@ -146,6 +146,9 @@ def get_logger(app_type: str) -> logging.Logger:
     Returns:
         A logger specific to the app type.
     """
+    # Create a logger with the name "Huntarr" instead of including the app type
+    app_specific_logger = logging.getLogger(f"Huntarr")
+    
     if app_type in APP_LOG_FILES:
         log_name = f"huntarr.{app_type}"
         if log_name not in app_loggers:
@@ -155,6 +158,8 @@ def get_logger(app_type: str) -> logging.Logger:
     else:
         # Return the main logger if the app type is not recognized
         return logger
+
+    return app_specific_logger
 
 def debug_log(message: str, data: object = None, app_type: Optional[str] = None) -> None:
     """
