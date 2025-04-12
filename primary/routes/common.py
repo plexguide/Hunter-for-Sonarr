@@ -362,3 +362,19 @@ def update_theme():
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+@common_bp.route('/api/settings/refresh', methods=['POST'])
+def refresh_settings():
+    try:
+        # Force a reload of settings from disk
+        from primary import config
+        config.refresh_settings()
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOG_FILE, 'a') as f:
+            f.write(f"{timestamp} - huntarr-web - INFO - Settings refreshed from disk by UI\n")
+        return jsonify({"success": True, "message": "Settings refreshed successfully"})
+    except Exception as e:
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOG_FILE, 'a') as f:
+            f.write(f"{timestamp} - huntarr-web - ERROR - Error refreshing settings: {str(e)}\n")
+        return jsonify({"success": False, "message": str(e)}), 500

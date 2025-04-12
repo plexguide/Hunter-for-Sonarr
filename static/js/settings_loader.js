@@ -275,8 +275,42 @@ function saveCurrentSettings() {
         if (data.success) {
             alert('Settings saved successfully!');
             
-            // Reload settings to reflect any changes from the server
-            loadAppSettings(app);
+            // Give the server a moment to fully process and save the settings
+            setTimeout(() => {
+                // Force a full reload of all settings from the server
+                // This ensures we're showing what's actually in the huntarr.json file
+                fetch('/api/settings/refresh', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(refreshResponse => refreshResponse.json())
+                .then(refreshData => {
+                    console.log('Settings refreshed from server');
+                    
+                    // Now reload the app settings to display the current values
+                    loadAppSettings(app);
+                    
+                    // If we're using a module-specific loadSettings function, call that too
+                    if (window.huntarrApp && window.huntarrApp.currentApp === app) {
+                        if (app === 'sonarr' && window.huntarrApp.sonarrModule && window.huntarrApp.sonarrModule.loadSettings) {
+                            window.huntarrApp.sonarrModule.loadSettings();
+                        } else if (app === 'radarr' && window.huntarrApp.radarrModule && window.huntarrApp.radarrModule.loadSettings) {
+                            window.huntarrApp.radarrModule.loadSettings();
+                        } else if (app === 'lidarr' && window.huntarrApp.lidarrModule && window.huntarrApp.lidarrModule.loadSettings) {
+                            window.huntarrApp.lidarrModule.loadSettings();
+                        } else if (app === 'readarr' && window.huntarrApp.readarrModule && window.huntarrApp.readarrModule.loadSettings) {
+                            window.huntarrApp.readarrModule.loadSettings();
+                        }
+                    }
+                })
+                .catch(refreshError => {
+                    console.error('Error refreshing settings:', refreshError);
+                    // Still try to reload the settings
+                    loadAppSettings(app);
+                });
+            }, 500); // 500ms delay to ensure server processing is complete
         } else {
             alert('Error saving settings: ' + (data.message || 'Unknown error'));
         }
