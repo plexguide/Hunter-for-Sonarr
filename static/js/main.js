@@ -374,13 +374,13 @@ document.addEventListener('DOMContentLoaded', function() {
             statusElement.className = 'connection-badge';
         }
         
-        fetch('/api/test-connection', {
+        // Use the correct endpoint URL based on the app type
+        fetch(`/${app}/test-connection`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                app: app,
                 api_url: apiUrl,
                 api_key: apiKey
             })
