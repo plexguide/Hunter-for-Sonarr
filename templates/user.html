@@ -111,7 +111,7 @@
         }
     </style>
 </head>
-<body class="dark-mode">
+<body>
     <div class="app-container">
         <!-- Sidebar Navigation -->
         {% include 'components/sidebar.html' %}
@@ -258,20 +258,26 @@
         
         // Setup event listeners
         function setupEventListeners() {
-            // Fix navigation - make clicking on navbar items work properly
+            // Fix navigation - make clicking on navbar items use the same navigation style as the rest of the app
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.addEventListener('click', function(e) {
-                    // Only handle links that are not the user link
-                    if (this.id !== 'userNav') {
-                        // Get the original href
-                        const href = this.getAttribute('href');
-                        // Manually navigate to the correct page
-                        if (href.startsWith('#')) {
-                            window.location.href = `/${href.substring(1)}`;
-                        } else {
-                            window.location.href = href;
-                        }
-                        e.preventDefault();
+                    e.preventDefault();
+                    const href = this.getAttribute('href');
+                    
+                    // Don't navigate away if we're already on the user page and user nav is clicked
+                    if (this.id === 'userNav' && window.location.pathname === '/user') {
+                        return;
+                    }
+                    
+                    // Use direct navigation instead of hash-based
+                    if (href === '#home') {
+                        window.location.href = '/';
+                    } else if (href === '#logs') {
+                        window.location.href = '/#logs';
+                    } else if (href === '#settings') {
+                        window.location.href = '/#settings';
+                    } else {
+                        window.location.href = href;
                     }
                 });
             });
@@ -299,7 +305,7 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        if (response.ok) {
+                        if (data.success) {
                             statusElement.textContent = 'Username updated successfully';
                             statusElement.className = 'status-success';
                             document.getElementById('username').textContent = newUsername;
