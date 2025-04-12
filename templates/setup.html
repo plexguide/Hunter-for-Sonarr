@@ -412,6 +412,16 @@
                     }
                 }
             });
+            
+            // Set dark mode by default
+            const themeToggle = document.getElementById('themeToggle');
+            themeToggle.checked = true; // Enable dark mode by default
+            document.body.classList.add('dark-mode'); // Apply dark mode class
+            
+            // Handle theme toggle changes
+            themeToggle.addEventListener('change', function() {
+                document.body.classList.toggle('dark-mode', this.checked);
+            });
         });
     </script>
 </body>
