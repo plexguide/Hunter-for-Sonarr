@@ -20,7 +20,7 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None) -> Option
     """
     # Determine the API version based on app type
     if APP_TYPE == "sonarr":
-        api_base = "api/v3"
+        api_base = "api/v5"
     elif APP_TYPE == "radarr":
         api_base = "api/v3"
     elif APP_TYPE == "lidarr":
@@ -80,7 +80,7 @@ def check_connection() -> bool:
             
         # Determine the API version based on app type
         if APP_TYPE == "sonarr":
-            api_base = "api/v3"
+            api_base = "api/v5"
         elif APP_TYPE == "radarr":
             api_base = "api/v3"
         elif APP_TYPE == "lidarr":
@@ -150,7 +150,7 @@ def get_series() -> List[Dict]:
 
 def refresh_series(series_id: int) -> bool:
     """
-    POST /api/v3/command
+    POST /api/v5/command
     {
       "name": "RefreshSeries",
       "seriesId": <series_id>
@@ -171,7 +171,7 @@ def refresh_series(series_id: int) -> bool:
 
 def episode_search_episodes(episode_ids: List[int]) -> bool:
     """
-    POST /api/v3/command
+    POST /api/v5/command
     {
       "name": "EpisodeSearch",
       "episodeIds": [...]
@@ -192,7 +192,7 @@ def episode_search_episodes(episode_ids: List[int]) -> bool:
 
 def get_download_queue_size() -> int:
     """
-    GET /api/v3/queue
+    GET /api/v5/queue
     Returns total number of items in the queue with the status 'downloading'.
     """
     # Endpoint is the same for all apps
@@ -209,7 +209,7 @@ def get_download_queue_size() -> int:
 
 def get_cutoff_unmet(page: int = 1) -> Optional[Dict]:
     """
-    GET /api/v3/wanted/cutoff?sortKey=airDateUtc&sortDirection=descending&includeSeriesInformation=true
+    GET /api/v5/wanted/cutoff?sortKey=airDateUtc&sortDirection=descending&includeSeriesInformation=true
         &page=<page>&pageSize=200
     Returns JSON with a "records" array and "totalRecords".
     """
@@ -255,7 +255,7 @@ def get_episodes_for_series(series_id: int) -> Optional[List[Dict]]:
 
 def get_missing_episodes(pageSize: int = 1000) -> Optional[Dict]:
     """
-    GET /api/v3/wanted/missing?pageSize=<pageSize>&includeSeriesInformation=true
+    GET /api/v5/wanted/missing?pageSize=<pageSize>&includeSeriesInformation=true
     Returns JSON with a "records" array of missing episodes and "totalRecords".
     """
     if APP_TYPE != "sonarr":

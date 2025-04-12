@@ -32,8 +32,8 @@ def test_connection():
     if not api_url or not api_key:
         return jsonify({"success": False, "message": "Missing API URL or API key"}), 400
 
-    # For Sonarr, always use api/v3
-    api_base = "api/v3"
+    # For Sonarr, use api/v5
+    api_base = "api/v5"
     url = f"{api_url}/{api_base}/system/status"
     headers = {
         "X-Api-Key": api_key,
