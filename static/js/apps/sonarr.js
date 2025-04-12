@@ -372,9 +372,30 @@
                     app.originalSettings.api_url = settings.api_url;
                     app.originalSettings.api_key = settings.api_key;
                     
-                    // Update the rest of originalSettings
-                    if (settings.huntarr) app.originalSettings.huntarr = {...settings.huntarr};
-                    if (settings.advanced) app.originalSettings.advanced = {...settings.advanced};
+                    // Update the app-specific settings
+                    if (!app.originalSettings.sonarr) {
+                        app.originalSettings.sonarr = {};
+                    }
+                    
+                    // Copy settings to both the app-specific section and legacy sections
+                    if (settings.huntarr) {
+                        // Update legacy structure
+                        app.originalSettings.huntarr = {...settings.huntarr};
+                        
+                        // Update new app-specific structure
+                        for (const key in settings.huntarr) {
+                            app.originalSettings.sonarr[key] = settings.huntarr[key];
+                        }
+                    }
+                    
+                    if (settings.advanced) {
+                        app.originalSettings.advanced = {...settings.advanced};
+                        
+                        // Copy advanced settings to app-specific section
+                        for (const key in settings.advanced) {
+                            app.originalSettings.sonarr[key] = settings.advanced[key];
+                        }
+                    }
                     
                     // Update configuration status
                     app.configuredApps.sonarr = !!(settings.api_url && settings.api_key);
