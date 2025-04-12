@@ -113,6 +113,10 @@
             fetch('/api/settings')
                 .then(response => response.json())
                 .then(data => {
+                    // Get app-specific settings from the new structure
+                    const appSettings = data.sonarr || {};
+                    
+                    // For backward compatibility check the old structure too
                     const huntarr = data.huntarr || {};
                     const advanced = data.advanced || {};
                     
@@ -139,51 +143,53 @@
                         }
                     }
                     
-                    // Sonarr-specific settings
+                    // Sonarr-specific settings - prefer the app-specific section, fall back to old structure
                     if (this.elements.huntMissingShowsInput) {
-                        this.elements.huntMissingShowsInput.value = huntarr.hunt_missing_shows !== undefined ? huntarr.hunt_missing_shows : 1;
+                        this.elements.huntMissingShowsInput.value = appSettings.hunt_missing_shows !== undefined ? 
+                            appSettings.hunt_missing_shows : (huntarr.hunt_missing_shows !== undefined ? huntarr.hunt_missing_shows : 1);
                     }
                     if (this.elements.huntUpgradeEpisodesInput) {
-                        this.elements.huntUpgradeEpisodesInput.value = huntarr.hunt_upgrade_episodes !== undefined ? huntarr.hunt_upgrade_episodes : 5;
+                        this.elements.huntUpgradeEpisodesInput.value = appSettings.hunt_upgrade_episodes !== undefined ? 
+                            appSettings.hunt_upgrade_episodes : (huntarr.hunt_upgrade_episodes !== undefined ? huntarr.hunt_upgrade_episodes : 0);
                     }
                     if (this.elements.sleepDurationInput) {
-                        this.elements.sleepDurationInput.value = huntarr.sleep_duration || 900;
+                        this.elements.sleepDurationInput.value = appSettings.sleep_duration || huntarr.sleep_duration || 900;
                         this.updateSleepDurationDisplay();
                     }
                     if (this.elements.stateResetIntervalInput) {
-                        this.elements.stateResetIntervalInput.value = huntarr.state_reset_interval_hours || 168;
+                        this.elements.stateResetIntervalInput.value = appSettings.state_reset_interval_hours || huntarr.state_reset_interval_hours || 168;
                     }
                     if (this.elements.monitoredOnlyInput) {
-                        this.elements.monitoredOnlyInput.checked = huntarr.monitored_only !== false;
+                        this.elements.monitoredOnlyInput.checked = appSettings.monitored_only !== false && huntarr.monitored_only !== false;
                     }
                     if (this.elements.skipFutureEpisodesInput) {
-                        this.elements.skipFutureEpisodesInput.checked = huntarr.skip_future_episodes !== false;
+                        this.elements.skipFutureEpisodesInput.checked = appSettings.skip_future_episodes !== false && huntarr.skip_future_episodes !== false;
                     }
                     if (this.elements.skipSeriesRefreshInput) {
-                        this.elements.skipSeriesRefreshInput.checked = huntarr.skip_series_refresh === true;
+                        this.elements.skipSeriesRefreshInput.checked = appSettings.skip_series_refresh === true || huntarr.skip_series_refresh === true;
                     }
                     
                     // Advanced settings
                     if (this.elements.apiTimeoutInput) {
-                        this.elements.apiTimeoutInput.value = advanced.api_timeout || 60;
+                        this.elements.apiTimeoutInput.value = appSettings.api_timeout || advanced.api_timeout || 60;
                     }
                     if (this.elements.debugModeInput) {
-                        this.elements.debugModeInput.checked = advanced.debug_mode === true;
+                        this.elements.debugModeInput.checked = appSettings.debug_mode === true || advanced.debug_mode === true;
                     }
                     if (this.elements.commandWaitDelayInput) {
-                        this.elements.commandWaitDelayInput.value = advanced.command_wait_delay || 1;
+                        this.elements.commandWaitDelayInput.value = appSettings.command_wait_delay || advanced.command_wait_delay || 1;
                     }
                     if (this.elements.commandWaitAttemptsInput) {
-                        this.elements.commandWaitAttemptsInput.value = advanced.command_wait_attempts || 600;
+                        this.elements.commandWaitAttemptsInput.value = appSettings.command_wait_attempts || advanced.command_wait_attempts || 600;
                     }
                     if (this.elements.minimumDownloadQueueSizeInput) {
-                        this.elements.minimumDownloadQueueSizeInput.value = advanced.minimum_download_queue_size || -1;
+                        this.elements.minimumDownloadQueueSizeInput.value = appSettings.minimum_download_queue_size || advanced.minimum_download_queue_size || -1;
                     }
                     if (this.elements.randomMissingInput) {
-                        this.elements.randomMissingInput.checked = advanced.random_missing !== false;
+                        this.elements.randomMissingInput.checked = appSettings.random_missing !== false && advanced.random_missing !== false;
                     }
                     if (this.elements.randomUpgradesInput) {
-                        this.elements.randomUpgradesInput.checked = advanced.random_upgrades !== false;
+                        this.elements.randomUpgradesInput.checked = appSettings.random_upgrades !== false && advanced.random_upgrades !== false;
                     }
                     
                     // Update home page connection status
@@ -201,7 +207,12 @@
         },
         
         checkForChanges: function() {
-            if (!app.originalSettings.huntarr) return false; // Don't check if original settings not loaded
+            if (!app.originalSettings) return false; // Don't check if original settings not loaded
+            
+            // Get settings from app-specific section first, then fall back to old structure
+            const appSettings = app.originalSettings.sonarr || {};
+            const huntarrSettings = app.originalSettings.huntarr || {};
+            const advancedSettings = app.originalSettings.advanced || {};
             
             let hasChanges = false;
             
@@ -209,23 +220,81 @@
             if (this.elements.apiUrlInput && this.elements.apiUrlInput.value !== app.originalSettings.api_url) hasChanges = true;
             if (this.elements.apiKeyInput && this.elements.apiKeyInput.value !== app.originalSettings.api_key) hasChanges = true;
             
-            // Check Basic Settings
-            if (this.elements.huntMissingShowsInput && parseInt(this.elements.huntMissingShowsInput.value) !== app.originalSettings.huntarr.hunt_missing_shows) hasChanges = true;
-            if (this.elements.huntUpgradeEpisodesInput && parseInt(this.elements.huntUpgradeEpisodesInput.value) !== app.originalSettings.huntarr.hunt_upgrade_episodes) hasChanges = true;
-            if (this.elements.sleepDurationInput && parseInt(this.elements.sleepDurationInput.value) !== app.originalSettings.huntarr.sleep_duration) hasChanges = true;
-            if (this.elements.stateResetIntervalInput && parseInt(this.elements.stateResetIntervalInput.value) !== app.originalSettings.huntarr.state_reset_interval_hours) hasChanges = true;
-            if (this.elements.monitoredOnlyInput && this.elements.monitoredOnlyInput.checked !== app.originalSettings.huntarr.monitored_only) hasChanges = true;
-            if (this.elements.skipFutureEpisodesInput && this.elements.skipFutureEpisodesInput.checked !== app.originalSettings.huntarr.skip_future_episodes) hasChanges = true;
-            if (this.elements.skipSeriesRefreshInput && this.elements.skipSeriesRefreshInput.checked !== app.originalSettings.huntarr.skip_series_refresh) hasChanges = true;
+            // Check Basic Settings - first try app-specific settings, then fall back to old structure
+            if (this.elements.huntMissingShowsInput) {
+                const originalValue = appSettings.hunt_missing_shows !== undefined ? 
+                    appSettings.hunt_missing_shows : huntarrSettings.hunt_missing_shows;
+                if (parseInt(this.elements.huntMissingShowsInput.value) !== originalValue) hasChanges = true;
+            }
+            
+            if (this.elements.huntUpgradeEpisodesInput) {
+                const originalValue = appSettings.hunt_upgrade_episodes !== undefined ? 
+                    appSettings.hunt_upgrade_episodes : huntarrSettings.hunt_upgrade_episodes;
+                if (parseInt(this.elements.huntUpgradeEpisodesInput.value) !== originalValue) hasChanges = true;
+            }
+            
+            if (this.elements.sleepDurationInput) {
+                const originalValue = appSettings.sleep_duration || huntarrSettings.sleep_duration;
+                if (parseInt(this.elements.sleepDurationInput.value) !== originalValue) hasChanges = true;
+            }
+            
+            if (this.elements.stateResetIntervalInput) {
+                const originalValue = appSettings.state_reset_interval_hours || huntarrSettings.state_reset_interval_hours;
+                if (parseInt(this.elements.stateResetIntervalInput.value) !== originalValue) hasChanges = true;
+            }
+            
+            if (this.elements.monitoredOnlyInput) {
+                const originalValue = appSettings.monitored_only !== undefined ? 
+                    appSettings.monitored_only : huntarrSettings.monitored_only;
+                if (this.elements.monitoredOnlyInput.checked !== originalValue) hasChanges = true;
+            }
+            
+            if (this.elements.skipFutureEpisodesInput) {
+                const originalValue = appSettings.skip_future_episodes !== undefined ? 
+                    appSettings.skip_future_episodes : huntarrSettings.skip_future_episodes;
+                if (this.elements.skipFutureEpisodesInput.checked !== originalValue) hasChanges = true;
+            }
+            
+            if (this.elements.skipSeriesRefreshInput) {
+                const originalValue = appSettings.skip_series_refresh === true || huntarrSettings.skip_series_refresh === true;
+                if (this.elements.skipSeriesRefreshInput.checked !== originalValue) hasChanges = true;
+            }
             
             // Check Advanced Settings
-            if (this.elements.apiTimeoutInput && parseInt(this.elements.apiTimeoutInput.value) !== app.originalSettings.advanced.api_timeout) hasChanges = true;
-            if (this.elements.debugModeInput && this.elements.debugModeInput.checked !== app.originalSettings.advanced.debug_mode) hasChanges = true;
-            if (this.elements.commandWaitDelayInput && parseInt(this.elements.commandWaitDelayInput.value) !== app.originalSettings.advanced.command_wait_delay) hasChanges = true;
-            if (this.elements.commandWaitAttemptsInput && parseInt(this.elements.commandWaitAttemptsInput.value) !== app.originalSettings.advanced.command_wait_attempts) hasChanges = true;
-            if (this.elements.minimumDownloadQueueSizeInput && parseInt(this.elements.minimumDownloadQueueSizeInput.value) !== app.originalSettings.advanced.minimum_download_queue_size) hasChanges = true;
-            if (this.elements.randomMissingInput && this.elements.randomMissingInput.checked !== app.originalSettings.advanced.random_missing) hasChanges = true;
-            if (this.elements.randomUpgradesInput && this.elements.randomUpgradesInput.checked !== app.originalSettings.advanced.random_upgrades) hasChanges = true;
+            if (this.elements.apiTimeoutInput) {
+                const originalValue = appSettings.api_timeout || advancedSettings.api_timeout;
+                if (parseInt(this.elements.apiTimeoutInput.value) !== originalValue) hasChanges = true;
+            }
+            
+            if (this.elements.debugModeInput) {
+                const originalValue = appSettings.debug_mode === true || advancedSettings.debug_mode === true;
+                if (this.elements.debugModeInput.checked !== originalValue) hasChanges = true;
+            }
+            
+            if (this.elements.commandWaitDelayInput) {
+                const originalValue = appSettings.command_wait_delay || advancedSettings.command_wait_delay;
+                if (parseInt(this.elements.commandWaitDelayInput.value) !== originalValue) hasChanges = true;
+            }
+            
+            if (this.elements.commandWaitAttemptsInput) {
+                const originalValue = appSettings.command_wait_attempts || advancedSettings.command_wait_attempts;
+                if (parseInt(this.elements.commandWaitAttemptsInput.value) !== originalValue) hasChanges = true;
+            }
+            
+            if (this.elements.minimumDownloadQueueSizeInput) {
+                const originalValue = appSettings.minimum_download_queue_size || advancedSettings.minimum_download_queue_size;
+                if (parseInt(this.elements.minimumDownloadQueueSizeInput.value) !== originalValue) hasChanges = true;
+            }
+            
+            if (this.elements.randomMissingInput) {
+                const originalValue = appSettings.random_missing !== false && advancedSettings.random_missing !== false;
+                if (this.elements.randomMissingInput.checked !== originalValue) hasChanges = true;
+            }
+            
+            if (this.elements.randomUpgradesInput) {
+                const originalValue = appSettings.random_upgrades !== false && advancedSettings.random_upgrades !== false;
+                if (this.elements.randomUpgradesInput.checked !== originalValue) hasChanges = true;
+            }
             
             // Update save buttons state
             this.updateSaveButtonState(hasChanges);

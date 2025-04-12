@@ -211,11 +211,37 @@ def stream_logs():
 def get_settings():
     settings = settings_manager.get_all_settings()
     apps = ['sonarr', 'radarr', 'lidarr', 'readarr']
+    
+    # Get the current app type
+    current_app = settings.get('app_type', 'sonarr')
+    
+    # Provide backward compatibility for the frontend
+    # Map app-specific settings to the legacy huntarr and advanced sections
+    # This ensures the UI can read settings with minimal changes
+    if current_app in settings:
+        if 'huntarr' not in settings:
+            settings['huntarr'] = {}
+        if 'advanced' not in settings:
+            settings['advanced'] = {}
+        
+        # Copy app-specific settings to both the legacy structure and keep the app-specific structure
+        for key, value in settings[current_app].items():
+            # Advanced settings
+            if key in ['api_timeout', 'debug_mode', 'command_wait_delay', 
+                    'command_wait_attempts', 'minimum_download_queue_size',
+                    'random_missing', 'random_upgrades']:
+                settings['advanced'][key] = value
+            # Huntarr settings
+            else:
+                settings['huntarr'][key] = value
+    
+    # Add API connection info for the current app
     for app_name in apps:
         api_url, api_key = __import__("primary.keys_manager", fromlist=[""]).get_api_keys(app_name)
-        if app_name == settings.get('app_type', 'sonarr'):
+        if app_name == current_app:
             settings['api_url'] = api_url
             settings['api_key'] = api_key
+    
     return jsonify(settings)
 
 @common_bp.route('/api/app-settings', methods=['GET'])
