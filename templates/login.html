@@ -36,7 +36,7 @@
                         <i class="fas fa-shield-alt"></i>
                         <span>2FA Code</span>
                     </label>
-                    <input type="text" id="twoFactorCode" name="twoFactorCode" placeholder="000000" maxlength="6">
+                    <input type="text" id="twoFactorCode" name="otp_code" placeholder="000000" maxlength="6">
                 </div>
                 <div class="error-message" id="loginError"></div>
                 <button type="submit" class="login-button">
@@ -95,24 +95,23 @@
                     return;
                 }
                 
-                // Prepare form data
-                const formData = new FormData();
-                formData.append('username', username);
-                formData.append('password', password);
-                if (twoFactorCode) {
-                    formData.append('twoFactorCode', twoFactorCode);
-                }
-                
-                // Send login request
-                fetch('/login', {
+                // Send login request using JSON
+                fetch('/api/login', {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        otp_code: twoFactorCode
+                    })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         window.location.href = data.redirect || '/';
-                    } else if (data.requires2fa) {
+                    } else if (data.needs_2fa) {
                         document.getElementById('twoFactorGroup').style.display = 'block';
                         errorElement.textContent = 'Please enter your 2FA code';
                     } else {
