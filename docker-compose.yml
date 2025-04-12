@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  huntarr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: huntarr
+    ports:
+      - "9705:9705"
+    volumes:
+      - huntarr-config:/config
+      - /tmp/huntarr-logs:/tmp/huntarr-logs
+      - /tmp/huntarr-state:/tmp/huntarr-state
+    environment:
+      - TZ=America/New_York
+    restart: unless-stopped
+
+volumes:
+  huntarr-config:
+    name: huntarr-config

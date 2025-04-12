@@ -117,19 +117,79 @@ HUNT_MODE = determine_hunt_mode()
 # Ensure RANDOM_UPGRADES is dynamically reloaded at the start of each cycle
 # Updated logic to reload settings before processing upgrades
 
-def refresh_settings():
-    """Refresh configuration settings from the settings manager."""
-    global RANDOM_UPGRADES
-
-    # Force reload the settings_manager module to get fresh values from disk
-    from primary import settings_manager
-    importlib.reload(settings_manager)
-
-    # Reload RANDOM_UPGRADES from settings
+def refresh_settings(app_type: str = None) -> None:
+    """
+    Reload all settings from the settings file.
+    
+    Args:
+        app_type: Optional app type to refresh settings for (sonarr, radarr, etc.)
+    """
+    global API_URL, API_KEY, SLEEP_DURATION, MONITORED_ONLY, HUNT_MISSING_SHOWS, HUNT_UPGRADE_EPISODES
+    global STATE_RESET_INTERVAL_HOURS, API_TIMEOUT, COMMAND_WAIT_DELAY, COMMAND_WAIT_ATTEMPTS
+    global MINIMUM_DOWNLOAD_QUEUE_SIZE, SKIP_FUTURE_EPISODES, SKIP_SERIES_REFRESH
+    global RANDOM_MISSING, RANDOM_UPGRADES, DEBUG_MODE
+    
+    # If app_type is provided, temporarily override APP_TYPE
+    original_app_type = APP_TYPE
+    if app_type:
+        os.environ["APP_TYPE"] = app_type
+    
+    # Settings that apply to all apps
+    SLEEP_DURATION = settings_manager.get_setting("huntarr", "sleep_duration", 900)
+    STATE_RESET_INTERVAL_HOURS = settings_manager.get_setting("huntarr", "state_reset_interval_hours", 168)
+    RANDOM_MISSING = settings_manager.get_setting("advanced", "random_missing", True)
     RANDOM_UPGRADES = settings_manager.get_setting("advanced", "random_upgrades", True)
-
-    # Log the refreshed settings
-    logger.debug(f"Settings refreshed: RANDOM_UPGRADES={RANDOM_UPGRADES}")
+    MONITORED_ONLY = settings_manager.get_setting("huntarr", "monitored_only", True)
+    API_TIMEOUT = settings_manager.get_setting("advanced", "api_timeout", 60)
+    COMMAND_WAIT_DELAY = settings_manager.get_setting("advanced", "command_wait_delay", 1)
+    COMMAND_WAIT_ATTEMPTS = settings_manager.get_setting("advanced", "command_wait_attempts", 600)
+    MINIMUM_DOWNLOAD_QUEUE_SIZE = settings_manager.get_setting("advanced", "minimum_download_queue_size", -1)
+    DEBUG_MODE = settings_manager.get_setting("advanced", "debug_mode", False)
+    LOG_REFRESH_INTERVAL_SECONDS = settings_manager.get_setting("huntarr", "log_refresh_interval_seconds", 30)
+    
+    # Get the actual app type we're refreshing settings for
+    current_app_type = os.environ.get("APP_TYPE", original_app_type)
+    
+    # App-specific settings based on APP_TYPE
+    if current_app_type == "sonarr":
+        HUNT_MISSING_SHOWS = settings_manager.get_setting("huntarr", "hunt_missing_shows", 1)
+        HUNT_UPGRADE_EPISODES = settings_manager.get_setting("huntarr", "hunt_upgrade_episodes", 0)
+        SKIP_FUTURE_EPISODES = settings_manager.get_setting("huntarr", "skip_future_episodes", True)
+        SKIP_SERIES_REFRESH = settings_manager.get_setting("huntarr", "skip_series_refresh", False)
+        
+    elif current_app_type == "radarr":
+        HUNT_MISSING_MOVIES = settings_manager.get_setting("huntarr", "hunt_missing_movies", 1)
+        HUNT_UPGRADE_MOVIES = settings_manager.get_setting("huntarr", "hunt_upgrade_movies", 0)
+        SKIP_FUTURE_RELEASES = settings_manager.get_setting("huntarr", "skip_future_releases", True)
+        SKIP_MOVIE_REFRESH = settings_manager.get_setting("huntarr", "skip_movie_refresh", False)
+        
+    elif current_app_type == "lidarr":
+        HUNT_MISSING_ALBUMS = settings_manager.get_setting("huntarr", "hunt_missing_albums", 1)
+        HUNT_UPGRADE_TRACKS = settings_manager.get_setting("huntarr", "hunt_upgrade_tracks", 0)
+        SKIP_FUTURE_RELEASES = settings_manager.get_setting("huntarr", "skip_future_releases", True)
+        SKIP_ARTIST_REFRESH = settings_manager.get_setting("huntarr", "skip_artist_refresh", False)
+        
+    elif current_app_type == "readarr":
+        HUNT_MISSING_BOOKS = settings_manager.get_setting("huntarr", "hunt_missing_books", 1)
+        HUNT_UPGRADE_BOOKS = settings_manager.get_setting("huntarr", "hunt_upgrade_books", 0)
+        SKIP_FUTURE_RELEASES = settings_manager.get_setting("huntarr", "skip_future_releases", True)
+        SKIP_AUTHOR_REFRESH = settings_manager.get_setting("huntarr", "skip_author_refresh", False)
+    
+    # For API credentials, use the API credentials for the specific app
+    if app_type:
+        api_url, api_key = keys_manager.get_api_keys(app_type)
+        # Only set these variables temporarily if app_type is provided
+        os.environ[f"{app_type.upper()}_API_URL"] = api_url
+        os.environ[f"{app_type.upper()}_API_KEY"] = api_key
+    else:
+        # For backwards compatibility, still set the global variables
+        api_url, api_key = keys_manager.get_api_keys(APP_TYPE)
+        API_URL = api_url
+        API_KEY = api_key
+    
+    # Restore original APP_TYPE if we temporarily changed it
+    if app_type and app_type != original_app_type:
+        os.environ["APP_TYPE"] = original_app_type
 
 def log_configuration(logger):
     """Log the current configuration settings"""

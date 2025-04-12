@@ -1,31 +1,45 @@
 #!/usr/bin/env python3
 """
 Logging configuration for Huntarr
+Supports separate log files for each application type
 """
 
 import logging
 import sys
 import os
 import pathlib
+from typing import Dict, Optional
 
 # Create log directory
 LOG_DIR = pathlib.Path("/tmp/huntarr-logs")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
-LOG_FILE = LOG_DIR / "huntarr.log"
 
-# Global logger instance
+# Default log file for general messages
+MAIN_LOG_FILE = LOG_DIR / "huntarr.log"
+
+# App-specific log files
+APP_LOG_FILES = {
+    "sonarr": LOG_DIR / "huntarr-sonarr.log",
+    "radarr": LOG_DIR / "huntarr-radarr.log",
+    "lidarr": LOG_DIR / "huntarr-lidarr.log",
+    "readarr": LOG_DIR / "huntarr-readarr.log"
+}
+
+# Global logger instances
 logger = None
+app_loggers: Dict[str, logging.Logger] = {}
 
-def setup_logger(debug_mode=None):
+def setup_logger(debug_mode=None, app_type=None):
     """Configure and return the application logger
     
     Args:
         debug_mode (bool, optional): Override the DEBUG_MODE from config. Defaults to None.
+        app_type (str, optional): The app type to set up a logger for. Defaults to None (main logger).
     
     Returns:
         logging.Logger: The configured logger
     """
-    global logger
+    global logger, app_loggers
     
     # Get DEBUG_MODE from config, but only if we haven't been given a value
     # Use a safe approach to avoid circular imports
@@ -41,58 +55,116 @@ def setup_logger(debug_mode=None):
     else:
         use_debug_mode = debug_mode
     
-    if logger is None:
-        # First-time setup
-        logger = logging.getLogger("huntarr")
+    # Determine the logger and log file to use
+    if app_type in APP_LOG_FILES:
+        # Use or create an app-specific logger
+        log_name = f"huntarr.{app_type}"
+        log_file = APP_LOG_FILES[app_type]
+        
+        if log_name in app_loggers:
+            # Reset existing logger
+            current_logger = app_loggers[log_name]
+            for handler in current_logger.handlers[:]:
+                current_logger.removeHandler(handler)
+        else:
+            # Create a new logger
+            current_logger = logging.getLogger(log_name)
+            app_loggers[log_name] = current_logger
     else:
-        # Reset handlers to avoid duplicates
-        for handler in logger.handlers[:]:
-            logger.removeHandler(handler)
+        # Use or create the main logger
+        log_name = "huntarr"
+        log_file = MAIN_LOG_FILE
+        
+        if logger is None:
+            # First-time setup
+            current_logger = logging.getLogger(log_name)
+            logger = current_logger
+        else:
+            # Reset handlers to avoid duplicates
+            current_logger = logger
+            for handler in current_logger.handlers[:]:
+                current_logger.removeHandler(handler)
     
     # Set the log level based on use_debug_mode
-    logger.setLevel(logging.DEBUG if use_debug_mode else logging.INFO)
+    current_logger.setLevel(logging.DEBUG if use_debug_mode else logging.INFO)
     
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG if use_debug_mode else logging.INFO)
     
     # Create file handler for the web interface
-    file_handler = logging.FileHandler(LOG_FILE)
+    file_handler = logging.FileHandler(log_file)
     file_handler.setLevel(logging.DEBUG if use_debug_mode else logging.INFO)
     
-    # Set format
+    # Set format - include app_type in format if provided
+    log_format = "%(asctime)s - "
+    if app_type:
+        log_format += f"{app_type} - "
+    else:
+        log_format += "huntarr - "
+    log_format += "%(levelname)s - %(message)s"
+    
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        log_format,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     console_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
     
     # Add handlers to logger
-    logger.addHandler(console_handler)
-    logger.addHandler(file_handler)
+    current_logger.addHandler(console_handler)
+    current_logger.addHandler(file_handler)
     
     if use_debug_mode:
-        logger.debug("Debug logging enabled")
+        current_logger.debug("Debug logging enabled")
     
-    return logger
+    return current_logger
 
-# Create the logger instance on module import
+# Create the main logger instance on module import
 logger = setup_logger()
 
-def debug_log(message: str, data: object = None) -> None:
-    """Log debug messages with optional data."""
-    if logger.level <= logging.DEBUG:
-        logger.debug(f"{message}")
+def get_logger(app_type: str) -> logging.Logger:
+    """
+    Get a logger for a specific app type.
+    
+    Args:
+        app_type: The app type to get a logger for.
+        
+    Returns:
+        A logger specific to the app type.
+    """
+    if app_type in APP_LOG_FILES:
+        log_name = f"huntarr.{app_type}"
+        if log_name not in app_loggers:
+            # Set up the logger if it doesn't exist
+            return setup_logger(app_type=app_type)
+        return app_loggers[log_name]
+    else:
+        # Return the main logger if the app type is not recognized
+        return logger
+
+def debug_log(message: str, data: object = None, app_type: Optional[str] = None) -> None:
+    """
+    Log debug messages with optional data.
+    
+    Args:
+        message: The message to log.
+        data: Optional data to include with the message.
+        app_type: Optional app type to log to a specific app's log file.
+    """
+    current_logger = get_logger(app_type) if app_type else logger
+    
+    if current_logger.level <= logging.DEBUG:
+        current_logger.debug(f"{message}")
         if data is not None:
             try:
                 import json
                 as_json = json.dumps(data)
                 if len(as_json) > 500:
                     as_json = as_json[:500] + "..."
-                logger.debug(as_json)
+                current_logger.debug(as_json)
             except:
                 data_str = str(data)
                 if len(data_str) > 500:
                     data_str = data_str[:500] + "..."
-                logger.debug(data_str)
+                current_logger.debug(data_str)
