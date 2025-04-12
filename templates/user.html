@@ -243,27 +243,38 @@
         });
         
         function applyDarkMode() {
-            // Add dark-mode class to ensure consistent appearance
-            document.body.classList.add('dark-mode');
+            // Check localStorage for theme preference first for immediate application
+            const prefersDarkMode = localStorage.getItem('huntarr-dark-mode') === 'true';
+            
+            if (prefersDarkMode) {
+                document.body.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+            }
             
             // Update theme toggle if it exists
             const themeToggle = document.getElementById('themeToggle');
             if (themeToggle) {
-                themeToggle.checked = true;
+                themeToggle.checked = prefersDarkMode;
                 themeToggle.addEventListener('change', function() {
-                    if (this.checked) {
-                        document.body.classList.add('dark-mode');
+                    const isDarkMode = this.checked;
+                    
+                    if (isDarkMode) {
+                        document.body.classList.add('dark-theme');
                     } else {
-                        document.body.classList.remove('dark-mode');
+                        document.body.classList.remove('dark-theme');
                     }
                     
-                    // Save theme preference
+                    // Store in localStorage for immediate page transitions
+                    localStorage.setItem('huntarr-dark-mode', isDarkMode);
+                    
+                    // Save theme preference to server
                     fetch('/api/settings/theme', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ dark_mode: this.checked })
+                        body: JSON.stringify({ dark_mode: isDarkMode })
                     }).catch(error => console.error('Error saving theme:', error));
                 });
             }

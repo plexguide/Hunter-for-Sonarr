@@ -59,7 +59,7 @@
             const themeToggle = document.getElementById('themeToggle');
             
             // Check for saved theme preference
-            const savedTheme = localStorage.getItem('darkTheme');
+            const savedTheme = localStorage.getItem('huntarr-dark-mode');
             if (savedTheme === 'true') {
                 document.body.classList.add('dark-theme');
                 themeToggle.checked = true;
@@ -69,10 +69,10 @@
             themeToggle.addEventListener('change', function() {
                 if (this.checked) {
                     document.body.classList.add('dark-theme');
-                    localStorage.setItem('darkTheme', 'true');
+                    localStorage.setItem('huntarr-dark-mode', 'true');
                 } else {
                     document.body.classList.remove('dark-theme');
-                    localStorage.setItem('darkTheme', 'false');
+                    localStorage.setItem('huntarr-dark-mode', 'false');
                 }
             });
             

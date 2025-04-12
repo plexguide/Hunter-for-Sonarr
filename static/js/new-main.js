@@ -535,6 +535,8 @@ const HuntarrUI = {
             .then(response => response.json())
             .then(data => {
                 const isDarkMode = data.dark_mode || false;
+                // Save to localStorage for page transitions
+                localStorage.setItem('huntarr-dark-mode', isDarkMode);
                 this.setTheme(isDarkMode);
             })
             .catch(error => {
@@ -559,6 +561,9 @@ const HuntarrUI = {
     handleThemeToggle: function(e) {
         const isDarkMode = e.target.checked;
         this.setTheme(isDarkMode);
+        
+        // Store preference in localStorage immediately for page transitions
+        localStorage.setItem('huntarr-dark-mode', isDarkMode);
         
         fetch('/api/settings/theme', {
             method: 'POST',

@@ -438,10 +438,13 @@
             const themeToggle = document.getElementById('themeToggle');
             themeToggle.checked = true; // Enable dark mode by default
             document.body.classList.add('dark-mode'); // Apply dark mode class
-            
+            localStorage.setItem('huntarr-dark-mode', 'true'); // Save to localStorage
+
             // Handle theme toggle changes
             themeToggle.addEventListener('change', function() {
-                document.body.classList.toggle('dark-mode', this.checked);
+                const isDarkMode = this.checked;
+                document.body.classList.toggle('dark-mode', isDarkMode);
+                localStorage.setItem('huntarr-dark-mode', isDarkMode);
             });
         });
     </script>
