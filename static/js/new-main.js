@@ -17,6 +17,9 @@ const HuntarrUI = {
         lidarr: false
     },
     
+    // Logo URL
+    logoUrl: 'https://github.com/plexguide/Huntarr/blob/main/logo/64.png?raw=true',
+    
     // Element references
     elements: {},
     
@@ -28,6 +31,9 @@ const HuntarrUI = {
             document.body.classList.add('dark-theme');
         }
         
+        // Ensure logo is visible immediately
+        this.logoUrl = localStorage.getItem('huntarr-logo-url') || this.logoUrl;
+        
         this.cacheElements();
         this.setupEventListeners();
         this.loadTheme();
@@ -35,8 +41,10 @@ const HuntarrUI = {
         this.checkAppConnections();
         this.handleHashNavigation();
         
-        // Set up logo handling for navigation
-        this.setupLogoHandling();
+        // Ensure logo is applied
+        if (typeof window.applyLogoToAllElements === 'function') {
+            window.applyLogoToAllElements();
+        }
     },
     
     // Cache DOM elements for better performance
@@ -173,10 +181,8 @@ const HuntarrUI = {
             // Internal navigation
             window.location.hash = href;
         } else {
-            // External navigation - preserve logo state
-            if (this.logoSrc) {
-                sessionStorage.setItem('huntarr-logo-src', this.logoSrc);
-            }
+            // External navigation - preserve state
+            localStorage.setItem('huntarr-logo-url', this.logoUrl);
             window.location.href = href;
         }
     },
@@ -681,5 +687,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (logoImg) {
             logoImg.src = cachedLogoSrc;
         }
+    }
+    
+    // Also apply logo on page load
+    if (typeof window.applyLogoToAllElements === 'function') {
+        window.applyLogoToAllElements();
     }
 });

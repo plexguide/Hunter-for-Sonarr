@@ -123,6 +123,7 @@ button {
     padding: 0 20px 20px;
     margin-bottom: 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 64px; /* Ensures container doesn't collapse while loading */
 }
 
 /* Updated logo size */
@@ -130,12 +131,16 @@ button {
     width: 64px;
     height: 64px;
     margin-right: 10px;
+    object-fit: contain;
+    transition: none !important; /* Prevent transition animations */
 }
 
 .login-logo {
     width: 64px;
     height: 64px;
     margin-bottom: 10px;
+    object-fit: contain;
+    transition: none !important; /* Prevent transition animations */
 }
 
 .sidebar h1 {

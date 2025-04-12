@@ -1,4 +1,10 @@
 (function() {
+    // Store logo URL consistently across the app
+    const LOGO_URL = 'https://github.com/plexguide/Huntarr/blob/main/logo/64.png?raw=true';
+    
+    // Immediately inject a hidden logo element to preload it
+    document.write(`<img src="${LOGO_URL}" style="display: none;" id="preloaded-logo" />`);
+    
     // Check for dark mode preference from localStorage
     const prefersDarkMode = localStorage.getItem('huntarr-dark-mode') === 'true';
     
@@ -24,22 +30,39 @@
         document.head.appendChild(style);
     }
     
-    // Preload the logo image to prevent flashing during navigation
-    const preloadLogo = new Image();
-    preloadLogo.src = 'https://github.com/plexguide/Huntarr/blob/main/logo/64.png?raw=true';
-    preloadLogo.fetchPriority = 'high';
+    // Store the logo URL in localStorage for persistence across page loads
+    localStorage.setItem('huntarr-logo-url', LOGO_URL);
     
-    // Create a hidden div to store the preloaded image
-    window.addEventListener('DOMContentLoaded', function() {
-        const imageCache = document.createElement('div');
-        imageCache.style.display = 'none';
-        imageCache.innerHTML = `<img src="${preloadLogo.src}" id="preloaded-logo">`;
-        document.body.appendChild(imageCache);
+    // Create a global function to apply the logo to all logo elements
+    window.applyLogoToAllElements = function() {
+        const logoUrl = localStorage.getItem('huntarr-logo-url') || LOGO_URL;
+        const logoElements = document.querySelectorAll('.logo, .login-logo');
         
-        // Update all logo instances in the document
-        const logoImages = document.querySelectorAll('.logo, .login-logo');
-        logoImages.forEach(img => {
-            img.src = preloadLogo.src;
+        logoElements.forEach(img => {
+            // Set src immediately and ensure it's loaded
+            img.src = logoUrl;
+            
+            // Add inline style to prevent layout shift
+            img.style.visibility = 'visible';
         });
+    };
+    
+    // Apply logo as soon as DOM is interactive
+    document.addEventListener('DOMContentLoaded', function() {
+        window.applyLogoToAllElements();
+        
+        // Also set up MutationObserver to catch any dynamically added logo elements
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes.length) {
+                    window.applyLogoToAllElements();
+                }
+            });
+        });
+        
+        observer.observe(document.body, { childList: true, subtree: true });
     });
+    
+    // Ensure logo is loaded when navigating with AJAX
+    window.addEventListener('load', window.applyLogoToAllElements);
 })();
