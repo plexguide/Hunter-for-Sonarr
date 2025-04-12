@@ -81,8 +81,7 @@ def app_specific_loop(app_type: str) -> None:
     elif app_type == "radarr":
         from primary.apps.radarr.missing import process_missing_movies
         from primary.apps.radarr.upgrade import process_cutoff_upgrades
-        # Placeholder for Radarr-specific API functions
-        sonarr_get_download_queue_size = lambda: 0  # Placeholder
+        from primary.apps.radarr.api import get_download_queue_size
     elif app_type == "lidarr":
         from primary.apps.lidarr.missing import process_missing_albums
         from primary.apps.lidarr.upgrade import process_cutoff_upgrades
@@ -194,7 +193,7 @@ def app_specific_loop(app_type: str) -> None:
         
         elif app_type == "radarr":
             # Get download queue size with the app-specific function
-            download_queue_size = sonarr_get_download_queue_size()  # Placeholder - will be replaced with radarr-specific function
+            download_queue_size = get_download_queue_size()
             min_download_queue_size = MINIMUM_DOWNLOAD_QUEUE_SIZE
             
             if min_download_queue_size < 0 or (min_download_queue_size >= 0 and download_queue_size <= min_download_queue_size):
