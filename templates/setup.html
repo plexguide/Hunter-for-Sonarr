@@ -94,9 +94,45 @@
             text-decoration: underline;
             cursor: pointer;
         }
+        
+        /* Dark mode styles */
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+        
+        .dark-mode .login-container {
+            background-color: #2c2c2c;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .dark-mode .form-group input {
+            background-color: #383838;
+            border-color: #555;
+            color: #f0f0f0;
+        }
+        
+        .dark-mode .login-button {
+            background-color: #4a90e2;
+        }
+        
+        .dark-mode .login-button.secondary {
+            background-color: #555;
+        }
+        
+        .dark-mode .step {
+            background-color: #444;
+            color: #ddd;
+        }
+        
+        .dark-mode .secret-key {
+            background-color: #383838;
+            border-color: #555;
+            color: #f0f0f0;
+        }
     </style>
 </head>
-<body class="login-page">
+<body class="login-page dark-mode">
     <div class="login-container">
         <div class="login-header">
             <img src="https://github.com/plexguide/Huntarr/blob/main/logo/40.png?raw=true" alt="Huntarr Logo" class="login-logo">
