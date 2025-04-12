@@ -400,13 +400,14 @@
             });
             
             // Allow pressing Enter to continue
-            document.addEventListener('keypress', function(e) {
+            document.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
-                    if (currentStep === 1) {
+                    e.preventDefault(); // Prevent form submission
+                    if (currentStep === 1 && document.activeElement !== accountNextButton) {
                         accountNextButton.click();
-                    } else if (currentStep === 2) {
+                    } else if (currentStep === 2 && document.activeElement !== twoFactorNextButton) {
                         twoFactorNextButton.click();
-                    } else if (currentStep === 3) {
+                    } else if (currentStep === 3 && document.activeElement !== finishSetupButton) {
                         finishSetupButton.click();
                     }
                 }

@@ -1,52 +1,483 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Huntarr - Media Management Assistant</title>
-    {% include 'components/head.html' %}
+    <link rel="stylesheet" href="/static/css/new-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="/static/favicon.ico">
 </head>
 <body>
     <div class="app-container">
         <!-- Sidebar Navigation -->
-        {% include 'components/sidebar.html' %}
+        <div class="sidebar">
+            <div class="logo-container">
+                <img src="https://github.com/plexguide/Huntarr/blob/main/logo/40.png?raw=true" alt="Huntarr Logo" class="logo">
+                <h1>Huntarr</h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#home" class="nav-item active" id="homeNav">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#logs" class="nav-item" id="logsNav">
+                    <i class="fas fa-list-alt"></i>
+                    <span>Logs</span>
+                </a>
+                <a href="#settings" class="nav-item" id="settingsNav">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="/user" class="nav-item" id="userNav">
+                    <i class="fas fa-user"></i>
+                    <span>User</span>
+                </a>
+            </nav>
+            
+            <div class="theme-switcher">
+                <div class="switch-label">
+                    <i class="fas fa-sun light-icon"></i>
+                    <i class="fas fa-moon dark-icon"></i>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="themeToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
         
         <!-- Main Content Area -->
         <div class="main-content">
-            {% include 'components/topbar.html' %}
+            <div class="top-bar">
+                <div class="page-title" id="currentPageTitle">Home</div>
+                <div class="user-info">
+                    <span id="username">User</span>
+                    <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+                </div>
+            </div>
             
-            <!-- Content Sections -->
-            {% include 'components/home_section.html' %}
-            {% include 'components/logs_section.html' %}
-            {% include 'components/settings_section.html' %}
+            <!-- Home Section -->
+            <section id="homeSection" class="content-section active">
+                <div class="dashboard-grid">
+                    <div class="card welcome-card">
+                        <h2>Welcome to Huntarr</h2>
+                        <p>Your media management assistant for Sonarr, Radarr, and Lidarr</p>
+                    </div>
+                    
+                    <div class="card status-card">
+                        <h3><i class="fas fa-server"></i> Connection Status</h3>
+                        <div class="status-list">
+                            <div class="status-item">
+                                <span class="status-label">Sonarr:</span>
+                                <span id="sonarrHomeStatus" class="status-badge not-connected">
+                                    <i class="fas fa-times-circle"></i> Not Connected
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Radarr:</span>
+                                <span id="radarrHomeStatus" class="status-badge not-connected">
+                                    <i class="fas fa-times-circle"></i> Not Connected
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Lidarr:</span>
+                                <span id="lidarrHomeStatus" class="status-badge not-connected">
+                                    <i class="fas fa-times-circle"></i> Not Connected
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card stats-card">
+                        <h3><i class="fas fa-chart-line"></i> Activity Stats</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalMissingCount">-</div>
+                                <div class="stat-label">Missing Media</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalUpgradeCount">-</div>
+                                <div class="stat-label">Upgradable</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalProcessedCount">-</div>
+                                <div class="stat-label">Processed</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card action-card">
+                        <h3><i class="fas fa-play-circle"></i> Quick Actions</h3>
+                        <div class="action-buttons">
+                            <button id="startHuntButton" class="action-button start">
+                                <i class="fas fa-play"></i> Start Hunt
+                            </button>
+                            <button id="stopHuntButton" class="action-button stop">
+                                <i class="fas fa-stop"></i> Stop Hunt
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Logs Section -->
+            <section id="logsSection" class="content-section">
+                <div class="section-header">
+                    <div class="app-tabs">
+                        <button class="app-tab active" data-app="sonarr">Sonarr</button>
+                        <button class="app-tab" data-app="radarr">Radarr</button>
+                        <button class="app-tab" data-app="lidarr">Lidarr</button>
+                    </div>
+                    
+                    <div class="log-controls">
+                        <div class="connection-status">
+                            Status: <span id="logConnectionStatus" class="status-disconnected">Disconnected</span>
+                        </div>
+                        <div class="log-options">
+                            <label class="auto-scroll">
+                                <input type="checkbox" id="autoScrollCheckbox" checked>
+                                <span>Auto-scroll</span>
+                            </label>
+                            <button id="clearLogsButton" class="clear-button">
+                                <i class="fas fa-trash-alt"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="logs" id="logsContainer"></div>
+            </section>
+            
+            <!-- Settings Section -->
+            <section id="settingsSection" class="content-section">
+                <div class="section-header">
+                    <div class="app-tabs">
+                        <button class="settings-tab active" data-settings="sonarr">Sonarr</button>
+                        <button class="settings-tab" data-settings="radarr">Radarr</button>
+                        <button class="settings-tab" data-settings="lidarr">Lidarr</button>
+                        <button class="settings-tab" data-settings="global">Global</button>
+                    </div>
+                    
+                    <div class="settings-actions">
+                        <button id="saveSettingsButton" class="save-button" style="width: auto; padding: 8px 16px;">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                        <button id="resetSettingsButton" class="reset-button" style="width: auto; padding: 8px 16px;">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="settings-form">
+                    <!-- App-specific settings panels will be filled by JavaScript -->
+                    <div id="sonarrSettings" class="app-settings-panel active"></div>
+                    <div id="radarrSettings" class="app-settings-panel"></div>
+                    <div id="lidarrSettings" class="app-settings-panel"></div>
+                    <div id="globalSettings" class="app-settings-panel"></div>
+                </div>
+            </section>
         </div>
     </div>
     
-    {% include 'components/scripts.html' %}
-    
+    <script src="/static/js/settings_forms.js"></script>
+    <script src="/static/js/new-main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Activate the correct section based on hash
-            const hash = window.location.hash || '#home';
-            const section = hash.substring(1);
+            // Load settings for each app and populate forms
+            function loadAppSettings(app) {
+                fetch(`/api/settings/${app}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const container = document.getElementById(`${app}Settings`);
+                        if (!container) return;
+                        
+                        // Use the appropriate form generator based on app
+                        switch(app) {
+                            case 'sonarr':
+                                SettingsForms.generateSonarrForm(container, data);
+                                break;
+                            case 'radarr':
+                                SettingsForms.generateRadarrForm(container, data);
+                                break;
+                            case 'lidarr':
+                                SettingsForms.generateLidarrForm(container, data);
+                                break;
+                            case 'global':
+                                SettingsForms.generateGlobalForm(container, data);
+                                break;
+                        }
+                        
+                        // Update duration displays (hours) after forms are loaded
+                        SettingsForms.updateDurationDisplay();
+                        
+                        // Set up test connection buttons
+                        setupTestConnections();
+                    })
+                    .catch(error => {
+                        console.error(`Error loading ${app} settings:`, error);
+                    });
+            }
             
-            // Hide all sections first
-            document.querySelectorAll('.content-section').forEach(s => {
-                s.classList.remove('active');
+            // Setup test connection buttons
+            function setupTestConnections() {
+                // Sonarr connection test
+                const sonarrTestBtn = document.getElementById('testSonarrConnection');
+                if (sonarrTestBtn) {
+                    sonarrTestBtn.addEventListener('click', function() {
+                        const apiUrl = document.getElementById('sonarr_api_url').value;
+                        const apiKey = document.getElementById('sonarr_api_key').value;
+                        const status = document.getElementById('sonarrConnectionStatus');
+                        
+                        testConnection('sonarr', apiUrl, apiKey, status);
+                    });
+                }
+                
+                // Radarr connection test
+                const radarrTestBtn = document.getElementById('testRadarrConnection');
+                if (radarrTestBtn) {
+                    radarrTestBtn.addEventListener('click', function() {
+                        const apiUrl = document.getElementById('radarr_api_url').value;
+                        const apiKey = document.getElementById('radarr_api_key').value;
+                        const status = document.getElementById('radarrConnectionStatus');
+                        
+                        testConnection('radarr', apiUrl, apiKey, status);
+                    });
+                }
+                
+                // Lidarr connection test
+                const lidarrTestBtn = document.getElementById('testLidarrConnection');
+                if (lidarrTestBtn) {
+                    lidarrTestBtn.addEventListener('click', function() {
+                        const apiUrl = document.getElementById('lidarr_api_url').value;
+                        const apiKey = document.getElementById('lidarr_api_key').value;
+                        const status = document.getElementById('lidarrConnectionStatus');
+                        
+                        testConnection('lidarr', apiUrl, apiKey, status);
+                    });
+                }
+            }
+            
+            // Test connection function
+            function testConnection(app, apiUrl, apiKey, statusElement) {
+                if (!apiUrl || !apiKey) {
+                    statusElement.textContent = 'Missing URL or API Key';
+                    statusElement.className = 'connection-badge not-connected';
+                    return;
+                }
+                
+                statusElement.textContent = 'Testing...';
+                statusElement.className = 'connection-badge testing';
+                
+                fetch(`/api/${app}/test-connection`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        api_url: apiUrl,
+                        api_key: apiKey
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        statusElement.textContent = 'Connected';
+                        statusElement.className = 'connection-badge connected';
+                    } else {
+                        statusElement.textContent = data.message || 'Connection Failed';
+                        statusElement.className = 'connection-badge not-connected';
+                    }
+                })
+                .catch(error => {
+                    console.error(`Error testing ${app} connection:`, error);
+                    statusElement.textContent = 'Error';
+                    statusElement.className = 'connection-badge not-connected';
+                });
+            }
+            
+            // Switch between settings tabs
+            const settingsTabs = document.querySelectorAll('.settings-tab');
+            settingsTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const app = this.getAttribute('data-settings');
+                    
+                    // Update active tab
+                    settingsTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show selected settings panel
+                    const panels = document.querySelectorAll('.app-settings-panel');
+                    panels.forEach(panel => panel.classList.remove('active'));
+                    
+                    const selectedPanel = document.getElementById(`${app}Settings`);
+                    if (selectedPanel) {
+                        selectedPanel.classList.add('active');
+                        
+                        // Load settings if panel is empty
+                        if (!selectedPanel.hasChildNodes()) {
+                            loadAppSettings(app);
+                        }
+                    }
+                });
             });
             
-            // Show selected section
-            const sectionElement = document.getElementById(section + 'Section') || document.getElementById('homeSection');
-            sectionElement.classList.add('active');
+            // Save settings
+            const saveBtn = document.getElementById('saveSettingsButton');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function() {
+                    const activeTab = document.querySelector('.settings-tab.active');
+                    if (!activeTab) return;
+                    
+                    const app = activeTab.getAttribute('data-settings');
+                    saveSettings(app);
+                });
+            }
             
-            // Update navigation
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
+            // Save settings function
+            function saveSettings(app) {
+                let settings = {};
+                
+                if (app === 'sonarr') {
+                    settings = {
+                        app_type: 'sonarr',
+                        api_url: document.getElementById('sonarr_api_url')?.value || '',
+                        api_key: document.getElementById('sonarr_api_key')?.value || '',
+                        huntarr: {
+                            hunt_missing_shows: parseInt(document.getElementById('hunt_missing_shows')?.value || 1),
+                            hunt_upgrade_episodes: parseInt(document.getElementById('hunt_upgrade_episodes')?.value || 0),
+                            sleep_duration: parseInt(document.getElementById('sleep_duration')?.value || 900),
+                            state_reset_interval_hours: parseInt(document.getElementById('state_reset_interval_hours')?.value || 168),
+                            monitored_only: document.getElementById('monitored_only')?.checked ?? true,
+                            skip_future_episodes: document.getElementById('skip_future_episodes')?.checked ?? true,
+                            skip_series_refresh: document.getElementById('skip_series_refresh')?.checked ?? false
+                        },
+                        advanced: {
+                            debug_mode: document.getElementById('debug_mode')?.checked ?? false,
+                            random_missing: document.getElementById('random_missing')?.checked ?? true,
+                            random_upgrades: document.getElementById('random_upgrades')?.checked ?? true
+                        }
+                    };
+                } else if (app === 'radarr') {
+                    settings = {
+                        app_type: 'radarr',
+                        api_url: document.getElementById('radarr_api_url')?.value || '',
+                        api_key: document.getElementById('radarr_api_key')?.value || '',
+                        huntarr: {
+                            hunt_missing_movies: parseInt(document.getElementById('hunt_missing_movies')?.value || 1),
+                            hunt_upgrade_movies: parseInt(document.getElementById('hunt_upgrade_movies')?.value || 0),
+                            sleep_duration: parseInt(document.getElementById('radarr_sleep_duration')?.value || 900),
+                            state_reset_interval_hours: parseInt(document.getElementById('radarr_state_reset_interval_hours')?.value || 168),
+                            monitored_only: document.getElementById('radarr_monitored_only')?.checked ?? true,
+                            skip_future_releases: document.getElementById('skip_future_releases')?.checked ?? true,
+                            skip_movie_refresh: document.getElementById('skip_movie_refresh')?.checked ?? false
+                        },
+                        advanced: {
+                            debug_mode: document.getElementById('radarr_debug_mode')?.checked ?? false,
+                            random_missing: document.getElementById('radarr_random_missing')?.checked ?? true,
+                            random_upgrades: document.getElementById('radarr_random_upgrades')?.checked ?? true
+                        }
+                    };
+                } else if (app === 'lidarr') {
+                    settings = {
+                        app_type: 'lidarr',
+                        api_url: document.getElementById('lidarr_api_url')?.value || '',
+                        api_key: document.getElementById('lidarr_api_key')?.value || '',
+                        huntarr: {
+                            hunt_missing_albums: parseInt(document.getElementById('hunt_missing_albums')?.value || 1),
+                            hunt_upgrade_tracks: parseInt(document.getElementById('hunt_upgrade_tracks')?.value || 0),
+                            sleep_duration: parseInt(document.getElementById('lidarr_sleep_duration')?.value || 900),
+                            state_reset_interval_hours: parseInt(document.getElementById('lidarr_state_reset_interval_hours')?.value || 168),
+                            monitored_only: document.getElementById('lidarr_monitored_only')?.checked ?? true,
+                            skip_future_releases: document.getElementById('lidarr_skip_future_releases')?.checked ?? true,
+                            skip_artist_refresh: document.getElementById('skip_artist_refresh')?.checked ?? false
+                        },
+                        advanced: {
+                            debug_mode: document.getElementById('lidarr_debug_mode')?.checked ?? false,
+                            random_missing: document.getElementById('lidarr_random_missing')?.checked ?? true,
+                            random_upgrades: document.getElementById('lidarr_random_upgrades')?.checked ?? true
+                        }
+                    };
+                } else if (app === 'global') {
+                    settings = {
+                        app_type: 'global',
+                        advanced: {
+                            debug_mode: document.getElementById('debug_mode')?.checked ?? false,
+                            command_wait_delay: parseInt(document.getElementById('command_wait_delay')?.value || 1),
+                            command_wait_attempts: parseInt(document.getElementById('command_wait_attempts')?.value || 600),
+                            minimum_download_queue_size: parseInt(document.getElementById('minimum_download_queue_size')?.value || -1)
+                        }
+                    };
+                }
+                
+                fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(settings)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message
+                        alert(data.changes_made ? 
+                            'Settings saved successfully! Restart required for changes to take effect.' : 
+                            'No changes detected.');
+                            
+                        // Reload app settings to reflect any backend changes
+                        loadAppSettings(app);
+                    } else {
+                        alert('Error saving settings: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving settings:', error);
+                    alert('Error saving settings: ' + error.message);
+                });
+            }
             
-            const navItem = document.getElementById(section + 'Nav') || document.getElementById('homeNav');
-            navItem.classList.add('active');
+            // Reset settings
+            const resetBtn = document.getElementById('resetSettingsButton');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to reset to default settings?')) {
+                        const activeTab = document.querySelector('.settings-tab.active');
+                        if (!activeTab) return;
+                        
+                        const app = activeTab.getAttribute('data-settings');
+                        resetSettings(app);
+                    }
+                });
+            }
             
-            // Update page title
-            document.getElementById('currentPageTitle').textContent = section.charAt(0).toUpperCase() + section.slice(1);
+            // Reset settings function
+            function resetSettings(app) {
+                fetch(`/api/settings/${app}/reset`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Settings reset to defaults');
+                        loadAppSettings(app);
+                    } else {
+                        alert('Error resetting settings: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resetting settings:', error);
+                    alert('Error resetting settings: ' + error.message);
+                });
+            }
+            
+            // Load initial settings for current active tab
+            const activeTab = document.querySelector('.settings-tab.active');
+            if (activeTab) {
+                const app = activeTab.getAttribute('data-settings');
+                loadAppSettings(app);
+            }
         });
     </script>
 </body>
