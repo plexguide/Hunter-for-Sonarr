@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huntarr - Media Management Assistant</title>
+    <link rel="stylesheet" href="/static/css/new-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="/static/favicon.ico">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="logo-container">
+                <img src="https://github.com/plexguide/Huntarr/blob/main/logo/40.png?raw=true" alt="Huntarr Logo" class="logo">
+                <h1>Huntarr</h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#home" class="nav-item active" id="homeNav">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#logs" class="nav-item" id="logsNav">
+                    <i class="fas fa-list-alt"></i>
+                    <span>Logs</span>
+                </a>
+                <a href="#settings" class="nav-item" id="settingsNav">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="/user" class="nav-item" id="userNav">
+                    <i class="fas fa-user"></i>
+                    <span>User</span>
+                </a>
+            </nav>
+            
+            <div class="theme-switcher">
+                <div class="switch-label">
+                    <i class="fas fa-sun light-icon"></i>
+                    <i class="fas fa-moon dark-icon"></i>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="themeToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="page-title" id="currentPageTitle">Home</div>
+                <div class="user-info">
+                    <span id="username">User</span>
+                    <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+                </div>
+            </div>
+            
+            <!-- Home Section -->
+            <section id="homeSection" class="content-section active">
+                <div class="dashboard-grid">
+                    <div class="card welcome-card">
+                        <h2>Welcome to Huntarr</h2>
+                        <p>Your media management assistant for Sonarr, Radarr, and Lidarr</p>
+                    </div>
+                    
+                    <div class="card status-card">
+                        <h3><i class="fas fa-server"></i> Connection Status</h3>
+                        <div class="status-list">
+                            <div class="status-item">
+                                <span class="status-label">Sonarr:</span>
+                                <span id="sonarrHomeStatus" class="status-badge not-connected">
+                                    <i class="fas fa-times-circle"></i> Not Connected
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Radarr:</span>
+                                <span id="radarrHomeStatus" class="status-badge not-connected">
+                                    <i class="fas fa-times-circle"></i> Not Connected
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Lidarr:</span>
+                                <span id="lidarrHomeStatus" class="status-badge not-connected">
+                                    <i class="fas fa-times-circle"></i> Not Connected
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card stats-card">
+                        <h3><i class="fas fa-chart-line"></i> Activity Stats</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalMissingCount">-</div>
+                                <div class="stat-label">Missing Media</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalUpgradeCount">-</div>
+                                <div class="stat-label">Upgradable</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalProcessedCount">-</div>
+                                <div class="stat-label">Processed</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card action-card">
+                        <h3><i class="fas fa-play-circle"></i> Quick Actions</h3>
+                        <div class="action-buttons">
+                            <button id="startHuntButton" class="action-button start">
+                                <i class="fas fa-play"></i> Start Hunt
+                            </button>
+                            <button id="stopHuntButton" class="action-button stop">
+                                <i class="fas fa-stop"></i> Stop Hunt
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Logs Section -->
+            <section id="logsSection" class="content-section">
+                <div class="section-header">
+                    <div class="app-tabs">
+                        <button class="app-tab active" data-app="sonarr">Sonarr</button>
+                        <button class="app-tab" data-app="radarr">Radarr</button>
+                        <button class="app-tab" data-app="lidarr">Lidarr</button>
+                    </div>
+                    
+                    <div class="log-controls">
+                        <div class="connection-status">
+                            Status: <span id="logConnectionStatus" class="status-disconnected">Disconnected</span>
+                        </div>
+                        <div class="log-options">
+                            <label class="auto-scroll">
+                                <input type="checkbox" id="autoScrollCheckbox" checked>
+                                <span>Auto-scroll</span>
+                            </label>
+                            <button id="clearLogsButton" class="clear-button">
+                                <i class="fas fa-trash-alt"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="logs" id="logsContainer"></div>
+            </section>
+            
+            <!-- Settings Section -->
+            <section id="settingsSection" class="content-section">
+                <div class="section-header">
+                    <div class="app-tabs">
+                        <button class="settings-tab active" data-settings="sonarr">Sonarr</button>
+                        <button class="settings-tab" data-settings="radarr">Radarr</button>
+                        <button class="settings-tab" data-settings="lidarr">Lidarr</button>
+                        <button class="settings-tab" data-settings="global">Global</button>
+                    </div>
+                    
+                    <div class="settings-actions">
+                        <button id="saveSettingsButton" class="save-button">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                        <button id="resetSettingsButton" class="reset-button">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="settings-form">
+                    <!-- Global Settings -->
+                    <div id="globalSettings" class="app-settings-panel">
+                        <div class="settings-group">
+                            <h3>General Settings</h3>
+                            <div class="setting-item">
+                                <label for="debug_mode">Debug Mode:</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="debug_mode">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <p class="setting-help">Enable detailed debug logging</p>
+                            </div>
+                            <div class="setting-item">
+                                <label for="command_wait_delay">Command Wait Delay:</label>
+                                <input type="number" id="command_wait_delay" min="1" step="1">
+                                <p class="setting-help">Delay in seconds between checking for command status</p>
+                            </div>
+                            <div class="setting-item">
+                                <label for="command_wait_attempts">Command Wait Attempts:</label>
+                                <input type="number" id="command_wait_attempts" min="10" step="1">
+                                <p class="setting-help">Number of attempts to check for command completion</p>
+                            </div>
+                            <div class="setting-item">
+                                <label for="minimum_download_queue_size">Minimum Queue Size:</label>
+                                <input type="number" id="minimum_download_queue_size" min="-1" step="1">
+                                <p class="setting-help">Minimum download queue size before stopping searches</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- App-specific settings panels will be filled by JavaScript -->
+                    <div id="sonarrSettings" class="app-settings-panel active"></div>
+                    <div id="radarrSettings" class="app-settings-panel"></div>
+                    <div id="lidarrSettings" class="app-settings-panel"></div>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <script src="/static/js/new-main.js"></script>
+</body>
+</html>
