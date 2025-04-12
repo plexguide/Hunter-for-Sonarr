@@ -28,11 +28,15 @@ DEFAULT_SETTINGS = {
     },
     "app_type": "sonarr",  # Default app type
     "connections": {},     # Holds API URLs and keys
-    "huntarr": {
-        # These will be loaded from default_configs.json based on app_type
+    "global": {            # Global settings (UI preferences etc)
     },
-    "advanced": {
-        # These will be loaded from default_configs.json based on app_type
+    "sonarr": {            # Sonarr-specific settings
+    },
+    "radarr": {            # Radarr-specific settings
+    },
+    "lidarr": {            # Lidarr-specific settings
+    },
+    "readarr": {           # Readarr-specific settings
     }
 }
 
@@ -113,37 +117,22 @@ def load_settings() -> Dict[str, Any]:
         app_type = env_settings.get("app_type", "sonarr")
         settings["app_type"] = app_type
         
-        # Get default settings for this app type
-        app_defaults = get_app_defaults(app_type)
+        # Load default configs for all apps
+        supported_apps = ["sonarr", "radarr", "lidarr", "readarr"]
+        for app in supported_apps:
+            app_defaults = get_app_defaults(app)
+            # Initialize app-specific settings
+            if app not in settings:
+                settings[app] = {}
+            settings[app].update(app_defaults)
         
-        # Categorize settings
-        huntarr_settings = {}
-        advanced_settings = {}
-        
-        # Distribute app defaults into categories
-        for key, value in app_defaults.items():
-            # Simple categorization based on key name
-            if key in ("api_timeout", "debug_mode", "command_wait_delay", 
-                      "command_wait_attempts", "minimum_download_queue_size",
-                      "random_missing", "random_upgrades"):
-                advanced_settings[key] = value
-            else:
-                huntarr_settings[key] = value
-        
-        # Apply defaults to settings
-        settings["huntarr"].update(huntarr_settings)
-        settings["advanced"].update(advanced_settings)
-        
-        # Apply environment settings, keeping track of whether they're huntarr or advanced
+        # Apply environment settings to the current app type
         for key, value in env_settings.items():
-            if key in ("app_type"):
+            if key == "app_type":
                 settings[key] = value
-            elif key in ("api_timeout", "debug_mode", "command_wait_delay", 
-                        "command_wait_attempts", "minimum_download_queue_size",
-                        "random_missing", "random_upgrades"):
-                settings["advanced"][key] = value
             else:
-                settings["huntarr"][key] = value
+                # Put environment variables in the appropriate app section
+                settings[app_type][key] = value
         
         # Finally, load user settings from file (highest priority)
         if SETTINGS_FILE.exists():

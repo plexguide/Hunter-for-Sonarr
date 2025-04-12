@@ -246,43 +246,40 @@ def update_settings():
             keys_manager.save_api_keys(app_type, data["api_url"], data["api_key"])
         
         old_settings = settings_manager.get_all_settings()
-        old_huntarr = old_settings.get("huntarr", {})
-        old_advanced = old_settings.get("advanced", {})
-        old_ui = old_settings.get("ui", {})
-        huntarr_changes = {}
-        advanced_changes = {}
-        ui_changes = {}
         changes_made = False
+        changes_log = []
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # Handle huntarr settings
-        if "huntarr" in data:
-            for key, value in data["huntarr"].items():
-                old_value = old_huntarr.get(key)
-                if old_value != value:
-                    huntarr_changes[key] = {"old": old_value, "new": value}
-                    changes_made = True
-                settings_manager.update_setting("huntarr", key, value)
-        
-        # Handle UI settings
-        if "ui" in data:
-            for key, value in data["ui"].items():
-                old_value = old_ui.get(key)
-                if old_value != value:
-                    ui_changes[key] = {"old": old_value, "new": value}
-                    changes_made = True
-                settings_manager.update_setting("ui", key, value)
-        
-        # Handle advanced settings
-        if "advanced" in data:
-            for key, value in data["advanced"].items():
-                old_value = old_advanced.get(key)
-                if old_value != value:
-                    advanced_changes[key] = {"old": old_value, "new": value}
-                    changes_made = True
-                settings_manager.update_setting("advanced", key, value)
+        # Handle app-specific settings - put all settings in the appropriate app section
+        for key, value in data.items():
+            # Skip special keys that are handled separately
+            if key in ["api_url", "api_key", "app_type"]:
+                continue
+                
+            # Handle nested dictionaries (like "huntarr", "advanced", "ui" categories)
+            if isinstance(value, dict):
+                # For backwards compatibility, map "huntarr" and "advanced" categories to the app-specific section
+                if key in ["huntarr", "advanced"]:
+                    for setting_key, setting_value in value.items():
+                        old_value = old_settings.get(app_type, {}).get(setting_key)
+                        if old_value != setting_value:
+                            changes_made = True
+                            changes_log.append(f"{key}.{setting_key} from {old_value} to {setting_value}")
+                        
+                        # Update the setting in the app-specific section
+                        settings_manager.update_setting(app_type, setting_key, setting_value)
+                else:
+                    # For other categories like "ui" or future ones
+                    for setting_key, setting_value in value.items():
+                        old_value = old_settings.get(key, {}).get(setting_key)
+                        if old_value != setting_value:
+                            changes_made = True
+                            changes_log.append(f"{key}.{setting_key} from {old_value} to {setting_value}")
+                        
+                        # Update the setting directly in the category
+                        settings_manager.update_setting(key, setting_key, setting_value)
         
         # Log the changes
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if changes_made or ("api_url" in data and "api_key" in data):
             with open(LOG_FILE, 'a') as f:
                 f.write(f"{timestamp} - huntarr-web - INFO - Settings updated by user\n")
@@ -294,12 +291,8 @@ def update_settings():
                     f.write(f"{timestamp} - huntarr-web - INFO - Updated {app_type} API connection: URL={api_url_masked}, Key={api_key_masked}\n")
                 
                 # Log other changes
-                for key, change in huntarr_changes.items():
-                    f.write(f"{timestamp} - huntarr-web - INFO - Changed {key} from {change['old']} to {change['new']}\n")
-                for key, change in advanced_changes.items():
-                    f.write(f"{timestamp} - huntarr-web - INFO - Changed advanced.{key} from {change['old']} to {change['new']}\n")
-                for key, change in ui_changes.items():
-                    f.write(f"{timestamp} - huntarr-web - INFO - Changed UI.{key} from {change['old']} to {change['new']}\n")
+                for change in changes_log:
+                    f.write(f"{timestamp} - huntarr-web - INFO - Changed {change}\n")
             
             # Explicitly save all settings to ensure everything is written to disk
             all_settings = settings_manager.get_all_settings()
