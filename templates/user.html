@@ -41,12 +41,12 @@
         }
         
         .save-button {
-            background-color: var(--button-success-bg);
+            background-color: #28a745;
             color: white;
         }
         
         .danger-button {
-            background-color: var(--button-danger-bg);
+            background-color: #dc3545;
             color: white;
         }
         
@@ -75,7 +75,7 @@
         }
         
         .secret-key {
-            background-color: var(--bg-tertiary);
+            background-color: #2c2c2c;
             padding: 10px;
             border-radius: 5px;
             margin-top: 10px;
@@ -85,7 +85,7 @@
         
         .status-success {
             background-color: rgba(46, 204, 113, 0.2);
-            color: var(--success-color);
+            color: #2ecc71;
             visibility: visible;
             height: auto;
             padding: 10px;
@@ -94,20 +94,30 @@
         
         .status-error {
             background-color: rgba(231, 76, 60, 0.2);
-            color: var(--error-color);
+            color: #e74c3c;
             visibility: visible;
             height: auto;
             padding: 10px;
             margin-top: 15px;
         }
         
+        .setting-item {
+            margin-bottom: 15px;
+        }
+        
+        .setting-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
         .form-control {
             width: 100%;
             padding: 8px 12px;
-            border: 1px solid var(--border-color);
+            border: 1px solid #444;
             border-radius: 4px;
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
+            background-color: #333;
+            color: #fff;
         }
     </style>
 </head>
@@ -120,9 +130,79 @@
         <div class="main-content">
             {% include 'components/topbar.html' %}
             
-            <section class="content-section active">
-                {% include 'components/user_profile.html' %}
-            </section>
+            <div class="user-section">
+                <div class="user-card">
+                    <h3><i class="fas fa-user-edit"></i> Change Username</h3>
+                    <div class="setting-item">
+                        <label for="currentUsername">Current Username:</label>
+                        <span id="currentUsername">Loading...</span>
+                    </div>
+                    <div class="setting-item">
+                        <label for="newUsername">New Username:</label>
+                        <input type="text" id="newUsername" class="form-control">
+                    </div>
+                    <button id="saveUsername" class="user-button save-button">Save Username</button>
+                    <div id="usernameStatus" style="display: none;"></div>
+                </div>
+                
+                <div class="user-card">
+                    <h3><i class="fas fa-key"></i> Change Password</h3>
+                    <div class="setting-item">
+                        <label for="currentPassword">Current Password:</label>
+                        <input type="password" id="currentPassword" class="form-control">
+                    </div>
+                    <div class="setting-item">
+                        <label for="newPassword">New Password:</label>
+                        <input type="password" id="newPassword" class="form-control">
+                    </div>
+                    <div class="setting-item">
+                        <label for="confirmPassword">Confirm Password:</label>
+                        <input type="password" id="confirmPassword" class="form-control">
+                    </div>
+                    <button id="savePassword" class="user-button save-button">Save Password</button>
+                    <div id="passwordStatus" style="display: none;"></div>
+                </div>
+                
+                <div class="user-card">
+                    <h3><i class="fas fa-shield-alt"></i> Two-Factor Authentication</h3>
+                    <div id="twoFactorStatus" class="setting-item">
+                        <label>Status:</label>
+                        <span id="twoFactorEnabled">Loading...</span>
+                    </div>
+                    
+                    <div id="enableTwoFactorSection" style="display: none;">
+                        <button id="enableTwoFactor" class="user-button save-button">Enable 2FA</button>
+                    </div>
+                    
+                    <div id="setupTwoFactorSection" style="display: none;">
+                        <div class="qr-code-container">
+                            <div class="qr-code">
+                                <img id="qrCode" src="" alt="QR Code">
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label for="secretKey">Secret Key:</label>
+                            <div class="secret-key" id="secretKey"></div>
+                            <p class="setting-help">Use this key if you can't scan the QR code</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="verificationCode">Verification Code:</label>
+                            <input type="text" id="verificationCode" class="form-control" placeholder="000000" maxlength="6">
+                        </div>
+                        <button id="verifyTwoFactor" class="user-button save-button">Verify and Enable</button>
+                        <div id="verifyStatus" style="display: none;"></div>
+                    </div>
+                    
+                    <div id="disableTwoFactorSection" style="display: none;">
+                        <div class="setting-item">
+                            <label for="disableCode">Verification Code:</label>
+                            <input type="text" id="disableCode" class="form-control" placeholder="000000" maxlength="6">
+                        </div>
+                        <button id="disableTwoFactor" class="user-button danger-button">Disable 2FA</button>
+                        <div id="disableStatus" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -132,91 +212,73 @@
             // Set active nav item
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(item => item.classList.remove('active'));
-            document.getElementById('userNav').classList.add('active');
-            document.getElementById('currentPageTitle').textContent = 'User Settings';
+            const userNav = document.getElementById('userNav');
+            if (userNav) userNav.classList.add('active');
             
-            // Apply theme based on API settings
-            applyThemeFromAPI();
+            const pageTitleElement = document.getElementById('currentPageTitle');
+            if (pageTitleElement) pageTitleElement.textContent = 'User Settings';
             
-            // User Functions
+            // Apply dark mode if theme is dark
+            applyDarkMode();
+            
+            // Fetch user data
             fetchUserData();
             
-            // Button event listeners
+            // Setup event listeners for buttons
             setupEventListeners();
         });
         
-        // Apply theme from API
-        function applyThemeFromAPI() {
-            fetch('/api/settings/theme')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.dark_mode) {
-                        document.body.classList.add('dark-mode');
-                        if (document.getElementById('themeToggle')) {
-                            document.getElementById('themeToggle').checked = true;
-                        }
-                    } else {
-                        document.body.classList.remove('dark-mode');
-                        if (document.getElementById('themeToggle')) {
-                            document.getElementById('themeToggle').checked = false;
-                        }
-                    }
-                })
-                .catch(error => console.error('Error loading theme:', error));
-                
-            // Add event listener for theme toggle if it exists
+        function applyDarkMode() {
+            // Add dark-mode class to ensure consistent appearance
+            document.body.classList.add('dark-mode');
+            
+            // Update theme toggle if it exists
             const themeToggle = document.getElementById('themeToggle');
             if (themeToggle) {
+                themeToggle.checked = true;
                 themeToggle.addEventListener('change', function() {
-                    const isDarkMode = this.checked;
-                    
-                    // Update body class
-                    if (isDarkMode) {
+                    if (this.checked) {
                         document.body.classList.add('dark-mode');
                     } else {
                         document.body.classList.remove('dark-mode');
                     }
                     
-                    // Save theme preference to API
+                    // Save theme preference
                     fetch('/api/settings/theme', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ dark_mode: isDarkMode })
-                    })
-                    .catch(error => console.error('Error saving theme:', error));
+                        body: JSON.stringify({ dark_mode: this.checked })
+                    }).catch(error => console.error('Error saving theme:', error));
                 });
             }
         }
         
-        // Fetch user data
         function fetchUserData() {
-            // Fetch username
+            // Get username
             fetch('/api/user/info')
                 .then(response => response.json())
                 .then(data => {
-                    // Update username in the topbar
-                    const usernameElement = document.getElementById('username');
-                    if (usernameElement && data.username) {
-                        usernameElement.textContent = data.username;
-                    }
-                    
-                    // Update username in the form
-                    const currentUsernameElement = document.getElementById('currentUsername');
-                    if (currentUsernameElement && data.username) {
-                        currentUsernameElement.textContent = data.username;
+                    // Update username in topbar and form
+                    if (data.username) {
+                        if (document.getElementById('username')) {
+                            document.getElementById('username').textContent = data.username;
+                        }
+                        if (document.getElementById('currentUsername')) {
+                            document.getElementById('currentUsername').textContent = data.username;
+                        }
                     }
                 })
                 .catch(error => {
-                    console.error('Error fetching user data:', error);
+                    console.error('Error fetching user info:', error);
                     const currentUsernameElement = document.getElementById('currentUsername');
                     if (currentUsernameElement) {
-                        currentUsernameElement.textContent = 'Error loading user data';
+                        currentUsernameElement.textContent = 'Error loading username';
                     }
                 });
             
-            // Fetch 2FA status
+            // Get 2FA status
             fetch('/api/user/2fa-status')
                 .then(response => response.json())
                 .then(data => {
@@ -233,9 +295,6 @@
                         if (document.getElementById('enableTwoFactorSection')) {
                             document.getElementById('enableTwoFactorSection').style.display = 'none';
                         }
-                        if (document.getElementById('setupTwoFactorSection')) {
-                            document.getElementById('setupTwoFactorSection').style.display = 'none';
-                        }
                     } else {
                         if (document.getElementById('disableTwoFactorSection')) {
                             document.getElementById('disableTwoFactorSection').style.display = 'none';
@@ -243,41 +302,38 @@
                         if (document.getElementById('enableTwoFactorSection')) {
                             document.getElementById('enableTwoFactorSection').style.display = 'block';
                         }
-                        if (document.getElementById('setupTwoFactorSection')) {
-                            document.getElementById('setupTwoFactorSection').style.display = 'none';
-                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error fetching 2FA status:', error);
-                    if (document.getElementById('twoFactorEnabled')) {
-                        document.getElementById('twoFactorEnabled').textContent = 'Unknown';
+                    const twoFactorEnabled = document.getElementById('twoFactorEnabled');
+                    if (twoFactorEnabled) {
+                        twoFactorEnabled.textContent = 'Unknown';
                     }
                 });
         }
         
-        // Setup event listeners
         function setupEventListeners() {
-            // Fix navigation - make clicking on navbar items use the same navigation style as the rest of the app
+            // Fix navigation
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const href = this.getAttribute('href');
-                    
-                    // Don't navigate away if we're already on the user page and user nav is clicked
                     if (this.id === 'userNav' && window.location.pathname === '/user') {
+                        // Don't do anything if we're on the user page and clicking user nav
+                        e.preventDefault();
                         return;
                     }
                     
-                    // Use direct navigation instead of hash-based
+                    // For other nav items, make them work correctly
+                    const href = this.getAttribute('href');
                     if (href === '#home') {
                         window.location.href = '/';
+                        e.preventDefault();
                     } else if (href === '#logs') {
                         window.location.href = '/#logs';
+                        e.preventDefault();
                     } else if (href === '#settings') {
                         window.location.href = '/#settings';
-                    } else {
-                        window.location.href = href;
+                        e.preventDefault();
                     }
                 });
             });
@@ -365,7 +421,7 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        if (response.ok) {
+                        if (data.success) {
                             statusElement.textContent = 'Password updated successfully';
                             statusElement.className = 'status-success';
                             document.getElementById('currentPassword').value = '';
@@ -441,7 +497,7 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        if (response.ok) {
+                        if (data.success) {
                             statusElement.textContent = '2FA enabled successfully';
                             statusElement.className = 'status-success';
                             setTimeout(() => {
@@ -486,7 +542,7 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        if (response.ok) {
+                        if (data.success) {
                             statusElement.textContent = '2FA disabled successfully';
                             statusElement.className = 'status-success';
                             setTimeout(() => {
