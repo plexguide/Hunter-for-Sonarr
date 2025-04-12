@@ -721,6 +721,14 @@ input:checked + .toggle-slider:before {
     .stats-grid {
         grid-template-columns: 1fr;
     }
+
+    /* Make inputs responsive on narrow screens */
+    .setting-item input[type="text"],
+    .setting-item input[type="number"],
+    .setting-item input[type="password"] {
+        width: 100%;
+        max-width: 300px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -736,11 +744,52 @@ input:checked + .toggle-slider:before {
     .app-tabs, .settings-actions {
         width: 100%;
         overflow-x: auto;
+        padding-bottom: 5px; /* Prevent cut-off of button shadows */
     }
     
     .app-tab, .settings-tab {
         flex: 1;
         white-space: nowrap;
+        min-width: 100px; /* Minimum button width */
+    }
+
+    /* Layout improvements for user cards on mobile */
+    .user-card {
+        padding: 15px;
+    }
+
+    .verification-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .verification-input {
+        width: 100%;
+        max-width: 200px;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+}
+
+/* Ensure very small screens can still access everything */
+@media (max-width: 480px) {
+    .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+        padding: 10px 15px;
+    }
+
+    .user-info {
+        margin-top: 10px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .action-button {
+        margin-bottom: 10px;
     }
 }
 

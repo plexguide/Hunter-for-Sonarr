@@ -599,6 +599,15 @@ const HuntarrUI = {
         // Add to the document
         document.body.appendChild(notification);
         
+        // Ensure any existing notification is removed first to prevent stacking
+        const existingNotifications = document.querySelectorAll('.notification');
+        existingNotifications.forEach(n => {
+            if (n !== notification) {
+                n.classList.remove('show');
+                setTimeout(() => n.remove(), 300);
+            }
+        });
+        
         // Fade in
         setTimeout(() => {
             notification.classList.add('show');
