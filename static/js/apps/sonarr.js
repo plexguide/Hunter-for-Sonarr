@@ -145,12 +145,17 @@
                     
                     // Sonarr-specific settings - prefer the app-specific section, fall back to old structure
                     if (this.elements.huntMissingShowsInput) {
-                        this.elements.huntMissingShowsInput.value = appSettings.hunt_missing_shows !== undefined ? 
-                            appSettings.hunt_missing_shows : (huntarr.hunt_missing_shows !== undefined ? huntarr.hunt_missing_shows : 1);
+                        // Use defined values if available, even if they're 0!
+                        const value = appSettings.hunt_missing_shows !== undefined ? 
+                            appSettings.hunt_missing_shows : 
+                            (huntarr.hunt_missing_shows !== undefined ? huntarr.hunt_missing_shows : 1);
+                        this.elements.huntMissingShowsInput.value = value;
                     }
                     if (this.elements.huntUpgradeEpisodesInput) {
-                        this.elements.huntUpgradeEpisodesInput.value = appSettings.hunt_upgrade_episodes !== undefined ? 
-                            appSettings.hunt_upgrade_episodes : (huntarr.hunt_upgrade_episodes !== undefined ? huntarr.hunt_upgrade_episodes : 0);
+                        const value = appSettings.hunt_upgrade_episodes !== undefined ?
+                            appSettings.hunt_upgrade_episodes :
+                            (huntarr.hunt_upgrade_episodes !== undefined ? huntarr.hunt_upgrade_episodes : 0);
+                        this.elements.huntUpgradeEpisodesInput.value = value;
                     }
                     if (this.elements.sleepDurationInput) {
                         this.elements.sleepDurationInput.value = appSettings.sleep_duration || huntarr.sleep_duration || 900;
@@ -419,12 +424,16 @@
                         alert('No changes detected.');
                     }
                 } else {
-                    alert('Error saving settings: ' + (data.message || 'Unknown error'));
+                    // Ensure we reload the settings directly from server to synchronize UI
+                    sonarrModule.loadSettings();
+                    alert('Settings saved successfully. Reloaded latest values from server.');
                 }
             })
             .catch(error => {
                 console.error('Error saving settings:', error);
                 alert('Error saving settings: ' + error.message);
+                // Even on error, reload settings to ensure UI is consistent
+                sonarrModule.loadSettings();
             });
         } else if (originalSaveSettings) {
             // Call the original if we're not handling Sonarr

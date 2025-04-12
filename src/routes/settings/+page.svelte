@@ -6,10 +6,19 @@
   let showSuccessMessage = false;
   let showErrorMessage = false;
   let errorMessage = "";
+  let isSaving = false;
 
   // Ensure settings are properly loaded on component mount
   onMount(async () => {
-    await loadSettings();
+    try {
+      const response = await fetch('/api/settings');
+      if (response.ok) {
+        const data = await response.json();
+        settings.set(ensureNumericValues(data));
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
   });
   
   async function loadSettings() {
@@ -57,6 +66,9 @@
 
   // Modify the save function to ensure it updates the UI state
   async function saveSettings() {
+    if (isSaving) return; // Prevent multiple simultaneous saves
+    
+    isSaving = true;
     try {
       const settingsValue = $settings;
       
@@ -87,6 +99,8 @@
       setTimeout(() => {
         showErrorMessage = false;
       }, 3000);
+    } finally {
+      isSaving = false;
     }
   }
 

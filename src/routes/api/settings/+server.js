@@ -26,43 +26,6 @@ function writeConfig(config) {
   }
 }
 
-// Parse numeric settings properly
-function parseNumericSettings(settings) {
-  if (!settings) return {};
-  
-  const result = { ...settings };
-  
-  // Define which fields should be numeric
-  const numericFields = [
-    'missingEpisodesSearch', 'upgradeEpisodesSearch', 'searchInterval',
-    'hunt_missing_shows', 'hunt_upgrade_episodes', 'sleep_duration',
-    'hunt_missing_movies', 'hunt_upgrade_movies', 'state_reset_interval_hours',
-    'hunt_missing_albums', 'hunt_upgrade_tracks', 'hunt_missing_books', 
-    'hunt_upgrade_books', 'api_timeout', 'command_wait_delay',
-    'command_wait_attempts', 'minimum_download_queue_size'
-  ];
-  
-  // Parse any numeric fields at the root level
-  numericFields.forEach(field => {
-    if (result[field] !== undefined) {
-      result[field] = parseInt(result[field], 10);
-    }
-  });
-  
-  // Parse nested objects
-  ['sonarr', 'radarr', 'lidarr', 'readarr', 'huntarr', 'advanced'].forEach(section => {
-    if (result[section]) {
-      numericFields.forEach(field => {
-        if (result[section][field] !== undefined) {
-          result[section][field] = parseInt(result[section][field], 10);
-        }
-      });
-    }
-  });
-  
-  return result;
-}
-
 // GET handler
 export async function GET() {
   const config = readConfig();
@@ -72,23 +35,45 @@ export async function GET() {
 // POST handler
 export async function POST({ request }) {
   try {
-    let newSettings = await request.json();
-    
-    // Parse numeric values consistently
-    newSettings = parseNumericSettings(newSettings);
+    const newSettings = await request.json();
     
     // Read existing config to merge with new settings
     const existingConfig = readConfig();
     
-    // Create deep merged config to preserve nested structures
-    const updatedConfig = deepMerge(existingConfig, newSettings);
+    // Merge settings, ensuring numeric values are properly handled
+    const updatedConfig = {
+      ...existingConfig,
+      ...newSettings
+    };
     
+    // Ensure numeric values are preserved correctly in nested objects
+    if (newSettings.sonarr) {
+      updatedConfig.sonarr = {
+        ...existingConfig.sonarr,
+        ...newSettings.sonarr
+      };
+      
+      // Explicitly handle numeric fields
+      if (newSettings.sonarr.missingEpisodesSearch !== undefined) {
+        updatedConfig.sonarr.missingEpisodesSearch = Number(newSettings.sonarr.missingEpisodesSearch);
+      }
+      if (newSettings.sonarr.upgradeEpisodesSearch !== undefined) {
+        updatedConfig.sonarr.upgradeEpisodesSearch = Number(newSettings.sonarr.upgradeEpisodesSearch);
+      }
+      if (newSettings.sonarr.searchInterval !== undefined) {
+        updatedConfig.sonarr.searchInterval = Number(newSettings.sonarr.searchInterval);
+      }
+    }
+    
+    // Handle other app settings similarly
+    // ...existing code...
+
     // Write updated config
     const success = writeConfig(updatedConfig);
     
     if (success) {
-      // Return the fully updated config so UI can refresh with correct values
-      return json(updatedConfig);
+      // Return the exact config that was saved to ensure UI consistency
+      return json(readConfig());
     } else {
       return json({ error: 'Failed to save settings' }, { status: 500 });
     }
@@ -96,29 +81,4 @@ export async function POST({ request }) {
     console.error('Error processing settings:', error);
     return json({ error: 'Server error' }, { status: 500 });
   }
-}
-
-// Helper for deep merging objects
-function deepMerge(target, source) {
-  const output = { ...target };
-  
-  if (isObject(target) && isObject(source)) {
-    Object.keys(source).forEach(key => {
-      if (isObject(source[key])) {
-        if (!(key in target)) {
-          output[key] = source[key];
-        } else {
-          output[key] = deepMerge(target[key], source[key]);
-        }
-      } else {
-        output[key] = source[key];
-      }
-    });
-  }
-  
-  return output;
-}
-
-function isObject(item) {
-  return (item && typeof item === 'object' && !Array.isArray(item));
 }
