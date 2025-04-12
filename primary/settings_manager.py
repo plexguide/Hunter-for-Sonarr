@@ -15,8 +15,8 @@ from typing import Dict, Any, Optional
 logging.basicConfig(level=logging.INFO)
 settings_logger = logging.getLogger("settings_manager")
 
-# Settings directory setup - Changed to use the root config directory
-SETTINGS_DIR = pathlib.Path("/config")
+# Settings directory setup
+SETTINGS_DIR = pathlib.Path("/config/settings")
 SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
 
 SETTINGS_FILE = SETTINGS_DIR / "huntarr.json"

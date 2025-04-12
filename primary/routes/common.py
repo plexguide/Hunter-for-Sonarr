@@ -236,6 +236,15 @@ def update_settings():
         data = request.json
         if not data:
             return jsonify({"success": False, "message": "No data provided"}), 400
+        
+        # Get the app type from the data or use 'sonarr' as default
+        app_type = data.get("app_type", "sonarr")
+        
+        # Handle API connection info if provided
+        if "api_url" in data and "api_key" in data:
+            from primary import keys_manager
+            keys_manager.save_api_keys(app_type, data["api_url"], data["api_key"])
+        
         old_settings = settings_manager.get_all_settings()
         old_huntarr = old_settings.get("huntarr", {})
         old_advanced = old_settings.get("advanced", {})
@@ -244,6 +253,8 @@ def update_settings():
         advanced_changes = {}
         ui_changes = {}
         changes_made = False
+        
+        # Handle huntarr settings
         if "huntarr" in data:
             for key, value in data["huntarr"].items():
                 old_value = old_huntarr.get(key)
@@ -251,6 +262,8 @@ def update_settings():
                     huntarr_changes[key] = {"old": old_value, "new": value}
                     changes_made = True
                 settings_manager.update_setting("huntarr", key, value)
+        
+        # Handle UI settings
         if "ui" in data:
             for key, value in data["ui"].items():
                 old_value = old_ui.get(key)
@@ -258,6 +271,8 @@ def update_settings():
                     ui_changes[key] = {"old": old_value, "new": value}
                     changes_made = True
                 settings_manager.update_setting("ui", key, value)
+        
+        # Handle advanced settings
         if "advanced" in data:
             for key, value in data["advanced"].items():
                 old_value = old_advanced.get(key)
@@ -265,20 +280,37 @@ def update_settings():
                     advanced_changes[key] = {"old": old_value, "new": value}
                     changes_made = True
                 settings_manager.update_setting("advanced", key, value)
+        
+        # Log the changes
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        if changes_made:
+        if changes_made or ("api_url" in data and "api_key" in data):
             with open(LOG_FILE, 'a') as f:
                 f.write(f"{timestamp} - huntarr-web - INFO - Settings updated by user\n")
+                
+                # Log connection changes if any
+                if "api_url" in data and "api_key" in data:
+                    api_url_masked = data["api_url"]
+                    api_key_masked = "****" + data["api_key"][-4:] if len(data["api_key"]) > 4 else "****" if data["api_key"] else ""
+                    f.write(f"{timestamp} - huntarr-web - INFO - Updated {app_type} API connection: URL={api_url_masked}, Key={api_key_masked}\n")
+                
+                # Log other changes
                 for key, change in huntarr_changes.items():
                     f.write(f"{timestamp} - huntarr-web - INFO - Changed {key} from {change['old']} to {change['new']}\n")
                 for key, change in advanced_changes.items():
                     f.write(f"{timestamp} - huntarr-web - INFO - Changed advanced.{key} from {change['old']} to {change['new']}\n")
                 for key, change in ui_changes.items():
                     f.write(f"{timestamp} - huntarr-web - INFO - Changed UI.{key} from {change['old']} to {change['new']}\n")
+            
+            # Explicitly save all settings to ensure everything is written to disk
+            all_settings = settings_manager.get_all_settings()
+            settings_manager.save_settings(all_settings)
+            
             return jsonify({"success": True, "message": "Settings saved successfully", "changes_made": True})
         else:
             return jsonify({"success": True, "message": "No changes detected", "changes_made": False})
     except Exception as e:
+        with open(LOG_FILE, 'a') as f:
+            f.write(f"{timestamp} - huntarr-web - ERROR - Error saving settings: {str(e)}\n")
         return jsonify({"success": False, "message": str(e)}), 500
 
 @common_bp.route('/api/settings/reset', methods=['POST'])

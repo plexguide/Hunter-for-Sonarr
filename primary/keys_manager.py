@@ -14,8 +14,8 @@ from typing import Dict, Any, Optional, Tuple
 logging.basicConfig(level=logging.INFO)
 keys_logger = logging.getLogger("keys_manager")
 
-# Settings directory - Changed to match settings_manager.py
-SETTINGS_DIR = pathlib.Path("/config")
+# Settings directory - use the same directory as settings_manager
+SETTINGS_DIR = pathlib.Path("/config/settings")
 SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
 
 SETTINGS_FILE = SETTINGS_DIR / "huntarr.json"
