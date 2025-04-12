@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Setup - Huntarr</title>
+    <!-- Inline script to prevent theme flashing -->
+    <script>
+        // Always use dark mode for setup page
+        document.documentElement.classList.add('dark-theme');
+        document.write('<style>body, html { background-color: #1a1d24 !important; color: #f8f9fa !important; } .login-container { background-color: #252a34 !important; } .login-header { background-color: #121212 !important; }</style>');
+    </script>
+    <!-- Preload logo -->
+    <link rel="preload" href="https://github.com/plexguide/Huntarr/blob/main/logo/64.png?raw=true" as="image" fetchpriority="high">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="/static/favicon.ico">

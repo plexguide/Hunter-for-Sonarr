@@ -7,10 +7,16 @@
     
     // Check for dark mode preference from localStorage
     const prefersDarkMode = localStorage.getItem('huntarr-dark-mode') === 'true';
+    const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    // Apply dark theme immediately if needed
-    if (prefersDarkMode) {
+    // Apply dark theme immediately if needed or if system prefers dark
+    if (prefersDarkMode || (prefersDarkMode === null && systemPrefersDark)) {
         document.documentElement.classList.add('dark-theme');
+        
+        // If no explicit preference, use system preference
+        if (prefersDarkMode === null && systemPrefersDark) {
+            localStorage.setItem('huntarr-dark-mode', 'true');
+        }
         
         // Add inline style to immediately set background color
         // This prevents flash before the CSS files load
@@ -25,6 +31,12 @@
             }
             .top-bar {
                 background-color: #252a34 !important;
+            }
+            .login-container {
+                background-color: #252a34 !important;
+            }
+            .login-header {
+                background-color: #121212 !important;
             }
         `;
         document.head.appendChild(style);
