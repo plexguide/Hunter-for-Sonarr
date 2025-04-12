@@ -58,15 +58,18 @@ def user_exists() -> bool:
 def create_user(username: str, password: str) -> bool:
     """Create a new user"""
     if not username or not password:
+        print("Error: Username or password is empty")
         return False
         
     # Ensure user directory exists with proper permissions
+    print(f"Creating user directory: {USER_DIR}")
     USER_DIR.mkdir(parents=True, exist_ok=True)
     try:
         # Set appropriate permissions if not running as root
+        print(f"Setting permissions on directory: {USER_DIR}")
         os.chmod(USER_DIR, 0o755)
-    except:
-        pass
+    except Exception as e:
+        print(f"Warning: Could not set permissions on directory: {e}")
         
     # Hash the username and password
     username_hash = hash_username(username)
@@ -82,13 +85,16 @@ def create_user(username: str, password: str) -> bool:
     }
     
     try:
+        print(f"Writing user file: {USER_FILE}")
         with open(USER_FILE, 'w') as f:
             json.dump(user_data, f)
         # Set appropriate permissions on the file
         try:
+            print(f"Setting permissions on file: {USER_FILE}")
             os.chmod(USER_FILE, 0o644)
-        except:
-            pass
+        except Exception as e:
+            print(f"Warning: Could not set permissions on file: {e}")
+        print("User creation successful")
         return True
     except Exception as e:
         print(f"Error creating user: {e}")

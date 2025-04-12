@@ -72,23 +72,37 @@ def api_setup():
     username = data.get('username')
     password = data.get('password')
     confirm_password = data.get('confirm_password')
-    if not username or not password:
-        return jsonify({"success": False, "message": "Username and password required"}), 400
+    
+    # Add more detailed validation
+    if not username:
+        return jsonify({"success": False, "message": "Username is required"}), 400
+    if not password:
+        return jsonify({"success": False, "message": "Password is required"}), 400
     if password != confirm_password:
         return jsonify({"success": False, "message": "Passwords do not match"}), 400
+    
+    # Log setup attempt
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(LOG_FILE, 'a') as f:
         f.write(f"{timestamp} - huntarr-web - INFO - Attempting to create first user: {username}\n")
-    if create_user(username, password):
+    
+    # Try to create user and catch specific exceptions
+    try:
+        success = create_user(username, password)
+        if success:
+            with open(LOG_FILE, 'a') as f:
+                f.write(f"{timestamp} - huntarr-web - INFO - Successfully created first user\n")
+            session_id = create_session(username)
+            session[SESSION_COOKIE_NAME] = session_id
+            return jsonify({"success": True})
+        else:
+            with open(LOG_FILE, 'a') as f:
+                f.write(f"{timestamp} - huntarr-web - ERROR - Failed to create user\n")
+            return jsonify({"success": False, "message": "Failed to create user account"}), 500
+    except Exception as e:
         with open(LOG_FILE, 'a') as f:
-            f.write(f"{timestamp} - huntarr-web - INFO - Successfully created first user\n")
-        session_id = create_session(username)
-        session[SESSION_COOKIE_NAME] = session_id
-        return jsonify({"success": True})
-    else:
-        with open(LOG_FILE, 'a') as f:
-            f.write(f"{timestamp} - huntarr-web - ERROR - Failed to create user - check permissions\n")
-        return jsonify({"success": False, "message": "Failed to create user - check directory permissions"}), 500
+            f.write(f"{timestamp} - huntarr-web - ERROR - Exception during user creation: {str(e)}\n")
+        return jsonify({"success": False, "message": f"Error creating user: {str(e)}"}), 500
 
 @common_bp.route('/api/login', methods=['POST'])
 def api_login():

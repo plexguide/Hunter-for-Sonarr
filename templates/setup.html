@@ -318,7 +318,7 @@
                     return;
                 }
                 
-                // Create user account
+                // Create user account with improved error handling
                 fetch('/api/setup', {
                     method: 'POST',
                     headers: {
@@ -330,7 +330,15 @@
                         confirm_password: confirmPassword
                     })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    // Check if response is ok before parsing JSON
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         accountCreated = true;
@@ -357,7 +365,7 @@
                 })
                 .catch(error => {
                     console.error('Setup error:', error);
-                    showError('An error occurred. Please try again.');
+                    showError('Error: ' + error.message);
                 });
             });
             
