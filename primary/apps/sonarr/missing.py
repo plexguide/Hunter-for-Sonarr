@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Missing Episode Processing for Sonarr
+Missing Episodes Processing for Sonarr
 Handles searching for missing episodes in Sonarr
 """
 
@@ -10,239 +10,229 @@ import datetime
 import os
 import json
 from typing import List, Callable, Dict, Optional
-from primary.utils.logger import get_logger, debug_log
-from primary.config import (
-    MONITORED_ONLY, 
-    SKIP_FUTURE_EPISODES,
-    SKIP_SERIES_REFRESH
-)
+from primary.utils.logger import get_logger
+from primary.config import MONITORED_ONLY
 from primary import settings_manager
-from primary.api import (
-    get_episodes_for_series, 
-    refresh_series, 
-    episode_search_episodes, 
-    get_series_with_missing_episodes,
-    arr_request,
-    get_missing_episodes
-)
 from primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
 
 # Get app-specific logger
 logger = get_logger("sonarr")
 
-def get_missing_total_pages(pageSize: int = 200) -> int:
+def get_missing_episodes():
     """
-    Calculates the total number of pages for missing episodes.
-    Returns the number of pages, or 0 if no missing episodes.
-    Returns -1 if there was an API error.
+    Get a list of missing episodes from Sonarr.
+    
+    Returns:
+        A list of episode objects that are missing
     """
-    response = get_missing_episodes(pageSize=1)  # Get just 1 to get total count
-    if not response:
-        logger.error("Failed to get missing episodes data from API")
-        return -1
+    from primary.apps.sonarr.api import arr_request
     
-    if "totalRecords" not in response:
-        logger.error("Missing totalRecords in API response")
-        return -1
+    # Get missing episodes from Sonarr API
+    params = "pageSize=1000"
+    if MONITORED_ONLY:
+        params += "&monitored=true"
     
-    total_records = response.get("totalRecords", 0)
-    if not isinstance(total_records, int) or total_records < 1:
-        logger.info("No missing episodes found")
-        return 0
+    episodes = arr_request(f"wanted/missing?{params}")
+    if not episodes or "records" not in episodes:
+        return []
     
-    # Calculate total pages based on pageSize
-    total_pages = (total_records + pageSize - 1) // pageSize
-    logger.debug(f"Total missing episodes: {total_records}, pages: {total_pages}")
-    return max(total_pages, 1)
+    return episodes.get("records", [])
 
-def get_missing(page: int) -> Optional[Dict]:
-    """Get a page of missing episodes."""
-    return get_missing_episodes(pageSize=200)
+def episode_search(episode_ids: List[int]) -> bool:
+    """
+    Trigger a search for one or more episodes.
+    
+    Args:
+        episode_ids: A list of episode IDs to search for
+        
+    Returns:
+        True if the search command was successful, False otherwise
+    """
+    from primary.apps.sonarr.api import arr_request
+    
+    endpoint = "command"
+    data = {
+        "name": "EpisodeSearch",
+        "episodeIds": episode_ids
+    }
+    
+    response = arr_request(endpoint, method="POST", data=data)
+    if response:
+        logger.debug(f"Triggered search for episode IDs: {episode_ids}")
+        return True
+    return False
+
+def refresh_series(series_id: int) -> bool:
+    """
+    Refresh a series in Sonarr.
+    
+    Args:
+        series_id: The ID of the series to refresh
+        
+    Returns:
+        True if the refresh was successful, False otherwise
+    """
+    from primary.apps.sonarr.api import arr_request
+    
+    endpoint = "command"
+    data = {
+        "name": "RefreshSeries",
+        "seriesId": series_id
+    }
+    
+    response = arr_request(endpoint, method="POST", data=data)
+    if response:
+        logger.debug(f"Refreshed series ID {series_id}")
+        return True
+    return False
 
 def process_missing_episodes(restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
     """
     Process episodes that are missing from the library.
-
+    
     Args:
         restart_cycle_flag: Function that returns whether to restart the cycle
-
+    
     Returns:
         True if any processing was done, False otherwise
     """
     # Reload settings to ensure the latest values are used
     from primary.config import refresh_settings
     refresh_settings("sonarr")
-
+    
     # Get the current value directly at the start of processing
-    HUNT_MISSING_SHOWS = settings_manager.get_setting("huntarr", "hunt_missing_shows", 1)
+    HUNT_MISSING_EPISODES = settings_manager.get_setting("huntarr", "hunt_missing_episodes", 1)
     RANDOM_MISSING = settings_manager.get_setting("advanced", "random_missing", True)
+    SKIP_SERIES_REFRESH = settings_manager.get_setting("advanced", "skip_series_refresh", False)
     
     # Get app-specific state file
     PROCESSED_MISSING_FILE = get_state_file_path("sonarr", "processed_missing")
-
+    
     logger.info("=== Checking for Missing Episodes ===")
-
-    # Skip if HUNT_MISSING_SHOWS is set to 0
-    if HUNT_MISSING_SHOWS <= 0:
-        logger.info("HUNT_MISSING_SHOWS is set to 0, skipping missing episodes")
+    
+    # Skip if HUNT_MISSING_EPISODES is set to 0
+    if HUNT_MISSING_EPISODES <= 0:
+        logger.info("HUNT_MISSING_EPISODES is set to 0, skipping missing episodes")
         return False
-
+    
     # Check for restart signal
     if restart_cycle_flag():
         logger.info("🔄 Received restart signal before starting missing episodes. Aborting...")
         return False
-
-    total_pages = get_missing_total_pages()
-
-    # If we got an error (-1) from the API request, return early
-    if total_pages < 0:
-        logger.error("Failed to get missing data due to API error. Skipping this cycle.")
-        return False
-
-    if total_pages == 0:
+    
+    # Get missing episodes
+    logger.info("Retrieving episodes with missing files...")
+    missing_episodes = get_missing_episodes()
+    
+    if not missing_episodes:
         logger.info("No missing episodes found.")
         return False
-
-    # Check for restart signal
+    
+    # Check for restart signal after retrieving episodes
     if restart_cycle_flag():
-        logger.info("🔄 Received restart signal after getting total pages. Aborting...")
+        logger.info("🔄 Received restart signal after retrieving missing episodes. Aborting...")
         return False
-
-    logger.info(f"Found {total_pages} total pages of missing episodes.")
+    
+    logger.info(f"Found {len(missing_episodes)} episodes with missing files.")
     processed_missing_ids = load_processed_ids(PROCESSED_MISSING_FILE)
     episodes_processed = 0
     processing_done = False
-
-    # Use RANDOM_MISSING setting
-    should_use_random = RANDOM_MISSING
-
-    logger.info(f"Using {'random' if should_use_random else 'sequential'} selection for missing episodes (RANDOM_MISSING={should_use_random})")
-
-    # Initialize page variable for both modes
-    page = 1
-
-    while True:
-        # Check for restart signal at the beginning of each page processing
+    
+    # Filter out already processed episodes
+    unprocessed_episodes = [ep for ep in missing_episodes if ep.get("id") not in processed_missing_ids]
+    
+    if not unprocessed_episodes:
+        logger.info("All missing episodes have already been processed. Skipping.")
+        return False
+    
+    logger.info(f"Found {len(unprocessed_episodes)} missing episodes that haven't been processed yet.")
+    
+    # Randomize if requested
+    if RANDOM_MISSING:
+        logger.info("Using random selection for missing episodes (RANDOM_MISSING=true)")
+        random.shuffle(unprocessed_episodes)
+    else:
+        logger.info("Using sequential selection for missing episodes (RANDOM_MISSING=false)")
+        # Sort by air date for consistent ordering
+        unprocessed_episodes.sort(key=lambda x: x.get("airDateUtc", ""))
+    
+    # Check for restart signal before processing episodes
+    if restart_cycle_flag():
+        logger.info("🔄 Received restart signal before processing episodes. Aborting...")
+        return False
+    
+    # Process up to HUNT_MISSING_EPISODES episodes
+    for episode in unprocessed_episodes:
+        # Check for restart signal before each episode
         if restart_cycle_flag():
-            logger.info("🔄 Received restart signal at start of page loop. Aborting...")
+            logger.info("🔄 Received restart signal during episode processing. Aborting...")
             break
-
-        # Check again to make sure we're using the current limit
-        # This ensures if settings changed during processing, we use the new value
-        current_limit = settings_manager.get_setting("huntarr", "hunt_missing_shows", 1)
-
+        
+        # Check again for the current limit in case it was changed during processing
+        current_limit = settings_manager.get_setting("huntarr", "hunt_missing_episodes", 1)
+        
         if episodes_processed >= current_limit:
-            logger.info(f"Reached HUNT_MISSING_SHOWS={current_limit} for this cycle.")
+            logger.info(f"Reached HUNT_MISSING_EPISODES={current_limit} for this cycle.")
             break
-
-        # If random selection is enabled, pick a random page each iteration
-        if should_use_random and total_pages > 1:
-            page = random.randint(1, total_pages)
-        # If sequential and we've reached the end, we're done
-        elif not should_use_random and page > total_pages:
-            break
-
-        logger.info(f"Retrieving missing episodes (page={page} of {total_pages})...")
-        missing_data = get_missing(page)
-
-        # Check for restart signal after retrieving page
-        if restart_cycle_flag():
-            logger.info(f"🔄 Received restart signal after retrieving page {page}. Aborting...")
-            break
-
-        if not missing_data or "records" not in missing_data:
-            logger.error(f"ERROR: Unable to retrieve missing data from Sonarr on page {page}.")
-
-            # In sequential mode, try the next page
-            if not should_use_random:
-                page += 1
+        
+        episode_id = episode.get("id")
+        series_id = episode.get("seriesId")
+        episode_num = episode.get("episodeNumber", "?")
+        season_num = episode.get("seasonNumber", "?")
+        series_title = episode.get("series", {}).get("title", "Unknown Series")
+        episode_title = episode.get("title", "Unknown Title")
+        
+        # Get air date info
+        air_date = "Unknown"
+        if "airDateUtc" in episode:
+            air_date_str = episode.get("airDateUtc", "")
+            try:
+                air_date = datetime.datetime.strptime(air_date_str.split('T')[0], "%Y-%m-%d").strftime("%b %d, %Y")
+            except (ValueError, IndexError):
+                air_date = air_date_str
+        
+        logger.info(f"Processing missing episode: {series_title} - S{season_num:02d}E{episode_num:02d} - \"{episode_title}\" (Aired: {air_date}) (Episode ID: {episode_id})")
+        
+        # Refresh the series information if SKIP_SERIES_REFRESH is false
+        if not SKIP_SERIES_REFRESH and series_id is not None:
+            logger.info(" - Refreshing series information...")
+            refresh_res = refresh_series(series_id)
+            if not refresh_res:
+                logger.warning("WARNING: Refresh command failed. Skipping this episode.")
                 continue
-            else:
-                break
-
-        episodes = missing_data["records"]
-        total_eps = len(episodes)
-        logger.info(f"Found {total_eps} episodes on page {page} that are missing.")
-
-        # Randomize or sequential indices within the page
-        indices = list(range(total_eps))
-        if should_use_random:
-            random.shuffle(indices)
-
-        # Check for restart signal before processing episodes
+            logger.info(f"Refresh command completed successfully.")
+            
+            # Small delay after refresh to allow Sonarr to process
+            time.sleep(2)
+        else:
+            reason = "SKIP_SERIES_REFRESH=true" if SKIP_SERIES_REFRESH else "series_id is None"
+            logger.info(f" - Skipping series refresh ({reason})")
+        
+        # Check for restart signal before searching
         if restart_cycle_flag():
-            logger.info(f"🔄 Received restart signal before processing episodes on page {page}. Aborting...")
+            logger.info(f"🔄 Received restart signal before searching for {series_title} - S{season_num:02d}E{episode_num:02d}. Aborting...")
             break
-
-        for idx in indices:
-            # Check for restart signal before each episode
-            if restart_cycle_flag():
-                logger.info(f"🔄 Received restart signal during episode processing. Aborting...")
-                break
-
-            # Check again for the current limit in case it was changed during processing
-            current_limit = settings_manager.get_setting("huntarr", "hunt_missing_shows", 1)
-
-            if episodes_processed >= current_limit:
-                break
-
-            ep_obj = episodes[idx]
-            episode_id = ep_obj.get("id")
-            if not episode_id or episode_id in processed_missing_ids:
-                continue
-
-            series_id = ep_obj.get("seriesId")
-            season_num = ep_obj.get("seasonNumber")
-            ep_num = ep_obj.get("episodeNumber")
-            ep_title = ep_obj.get("title", "Unknown Episode Title")
-
-            series_title = ep_obj.get("seriesTitle", None)
-            if not series_title:
-                # fallback: request the series
-                series_data = arr_request(f"series/{series_id}", method="GET")
-                if series_data:
-                    series_title = series_data.get("title", "Unknown Series")
-                else:
-                    series_title = "Unknown Series"
-
-            logger.info(f"Processing missing episode for \"{series_title}\" - S{season_num}E{ep_num} - \"{ep_title}\" (Episode ID: {episode_id})")
-
-            # Search for the episode (missing)
-            logger.info(" - Searching for missing episode...")
-            search_res = episode_search_episodes([episode_id])
-            if search_res:
-                logger.info(f"Search command completed successfully.")
-                # Mark processed
-                save_processed_id(PROCESSED_MISSING_FILE, episode_id)
-                episodes_processed += 1
-                processing_done = True
-
-                # Log with the current limit, not the initial one
-                current_limit = settings_manager.get_setting("huntarr", "hunt_missing_shows", 1)
-                logger.info(f"Processed {episodes_processed}/{current_limit} missing episodes this cycle.")
-            else:
-                logger.warning(f"WARNING: Search command failed for episode ID {episode_id}.")
-                continue
-
-            # Check for restart signal after processing an episode
-            if restart_cycle_flag():
-                logger.info(f"🔄 Received restart signal after processing episode {ep_title}. Aborting...")
-                break
-
-        # Move to the next page if using sequential mode
-        if not should_use_random:
-            page += 1
-        # In random mode, we just handle one random page this iteration,
-        # then check if we've processed enough episodes or continue to another random page
-
-        # Check for restart signal after processing a page
-        if restart_cycle_flag():
-            logger.info(f"🔄 Received restart signal after processing page {page}. Aborting...")
-            break
-
-    # Log with the current limit, not the initial one
-    current_limit = settings_manager.get_setting("huntarr", "hunt_missing_shows", 1)
+        
+        # Search for the episode
+        logger.info(" - Searching for missing episode...")
+        search_res = episode_search([episode_id])
+        if search_res:
+            logger.info(f"Search command completed successfully.")
+            # Mark as processed
+            save_processed_id(PROCESSED_MISSING_FILE, episode_id)
+            episodes_processed += 1
+            processing_done = True
+            
+            # Log with the current limit, not the initial one
+            current_limit = settings_manager.get_setting("huntarr", "hunt_missing_episodes", 1)
+            logger.info(f"Processed {episodes_processed}/{current_limit} missing episodes this cycle.")
+        else:
+            logger.warning(f"WARNING: Search command failed for episode ID {episode_id}.")
+            continue
+    
+    # Log final status
+    current_limit = settings_manager.get_setting("huntarr", "hunt_missing_episodes", 1)
     logger.info(f"Completed processing {episodes_processed} missing episodes for this cycle.")
     truncate_processed_list(PROCESSED_MISSING_FILE)
-
+    
     return processing_done
