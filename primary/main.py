@@ -14,6 +14,9 @@ import logging
 import threading
 from typing import Dict, List, Optional
 
+# Define the version number
+__version__ = "1.0.0"
+
 # Set up logging first to avoid circular imports
 from primary.utils.logger import setup_logger
 logger = setup_logger()
