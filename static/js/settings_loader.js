@@ -273,52 +273,106 @@ function saveCurrentSettings() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Settings saved successfully!');
+            // Show a non-blocking notification instead of an alert
+            showNotification('Settings saved successfully!', 'success');
             
-            // Give the server a moment to fully process and save the settings
-            setTimeout(() => {
-                // Force a full reload of all settings from the server
-                // This ensures we're showing what's actually in the huntarr.json file
-                fetch('/api/settings/refresh', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(refreshResponse => refreshResponse.json())
-                .then(refreshData => {
-                    console.log('Settings refreshed from server');
-                    
-                    // Now reload the app settings to display the current values
-                    loadAppSettings(app);
-                    
-                    // If we're using a module-specific loadSettings function, call that too
-                    if (window.huntarrApp && window.huntarrApp.currentApp === app) {
-                        if (app === 'sonarr' && window.huntarrApp.sonarrModule && window.huntarrApp.sonarrModule.loadSettings) {
-                            window.huntarrApp.sonarrModule.loadSettings();
-                        } else if (app === 'radarr' && window.huntarrApp.radarrModule && window.huntarrApp.radarrModule.loadSettings) {
-                            window.huntarrApp.radarrModule.loadSettings();
-                        } else if (app === 'lidarr' && window.huntarrApp.lidarrModule && window.huntarrApp.lidarrModule.loadSettings) {
-                            window.huntarrApp.lidarrModule.loadSettings();
-                        } else if (app === 'readarr' && window.huntarrApp.readarrModule && window.huntarrApp.readarrModule.loadSettings) {
-                            window.huntarrApp.readarrModule.loadSettings();
-                        }
-                    }
-                })
-                .catch(refreshError => {
-                    console.error('Error refreshing settings:', refreshError);
-                    // Still try to reload the settings
-                    loadAppSettings(app);
-                });
-            }, 500); // 500ms delay to ensure server processing is complete
+            // Immediately reload settings from server without waiting for user interaction
+            reloadSettingsFromServer(app);
         } else {
-            alert('Error saving settings: ' + (data.message || 'Unknown error'));
+            showNotification('Error saving settings: ' + (data.message || 'Unknown error'), 'error');
         }
     })
     .catch(error => {
         console.error('Error saving settings:', error);
-        alert('Error saving settings: ' + error.message);
+        showNotification('Error saving settings: ' + error.message, 'error');
     });
+}
+
+// Helper function to reload settings from server
+function reloadSettingsFromServer(app) {
+    // Force a full reload of all settings from the server
+    fetch('/api/settings/refresh', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(refreshResponse => refreshResponse.json())
+    .then(refreshData => {
+        console.log('Settings refreshed from server');
+        
+        // Now reload the app settings to display the current values
+        loadAppSettings(app);
+        
+        // If we're using a module-specific loadSettings function, call that too
+        if (window.huntarrApp && window.huntarrApp.currentApp === app) {
+            if (app === 'sonarr' && window.huntarrApp.sonarrModule && window.huntarrApp.sonarrModule.loadSettings) {
+                window.huntarrApp.sonarrModule.loadSettings();
+            } else if (app === 'radarr' && window.huntarrApp.radarrModule && window.huntarrApp.radarrModule.loadSettings) {
+                window.huntarrApp.radarrModule.loadSettings();
+            } else if (app === 'lidarr' && window.huntarrApp.lidarrModule && window.huntarrApp.lidarrModule.loadSettings) {
+                window.huntarrApp.lidarrModule.loadSettings();
+            } else if (app === 'readarr' && window.huntarrApp.readarrModule && window.huntarrApp.readarrModule.loadSettings) {
+                window.huntarrApp.readarrModule.loadSettings();
+            }
+        }
+    })
+    .catch(refreshError => {
+        console.error('Error refreshing settings:', refreshError);
+        // Still try to reload the settings
+        loadAppSettings(app);
+    });
+}
+
+// Show a non-blocking notification instead of using alert()
+function showNotification(message, type = 'info') {
+    // Create or find the notification container
+    let notificationContainer = document.getElementById('notification-container');
+    if (!notificationContainer) {
+        notificationContainer = document.createElement('div');
+        notificationContainer.id = 'notification-container';
+        notificationContainer.style.position = 'fixed';
+        notificationContainer.style.top = '20px';
+        notificationContainer.style.right = '20px';
+        notificationContainer.style.zIndex = '1000';
+        document.body.appendChild(notificationContainer);
+    }
+    
+    // Create the notification element
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.backgroundColor = type === 'success' ? 'rgba(46, 204, 113, 0.9)' : 
+                                         type === 'error' ? 'rgba(231, 76, 60, 0.9)' : 
+                                         'rgba(52, 152, 219, 0.9)';
+    notification.style.color = 'white';
+    notification.style.padding = '12px 20px';
+    notification.style.marginBottom = '10px';
+    notification.style.borderRadius = '4px';
+    notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+    notification.style.display = 'block';
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s ease-in-out';
+    
+    // Add the notification to the container
+    notificationContainer.appendChild(notification);
+    
+    // Fade in
+    setTimeout(() => {
+        notification.style.opacity = '1';
+    }, 10);
+    
+    // Remove after delay
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            notification.remove();
+            // Remove container if empty
+            if (notificationContainer.children.length === 0) {
+                notificationContainer.remove();
+            }
+        }, 300);
+    }, 3000);
 }
 
 // Reset current settings to defaults
