@@ -40,6 +40,9 @@ DEFAULT_SETTINGS = {
     }
 }
 
+# Update the DEFAULT_CONFIGS_FILE path
+DEFAULT_CONFIGS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'default_configs.json')
+
 # Load default configurations from file
 def load_default_configs():
     """Load default configurations for all supported apps"""
@@ -133,6 +136,18 @@ def load_settings() -> Dict[str, Any]:
             else:
                 # Put environment variables in the appropriate app section
                 settings[app_type][key] = value
+        
+        # Load default configs from file
+        default_configs = {}
+        if os.path.exists(DEFAULT_CONFIGS_FILE):
+            try:
+                with open(DEFAULT_CONFIGS_FILE, 'r') as f:
+                    default_configs = json.load(f)
+                settings_logger.info(f"Loaded default configs from {DEFAULT_CONFIGS_FILE}")
+            except Exception as e:
+                settings_logger.error(f"Error loading default configs from {DEFAULT_CONFIGS_FILE}: {e}")
+        else:
+            settings_logger.warning(f"Default configs file not found at {DEFAULT_CONFIGS_FILE}")
         
         # Finally, load user settings from file (highest priority)
         if SETTINGS_FILE.exists():
