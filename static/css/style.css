@@ -639,8 +639,8 @@ input:checked + .slider:before {
 .toggle-switch {
     position: relative;
     display: inline-block;
-    width: 36px; /* Reduced from 50px */
-    height: 20px; /* Reduced from 24px */
+    width: 40px; /* Changed to match login page toggle (40px) */
+    height: 20px;
     flex-shrink: 0;
 }
 
@@ -665,10 +665,10 @@ input:checked + .slider:before {
 .toggle-slider:before {
     position: absolute;
     content: "";
-    height: 14px; /* Reduced from 16px */
-    width: 14px; /* Reduced from 16px */
-    left: 3px; /* Adjusted from 4px */
-    bottom: 3px; /* Adjusted from 4px */
+    height: 12px; /* Changed to match login page toggle (12px) */
+    width: 12px; /* Changed to match login page toggle (12px) */
+    left: 4px; /* Changed to match login page toggle */
+    bottom: 4px; /* Changed to match login page toggle */
     background-color: white;
     transition: .4s;
     border-radius: 50%;
@@ -679,7 +679,7 @@ input:checked + .toggle-slider {
 }
 
 input:checked + .toggle-slider:before {
-    transform: translateX(16px); /* Reduced from 26px */
+    transform: translateX(20px); /* Changed to match login page toggle (20px) */
 }
 
 /* Responsive Adjustments */
