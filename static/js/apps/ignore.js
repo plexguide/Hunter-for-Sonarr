@@ -11,21 +11,21 @@
             // Settings form elements
             huntMissingShowsInput: document.getElementById('hunt_missing_shows'),
             huntUpgradeEpisodesInput: document.getElementById('hunt_upgrade_episodes'),
-            sleepDurationInput: document.getElementById('sonarr_sleep_duration'),
-            sleepDurationHoursSpan: document.getElementById('sonarr_sleep_duration_hours'),
-            stateResetIntervalInput: document.getElementById('sonarr_state_reset_interval_hours'),
-            monitoredOnlyInput: document.getElementById('sonarr_monitored_only'),
-            randomMissingInput: document.getElementById('sonarr_random_missing'),
-            randomUpgradesInput: document.getElementById('sonarr_random_upgrades'),
+            sleepDurationInput: document.getElementById('sleep_duration'),
+            sleepDurationHoursSpan: document.getElementById('sleep_duration_hours'),
+            stateResetIntervalInput: document.getElementById('state_reset_interval_hours'),
+            monitoredOnlyInput: document.getElementById('monitored_only'),
+            randomMissingInput: document.getElementById('random_missing'),
+            randomUpgradesInput: document.getElementById('random_upgrades'),
             skipFutureEpisodesInput: document.getElementById('skip_future_episodes'),
             skipSeriesRefreshInput: document.getElementById('skip_series_refresh'),
             
             // Advanced settings
-            apiTimeoutInput: document.getElementById('sonarr_api_timeout'),
-            debugModeInput: document.getElementById('sonarr_debug_mode'),
-            commandWaitDelayInput: document.getElementById('sonarr_command_wait_delay'),
-            commandWaitAttemptsInput: document.getElementById('sonarr_command_wait_attempts'),
-            minimumDownloadQueueSizeInput: document.getElementById('sonarr_minimum_download_queue_size')
+            apiTimeoutInput: document.getElementById('api_timeout'),
+            debugModeInput: document.getElementById('debug_mode'),
+            commandWaitDelayInput: document.getElementById('command_wait_delay'),
+            commandWaitAttemptsInput: document.getElementById('command_wait_attempts'),
+            minimumDownloadQueueSizeInput: document.getElementById('minimum_download_queue_size')
         },
         
         init: function() {
