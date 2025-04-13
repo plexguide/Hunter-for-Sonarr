@@ -651,7 +651,7 @@ input:checked + .slider:before {
 .toggle-switch {
     position: relative;
     display: inline-block;
-    width: 36px; /* Reduced from 50px */
+    width: 10px; /* Reduced from 50px */
     height: 20px; /* Reduced from 24px */
     flex-shrink: 0;
 }
