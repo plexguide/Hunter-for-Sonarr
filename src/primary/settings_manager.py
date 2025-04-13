@@ -41,45 +41,39 @@ DEFAULT_SETTINGS = {
 }
 
 # Update the DEFAULT_CONFIGS_FILE path
-DEFAULT_CONFIGS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'default_configs.json')
+DEFAULT_CONFIGS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'default_configs.json')
 
-# Include hard-coded default config directly in the file
-
-# Add hardcoded default configs for each app type
-DEFAULT_CONFIGS = {
-  "sonarr": {
-    "huntarr": {
-      "hunt_missing_shows": 1,
-      "hunt_upgrade_episodes": 0,
-      "monitored_only": True,
-      "skip_future_episodes": True,
-      "skip_series_refresh": False,
-      "log_refresh_interval_seconds": 30
-    },
-    "advanced": {
-      "api_timeout": 60,
-      "command_wait_delay": 1,
-      "command_wait_attempts": 600,
-      "minimum_download_queue_size": -1,
-      "debug_mode": False,
-      "random_missing": True,
-      "random_upgrades": True
+# Load default configurations from file
+try:
+    with open(DEFAULT_CONFIGS_FILE, 'r') as f:
+        DEFAULT_CONFIGS = json.load(f)
+    settings_logger.info(f"Loaded default configs from {DEFAULT_CONFIGS_FILE}")
+except Exception as e:
+    settings_logger.error(f"Error loading default configs from {DEFAULT_CONFIGS_FILE}: {e}")
+    # Include hard-coded default config as fallback
+    DEFAULT_CONFIGS = {
+      "sonarr": {
+        "huntarr": {
+          "hunt_missing_shows": 1,
+          "hunt_upgrade_episodes": 0,
+          "monitored_only": True,
+          "skip_future_episodes": True,
+          "skip_series_refresh": False,
+          "log_refresh_interval_seconds": 30
+        },
+        "advanced": {
+          "api_timeout": 60,
+          "command_wait_delay": 1,
+          "command_wait_attempts": 600,
+          "minimum_download_queue_size": -1,
+          "debug_mode": False,
+          "random_missing": True,
+          "random_upgrades": True
+        }
+      },
+      # Other app types would be included here in the fallback
     }
-  },
-  "radarr": {
-    # Same structure as sonarr with appropriate key changes
-    # ...existing code...
-  },
-  "lidarr": {
-    # Same structure
-    # ...existing code...
-  },
-  "readarr": {
-    # Same structure
-    # ...existing code...
-  }
-}
-
+    
 def get_default_config_for_app(app_type: str) -> Dict[str, Any]:
     """Get default config for a specific app type"""
     if app_type in DEFAULT_CONFIGS:
