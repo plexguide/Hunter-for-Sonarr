@@ -23,9 +23,7 @@ const SettingsForms = {
                     <p class="setting-help">API key for Sonarr</p>
                 </div>
                 <div class="setting-item">
-                    <button id="testSonarrConnection" class="test-button">
-                        <i class="fas fa-plug"></i> Test Connection
-                    </button>
+                    <!-- Remove test connection button but keep status indicator -->
                     <span id="sonarrConnectionStatus" class="connection-badge not-connected">Not Configured</span>
                 </div>
             </div>
@@ -131,9 +129,7 @@ const SettingsForms = {
                     <p class="setting-help">API key for Radarr</p>
                 </div>
                 <div class="setting-item">
-                    <button id="testRadarrConnection" class="test-button">
-                        <i class="fas fa-plug"></i> Test Connection
-                    </button>
+                    <!-- Remove test connection button but keep status indicator -->
                     <span id="radarrConnectionStatus" class="connection-badge not-connected">Not Configured</span>
                 </div>
             </div>
@@ -239,9 +235,7 @@ const SettingsForms = {
                     <p class="setting-help">API key for Lidarr</p>
                 </div>
                 <div class="setting-item">
-                    <button id="testLidarrConnection" class="test-button">
-                        <i class="fas fa-plug"></i> Test Connection
-                    </button>
+                    <!-- Remove test connection button but keep status indicator -->
                     <span id="lidarrConnectionStatus" class="connection-badge not-connected">Not Configured</span>
                 </div>
             </div>

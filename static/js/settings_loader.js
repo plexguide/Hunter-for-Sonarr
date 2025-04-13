@@ -99,81 +99,15 @@ function setupTabSwitching() {
     });
 }
 
-// Set up test connection buttons
+// Set up test connection buttons - remove this function or empty it
 function setupTestConnectionButtons() {
-    // Sonarr connection test
-    const sonarrTestBtn = document.getElementById('testSonarrConnection');
-    if (sonarrTestBtn) {
-        sonarrTestBtn.addEventListener('click', function() {
-            testConnection('sonarr');
-        });
-    }
-    
-    // Radarr connection test
-    const radarrTestBtn = document.getElementById('testRadarrConnection');
-    if (radarrTestBtn) {
-        radarrTestBtn.addEventListener('click', function() {
-            testConnection('radarr');
-        });
-    }
-    
-    // Lidarr connection test
-    const lidarrTestBtn = document.getElementById('testLidarrConnection');
-    if (lidarrTestBtn) {
-        lidarrTestBtn.addEventListener('click', function() {
-            testConnection('lidarr');
-        });
-    }
+    // Function emptied - no longer setting up test connection buttons
 }
 
-// Test connection function
-function testConnection(app) {
-    const apiUrlElem = document.getElementById(`${app}_api_url`);
-    const apiKeyElem = document.getElementById(`${app}_api_key`);
-    const statusElem = document.getElementById(`${app}ConnectionStatus`);
-    
-    if (!apiUrlElem || !apiKeyElem || !statusElem) {
-        console.error(`Missing elements for ${app} connection test`);
-        return;
-    }
-    
-    const apiUrl = apiUrlElem.value;
-    const apiKey = apiKeyElem.value;
-    
-    if (!apiUrl || !apiKey) {
-        alert(`Please enter both URL and API Key for ${app.charAt(0).toUpperCase() + app.slice(1)}`);
-        return;
-    }
-    
-    statusElem.textContent = 'Testing...';
-    statusElem.className = 'connection-badge testing';
-    
-    fetch(`/api/${app}/test-connection`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            api_url: apiUrl,
-            api_key: apiKey
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            statusElem.textContent = 'Connected';
-            statusElem.className = 'connection-badge connected';
-        } else {
-            statusElem.textContent = data.message || 'Connection Failed';
-            statusElem.className = 'connection-badge not-connected';
-        }
-    })
-    .catch(error => {
-        console.error(`Error testing ${app} connection:`, error);
-        statusElem.textContent = 'Error';
-        statusElem.className = 'connection-badge not-connected';
-    });
-}
+// Test connection function - can be removed if not used elsewhere
+// function testConnection(app) {
+//     // This entire function can be removed if not referenced elsewhere
+// }
 
 // Set up save and reset buttons
 function setupSettingsButtons() {

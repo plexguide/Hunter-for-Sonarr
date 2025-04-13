@@ -8,7 +8,6 @@
             apiUrlInput: document.getElementById('radarr_api_url'),
             apiKeyInput: document.getElementById('radarr_api_key'),
             connectionStatus: document.getElementById('radarrConnectionStatus'),
-            testConnectionButton: document.getElementById('testRadarrConnection'),
             
             // Settings form elements
             huntMissingMoviesInput: document.getElementById('hunt_missing_movies'),
@@ -125,7 +124,7 @@
                                 // Update configured status
                                 app.configuredApps.radarr = !!(appData.api_url && appData.api_key);
                                 
-                                // Update connection status
+                                // Update connection status display without test button dependency
                                 if (this.elements.connectionStatus) {
                                     if (appData.api_url && appData.api_key) {
                                         this.elements.connectionStatus.textContent = 'Configured';

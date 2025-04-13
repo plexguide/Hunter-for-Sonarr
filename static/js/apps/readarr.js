@@ -8,7 +8,6 @@
             apiUrlInput: document.getElementById('readarr_api_url'),
             apiKeyInput: document.getElementById('readarr_api_key'),
             connectionStatus: document.getElementById('readarrConnectionStatus'),
-            testConnectionButton: document.getElementById('testReadarrConnection'),
             
             // Settings form elements
             huntMissingBooksInput: document.getElementById('hunt_missing_books'),
@@ -46,13 +45,6 @@
                     originalLoadSettings.call(this, appType);
                 }
             };
-            
-            // Wire up the specific test connection
-            if (this.elements.testConnectionButton) {
-                this.elements.testConnectionButton.addEventListener('click', () => {
-                    app.testConnection('readarr', this.elements.apiUrlInput, this.elements.apiKeyInput, this.elements.connectionStatus);
-                });
-            }
         },
         
         setupEventListeners: function() {
@@ -132,7 +124,7 @@
                                 // Update configured status
                                 app.configuredApps.readarr = !!(appData.api_url && appData.api_key);
                                 
-                                // Update connection status
+                                // Update connection status display without test button dependency
                                 if (this.elements.connectionStatus) {
                                     if (appData.api_url && appData.api_key) {
                                         this.elements.connectionStatus.textContent = 'Configured';

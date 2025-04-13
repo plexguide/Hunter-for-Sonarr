@@ -8,7 +8,6 @@
             apiUrlInput: document.getElementById('sonarr_api_url'),
             apiKeyInput: document.getElementById('sonarr_api_key'),
             connectionStatus: document.getElementById('sonarrConnectionStatus'),
-            testConnectionButton: document.getElementById('testSonarrConnection'),
             
             // Settings form elements
             huntMissingShowsInput: document.getElementById('hunt_missing_shows'),
@@ -91,13 +90,6 @@
                     this.checkForChanges();
                 });
             }
-            
-            // Wire up the specific test connection
-            if (this.elements.testConnectionButton) {
-                this.elements.testConnectionButton.addEventListener('click', () => {
-                    app.testConnection('sonarr', this.elements.apiUrlInput, this.elements.apiKeyInput, this.elements.connectionStatus);
-                });
-            }
         },
         
         updateSleepDurationDisplay: function() {
@@ -132,7 +124,7 @@
                                 // Update configured status
                                 app.configuredApps.sonarr = !!(appData.api_url && appData.api_key);
                                 
-                                // Update connection status
+                                // Update connection status display without test button dependency
                                 if (this.elements.connectionStatus) {
                                     if (appData.api_url && appData.api_key) {
                                         this.elements.connectionStatus.textContent = 'Configured';
