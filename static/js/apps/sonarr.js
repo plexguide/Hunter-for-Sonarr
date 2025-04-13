@@ -7,7 +7,6 @@
         elements: {
             apiUrlInput: document.getElementById('sonarr_api_url'),
             apiKeyInput: document.getElementById('sonarr_api_key'),
-            connectionStatus: document.getElementById('sonarrConnectionStatus'),
             
             // Settings form elements
             huntMissingShowsInput: document.getElementById('hunt_missing_shows'),
@@ -123,17 +122,6 @@
                                 
                                 // Update configured status
                                 app.configuredApps.sonarr = !!(appData.api_url && appData.api_key);
-                                
-                                // Update connection status display without test button dependency
-                                if (this.elements.connectionStatus) {
-                                    if (appData.api_url && appData.api_key) {
-                                        this.elements.connectionStatus.textContent = 'Configured';
-                                        this.elements.connectionStatus.className = 'connection-badge connected';
-                                    } else {
-                                        this.elements.connectionStatus.textContent = 'Not Configured';
-                                        this.elements.connectionStatus.className = 'connection-badge not-connected';
-                                    }
-                                }
                             }
                             
                             // Sonarr-specific settings
@@ -203,11 +191,6 @@
                             this.elements.apiUrlInput.dataset.originalValue = '';
                             this.elements.apiKeyInput.dataset.originalValue = '';
                             app.configuredApps.sonarr = false;
-                            
-                            if (this.elements.connectionStatus) {
-                                this.elements.connectionStatus.textContent = 'Not Configured';
-                                this.elements.connectionStatus.className = 'connection-badge not-connected';
-                            }
                             
                             // Update home page connection status
                             app.updateHomeConnectionStatus();

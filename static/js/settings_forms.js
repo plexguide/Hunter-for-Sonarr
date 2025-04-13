@@ -22,10 +22,7 @@ const SettingsForms = {
                     <input type="text" id="sonarr_api_key" value="${settings.api_key || ''}">
                     <p class="setting-help">API key for Sonarr</p>
                 </div>
-                <div class="setting-item">
-                    <!-- Remove test connection button but keep status indicator -->
-                    <span id="sonarrConnectionStatus" class="connection-badge not-connected">Not Configured</span>
-                </div>
+                <!-- Removed the connection status indicator -->
             </div>
             
             <div class="settings-group">
@@ -128,10 +125,7 @@ const SettingsForms = {
                     <input type="text" id="radarr_api_key" value="${settings.api_key || ''}">
                     <p class="setting-help">API key for Radarr</p>
                 </div>
-                <div class="setting-item">
-                    <!-- Remove test connection button but keep status indicator -->
-                    <span id="radarrConnectionStatus" class="connection-badge not-connected">Not Configured</span>
-                </div>
+                <!-- Removed the connection status indicator -->
             </div>
             
             <div class="settings-group">
@@ -234,10 +228,7 @@ const SettingsForms = {
                     <input type="text" id="lidarr_api_key" value="${settings.api_key || ''}">
                     <p class="setting-help">API key for Lidarr</p>
                 </div>
-                <div class="setting-item">
-                    <!-- Remove test connection button but keep status indicator -->
-                    <span id="lidarrConnectionStatus" class="connection-badge not-connected">Not Configured</span>
-                </div>
+                <!-- Removed the connection status indicator -->
             </div>
             
             <div class="settings-group">
