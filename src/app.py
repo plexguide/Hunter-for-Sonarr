@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, session, redirect
-from primary.auth import verify_user, create_session, authenticate_request, SESSION_COOKIE_NAME, user_exists
+from src.primary.auth import verify_user, create_session, authenticate_request, SESSION_COOKIE_NAME, user_exists
 import os
 
 # Configure Flask to use templates and static files from the frontend folder

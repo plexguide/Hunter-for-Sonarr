@@ -10,10 +10,10 @@ import datetime
 import os
 import json
 from typing import List, Callable, Dict, Optional
-from primary.utils.logger import get_logger
-from primary.config import MONITORED_ONLY
-from primary import settings_manager
-from primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
+from src.primary.utils.logger import get_logger
+from src.primary.config import MONITORED_ONLY
+from src.primary import settings_manager
+from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
 
 # Get app-specific logger
 logger = get_logger("sonarr")

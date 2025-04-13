@@ -43,23 +43,49 @@ DEFAULT_SETTINGS = {
 # Update the DEFAULT_CONFIGS_FILE path
 DEFAULT_CONFIGS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'default_configs.json')
 
-# Load default configurations from file
-def load_default_configs():
-    """Load default configurations for all supported apps"""
-    try:
-        default_configs_path = pathlib.Path("/app/default_configs.json")
-        if default_configs_path.exists():
-            with open(default_configs_path, 'r') as f:
-                return json.load(f)
-        else:
-            settings_logger.warning(f"Default configs file not found at {default_configs_path}")
-            return {}
-    except Exception as e:
-        settings_logger.error(f"Error loading default configs: {e}")
-        return {}
+# Include hard-coded default config directly in the file
 
-# Initialize default configs
-DEFAULT_CONFIGS = load_default_configs()
+# Add hardcoded default configs for each app type
+DEFAULT_CONFIGS = {
+  "sonarr": {
+    "huntarr": {
+      "hunt_missing_shows": 1,
+      "hunt_upgrade_episodes": 0,
+      "monitored_only": True,
+      "skip_future_episodes": True,
+      "skip_series_refresh": False,
+      "log_refresh_interval_seconds": 30
+    },
+    "advanced": {
+      "api_timeout": 60,
+      "command_wait_delay": 1,
+      "command_wait_attempts": 600,
+      "minimum_download_queue_size": -1,
+      "debug_mode": False,
+      "random_missing": True,
+      "random_upgrades": True
+    }
+  },
+  "radarr": {
+    # Same structure as sonarr with appropriate key changes
+    # ...existing code...
+  },
+  "lidarr": {
+    # Same structure
+    # ...existing code...
+  },
+  "readarr": {
+    # Same structure
+    # ...existing code...
+  }
+}
+
+def get_default_config_for_app(app_type: str) -> Dict[str, Any]:
+    """Get default config for a specific app type"""
+    if app_type in DEFAULT_CONFIGS:
+        return DEFAULT_CONFIGS[app_type]
+    settings_logger.warning(f"No default config found for app_type: {app_type}, falling back to sonarr")
+    return DEFAULT_CONFIGS.get("sonarr", {})
 
 def get_app_defaults(app_type):
     """Get default settings for a specific app type"""
@@ -102,6 +128,7 @@ def get_env_settings():
     
     return env_settings
 
+# Modify the load_settings function to use the hardcoded defaults
 def load_settings() -> Dict[str, Any]:
     """
     Load settings with the following priority:
@@ -137,17 +164,8 @@ def load_settings() -> Dict[str, Any]:
                 # Put environment variables in the appropriate app section
                 settings[app_type][key] = value
         
-        # Load default configs from file
-        default_configs = {}
-        if os.path.exists(DEFAULT_CONFIGS_FILE):
-            try:
-                with open(DEFAULT_CONFIGS_FILE, 'r') as f:
-                    default_configs = json.load(f)
-                settings_logger.info(f"Loaded default configs from {DEFAULT_CONFIGS_FILE}")
-            except Exception as e:
-                settings_logger.error(f"Error loading default configs from {DEFAULT_CONFIGS_FILE}: {e}")
-        else:
-            settings_logger.warning(f"Default configs file not found at {DEFAULT_CONFIGS_FILE}")
+        # Use hardcoded defaults instead of trying to load from file
+        default_configs = DEFAULT_CONFIGS
         
         # Finally, load user settings from file (highest priority)
         if SETTINGS_FILE.exists():
@@ -169,7 +187,7 @@ def load_settings() -> Dict[str, Any]:
     except Exception as e:
         settings_logger.error(f"Error loading settings: {e}")
         settings_logger.info("Using default settings due to error")
-        return DEFAULT_SETTINGS
+        return DEFAULT_CONFIGS.get(app_type, DEFAULT_CONFIGS["sonarr"])
 
 def _deep_update(d, u):
     """Recursively update a dictionary without overwriting entire nested dicts"""

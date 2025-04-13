@@ -10,11 +10,11 @@ import datetime
 import os
 import json
 from typing import List, Callable, Dict, Optional
-from primary.utils.logger import get_logger, debug_log
-from primary.config import MONITORED_ONLY
-from primary import settings_manager
-from primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
-from primary.apps.radarr.api import get_movies_with_missing, refresh_movie, movie_search
+from src.primary.utils.logger import get_logger, debug_log
+from src.primary.config import MONITORED_ONLY
+from src.primary import settings_manager
+from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
+from src.primary.apps.radarr.api import get_movies_with_missing, refresh_movie, movie_search
 
 # Get app-specific logger
 logger = get_logger("radarr")
@@ -30,7 +30,7 @@ def process_missing_movies(restart_cycle_flag: Callable[[], bool] = lambda: Fals
         True if any processing was done, False otherwise
     """
     # Reload settings to ensure the latest values are used
-    from primary.config import refresh_settings
+    from src.primary.config import refresh_settings
     refresh_settings("radarr")
 
     # Get the current value directly at the start of processing
