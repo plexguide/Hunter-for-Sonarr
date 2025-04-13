@@ -18,14 +18,14 @@ from typing import Dict, List, Optional
 __version__ = "1.0.0"
 
 # Set up logging first to avoid circular imports
-from primary.utils.logger import setup_logger
+from src.primary.utils.logger import setup_logger
 logger = setup_logger()
 
 # Now import the rest of the modules
-from primary.config import SLEEP_DURATION, MINIMUM_DOWNLOAD_QUEUE_SIZE, log_configuration, refresh_settings
-from primary.state import check_state_reset, calculate_reset_time
-from primary.utils.app_utils import get_ip_address
-from primary import keys_manager
+from src.primary.config import SLEEP_DURATION, MINIMUM_DOWNLOAD_QUEUE_SIZE, log_configuration, refresh_settings
+from src.primary.state import check_state_reset, calculate_reset_time
+from src.primary.utils.app_utils import get_ip_address
+from src.primary import keys_manager
 
 # Flags to indicate if cycles should restart for each app
 restart_cycles = {
@@ -53,8 +53,8 @@ signal.signal(signal.SIGUSR1, signal_handler)
 def force_reload_all_modules():
     """Force reload of all relevant modules to ensure fresh settings"""
     try:
-        importlib.reload(sys.modules['primary.config'])
-        logger.debug("Reloaded primary.config module")
+        importlib.reload(sys.modules['src.primary.config'])
+        logger.debug("Reloaded src.primary.config module")
     except (KeyError, ImportError) as e:
         logger.error(f"Error reloading modules: {e}")
 
@@ -68,7 +68,7 @@ def app_specific_loop(app_type: str) -> None:
     global restart_cycles
     
     # Get app-specific logger
-    from primary.utils.logger import get_logger
+    from src.primary.utils.logger import get_logger
     app_logger = get_logger(app_type)
     
     app_logger.info(f"=== Huntarr starting component for {app_type.title()} interaction ===")
@@ -78,20 +78,20 @@ def app_specific_loop(app_type: str) -> None:
     
     # Import necessary modules based on app type
     if app_type == "sonarr":
-        from primary.apps.sonarr.missing import process_missing_episodes
-        from primary.apps.sonarr.upgrade import process_cutoff_upgrades
-        from primary.api import get_download_queue_size as sonarr_get_download_queue_size
+        from src.primary.apps.sonarr.missing import process_missing_episodes
+        from src.primary.apps.sonarr.upgrade import process_cutoff_upgrades
+        from src.primary.api import get_download_queue_size as sonarr_get_download_queue_size
     elif app_type == "radarr":
-        from primary.apps.radarr.missing import process_missing_movies
-        from primary.apps.radarr.upgrade import process_cutoff_upgrades
-        from primary.apps.radarr.api import get_download_queue_size
+        from src.primary.apps.radarr.missing import process_missing_movies
+        from src.primary.apps.radarr.upgrade import process_cutoff_upgrades
+        from src.primary.apps.radarr.api import get_download_queue_size
     elif app_type == "lidarr":
-        from primary.apps.lidarr.missing import process_missing_albums
-        from primary.apps.lidarr.upgrade import process_cutoff_upgrades
-        from primary.apps.lidarr.api import get_download_queue_size
+        from src.primary.apps.lidarr.missing import process_missing_albums
+        from src.primary.apps.lidarr.upgrade import process_cutoff_upgrades
+        from src.primary.apps.lidarr.api import get_download_queue_size
     elif app_type == "readarr":
-        from primary.apps.readarr.missing import process_missing_books
-        from primary.apps.readarr.upgrade import process_cutoff_upgrades
+        from src.primary.apps.readarr.missing import process_missing_books
+        from src.primary.apps.readarr.upgrade import process_cutoff_upgrades
         # Placeholder for Readarr-specific API functions
         sonarr_get_download_queue_size = lambda: 0  # Placeholder
     
@@ -113,7 +113,7 @@ def app_specific_loop(app_type: str) -> None:
         app_logger.info(f"=== Starting Huntarr {app_type} cycle ===")
         
         # Import check_connection with the correct app type
-        import_module = __import__('primary.api', fromlist=[''])
+        import_module = __import__('src.primary.api', fromlist=[''])
         check_connection = getattr(import_module, 'check_connection')
         
         # Override the global APP_TYPE for this thread
@@ -163,7 +163,7 @@ def app_specific_loop(app_type: str) -> None:
                     continue
                 
                 # Get app-specific settings
-                from primary.config import HUNT_MISSING_SHOWS, HUNT_UPGRADE_EPISODES
+                from src.primary.config import HUNT_MISSING_SHOWS, HUNT_UPGRADE_EPISODES
                 
                 if HUNT_MISSING_SHOWS > 0:
                     app_logger.info(f"Configured to look for {HUNT_MISSING_SHOWS} missing shows")
@@ -204,7 +204,7 @@ def app_specific_loop(app_type: str) -> None:
                     continue
                 
                 # Get app-specific settings
-                from primary.config import HUNT_MISSING_MOVIES, HUNT_UPGRADE_MOVIES
+                from src.primary.config import HUNT_MISSING_MOVIES, HUNT_UPGRADE_MOVIES
                 
                 if HUNT_MISSING_MOVIES > 0:
                     app_logger.info(f"Configured to look for {HUNT_MISSING_MOVIES} missing movies")
@@ -245,7 +245,7 @@ def app_specific_loop(app_type: str) -> None:
                     continue
                 
                 # Get app-specific settings
-                from primary.config import HUNT_MISSING_ALBUMS, HUNT_UPGRADE_TRACKS
+                from src.primary.config import HUNT_MISSING_ALBUMS, HUNT_UPGRADE_TRACKS
                 
                 if HUNT_MISSING_ALBUMS > 0:
                     app_logger.info(f"Configured to look for {HUNT_MISSING_ALBUMS} missing albums")
@@ -286,7 +286,7 @@ def app_specific_loop(app_type: str) -> None:
                     continue
                 
                 # Get app-specific settings
-                from primary.config import HUNT_MISSING_BOOKS, HUNT_UPGRADE_BOOKS
+                from src.primary.config import HUNT_MISSING_BOOKS, HUNT_UPGRADE_BOOKS
                 
                 if HUNT_MISSING_BOOKS > 0:
                     app_logger.info(f"Configured to look for {HUNT_MISSING_BOOKS} missing books")
@@ -319,7 +319,7 @@ def app_specific_loop(app_type: str) -> None:
         calculate_reset_time(app_type)
         
         refresh_settings(app_type)
-        from primary.config import SLEEP_DURATION as CURRENT_SLEEP_DURATION
+        from src.primary.config import SLEEP_DURATION as CURRENT_SLEEP_DURATION
         
         app_logger.info(f"{app_type} cycle complete. Sleeping {CURRENT_SLEEP_DURATION}s before next cycle...")
         
