@@ -54,6 +54,9 @@ function loadAppSettings(app) {
                         case 'lidarr':
                             SettingsForms.generateLidarrForm(container, settings);
                             break;
+                        case 'readarr':
+                            SettingsForms.generateReadarrForm(container, settings);
+                            break;
                         case 'global':
                             SettingsForms.generateGlobalForm(container, settings);
                             break;

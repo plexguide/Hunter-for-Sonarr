@@ -313,6 +313,109 @@ const SettingsForms = {
         `;
     },
     
+    // Generate Readarr settings form
+    generateReadarrForm: function(container, settings = {}) {
+        const huntarr = settings.huntarr || {};
+        const advanced = settings.advanced || {};
+        
+        container.innerHTML = `
+            <div class="settings-group">
+                <h3>Readarr Connection</h3>
+                <div class="setting-item">
+                    <label for="readarr_api_url">URL:</label>
+                    <input type="text" id="readarr_api_url" value="${settings.api_url || ''}">
+                    <p class="setting-help">Base URL for Readarr (e.g., http://localhost:8787)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="readarr_api_key">API Key:</label>
+                    <input type="text" id="readarr_api_key" value="${settings.api_key || ''}">
+                    <p class="setting-help">API key for Readarr</p>
+                </div>
+                <!-- Removed the connection status indicator -->
+            </div>
+            
+            <div class="settings-group">
+                <h3>Search Settings</h3>
+                <div class="setting-item">
+                    <label for="hunt_missing_books">Missing Books to Search:</label>
+                    <input type="number" id="hunt_missing_books" min="0" value="${huntarr.hunt_missing_books || 1}">
+                    <p class="setting-help">Number of missing books to search per cycle (0 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="hunt_upgrade_books">Books to Upgrade:</label>
+                    <input type="number" id="hunt_upgrade_books" min="0" value="${huntarr.hunt_upgrade_books || 0}">
+                    <p class="setting-help">Number of books to search for quality upgrades per cycle (0 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="readarr_sleep_duration">Search Interval:</label>
+                    <input type="number" id="readarr_sleep_duration" min="60" value="${huntarr.sleep_duration || 900}">
+                    <p class="setting-help">Time between searches in seconds (<span id="readarr_sleep_duration_hours"></span>)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="readarr_state_reset_interval_hours">Reset Interval:</label>
+                    <input type="number" id="readarr_state_reset_interval_hours" min="1" value="${huntarr.state_reset_interval_hours || 168}">
+                    <p class="setting-help">Hours between state resets (default: 168 = 7 days)</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Additional Options</h3>
+                <div class="setting-item">
+                    <label for="readarr_monitored_only">Monitored Only:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="readarr_monitored_only" ${huntarr.monitored_only !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Only search for monitored items</p>
+                </div>
+                <div class="setting-item">
+                    <label for="readarr_skip_future_releases">Skip Future Releases:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="readarr_skip_future_releases" ${huntarr.skip_future_releases !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip searching for books with future release dates</p>
+                </div>
+                <div class="setting-item">
+                    <label for="skip_author_refresh">Skip Author Refresh:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="skip_author_refresh" ${huntarr.skip_author_refresh === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip refreshing author metadata before searching</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Advanced Settings</h3>
+                <div class="setting-item">
+                    <label for="readarr_random_missing">Random Missing:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="readarr_random_missing" ${advanced.random_missing !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Select random missing items instead of sequential order</p>
+                </div>
+                <div class="setting-item">
+                    <label for="readarr_random_upgrades">Random Upgrades:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="readarr_random_upgrades" ${advanced.random_upgrades !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Select random items for quality upgrades</p>
+                </div>
+                <div class="setting-item">
+                    <label for="readarr_debug_mode">Debug Mode:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="readarr_debug_mode" ${advanced.debug_mode === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
+                </div>
+            </div>
+        `;
+    },
+    
     // Generate Global settings form
     generateGlobalForm: function(container, settings = {}) {
         const advanced = settings.advanced || {};
@@ -364,5 +467,6 @@ const SettingsForms = {
         updateSleepDisplay('sleep_duration', 'sleep_duration_hours');
         updateSleepDisplay('radarr_sleep_duration', 'radarr_sleep_duration_hours');
         updateSleepDisplay('lidarr_sleep_duration', 'lidarr_sleep_duration_hours');
+        updateSleepDisplay('readarr_sleep_duration', 'readarr_sleep_duration_hours');
     }
 };
