@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>User Settings - Huntarr</title>
+    {% include 'components/head.html' %}
+    <style>
+        .user-section {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* Ensure main content area is scrollable */
+        .main-content {
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+        
+        .user-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow: hidden; /* Ensure content doesn't overflow the card */
+        }
+        
+        .user-card h3 {
+            display: flex;
+            align-items: center;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        
+        .user-card h3 i {
+            margin-right: 10px;
+            color: var(--accent-color);
+        }
+        
+        .user-button {
+            padding: 8px 16px;
+            margin-top: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .save-button {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .danger-button {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .user-button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        .qr-code-container {
+            margin: 15px auto;
+            text-align: center;
+        }
+        
+        .qr-code {
+            max-width: 160px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        
+        .qr-code img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .secret-key {
+            background-color: #2c2c2c;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        
+        .status-success {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            visibility: visible;
+            height: auto;
+            padding: 10px;
+            margin-top: 15px;
+        }
+        
+        .status-error {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            visibility: visible;
+            height: auto;
+            padding: 10px;
+            margin-top: 15px;
+        }
+        
+        .setting-item {
+            margin-bottom: 15px;
+        }
+        
+        .setting-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background-color: #333;
+            color: #fff;
+        }
+        
+        /* Ensure setupTwoFactorSection content is scrollable */
+        #setupTwoFactorSection {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        {% include 'components/sidebar.html' %}
+        
+        <!-- Main Content Area -->
+        <div class="main-content">
+            {% include 'components/topbar.html' %}
+            
+            <div class="user-section">
+                <div class="user-card">
+                    <h3><i class="fas fa-user-edit"></i> Change Username</h3>
+                    <div class="setting-item">
+                        <label for="currentUsername">Current Username:</label>
+                        <span id="currentUsername">Loading...</span>
+                    </div>
+                    <div class="setting-item">
+                        <label for="newUsername">New Username:</label>
+                        <input type="text" id="newUsername" class="form-control">
+                    </div>
+                    <button id="saveUsername" class="user-button save-button">Save Username</button>
+                    <div id="usernameStatus" style="display: none;"></div>
+                </div>
+                
+                <div class="user-card">
+                    <h3><i class="fas fa-key"></i> Change Password</h3>
+                    <div class="setting-item">
+                        <label for="currentPassword">Current Password:</label>
+                        <input type="password" id="currentPassword" class="form-control">
+                    </div>
+                    <div class="setting-item">
+                        <label for="newPassword">New Password:</label>
+                        <input type="password" id="newPassword" class="form-control">
+                    </div>
+                    <div class="setting-item">
+                        <label for="confirmPassword">Confirm Password:</label>
+                        <input type="password" id="confirmPassword" class="form-control">
+                    </div>
+                    <button id="savePassword" class="user-button save-button">Save Password</button>
+                    <div id="passwordStatus" style="display: none;"></div>
+                </div>
+                
+                <div class="user-card">
+                    <h3><i class="fas fa-shield-alt"></i> Two-Factor Authentication</h3>
+                    <div id="twoFactorStatus" class="setting-item">
+                        <label>Status:</label>
+                        <span id="twoFactorEnabled">Loading...</span>
+                    </div>
+                    
+                    <div id="enableTwoFactorSection" style="display: none;">
+                        <button id="enableTwoFactor" class="user-button save-button">Enable 2FA</button>
+                    </div>
+                    
+                    <div id="setupTwoFactorSection" style="display: none;">
+                        <div class="qr-code-container">
+                            <div class="qr-code">
+                                <img id="qrCode" src="" alt="QR Code">
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label for="secretKey">Secret Key:</label>
+                            <div class="secret-key" id="secretKey"></div>
+                            <p class="setting-help">Use this key if you can't scan the QR code</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="verificationCode">Verification Code:</label>
+                            <input type="text" id="verificationCode" class="form-control" placeholder="000000" maxlength="6">
+                        </div>
+                        <button id="verifyTwoFactor" class="user-button save-button">Verify and Enable</button>
+                        <div id="verifyStatus" style="display: none;"></div>
+                    </div>
+                    
+                    <div id="disableTwoFactorSection" style="display: none;">
+                        <div class="setting-item">
+                            <label for="disableCode">Verification Code:</label>
+                            <input type="text" id="disableCode" class="form-control" placeholder="000000" maxlength="6">
+                        </div>
+                        <button id="disableTwoFactor" class="user-button danger-button">Disable 2FA</button>
+                        <div id="disableStatus" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'components/scripts.html' %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set active nav item
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            const userNav = document.getElementById('userNav');
+            if (userNav) userNav.classList.add('active');
+            
+            const pageTitleElement = document.getElementById('currentPageTitle');
+            if (pageTitleElement) pageTitleElement.textContent = 'User Settings';
+            
+            // Apply dark mode if theme is dark
+            applyDarkMode();
+            
+            // Fetch user data
+            fetchUserData();
+            
+            // Setup event listeners for buttons
+            setupEventListeners();
+        });
+        
+        function applyDarkMode() {
+            // Always use dark mode
+            document.body.classList.add('dark-theme');
+            localStorage.setItem('huntarr-dark-mode', 'true');
+            
+            // Update server setting to dark mode
+            fetch('/api/settings/theme', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ dark_mode: true })
+            }).catch(error => console.error('Error saving theme:', error));
+        }
+        
+        function fetchUserData() {
+            // Get username
+            fetch('/api/user/info')
+                .then(response => response.json())
+                .then(data => {
+                    // Update username in topbar and form
+                    if (data.username) {
+                        if (document.getElementById('username')) {
+                            document.getElementById('username').textContent = data.username;
+                        }
+                        if (document.getElementById('currentUsername')) {
+                            document.getElementById('currentUsername').textContent = data.username;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching user info:', error);
+                    const currentUsernameElement = document.getElementById('currentUsername');
+                    if (currentUsernameElement) {
+                        currentUsernameElement.textContent = 'Error loading username';
+                    }
+                });
+            
+            // Get 2FA status
+            fetch('/api/user/2fa-status')
+                .then(response => response.json())
+                .then(data => {
+                    const twoFactorEnabled = document.getElementById('twoFactorEnabled');
+                    if (twoFactorEnabled) {
+                        twoFactorEnabled.textContent = data.enabled ? 'Enabled' : 'Disabled';
+                    }
+                    
+                    // Show appropriate 2FA sections
+                    if (data.enabled) {
+                        if (document.getElementById('disableTwoFactorSection')) {
+                            document.getElementById('disableTwoFactorSection').style.display = 'block';
+                        }
+                        if (document.getElementById('enableTwoFactorSection')) {
+                            document.getElementById('enableTwoFactorSection').style.display = 'none';
+                        }
+                    } else {
+                        if (document.getElementById('disableTwoFactorSection')) {
+                            document.getElementById('disableTwoFactorSection').style.display = 'none';
+                        }
+                        if (document.getElementById('enableTwoFactorSection')) {
+                            document.getElementById('enableTwoFactorSection').style.display = 'block';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching 2FA status:', error);
+                    const twoFactorEnabled = document.getElementById('twoFactorEnabled');
+                    if (twoFactorEnabled) {
+                        twoFactorEnabled.textContent = 'Unknown';
+                    }
+                });
+        }
+        
+        function setupEventListeners() {
+            // Fix navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (this.id === 'userNav' && window.location.pathname === '/user') {
+                        // Don't do anything if we're on the user page and clicking user nav
+                        e.preventDefault();
+                        return;
+                    }
+                    
+                    // For other nav items, make them work correctly
+                    const href = this.getAttribute('href');
+                    if (href === '#home') {
+                        window.location.href = '/';
+                        e.preventDefault();
+                    } else if (href === '#logs') {
+                        window.location.href = '/#logs';
+                        e.preventDefault();
+                    } else if (href === '#settings') {
+                        window.location.href = '/#settings';
+                        e.preventDefault();
+                    }
+                });
+            });
+            
+            // Username change
+            const saveUsernameButton = document.getElementById('saveUsername');
+            if (saveUsernameButton) {
+                saveUsernameButton.addEventListener('click', function() {
+                    const newUsername = document.getElementById('newUsername').value.trim();
+                    const statusElement = document.getElementById('usernameStatus');
+                    
+                    if (!newUsername) {
+                        statusElement.textContent = 'Username cannot be empty';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                        return;
+                    }
+                    
+                    fetch('/api/user/change-username', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username: newUsername })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            statusElement.textContent = 'Username updated successfully';
+                            statusElement.className = 'status-success';
+                            document.getElementById('username').textContent = newUsername;
+                            document.getElementById('currentUsername').textContent = newUsername;
+                            document.getElementById('newUsername').value = '';
+                        } else {
+                            statusElement.textContent = data.message || 'Failed to update username';
+                            statusElement.className = 'status-error';
+                        }
+                        
+                        statusElement.style.display = 'block';
+                        setTimeout(() => {
+                            statusElement.style.display = 'none';
+                        }, 5000);
+                    })
+                    .catch(error => {
+                        console.error('Error updating username:', error);
+                        statusElement.textContent = 'An error occurred';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                    });
+                });
+            }
+            
+            // Password change
+            const savePasswordButton = document.getElementById('savePassword');
+            if (savePasswordButton) {
+                savePasswordButton.addEventListener('click', function() {
+                    const currentPassword = document.getElementById('currentPassword').value;
+                    const newPassword = document.getElementById('newPassword').value;
+                    const confirmPassword = document.getElementById('confirmPassword').value;
+                    const statusElement = document.getElementById('passwordStatus');
+                    
+                    if (!currentPassword || !newPassword || !confirmPassword) {
+                        statusElement.textContent = 'All password fields are required';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                        return;
+                    }
+                    
+                    if (newPassword !== confirmPassword) {
+                        statusElement.textContent = 'New passwords do not match';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                        return;
+                    }
+                    
+                    fetch('/api/user/change-password', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            current_password: currentPassword,
+                            new_password: newPassword
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            statusElement.textContent = 'Password updated successfully';
+                            statusElement.className = 'status-success';
+                            document.getElementById('currentPassword').value = '';
+                            document.getElementById('newPassword').value = '';
+                            document.getElementById('confirmPassword').value = '';
+                        } else {
+                            statusElement.textContent = data.message || 'Failed to update password';
+                            statusElement.className = 'status-error';
+                        }
+                        
+                        statusElement.style.display = 'block';
+                        setTimeout(() => {
+                            statusElement.style.display = 'none';
+                        }, 5000);
+                    })
+                    .catch(error => {
+                        console.error('Error updating password:', error);
+                        statusElement.textContent = 'An error occurred';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                    });
+                });
+            }
+            
+            // 2FA Setup
+            const enableTwoFactorButton = document.getElementById('enableTwoFactor');
+            if (enableTwoFactorButton) {
+                enableTwoFactorButton.addEventListener('click', function() {
+                    fetch('/api/user/generate-2fa')
+                        .then(response => response.json())
+                        .then(data => {
+                            // Show QR code for scanning
+                            if (document.getElementById('qrCode')) {
+                                // Make sure we're using the correct property from the API response
+                                document.getElementById('qrCode').src = data.qr_code_url;
+                                console.log("QR code URL set to:", data.qr_code_url);
+                            }
+                            
+                            // Show secret key for manual entry
+                            if (document.getElementById('secretKey')) {
+                                document.getElementById('secretKey').textContent = data.secret;
+                                console.log("Secret key set to:", data.secret);
+                            }
+                            
+                            // Switch from the enable section to the setup section
+                            if (document.getElementById('enableTwoFactorSection')) {
+                                document.getElementById('enableTwoFactorSection').style.display = 'none';
+                            }
+                            if (document.getElementById('setupTwoFactorSection')) {
+                                document.getElementById('setupTwoFactorSection').style.display = 'block';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error setting up 2FA:', error);
+                            alert('Failed to set up 2FA. Please try again. Error: ' + error.message);
+                        });
+                });
+            }
+            
+            // Verify 2FA
+            const verifyTwoFactorButton = document.getElementById('verifyTwoFactor');
+            if (verifyTwoFactorButton) {
+                verifyTwoFactorButton.addEventListener('click', function() {
+                    const code = document.getElementById('verificationCode').value.trim();
+                    const statusElement = document.getElementById('verifyStatus');
+                    
+                    if (!code || code.length !== 6) {
+                        statusElement.textContent = 'Please enter a valid 6-digit code';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                        return;
+                    }
+                    
+                    fetch('/api/user/verify-2fa', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ code: code })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            statusElement.textContent = '2FA enabled successfully';
+                            statusElement.className = 'status-success';
+                            setTimeout(() => {
+                                fetchUserData(); // Refresh the page data
+                            }, 2000);
+                        } else {
+                            statusElement.textContent = data.message || 'Failed to verify code';
+                            statusElement.className = 'status-error';
+                        }
+                        
+                        statusElement.style.display = 'block';
+                    })
+                    .catch(error => {
+                        console.error('Error verifying 2FA:', error);
+                        statusElement.textContent = 'An error occurred';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                    });
+                });
+            }
+            
+            // Disable 2FA
+            const disableTwoFactorButton = document.getElementById('disableTwoFactor');
+            if (disableTwoFactorButton) {
+                disableTwoFactorButton.addEventListener('click', function() {
+                    const code = document.getElementById('disableCode').value.trim();
+                    const statusElement = document.getElementById('disableStatus');
+                    
+                    if (!code || code.length !== 6) {
+                        statusElement.textContent = 'Please enter a valid 6-digit code';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                        return;
+                    }
+                    
+                    fetch('/api/user/disable-2fa', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ code: code })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            statusElement.textContent = '2FA disabled successfully';
+                            statusElement.className = 'status-success';
+                            setTimeout(() => {
+                                fetchUserData(); // Refresh the page data
+                            }, 2000);
+                        } else {
+                            statusElement.textContent = data.message || 'Failed to disable 2FA';
+                            statusElement.className = 'status-error';
+                        }
+                        
+                        statusElement.style.display = 'block';
+                    })
+                    .catch(error => {
+                        console.error('Error disabling 2FA:', error);
+                        statusElement.textContent = 'An error occurred';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                    });
+                });
+            }
+        }
+    </script>
+</body>
+</html>

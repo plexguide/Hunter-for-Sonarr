@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Huntarr</title>
+    <!-- Inline script to prevent theme flashing -->
+    <script>
+        // Check theme preference immediately before any rendering
+        (function() {
+            var prefersDarkMode = localStorage.getItem('huntarr-dark-mode') === 'true';
+            if (prefersDarkMode || window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark-theme');
+                // Add inline styles to prevent flash
+                document.write('<style>body, html { background-color: #1a1d24 !important; color: #f8f9fa !important; } .login-container { background-color: #252a34 !important; } .login-header { background-color: #121212 !important; }</style>');
+            }
+        })();
+    </script>
+    <!-- Preload logo -->
+    <link rel="preload" href="/static/logo/64.png" as="image" fetchpriority="high">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="/static/logo/16.png">
+    <!-- Preload script to prevent flashing -->
+    <script src="/static/js/theme-preload.js"></script>
+    <!-- Improve logo loading -->
+    <style>
+        .login-logo {
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .login-logo.loaded {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-header">
+            <img src="/static/logo/64.png" alt="Huntarr Logo" class="login-logo" onload="this.classList.add('loaded')">
+            <h1>Huntarr</h1>
+        </div>
+        <div class="login-form">
+            <h2>Log in to your account</h2>
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <label for="username">
+                        <i class="fas fa-user"></i>
+                        <span>Username</span>
+                    </label>
+                    <input type="text" id="username" name="username" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i>
+                        <span>Password</span>
+                    </label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group" id="twoFactorGroup" style="display: none;">
+                    <label for="twoFactorCode">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>2FA Code</span>
+                    </label>
+                    <input type="text" id="twoFactorCode" name="otp_code" placeholder="000000" maxlength="6">
+                </div>
+                <div class="error-message" id="loginError"></div>
+                <button type="submit" class="login-button">
+                    <i class="fas fa-sign-in-alt"></i> Log In
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Apply logo loaded class if image is already complete
+            const logoImg = document.querySelector('.login-logo');
+            if (logoImg && logoImg.complete) {
+                logoImg.classList.add('loaded');
+            }
+            
+            // Always set dark theme
+            document.body.classList.add('dark-theme');
+            localStorage.setItem('huntarr-dark-mode', 'true');
+            
+            // Form submission handling
+            const loginForm = document.querySelector('form');
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const twoFactorCode = document.getElementById('twoFactorCode').value;
+                const errorElement = document.getElementById('loginError');
+                
+                // Clear previous errors
+                errorElement.textContent = '';
+                
+                // Basic validation
+                if (!username || !password) {
+                    errorElement.textContent = 'Username and password are required';
+                    return;
+                }
+                
+                // Send login request using JSON
+                fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        otp_code: twoFactorCode
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = data.redirect || '/';
+                    } else if (data.needs_2fa) {
+                        document.getElementById('twoFactorGroup').style.display = 'block';
+                        errorElement.textContent = 'Please enter your 2FA code';
+                    } else {
+                        errorElement.textContent = data.message || 'Invalid username or password';
+                    }
+                })
+                .catch(error => {
+                    console.error('Login error:', error);
+                    errorElement.textContent = 'An error occurred during login';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,73 +1,22 @@
-from flask import Flask, render_template, request, jsonify, session, redirect
-from primary.auth import verify_user, create_session, authenticate_request, SESSION_COOKIE_NAME, user_exists
+#!/usr/bin/env python3
+"""
+Main entry point for the Huntarr application.
+This file imports from the src folder.
+"""
 
-app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Should be a secure random value in production
+import os
+import sys
 
-# Standard routes for the main UI
-@app.route('/')
-def index():
-    """Serve the main UI"""
-    # Check authentication
-    auth_result = authenticate_request()
-    if auth_result is not None:
-        return auth_result
-    return render_template('index.html')
+# Add the current directory to the path so the src module can be imported
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-@app.route('/user')
-def user_page():
-    """Serve the user settings page"""
-    # Check authentication
-    auth_result = authenticate_request()
-    if auth_result is not None:
-        return auth_result
-    return render_template('user.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    """Handle user login"""
-    # If no user exists yet, redirect to setup
-    if not user_exists():
-        return redirect('/setup')
-        
-    if request.method == 'POST':
-        # Handle form submission via AJAX
-        if request.content_type and 'application/json' in request.content_type:
-            data = request.json
-            username = data.get('username')
-            password = data.get('password')
-            otp_code = data.get('twoFactorCode')
-        else:
-            # Handle regular form submission
-            username = request.form.get('username')
-            password = request.form.get('password')
-            otp_code = request.form.get('twoFactorCode')
-            
-        # Use the auth module to verify credentials
-        auth_success, needs_2fa = verify_user(username, password, otp_code)
-        
-        if auth_success:
-            # Create a new session and set the cookie
-            session_id = create_session(username)
-            session[SESSION_COOKIE_NAME] = session_id
-            return jsonify({'success': True, 'redirect': '/'})
-        elif needs_2fa:
-            # User authenticated but 2FA is required
-            return jsonify({'success': False, 'requires2fa': True, 'message': 'Please enter your 2FA code'})
-        else:
-            # Failed login
-            return jsonify({'success': False, 'message': 'Invalid username or password'})
-    
-    # GET request - display login page
-    return render_template('login.html')
-
-@app.route('/setup', methods=['GET'])
-def setup():
-    """Setup page for initial user creation"""
-    # Only show setup if no user exists
-    if user_exists():
-        return redirect('/')
-    return render_template('setup.html')
+# Import the app from the src module
+from src.app import app
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Run the Flask application
+    debug_mode = os.environ.get('DEBUG', 'false').lower() == 'true'
+    host = '0.0.0.0'  # Listen on all interfaces
+    port = int(os.environ.get('PORT', 9705))
+    
+    app.run(host=host, port=port, debug=debug_mode)
