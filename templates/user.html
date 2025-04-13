@@ -243,41 +243,18 @@
         });
         
         function applyDarkMode() {
-            // Check localStorage for theme preference first for immediate application
-            const prefersDarkMode = localStorage.getItem('huntarr-dark-mode') === 'true';
+            // Always use dark mode
+            document.body.classList.add('dark-theme');
+            localStorage.setItem('huntarr-dark-mode', 'true');
             
-            if (prefersDarkMode) {
-                document.body.classList.add('dark-theme');
-            } else {
-                document.body.classList.remove('dark-theme');
-            }
-            
-            // Update theme toggle if it exists
-            const themeToggle = document.getElementById('themeToggle');
-            if (themeToggle) {
-                themeToggle.checked = prefersDarkMode;
-                themeToggle.addEventListener('change', function() {
-                    const isDarkMode = this.checked;
-                    
-                    if (isDarkMode) {
-                        document.body.classList.add('dark-theme');
-                    } else {
-                        document.body.classList.remove('dark-theme');
-                    }
-                    
-                    // Store in localStorage for immediate page transitions
-                    localStorage.setItem('huntarr-dark-mode', isDarkMode);
-                    
-                    // Save theme preference to server
-                    fetch('/api/settings/theme', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ dark_mode: isDarkMode })
-                    }).catch(error => console.error('Error saving theme:', error));
-                });
-            }
+            // Update server setting to dark mode
+            fetch('/api/settings/theme', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ dark_mode: true })
+            }).catch(error => console.error('Error saving theme:', error));
         }
         
         function fetchUserData() {

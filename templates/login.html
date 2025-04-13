@@ -80,25 +80,9 @@
                 logoImg.classList.add('loaded');
             }
             
-            // Theme toggle functionality
-            const themeToggle = document.getElementById('themeToggle');
-            
-            // Check for saved theme preference - set toggle state
-            const savedTheme = localStorage.getItem('huntarr-dark-mode');
-            if (savedTheme === 'true') {
-                themeToggle.checked = true;
-            }
-            
-            // Theme toggle event listener
-            themeToggle.addEventListener('change', function() {
-                if (this.checked) {
-                    document.body.classList.add('dark-theme');
-                    localStorage.setItem('huntarr-dark-mode', 'true');
-                } else {
-                    document.body.classList.remove('dark-theme');
-                    localStorage.setItem('huntarr-dark-mode', 'false');
-                }
-            });
+            // Always set dark theme
+            document.body.classList.add('dark-theme');
+            localStorage.setItem('huntarr-dark-mode', 'true');
             
             // Form submission handling
             const loginForm = document.querySelector('form');

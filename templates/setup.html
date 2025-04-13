@@ -228,14 +228,6 @@
                     </button>
                 </div>
             </div>
-            
-            <div class="theme-toggle">
-                <label class="switch">
-                    <input type="checkbox" id="themeToggle">
-                    <span class="slider round"></span>
-                </label>
-                <span>Dark Mode</span>
-            </div>
         </div>
     </div>
 
@@ -260,7 +252,6 @@
             const twoFactorNextButton = document.getElementById('twoFactorNextButton');
             
             // Complete setup elements
-            const setupPrevButton = null; // Remove reference
             const finishSetupButton = document.getElementById('finishSetupButton');
             
             // Current step tracking
@@ -444,18 +435,9 @@
                 }
             });
             
-            // Set dark mode by default
-            const themeToggle = document.getElementById('themeToggle');
-            themeToggle.checked = true; // Enable dark mode by default
-            document.body.classList.add('dark-mode'); // Apply dark mode class
-            localStorage.setItem('huntarr-dark-mode', 'true'); // Save to localStorage
-
-            // Handle theme toggle changes
-            themeToggle.addEventListener('change', function() {
-                const isDarkMode = this.checked;
-                document.body.classList.toggle('dark-mode', isDarkMode);
-                localStorage.setItem('huntarr-dark-mode', isDarkMode);
-            });
+            // Always use dark mode
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('huntarr-dark-mode', 'true');
         });
     </script>
 </body>

@@ -243,39 +243,23 @@ const huntarrApp = {
     
     // Theme management
     loadTheme: function() {
-        fetch('/api/settings/theme')
-            .then(response => response.json())
-            .then(data => {
-                const isDarkMode = data.dark_mode || false;
-                this.setTheme(isDarkMode);
-                if (this.elements.themeToggle) this.elements.themeToggle.checked = isDarkMode;
-                if (this.elements.themeLabel) this.elements.themeLabel.textContent = isDarkMode ? 'Dark Mode' : 'Light Mode';
-            })
-            .catch(error => console.error('Error loading theme:', error));
-    },
-    
-    setTheme: function(isDark) {
-        if (isDark) {
-            document.body.classList.add('dark-theme');
-            if (this.elements.themeLabel) this.elements.themeLabel.textContent = 'Dark Mode';
-        } else {
-            document.body.classList.remove('dark-theme');
-            if (this.elements.themeLabel) this.elements.themeLabel.textContent = 'Light Mode';
-        }
-    },
-    
-    handleThemeToggle: function(event) {
-        const isDarkMode = event.target.checked;
-        this.setTheme(isDarkMode);
+        // Always set to dark mode
+        this.setTheme(true);
         
+        // Update server setting to dark mode
         fetch('/api/settings/theme', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ dark_mode: isDarkMode })
+            body: JSON.stringify({ dark_mode: true })
         })
         .catch(error => console.error('Error saving theme:', error));
+    },
+    
+    setTheme: function(isDark) {
+        // Always use dark theme
+        document.body.classList.add('dark-theme');
     },
     
     // Log management

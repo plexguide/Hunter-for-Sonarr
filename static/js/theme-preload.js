@@ -6,42 +6,32 @@
     const preloadImg = new Image();
     preloadImg.src = LOGO_URL;
     
-    // Check for dark mode preference from localStorage
-    const prefersDarkMode = localStorage.getItem('huntarr-dark-mode') === 'true';
-    const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // Always enforce dark theme
+    document.documentElement.classList.add('dark-theme');
+    localStorage.setItem('huntarr-dark-mode', 'true');
     
-    // Apply dark theme immediately if needed or if system prefers dark
-    if (prefersDarkMode || (prefersDarkMode === null && systemPrefersDark)) {
-        document.documentElement.classList.add('dark-theme');
-        
-        // If no explicit preference, use system preference
-        if (prefersDarkMode === null && systemPrefersDark) {
-            localStorage.setItem('huntarr-dark-mode', 'true');
+    // Add inline style to immediately set background color
+    // This prevents flash before the CSS files load
+    const style = document.createElement('style');
+    style.textContent = `
+        body, html { 
+            background-color: #1a1d24 !important; 
+            color: #f8f9fa !important;
         }
-        
-        // Add inline style to immediately set background color
-        // This prevents flash before the CSS files load
-        const style = document.createElement('style');
-        style.textContent = `
-            body, html { 
-                background-color: #1a1d24 !important; 
-                color: #f8f9fa !important;
-            }
-            .sidebar {
-                background-color: #121212 !important;
-            }
-            .top-bar {
-                background-color: #252a34 !important;
-            }
-            .login-container {
-                background-color: #252a34 !important;
-            }
-            .login-header {
-                background-color: #121212 !important;
-            }
-        `;
-        document.head.appendChild(style);
-    }
+        .sidebar {
+            background-color: #121212 !important;
+        }
+        .top-bar {
+            background-color: #252a34 !important;
+        }
+        .login-container {
+            background-color: #252a34 !important;
+        }
+        .login-header {
+            background-color: #121212 !important;
+        }
+    `;
+    document.head.appendChild(style);
     
     // Store the logo URL in localStorage for persistence across page loads
     localStorage.setItem('huntarr-logo-url', LOGO_URL);
