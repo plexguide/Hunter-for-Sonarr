@@ -1,5 +1,5 @@
 <section id="homeSection" class="content-section">
-    <div class="dashboard-grid">
+    <div class="dashboard-grid stack-layout">
         <div class="card welcome-card">
             <h2>Welcome to Huntarr</h2>
             <p>Your media management assistant for Sonarr, Radarr, and Lidarr</p>
@@ -26,3 +26,16 @@
         </div>
     </div>
 </section>
+
+<style>
+    .stack-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 100%;
+    }
+    
+    .stack-layout .card {
+        width: 100%;
+    }
+</style>
