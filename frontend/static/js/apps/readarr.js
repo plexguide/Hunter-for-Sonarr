@@ -102,11 +102,11 @@
             fetch('/api/settings')
                 .then(response => response.json())
                 .then(data => {
-                    const huntarr = data.huntarr || {};
-                    const advanced = data.advanced || {};
-                    
                     // Store original settings for comparison
                     app.originalSettings = JSON.parse(JSON.stringify(data));
+                    
+                    // Get app-specific settings directly from readarr section instead of huntarr/advanced
+                    const readarrSettings = data.readarr || {};
                     
                     // For Readarr, load from app-settings endpoint
                     fetch(`/api/app-settings?app=readarr`)
@@ -124,51 +124,51 @@
                                 app.configuredApps.readarr = !!(appData.api_url && appData.api_key);
                             }
                             
-                            // Readarr-specific settings
+                            // Readarr-specific settings - all from readarrSettings directly
                             if (this.elements.huntMissingBooksInput) {
-                                this.elements.huntMissingBooksInput.value = huntarr.hunt_missing_books !== undefined ? huntarr.hunt_missing_books : 1;
+                                this.elements.huntMissingBooksInput.value = readarrSettings.hunt_missing_books !== undefined ? readarrSettings.hunt_missing_books : 1;
                             }
                             if (this.elements.huntUpgradeBooksInput) {
-                                this.elements.huntUpgradeBooksInput.value = huntarr.hunt_upgrade_books !== undefined ? huntarr.hunt_upgrade_books : 0;
+                                this.elements.huntUpgradeBooksInput.value = readarrSettings.hunt_upgrade_books !== undefined ? readarrSettings.hunt_upgrade_books : 0;
                             }
                             if (this.elements.sleepDurationInput) {
-                                this.elements.sleepDurationInput.value = huntarr.sleep_duration || 900;
+                                this.elements.sleepDurationInput.value = readarrSettings.sleep_duration || 900;
                                 this.updateSleepDurationDisplay();
                             }
                             if (this.elements.stateResetIntervalInput) {
-                                this.elements.stateResetIntervalInput.value = huntarr.state_reset_interval_hours || 168;
+                                this.elements.stateResetIntervalInput.value = readarrSettings.state_reset_interval_hours || 168;
                             }
                             if (this.elements.monitoredOnlyInput) {
-                                this.elements.monitoredOnlyInput.checked = huntarr.monitored_only !== false;
+                                this.elements.monitoredOnlyInput.checked = readarrSettings.monitored_only !== false;
                             }
                             if (this.elements.skipFutureReleasesInput) {
-                                this.elements.skipFutureReleasesInput.checked = huntarr.skip_future_releases !== false;
+                                this.elements.skipFutureReleasesInput.checked = readarrSettings.skip_future_releases !== false;
                             }
                             if (this.elements.skipAuthorRefreshInput) {
-                                this.elements.skipAuthorRefreshInput.checked = huntarr.skip_author_refresh === true;
+                                this.elements.skipAuthorRefreshInput.checked = readarrSettings.skip_author_refresh === true;
                             }
                             
-                            // Advanced settings
+                            // Advanced settings - from the same readarrSettings object
                             if (this.elements.apiTimeoutInput) {
-                                this.elements.apiTimeoutInput.value = advanced.api_timeout || 60;
+                                this.elements.apiTimeoutInput.value = readarrSettings.api_timeout || 60;
                             }
                             if (this.elements.debugModeInput) {
-                                this.elements.debugModeInput.checked = advanced.debug_mode === true;
+                                this.elements.debugModeInput.checked = readarrSettings.debug_mode === true;
                             }
                             if (this.elements.commandWaitDelayInput) {
-                                this.elements.commandWaitDelayInput.value = advanced.command_wait_delay || 1;
+                                this.elements.commandWaitDelayInput.value = readarrSettings.command_wait_delay || 1;
                             }
                             if (this.elements.commandWaitAttemptsInput) {
-                                this.elements.commandWaitAttemptsInput.value = advanced.command_wait_attempts || 600;
+                                this.elements.commandWaitAttemptsInput.value = readarrSettings.command_wait_attempts || 600;
                             }
                             if (this.elements.minimumDownloadQueueSizeInput) {
-                                this.elements.minimumDownloadQueueSizeInput.value = advanced.minimum_download_queue_size || -1;
+                                this.elements.minimumDownloadQueueSizeInput.value = readarrSettings.minimum_download_queue_size || -1;
                             }
                             if (this.elements.randomMissingInput) {
-                                this.elements.randomMissingInput.checked = advanced.random_missing !== false;
+                                this.elements.randomMissingInput.checked = readarrSettings.random_missing !== false;
                             }
                             if (this.elements.randomUpgradesInput) {
-                                this.elements.randomUpgradesInput.checked = advanced.random_upgrades !== false;
+                                this.elements.randomUpgradesInput.checked = readarrSettings.random_upgrades !== false;
                             }
                             
                             // Update home page connection status
@@ -205,9 +205,10 @@
         },
         
         checkForChanges: function() {
-            if (!app.originalSettings.huntarr) return false; // Don't check if original settings not loaded
+            if (!app.originalSettings.readarr) return false; // Don't check if original settings not loaded
             
             let hasChanges = false;
+            const readarrSettings = app.originalSettings.readarr || {};
             
             // API connection settings
             if (this.elements.apiUrlInput && this.elements.apiUrlInput.dataset.originalValue !== undefined && 
@@ -215,23 +216,23 @@
             if (this.elements.apiKeyInput && this.elements.apiKeyInput.dataset.originalValue !== undefined && 
                 this.elements.apiKeyInput.value !== this.elements.apiKeyInput.dataset.originalValue) hasChanges = true;
             
-            // Check Basic Settings
-            if (this.elements.huntMissingBooksInput && parseInt(this.elements.huntMissingBooksInput.value) !== app.originalSettings.huntarr.hunt_missing_books) hasChanges = true;
-            if (this.elements.huntUpgradeBooksInput && parseInt(this.elements.huntUpgradeBooksInput.value) !== app.originalSettings.huntarr.hunt_upgrade_books) hasChanges = true;
-            if (this.elements.sleepDurationInput && parseInt(this.elements.sleepDurationInput.value) !== app.originalSettings.huntarr.sleep_duration) hasChanges = true;
-            if (this.elements.stateResetIntervalInput && parseInt(this.elements.stateResetIntervalInput.value) !== app.originalSettings.huntarr.state_reset_interval_hours) hasChanges = true;
-            if (this.elements.monitoredOnlyInput && this.elements.monitoredOnlyInput.checked !== app.originalSettings.huntarr.monitored_only) hasChanges = true;
-            if (this.elements.skipFutureReleasesInput && this.elements.skipFutureReleasesInput.checked !== app.originalSettings.huntarr.skip_future_releases) hasChanges = true;
-            if (this.elements.skipAuthorRefreshInput && this.elements.skipAuthorRefreshInput.checked !== app.originalSettings.huntarr.skip_author_refresh) hasChanges = true;
+            // Check all settings directly from the readarr object
+            if (this.elements.huntMissingBooksInput && parseInt(this.elements.huntMissingBooksInput.value) !== readarrSettings.hunt_missing_books) hasChanges = true;
+            if (this.elements.huntUpgradeBooksInput && parseInt(this.elements.huntUpgradeBooksInput.value) !== readarrSettings.hunt_upgrade_books) hasChanges = true;
+            if (this.elements.sleepDurationInput && parseInt(this.elements.sleepDurationInput.value) !== readarrSettings.sleep_duration) hasChanges = true;
+            if (this.elements.stateResetIntervalInput && parseInt(this.elements.stateResetIntervalInput.value) !== readarrSettings.state_reset_interval_hours) hasChanges = true;
+            if (this.elements.monitoredOnlyInput && this.elements.monitoredOnlyInput.checked !== readarrSettings.monitored_only) hasChanges = true;
+            if (this.elements.skipFutureReleasesInput && this.elements.skipFutureReleasesInput.checked !== readarrSettings.skip_future_releases) hasChanges = true;
+            if (this.elements.skipAuthorRefreshInput && this.elements.skipAuthorRefreshInput.checked !== readarrSettings.skip_author_refresh) hasChanges = true;
             
-            // Check Advanced Settings
-            if (this.elements.apiTimeoutInput && parseInt(this.elements.apiTimeoutInput.value) !== app.originalSettings.advanced.api_timeout) hasChanges = true;
-            if (this.elements.debugModeInput && this.elements.debugModeInput.checked !== app.originalSettings.advanced.debug_mode) hasChanges = true;
-            if (this.elements.commandWaitDelayInput && parseInt(this.elements.commandWaitDelayInput.value) !== app.originalSettings.advanced.command_wait_delay) hasChanges = true;
-            if (this.elements.commandWaitAttemptsInput && parseInt(this.elements.commandWaitAttemptsInput.value) !== app.originalSettings.advanced.command_wait_attempts) hasChanges = true;
-            if (this.elements.minimumDownloadQueueSizeInput && parseInt(this.elements.minimumDownloadQueueSizeInput.value) !== app.originalSettings.advanced.minimum_download_queue_size) hasChanges = true;
-            if (this.elements.randomMissingInput && this.elements.randomMissingInput.checked !== app.originalSettings.advanced.random_missing) hasChanges = true;
-            if (this.elements.randomUpgradesInput && this.elements.randomUpgradesInput.checked !== app.originalSettings.advanced.random_upgrades) hasChanges = true;
+            // Check Advanced Settings directly from the readarr object as well
+            if (this.elements.apiTimeoutInput && parseInt(this.elements.apiTimeoutInput.value) !== readarrSettings.api_timeout) hasChanges = true;
+            if (this.elements.debugModeInput && this.elements.debugModeInput.checked !== readarrSettings.debug_mode) hasChanges = true;
+            if (this.elements.commandWaitDelayInput && parseInt(this.elements.commandWaitDelayInput.value) !== readarrSettings.command_wait_delay) hasChanges = true;
+            if (this.elements.commandWaitAttemptsInput && parseInt(this.elements.commandWaitAttemptsInput.value) !== readarrSettings.command_wait_attempts) hasChanges = true;
+            if (this.elements.minimumDownloadQueueSizeInput && parseInt(this.elements.minimumDownloadQueueSizeInput.value) !== readarrSettings.minimum_download_queue_size) hasChanges = true;
+            if (this.elements.randomMissingInput && this.elements.randomMissingInput.checked !== readarrSettings.random_missing) hasChanges = true;
+            if (this.elements.randomUpgradesInput && this.elements.randomUpgradesInput.checked !== readarrSettings.random_upgrades) hasChanges = true;
             
             // Update save buttons state
             this.updateSaveButtonState(hasChanges);
@@ -259,16 +260,17 @@
                 app_type: 'readarr',
                 api_url: this.elements.apiUrlInput ? this.elements.apiUrlInput.value || '' : '',
                 api_key: this.elements.apiKeyInput ? this.elements.apiKeyInput.value || '' : '',
-                huntarr: {
+                readarr: {
+                    // Combined settings - all at top level, no nesting
                     hunt_missing_books: this.elements.huntMissingBooksInput ? parseInt(this.elements.huntMissingBooksInput.value) || 0 : 0,
                     hunt_upgrade_books: this.elements.huntUpgradeBooksInput ? parseInt(this.elements.huntUpgradeBooksInput.value) || 0 : 0,
                     sleep_duration: this.elements.sleepDurationInput ? parseInt(this.elements.sleepDurationInput.value) || 900 : 900,
                     state_reset_interval_hours: this.elements.stateResetIntervalInput ? parseInt(this.elements.stateResetIntervalInput.value) || 168 : 168,
                     monitored_only: this.elements.monitoredOnlyInput ? this.elements.monitoredOnlyInput.checked : true,
                     skip_future_releases: this.elements.skipFutureReleasesInput ? this.elements.skipFutureReleasesInput.checked : true,
-                    skip_author_refresh: this.elements.skipAuthorRefreshInput ? this.elements.skipAuthorRefreshInput.checked : false
-                },
-                advanced: {
+                    skip_author_refresh: this.elements.skipAuthorRefreshInput ? this.elements.skipAuthorRefreshInput.checked : false,
+                    
+                    // Include advanced settings at the same level
                     debug_mode: this.elements.debugModeInput ? this.elements.debugModeInput.checked : false,
                     command_wait_delay: this.elements.commandWaitDelayInput ? parseInt(this.elements.commandWaitDelayInput.value) || 1 : 1,
                     command_wait_attempts: this.elements.commandWaitAttemptsInput ? parseInt(this.elements.commandWaitAttemptsInput.value) || 600 : 600,
@@ -310,8 +312,7 @@
                     if (readarrModule.elements.apiKeyInput) readarrModule.elements.apiKeyInput.dataset.originalValue = settings.api_key;
                     
                     // Update the rest of originalSettings
-                    if (settings.huntarr) app.originalSettings.huntarr = {...settings.huntarr};
-                    if (settings.advanced) app.originalSettings.advanced = {...settings.advanced};
+                    if (settings.readarr) app.originalSettings.readarr = {...settings.readarr};
                     
                     // Update configuration status
                     app.configuredApps.readarr = !!(settings.api_url && settings.api_key);

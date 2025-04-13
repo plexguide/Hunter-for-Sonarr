@@ -21,7 +21,7 @@ SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
 
 SETTINGS_FILE = SETTINGS_DIR / "huntarr.json"
 
-# Default settings
+# Default settings - updated to have a flat structure with no nesting
 DEFAULT_SETTINGS = {
     "ui": {
         "dark_mode": True
@@ -30,25 +30,12 @@ DEFAULT_SETTINGS = {
     "connections": {},     # Holds API URLs and keys
     "global": {            # Global settings (UI preferences etc)
     },
-    "sonarr": {            # Sonarr-specific settings
-    },
-    "radarr": {            # Radarr-specific settings
-    },
-    "lidarr": {            # Lidarr-specific settings
-    },
-    "readarr": {           # Readarr-specific settings
-    }
-}
-
-# Define default configurations directly in this file instead of loading from external JSON
-DEFAULT_CONFIGS = {
-    "sonarr": {
+    "sonarr": {            # Sonarr-specific settings - all settings at this level, no nesting
         "hunt_missing_shows": 1,
         "hunt_upgrade_episodes": 0,
         "monitored_only": True,
         "skip_future_episodes": True,
         "skip_series_refresh": False,
-        "log_refresh_interval_seconds": 30,
         "sleep_duration": 900,
         "state_reset_interval_hours": 168,
         "api_timeout": 60,
@@ -57,15 +44,15 @@ DEFAULT_CONFIGS = {
         "minimum_download_queue_size": -1,
         "debug_mode": False,
         "random_missing": True,
-        "random_upgrades": True
+        "random_upgrades": True,
+        "log_refresh_interval_seconds": 30
     },
-    "radarr": {
+    "radarr": {            # Radarr-specific settings - all settings at this level, no nesting
         "hunt_missing_movies": 1,
         "hunt_upgrade_movies": 0,
         "monitored_only": True,
         "skip_future_releases": True,
         "skip_movie_refresh": False,
-        "log_refresh_interval_seconds": 30,
         "sleep_duration": 900,
         "state_reset_interval_hours": 168,
         "api_timeout": 60,
@@ -74,15 +61,15 @@ DEFAULT_CONFIGS = {
         "minimum_download_queue_size": -1,
         "debug_mode": False,
         "random_missing": True,
-        "random_upgrades": True
+        "random_upgrades": True,
+        "log_refresh_interval_seconds": 30
     },
-    "lidarr": {
+    "lidarr": {            # Lidarr-specific settings - all settings at this level, no nesting
         "hunt_missing_albums": 1,
         "hunt_upgrade_tracks": 0,
         "monitored_only": True,
         "skip_future_releases": True,
         "skip_artist_refresh": False,
-        "log_refresh_interval_seconds": 30,
         "sleep_duration": 900,
         "state_reset_interval_hours": 168,
         "api_timeout": 60,
@@ -91,15 +78,15 @@ DEFAULT_CONFIGS = {
         "minimum_download_queue_size": -1,
         "debug_mode": False,
         "random_missing": True,
-        "random_upgrades": True
+        "random_upgrades": True,
+        "log_refresh_interval_seconds": 30
     },
-    "readarr": {
+    "readarr": {           # Readarr-specific settings - all settings at this level, no nesting
         "hunt_missing_books": 1,
         "hunt_upgrade_books": 0,
         "monitored_only": True,
         "skip_future_releases": True,
         "skip_author_refresh": False,
-        "log_refresh_interval_seconds": 30,
         "sleep_duration": 900,
         "state_reset_interval_hours": 168,
         "api_timeout": 60,
@@ -108,185 +95,197 @@ DEFAULT_CONFIGS = {
         "minimum_download_queue_size": -1,
         "debug_mode": False,
         "random_missing": True,
-        "random_upgrades": True
+        "random_upgrades": True,
+        "log_refresh_interval_seconds": 30
     }
 }
 
-def get_default_config_for_app(app_type: str) -> Dict[str, Any]:
-    """Get default config for a specific app type"""
-    if app_type in DEFAULT_CONFIGS:
-        return DEFAULT_CONFIGS[app_type]
-    settings_logger.warning(f"No default config found for app_type: {app_type}, falling back to sonarr")
-    return DEFAULT_CONFIGS.get("sonarr", {})
-
-def get_app_defaults(app_type):
-    """Get default settings for a specific app type"""
-    if app_type in DEFAULT_CONFIGS:
-        return DEFAULT_CONFIGS[app_type]
-    else:
-        settings_logger.warning(f"No default config found for app_type: {app_type}, falling back to sonarr")
-        return DEFAULT_CONFIGS.get("sonarr", {})
-
-def get_env_settings():
-    """Get settings from environment variables"""
-    env_settings = {
-        "app_type": os.environ.get("APP_TYPE", "sonarr").lower()
-    }
-    
-    # Optional environment variables
-    if "API_TIMEOUT" in os.environ:
-        try:
-            env_settings["api_timeout"] = int(os.environ.get("API_TIMEOUT"))
-        except ValueError:
-            pass
-            
-    if "MONITORED_ONLY" in os.environ:
-        env_settings["monitored_only"] = os.environ.get("MONITORED_ONLY", "true").lower() == "true"
-        
-    # All other environment variables that might override defaults
-    for key, value in os.environ.items():
-        if key.startswith(("HUNT_", "SLEEP_", "STATE_", "SKIP_", "RANDOM_", "COMMAND_", "MINIMUM_", "DEBUG_")):
-            # Convert to lowercase with underscores
-            settings_key = key.lower()
-            
-            # Try to convert to appropriate type
-            if value.lower() in ("true", "false"):
-                env_settings[settings_key] = value.lower() == "true"
-            else:
-                try:
-                    env_settings[settings_key] = int(value)
-                except ValueError:
-                    env_settings[settings_key] = value
-    
-    return env_settings
-
-# Modify the load_settings function to use the hardcoded defaults
+# Load settings from file
 def load_settings() -> Dict[str, Any]:
-    """
-    Load settings with the following priority:
-    1. User-defined settings in the huntarr.json file
-    2. Environment variables 
-    3. Default settings for the selected app_type
-    """
+    """Load settings from JSON file"""
     try:
-        # Start with default settings structure
-        settings = dict(DEFAULT_SETTINGS)
-        
-        # Get environment variables
-        env_settings = get_env_settings()
-        
-        # If we have an app_type, update the settings
-        app_type = env_settings.get("app_type", "sonarr")
-        settings["app_type"] = app_type
-        
-        # Load default configs for all apps
-        supported_apps = ["sonarr", "radarr", "lidarr", "readarr"]
-        for app in supported_apps:
-            app_defaults = get_app_defaults(app)
-            # Initialize app-specific settings
-            if app not in settings:
-                settings[app] = {}
-            settings[app].update(app_defaults)
-        
-        # Apply environment settings to the current app type
-        for key, value in env_settings.items():
-            if key == "app_type":
-                settings[key] = value
-            else:
-                # Put environment variables in the appropriate app section
-                settings[app_type][key] = value
-        
-        # Use hardcoded defaults instead of trying to load from file
-        default_configs = DEFAULT_CONFIGS
-        
-        # Finally, load user settings from file (highest priority)
         if SETTINGS_FILE.exists():
-            with open(SETTINGS_FILE, 'r') as f:
-                user_settings = json.load(f)
-                # Deep merge user settings
-                _deep_update(settings, user_settings)
+            with open(SETTINGS_FILE, "r", encoding="utf-8") as file:
+                loaded_settings = json.load(file)
                 
-                # Log API settings for debugging
-                conn = user_settings.get("connections", {}).get(app_type, {})
-                api_url = conn.get("api_url", "")
-                has_api_key = bool(conn.get("api_key", ""))
-                settings_logger.debug(f"Loaded settings from {SETTINGS_FILE}. API URL={api_url}, Has API Key: {has_api_key}")
+                # Check loaded settings structure, remove any nested huntarr/advanced sections
+                for app_type in ["sonarr", "radarr", "lidarr", "readarr"]:
+                    if app_type in loaded_settings:
+                        app_settings = loaded_settings[app_type]
+                        
+                        # If we find a nested huntarr or advanced section, flatten it
+                        if isinstance(app_settings, dict):
+                            # Extract nested huntarr settings
+                            if "huntarr" in app_settings and isinstance(app_settings["huntarr"], dict):
+                                for key, value in app_settings["huntarr"].items():
+                                    # Only copy if not already set at top level
+                                    if key not in app_settings:
+                                        app_settings[key] = value
+                                # Remove the nested section
+                                app_settings.pop("huntarr", None)
+                                
+                            # Extract nested advanced settings
+                            if "advanced" in app_settings and isinstance(app_settings["advanced"], dict):
+                                for key, value in app_settings["advanced"].items():
+                                    # Only copy if not already set at top level
+                                    if key not in app_settings:
+                                        app_settings[key] = value
+                                # Remove the nested section
+                                app_settings.pop("advanced", None)
+                
+                # Merge with defaults to ensure all required keys exist
+                merged_settings = DEFAULT_SETTINGS.copy()
+                
+                # Update defaults with loaded settings
+                def deep_update(source, updates):
+                    for key, value in updates.items():
+                        if key in source and isinstance(source[key], dict) and isinstance(value, dict):
+                            source[key] = deep_update(source[key], value)
+                        else:
+                            source[key] = value
+                    return source
+                
+                merged_settings = deep_update(merged_settings, loaded_settings)
+                
+                return merged_settings
         else:
-            settings_logger.info(f"No settings file found at {SETTINGS_FILE}, creating with default values")
-            save_settings(settings)
-        
-        return settings
+            # If file doesn't exist, create it with default settings
+            save_settings(DEFAULT_SETTINGS)
+            return DEFAULT_SETTINGS
     except Exception as e:
         settings_logger.error(f"Error loading settings: {e}")
-        settings_logger.info("Using default settings due to error")
-        return DEFAULT_CONFIGS.get(app_type, DEFAULT_CONFIGS["sonarr"])
+        # If there's an error, return defaults and try to save them
+        try:
+            save_settings(DEFAULT_SETTINGS)
+        except Exception as save_error:
+            settings_logger.error(f"Error saving default settings: {save_error}")
+        return DEFAULT_SETTINGS
 
-def _deep_update(d, u):
-    """Recursively update a dictionary without overwriting entire nested dicts"""
-    for k, v in u.items():
-        if isinstance(v, dict) and k in d and isinstance(d[k], dict):
-            _deep_update(d[k], v)
-        else:
-            d[k] = v
-
+# Save settings to file
 def save_settings(settings: Dict[str, Any]) -> bool:
-    """Save settings to the settings file."""
+    """Save settings to JSON file"""
     try:
-        with open(SETTINGS_FILE, 'w') as f:
-            json.dump(settings, f, indent=2)
-        settings_logger.info("Settings saved successfully")
+        SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
+        with open(SETTINGS_FILE, "w", encoding="utf-8") as file:
+            json.dump(settings, file, indent=2)
         return True
     except Exception as e:
         settings_logger.error(f"Error saving settings: {e}")
         return False
 
-def update_setting(category: str, key: str, value: Any) -> bool:
-    """Update a specific setting value."""
-    try:
-        settings = load_settings()
-        
-        # Ensure category exists
-        if category not in settings:
-            settings[category] = {}
-            
-        # Update the value
-        settings[category][key] = value
-        
-        # Save the updated settings
-        return save_settings(settings)
-    except Exception as e:
-        settings_logger.error(f"Error updating setting {category}.{key}: {e}")
-        return False
+# Update a specific setting
+def update_setting(section: str, key: str, value: Any) -> bool:
+    """Update a specific setting in a section"""
+    settings = load_settings()
+    
+    # Create section if it doesn't exist
+    if section not in settings:
+        settings[section] = {}
+    
+    # Update the setting
+    settings[section][key] = value
+    
+    # Save the updated settings
+    return save_settings(settings)
 
-def get_setting(category: str, key: str, default: Any = None) -> Any:
-    """Get a specific setting value."""
-    try:
-        settings = load_settings()
-        return settings.get(category, {}).get(key, default)
-    except Exception as e:
-        settings_logger.error(f"Error getting setting {category}.{key}: {e}")
+# Get a specific setting
+def get_setting(section: str, key: str, default: Any = None) -> Any:
+    """Get a specific setting from a section"""
+    settings = load_settings()
+    
+    # Check if the section exists
+    if section not in settings:
         return default
+    
+    # Check if the key exists in the section
+    if key not in settings[section]:
+        return default
+    
+    # Return the setting value
+    return settings[section][key]
 
-def get_all_settings() -> Dict[str, Any]:
-    """Get all settings."""
-    return load_settings()
-
+# Get the current app type
 def get_app_type() -> str:
-    """Get the current app type"""
-    settings = load_settings()
-    return settings.get("app_type", "sonarr")
+    """Get the current app type from settings or environment"""
+    # Check for environment variable first
+    env_app_type = os.environ.get("APP_TYPE")
+    if env_app_type and env_app_type.lower() in ["sonarr", "radarr", "lidarr", "readarr"]:
+        return env_app_type.lower()
+    
+    # Fall back to settings file
+    app_type = get_setting("app_type", None)
+    if app_type and app_type.lower() in ["sonarr", "radarr", "lidarr", "readarr"]:
+        return app_type.lower()
+    
+    # Default to sonarr if nothing else is specified
+    return "sonarr"
 
-def get_api_key() -> str:
-    """Get the API key from the connections section"""
+# Set the app type
+def set_app_type(app_type: str) -> bool:
+    """Set the app type"""
+    if app_type.lower() not in ["sonarr", "radarr", "lidarr", "readarr"]:
+        return False
+    
     settings = load_settings()
-    app_type = settings.get("app_type", "sonarr")
-    return settings.get("connections", {}).get(app_type, {}).get("api_key", "")
+    settings["app_type"] = app_type.lower()
+    return save_settings(settings)
 
+# Get the API URL for the current app
 def get_api_url() -> str:
-    """Get the API URL from the connections section"""
+    """Get the API URL for the current app"""
+    app_type = get_app_type()
+    api_url = os.environ.get(f"{app_type.upper()}_URL")
+    
+    if not api_url:
+        # Try to get from connections in settings
+        settings = load_settings()
+        connections = settings.get("connections", {})
+        api_url = connections.get(f"{app_type}_url", "")
+    
+    return api_url
+
+# Get the API key for the current app
+def get_api_key() -> str:
+    """Get the API key for the current app"""
+    app_type = get_app_type()
+    api_key = os.environ.get(f"{app_type.upper()}_APIKEY")
+    
+    if not api_key:
+        # Try to get from connections in settings
+        settings = load_settings()
+        connections = settings.get("connections", {})
+        api_key = connections.get(f"{app_type}_apikey", "")
+    
+    return api_key
+
+# Save API connection details
+def save_api_details(app_type: str, api_url: str, api_key: str) -> bool:
+    """Save API connection details for an app"""
+    if app_type.lower() not in ["sonarr", "radarr", "lidarr", "readarr"]:
+        return False
+    
     settings = load_settings()
-    app_type = settings.get("app_type", "sonarr")
-    return settings.get("connections", {}).get(app_type, {}).get("api_url", "")
+    
+    # Ensure the connections section exists
+    if "connections" not in settings:
+        settings["connections"] = {}
+    
+    # Update the connection details
+    settings["connections"][f"{app_type.lower()}_url"] = api_url
+    settings["connections"][f"{app_type.lower()}_apikey"] = api_key
+    
+    return save_settings(settings)
+
+# Get API details for a specific app
+def get_api_details(app_type: str) -> Dict[str, str]:
+    """Get API connection details for an app"""
+    settings = load_settings()
+    connections = settings.get("connections", {})
+    
+    return {
+        "api_url": connections.get(f"{app_type.lower()}_url", ""),
+        "api_key": connections.get(f"{app_type.lower()}_apikey", "")
+    }
 
 # Initialize settings file if it doesn't exist
 if not SETTINGS_FILE.exists():

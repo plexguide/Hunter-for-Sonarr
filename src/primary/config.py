@@ -21,7 +21,7 @@ API_KEY = settings_manager.get_api_key()
 # Web UI is always enabled
 ENABLE_WEB_UI = True
 
-# Base settings common to all apps - no longer using subsections
+# Base settings common to all apps - read directly from app section instead of nested
 API_TIMEOUT = settings_manager.get_setting(APP_TYPE, "api_timeout", 60)
 DEBUG_MODE = settings_manager.get_setting(APP_TYPE, "debug_mode", False)
 COMMAND_WAIT_DELAY = settings_manager.get_setting(APP_TYPE, "command_wait_delay", 1)
@@ -52,7 +52,7 @@ SKIP_MOVIE_REFRESH = False
 SKIP_ARTIST_REFRESH = False
 SKIP_AUTHOR_REFRESH = False
 
-# App-specific settings based on APP_TYPE
+# App-specific settings based on APP_TYPE - all read directly from app section
 if APP_TYPE == "sonarr":
     HUNT_MISSING_SHOWS = settings_manager.get_setting(APP_TYPE, "hunt_missing_shows", 1)
     HUNT_UPGRADE_EPISODES = settings_manager.get_setting(APP_TYPE, "hunt_upgrade_episodes", 0)
@@ -130,12 +130,6 @@ def determine_hunt_mode():
 # Set the initial hunt mode
 HUNT_MODE = determine_hunt_mode()
 
-# Ensure all settings are saved and reloaded properly
-# Added logic to save and reload RANDOM_UPGRADES and other settings
-
-# Ensure RANDOM_UPGRADES is dynamically reloaded at the start of each cycle
-# Updated logic to reload settings before processing upgrades
-
 def refresh_settings(app_type: str = None) -> None:
     """Refresh settings from the settings manager"""
     # Keep a reference to the original app type
@@ -154,21 +148,23 @@ def refresh_settings(app_type: str = None) -> None:
     global SKIP_FUTURE_RELEASES, SKIP_MOVIE_REFRESH
     global SKIP_ARTIST_REFRESH, SKIP_AUTHOR_REFRESH
     
-    # Common settings - updated to use direct app section instead of nested sections
-    RANDOM_MISSING = settings_manager.get_setting(APP_TYPE, "random_missing", True)
-    RANDOM_UPGRADES = settings_manager.get_setting(APP_TYPE, "random_upgrades", True)
-    MONITORED_ONLY = settings_manager.get_setting(APP_TYPE, "monitored_only", True)
-    API_TIMEOUT = settings_manager.get_setting(APP_TYPE, "api_timeout", 60)
-    COMMAND_WAIT_DELAY = settings_manager.get_setting(APP_TYPE, "command_wait_delay", 1)
-    COMMAND_WAIT_ATTEMPTS = settings_manager.get_setting(APP_TYPE, "command_wait_attempts", 600)
-    MINIMUM_DOWNLOAD_QUEUE_SIZE = settings_manager.get_setting(APP_TYPE, "minimum_download_queue_size", -1)
-    DEBUG_MODE = settings_manager.get_setting(APP_TYPE, "debug_mode", False)
-    LOG_REFRESH_INTERVAL_SECONDS = settings_manager.get_setting(APP_TYPE, "log_refresh_interval_seconds", 30)
-    
     # Get the actual app type we're refreshing settings for
     current_app_type = os.environ.get("APP_TYPE", original_app_type)
     
-    # App-specific settings based on APP_TYPE
+    # Common settings - read directly from app section
+    RANDOM_MISSING = settings_manager.get_setting(current_app_type, "random_missing", True)
+    RANDOM_UPGRADES = settings_manager.get_setting(current_app_type, "random_upgrades", True)
+    MONITORED_ONLY = settings_manager.get_setting(current_app_type, "monitored_only", True)
+    API_TIMEOUT = settings_manager.get_setting(current_app_type, "api_timeout", 60)
+    COMMAND_WAIT_DELAY = settings_manager.get_setting(current_app_type, "command_wait_delay", 1)
+    COMMAND_WAIT_ATTEMPTS = settings_manager.get_setting(current_app_type, "command_wait_attempts", 600)
+    MINIMUM_DOWNLOAD_QUEUE_SIZE = settings_manager.get_setting(current_app_type, "minimum_download_queue_size", -1)
+    DEBUG_MODE = settings_manager.get_setting(current_app_type, "debug_mode", False)
+    LOG_REFRESH_INTERVAL_SECONDS = settings_manager.get_setting(current_app_type, "log_refresh_interval_seconds", 30)
+    SLEEP_DURATION = settings_manager.get_setting(current_app_type, "sleep_duration", 900)
+    STATE_RESET_INTERVAL_HOURS = settings_manager.get_setting(current_app_type, "state_reset_interval_hours", 168)
+    
+    # App-specific settings based on current app type
     if current_app_type == "sonarr":
         HUNT_MISSING_SHOWS = settings_manager.get_setting(current_app_type, "hunt_missing_shows", 1)
         HUNT_UPGRADE_EPISODES = settings_manager.get_setting(current_app_type, "hunt_upgrade_episodes", 0)

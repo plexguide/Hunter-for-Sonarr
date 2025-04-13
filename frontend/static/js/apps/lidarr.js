@@ -102,11 +102,11 @@
             fetch('/api/settings')
                 .then(response => response.json())
                 .then(data => {
-                    const huntarr = data.huntarr || {};
-                    const advanced = data.advanced || {};
-                    
                     // Store original settings for comparison
                     app.originalSettings = JSON.parse(JSON.stringify(data));
+                    
+                    // Get app-specific settings directly from lidarr section instead of huntarr/advanced
+                    const lidarrSettings = data.lidarr || {};
                     
                     // For Lidarr, load from app-settings endpoint
                     fetch(`/api/app-settings?app=lidarr`)
@@ -124,51 +124,51 @@
                                 app.configuredApps.lidarr = !!(appData.api_url && appData.api_key);
                             }
                             
-                            // Lidarr-specific settings
+                            // Lidarr-specific settings - all from lidarrSettings directly
                             if (this.elements.huntMissingAlbumsInput) {
-                                this.elements.huntMissingAlbumsInput.value = huntarr.hunt_missing_albums !== undefined ? huntarr.hunt_missing_albums : 1;
+                                this.elements.huntMissingAlbumsInput.value = lidarrSettings.hunt_missing_albums !== undefined ? lidarrSettings.hunt_missing_albums : 1;
                             }
                             if (this.elements.huntUpgradeTracksInput) {
-                                this.elements.huntUpgradeTracksInput.value = huntarr.hunt_upgrade_tracks !== undefined ? huntarr.hunt_upgrade_tracks : 0;
+                                this.elements.huntUpgradeTracksInput.value = lidarrSettings.hunt_upgrade_tracks !== undefined ? lidarrSettings.hunt_upgrade_tracks : 0;
                             }
                             if (this.elements.sleepDurationInput) {
-                                this.elements.sleepDurationInput.value = huntarr.sleep_duration || 900;
+                                this.elements.sleepDurationInput.value = lidarrSettings.sleep_duration || 900;
                                 this.updateSleepDurationDisplay();
                             }
                             if (this.elements.stateResetIntervalInput) {
-                                this.elements.stateResetIntervalInput.value = huntarr.state_reset_interval_hours || 168;
+                                this.elements.stateResetIntervalInput.value = lidarrSettings.state_reset_interval_hours || 168;
                             }
                             if (this.elements.monitoredOnlyInput) {
-                                this.elements.monitoredOnlyInput.checked = huntarr.monitored_only !== false;
+                                this.elements.monitoredOnlyInput.checked = lidarrSettings.monitored_only !== false;
                             }
                             if (this.elements.skipFutureReleasesInput) {
-                                this.elements.skipFutureReleasesInput.checked = huntarr.skip_future_releases !== false;
+                                this.elements.skipFutureReleasesInput.checked = lidarrSettings.skip_future_releases !== false;
                             }
                             if (this.elements.skipArtistRefreshInput) {
-                                this.elements.skipArtistRefreshInput.checked = huntarr.skip_artist_refresh === true;
+                                this.elements.skipArtistRefreshInput.checked = lidarrSettings.skip_artist_refresh === true;
                             }
                             
-                            // Advanced settings
+                            // Advanced settings - from the same lidarrSettings object
                             if (this.elements.apiTimeoutInput) {
-                                this.elements.apiTimeoutInput.value = advanced.api_timeout || 60;
+                                this.elements.apiTimeoutInput.value = lidarrSettings.api_timeout || 60;
                             }
                             if (this.elements.debugModeInput) {
-                                this.elements.debugModeInput.checked = advanced.debug_mode === true;
+                                this.elements.debugModeInput.checked = lidarrSettings.debug_mode === true;
                             }
                             if (this.elements.commandWaitDelayInput) {
-                                this.elements.commandWaitDelayInput.value = advanced.command_wait_delay || 1;
+                                this.elements.commandWaitDelayInput.value = lidarrSettings.command_wait_delay || 1;
                             }
                             if (this.elements.commandWaitAttemptsInput) {
-                                this.elements.commandWaitAttemptsInput.value = advanced.command_wait_attempts || 600;
+                                this.elements.commandWaitAttemptsInput.value = lidarrSettings.command_wait_attempts || 600;
                             }
                             if (this.elements.minimumDownloadQueueSizeInput) {
-                                this.elements.minimumDownloadQueueSizeInput.value = advanced.minimum_download_queue_size || -1;
+                                this.elements.minimumDownloadQueueSizeInput.value = lidarrSettings.minimum_download_queue_size || -1;
                             }
                             if (this.elements.randomMissingInput) {
-                                this.elements.randomMissingInput.checked = advanced.random_missing !== false;
+                                this.elements.randomMissingInput.checked = lidarrSettings.random_missing !== false;
                             }
                             if (this.elements.randomUpgradesInput) {
-                                this.elements.randomUpgradesInput.checked = advanced.random_upgrades !== false;
+                                this.elements.randomUpgradesInput.checked = lidarrSettings.random_upgrades !== false;
                             }
                             
                             // Update home page connection status
@@ -205,9 +205,10 @@
         },
         
         checkForChanges: function() {
-            if (!app.originalSettings.huntarr) return false; // Don't check if original settings not loaded
+            if (!app.originalSettings.lidarr) return false; // Don't check if original settings not loaded
             
             let hasChanges = false;
+            const lidarrSettings = app.originalSettings.lidarr || {};
             
             // API connection settings
             if (this.elements.apiUrlInput && this.elements.apiUrlInput.dataset.originalValue !== undefined && 
@@ -215,23 +216,23 @@
             if (this.elements.apiKeyInput && this.elements.apiKeyInput.dataset.originalValue !== undefined && 
                 this.elements.apiKeyInput.value !== this.elements.apiKeyInput.dataset.originalValue) hasChanges = true;
             
-            // Check Basic Settings
-            if (this.elements.huntMissingAlbumsInput && parseInt(this.elements.huntMissingAlbumsInput.value) !== app.originalSettings.huntarr.hunt_missing_albums) hasChanges = true;
-            if (this.elements.huntUpgradeTracksInput && parseInt(this.elements.huntUpgradeTracksInput.value) !== app.originalSettings.huntarr.hunt_upgrade_tracks) hasChanges = true;
-            if (this.elements.sleepDurationInput && parseInt(this.elements.sleepDurationInput.value) !== app.originalSettings.huntarr.sleep_duration) hasChanges = true;
-            if (this.elements.stateResetIntervalInput && parseInt(this.elements.stateResetIntervalInput.value) !== app.originalSettings.huntarr.state_reset_interval_hours) hasChanges = true;
-            if (this.elements.monitoredOnlyInput && this.elements.monitoredOnlyInput.checked !== app.originalSettings.huntarr.monitored_only) hasChanges = true;
-            if (this.elements.skipFutureReleasesInput && this.elements.skipFutureReleasesInput.checked !== app.originalSettings.huntarr.skip_future_releases) hasChanges = true;
-            if (this.elements.skipArtistRefreshInput && this.elements.skipArtistRefreshInput.checked !== app.originalSettings.huntarr.skip_artist_refresh) hasChanges = true;
+            // Check all settings directly from the lidarr object
+            if (this.elements.huntMissingAlbumsInput && parseInt(this.elements.huntMissingAlbumsInput.value) !== lidarrSettings.hunt_missing_albums) hasChanges = true;
+            if (this.elements.huntUpgradeTracksInput && parseInt(this.elements.huntUpgradeTracksInput.value) !== lidarrSettings.hunt_upgrade_tracks) hasChanges = true;
+            if (this.elements.sleepDurationInput && parseInt(this.elements.sleepDurationInput.value) !== lidarrSettings.sleep_duration) hasChanges = true;
+            if (this.elements.stateResetIntervalInput && parseInt(this.elements.stateResetIntervalInput.value) !== lidarrSettings.state_reset_interval_hours) hasChanges = true;
+            if (this.elements.monitoredOnlyInput && this.elements.monitoredOnlyInput.checked !== lidarrSettings.monitored_only) hasChanges = true;
+            if (this.elements.skipFutureReleasesInput && this.elements.skipFutureReleasesInput.checked !== lidarrSettings.skip_future_releases) hasChanges = true;
+            if (this.elements.skipArtistRefreshInput && this.elements.skipArtistRefreshInput.checked !== lidarrSettings.skip_artist_refresh) hasChanges = true;
             
-            // Check Advanced Settings
-            if (this.elements.apiTimeoutInput && parseInt(this.elements.apiTimeoutInput.value) !== app.originalSettings.advanced.api_timeout) hasChanges = true;
-            if (this.elements.debugModeInput && this.elements.debugModeInput.checked !== app.originalSettings.advanced.debug_mode) hasChanges = true;
-            if (this.elements.commandWaitDelayInput && parseInt(this.elements.commandWaitDelayInput.value) !== app.originalSettings.advanced.command_wait_delay) hasChanges = true;
-            if (this.elements.commandWaitAttemptsInput && parseInt(this.elements.commandWaitAttemptsInput.value) !== app.originalSettings.advanced.command_wait_attempts) hasChanges = true;
-            if (this.elements.minimumDownloadQueueSizeInput && parseInt(this.elements.minimumDownloadQueueSizeInput.value) !== app.originalSettings.advanced.minimum_download_queue_size) hasChanges = true;
-            if (this.elements.randomMissingInput && this.elements.randomMissingInput.checked !== app.originalSettings.advanced.random_missing) hasChanges = true;
-            if (this.elements.randomUpgradesInput && this.elements.randomUpgradesInput.checked !== app.originalSettings.advanced.random_upgrades) hasChanges = true;
+            // Check Advanced Settings directly from the lidarr object as well
+            if (this.elements.apiTimeoutInput && parseInt(this.elements.apiTimeoutInput.value) !== lidarrSettings.api_timeout) hasChanges = true;
+            if (this.elements.debugModeInput && this.elements.debugModeInput.checked !== lidarrSettings.debug_mode) hasChanges = true;
+            if (this.elements.commandWaitDelayInput && parseInt(this.elements.commandWaitDelayInput.value) !== lidarrSettings.command_wait_delay) hasChanges = true;
+            if (this.elements.commandWaitAttemptsInput && parseInt(this.elements.commandWaitAttemptsInput.value) !== lidarrSettings.command_wait_attempts) hasChanges = true;
+            if (this.elements.minimumDownloadQueueSizeInput && parseInt(this.elements.minimumDownloadQueueSizeInput.value) !== lidarrSettings.minimum_download_queue_size) hasChanges = true;
+            if (this.elements.randomMissingInput && this.elements.randomMissingInput.checked !== lidarrSettings.random_missing) hasChanges = true;
+            if (this.elements.randomUpgradesInput && this.elements.randomUpgradesInput.checked !== lidarrSettings.random_upgrades) hasChanges = true;
             
             // Update save buttons state
             this.updateSaveButtonState(hasChanges);
@@ -259,16 +260,17 @@
                 app_type: 'lidarr',
                 api_url: this.elements.apiUrlInput ? this.elements.apiUrlInput.value || '' : '',
                 api_key: this.elements.apiKeyInput ? this.elements.apiKeyInput.value || '' : '',
-                huntarr: {
+                lidarr: {
+                    // Combined settings - all at top level, no nesting
                     hunt_missing_albums: this.elements.huntMissingAlbumsInput ? parseInt(this.elements.huntMissingAlbumsInput.value) || 0 : 0,
                     hunt_upgrade_tracks: this.elements.huntUpgradeTracksInput ? parseInt(this.elements.huntUpgradeTracksInput.value) || 0 : 0,
                     sleep_duration: this.elements.sleepDurationInput ? parseInt(this.elements.sleepDurationInput.value) || 900 : 900,
                     state_reset_interval_hours: this.elements.stateResetIntervalInput ? parseInt(this.elements.stateResetIntervalInput.value) || 168 : 168,
                     monitored_only: this.elements.monitoredOnlyInput ? this.elements.monitoredOnlyInput.checked : true,
                     skip_future_releases: this.elements.skipFutureReleasesInput ? this.elements.skipFutureReleasesInput.checked : true,
-                    skip_artist_refresh: this.elements.skipArtistRefreshInput ? this.elements.skipArtistRefreshInput.checked : false
-                },
-                advanced: {
+                    skip_artist_refresh: this.elements.skipArtistRefreshInput ? this.elements.skipArtistRefreshInput.checked : false,
+                    
+                    // Include advanced settings at the same level
                     debug_mode: this.elements.debugModeInput ? this.elements.debugModeInput.checked : false,
                     command_wait_delay: this.elements.commandWaitDelayInput ? parseInt(this.elements.commandWaitDelayInput.value) || 1 : 1,
                     command_wait_attempts: this.elements.commandWaitAttemptsInput ? parseInt(this.elements.commandWaitAttemptsInput.value) || 600 : 600,
@@ -310,8 +312,7 @@
                     if (lidarrModule.elements.apiKeyInput) lidarrModule.elements.apiKeyInput.dataset.originalValue = settings.api_key;
                     
                     // Update the rest of originalSettings
-                    if (settings.huntarr) app.originalSettings.huntarr = {...settings.huntarr};
-                    if (settings.advanced) app.originalSettings.advanced = {...settings.advanced};
+                    if (settings.lidarr) app.originalSettings.lidarr = {...settings.lidarr};
                     
                     // Update configuration status
                     app.configuredApps.lidarr = !!(settings.api_url && settings.api_key);
