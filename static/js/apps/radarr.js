@@ -46,13 +46,6 @@
                     originalLoadSettings.call(this, appType);
                 }
             };
-            
-            // Wire up the specific test connection
-            if (this.elements.testConnectionButton) {
-                this.elements.testConnectionButton.addEventListener('click', () => {
-                    app.testConnection('radarr', this.elements.apiUrlInput, this.elements.apiKeyInput, this.elements.connectionStatus);
-                });
-            }
         },
         
         setupEventListeners: function() {
