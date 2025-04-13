@@ -7,9 +7,9 @@ Handles all configuration settings with defaults
 import os
 import logging
 import importlib
-from primary import settings_manager
-from primary import keys_manager
-from primary.utils.logger import logger
+from src.primary import settings_manager
+from src.primary import keys_manager
+from src.primary.utils.logger import logger
 
 # Get app type
 APP_TYPE = settings_manager.get_app_type()

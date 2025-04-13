@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """
 Main entry point for Huntarr
-This file simply imports from the src module and runs the appropriate entry point.
 """
 
-import os
 import sys
+import os
 
-# Add the current directory to the path so the src module can be imported
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add the current directory to the path to ensure imports work correctly
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-# Import the main functionality from the src module
+# Set up the Python path to find modules
+if os.path.exists('/app'):
+    sys.path.insert(0, '/app')
+
+# Now import the main function
 from src.primary.main import main
 
 if __name__ == "__main__":
-    # Run the main function
     main()

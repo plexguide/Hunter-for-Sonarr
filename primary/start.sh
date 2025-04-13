@@ -10,5 +10,7 @@ echo "Starting with Web UI enabled on port 9705"
 
 # Start both the web server and the main application
 cd /app
-python -m primary.web_server &
-python -m primary.main
+# Add the app directory to the Python path
+export PYTHONPATH=/app:$PYTHONPATH
+python -m src.primary.web_server &
+python -m main
