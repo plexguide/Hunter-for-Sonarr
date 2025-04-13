@@ -217,7 +217,6 @@ button {
     left: 0;
     right: 0;
     bottom: 0;
-    width: 40;
     background-color: var(--switch-bg);
     transition: .4s;
 }
