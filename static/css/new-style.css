@@ -242,7 +242,7 @@ input:checked + .slider:before {
 
 .slider.round {
     border-radius: 34px;
-    width: 40px;
+    width: 52px;
 }
 
 .slider.round:before {
