@@ -40,44 +40,76 @@ DEFAULT_SETTINGS = {
     }
 }
 
-# Update the DEFAULT_CONFIGS_FILE path
-DEFAULT_CONFIGS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'default_configs.json')
-
-# Include hard-coded default config directly in the file
-
-# Add hardcoded default configs for each app type
+# Define default configurations directly in this file instead of loading from external JSON
 DEFAULT_CONFIGS = {
-  "sonarr": {
-    "huntarr": {
-      "hunt_missing_shows": 1,
-      "hunt_upgrade_episodes": 0,
-      "monitored_only": True,
-      "skip_future_episodes": True,
-      "skip_series_refresh": False,
-      "log_refresh_interval_seconds": 30
+    "sonarr": {
+        "hunt_missing_shows": 1,
+        "hunt_upgrade_episodes": 0,
+        "monitored_only": True,
+        "skip_future_episodes": True,
+        "skip_series_refresh": False,
+        "log_refresh_interval_seconds": 30,
+        "sleep_duration": 900,
+        "state_reset_interval_hours": 168,
+        "api_timeout": 60,
+        "command_wait_delay": 1,
+        "command_wait_attempts": 600,
+        "minimum_download_queue_size": -1,
+        "debug_mode": False,
+        "random_missing": True,
+        "random_upgrades": True
     },
-    "advanced": {
-      "api_timeout": 60,
-      "command_wait_delay": 1,
-      "command_wait_attempts": 600,
-      "minimum_download_queue_size": -1,
-      "debug_mode": False,
-      "random_missing": True,
-      "random_upgrades": True
+    "radarr": {
+        "hunt_missing_movies": 1,
+        "hunt_upgrade_movies": 0,
+        "monitored_only": True,
+        "skip_future_releases": True,
+        "skip_movie_refresh": False,
+        "log_refresh_interval_seconds": 30,
+        "sleep_duration": 900,
+        "state_reset_interval_hours": 168,
+        "api_timeout": 60,
+        "command_wait_delay": 1,
+        "command_wait_attempts": 600,
+        "minimum_download_queue_size": -1,
+        "debug_mode": False,
+        "random_missing": True,
+        "random_upgrades": True
+    },
+    "lidarr": {
+        "hunt_missing_albums": 1,
+        "hunt_upgrade_tracks": 0,
+        "monitored_only": True,
+        "skip_future_releases": True,
+        "skip_artist_refresh": False,
+        "log_refresh_interval_seconds": 30,
+        "sleep_duration": 900,
+        "state_reset_interval_hours": 168,
+        "api_timeout": 60,
+        "command_wait_delay": 1,
+        "command_wait_attempts": 600,
+        "minimum_download_queue_size": -1,
+        "debug_mode": False,
+        "random_missing": True,
+        "random_upgrades": True
+    },
+    "readarr": {
+        "hunt_missing_books": 1,
+        "hunt_upgrade_books": 0,
+        "monitored_only": True,
+        "skip_future_releases": True,
+        "skip_author_refresh": False,
+        "log_refresh_interval_seconds": 30,
+        "sleep_duration": 900,
+        "state_reset_interval_hours": 168,
+        "api_timeout": 60,
+        "command_wait_delay": 1,
+        "command_wait_attempts": 600,
+        "minimum_download_queue_size": -1,
+        "debug_mode": False,
+        "random_missing": True,
+        "random_upgrades": True
     }
-  },
-  "radarr": {
-    # Same structure as sonarr with appropriate key changes
-    # ...existing code...
-  },
-  "lidarr": {
-    # Same structure
-    # ...existing code...
-  },
-  "readarr": {
-    # Same structure
-    # ...existing code...
-  }
 }
 
 def get_default_config_for_app(app_type: str) -> Dict[str, Any]:
