@@ -24,6 +24,7 @@
             </ul>
         </div>
     </div>
+    {% include 'components/footer.html' %}
 </section>
 
 <style>
@@ -54,5 +55,30 @@
     
     .resource-list li {
         margin-bottom: 10px;
+    }
+    
+    .banner-footer {
+        text-align: center;
+        padding: 20px;
+        margin-top: 30px;
+        background-color: var(--bg-secondary);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .banner-footer p {
+        margin: 0;
+        font-size: 1.1em;
+        color: var(--text-primary);
+    }
+    
+    .banner-footer a {
+        color: var(--accent-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .banner-footer a:hover {
+        text-decoration: underline;
     }
 </style>
