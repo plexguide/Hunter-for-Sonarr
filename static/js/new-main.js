@@ -277,23 +277,20 @@ const HuntarrUI = {
         // Disconnect any existing event sources
         this.disconnectAllEventSources();
         
-        if (this.configuredApps[this.currentApp]) {
-            this.connectEventSource(this.currentApp);
-            this.elements.logConnectionStatus.textContent = 'Connecting...';
-            this.elements.logConnectionStatus.className = '';
-        } else {
-            this.elements.logConnectionStatus.textContent = 'Not Configured';
-            this.elements.logConnectionStatus.className = 'status-disconnected';
-        }
+        // Connect to unified logs stream
+        this.connectEventSource();
+        this.elements.logConnectionStatus.textContent = 'Connecting...';
+        this.elements.logConnectionStatus.className = '';
     },
     
-    connectEventSource: function(app) {
-        if (this.eventSources[app]) {
-            this.eventSources[app].close();
+    connectEventSource: function() {
+        // Close any existing event source
+        if (this.eventSources.logs) {
+            this.eventSources.logs.close();
         }
         
         try {
-            const eventSource = new EventSource(`/api/logs/${app}`);
+            const eventSource = new EventSource(`/logs`);
             
             eventSource.onopen = () => {
                 this.elements.logConnectionStatus.textContent = 'Connected';
@@ -301,8 +298,27 @@ const HuntarrUI = {
             };
             
             eventSource.onmessage = (event) => {
-                const logData = JSON.parse(event.data);
-                this.addLogMessage(logData);
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                
+                // Add appropriate class for log level
+                if (event.data.includes(' - INFO - ')) {
+                    logEntry.classList.add('log-info');
+                } else if (event.data.includes(' - WARNING - ')) {
+                    logEntry.classList.add('log-warning');
+                } else if (event.data.includes(' - ERROR - ')) {
+                    logEntry.classList.add('log-error');
+                } else if (event.data.includes(' - DEBUG - ')) {
+                    logEntry.classList.add('log-debug');
+                }
+                
+                logEntry.textContent = event.data;
+                this.elements.logsContainer.appendChild(logEntry);
+                
+                // Auto-scroll to bottom if enabled
+                if (this.autoScroll) {
+                    this.elements.logsContainer.scrollTop = this.elements.logsContainer.scrollHeight;
+                }
             };
             
             eventSource.onerror = () => {
@@ -311,13 +327,13 @@ const HuntarrUI = {
                 
                 // Try to reconnect after a delay
                 setTimeout(() => {
-                    if (this.currentSection === 'logs' && this.currentApp === app) {
-                        this.connectEventSource(app);
+                    if (this.currentSection === 'logs') {
+                        this.connectEventSource();
                     }
                 }, 5000);
             };
             
-            this.eventSources[app] = eventSource;
+            this.eventSources.logs = eventSource;
         } catch (error) {
             console.error('Error connecting to event source:', error);
             this.elements.logConnectionStatus.textContent = 'Connection Error';

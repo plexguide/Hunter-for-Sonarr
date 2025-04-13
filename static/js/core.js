@@ -309,13 +309,12 @@ const huntarrApp = {
     // Event source for logs
     connectEventSource: function(app) {
         if (!this.elements.logsElement) return; // Skip if not on logs page
-        if (!this.configuredApps[app]) return; // Skip if app not configured
         
         if (this.eventSource) {
             this.eventSource.close();
         }
         
-        this.eventSource = new EventSource(`/logs?app=${app}`);
+        this.eventSource = new EventSource(`/logs`);
         
         this.eventSource.onopen = () => {
             if (this.elements.statusElement) {
@@ -330,11 +329,9 @@ const huntarrApp = {
                 this.elements.statusElement.className = 'status-disconnected';
             }
             
-            // Attempt to reconnect after 5 seconds if app is still configured
+            // Attempt to reconnect after 5 seconds
             setTimeout(() => {
-                if (this.configuredApps[app]) {
-                    this.connectEventSource(app);
-                }
+                this.connectEventSource();
             }, 5000);
         };
         
