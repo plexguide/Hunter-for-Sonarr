@@ -28,12 +28,25 @@ function loadAppSettings(app) {
     fetch(`/api/settings`)
         .then(response => response.json())
         .then(allSettings => {
+            // Extract the app-specific settings
+            let settings = {};
+            
+            // Get general settings
+            if (app === 'global') {
+                settings = allSettings.global || {};
+                if (allSettings.ui) {
+                    settings.ui = allSettings.ui;
+                }
+            } else {
+                // Extract app-specific settings
+                settings = allSettings[app] || {};
+            }
+            
             // Get app-specific API settings if needed
             fetch(`/api/app-settings?app=${app}`)
                 .then(response => response.json())
                 .then(apiData => {
-                    // Merge the API credentials with the general settings
-                    const settings = allSettings;
+                    // Merge the API credentials with the settings
                     if (apiData && apiData.success) {
                         settings.api_url = apiData.api_url;
                         settings.api_key = apiData.api_key;
@@ -68,15 +81,166 @@ function loadAppSettings(app) {
                     // Set up test connection buttons
                     setupTestConnectionButtons();
                     
-                    console.log(`${app} settings loaded successfully`);
+                    console.log(`${app} settings loaded successfully`, settings);
                 })
                 .catch(error => {
                     console.error(`Error loading API settings for ${app}:`, error);
+                    
+                    // If API settings fetch fails, still try to load the form with what we have
+                    const container = document.getElementById(`${app}Settings`);
+                    if (!container) return;
+                    
+                    // Generate the form based on the app type
+                    switch(app) {
+                        case 'sonarr':
+                            SettingsForms.generateSonarrForm(container, settings);
+                            break;
+                        case 'radarr':
+                            SettingsForms.generateRadarrForm(container, settings);
+                            break;
+                        case 'lidarr':
+                            SettingsForms.generateLidarrForm(container, settings);
+                            break;
+                        case 'readarr':
+                            SettingsForms.generateReadarrForm(container, settings);
+                            break;
+                        case 'global':
+                            SettingsForms.generateGlobalForm(container, settings);
+                            break;
+                    }
+                    
+                    // Update any dynamic displays
+                    SettingsForms.updateDurationDisplay();
                 });
         })
         .catch(error => {
             console.error(`Error loading settings for ${app}:`, error);
+            
+            // If the settings fetch fails entirely, try to load with default empty settings
+            const container = document.getElementById(`${app}Settings`);
+            if (!container) return;
+            
+            // Generate the form with default values
+            switch(app) {
+                case 'sonarr':
+                    SettingsForms.generateSonarrForm(container, getDefaultSettings('sonarr'));
+                    break;
+                case 'radarr':
+                    SettingsForms.generateRadarrForm(container, getDefaultSettings('radarr'));
+                    break;
+                case 'lidarr':
+                    SettingsForms.generateLidarrForm(container, getDefaultSettings('lidarr'));
+                    break;
+                case 'readarr':
+                    SettingsForms.generateReadarrForm(container, getDefaultSettings('readarr'));
+                    break;
+                case 'global':
+                    SettingsForms.generateGlobalForm(container, getDefaultSettings('global'));
+                    break;
+            }
+            
+            // Update any dynamic displays
+            SettingsForms.updateDurationDisplay();
         });
+}
+
+// Helper function to get default settings for any app
+function getDefaultSettings(app) {
+    switch(app) {
+        case 'sonarr':
+            return {
+                api_url: '',
+                api_key: '',
+                hunt_missing_shows: 1,
+                hunt_upgrade_episodes: 0,
+                sleep_duration: 900,
+                state_reset_interval_hours: 168,
+                monitored_only: true,
+                skip_future_episodes: true,
+                skip_series_refresh: false,
+                random_missing: true,
+                random_upgrades: true,
+                debug_mode: false,
+                api_timeout: 60,
+                command_wait_delay: 1,
+                command_wait_attempts: 600,
+                minimum_download_queue_size: -1,
+                log_refresh_interval_seconds: 30
+            };
+        case 'radarr':
+            return {
+                api_url: '',
+                api_key: '',
+                hunt_missing_movies: 1,
+                hunt_upgrade_movies: 0,
+                sleep_duration: 900,
+                state_reset_interval_hours: 168,
+                monitored_only: true,
+                skip_future_releases: true,
+                skip_movie_refresh: false,
+                random_missing: true,
+                random_upgrades: true,
+                debug_mode: false,
+                api_timeout: 60,
+                command_wait_delay: 1,
+                command_wait_attempts: 600,
+                minimum_download_queue_size: -1,
+                log_refresh_interval_seconds: 30
+            };
+        case 'lidarr':
+            return {
+                api_url: '',
+                api_key: '',
+                hunt_missing_albums: 1,
+                hunt_upgrade_tracks: 0,
+                sleep_duration: 900,
+                state_reset_interval_hours: 168,
+                monitored_only: true,
+                skip_future_releases: true,
+                skip_artist_refresh: false,
+                random_missing: true,
+                random_upgrades: true,
+                debug_mode: false,
+                api_timeout: 60,
+                command_wait_delay: 1,
+                command_wait_attempts: 600,
+                minimum_download_queue_size: -1,
+                log_refresh_interval_seconds: 30
+            };
+        case 'readarr':
+            return {
+                api_url: '',
+                api_key: '',
+                hunt_missing_books: 1,
+                hunt_upgrade_books: 0,
+                sleep_duration: 900,
+                state_reset_interval_hours: 168,
+                monitored_only: true,
+                skip_future_releases: true,
+                skip_author_refresh: false,
+                random_missing: true,
+                random_upgrades: true,
+                debug_mode: false,
+                api_timeout: 60,
+                command_wait_delay: 1,
+                command_wait_attempts: 600,
+                minimum_download_queue_size: -1,
+                log_refresh_interval_seconds: 30
+            };
+        case 'global':
+            return {
+                debug_mode: false,
+                command_wait_delay: 1,
+                command_wait_attempts: 600,
+                minimum_download_queue_size: -1,
+                log_refresh_interval_seconds: 30,
+                ui: {
+                    dark_mode: true
+                }
+            };
+        default:
+            return {};
+    }
 }
 
 // Set up tab switching
@@ -127,11 +291,13 @@ function setupSettingsButtons() {
 }
 
 // Save current settings
-function saveCurrentSettings() {
-    const activeTab = document.querySelector('.settings-tab.active');
-    if (!activeTab) return;
+function saveCurrentSettings(app) {
+    if (!app) {
+        const activeTab = document.querySelector('.settings-tab.active');
+        if (!activeTab) return;
+        app = activeTab.getAttribute('data-settings');
+    }
     
-    const app = activeTab.getAttribute('data-settings');
     let settings = {
         app_type: app
     };
@@ -141,93 +307,97 @@ function saveCurrentSettings() {
         settings.api_url = document.getElementById('sonarr_api_url')?.value || '';
         settings.api_key = document.getElementById('sonarr_api_key')?.value || '';
         
-        // Now add all settings directly under the app key instead of nested
-        settings.sonarr = {
-            hunt_missing_shows: parseInt(document.getElementById('hunt_missing_shows')?.value || 1),
-            hunt_upgrade_episodes: parseInt(document.getElementById('hunt_upgrade_episodes')?.value || 0),
-            sleep_duration: parseInt(document.getElementById('sleep_duration')?.value || 900),
-            state_reset_interval_hours: parseInt(document.getElementById('state_reset_interval_hours')?.value || 168),
-            monitored_only: document.getElementById('monitored_only')?.checked ?? true,
-            skip_future_episodes: document.getElementById('skip_future_episodes')?.checked ?? true,
-            skip_series_refresh: document.getElementById('skip_series_refresh')?.checked ?? false,
-            random_missing: document.getElementById('random_missing')?.checked ?? true,
-            random_upgrades: document.getElementById('random_upgrades')?.checked ?? true,
-            debug_mode: document.getElementById('debug_mode')?.checked ?? false,
-            api_timeout: parseInt(document.getElementById('api_timeout')?.value || 60),
-            command_wait_delay: parseInt(document.getElementById('command_wait_delay')?.value || 1),
-            command_wait_attempts: parseInt(document.getElementById('command_wait_attempts')?.value || 600),
-            minimum_download_queue_size: parseInt(document.getElementById('minimum_download_queue_size')?.value || -1)
-        };
+        // Add all settings directly at the root level - no more nesting under 'sonarr'
+        settings.hunt_missing_shows = parseInt(document.getElementById('hunt_missing_shows')?.value || 1);
+        settings.hunt_upgrade_episodes = parseInt(document.getElementById('hunt_upgrade_episodes')?.value || 0);
+        settings.sleep_duration = parseInt(document.getElementById('sleep_duration')?.value || 900);
+        settings.state_reset_interval_hours = parseInt(document.getElementById('state_reset_interval_hours')?.value || 168);
+        settings.monitored_only = document.getElementById('monitored_only')?.checked ?? true;
+        settings.skip_future_episodes = document.getElementById('skip_future_episodes')?.checked ?? true;
+        settings.skip_series_refresh = document.getElementById('skip_series_refresh')?.checked ?? false;
+        settings.random_missing = document.getElementById('random_missing')?.checked ?? true;
+        settings.random_upgrades = document.getElementById('random_upgrades')?.checked ?? true;
+        settings.debug_mode = document.getElementById('debug_mode')?.checked ?? false;
+        settings.api_timeout = parseInt(document.getElementById('api_timeout')?.value || 60);
+        settings.command_wait_delay = parseInt(document.getElementById('command_wait_delay')?.value || 1);
+        settings.command_wait_attempts = parseInt(document.getElementById('command_wait_attempts')?.value || 600);
+        settings.minimum_download_queue_size = parseInt(document.getElementById('minimum_download_queue_size')?.value || -1);
+        settings.log_refresh_interval_seconds = parseInt(document.getElementById('log_refresh_interval_seconds')?.value || 30);
     } else if (app === 'radarr') {
         settings.api_url = document.getElementById('radarr_api_url')?.value || '';
         settings.api_key = document.getElementById('radarr_api_key')?.value || '';
         
-        settings.radarr = {
-            hunt_missing_movies: parseInt(document.getElementById('hunt_missing_movies')?.value || 1),
-            hunt_upgrade_movies: parseInt(document.getElementById('hunt_upgrade_movies')?.value || 0),
-            sleep_duration: parseInt(document.getElementById('radarr_sleep_duration')?.value || 900),
-            state_reset_interval_hours: parseInt(document.getElementById('radarr_state_reset_interval_hours')?.value || 168),
-            monitored_only: document.getElementById('radarr_monitored_only')?.checked ?? true,
-            skip_future_releases: document.getElementById('skip_future_releases')?.checked ?? true,
-            skip_movie_refresh: document.getElementById('skip_movie_refresh')?.checked ?? false,
-            random_missing: document.getElementById('radarr_random_missing')?.checked ?? true,
-            random_upgrades: document.getElementById('radarr_random_upgrades')?.checked ?? true,
-            debug_mode: document.getElementById('radarr_debug_mode')?.checked ?? false,
-            api_timeout: parseInt(document.getElementById('radarr_api_timeout')?.value || 60),
-            command_wait_delay: parseInt(document.getElementById('radarr_command_wait_delay')?.value || 1),
-            command_wait_attempts: parseInt(document.getElementById('radarr_command_wait_attempts')?.value || 600),
-            minimum_download_queue_size: parseInt(document.getElementById('radarr_minimum_download_queue_size')?.value || -1)
-        };
+        // Add all settings directly at the root level - no more nesting under 'radarr'
+        settings.hunt_missing_movies = parseInt(document.getElementById('hunt_missing_movies')?.value || 1);
+        settings.hunt_upgrade_movies = parseInt(document.getElementById('hunt_upgrade_movies')?.value || 0);
+        settings.sleep_duration = parseInt(document.getElementById('radarr_sleep_duration')?.value || 900);
+        settings.state_reset_interval_hours = parseInt(document.getElementById('radarr_state_reset_interval_hours')?.value || 168);
+        settings.monitored_only = document.getElementById('radarr_monitored_only')?.checked ?? true;
+        settings.skip_future_releases = document.getElementById('skip_future_releases')?.checked ?? true;
+        settings.skip_movie_refresh = document.getElementById('skip_movie_refresh')?.checked ?? false;
+        settings.random_missing = document.getElementById('radarr_random_missing')?.checked ?? true;
+        settings.random_upgrades = document.getElementById('radarr_random_upgrades')?.checked ?? true;
+        settings.debug_mode = document.getElementById('radarr_debug_mode')?.checked ?? false;
+        settings.api_timeout = parseInt(document.getElementById('radarr_api_timeout')?.value || 60);
+        settings.command_wait_delay = parseInt(document.getElementById('radarr_command_wait_delay')?.value || 1);
+        settings.command_wait_attempts = parseInt(document.getElementById('radarr_command_wait_attempts')?.value || 600);
+        settings.minimum_download_queue_size = parseInt(document.getElementById('radarr_minimum_download_queue_size')?.value || -1);
+        settings.log_refresh_interval_seconds = parseInt(document.getElementById('radarr_log_refresh_interval_seconds')?.value || 30);
     } else if (app === 'lidarr') {
         settings.api_url = document.getElementById('lidarr_api_url')?.value || '';
         settings.api_key = document.getElementById('lidarr_api_key')?.value || '';
         
-        settings.lidarr = {
-            hunt_missing_albums: parseInt(document.getElementById('hunt_missing_albums')?.value || 1),
-            hunt_upgrade_tracks: parseInt(document.getElementById('hunt_upgrade_tracks')?.value || 0),
-            sleep_duration: parseInt(document.getElementById('lidarr_sleep_duration')?.value || 900),
-            state_reset_interval_hours: parseInt(document.getElementById('lidarr_state_reset_interval_hours')?.value || 168),
-            monitored_only: document.getElementById('lidarr_monitored_only')?.checked ?? true,
-            skip_future_releases: document.getElementById('lidarr_skip_future_releases')?.checked ?? true,
-            skip_artist_refresh: document.getElementById('skip_artist_refresh')?.checked ?? false,
-            random_missing: document.getElementById('lidarr_random_missing')?.checked ?? true,
-            random_upgrades: document.getElementById('lidarr_random_upgrades')?.checked ?? true,
-            debug_mode: document.getElementById('lidarr_debug_mode')?.checked ?? false,
-            api_timeout: parseInt(document.getElementById('lidarr_api_timeout')?.value || 60),
-            command_wait_delay: parseInt(document.getElementById('lidarr_command_wait_delay')?.value || 1),
-            command_wait_attempts: parseInt(document.getElementById('lidarr_command_wait_attempts')?.value || 600),
-            minimum_download_queue_size: parseInt(document.getElementById('lidarr_minimum_download_queue_size')?.value || -1)
-        };
+        // Add all settings directly at the root level - no more nesting under 'lidarr'
+        settings.hunt_missing_albums = parseInt(document.getElementById('hunt_missing_albums')?.value || 1);
+        settings.hunt_upgrade_tracks = parseInt(document.getElementById('hunt_upgrade_tracks')?.value || 0);
+        settings.sleep_duration = parseInt(document.getElementById('lidarr_sleep_duration')?.value || 900);
+        settings.state_reset_interval_hours = parseInt(document.getElementById('lidarr_state_reset_interval_hours')?.value || 168);
+        settings.monitored_only = document.getElementById('lidarr_monitored_only')?.checked ?? true;
+        settings.skip_future_releases = document.getElementById('lidarr_skip_future_releases')?.checked ?? true;
+        settings.skip_artist_refresh = document.getElementById('skip_artist_refresh')?.checked ?? false;
+        settings.random_missing = document.getElementById('lidarr_random_missing')?.checked ?? true;
+        settings.random_upgrades = document.getElementById('lidarr_random_upgrades')?.checked ?? true;
+        settings.debug_mode = document.getElementById('lidarr_debug_mode')?.checked ?? false;
+        settings.api_timeout = parseInt(document.getElementById('lidarr_api_timeout')?.value || 60);
+        settings.command_wait_delay = parseInt(document.getElementById('lidarr_command_wait_delay')?.value || 1);
+        settings.command_wait_attempts = parseInt(document.getElementById('lidarr_command_wait_attempts')?.value || 600);
+        settings.minimum_download_queue_size = parseInt(document.getElementById('lidarr_minimum_download_queue_size')?.value || -1);
+        settings.log_refresh_interval_seconds = parseInt(document.getElementById('lidarr_log_refresh_interval_seconds')?.value || 30);
     } else if (app === 'readarr') {
         settings.api_url = document.getElementById('readarr_api_url')?.value || '';
         settings.api_key = document.getElementById('readarr_api_key')?.value || '';
         
-        settings.readarr = {
-            hunt_missing_books: parseInt(document.getElementById('hunt_missing_books')?.value || 1),
-            hunt_upgrade_books: parseInt(document.getElementById('hunt_upgrade_books')?.value || 0),
-            sleep_duration: parseInt(document.getElementById('readarr_sleep_duration')?.value || 900),
-            state_reset_interval_hours: parseInt(document.getElementById('readarr_state_reset_interval_hours')?.value || 168),
-            monitored_only: document.getElementById('readarr_monitored_only')?.checked ?? true,
-            skip_future_releases: document.getElementById('readarr_skip_future_releases')?.checked ?? true,
-            skip_author_refresh: document.getElementById('skip_author_refresh')?.checked ?? false,
-            random_missing: document.getElementById('readarr_random_missing')?.checked ?? true,
-            random_upgrades: document.getElementById('readarr_random_upgrades')?.checked ?? true,
-            debug_mode: document.getElementById('readarr_debug_mode')?.checked ?? false,
-            api_timeout: parseInt(document.getElementById('readarr_api_timeout')?.value || 60),
-            command_wait_delay: parseInt(document.getElementById('readarr_command_wait_delay')?.value || 1),
-            command_wait_attempts: parseInt(document.getElementById('readarr_command_wait_attempts')?.value || 600),
-            minimum_download_queue_size: parseInt(document.getElementById('readarr_minimum_download_queue_size')?.value || -1)
-        };
+        // Add all settings directly at the root level - no more nesting under 'readarr'
+        settings.hunt_missing_books = parseInt(document.getElementById('hunt_missing_books')?.value || 1);
+        settings.hunt_upgrade_books = parseInt(document.getElementById('hunt_upgrade_books')?.value || 0);
+        settings.sleep_duration = parseInt(document.getElementById('readarr_sleep_duration')?.value || 900);
+        settings.state_reset_interval_hours = parseInt(document.getElementById('readarr_state_reset_interval_hours')?.value || 168);
+        settings.monitored_only = document.getElementById('readarr_monitored_only')?.checked ?? true;
+        settings.skip_future_releases = document.getElementById('readarr_skip_future_releases')?.checked ?? true;
+        settings.skip_author_refresh = document.getElementById('skip_author_refresh')?.checked ?? false;
+        settings.random_missing = document.getElementById('readarr_random_missing')?.checked ?? true;
+        settings.random_upgrades = document.getElementById('readarr_random_upgrades')?.checked ?? true;
+        settings.debug_mode = document.getElementById('readarr_debug_mode')?.checked ?? false;
+        settings.api_timeout = parseInt(document.getElementById('readarr_api_timeout')?.value || 60);
+        settings.command_wait_delay = parseInt(document.getElementById('readarr_command_wait_delay')?.value || 1);
+        settings.command_wait_attempts = parseInt(document.getElementById('readarr_command_wait_attempts')?.value || 600);
+        settings.minimum_download_queue_size = parseInt(document.getElementById('readarr_minimum_download_queue_size')?.value || -1);
+        settings.log_refresh_interval_seconds = parseInt(document.getElementById('readarr_log_refresh_interval_seconds')?.value || 30);
     } else if (app === 'global') {
-        settings.global = {
-            debug_mode: document.getElementById('debug_mode')?.checked ?? false,
-            command_wait_delay: parseInt(document.getElementById('command_wait_delay')?.value || 1),
-            command_wait_attempts: parseInt(document.getElementById('command_wait_attempts')?.value || 600),
-            minimum_download_queue_size: parseInt(document.getElementById('minimum_download_queue_size')?.value || -1)
-        };
+        // Global settings
+        settings.debug_mode = document.getElementById('global_debug_mode')?.checked ?? false;
+        settings.command_wait_delay = parseInt(document.getElementById('global_command_wait_delay')?.value || 1);
+        settings.command_wait_attempts = parseInt(document.getElementById('global_command_wait_attempts')?.value || 600);
+        settings.minimum_download_queue_size = parseInt(document.getElementById('global_minimum_download_queue_size')?.value || -1);
+        settings.log_refresh_interval_seconds = parseInt(document.getElementById('global_log_refresh_interval_seconds')?.value || 30);
+        // UI settings
+        if (!settings.ui) settings.ui = {};
+        settings.ui.dark_mode = document.getElementById('dark_mode')?.checked ?? true;
     }
     
-    // Save settings via API
+    console.log('Saving settings:', settings);
+    
+    // Send the settings to the server
     fetch('/api/settings', {
         method: 'POST',
         headers: {
@@ -235,16 +405,38 @@ function saveCurrentSettings() {
         },
         body: JSON.stringify(settings)
     })
-    .then(response => response.json())
+    .then(response => {
+        // Check if the response is valid JSON first
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json().catch(err => {
+                console.error('Error parsing JSON response:', err);
+                throw new Error('Invalid JSON response from server');
+            });
+        } else {
+            // If not JSON, get the text and throw an error
+            return response.text().then(text => {
+                console.error('Received non-JSON response:', text.substring(0, 300));
+                throw new Error(`Server responded with non-JSON data: ${text.substring(0, 100)}...`);
+            });
+        }
+    })
     .then(data => {
         if (data.success) {
-            // Show a non-blocking notification instead of an alert
             showNotification('Settings saved successfully!', 'success');
             
-            // Immediately reload settings from server without waiting for user interaction
-            reloadSettingsFromServer(app);
+            // Trigger settings syncing
+            if (window.HuntarrEvents) {
+                window.HuntarrEvents.dispatchSettingsChanged(app);
+            }
+            
+            // Reload settings to ensure consistency
+            setTimeout(() => {
+                reloadSettingsFromServer(app);
+            }, 1000);
         } else {
             showNotification('Error saving settings: ' + (data.message || 'Unknown error'), 'error');
+            console.error('Error details:', data.details || 'No details provided');
         }
     })
     .catch(error => {

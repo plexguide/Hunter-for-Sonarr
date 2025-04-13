@@ -29,8 +29,28 @@ DEFAULT_SETTINGS = {
     "app_type": "sonarr",  # Default app type
     "connections": {},     # Holds API URLs and keys
     "global": {            # Global settings (UI preferences etc)
+        "debug_mode": False,
+        "command_wait_delay": 1,
+        "command_wait_attempts": 600,
+        "minimum_download_queue_size": -1,
+        "log_refresh_interval_seconds": 30
     },
     "sonarr": {            # Sonarr-specific settings
+        "hunt_missing_shows": 1,
+        "hunt_upgrade_episodes": 0,
+        "sleep_duration": 900,
+        "state_reset_interval_hours": 168,
+        "monitored_only": True,
+        "skip_future_episodes": True,
+        "skip_series_refresh": False,
+        "random_missing": True,
+        "random_upgrades": True,
+        "debug_mode": False,
+        "api_timeout": 60,
+        "command_wait_delay": 1,
+        "command_wait_attempts": 600,
+        "minimum_download_queue_size": -1,
+        "log_refresh_interval_seconds": 30
     },
     "radarr": {            # Radarr-specific settings
     },

@@ -10,6 +10,121 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Add to the initialization section
+const HuntarrApp = {
+    init: function() {
+        // ...existing code...
+        
+        // Initialize settings if we're on the settings page
+        if (window.location.pathname === '/settings' || window.location.hash === '#settings') {
+            this.initializeSettings();
+        }
+    },
+    
+    // ...existing code...
+    
+    // Add this new method
+    initializeSettings: function() {
+        console.log("Initializing settings...");
+        
+        // Make sure the settings tab buttons exist
+        const settingsTabs = document.querySelectorAll('.settings-tab');
+        if (settingsTabs.length > 0) {
+            // Find the active tab
+            const activeTab = document.querySelector('.settings-tab.active');
+            if (activeTab) {
+                const tabName = activeTab.getAttribute('data-settings');
+                console.log("Loading settings for: " + tabName);
+                
+                // Load settings for the active tab
+                this.loadSettings(tabName);
+                
+                // Set up event listeners for tab switching if not already done
+                settingsTabs.forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        // Update active tab
+                        settingsTabs.forEach(t => t.classList.remove('active'));
+                        e.target.classList.add('active');
+                        
+                        // Show selected settings panel
+                        const app = e.target.getAttribute('data-settings');
+                        const panels = document.querySelectorAll('.app-settings-panel');
+                        panels.forEach(panel => panel.classList.remove('active'));
+                        
+                        const selectedPanel = document.getElementById(`${app}Settings`);
+                        if (selectedPanel) {
+                            selectedPanel.classList.add('active');
+                            this.loadSettings(app);
+                        }
+                    });
+                });
+            }
+        }
+    },
+    
+    // Modify the loadSettings method to ensure it's logging and running correctly
+    loadSettings: function(app) {
+        console.log(`Loading settings for ${app}...`);
+        
+        fetch(`/api/settings/${app}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch settings');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(`Settings data for ${app}:`, data);
+                const container = document.getElementById(`${app}Settings`);
+                if (!container) {
+                    console.error(`Container for ${app} settings not found`);
+                    return;
+                }
+                
+                // Clear previous content
+                container.innerHTML = '';
+                
+                // Use the appropriate form generator based on app
+                switch(app) {
+                    case 'sonarr':
+                        SettingsForms.generateSonarrForm(container, data);
+                        break;
+                    case 'radarr':
+                        SettingsForms.generateRadarrForm(container, data);
+                        break;
+                    case 'lidarr':
+                        SettingsForms.generateLidarrForm(container, data);
+                        break;
+                    case 'readarr':
+                        SettingsForms.generateReadarrForm(container, data);
+                        break;
+                    case 'global':
+                        SettingsForms.generateGlobalForm(container, data);
+                        break;
+                }
+                
+                // Update any duration displays
+                if (typeof SettingsForms.updateDurationDisplay === 'function') {
+                    SettingsForms.updateDurationDisplay();
+                }
+            })
+            .catch(error => {
+                console.error(`Error loading ${app} settings:`, error);
+                const container = document.getElementById(`${app}Settings`);
+                if (container) {
+                    container.innerHTML = `<div class="error-message">Error loading settings: ${error.message}</div>`;
+                }
+            });
+    },
+    
+    // ...existing code...
+};
+
+// Initialize the app when the DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    HuntarrApp.init();
+});
+
 // ...existing code...
             panelElement.classList.add('active');
             this.currentSettingsTab = tab;

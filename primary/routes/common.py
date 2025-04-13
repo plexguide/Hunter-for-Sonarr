@@ -268,69 +268,85 @@ def update_settings():
         
         # Handle API connection info if provided
         if "api_url" in data and "api_key" in data:
-            from primary import keys_manager
-            keys_manager.save_api_keys(app_type, data["api_url"], data["api_key"])
+            try:
+                from primary import keys_manager
+                keys_manager.save_api_keys(app_type, data["api_url"], data["api_key"])
+            except Exception as e:
+                return jsonify({"success": False, "message": f"Error saving API keys: {str(e)}"}), 500
         
-        old_settings = settings_manager.get_all_settings()
+        # Process all settings at the app level - no nesting
+        try:
+            from primary import settings_manager
+            old_settings = settings_manager.get_all_settings()
+        except Exception as e:
+            return jsonify({"success": False, "message": f"Error loading settings: {str(e)}"}), 500
+            
         changes_made = False
         changes_log = []
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # Handle app-specific settings - put all settings in the appropriate app section
-        for key, value in data.items():
-            # Skip special keys that are handled separately
-            if key in ["api_url", "api_key", "app_type"]:
-                continue
-                
-            # Handle nested dictionaries (like "huntarr", "advanced", "ui" categories)
-            if isinstance(value, dict):
-                # For backwards compatibility, map "huntarr" and "advanced" categories to the app-specific section
-                if key in ["huntarr", "advanced"]:
-                    for setting_key, setting_value in value.items():
-                        old_value = old_settings.get(app_type, {}).get(setting_key)
-                        if old_value != setting_value:
-                            changes_made = True
-                            changes_log.append(f"{key}.{setting_key} from {old_value} to {setting_value}")
-                        
-                        # Update the setting in the app-specific section
-                        settings_manager.update_setting(app_type, setting_key, setting_value)
-                else:
-                    # For other categories like "ui" or future ones
-                    for setting_key, setting_value in value.items():
-                        old_value = old_settings.get(key, {}).get(setting_key)
-                        if old_value != setting_value:
-                            changes_made = True
-                            changes_log.append(f"{key}.{setting_key} from {old_value} to {setting_value}")
-                        
-                        # Update the setting directly in the category
-                        settings_manager.update_setting(key, setting_key, setting_value)
+        # Ignore app_type and API keys, as they're handled separately
+        skip_keys = ["app_type", "api_url", "api_key"]
         
-        # Log the changes
-        if changes_made or ("api_url" in data and "api_key" in data):
-            with open(LOG_FILE, 'a') as f:
-                f.write(f"{timestamp} - huntarr-web - INFO - Settings updated by user\n")
+        # Update all other settings directly in the app section
+        if app_type != 'global':
+            # Ensure app section exists
+            if app_type not in old_settings:
+                old_settings[app_type] = {}
                 
-                # Log connection changes if any
-                if "api_url" in data and "api_key" in data:
-                    api_url_masked = data["api_url"]
-                    api_key_masked = "****" + data["api_key"][-4:] if len(data["api_key"]) > 4 else "****" if data["api_key"] else ""
-                    f.write(f"{timestamp} - huntarr-web - INFO - Updated {app_type} API connection: URL={api_url_masked}, Key={api_key_masked}\n")
-                
-                # Log other changes
-                for change in changes_log:
-                    f.write(f"{timestamp} - huntarr-web - INFO - Changed {change}\n")
-            
-            # Explicitly save all settings to ensure everything is written to disk
-            all_settings = settings_manager.get_all_settings()
-            settings_manager.save_settings(all_settings)
-            
-            return jsonify({"success": True, "message": "Settings saved successfully", "changes_made": True})
+            # Copy all settings to the app section
+            for key, value in data.items():
+                if key not in skip_keys:
+                    old_value = old_settings.get(app_type, {}).get(key)
+                    if old_value != value:
+                        changes_made = True
+                        changes_log.append(f"{app_type}.{key} from {old_value} to {value}")
+                    old_settings[app_type][key] = value
         else:
-            return jsonify({"success": True, "message": "No changes detected", "changes_made": False})
+            # Handle global settings
+            if "global" not in old_settings:
+                old_settings["global"] = {}
+                
+            # Handle UI settings separately
+            if "ui" in data:
+                if "ui" not in old_settings:
+                    old_settings["ui"] = {}
+                for key, value in data["ui"].items():
+                    old_value = old_settings.get("ui", {}).get(key)
+                    if old_value != value:
+                        changes_made = True
+                        changes_log.append(f"ui.{key} from {old_value} to {value}")
+                    old_settings["ui"][key] = value
+            
+            # Copy remaining global settings
+            for key, value in data.items():
+                if key not in skip_keys and key != "ui":
+                    old_value = old_settings.get("global", {}).get(key)
+                    if old_value != value:
+                        changes_made = True
+                        changes_log.append(f"global.{key} from {old_value} to {value}")
+                    old_settings["global"][key] = value
+                    
+        # Save all settings
+        if settings_manager.save_settings(old_settings):
+            return jsonify({
+                "success": True, 
+                "message": "Settings saved successfully", 
+                "changes_made": changes_made
+            })
+        else:
+            return jsonify({
+                "success": False, 
+                "message": "Error saving settings"
+            }), 500
     except Exception as e:
-        with open(LOG_FILE, 'a') as f:
-            f.write(f"{timestamp} - huntarr-web - ERROR - Error saving settings: {str(e)}\n")
-        return jsonify({"success": False, "message": str(e)}), 500
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error updating settings: {error_details}")
+        return jsonify({
+            "success": False, 
+            "message": f"Error updating settings: {str(e)}",
+            "details": error_details
+        }), 500
 
 @common_bp.route('/api/settings/reset', methods=['POST'])
 def reset_settings():

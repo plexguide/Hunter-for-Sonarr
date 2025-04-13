@@ -260,25 +260,24 @@
                 app_type: 'readarr',
                 api_url: this.elements.apiUrlInput ? this.elements.apiUrlInput.value || '' : '',
                 api_key: this.elements.apiKeyInput ? this.elements.apiKeyInput.value || '' : '',
-                readarr: {
-                    // Combined settings - all at top level, no nesting
-                    hunt_missing_books: this.elements.huntMissingBooksInput ? parseInt(this.elements.huntMissingBooksInput.value) || 0 : 0,
-                    hunt_upgrade_books: this.elements.huntUpgradeBooksInput ? parseInt(this.elements.huntUpgradeBooksInput.value) || 0 : 0,
-                    sleep_duration: this.elements.sleepDurationInput ? parseInt(this.elements.sleepDurationInput.value) || 900 : 900,
-                    state_reset_interval_hours: this.elements.stateResetIntervalInput ? parseInt(this.elements.stateResetIntervalInput.value) || 168 : 168,
-                    monitored_only: this.elements.monitoredOnlyInput ? this.elements.monitoredOnlyInput.checked : true,
-                    skip_future_releases: this.elements.skipFutureReleasesInput ? this.elements.skipFutureReleasesInput.checked : true,
-                    skip_author_refresh: this.elements.skipAuthorRefreshInput ? this.elements.skipAuthorRefreshInput.checked : false,
-                    
-                    // Include advanced settings at the same level
-                    debug_mode: this.elements.debugModeInput ? this.elements.debugModeInput.checked : false,
-                    command_wait_delay: this.elements.commandWaitDelayInput ? parseInt(this.elements.commandWaitDelayInput.value) || 1 : 1,
-                    command_wait_attempts: this.elements.commandWaitAttemptsInput ? parseInt(this.elements.commandWaitAttemptsInput.value) || 600 : 600,
-                    minimum_download_queue_size: this.elements.minimumDownloadQueueSizeInput ? parseInt(this.elements.minimumDownloadQueueSizeInput.value) || -1 : -1,
-                    random_missing: this.elements.randomMissingInput ? this.elements.randomMissingInput.checked : true,
-                    random_upgrades: this.elements.randomUpgradesInput ? this.elements.randomUpgradesInput.checked : true,
-                    api_timeout: this.elements.apiTimeoutInput ? parseInt(this.elements.apiTimeoutInput.value) || 60 : 60
-                }
+                // Combined settings - all at top level, no nesting
+                hunt_missing_books: this.elements.huntMissingBooksInput ? parseInt(this.elements.huntMissingBooksInput.value) || 0 : 0,
+                hunt_upgrade_books: this.elements.huntUpgradeBooksInput ? parseInt(this.elements.huntUpgradeBooksInput.value) || 0 : 0,
+                sleep_duration: this.elements.sleepDurationInput ? parseInt(this.elements.sleepDurationInput.value) || 900 : 900,
+                state_reset_interval_hours: this.elements.stateResetIntervalInput ? parseInt(this.elements.stateResetIntervalInput.value) || 168 : 168,
+                monitored_only: this.elements.monitoredOnlyInput ? this.elements.monitoredOnlyInput.checked : true,
+                skip_future_releases: this.elements.skipFutureReleasesInput ? this.elements.skipFutureReleasesInput.checked : true,
+                skip_author_refresh: this.elements.skipAuthorRefreshInput ? this.elements.skipAuthorRefreshInput.checked : false,
+                
+                // Include advanced settings at the same level
+                debug_mode: this.elements.debugModeInput ? this.elements.debugModeInput.checked : false,
+                command_wait_delay: this.elements.commandWaitDelayInput ? parseInt(this.elements.commandWaitDelayInput.value) || 1 : 1,
+                command_wait_attempts: this.elements.commandWaitAttemptsInput ? parseInt(this.elements.commandWaitAttemptsInput.value) || 600 : 600,
+                minimum_download_queue_size: this.elements.minimumDownloadQueueSizeInput ? parseInt(this.elements.minimumDownloadQueueSizeInput.value) || -1 : -1,
+                random_missing: this.elements.randomMissingInput ? this.elements.randomMissingInput.checked : true,
+                random_upgrades: this.elements.randomUpgradesInput ? this.elements.randomUpgradesInput.checked : true,
+                api_timeout: this.elements.apiTimeoutInput ? parseInt(this.elements.apiTimeoutInput.value) || 60 : 60,
+                log_refresh_interval_seconds: 30 // Default value
             };
         }
     };

@@ -29,22 +29,27 @@ DEFAULT_SETTINGS = {
     "app_type": "sonarr",  # Default app type
     "connections": {},     # Holds API URLs and keys
     "global": {            # Global settings (UI preferences etc)
+        "debug_mode": False,
+        "command_wait_delay": 1,
+        "command_wait_attempts": 600,
+        "minimum_download_queue_size": -1,
+        "log_refresh_interval_seconds": 30
     },
     "sonarr": {            # Sonarr-specific settings - all settings at this level, no nesting
         "hunt_missing_shows": 1,
         "hunt_upgrade_episodes": 0,
+        "sleep_duration": 900,
+        "state_reset_interval_hours": 168,
         "monitored_only": True,
         "skip_future_episodes": True,
         "skip_series_refresh": False,
-        "sleep_duration": 900,
-        "state_reset_interval_hours": 168,
+        "random_missing": True,
+        "random_upgrades": True,
+        "debug_mode": False,
         "api_timeout": 60,
         "command_wait_delay": 1,
         "command_wait_attempts": 600,
         "minimum_download_queue_size": -1,
-        "debug_mode": False,
-        "random_missing": True,
-        "random_upgrades": True,
         "log_refresh_interval_seconds": 30
     },
     "radarr": {            # Radarr-specific settings - all settings at this level, no nesting
@@ -100,66 +105,37 @@ DEFAULT_SETTINGS = {
     }
 }
 
+def _deep_update(d, u):
+    """Recursively update a dictionary without overwriting entire nested dicts"""
+    for k, v in u.items():
+        if isinstance(v, dict) and k in d and isinstance(d[k], dict):
+            _deep_update(d[k], v)
+        else:
+            d[k] = v
+
 # Load settings from file
 def load_settings() -> Dict[str, Any]:
     """Load settings from JSON file"""
     try:
+        # Start with default settings
+        settings = DEFAULT_SETTINGS.copy()
+        
+        # Then load from file if it exists
         if SETTINGS_FILE.exists():
             with open(SETTINGS_FILE, "r", encoding="utf-8") as file:
-                loaded_settings = json.load(file)
+                user_settings = json.load(file)
+                # Deep merge user settings
+                _deep_update(settings, user_settings)
                 
-                # Check loaded settings structure, remove any nested huntarr/advanced sections
-                for app_type in ["sonarr", "radarr", "lidarr", "readarr"]:
-                    if app_type in loaded_settings:
-                        app_settings = loaded_settings[app_type]
-                        
-                        # If we find a nested huntarr or advanced section, flatten it
-                        if isinstance(app_settings, dict):
-                            # Extract nested huntarr settings
-                            if "huntarr" in app_settings and isinstance(app_settings["huntarr"], dict):
-                                for key, value in app_settings["huntarr"].items():
-                                    # Only copy if not already set at top level
-                                    if key not in app_settings:
-                                        app_settings[key] = value
-                                # Remove the nested section
-                                app_settings.pop("huntarr", None)
-                                
-                            # Extract nested advanced settings
-                            if "advanced" in app_settings and isinstance(app_settings["advanced"], dict):
-                                for key, value in app_settings["advanced"].items():
-                                    # Only copy if not already set at top level
-                                    if key not in app_settings:
-                                        app_settings[key] = value
-                                # Remove the nested section
-                                app_settings.pop("advanced", None)
-                
-                # Merge with defaults to ensure all required keys exist
-                merged_settings = DEFAULT_SETTINGS.copy()
-                
-                # Update defaults with loaded settings
-                def deep_update(source, updates):
-                    for key, value in updates.items():
-                        if key in source and isinstance(source[key], dict) and isinstance(value, dict):
-                            source[key] = deep_update(source[key], value)
-                        else:
-                            source[key] = value
-                    return source
-                
-                merged_settings = deep_update(merged_settings, loaded_settings)
-                
-                return merged_settings
-        else:
-            # If file doesn't exist, create it with default settings
-            save_settings(DEFAULT_SETTINGS)
-            return DEFAULT_SETTINGS
+        return settings
     except Exception as e:
         settings_logger.error(f"Error loading settings: {e}")
-        # If there's an error, return defaults and try to save them
-        try:
-            save_settings(DEFAULT_SETTINGS)
-        except Exception as save_error:
-            settings_logger.error(f"Error saving default settings: {save_error}")
-        return DEFAULT_SETTINGS
+        return DEFAULT_SETTINGS.copy()
+
+# Get all settings - add this missing function
+def get_all_settings() -> Dict[str, Any]:
+    """Get all settings as a dictionary"""
+    return load_settings()
 
 # Save settings to file
 def save_settings(settings: Dict[str, Any]) -> bool:

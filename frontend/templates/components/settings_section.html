@@ -4,54 +4,144 @@
             <button class="settings-tab active" data-settings="sonarr">Sonarr</button>
             <button class="settings-tab" data-settings="radarr">Radarr</button>
             <button class="settings-tab" data-settings="lidarr">Lidarr</button>
+            <button class="settings-tab" data-settings="readarr">Readarr</button>
             <button class="settings-tab" data-settings="global">Global</button>
         </div>
         
         <div class="settings-actions">
-            <button id="saveSettingsButton" class="save-button" style="width: auto; padding: 8px 16px;">
+            <button id="saveSettings" class="save-button">
                 <i class="fas fa-save"></i> Save
             </button>
-            <button id="resetSettingsButton" class="reset-button" style="width: auto; padding: 8px 16px;">
+            <button id="resetSettings" class="reset-button">
                 <i class="fas fa-undo"></i> Reset
             </button>
         </div>
     </div>
     
     <div class="settings-form">
-        <!-- Global Settings -->
-        <div id="globalSettings" class="app-settings-panel">
-            <div class="settings-group">
-                <h3>General Settings</h3>
-                <div class="setting-item">
-                    <label for="debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="debug_mode">
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable detailed debug logging</p>
-                </div>
-                <div class="setting-item">
-                    <label for="command_wait_delay">Command Wait Delay:</label>
-                    <input type="number" id="command_wait_delay" min="1" step="1">
-                    <p class="setting-help">Delay in seconds between checking for command status</p>
-                </div>
-                <div class="setting-item">
-                    <label for="command_wait_attempts">Command Wait Attempts:</label>
-                    <input type="number" id="command_wait_attempts" min="10" step="1">
-                    <p class="setting-help">Number of attempts to check for command completion</p>
-                </div>
-                <div class="setting-item">
-                    <label for="minimum_download_queue_size">Minimum Queue Size:</label>
-                    <input type="number" id="minimum_download_queue_size" min="-1" step="1">
-                    <p class="setting-help">Minimum download queue size before stopping searches</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- App-specific settings panels will be filled by JavaScript -->
-        <div id="sonarrSettings" class="app-settings-panel active"></div>
-        <div id="radarrSettings" class="app-settings-panel"></div>
-        <div id="lidarrSettings" class="app-settings-panel"></div>
+        <!-- App-specific settings panels -->
+        <div id="sonarrSettings" class="app-settings-panel active" style="display: block;"></div>
+        <div id="radarrSettings" class="app-settings-panel" style="display: none;"></div>
+        <div id="lidarrSettings" class="app-settings-panel" style="display: none;"></div>
+        <div id="readarrSettings" class="app-settings-panel" style="display: none;"></div>
+        <div id="globalSettings" class="app-settings-panel" style="display: none;"></div>
     </div>
-    {% include 'components/footer.html' %}
+    
+    <div class="bottom-actions">
+        <button id="saveSettingsBottom" class="save-button">
+            <i class="fas fa-save"></i> Save
+        </button>
+        <button id="resetSettingsBottom" class="reset-button">
+            <i class="fas fa-undo"></i> Reset
+        </button>
+    </div>
 </section>
+
+<script>
+    // Initialize settings when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Settings section initialized');
+        
+        // Load settings for the active tab
+        const activeTab = document.querySelector('.settings-tab.active');
+        if (activeTab) {
+            const app = activeTab.getAttribute('data-settings');
+            console.log('Loading settings for:', app);
+            
+            // Check if we have a global function to load settings
+            if (typeof loadAppSettings === 'function') {
+                loadAppSettings(app);
+            } else if (window.HuntarrApp && typeof window.HuntarrApp.loadSettings === 'function') {
+                window.HuntarrApp.loadSettings(app);
+            } else {
+                console.error('No loadSettings function found');
+                // Fallback: try to load settings using fetch directly
+                fetch(`/api/settings/${app}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(`Settings data for ${app}:`, data);
+                        const container = document.getElementById(`${app}Settings`);
+                        if (container && typeof SettingsForms !== 'undefined') {
+                            const method = `generate${app.charAt(0).toUpperCase() + app.slice(1)}Form`;
+                            if (typeof SettingsForms[method] === 'function') {
+                                SettingsForms[method](container, data);
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error loading settings:', error));
+            }
+        }
+        
+        // Set up tab switching
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const app = this.getAttribute('data-settings');
+                console.log('Switching to tab:', app);
+                
+                // Update active tab
+                document.querySelectorAll('.settings-tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Show selected panel
+                document.querySelectorAll('.app-settings-panel').forEach(panel => {
+                    panel.style.display = 'none';
+                    panel.classList.remove('active');
+                });
+                
+                const targetPanel = document.getElementById(`${app}Settings`);
+                if (targetPanel) {
+                    targetPanel.style.display = 'block';
+                    targetPanel.classList.add('active');
+                    
+                    // Load settings if not already loaded
+                    if (!targetPanel.querySelector('.settings-group')) {
+                        console.log('Loading settings for newly activated tab:', app);
+                        if (typeof loadAppSettings === 'function') {
+                            loadAppSettings(app);
+                        } else if (window.HuntarrApp && typeof window.HuntarrApp.loadSettings === 'function') {
+                            window.HuntarrApp.loadSettings(app);
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Set up save buttons
+        const saveButtons = document.querySelectorAll('#saveSettings, #saveSettingsBottom');
+        saveButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const activeTab = document.querySelector('.settings-tab.active');
+                if (activeTab) {
+                    const app = activeTab.getAttribute('data-settings');
+                    console.log('Saving settings for:', app);
+                    
+                    if (typeof saveCurrentSettings === 'function') {
+                        saveCurrentSettings(app);
+                    } else if (window.HuntarrApp && typeof window.HuntarrApp.saveSettings === 'function') {
+                        window.HuntarrApp.saveSettings(app);
+                    }
+                }
+            });
+        });
+        
+        // Set up reset buttons
+        const resetButtons = document.querySelectorAll('#resetSettings, #resetSettingsBottom');
+        resetButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const activeTab = document.querySelector('.settings-tab.active');
+                if (activeTab) {
+                    const app = activeTab.getAttribute('data-settings');
+                    console.log('Resetting settings for:', app);
+                    
+                    if (typeof resetCurrentSettings === 'function') {
+                        resetCurrentSettings(app);
+                    } else if (window.HuntarrApp && typeof window.HuntarrApp.resetSettings === 'function') {
+                        window.HuntarrApp.resetSettings(app);
+                    }
+                }
+            });
+        });
+    });
+</script>
