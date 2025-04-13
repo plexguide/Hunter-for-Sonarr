@@ -35,6 +35,23 @@ RANDOM_UPGRADES = settings_manager.get_setting("advanced", "random_upgrades", Tr
 # Add a new variable for log refresh interval
 LOG_REFRESH_INTERVAL_SECONDS = settings_manager.get_setting("huntarr", "log_refresh_interval_seconds", 30)
 
+# Initialize all app-specific variables to default values first,
+# then override based on the current app type
+HUNT_MISSING_SHOWS = 0
+HUNT_UPGRADE_EPISODES = 0
+HUNT_MISSING_MOVIES = 0
+HUNT_UPGRADE_MOVIES = 0
+HUNT_MISSING_ALBUMS = 0
+HUNT_UPGRADE_TRACKS = 0
+HUNT_MISSING_BOOKS = 0
+HUNT_UPGRADE_BOOKS = 0
+SKIP_FUTURE_EPISODES = True
+SKIP_FUTURE_RELEASES = True
+SKIP_SERIES_REFRESH = False
+SKIP_MOVIE_REFRESH = False
+SKIP_ARTIST_REFRESH = False
+SKIP_AUTHOR_REFRESH = False
+
 # App-specific settings based on APP_TYPE
 if APP_TYPE == "sonarr":
     HUNT_MISSING_SHOWS = settings_manager.get_setting("huntarr", "hunt_missing_shows", 1)
