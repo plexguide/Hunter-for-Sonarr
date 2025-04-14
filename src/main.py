@@ -71,7 +71,7 @@ def force_reload_all_modules():
         config.refresh_settings()
         
         # Log the reloaded settings for verification
-        logger.warning("⚠️ Settings refreshed from environment variables after restart signal ⚠️")
+        logger.warning("⚠️ Settings reloaded after restart signal ⚠️")
         config.log_configuration(logger)
         
         return True

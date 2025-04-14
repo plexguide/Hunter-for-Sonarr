@@ -1,12 +1,14 @@
+version: '3'
+
 services:
   huntarr-sonarr:
-    image: huntarr/4sonarr:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: huntarr-sonarr
-    restart: always
+    restart: unless-stopped
     ports:
       - "9705:8988"
-    volumes:
-      - ./config:/config
     environment:
       - API_KEY=your-api-key
       - API_URL=http://your-sonarr-address:8989
@@ -25,3 +27,4 @@ services:
       - MINIMUM_DOWNLOAD_QUEUE_SIZE=-1
       - RANDOM_MISSING=true
       - RANDOM_UPGRADES=true
+      - TZ=America/New_York
