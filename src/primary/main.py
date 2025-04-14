@@ -58,6 +58,27 @@ def force_reload_all_modules():
     except (KeyError, ImportError) as e:
         logger.error(f"Error reloading modules: {e}")
 
+# Find the refresh_settings function and modify it to accept an app_type parameter
+def refresh_settings(app_type=None):
+    """
+    Refresh settings from the config file.
+    
+    Args:
+        app_type: Optional app type to refresh settings for. If None, uses the global APP_TYPE.
+    """
+    from src.primary.config import log_configuration
+    
+    # If app_type is not provided, use the global APP_TYPE
+    if app_type is None:
+        from src.primary.config import APP_TYPE as current_app_type
+        app_type = current_app_type
+        
+    # Log the refresh
+    logger.debug(f"Refreshing settings for {app_type}")
+    
+    # Call the original log_configuration function
+    log_configuration()
+
 def app_specific_loop(app_type: str) -> None:
     """
     Main processing loop for a specific Arr application

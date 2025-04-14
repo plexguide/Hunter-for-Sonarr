@@ -96,9 +96,15 @@ def process_missing_episodes(restart_cycle_flag: Callable[[], bool] = lambda: Fa
     Returns:
         True if any processing was done, False otherwise
     """
-    # Reload settings to ensure the latest values are used
-    from primary.config import refresh_settings
-    refresh_settings("sonarr")
+    # Replace the direct call to refresh_settings with an import and conditional call
+    from src.primary.config import refresh_settings as config_refresh_settings
+    
+    # Use the try-except to handle both versions of the function
+    try:
+        config_refresh_settings("sonarr")
+    except TypeError:
+        # If the function doesn't accept arguments, call it without arguments
+        config_refresh_settings()
     
     # Get the current value directly at the start of processing
     HUNT_MISSING_EPISODES = settings_manager.get_setting("huntarr", "hunt_missing_episodes", 1)

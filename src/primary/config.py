@@ -198,15 +198,61 @@ def log_configuration(app_logger=None):
         log.info(f"Skip Author Refresh: {SKIP_AUTHOR_REFRESH}")
 
 # Refresh settings from file
-def refresh_settings():
-    """Refresh settings from file and update module globals"""
-    # Reimport this module to refresh settings
+def refresh_settings(app_type=None):
+    """
+    Refresh global settings from config file.
+    
+    Args:
+        app_type: Optional app type to refresh settings for. If None, uses the global APP_TYPE.
+    """
+    # Import at function level to avoid circular import
+    from src.primary.settings_manager import load_settings, get_setting
+    
+    # If app_type is provided, temporarily override the global APP_TYPE
+    global APP_TYPE
+    original_app_type = APP_TYPE
+    
     try:
-        importlib.reload(sys.modules[__name__])
-        return True
-    except Exception as e:
-        logger.error(f"Error refreshing settings: {e}")
-        return False
+        if app_type is not None:
+            APP_TYPE = app_type
+            
+        # Reload all settings for the current APP_TYPE
+        global MONITORED_ONLY, LOG_REFRESH_INTERVAL_SECONDS, SLEEP_DURATION
+        global STATE_RESET_INTERVAL_HOURS, RANDOM_MISSING, RANDOM_UPGRADES
+        global API_TIMEOUT, COMMAND_WAIT_DELAY, COMMAND_WAIT_ATTEMPTS, MINIMUM_DOWNLOAD_QUEUE_SIZE
+        
+        # Reload all the settings
+        MONITORED_ONLY = get_setting(APP_TYPE, "monitored_only", True)
+        LOG_REFRESH_INTERVAL_SECONDS = get_setting(APP_TYPE, "log_refresh_interval_seconds", 30)
+        SLEEP_DURATION = get_setting(APP_TYPE, "sleep_duration", 900)
+        STATE_RESET_INTERVAL_HOURS = get_setting(APP_TYPE, "state_reset_interval_hours", 168)
+        RANDOM_MISSING = get_setting(APP_TYPE, "random_missing", True)
+        RANDOM_UPGRADES = get_setting(APP_TYPE, "random_upgrades", True)
+        
+        # App-specific settings
+        # Load app-specific settings based on current APP_TYPE
+        if APP_TYPE == "sonarr":
+            global HUNT_MISSING_SHOWS, HUNT_UPGRADE_EPISODES
+            global SKIP_FUTURE_EPISODES, SKIP_SERIES_REFRESH
+            HUNT_MISSING_SHOWS = get_setting(APP_TYPE, "hunt_missing_shows", 1)
+            HUNT_UPGRADE_EPISODES = get_setting(APP_TYPE, "hunt_upgrade_episodes", 0)
+            SKIP_FUTURE_EPISODES = get_setting(APP_TYPE, "skip_future_episodes", True)
+            SKIP_SERIES_REFRESH = get_setting(APP_TYPE, "skip_series_refresh", False)
+        elif APP_TYPE == "radarr":
+            global HUNT_MISSING_MOVIES, HUNT_UPGRADE_MOVIES
+            global SKIP_FUTURE_RELEASES, SKIP_MOVIE_REFRESH
+            HUNT_MISSING_MOVIES = get_setting(APP_TYPE, "hunt_missing_movies", 1)
+            HUNT_UPGRADE_MOVIES = get_setting(APP_TYPE, "hunt_upgrade_movies", 0)
+            SKIP_FUTURE_RELEASES = get_setting(APP_TYPE, "skip_future_releases", True)
+            SKIP_MOVIE_REFRESH = get_setting(APP_TYPE, "skip_movie_refresh", False)
+        # Add other app types as needed
+        
+        # Log the new configuration
+        log_configuration()
+    finally:
+        # Restore original APP_TYPE if it was changed
+        if app_type is not None:
+            APP_TYPE = original_app_type
 
 # Configure logging based on settings
 configure_logging(logger)
