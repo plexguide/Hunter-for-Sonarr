@@ -1,0 +1,67 @@
+/* General styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+header {
+    background-color: var(--header-background-color);
+    color: var(--header-text-color);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+main {
+    padding: 20px;
+}
+
+/* Tab styling - simplify now that we have just one tab */
+.tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0;
+}
+
+.tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border: none;
+    outline: none;
+    font-size: 14px;
+}
+
+.tab.active {
+    border-bottom: 2px solid var(--accent-color);
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+/* Optionally, since there's only one tab, we could hide tabs completely */
+/* Uncomment this section to hide the tabs UI completely
+.tabs {
+    display: none;
+}
+*/
+
+/* Footer styles */
+footer {
+    background-color: var(--footer-background-color);
+    color: var(--footer-text-color);
+    padding: 10px 20px;
+    text-align: center;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}

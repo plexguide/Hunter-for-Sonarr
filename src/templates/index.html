@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huntarr-Sonarr</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/main.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Huntarr-Sonarr</h1>
+    </header>
+    <main>
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="logs">Logs</button>
+            <!-- Removing the settings tab button -->
+        </div>
+
+        <!-- Tab content -->
+        <div class="tab-content">
+            <div id="logs" class="tab-pane active">
+                <!-- Log content -->
+                <div class="log-header">
+                    <div class="connection-status">
+                        <span class="status-indicator"></span>
+                        <span class="status-text">Connecting...</span>
+                    </div>
+                    <div class="controls">
+                        <button id="toggle-theme" class="theme-toggle">☀️</button>
+                        <button id="clear-logs" class="clear-logs">Clear Logs</button>
+                        <div class="auto-scroll">
+                            <input type="checkbox" id="auto-scroll-checkbox" checked>
+                            <label for="auto-scroll-checkbox">Auto-scroll</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="log-container"></div>
+            </div>
+            
+            <!-- Removing the settings tab content -->
+        </div>
+    </main>
+</body>
+</html>

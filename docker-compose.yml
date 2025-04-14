@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   huntarr-sonarr:
     image: huntarr/4sonarr:latest
