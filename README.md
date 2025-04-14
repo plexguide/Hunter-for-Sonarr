@@ -109,6 +109,7 @@ The following environment variables can be configured:
 | `RANDOM_SELECTION`           | Use random selection (`true`) or sequential (`false`)                    | true       |
 | `STATE_RESET_INTERVAL_HOURS` | Hours which the processed state files reset (168=1 week, 0=never reset)  | 168        |
 | `DEBUG_MODE`                 | Enable detailed debug logging (`true` or `false`)                        | false      |
+| `TZ`                         | Container timezone (format: Area/Location)                               | America/New_York |
 
 ### Detailed Configuration Explanation
 
@@ -165,6 +166,7 @@ docker run -d --name huntarr-sonarr \
   -e RANDOM_SELECTION="true" \
   -e STATE_RESET_INTERVAL_HOURS="168" \
   -e DEBUG_MODE="false" \
+  -e TZ="America/New_York" \
   huntarr/4sonarr:latest
 ```
 
@@ -195,6 +197,7 @@ services:
       RANDOM_SELECTION: "true"
       STATE_RESET_INTERVAL_HOURS: "168"
       DEBUG_MODE: "false"
+      TZ: "America/New_York"
 ```
 
 Then run:
@@ -220,6 +223,7 @@ docker run -d --name huntarr-sonarr \
   -e RANDOM_SELECTION="true" \
   -e STATE_RESET_INTERVAL_HOURS="168" \
   -e DEBUG_MODE="false" \
+  -e TZ="America/New_York" \
   huntarr/4sonarr:latest
 ```
 
@@ -249,6 +253,7 @@ Environment="SLEEP_DURATION=900"
 Environment="RANDOM_SELECTION=true"
 Environment="STATE_RESET_INTERVAL_HOURS=168"
 Environment="DEBUG_MODE=false"
+Environment="TZ=America/New_York"
 ExecStart=/usr/local/bin/huntarr.sh
 Restart=on-failure
 RestartSec=10

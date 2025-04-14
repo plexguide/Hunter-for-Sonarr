@@ -13,10 +13,11 @@ services:
       MONITORED_ONLY: "true"
       HUNT_MISSING_SHOWS: "1"
       HUNT_UPGRADE_EPISODES: "0"
-      SLEEP_DURATION: "900"
+      SLEEP_DURATION: "1500"
       RANDOM_SELECTION: "true"
       STATE_RESET_INTERVAL_HOURS: "168"
       DEBUG_MODE: "false"
+      TZ: "America/New_York"
     volumes:
       # Optional: Mount source code for hot-reloading during development
       # - ./:/app

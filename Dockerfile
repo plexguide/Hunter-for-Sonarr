@@ -19,6 +19,7 @@ ENV API_KEY="your-api-key" \
     STATE_RESET_INTERVAL_HOURS=168 \
     RANDOM_SELECTION="true" \
     MONITORED_ONLY="true" \
-    DEBUG_MODE="false"
+    DEBUG_MODE="false" \
+    TZ="America/New_York"
 # Run the application
 CMD ["python", "main.py"]
