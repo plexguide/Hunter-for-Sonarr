@@ -107,9 +107,10 @@ def process_missing_episodes(restart_cycle_flag: Callable[[], bool] = lambda: Fa
         config_refresh_settings()
     
     # Get the current value directly at the start of processing
-    HUNT_MISSING_EPISODES = settings_manager.get_setting("huntarr", "hunt_missing_episodes", 1)
-    RANDOM_MISSING = settings_manager.get_setting("advanced", "random_missing", True)
-    SKIP_SERIES_REFRESH = settings_manager.get_setting("advanced", "skip_series_refresh", False)
+    # Update this line to use "hunt_missing_shows" instead of "hunt_missing_episodes"
+    HUNT_MISSING_EPISODES = settings_manager.get_setting("sonarr", "hunt_missing_shows", 3)
+    RANDOM_MISSING = settings_manager.get_setting("sonarr", "random_missing", True)
+    SKIP_SERIES_REFRESH = settings_manager.get_setting("sonarr", "skip_series_refresh", False)
     
     # Get app-specific state file
     PROCESSED_MISSING_FILE = get_state_file_path("sonarr", "processed_missing")
@@ -175,10 +176,10 @@ def process_missing_episodes(restart_cycle_flag: Callable[[], bool] = lambda: Fa
             break
         
         # Check again for the current limit in case it was changed during processing
-        current_limit = settings_manager.get_setting("huntarr", "hunt_missing_episodes", 1)
+        current_limit = settings_manager.get_setting("sonarr", "hunt_missing_shows", 3)
         
         if episodes_processed >= current_limit:
-            logger.info(f"Reached HUNT_MISSING_EPISODES={current_limit} for this cycle.")
+            logger.info(f"Reached HUNT_MISSING_SHOWS={current_limit} for this cycle.")
             break
         
         episode_id = episode.get("id")
@@ -230,14 +231,14 @@ def process_missing_episodes(restart_cycle_flag: Callable[[], bool] = lambda: Fa
             processing_done = True
             
             # Log with the current limit, not the initial one
-            current_limit = settings_manager.get_setting("huntarr", "hunt_missing_episodes", 1)
+            current_limit = settings_manager.get_setting("sonarr", "hunt_missing_shows", 3)
             logger.info(f"Processed {episodes_processed}/{current_limit} missing episodes this cycle.")
         else:
             logger.warning(f"WARNING: Search command failed for episode ID {episode_id}.")
             continue
     
     # Log final status
-    current_limit = settings_manager.get_setting("huntarr", "hunt_missing_episodes", 1)
+    current_limit = settings_manager.get_setting("sonarr", "hunt_missing_shows", 3)
     logger.info(f"Completed processing {episodes_processed} missing episodes for this cycle.")
     truncate_processed_list(PROCESSED_MISSING_FILE)
     
