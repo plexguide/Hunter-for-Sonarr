@@ -2,6 +2,7 @@
 """
 Web server for Huntarr
 Provides a web interface to view logs in real-time, manage settings, and includes authentication
+Simplified for Sonarr only
 """
 
 import os
@@ -52,24 +53,17 @@ log_lock = threading.Lock()
 LOG_DIR = "/tmp/huntarr-logs"
 
 # Default log refresh interval (seconds)
-LOG_REFRESH_INTERVAL = settings_manager.get_setting("huntarr", "log_refresh_interval_seconds", 30)
+LOG_REFRESH_INTERVAL = settings_manager.get_setting("sonarr", "log_refresh_interval_seconds", 30)
 
 # Function to get the PID of the main python process
 def get_main_process_pid():
     return MAIN_PID
 
-# Function to trigger reload of settings for a specific app
-def trigger_settings_reload(app_type):
+# Function to trigger reload of settings
+def trigger_settings_reload():
     """
-    Trigger a settings reload for a specific app by sending a SIGUSR1 signal to the main process
-    with the app type set in an environment variable.
-    
-    Args:
-        app_type: The app type to reload settings for (sonarr, radarr, etc.)
+    Trigger a settings reload by sending a SIGUSR1 signal to the main process.
     """
-    # Set environment variable for the app type to restart
-    os.environ["RESTART_APP_TYPE"] = app_type
-    
     # Send SIGUSR1 to the main process
     pid = get_main_process_pid()
     if pid:
@@ -103,24 +97,16 @@ def settings():
 @app.route('/logs')
 def logs():
     """
-    Event stream for logs. 
-    Filter logs by app type using the 'app' query parameter.
-    Example: /logs?app=sonarr
+    Event stream for logs.
     """
-    app_type = request.args.get('app', 'sonarr')  # Default to sonarr if no app specified
-    
-    # Validate app_type
-    if app_type not in ['sonarr', 'radarr', 'lidarr', 'readarr']:
-        app_type = 'sonarr'  # Default to sonarr for invalid app types
-    
     def generate():
-        # Get the specific log file for the app type
-        log_file_path = f"{LOG_DIR}/huntarr-{app_type}.log"
+        # Get the specific log file for sonarr
+        log_file_path = f"{LOG_DIR}/huntarr-sonarr.log"
         if not os.path.exists(log_file_path):
             # Create the file if it doesn't exist
             with open(log_file_path, 'a') as f:
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                f.write(f"{timestamp} - {app_type} - INFO - Log file created\n")
+                f.write(f"{timestamp} - sonarr - INFO - Log file created\n")
         
         # Initial position - start at the end of the file
         with open(log_file_path, 'r') as f:
@@ -136,8 +122,8 @@ def logs():
             
             if lines:
                 for line in lines:
-                    # Check if the line contains the app_type
-                    if f" - {app_type} - " in line or " - huntarr - " in line:
+                    # Check if the line contains sonarr
+                    if " - sonarr - " in line or " - huntarr - " in line:
                         yield f"data: {line}\n\n"
             
             time.sleep(1)  # Check for new logs every second
@@ -150,56 +136,52 @@ def api_settings():
         # Return all settings
         return jsonify(settings_manager.get_all_settings())
     elif request.method == 'POST':
-        # Save settings and trigger reload for the specific app type
+        # Save settings and trigger reload
         data = request.json
-        app_type = data.get('app_type', 'sonarr')
+        
+        # Force app_type to be sonarr
+        if 'app_type' in data:
+            data['app_type'] = 'sonarr'
         
         result = settings_manager.save_settings(data)
         
-        # Trigger reload for the specific app type
-        if result.get('success', False):
-            reload_success = trigger_settings_reload(app_type)
+        # Trigger reload
+        if result:
+            reload_success = trigger_settings_reload()
             if not reload_success:
-                result['message'] = "Settings saved but failed to trigger reload"
-        
-        return jsonify(result)
+                return jsonify({"success": True, "message": "Settings saved but failed to trigger reload"})
+            return jsonify({"success": True, "message": "Settings saved and reload triggered"})
+        else:
+            return jsonify({"success": False, "message": "Failed to save settings"})
 
 @app.route('/api/settings/theme', methods=['GET', 'POST'])
 def api_theme():
     if request.method == 'GET':
         # Return current theme setting
-        dark_mode = settings_manager.get_setting("ui", "dark_mode", False)
+        dark_mode = settings_manager.get_setting("ui", "dark_mode", True)
         return jsonify({"dark_mode": dark_mode})
     elif request.method == 'POST':
         # Save theme setting
         data = request.json
-        dark_mode = data.get('dark_mode', False)
-        settings_manager.set_setting("ui", "dark_mode", dark_mode)
+        dark_mode = data.get('dark_mode', True)
+        settings_manager.update_setting("ui", "dark_mode", dark_mode)
         return jsonify({"success": True})
 
 @app.route('/api/settings/reset', methods=['POST'])
 def api_reset_settings():
-    data = request.json
-    app_type = data.get('app', 'sonarr')
+    # Reset settings to default
+    settings = settings_manager.DEFAULT_SETTINGS.copy()
+    result = settings_manager.save_settings(settings)
     
-    # Reset settings for the specific app type
-    settings_manager.reset_settings(app_type)
+    # Trigger reload
+    reload_success = trigger_settings_reload()
     
-    # Trigger reload for the specific app type
-    reload_success = trigger_settings_reload(app_type)
-    
-    return jsonify({"success": True, "reload_triggered": reload_success})
+    return jsonify({"success": result, "reload_triggered": reload_success})
 
 @app.route('/api/app-settings', methods=['GET'])
 def api_app_settings():
-    app_type = request.args.get('app', 'sonarr')
-    
-    # Validate app_type
-    if app_type not in ['sonarr', 'radarr', 'lidarr', 'readarr']:
-        return jsonify({"success": False, "message": f"Invalid app type: {app_type}"})
-    
-    # Get API credentials for the specified app type
-    api_url, api_key = keys_manager.get_api_keys(app_type)
+    # Always return Sonarr settings
+    api_url, api_key = keys_manager.get_api_keys()
     
     return jsonify({
         "success": True,
@@ -209,9 +191,9 @@ def api_app_settings():
 
 @app.route('/api/configured-apps', methods=['GET'])
 def api_configured_apps():
-    # Return the configured status of all apps
-    configured_apps = keys_manager.list_configured_apps()
-    return jsonify(configured_apps)
+    # Return only Sonarr configuration status
+    is_configured = keys_manager.is_sonarr_configured()
+    return jsonify({"sonarr": is_configured})
 
 def start_web_server():
     """Start the web server in debug or production mode"""

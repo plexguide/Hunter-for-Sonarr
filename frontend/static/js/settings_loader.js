@@ -1,14 +1,11 @@
 /**
- * Settings loader for Huntarr
- * This file handles loading settings for each app tab
+ * Settings loader for Huntarr Sonarr
+ * This file handles loading Sonarr settings
  */
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize settings on page load
     initializeSettings();
-    
-    // Set up tab switching
-    setupTabSwitching();
     
     // Set up save and reset buttons
     setupSettingsButtons();
@@ -16,34 +13,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize settings
 function initializeSettings() {
-    // Load settings for all apps
-    loadAppSettings('sonarr');
-    loadAppSettings('radarr');
-    loadAppSettings('lidarr');
-    loadAppSettings('global');
+    // Load Sonarr settings
+    loadSonarrSettings();
 }
 
-// Load settings for a specific app
-function loadAppSettings(app) {
+// Load Sonarr settings
+function loadSonarrSettings() {
     fetch(`/api/settings`)
         .then(response => response.json())
         .then(allSettings => {
-            // Extract the app-specific settings
-            let settings = {};
+            // Extract the Sonarr-specific settings
+            let settings = allSettings.sonarr || {};
             
-            // Get general settings
-            if (app === 'global') {
-                settings = allSettings.global || {};
-                if (allSettings.ui) {
-                    settings.ui = allSettings.ui;
-                }
-            } else {
-                // Extract app-specific settings
-                settings = allSettings[app] || {};
-            }
-            
-            // Get app-specific API settings if needed
-            fetch(`/api/app-settings?app=${app}`)
+            // Get Sonarr API settings
+            fetch(`/api/app-settings`)
                 .then(response => response.json())
                 .then(apiData => {
                     // Merge the API credentials with the settings
@@ -52,327 +35,111 @@ function loadAppSettings(app) {
                         settings.api_key = apiData.api_key;
                     }
                     
-                    // Find the container for this app's settings
-                    const container = document.getElementById(`${app}Settings`);
+                    // Find the container for Sonarr settings
+                    const container = document.getElementById('sonarrSettings');
                     if (!container) return;
                     
-                    // Generate the form based on the app type
-                    switch(app) {
-                        case 'sonarr':
-                            SettingsForms.generateSonarrForm(container, settings);
-                            break;
-                        case 'radarr':
-                            SettingsForms.generateRadarrForm(container, settings);
-                            break;
-                        case 'lidarr':
-                            SettingsForms.generateLidarrForm(container, settings);
-                            break;
-                        case 'readarr':
-                            SettingsForms.generateReadarrForm(container, settings);
-                            break;
-                        case 'global':
-                            SettingsForms.generateGlobalForm(container, settings);
-                            break;
-                    }
+                    // Generate the Sonarr settings form
+                    SettingsForms.generateSonarrForm(container, settings);
                     
                     // Update any dynamic displays
                     SettingsForms.updateDurationDisplay();
                     
-                    // Set up test connection buttons
-                    setupTestConnectionButtons();
-                    
-                    console.log(`${app} settings loaded successfully`, settings);
+                    console.log('Sonarr settings loaded successfully', settings);
                 })
                 .catch(error => {
-                    console.error(`Error loading API settings for ${app}:`, error);
+                    console.error('Error loading API settings for Sonarr:', error);
                     
                     // If API settings fetch fails, still try to load the form with what we have
-                    const container = document.getElementById(`${app}Settings`);
+                    const container = document.getElementById('sonarrSettings');
                     if (!container) return;
                     
-                    // Generate the form based on the app type
-                    switch(app) {
-                        case 'sonarr':
-                            SettingsForms.generateSonarrForm(container, settings);
-                            break;
-                        case 'radarr':
-                            SettingsForms.generateRadarrForm(container, settings);
-                            break;
-                        case 'lidarr':
-                            SettingsForms.generateLidarrForm(container, settings);
-                            break;
-                        case 'readarr':
-                            SettingsForms.generateReadarrForm(container, settings);
-                            break;
-                        case 'global':
-                            SettingsForms.generateGlobalForm(container, settings);
-                            break;
-                    }
+                    // Generate the form with what we have
+                    SettingsForms.generateSonarrForm(container, settings);
                     
                     // Update any dynamic displays
                     SettingsForms.updateDurationDisplay();
                 });
         })
         .catch(error => {
-            console.error(`Error loading settings for ${app}:`, error);
+            console.error('Error loading settings for Sonarr:', error);
             
             // If the settings fetch fails entirely, try to load with default empty settings
-            const container = document.getElementById(`${app}Settings`);
+            const container = document.getElementById('sonarrSettings');
             if (!container) return;
             
             // Generate the form with default values
-            switch(app) {
-                case 'sonarr':
-                    SettingsForms.generateSonarrForm(container, getDefaultSettings('sonarr'));
-                    break;
-                case 'radarr':
-                    SettingsForms.generateRadarrForm(container, getDefaultSettings('radarr'));
-                    break;
-                case 'lidarr':
-                    SettingsForms.generateLidarrForm(container, getDefaultSettings('lidarr'));
-                    break;
-                case 'readarr':
-                    SettingsForms.generateReadarrForm(container, getDefaultSettings('readarr'));
-                    break;
-                case 'global':
-                    SettingsForms.generateGlobalForm(container, getDefaultSettings('global'));
-                    break;
-            }
+            SettingsForms.generateSonarrForm(container, getDefaultSettings());
             
             // Update any dynamic displays
             SettingsForms.updateDurationDisplay();
         });
 }
 
-// Helper function to get default settings for any app
-function getDefaultSettings(app) {
-    switch(app) {
-        case 'sonarr':
-            return {
-                api_url: '',
-                api_key: '',
-                hunt_missing_shows: 1,
-                hunt_upgrade_episodes: 0,
-                sleep_duration: 900,
-                state_reset_interval_hours: 168,
-                monitored_only: true,
-                skip_future_episodes: true,
-                skip_series_refresh: false,
-                random_missing: true,
-                random_upgrades: true,
-                debug_mode: false,
-                api_timeout: 60,
-                command_wait_delay: 1,
-                command_wait_attempts: 600,
-                minimum_download_queue_size: -1,
-                log_refresh_interval_seconds: 30
-            };
-        case 'radarr':
-            return {
-                api_url: '',
-                api_key: '',
-                hunt_missing_movies: 1,
-                hunt_upgrade_movies: 0,
-                sleep_duration: 900,
-                state_reset_interval_hours: 168,
-                monitored_only: true,
-                skip_future_releases: true,
-                skip_movie_refresh: false,
-                random_missing: true,
-                random_upgrades: true,
-                debug_mode: false,
-                api_timeout: 60,
-                command_wait_delay: 1,
-                command_wait_attempts: 600,
-                minimum_download_queue_size: -1,
-                log_refresh_interval_seconds: 30
-            };
-        case 'lidarr':
-            return {
-                api_url: '',
-                api_key: '',
-                hunt_missing_albums: 1,
-                hunt_upgrade_tracks: 0,
-                sleep_duration: 900,
-                state_reset_interval_hours: 168,
-                monitored_only: true,
-                skip_future_releases: true,
-                skip_artist_refresh: false,
-                random_missing: true,
-                random_upgrades: true,
-                debug_mode: false,
-                api_timeout: 60,
-                command_wait_delay: 1,
-                command_wait_attempts: 600,
-                minimum_download_queue_size: -1,
-                log_refresh_interval_seconds: 30
-            };
-        case 'readarr':
-            return {
-                api_url: '',
-                api_key: '',
-                hunt_missing_books: 1,
-                hunt_upgrade_books: 0,
-                sleep_duration: 900,
-                state_reset_interval_hours: 168,
-                monitored_only: true,
-                skip_future_releases: true,
-                skip_author_refresh: false,
-                random_missing: true,
-                random_upgrades: true,
-                debug_mode: false,
-                api_timeout: 60,
-                command_wait_delay: 1,
-                command_wait_attempts: 600,
-                minimum_download_queue_size: -1,
-                log_refresh_interval_seconds: 30
-            };
-        default:
-            return {};
-    }
-}
-
-// Set up tab switching
-function setupTabSwitching() {
-    const settingsTabs = document.querySelectorAll('.settings-tab');
-    settingsTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const app = this.getAttribute('data-settings');
-            
-            // Update active tab
-            settingsTabs.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Show selected settings panel
-            const panels = document.querySelectorAll('.app-settings-panel');
-            panels.forEach(panel => panel.classList.remove('active'));
-            
-            const selectedPanel = document.getElementById(`${app}Settings`);
-            if (selectedPanel) {
-                selectedPanel.classList.add('active');
-            }
-        });
-    });
-}
-
-// Set up test connection buttons - remove this function or empty it
-function setupTestConnectionButtons() {
-    // Function emptied - no longer setting up test connection buttons
+// Helper function to get default Sonarr settings
+function getDefaultSettings() {
+    return {
+        api_url: '',
+        api_key: '',
+        hunt_missing_shows: 1,
+        hunt_upgrade_episodes: 0,
+        sleep_duration: 900,
+        state_reset_interval_hours: 168,
+        monitored_only: true,
+        skip_future_episodes: true,
+        skip_series_refresh: false,
+        random_missing: true,
+        random_upgrades: true,
+        debug_mode: false,
+        api_timeout: 60,
+        command_wait_delay: 1,
+        command_wait_attempts: 600,
+        minimum_download_queue_size: -1,
+        log_refresh_interval_seconds: 30
+    };
 }
 
 // Set up save and reset buttons
 function setupSettingsButtons() {
-    // Save settings button
-    const saveBtn = document.getElementById('saveSettingsButton');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', function() {
-            saveCurrentSettings();
+    // Save settings buttons
+    const saveButtons = document.querySelectorAll('#saveSettings, #saveSettingsBottom');
+    saveButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            saveSettings();
         });
-    }
+    });
     
-    // Reset settings button
-    const resetBtn = document.getElementById('resetSettingsButton');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', function() {
-            resetCurrentSettings();
+    // Reset settings buttons
+    const resetButtons = document.querySelectorAll('#resetSettings, #resetSettingsBottom');
+    resetButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            resetSettings();
         });
-    }
+    });
 }
 
-// Save current settings
-function saveCurrentSettings(app) {
-    if (!app) {
-        const activeTab = document.querySelector('.settings-tab.active');
-        if (!activeTab) return;
-        app = activeTab.getAttribute('data-settings');
-    }
-    
+// Save settings
+function saveSettings() {
     let settings = {
-        app_type: app
+        app_type: 'sonarr',
+        api_url: document.getElementById('sonarr_api_url')?.value || '',
+        api_key: document.getElementById('sonarr_api_key')?.value || '',
+        hunt_missing_shows: parseInt(document.getElementById('hunt_missing_shows')?.value || 1),
+        hunt_upgrade_episodes: parseInt(document.getElementById('hunt_upgrade_episodes')?.value || 0),
+        sleep_duration: parseInt(document.getElementById('sleep_duration')?.value || 900),
+        state_reset_interval_hours: parseInt(document.getElementById('state_reset_interval_hours')?.value || 168),
+        monitored_only: document.getElementById('monitored_only')?.checked ?? true,
+        skip_future_episodes: document.getElementById('skip_future_episodes')?.checked ?? true,
+        skip_series_refresh: document.getElementById('skip_series_refresh')?.checked ?? false,
+        random_missing: document.getElementById('random_missing')?.checked ?? true,
+        random_upgrades: document.getElementById('random_upgrades')?.checked ?? true,
+        debug_mode: document.getElementById('debug_mode')?.checked ?? false,
+        api_timeout: parseInt(document.getElementById('api_timeout')?.value || 60),
+        command_wait_delay: parseInt(document.getElementById('command_wait_delay')?.value || 1),
+        command_wait_attempts: parseInt(document.getElementById('command_wait_attempts')?.value || 600),
+        minimum_download_queue_size: parseInt(document.getElementById('minimum_download_queue_size')?.value || -1),
+        log_refresh_interval_seconds: parseInt(document.getElementById('log_refresh_interval_seconds')?.value || 30)
     };
-    
-    // Collect settings based on app type
-    if (app === 'sonarr') {
-        settings.api_url = document.getElementById('sonarr_api_url')?.value || '';
-        settings.api_key = document.getElementById('sonarr_api_key')?.value || '';
-        
-        // Add all settings directly at the root level - no more nesting under 'sonarr'
-        settings.hunt_missing_shows = parseInt(document.getElementById('hunt_missing_shows')?.value || 1);
-        settings.hunt_upgrade_episodes = parseInt(document.getElementById('hunt_upgrade_episodes')?.value || 0);
-        settings.sleep_duration = parseInt(document.getElementById('sleep_duration')?.value || 900);
-        settings.state_reset_interval_hours = parseInt(document.getElementById('state_reset_interval_hours')?.value || 168);
-        settings.monitored_only = document.getElementById('monitored_only')?.checked ?? true;
-        settings.skip_future_episodes = document.getElementById('skip_future_episodes')?.checked ?? true;
-        settings.skip_series_refresh = document.getElementById('skip_series_refresh')?.checked ?? false;
-        settings.random_missing = document.getElementById('random_missing')?.checked ?? true;
-        settings.random_upgrades = document.getElementById('random_upgrades')?.checked ?? true;
-        settings.debug_mode = document.getElementById('debug_mode')?.checked ?? false;
-        settings.api_timeout = parseInt(document.getElementById('api_timeout')?.value || 60);
-        settings.command_wait_delay = parseInt(document.getElementById('command_wait_delay')?.value || 1);
-        settings.command_wait_attempts = parseInt(document.getElementById('command_wait_attempts')?.value || 600);
-        settings.minimum_download_queue_size = parseInt(document.getElementById('minimum_download_queue_size')?.value || -1);
-        settings.log_refresh_interval_seconds = parseInt(document.getElementById('log_refresh_interval_seconds')?.value || 30);
-    } else if (app === 'radarr') {
-        settings.api_url = document.getElementById('radarr_api_url')?.value || '';
-        settings.api_key = document.getElementById('radarr_api_key')?.value || '';
-        
-        // Add all settings directly at the root level - no more nesting under 'radarr'
-        settings.hunt_missing_movies = parseInt(document.getElementById('hunt_missing_movies')?.value || 1);
-        settings.hunt_upgrade_movies = parseInt(document.getElementById('hunt_upgrade_movies')?.value || 0);
-        settings.sleep_duration = parseInt(document.getElementById('radarr_sleep_duration')?.value || 900);
-        settings.state_reset_interval_hours = parseInt(document.getElementById('radarr_state_reset_interval_hours')?.value || 168);
-        settings.monitored_only = document.getElementById('radarr_monitored_only')?.checked ?? true;
-        settings.skip_future_releases = document.getElementById('skip_future_releases')?.checked ?? true;
-        settings.skip_movie_refresh = document.getElementById('skip_movie_refresh')?.checked ?? false;
-        settings.random_missing = document.getElementById('radarr_random_missing')?.checked ?? true;
-        settings.random_upgrades = document.getElementById('radarr_random_upgrades')?.checked ?? true;
-        settings.debug_mode = document.getElementById('radarr_debug_mode')?.checked ?? false;
-        settings.api_timeout = parseInt(document.getElementById('radarr_api_timeout')?.value || 60);
-        settings.command_wait_delay = parseInt(document.getElementById('radarr_command_wait_delay')?.value || 1);
-        settings.command_wait_attempts = parseInt(document.getElementById('radarr_command_wait_attempts')?.value || 600);
-        settings.minimum_download_queue_size = parseInt(document.getElementById('radarr_minimum_download_queue_size')?.value || -1);
-        settings.log_refresh_interval_seconds = parseInt(document.getElementById('radarr_log_refresh_interval_seconds')?.value || 30);
-    } else if (app === 'lidarr') {
-        settings.api_url = document.getElementById('lidarr_api_url')?.value || '';
-        settings.api_key = document.getElementById('lidarr_api_key')?.value || '';
-        
-        // Add all settings directly at the root level - no more nesting under 'lidarr'
-        settings.hunt_missing_albums = parseInt(document.getElementById('hunt_missing_albums')?.value || 1);
-        settings.hunt_upgrade_tracks = parseInt(document.getElementById('hunt_upgrade_tracks')?.value || 0);
-        settings.sleep_duration = parseInt(document.getElementById('lidarr_sleep_duration')?.value || 900);
-        settings.state_reset_interval_hours = parseInt(document.getElementById('lidarr_state_reset_interval_hours')?.value || 168);
-        settings.monitored_only = document.getElementById('lidarr_monitored_only')?.checked ?? true;
-        settings.skip_future_releases = document.getElementById('lidarr_skip_future_releases')?.checked ?? true;
-        settings.skip_artist_refresh = document.getElementById('skip_artist_refresh')?.checked ?? false;
-        settings.random_missing = document.getElementById('lidarr_random_missing')?.checked ?? true;
-        settings.random_upgrades = document.getElementById('lidarr_random_upgrades')?.checked ?? true;
-        settings.debug_mode = document.getElementById('lidarr_debug_mode')?.checked ?? false;
-        settings.api_timeout = parseInt(document.getElementById('lidarr_api_timeout')?.value || 60);
-        settings.command_wait_delay = parseInt(document.getElementById('lidarr_command_wait_delay')?.value || 1);
-        settings.command_wait_attempts = parseInt(document.getElementById('lidarr_command_wait_attempts')?.value || 600);
-        settings.minimum_download_queue_size = parseInt(document.getElementById('lidarr_minimum_download_queue_size')?.value || -1);
-        settings.log_refresh_interval_seconds = parseInt(document.getElementById('lidarr_log_refresh_interval_seconds')?.value || 30);
-    } else if (app === 'readarr') {
-        settings.api_url = document.getElementById('readarr_api_url')?.value || '';
-        settings.api_key = document.getElementById('readarr_api_key')?.value || '';
-        
-        // Add all settings directly at the root level - no more nesting under 'readarr'
-        settings.hunt_missing_books = parseInt(document.getElementById('hunt_missing_books')?.value || 1);
-        settings.hunt_upgrade_books = parseInt(document.getElementById('hunt_upgrade_books')?.value || 0);
-        settings.sleep_duration = parseInt(document.getElementById('readarr_sleep_duration')?.value || 900);
-        settings.state_reset_interval_hours = parseInt(document.getElementById('readarr_state_reset_interval_hours')?.value || 168);
-        settings.monitored_only = document.getElementById('readarr_monitored_only')?.checked ?? true;
-        settings.skip_future_releases = document.getElementById('readarr_skip_future_releases')?.checked ?? true;
-        settings.skip_author_refresh = document.getElementById('skip_author_refresh')?.checked ?? false;
-        settings.random_missing = document.getElementById('readarr_random_missing')?.checked ?? true;
-        settings.random_upgrades = document.getElementById('readarr_random_upgrades')?.checked ?? true;
-        settings.debug_mode = document.getElementById('readarr_debug_mode')?.checked ?? false;
-        settings.api_timeout = parseInt(document.getElementById('readarr_api_timeout')?.value || 60);
-        settings.command_wait_delay = parseInt(document.getElementById('readarr_command_wait_delay')?.value || 1);
-        settings.command_wait_attempts = parseInt(document.getElementById('readarr_command_wait_attempts')?.value || 600);
-        settings.minimum_download_queue_size = parseInt(document.getElementById('readarr_minimum_download_queue_size')?.value || -1);
-        settings.log_refresh_interval_seconds = parseInt(document.getElementById('readarr_log_refresh_interval_seconds')?.value || 30);
-    }
     
     console.log('Saving settings:', settings);
     
@@ -385,7 +152,7 @@ function saveCurrentSettings(app) {
         body: JSON.stringify(settings)
     })
     .then(response => {
-        // Check if the response is valid JSON first
+        // Check if the response is valid JSON
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
             return response.json().catch(err => {
@@ -404,14 +171,9 @@ function saveCurrentSettings(app) {
         if (data.success) {
             showNotification('Settings saved successfully!', 'success');
             
-            // Trigger settings syncing
-            if (window.HuntarrEvents) {
-                window.HuntarrEvents.dispatchSettingsChanged(app);
-            }
-            
             // Reload settings to ensure consistency
             setTimeout(() => {
-                reloadSettingsFromServer(app);
+                loadSonarrSettings();
             }, 1000);
         } else {
             showNotification('Error saving settings: ' + (data.message || 'Unknown error'), 'error');
@@ -424,40 +186,31 @@ function saveCurrentSettings(app) {
     });
 }
 
-// Helper function to reload settings from server
-function reloadSettingsFromServer(app) {
-    // Force a full reload of all settings from the server
-    fetch('/api/settings/refresh', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(refreshResponse => refreshResponse.json())
-    .then(refreshData => {
-        console.log('Settings refreshed from server');
-        
-        // Now reload the app settings to display the current values
-        loadAppSettings(app);
-        
-        // If we're using a module-specific loadSettings function, call that too
-        if (window.huntarrApp && window.huntarrApp.currentApp === app) {
-            if (app === 'sonarr' && window.huntarrApp.sonarrModule && window.huntarrApp.sonarrModule.loadSettings) {
-                window.huntarrApp.sonarrModule.loadSettings();
-            } else if (app === 'radarr' && window.huntarrApp.radarrModule && window.huntarrApp.radarrModule.loadSettings) {
-                window.huntarrApp.radarrModule.loadSettings();
-            } else if (app === 'lidarr' && window.huntarrApp.lidarrModule && window.huntarrApp.lidarrModule.loadSettings) {
-                window.huntarrApp.lidarrModule.loadSettings();
-            } else if (app === 'readarr' && window.huntarrApp.readarrModule && window.huntarrApp.readarrModule.loadSettings) {
-                window.huntarrApp.readarrModule.loadSettings();
+// Reset settings to defaults
+function resetSettings() {
+    if (confirm('Are you sure you want to reset Sonarr settings to defaults?')) {
+        fetch('/api/settings/reset', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Settings reset to defaults', 'success');
+                // Reload settings to reflect the reset
+                loadSonarrSettings();
+            } else {
+                showNotification('Error resetting settings: ' + (data.message || 'Unknown error'), 'error');
             }
-        }
-    })
-    .catch(refreshError => {
-        console.error('Error refreshing settings:', refreshError);
-        // Still try to reload the settings
-        loadAppSettings(app);
-    });
+        })
+        .catch(error => {
+            console.error('Error resetting settings:', error);
+            showNotification('Error resetting settings: ' + error.message, 'error');
+        });
+    }
 }
 
 // Show a non-blocking notification instead of using alert()
@@ -509,36 +262,4 @@ function showNotification(message, type = 'info') {
             }
         }, 300);
     }, 3000);
-}
-
-// Reset current settings to defaults
-function resetCurrentSettings() {
-    const activeTab = document.querySelector('.settings-tab.active');
-    if (!activeTab) return;
-    
-    const app = activeTab.getAttribute('data-settings');
-    
-    if (confirm(`Are you sure you want to reset ${app} settings to defaults?`)) {
-        fetch('/api/settings/reset', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ app: app })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Settings reset to defaults.');
-                // Reload settings to reflect the reset
-                loadAppSettings(app);
-            } else {
-                alert('Error resetting settings: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Error resetting settings:', error);
-            alert('Error resetting settings: ' + error.message);
-        });
-    }
 }

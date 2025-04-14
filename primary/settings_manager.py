@@ -2,7 +2,7 @@
 """
 Settings manager for Huntarr
 Handles loading, saving, and providing settings from a JSON file
-Supports default configurations for different Arr applications
+Simplified for Sonarr only
 """
 
 import os
@@ -21,13 +21,13 @@ SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
 
 SETTINGS_FILE = SETTINGS_DIR / "huntarr.json"
 
-# Default settings - flat structure with no huntarr nesting
+# Default settings - simplified for Sonarr only
 DEFAULT_SETTINGS = {
     "ui": {
         "dark_mode": True
     },
-    "app_type": "sonarr",  # Default app type
-    "connections": {},     # Holds API URLs and keys
+    "app_type": "sonarr",  # Fixed to sonarr
+    "connections": {},     # Holds API URL and key
     "global": {            # Global settings (UI preferences etc)
         "debug_mode": False,
         "command_wait_delay": 1,
@@ -43,57 +43,6 @@ DEFAULT_SETTINGS = {
         "monitored_only": True,
         "skip_future_episodes": True,
         "skip_series_refresh": False,
-        "random_missing": True,
-        "random_upgrades": True,
-        "debug_mode": False,
-        "api_timeout": 60,
-        "command_wait_delay": 1,
-        "command_wait_attempts": 600,
-        "minimum_download_queue_size": -1,
-        "log_refresh_interval_seconds": 30
-    },
-    "radarr": {            # Radarr-specific settings
-        "hunt_missing_movies": 1,
-        "hunt_upgrade_movies": 0,
-        "sleep_duration": 900,
-        "state_reset_interval_hours": 168,
-        "monitored_only": True,
-        "skip_future_releases": True,
-        "skip_movie_refresh": False,
-        "random_missing": True,
-        "random_upgrades": True,
-        "debug_mode": False,
-        "api_timeout": 60,
-        "command_wait_delay": 1,
-        "command_wait_attempts": 600,
-        "minimum_download_queue_size": -1,
-        "log_refresh_interval_seconds": 30
-    },
-    "lidarr": {            # Lidarr-specific settings
-        "hunt_missing_albums": 1,
-        "hunt_upgrade_tracks": 0,
-        "sleep_duration": 900,
-        "state_reset_interval_hours": 168,
-        "monitored_only": True,
-        "skip_future_releases": True,
-        "skip_artist_refresh": False,
-        "random_missing": True,
-        "random_upgrades": True,
-        "debug_mode": False,
-        "api_timeout": 60,
-        "command_wait_delay": 1,
-        "command_wait_attempts": 600,
-        "minimum_download_queue_size": -1,
-        "log_refresh_interval_seconds": 30
-    },
-    "readarr": {           # Readarr-specific settings
-        "hunt_missing_books": 1,
-        "hunt_upgrade_books": 0,
-        "sleep_duration": 900,
-        "state_reset_interval_hours": 168,
-        "monitored_only": True,
-        "skip_future_releases": True,
-        "skip_author_refresh": False,
         "random_missing": True,
         "random_upgrades": True,
         "debug_mode": False,
@@ -128,14 +77,21 @@ def load_settings() -> Dict[str, Any]:
                 _deep_update(settings, user_settings)
         
         # Remove any nested huntarr sections
-        for app in ["sonarr", "radarr", "lidarr", "readarr"]:
-            if app in settings and "huntarr" in settings[app]:
-                # Move all settings from app.huntarr directly to app level
-                for key, value in settings[app]["huntarr"].items():
-                    if key not in settings[app]:  # Don't overwrite existing settings
-                        settings[app][key] = value
-                # Remove the huntarr section
-                del settings[app]["huntarr"]
+        if "sonarr" in settings and "huntarr" in settings["sonarr"]:
+            # Move all settings from sonarr.huntarr directly to sonarr level
+            for key, value in settings["sonarr"]["huntarr"].items():
+                if key not in settings["sonarr"]:  # Don't overwrite existing settings
+                    settings["sonarr"][key] = value
+            # Remove the huntarr section
+            del settings["sonarr"]["huntarr"]
+        
+        # Force app_type to be sonarr
+        settings["app_type"] = "sonarr"
+        
+        # Remove other app settings if they exist
+        for app in ["radarr", "lidarr", "readarr"]:
+            if app in settings:
+                del settings[app]
                 
         return settings
     except Exception as e:
@@ -152,14 +108,21 @@ def save_settings(settings: Dict[str, Any]) -> bool:
     """Save settings to JSON file"""
     try:
         # Clean up any potential huntarr sections before saving
-        for app in ["sonarr", "radarr", "lidarr", "readarr"]:
-            if app in settings and "huntarr" in settings[app]:
-                # Move all settings from app.huntarr directly to app level
-                for key, value in settings[app]["huntarr"].items():
-                    if key not in settings[app]:  # Don't overwrite existing settings
-                        settings[app][key] = value
-                # Remove the huntarr section
-                del settings[app]["huntarr"]
+        if "sonarr" in settings and "huntarr" in settings["sonarr"]:
+            # Move all settings from sonarr.huntarr directly to sonarr level
+            for key, value in settings["sonarr"]["huntarr"].items():
+                if key not in settings["sonarr"]:  # Don't overwrite existing settings
+                    settings["sonarr"][key] = value
+            # Remove the huntarr section
+            del settings["sonarr"]["huntarr"]
+        
+        # Force app_type to be sonarr
+        settings["app_type"] = "sonarr"
+        
+        # Remove other app settings if they exist
+        for app in ["radarr", "lidarr", "readarr"]:
+            if app in settings:
+                del settings[app]
         
         SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
         with open(SETTINGS_FILE, "w", encoding="utf-8") as file:
@@ -207,45 +170,52 @@ def get_setting(section: str, key: str, default: Any = None) -> Any:
     # Return the default if the setting doesn't exist
     return default
 
-# Get app type
+# Get app type - always returns "sonarr"
 def get_app_type() -> str:
-    """Get the current app type"""
-    settings = load_settings()
-    return settings.get("app_type", "sonarr")
+    """Get the current app type - always sonarr"""
+    return "sonarr"
 
-# Get API URL for the current app
-def get_api_url() -> str:
-    """Get the API URL for the current app type"""
-    app_type = get_app_type()
+# Save API details for Sonarr
+def save_api_keys(app_type: str, api_url: str, api_key: str) -> bool:
+    """Save API keys for Sonarr"""
+    if app_type.lower() != "sonarr":
+        return False
+    
     settings = load_settings()
     
-    # Try to get from connections first
-    connections = settings.get("connections", {})
-    if app_type in connections and "api_url" in connections[app_type]:
-        return connections[app_type]["api_url"]
+    # Ensure the connections section exists
+    if "connections" not in settings:
+        settings["connections"] = {}
     
-    # Fallback to app section
-    if app_type in settings and "api_url" in settings[app_type]:
-        return settings[app_type]["api_url"]
+    # Store for sonarr
+    settings["connections"]["sonarr"] = {
+        "api_url": api_url,
+        "api_key": api_key
+    }
     
-    return ""
+    return save_settings(settings)
 
-# Get API key for the current app
-def get_api_key() -> str:
-    """Get the API key for the current app type"""
-    app_type = get_app_type()
+# Get API details for Sonarr
+def get_api_keys(app_type: str = "sonarr") -> tuple:
+    """Get API keys for Sonarr"""
     settings = load_settings()
     
-    # Try to get from connections first
+    # Initialize with empty values
+    api_url = ""
+    api_key = ""
+    
+    # Check in connections section first
     connections = settings.get("connections", {})
-    if app_type in connections and "api_key" in connections[app_type]:
-        return connections[app_type]["api_key"]
+    if "sonarr" in connections:
+        api_url = connections["sonarr"].get("api_url", "")
+        api_key = connections["sonarr"].get("api_key", "")
     
-    # Fallback to app section
-    if app_type in settings and "api_key" in settings[app_type]:
-        return settings[app_type]["api_key"]
+    # If not found, check in old format for backward compatibility
+    if not api_url and not api_key:
+        api_url = connections.get("sonarr_url", "")
+        api_key = connections.get("sonarr_apikey", "")
     
-    return ""
+    return api_url, api_key
 
 # Initialize settings file if it doesn't exist
 if not SETTINGS_FILE.exists():

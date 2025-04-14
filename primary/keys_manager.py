@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Keys manager for Huntarr
-Handles storage and retrieval of API keys and URLs from huntarr.json
+Handles storage and retrieval of Sonarr API keys and URLs from huntarr.json
+Simplified for Sonarr only
 """
 
 import os
@@ -22,16 +23,20 @@ SETTINGS_FILE = SETTINGS_DIR / "huntarr.json"
 
 def save_api_keys(app_type: str, api_url: str, api_key: str) -> bool:
     """
-    Save API keys and URL for an app.
+    Save API keys and URL for Sonarr.
     
     Args:
-        app_type: The type of app (sonarr, radarr, etc.)
-        api_url: The API URL for the app
+        app_type: The type of app (should always be sonarr)
+        api_url: The API URL for Sonarr
         api_key: The API key
     
     Returns:
         bool: True if successful, False otherwise
     """
+    if app_type.lower() != "sonarr":
+        keys_logger.warning(f"Attempted to save keys for non-Sonarr app: {app_type}")
+        return False
+        
     try:
         # Ensure settings file exists
         if not SETTINGS_FILE.exists():
@@ -46,8 +51,8 @@ def save_api_keys(app_type: str, api_url: str, api_key: str) -> bool:
         if "connections" not in settings_data:
             settings_data["connections"] = {}
             
-        # Create or update connection info for this app
-        settings_data["connections"][app_type] = {
+        # Create or update connection info for Sonarr
+        settings_data["connections"]["sonarr"] = {
             'api_url': api_url,
             'api_key': api_key
         }
@@ -56,22 +61,26 @@ def save_api_keys(app_type: str, api_url: str, api_key: str) -> bool:
         with open(SETTINGS_FILE, 'w') as f:
             json.dump(settings_data, f, indent=2)
         
-        keys_logger.info(f"Saved API keys for {app_type}")
+        keys_logger.info("Saved Sonarr API keys")
         return True
     except Exception as e:
-        keys_logger.error(f"Error saving API keys: {e}")
+        keys_logger.error(f"Error saving Sonarr API keys: {e}")
         return False
 
-def get_api_keys(app_type: str) -> Tuple[str, str]:
+def get_api_keys(app_type: str = "sonarr") -> Tuple[str, str]:
     """
-    Get API keys and URL for an app.
+    Get API keys and URL for Sonarr.
     
     Args:
-        app_type: The type of app (sonarr, radarr, etc.)
+        app_type: The type of app (should always be sonarr)
     
     Returns:
         Tuple[str, str]: (api_url, api_key)
     """
+    if app_type.lower() != "sonarr":
+        keys_logger.warning(f"Attempted to get keys for non-Sonarr app: {app_type}")
+        return '', ''
+        
     try:
         # Check if settings file exists
         if not SETTINGS_FILE.exists():
@@ -84,39 +93,32 @@ def get_api_keys(app_type: str) -> Tuple[str, str]:
         
         # Get connection info
         connections = settings_data.get("connections", {})
-        app_config = connections.get(app_type, {})
+        app_config = connections.get("sonarr", {})
         
         api_url = app_config.get('api_url', '')
         api_key = app_config.get('api_key', '')
         
         # Log what we found (without revealing the full API key)
         masked_key = "****" + api_key[-4:] if len(api_key) > 4 else "****" if api_key else ""
-        keys_logger.debug(f"Retrieved API info for {app_type}: URL={api_url}, Key={masked_key}")
+        keys_logger.debug(f"Retrieved Sonarr API info: URL={api_url}, Key={masked_key}")
         
         # Return URL and key
         return api_url, api_key
     except Exception as e:
-        keys_logger.error(f"Error getting API keys: {e}")
+        keys_logger.error(f"Error getting Sonarr API keys: {e}")
         return '', ''
 
-def list_configured_apps() -> Dict[str, bool]:
+def is_sonarr_configured() -> bool:
     """
-    List all apps and whether they're configured.
+    Check if Sonarr is configured.
     
     Returns:
-        Dict[str, bool]: Dictionary of app_type -> is_configured
+        bool: True if Sonarr is configured, False otherwise
     """
-    result = {
-        'sonarr': False,
-        'radarr': False,
-        'lidarr': False,
-        'readarr': False
-    }
-    
     try:
         # Check if settings file exists
         if not SETTINGS_FILE.exists():
-            return result
+            return False
             
         # Load settings file
         with open(SETTINGS_FILE, 'r') as f:
@@ -124,13 +126,10 @@ def list_configured_apps() -> Dict[str, bool]:
         
         # Get connection info
         connections = settings_data.get("connections", {})
+        sonarr_config = connections.get("sonarr", {})
         
-        # Check each app
-        for app in result.keys():
-            if app in connections and connections[app].get('api_url') and connections[app].get('api_key'):
-                result[app] = True
-        
-        return result
+        # Check if Sonarr is configured with both URL and API key
+        return bool(sonarr_config.get('api_url') and sonarr_config.get('api_key'))
     except Exception as e:
-        keys_logger.error(f"Error listing configured apps: {e}")
-        return result
+        keys_logger.error(f"Error checking if Sonarr is configured: {e}")
+        return False

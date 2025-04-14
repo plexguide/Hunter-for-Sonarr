@@ -1,4 +1,5 @@
 // Sonarr-specific functionality
+// Simplified for Sonarr-only app
 
 (function(app) {
     // Add Sonarr-specific initialization
@@ -31,19 +32,11 @@
         init: function() {
             this.setupEventListeners();
             
-            // Extend the core app with Sonarr-specific implementations
-            app.loadSettingsSonarr = this.loadSettings.bind(this);
+            // Directly assign the loadSettings method to the app
+            app.loadSettings = this.loadSettings.bind(this);
             
-            // Override the load settings with Sonarr implementation when Sonarr is active
-            const originalLoadSettings = app.loadSettings;
-            app.loadSettings = function(appType) {
-                if (appType === 'sonarr') {
-                    this.loadSettingsSonarr();
-                } else if (originalLoadSettings) {
-                    // Only call the original if we're not handling Sonarr
-                    originalLoadSettings.call(this, appType);
-                }
-            };
+            // Initialize sleep duration display
+            app.updateSleepDurationDisplay = this.updateSleepDurationDisplay.bind(this);
         },
         
         setupEventListeners: function() {
@@ -105,11 +98,11 @@
                     // Store original settings for comparison
                     app.originalSettings = JSON.parse(JSON.stringify(data));
                     
-                    // Get app-specific settings directly from sonarr section instead of huntarr/advanced
+                    // Get app-specific settings directly from sonarr section
                     const sonarrSettings = data.sonarr || {};
                     
-                    // For Sonarr, load from app-settings endpoint
-                    fetch(`/api/app-settings?app=sonarr`)
+                    // Load API settings
+                    fetch(`/api/app-settings`)
                         .then(response => response.json())
                         .then(appData => {
                             if (appData.success) {
@@ -124,7 +117,7 @@
                                 app.configuredApps.sonarr = !!(appData.api_url && appData.api_key);
                             }
                             
-                            // Sonarr-specific settings - all from sonarrSettings directly
+                            // Sonarr-specific settings
                             if (this.elements.huntMissingShowsInput) {
                                 this.elements.huntMissingShowsInput.value = sonarrSettings.hunt_missing_shows !== undefined ? sonarrSettings.hunt_missing_shows : 1;
                             }
@@ -148,7 +141,7 @@
                                 this.elements.skipSeriesRefreshInput.checked = sonarrSettings.skip_series_refresh === true;
                             }
                             
-                            // Advanced settings - from the same sonarrSettings object
+                            // Advanced settings
                             if (this.elements.apiTimeoutInput) {
                                 this.elements.apiTimeoutInput.value = sonarrSettings.api_timeout || 60;
                             }
@@ -285,67 +278,61 @@
     // Initialize Sonarr module
     sonarrModule.init();
     
-    // Override app.saveSettings to handle Sonarr-specific logic when Sonarr is active
-    const originalSaveSettings = app.saveSettings;
+    // Set the saveSettings method directly
     app.saveSettings = function() {
-        if (app.currentApp === 'sonarr') {
-            if (!sonarrModule.checkForChanges()) {
-                // If no changes, don't do anything
-                return;
-            }
-            
-            const settings = sonarrModule.getSettingsPayload();
-            
-            fetch('/api/settings', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(settings)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Store the original values in data attributes for comparison
-                    if (sonarrModule.elements.apiUrlInput) sonarrModule.elements.apiUrlInput.dataset.originalValue = settings.api_url;
-                    if (sonarrModule.elements.apiKeyInput) sonarrModule.elements.apiKeyInput.dataset.originalValue = settings.api_key;
-                    
-                    // Update the rest of originalSettings
-                    if (settings.sonarr) app.originalSettings.sonarr = {...settings.sonarr};
-                    
-                    // Update configuration status
-                    app.configuredApps.sonarr = !!(settings.api_url && settings.api_key);
-                    
-                    // Update connection status
-                    app.updateConnectionStatus();
-                    
-                    // Update home page connection status
-                    app.updateHomeConnectionStatus();
-                    
-                    // Update logs connection status
-                    app.updateLogsConnectionStatus();
-                    
-                    // Disable save buttons
-                    sonarrModule.updateSaveButtonState(false);
-                    
-                    // Show success message
-                    if (data.changes_made) {
-                        alert('Settings saved successfully and cycle restarted to apply changes!');
-                    } else {
-                        alert('No changes detected.');
-                    }
-                } else {
-                    alert('Error saving settings: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error saving settings:', error);
-                alert('Error saving settings: ' + error.message);
-            });
-        } else if (originalSaveSettings) {
-            // Call the original if we're not handling Sonarr
-            originalSaveSettings.call(app);
+        if (!sonarrModule.checkForChanges()) {
+            // If no changes, don't do anything
+            return;
         }
+        
+        const settings = sonarrModule.getSettingsPayload();
+        
+        fetch('/api/settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Store the original values in data attributes for comparison
+                if (sonarrModule.elements.apiUrlInput) sonarrModule.elements.apiUrlInput.dataset.originalValue = settings.api_url;
+                if (sonarrModule.elements.apiKeyInput) sonarrModule.elements.apiKeyInput.dataset.originalValue = settings.api_key;
+                
+                // Update the rest of originalSettings
+                if (settings.sonarr) app.originalSettings.sonarr = {...settings.sonarr};
+                
+                // Update configuration status
+                app.configuredApps.sonarr = !!(settings.api_url && settings.api_key);
+                
+                // Update connection status
+                app.updateConnectionStatus();
+                
+                // Update home page connection status
+                app.updateHomeConnectionStatus();
+                
+                // Update logs connection status
+                app.updateLogsConnectionStatus();
+                
+                // Disable save buttons
+                sonarrModule.updateSaveButtonState(false);
+                
+                // Show success message
+                if (data.message === "Settings saved and reload triggered") {
+                    alert('Settings saved successfully and cycle restarted to apply changes!');
+                } else {
+                    alert('Settings saved.');
+                }
+            } else {
+                alert('Error saving settings: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error saving settings:', error);
+            alert('Error saving settings: ' + error.message);
+        });
     };
     
     // Add the Sonarr module to the app for reference

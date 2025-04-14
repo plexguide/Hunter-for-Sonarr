@@ -1,16 +1,14 @@
-// Core functionality used across all application modules
+// Core functionality for Huntarr Sonarr
+// Simplified to support only Sonarr
 
 // Global state
 const huntarrApp = {
-    // Current selected app
+    // Current app is always sonarr
     currentApp: 'sonarr',
     
-    // Track which apps are configured
+    // Track if Sonarr is configured
     configuredApps: {
-        sonarr: false,
-        radarr: false,
-        lidarr: false,
-        readarr: false
+        sonarr: false
     },
     
     // Store original settings values
@@ -39,8 +37,8 @@ const huntarrApp = {
         // Get user info for welcome page
         this.getUserInfo();
         
-        // Load settings for initial app
-        this.loadSettings(this.currentApp);
+        // Load settings
+        this.loadSettings();
         
         // Navigate based on URL path
         this.handleNavigation();
@@ -69,15 +67,8 @@ const huntarrApp = {
         this.elements.themeToggle = document.getElementById('themeToggle');
         this.elements.themeLabel = document.getElementById('themeLabel');
         
-        // App tabs
-        this.elements.appTabs = document.querySelectorAll('.app-tab');
-        this.elements.appSettings = document.querySelectorAll('.app-settings');
-        
         // Connection status elements
         this.elements.sonarrHomeStatus = document.getElementById('sonarrHomeStatus');
-        this.elements.radarrHomeStatus = document.getElementById('radarrHomeStatus');
-        this.elements.lidarrHomeStatus = document.getElementById('lidarrHomeStatus');
-        this.elements.readarrHomeStatus = document.getElementById('readarrHomeStatus');
         
         // Save and reset buttons
         this.elements.saveSettingsButton = document.getElementById('saveSettings');
@@ -88,11 +79,6 @@ const huntarrApp = {
     
     // Set up event listeners
     setupEventListeners: function() {
-        // App tab selection
-        this.elements.appTabs.forEach(tab => {
-            tab.addEventListener('click', this.handleAppTabClick.bind(this));
-        });
-        
         // Navigation
         if (this.elements.homeButton && this.elements.logsButton && this.elements.settingsButton) {
             this.elements.homeButton.addEventListener('click', this.navigateToHome.bind(this));
@@ -129,44 +115,6 @@ const huntarrApp = {
         }
     },
     
-    // Handle app tab click
-    handleAppTabClick: function(event) {
-        const app = event.currentTarget.dataset.app;
-        
-        // If it's already the active app, do nothing
-        if (app === this.currentApp) return;
-        
-        // Update active tab
-        this.elements.appTabs.forEach(t => t.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-        
-        // Update active settings panel if on settings page
-        if (this.elements.settingsContainer && this.elements.settingsContainer.style.display !== 'none') {
-            this.elements.appSettings.forEach(s => s.style.display = 'none');
-            document.getElementById(`${app}Settings`).style.display = 'block';
-        }
-        
-        // Update current app
-        this.currentApp = app;
-        
-        // Load settings for this app
-        this.loadSettings(app);
-        
-        // For logs, refresh the log stream
-        if (this.elements.logsElement && this.elements.logsContainer && this.elements.logsContainer.style.display !== 'none') {
-            // Clear the logs first
-            this.elements.logsElement.innerHTML = '';
-            
-            // Update connection status based on configuration
-            this.updateLogsConnectionStatus();
-            
-            // Reconnect the event source only if app is configured
-            if (this.configuredApps[app]) {
-                this.connectEventSource(app);
-            }
-        }
-    },
-    
     // Navigation functions
     navigateToHome: function() {
         this.elements.homeContainer.style.display = 'flex';
@@ -195,9 +143,9 @@ const huntarrApp = {
         // Update the connection status based on configuration
         this.updateLogsConnectionStatus();
         
-        // Reconnect to logs for the current app if configured
-        if (this.elements.logsElement && this.configuredApps[this.currentApp]) {
-            this.connectEventSource(this.currentApp);
+        // Reconnect to logs if configured
+        if (this.elements.logsElement && this.configuredApps.sonarr) {
+            this.connectEventSource();
         }
     },
     
@@ -211,12 +159,11 @@ const huntarrApp = {
         this.elements.settingsButton.classList.add('active');
         this.elements.userButton.classList.remove('active');
         
-        // Show the settings for the current app
-        this.elements.appSettings.forEach(s => s.style.display = 'none');
-        document.getElementById(`${this.currentApp}Settings`).style.display = 'block';
+        // Show Sonarr settings
+        document.getElementById('sonarrSettings').style.display = 'block';
         
         // Make sure settings are loaded
-        this.loadSettings(this.currentApp);
+        this.loadSettings();
     },
     
     navigateToUser: function() {
@@ -233,11 +180,11 @@ const huntarrApp = {
             this.navigateToHome();
         }
         
-        // Connect to logs if we're on the logs page and the current app is configured
+        // Connect to logs if we're on the logs page and sonarr is configured
         if (this.elements.logsElement && this.elements.logsContainer && 
             this.elements.logsContainer.style.display !== 'none' && 
-            this.configuredApps[this.currentApp]) {
-            this.connectEventSource(this.currentApp);
+            this.configuredApps.sonarr) {
+            this.connectEventSource();
         }
     },
     
@@ -320,7 +267,7 @@ const huntarrApp = {
     },
     
     // Event source for logs
-    connectEventSource: function(app) {
+    connectEventSource: function() {
         if (!this.elements.logsElement) return; // Skip if not on logs page
         
         if (this.eventSource) {
@@ -379,15 +326,9 @@ const huntarrApp = {
             .then(data => {
                 // Update the configuredApps object
                 this.configuredApps.sonarr = data.sonarr || false;
-                this.configuredApps.radarr = data.radarr || false;
-                this.configuredApps.lidarr = data.lidarr || false;
-                this.configuredApps.readarr = data.readarr || false;
                 
                 // Update UI elements
                 this.updateStatusElement(this.elements.sonarrHomeStatus, this.configuredApps.sonarr);
-                this.updateStatusElement(this.elements.radarrHomeStatus, this.configuredApps.radarr);
-                this.updateStatusElement(this.elements.lidarrHomeStatus, this.configuredApps.lidarr);
-                this.updateStatusElement(this.elements.readarrHomeStatus, this.configuredApps.readarr);
             })
             .catch(error => console.error('Error checking configured apps:', error));
     },
@@ -406,7 +347,7 @@ const huntarrApp = {
     
     updateLogsConnectionStatus: function() {
         if (this.elements.statusElement) {
-            if (this.configuredApps[this.currentApp]) {
+            if (this.configuredApps.sonarr) {
                 this.elements.statusElement.textContent = 'Connected';
                 this.elements.statusElement.className = 'status-connected';
             } else {
@@ -417,16 +358,9 @@ const huntarrApp = {
     },
     
     updateConnectionStatus: function() {
-        const appConnectionElements = {
-            'sonarr': document.getElementById('sonarrConnectionStatus'),
-            'radarr': document.getElementById('radarrConnectionStatus'),
-            'lidarr': document.getElementById('lidarrConnectionStatus'),
-            'readarr': document.getElementById('readarrConnectionStatus')
-        };
-        
-        const connectionElement = appConnectionElements[this.currentApp];
+        const connectionElement = document.getElementById('sonarrConnectionStatus');
         if (connectionElement) {
-            this.updateStatusElement(connectionElement, this.configuredApps[this.currentApp]);
+            this.updateStatusElement(connectionElement, this.configuredApps.sonarr);
         }
     },
     
@@ -439,14 +373,14 @@ const huntarrApp = {
     },
     
     // Settings functions - generic common operations (app-specific logic in app modules)
-    loadSettings: function(app) {
-        // This function will be overridden by app-specific modules
-        // Each app module will attach its own implementation to huntarrApp
+    loadSettings: function() {
+        // This function will be overridden by app-specific module
+        // The sonarr module will attach its own implementation to huntarrApp
     },
     
     saveSettings: function() {
-        // This function will be overridden by app-specific modules
-        // Each app module will attach its own implementation to huntarrApp
+        // This function will be overridden by app-specific module
+        // The sonarr module will attach its own implementation to huntarrApp
     },
     
     resetSettings: function() {
@@ -456,15 +390,13 @@ const huntarrApp = {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ 
-                    app: this.currentApp
-                })
+                body: JSON.stringify({})
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     alert('Settings reset to defaults and cycle restarted.');
-                    this.loadSettings(this.currentApp);
+                    this.loadSettings();
                     
                     // Update home page connection status
                     this.updateHomeConnectionStatus();
@@ -482,13 +414,13 @@ const huntarrApp = {
         }
     },
     
-    // Test connection function - works for all apps
-    testConnection: function(app, urlInput, keyInput, statusElement) {
+    // Test connection function for Sonarr
+    testConnection: function(urlInput, keyInput, statusElement) {
         const apiUrl = urlInput.value;
         const apiKey = keyInput.value;
         
         if (!apiUrl || !apiKey) {
-            alert(`Please enter both API URL and API Key for ${app.charAt(0).toUpperCase() + app.slice(1)} before testing the connection.`);
+            alert('Please enter both API URL and API Key for Sonarr before testing the connection.');
             return;
         }
         
@@ -498,8 +430,7 @@ const huntarrApp = {
             statusElement.className = 'connection-badge';
         }
         
-        // Use the correct endpoint URL based on the app type
-        fetch(`/${app}/test-connection`, {
+        fetch('/sonarr/test-connection', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -518,7 +449,7 @@ const huntarrApp = {
                 }
                 
                 // Update configuration status
-                this.configuredApps[app] = true;
+                this.configuredApps.sonarr = true;
                 
                 // Update home page status
                 this.updateHomeConnectionStatus();
@@ -529,28 +460,28 @@ const huntarrApp = {
                 }
                 
                 // Update configuration status
-                this.configuredApps[app] = false;
+                this.configuredApps.sonarr = false;
                 
                 alert(`Connection failed: ${data.message}`);
             }
         })
         .catch(error => {
-            console.error(`Error testing ${app} connection:`, error);
+            console.error('Error testing Sonarr connection:', error);
             if (statusElement) {
                 statusElement.textContent = 'Connection Error';
                 statusElement.className = 'connection-badge not-connected';
             }
             
             // Update configuration status
-            this.configuredApps[app] = false;
+            this.configuredApps.sonarr = false;
             
-            alert(`Error testing ${app} connection: ` + error.message);
+            alert('Error testing Sonarr connection: ' + error.message);
         });
     },
     
     // Duration utility function
     updateSleepDurationDisplay: function() {
-        // This will be called from app-specific modules
+        // This will be called from the sonarr app-specific module
     },
     
     updateDurationDisplay: function(seconds, spanElement) {

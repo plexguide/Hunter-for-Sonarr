@@ -1,21 +1,37 @@
 <section id="logsSection" class="content-section">
     <div class="section-header">
+        <div class="log-header">
+            <h2>Sonarr Logs</h2>
+        </div>
         <div class="log-controls">
             <div class="connection-status">
-                Status: <span id="logConnectionStatus" class="status-disconnected">Disconnected</span>
+                Status: <span id="status" class="status-disconnected">Disconnected</span>
             </div>
             <div class="log-options">
                 <label class="auto-scroll">
-                    <input type="checkbox" id="autoScrollCheckbox" checked>
+                    <input type="checkbox" id="autoScroll" checked>
                     <span>Auto-scroll</span>
                 </label>
-                <button id="clearLogsButton" class="clear-button">
+                <button id="clearLogs" class="clear-button">
                     <i class="fas fa-trash-alt"></i> Clear
                 </button>
             </div>
         </div>
     </div>
     
-    <div class="logs" id="logsContainer"></div>
+    <div class="logs" id="logs"></div>
     {% include 'components/footer.html' %}
 </section>
+
+<style>
+    .log-header h2 {
+        margin: 0;
+        color: var(--accent-color);
+    }
+    
+    .section-header {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+</style>

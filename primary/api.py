@@ -1,35 +1,25 @@
 #!/usr/bin/env python3
 """
-Arr API Helper Functions
-Handles all communication with the Arr API
+Sonarr API Helper Functions
+Handles all communication with the Sonarr API
 """
 
 import requests
 import time
 from typing import List, Dict, Any, Optional, Union
 from primary.utils.logger import logger, debug_log
-from primary.config import API_KEY, API_URL, API_TIMEOUT, COMMAND_WAIT_DELAY, COMMAND_WAIT_ATTEMPTS, APP_TYPE
+from primary.config import API_KEY, API_URL, API_TIMEOUT, COMMAND_WAIT_DELAY, COMMAND_WAIT_ATTEMPTS
 
 # Create a session for reuse
 session = requests.Session()
 
 def arr_request(endpoint: str, method: str = "GET", data: Dict = None) -> Optional[Union[Dict, List]]:
     """
-    Make a request to the Arr API.
+    Make a request to the Sonarr API.
     `endpoint` should be something like 'series', 'command', 'wanted/cutoff', etc.
     """
-    # Determine the API version based on app type
-    if APP_TYPE == "sonarr":
-        api_base = "api/v3"
-    elif APP_TYPE == "radarr":
-        api_base = "api/v3"
-    elif APP_TYPE == "lidarr":
-        api_base = "api/v1"
-    elif APP_TYPE == "readarr":
-        api_base = "api/v1"
-    else:
-        # Default to v3 for unknown app types
-        api_base = "api/v3"
+    # Sonarr uses API v3
+    api_base = "api/v3"
     
     url = f"{API_URL}/{api_base}/{endpoint}"
     headers = {
@@ -59,48 +49,32 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None) -> Option
 
 def check_connection(app_type: str = None) -> bool:
     """
-    Check if we can connect to the Arr API.
+    Check if we can connect to the Sonarr API.
     Returns True if connection is successful, False otherwise.
     
     Args:
-        app_type: Optional app type to check connection for (sonarr, radarr, etc.).
-                 If None, uses the global APP_TYPE.
+        app_type: Optional parameter kept for compatibility, ignored as we only support Sonarr
     """
-    # Determine which app type to use
-    current_app_type = app_type or APP_TYPE
-    
-    # Get API credentials for the specified app type
+    # Get API credentials
     from primary import keys_manager
-    api_url, api_key = keys_manager.get_api_keys(current_app_type)
+    api_url, api_key = keys_manager.get_api_keys("sonarr")
     
     # First explicitly check if API URL and Key are configured
     if not api_url:
-        logger.error(f"API URL is not configured for {current_app_type} in settings. Please set it up in the Settings page.")
+        logger.error("Sonarr API URL is not configured in settings. Please set it up in the Settings page.")
         return False
     
     if not api_key:
-        logger.error(f"API Key is not configured for {current_app_type} in settings. Please set it up in the Settings page.")
+        logger.error("Sonarr API Key is not configured in settings. Please set it up in the Settings page.")
         return False
     
     # Log what we're attempting to connect to
-    logger.debug(f"Attempting to connect to {current_app_type.title()} at {api_url}")
+    logger.debug(f"Attempting to connect to Sonarr at {api_url}")
     
-    # Try to access the system/status endpoint which should be available on all Arr applications
+    # Try to access the system/status endpoint
     try:
         endpoint = "system/status"
-            
-        # Determine the API version based on app type
-        if current_app_type == "sonarr":
-            api_base = "api/v3"
-        elif current_app_type == "radarr":
-            api_base = "api/v3"
-        elif current_app_type == "lidarr":
-            api_base = "api/v1"
-        elif current_app_type == "readarr":
-            api_base = "api/v1"
-        else:
-            # Default to v3 for unknown app types
-            api_base = "api/v3"
+        api_base = "api/v3"  # Sonarr uses v3
         
         url = f"{api_url}/{api_base}/{endpoint}"
         headers = {
@@ -112,17 +86,18 @@ def check_connection(app_type: str = None) -> bool:
         response = session.get(url, headers=headers, timeout=API_TIMEOUT)
         
         if response.status_code == 401:
-            logger.error(f"Connection test failed: 401 Client Error: Unauthorized - Invalid API key for {current_app_type.title()}")
+            logger.error("Connection test failed: 401 Client Error: Unauthorized - Invalid API key for Sonarr")
             return False
             
         response.raise_for_status()
-        logger.info(f"Connection to {current_app_type.title()} at {api_url} successful")
+        logger.info(f"Connection to Sonarr at {api_url} successful")
         return True
     except requests.exceptions.RequestException as e:
-        logger.error(f"Connection test failed for {current_app_type}: {e}")
+        logger.error(f"Connection test failed for Sonarr: {e}")
         return False
 
 def wait_for_command(command_id: int):
+    """Wait for a Sonarr command to complete."""
     logger.debug(f"Waiting for command {command_id} to complete...")
     attempts = 0
     while True:
@@ -150,10 +125,6 @@ def wait_for_command(command_id: int):
 # Sonarr-specific functions
 def get_series() -> List[Dict]:
     """Get all series from Sonarr."""
-    if APP_TYPE != "sonarr":
-        logger.error("get_series() called but APP_TYPE is not sonarr")
-        return []
-    
     series_list = arr_request("series")
     if series_list:
         debug_log("Raw series API response sample:", series_list[:2] if len(series_list) > 2 else series_list)
@@ -161,16 +132,14 @@ def get_series() -> List[Dict]:
 
 def refresh_series(series_id: int) -> bool:
     """
-    POST /api/v5/command
+    Refresh a specific series in Sonarr.
+    
+    POST /api/v3/command
     {
       "name": "RefreshSeries",
       "seriesId": <series_id>
     }
     """
-    if APP_TYPE != "sonarr":
-        logger.error("refresh_series() called but APP_TYPE is not sonarr")
-        return False
-    
     data = {
         "name": "RefreshSeries",
         "seriesId": series_id
@@ -182,16 +151,14 @@ def refresh_series(series_id: int) -> bool:
 
 def episode_search_episodes(episode_ids: List[int]) -> bool:
     """
-    POST /api/v5/command
+    Search for episodes in Sonarr.
+    
+    POST /api/v3/command
     {
       "name": "EpisodeSearch",
       "episodeIds": [...]
     }
     """
-    if APP_TYPE != "sonarr":
-        logger.error("episode_search_episodes() called but APP_TYPE is not sonarr")
-        return False
-    
     data = {
         "name": "EpisodeSearch",
         "episodeIds": episode_ids
@@ -203,10 +170,11 @@ def episode_search_episodes(episode_ids: List[int]) -> bool:
 
 def get_download_queue_size() -> int:
     """
-    GET /api/v5/queue
+    Get the number of items currently downloading.
+    
+    GET /api/v3/queue?status=downloading
     Returns total number of items in the queue with the status 'downloading'.
     """
-    # Endpoint is the same for all apps
     response = arr_request("queue?status=downloading")
     if not response:
         return 0
@@ -220,14 +188,12 @@ def get_download_queue_size() -> int:
 
 def get_cutoff_unmet(page: int = 1) -> Optional[Dict]:
     """
-    GET /api/v5/wanted/cutoff?sortKey=airDateUtc&sortDirection=descending&includeSeriesInformation=true
+    Get episodes that don't meet their quality cutoff.
+    
+    GET /api/v3/wanted/cutoff?sortKey=airDateUtc&sortDirection=descending&includeSeriesInformation=true
         &page=<page>&pageSize=200
     Returns JSON with a "records" array and "totalRecords".
     """
-    if APP_TYPE != "sonarr":
-        logger.error("get_cutoff_unmet() called but APP_TYPE is not sonarr")
-        return None
-    
     endpoint = (
         "wanted/cutoff?"
         "sortKey=airDateUtc&sortDirection=descending&includeSeriesInformation=true"
@@ -237,13 +203,8 @@ def get_cutoff_unmet(page: int = 1) -> Optional[Dict]:
 
 def get_cutoff_unmet_total_pages() -> int:
     """
-    To find total pages, call the endpoint with page=1&pageSize=1, read totalRecords,
-    then compute how many pages if each pageSize=200.
+    Find the total number of pages of episodes that don't meet their quality cutoff.
     """
-    if APP_TYPE != "sonarr":
-        logger.error("get_cutoff_unmet_total_pages() called but APP_TYPE is not sonarr")
-        return 0
-    
     response = arr_request("wanted/cutoff?page=1&pageSize=1")
     if not response or "totalRecords" not in response:
         return 0
@@ -258,21 +219,15 @@ def get_cutoff_unmet_total_pages() -> int:
 
 def get_episodes_for_series(series_id: int) -> Optional[List[Dict]]:
     """Get all episodes for a specific series"""
-    if APP_TYPE != "sonarr":
-        logger.error("get_episodes_for_series() called but APP_TYPE is not sonarr")
-        return None
-    
     return arr_request(f"episode?seriesId={series_id}", method="GET")
 
 def get_missing_episodes(pageSize: int = 1000) -> Optional[Dict]:
     """
-    GET /api/v5/wanted/missing?pageSize=<pageSize>&includeSeriesInformation=true
+    Get missing episodes from Sonarr.
+    
+    GET /api/v3/wanted/missing?pageSize=<pageSize>&includeSeriesInformation=true
     Returns JSON with a "records" array of missing episodes and "totalRecords".
     """
-    if APP_TYPE != "sonarr":
-        logger.error("get_missing_episodes() called but APP_TYPE is not sonarr")
-        return None
-    
     endpoint = f"wanted/missing?pageSize={pageSize}&includeSeriesInformation=true"
     result = arr_request(endpoint, method="GET")
     
@@ -292,10 +247,6 @@ def get_series_with_missing_episodes() -> List[Dict]:
     Returns a list of series objects with an additional 'missingEpisodes' field 
     containing the list of missing episodes for that series.
     """
-    if APP_TYPE != "sonarr":
-        logger.error("get_series_with_missing_episodes() called but APP_TYPE is not sonarr")
-        return []
-    
     # Log request attempt
     logger.debug("Requesting missing episodes from Sonarr API")
     

@@ -1,15 +1,15 @@
 version: '3'
 
 services:
-  huntarr:
+  huntarr-sonarr:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: huntarr
+    container_name: huntarr-sonarr
     ports:
       - "9705:9705"
     volumes:
-      - huntarr-config:/config
+      - huntarr-sonarr-config:/config
       - /tmp/huntarr-logs:/tmp/huntarr-logs
       - /tmp/huntarr-state:/tmp/huntarr-state
     environment:
@@ -17,5 +17,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  huntarr-config:
-    name: huntarr-config
+  huntarr-sonarr-config:
+    name: huntarr-sonarr-config
