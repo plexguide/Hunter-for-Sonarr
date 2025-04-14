@@ -20,9 +20,10 @@ from api import get_cutoff_unmet, get_cutoff_unmet_total_pages, refresh_series, 
 from state import load_processed_ids, save_processed_id, truncate_processed_list, PROCESSED_UPGRADE_FILE
 
 def get_current_upgrade_limit():
-    """Get the current HUNT_UPGRADE_EPISODES value directly from config"""
-    # Force reload the config module to get the latest value
+    """Get the current HUNT_UPGRADE_EPISODES value directly from environment"""
+    # Use the value directly from config which now comes from environment
     import config
+    import importlib
     importlib.reload(config)
     return config.HUNT_UPGRADE_EPISODES
 

@@ -105,7 +105,7 @@ def update_theme():
         if "dark_mode" in data and old_value != data["dark_mode"]:
             settings_manager.update_setting("ui", "dark_mode", data["dark_mode"])
             
-            # Log the theme change - simplified to remove "from X" text
+            # Log the theme change
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with open(LOG_FILE, 'a') as f:
                 new_mode = 'Dark' if data['dark_mode'] else 'Light'
