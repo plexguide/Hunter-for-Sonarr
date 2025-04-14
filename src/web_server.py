@@ -28,7 +28,9 @@ log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
 # Create Flask app
-app = Flask(__name__)
+app = Flask(__name__, 
+            template_folder='../frontend/templates',
+            static_folder='../frontend/static')
 
 # Log file location
 LOG_FILE = "/tmp/huntarr-logs/huntarr.log"
@@ -61,7 +63,7 @@ def index():
 @app.route('/static/<path:path>')
 def send_static(path):
     """Serve static files"""
-    return send_from_directory('static', path)
+    return send_from_directory('../frontend/static', path)
 
 @app.route('/logs')
 def stream_logs():
@@ -88,32 +90,6 @@ def stream_logs():
 
     return Response(stream_with_context(generate()), 
                    mimetype='text/event-stream')
-
-# Keep only these theme-related endpoints
-@app.route('/api/settings/theme', methods=['GET'])
-def get_theme():
-    """Get the current theme setting"""
-    dark_mode = settings_manager.get_setting("ui", "dark_mode", True)
-    return jsonify({"dark_mode": dark_mode})
-
-@app.route('/api/settings/theme', methods=['POST'])
-def update_theme():
-    """Update the theme setting"""
-    try:
-        data = request.json
-        old_value = settings_manager.get_setting("ui", "dark_mode", True)
-        if "dark_mode" in data and old_value != data["dark_mode"]:
-            settings_manager.update_setting("ui", "dark_mode", data["dark_mode"])
-            
-            # Log the theme change
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            with open(LOG_FILE, 'a') as f:
-                new_mode = 'Dark' if data['dark_mode'] else 'Light'
-                f.write(f"{timestamp} - huntarr-web - INFO - Changed theme to {new_mode} Mode\n")
-        
-        return jsonify({"success": True})
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
 
 def get_ip_address():
     """Get the host's IP address from API_URL for display"""

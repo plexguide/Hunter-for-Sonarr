@@ -1,0 +1,29 @@
+{
+  "api": {
+    "api_key": "your-api-key",
+    "api_url": "http://your-sonarr-address:8989",
+    "api_timeout": 60
+  },
+  "hunting": {
+    "hunt_mode": "both",
+    "hunt_missing_shows": 1,
+    "hunt_upgrade_episodes": 5,
+    "random_selection": true,
+    "monitored_only": true,
+    "random_missing": true,
+    "random_upgrades": true
+  },
+  "system": {
+    "sleep_duration": 900,
+    "state_reset_interval_hours": 168,
+    "minimum_download_queue_size": -1,
+    "command_wait_delay": 1,
+    "command_wait_attempts": 600
+  },
+  "features": {
+    "skip_future_episodes": true,
+    "skip_series_refresh": false,
+    "enable_web_ui": true,
+    "debug_mode": false
+  }
+}

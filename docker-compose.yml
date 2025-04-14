@@ -14,7 +14,7 @@ services:
       - MONITORED_ONLY=true
       - HUNT_MISSING_SHOWS=1
       - HUNT_UPGRADE_EPISODES=0
-      - SLEEP_DURATION=900
+      - SLEEP_DURATION=1500
       - STATE_RESET_INTERVAL_HOURS=168
       - DEBUG_MODE=false
       - ENABLE_WEB_UI=true

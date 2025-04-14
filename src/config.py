@@ -104,3 +104,13 @@ def log_configuration(logger):
     logger.info(f"SKIP_FUTURE_EPISODES={SKIP_FUTURE_EPISODES}, SKIP_SERIES_REFRESH={SKIP_SERIES_REFRESH}")
     logger.info(f"ENABLE_WEB_UI={ENABLE_WEB_UI}, DEBUG_MODE={DEBUG_MODE}")
     logger.debug(f"API_KEY={API_KEY}")
+
+def refresh_settings():
+    """
+    Refresh settings from environment variables.
+    This function exists for compatibility with code that expects settings to be reloadable.
+    In this implementation, we're only using environment variables, not JSON files.
+    """
+    # This is intentionally left as a no-op function since we're only using environment variables
+    # which don't change during runtime
+    pass
