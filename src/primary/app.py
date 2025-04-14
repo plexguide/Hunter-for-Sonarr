@@ -63,6 +63,18 @@ def migrate_settings():
                 del settings[app]["advanced"]
                 changes_made = True
         
+        # Remove global section if present
+        if "global" in settings:
+            logging.info("Removing global section...")
+            del settings["global"]
+            changes_made = True
+            
+        # Remove UI section if present
+        if "ui" in settings:
+            logging.info("Removing UI section...")
+            del settings["ui"]
+            changes_made = True
+        
         # Save changes if needed
         if changes_made:
             with open(SETTINGS_FILE, "w", encoding="utf-8") as file:

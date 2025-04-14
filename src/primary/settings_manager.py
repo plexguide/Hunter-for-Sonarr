@@ -21,20 +21,10 @@ SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
 
 SETTINGS_FILE = SETTINGS_DIR / "huntarr.json"
 
-# Default settings - updated to have a flat structure with no nesting
+# Default settings - updated to have a flat structure with no global section or UI settings
 DEFAULT_SETTINGS = {
-    "ui": {
-        "dark_mode": True
-    },
     "app_type": "sonarr",  # Default app type
     "connections": {},     # Holds API URLs and keys
-    "global": {            # Global settings (UI preferences etc)
-        "debug_mode": False,
-        "command_wait_delay": 1,
-        "command_wait_attempts": 600,
-        "minimum_download_queue_size": -1,
-        "log_refresh_interval_seconds": 30
-    },
     "sonarr": {            # Sonarr-specific settings - all settings at this level, no nesting
         "hunt_missing_shows": 1,
         "hunt_upgrade_episodes": 0,
@@ -136,6 +126,14 @@ def load_settings() -> Dict[str, Any]:
                         settings[app][key] = value
                 # Remove the huntarr section
                 del settings[app]["huntarr"]
+        
+        # Remove any "global" section
+        if "global" in settings:
+            del settings["global"]
+            
+        # Remove any "ui" section
+        if "ui" in settings:
+            del settings["ui"]
                 
         return settings
     except Exception as e:
@@ -160,6 +158,14 @@ def save_settings(settings: Dict[str, Any]) -> bool:
                         settings[app][key] = value
                 # Remove the huntarr section
                 del settings[app]["huntarr"]
+        
+        # Remove global section if present
+        if "global" in settings:
+            del settings["global"]
+            
+        # Remove UI section if present
+        if "ui" in settings:
+            del settings["ui"]
         
         SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
         with open(SETTINGS_FILE, "w", encoding="utf-8") as file:

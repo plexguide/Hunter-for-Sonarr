@@ -258,8 +258,37 @@ const huntarrApp = {
     },
     
     setTheme: function(isDark) {
-        // Always use dark theme
+        // Always force dark mode
         document.body.classList.add('dark-theme');
+        document.body.classList.remove('light-theme');
+        
+        if (this.elements.themeToggle) {
+            this.elements.themeToggle.checked = true;
+        }
+        
+        if (this.elements.themeLabel) {
+            this.elements.themeLabel.textContent = 'Dark Mode';
+        }
+    },
+
+    handleThemeToggle: function(e) {
+        // Force dark mode regardless of toggle
+        this.setTheme(true);
+        
+        // Save to localStorage
+        localStorage.setItem('huntarr-dark-mode', 'true');
+        
+        // Send theme preference to server
+        fetch('/api/settings/theme', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ dark_mode: true })
+        })
+        .catch(error => {
+            console.error('Error saving theme preference:', error);
+        });
     },
     
     // Log management

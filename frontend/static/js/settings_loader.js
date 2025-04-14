@@ -227,17 +227,6 @@ function getDefaultSettings(app) {
                 minimum_download_queue_size: -1,
                 log_refresh_interval_seconds: 30
             };
-        case 'global':
-            return {
-                debug_mode: false,
-                command_wait_delay: 1,
-                command_wait_attempts: 600,
-                minimum_download_queue_size: -1,
-                log_refresh_interval_seconds: 30,
-                ui: {
-                    dark_mode: true
-                }
-            };
         default:
             return {};
     }
@@ -383,16 +372,6 @@ function saveCurrentSettings(app) {
         settings.command_wait_attempts = parseInt(document.getElementById('readarr_command_wait_attempts')?.value || 600);
         settings.minimum_download_queue_size = parseInt(document.getElementById('readarr_minimum_download_queue_size')?.value || -1);
         settings.log_refresh_interval_seconds = parseInt(document.getElementById('readarr_log_refresh_interval_seconds')?.value || 30);
-    } else if (app === 'global') {
-        // Global settings
-        settings.debug_mode = document.getElementById('global_debug_mode')?.checked ?? false;
-        settings.command_wait_delay = parseInt(document.getElementById('global_command_wait_delay')?.value || 1);
-        settings.command_wait_attempts = parseInt(document.getElementById('global_command_wait_attempts')?.value || 600);
-        settings.minimum_download_queue_size = parseInt(document.getElementById('global_minimum_download_queue_size')?.value || -1);
-        settings.log_refresh_interval_seconds = parseInt(document.getElementById('global_log_refresh_interval_seconds')?.value || 30);
-        // UI settings
-        if (!settings.ui) settings.ui = {};
-        settings.ui.dark_mode = document.getElementById('dark_mode')?.checked ?? true;
     }
     
     console.log('Saving settings:', settings);

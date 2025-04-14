@@ -512,56 +512,6 @@ const SettingsForms = {
         `;
     },
     
-    // Generate Global settings form
-    generateGlobalForm: function(container, settings = {}) {
-        // Access settings directly from the global section
-        
-        container.innerHTML = `
-            <div class="settings-group">
-                <h3>General Settings</h3>
-                <div class="setting-item">
-                    <label for="global_debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="global_debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable detailed debug logging</p>
-                </div>
-                <div class="setting-item">
-                    <label for="global_command_wait_delay">Command Wait Delay:</label>
-                    <input type="number" id="global_command_wait_delay" min="1" step="1" value="${settings.command_wait_delay || 1}">
-                    <p class="setting-help">Delay in seconds between checking for command status</p>
-                </div>
-                <div class="setting-item">
-                    <label for="global_command_wait_attempts">Command Wait Attempts:</label>
-                    <input type="number" id="global_command_wait_attempts" min="1" value="${settings.command_wait_attempts || 600}">
-                    <p class="setting-help">Maximum number of status check attempts</p>
-                </div>
-                <div class="setting-item">
-                    <label for="global_minimum_download_queue_size">Min Download Queue Size:</label>
-                    <input type="number" id="global_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
-                    <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="global_log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="global_log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display</p>
-                </div>
-            </div>
-            <div class="settings-group">
-                <h3>UI Settings</h3>
-                <div class="setting-item">
-                    <label for="dark_mode">Dark Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="dark_mode" ${settings.dark_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Use dark theme for the interface</p>
-                </div>
-            </div>
-        `;
-    },
-    
     // Update duration display - e.g., convert seconds to hours
     updateDurationDisplay: function() {
         // Function to update a specific sleep duration display

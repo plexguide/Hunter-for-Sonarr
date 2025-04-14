@@ -604,33 +604,32 @@ const HuntarrUI = {
             });
     },
     
+    // Update theme functions to always use dark theme
     setTheme: function(isDark) {
-        this.darkMode = isDark;
+        // Always force dark mode, ignore isDark parameter
+        document.body.classList.add('dark-theme');
+        document.body.classList.remove('light-theme');
+        localStorage.setItem('huntarr-dark-mode', 'true');
         
-        if (isDark) {
-            document.body.classList.add('dark-theme');
-        } else {
-            document.body.classList.remove('dark-theme');
-        }
-        
+        // Update the toggle if it exists
         if (this.elements.themeToggle) {
-            this.elements.themeToggle.checked = isDark;
+            this.elements.themeToggle.checked = true;
         }
     },
-    
+
     handleThemeToggle: function(e) {
-        const isDarkMode = e.target.checked;
-        this.setTheme(isDarkMode);
+        // Force dark mode regardless of toggle state
+        this.setTheme(true);
         
         // Store preference in localStorage immediately for page transitions
-        localStorage.setItem('huntarr-dark-mode', isDarkMode);
+        localStorage.setItem('huntarr-dark-mode', 'true');
         
         fetch('/api/settings/theme', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ dark_mode: isDarkMode })
+            body: JSON.stringify({ dark_mode: true })
         })
         .catch(error => {
             console.error('Error saving theme:', error);
