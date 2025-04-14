@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  huntarr-sonarr:
+    image: huntarr/4sonarr:latest
+    container_name: huntarr-sonarr
+    restart: always
+    ports:
+      - "9705:8988"
+    volumes:
+      - ./config:/config
+    environment:
+      - API_KEY=your-api-key
+      - API_URL=http://your-sonarr-address:8989
+      - API_TIMEOUT=60
+      - MONITORED_ONLY=true
+      - HUNT_MISSING_SHOWS=1
+      - HUNT_UPGRADE_EPISODES=0
+      - SLEEP_DURATION=900
+      - STATE_RESET_INTERVAL_HOURS=168
+      - DEBUG_MODE=false
+      - ENABLE_WEB_UI=true
+      - SKIP_FUTURE_EPISODES=true
+      - SKIP_SERIES_REFRESH=false
+      - COMMAND_WAIT_DELAY=1
+      - COMMAND_WAIT_ATTEMPTS=600
+      - MINIMUM_DOWNLOAD_QUEUE_SIZE=-1
+      - RANDOM_MISSING=true
+      - RANDOM_UPGRADES=true

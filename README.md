@@ -246,10 +246,10 @@ Huntarr-Sonarr includes a real-time log viewer and settings management web inter
 
 ### How to Access
 
-The web interface is available on port 8988. Simply navigate to:
+The web interface is available on port 9705. Simply navigate to:
 
 ```
-http://YOUR_SERVER_IP:8988
+http://YOUR_SERVER_IP:9705
 ```
 
 The URL will be displayed in the logs when Huntarr starts, using the same hostname you configured for your API_URL.
@@ -372,7 +372,7 @@ docker run -d --name huntarr-sonarr \
   huntarr/4sonarr:latest
 ```
 
-To check on the status of the program, you can use the web interface at http://YOUR_SERVER_IP:8988 or check the logs with:
+To check on the status of the program, you can use the web interface at http://YOUR_SERVER_IP:9705 or check the logs with:
 ```bash
 docker logs huntarr-sonarr
 ```

@@ -32,7 +32,7 @@ SKIP_SERIES_REFRESH="false"
 # Create volume mount points
 VOLUME ["/config"]
 # Expose web interface port
-EXPOSE 8988
+EXPOSE 9705
 # Add startup script that conditionally starts the web UI
 COPY start.sh .
 RUN chmod +x start.sh

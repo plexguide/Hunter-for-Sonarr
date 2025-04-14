@@ -276,8 +276,8 @@ if __name__ == "__main__":
     ip_address = get_ip_address()
     
     with open(LOG_FILE, 'a') as f:
-        f.write(f"{timestamp} - huntarr-web - INFO - Web server starting on port 8988\n")
-        f.write(f"{timestamp} - huntarr-web - INFO - Web interface available at http://{ip_address}:8988\n")
+        f.write(f"{timestamp} - huntarr-web - INFO - Web server starting on port 9705\n")
+        f.write(f"{timestamp} - huntarr-web - INFO - Web interface available at http://{ip_address}:9705\n")
     
     # Run the Flask app
-    app.run(host='0.0.0.0', port=8988, debug=False, threaded=True)
+    app.run(host='0.0.0.0', port=9705, debug=False, threaded=True)
