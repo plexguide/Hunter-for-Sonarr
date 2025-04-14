@@ -6,6 +6,7 @@ Handles all communication with the Sonarr API
 
 import requests
 import json
+import sys
 import time
 import datetime
 from typing import List, Dict, Any, Optional, Union

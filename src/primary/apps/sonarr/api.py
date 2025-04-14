@@ -6,12 +6,14 @@ Handles all communication with the Sonarr API
 
 import requests
 import json
+import sys
 import time
 import datetime
+import traceback
 from typing import List, Dict, Any, Optional, Union
-from primary.utils.logger import get_logger
-from primary import settings_manager
-from primary.auth import get_app_url_and_key
+from src.primary.utils.logger import get_logger
+from src.primary import settings_manager
+from src.primary.auth import get_app_url_and_key
 
 # Get app-specific logger
 logger = get_logger("sonarr")
@@ -35,48 +37,57 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type:
     Returns:
         The parsed JSON response or None if the request failed
     """
-    url, api_key = get_app_url_and_key(app_type)
-    
-    if not url or not api_key:
-        logger.error(f"No URL or API key configured for {app_type}")
-        return None
-    
-    # Construct the full URL
-    api_url = f"{url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
-    
-    # Set up headers
-    headers = {
-        "X-Api-Key": api_key,
-        "Content-Type": "application/json"
-    }
-    
     try:
-        if method.upper() == "GET":
-            response = session.get(api_url, headers=headers, timeout=API_TIMEOUT)
-        elif method.upper() == "POST":
-            response = session.post(api_url, headers=headers, json=data, timeout=API_TIMEOUT)
-        elif method.upper() == "PUT":
-            response = session.put(api_url, headers=headers, json=data, timeout=API_TIMEOUT)
-        elif method.upper() == "DELETE":
-            response = session.delete(api_url, headers=headers, timeout=API_TIMEOUT)
-        else:
-            logger.error(f"Unsupported HTTP method: {method}")
+        url, api_key = get_app_url_and_key(app_type)
+        
+        if not url or not api_key:
+            logger.error(f"No URL or API key configured for {app_type}")
             return None
         
-        # Check for successful response
-        response.raise_for_status()
+        # Construct the full URL
+        api_url = f"{url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
         
-        # Parse response if there is content
-        if response.content:
-            return response.json()
-        else:
-            return True
+        # Set up headers
+        headers = {
+            "X-Api-Key": api_key,
+            "Content-Type": "application/json"
+        }
+        
+        try:
+            if method.upper() == "GET":
+                response = session.get(api_url, headers=headers, timeout=API_TIMEOUT)
+            elif method.upper() == "POST":
+                response = session.post(api_url, headers=headers, json=data, timeout=API_TIMEOUT)
+            elif method.upper() == "PUT":
+                response = session.put(api_url, headers=headers, json=data, timeout=API_TIMEOUT)
+            elif method.upper() == "DELETE":
+                response = session.delete(api_url, headers=headers, timeout=API_TIMEOUT)
+            else:
+                logger.error(f"Unsupported HTTP method: {method}")
+                return None
             
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error during {method} request to {endpoint}: {str(e)}")
-        return None
-    except json.JSONDecodeError:
-        logger.error(f"Error decoding JSON response from {endpoint}")
+            # Check for successful response
+            response.raise_for_status()
+            
+            # Parse response if there is content
+            if response.content:
+                return response.json()
+            else:
+                return True
+                
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error during {method} request to {endpoint}: {str(e)}")
+            return None
+        except json.JSONDecodeError:
+            logger.error(f"Error decoding JSON response from {endpoint}")
+            return None
+    except Exception as e:
+        # Catch all exceptions and log them with traceback
+        error_msg = f"CRITICAL ERROR in arr_request: {str(e)}"
+        logger.error(error_msg)
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        print(error_msg, file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr)
         return None
 
 def get_system_status() -> Dict:

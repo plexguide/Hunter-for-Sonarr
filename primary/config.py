@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
 Configuration module for Huntarr
-Handles all configuration settings with defaults
+Loads settings from the settings manager and provides them as constants
 """
 
 import os
+import sys
 import logging
 import importlib
 from primary import settings_manager
-from primary import keys_manager
 from primary.utils.logger import logger
 
 # Get app type

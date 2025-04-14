@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
 Configuration module for Huntarr
-Handles all configuration settings with defaults
+Loads settings from the settings manager and provides them as constants
 """
 
 import os
+import sys
 import logging
 import importlib
+import traceback
 from src.primary import settings_manager
-from src.primary import keys_manager
 from src.primary.utils.logger import logger
 
 # Get app type
@@ -133,21 +134,31 @@ def determine_hunt_mode():
 # Configure logging
 def configure_logging(app_logger=None):
     """Configure logging based on DEBUG_MODE setting"""
-    # Configure based on DEBUG_MODE if a logger is provided
-    if app_logger:
+    try:
+        # Configure based on DEBUG_MODE if a logger is provided
+        if app_logger:
+            if DEBUG_MODE:
+                app_logger.setLevel(logging.DEBUG)
+            else:
+                app_logger.setLevel(logging.INFO)
+        
+        # Always configure the root logger
+        root_logger = logging.getLogger()
         if DEBUG_MODE:
-            app_logger.setLevel(logging.DEBUG)
+            root_logger.setLevel(logging.DEBUG)
         else:
-            app_logger.setLevel(logging.INFO)
-    
-    # Always configure the root logger
-    root_logger = logging.getLogger()
-    if DEBUG_MODE:
-        root_logger.setLevel(logging.DEBUG)
-    else:
-        root_logger.setLevel(logging.INFO)
-    
-    return app_logger or root_logger
+            root_logger.setLevel(logging.INFO)
+        
+        return app_logger or root_logger
+    except Exception as e:
+        # Print directly to stderr since logging might not be working
+        print(f"CRITICAL ERROR in configure_logging: {str(e)}", file=sys.stderr)
+        print(f"Traceback: {traceback.format_exc()}", file=sys.stderr)
+        # Try to log it anyway
+        if logger:
+            logger.error(f"Error in configure_logging: {str(e)}")
+            logger.error(traceback.format_exc())
+        raise
 
 # Log the configuration
 def log_configuration(app_logger=None):
