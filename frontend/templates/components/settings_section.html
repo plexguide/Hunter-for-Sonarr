@@ -27,14 +27,7 @@
         <!-- Global settings panel removed -->
     </div>
     
-    <div class="bottom-actions">
-        <button id="saveSettingsBottom" class="save-button">
-            <i class="fas fa-save"></i> Save
-        </button>
-        <button id="resetSettingsBottom" class="reset-button">
-            <i class="fas fa-undo"></i> Reset
-        </button>
-    </div>
+    <!-- Bottom actions div removed -->
 </section>
 
 <script>
@@ -108,8 +101,8 @@
             });
         });
         
-        // Set up save buttons
-        const saveButtons = document.querySelectorAll('#saveSettings, #saveSettingsBottom');
+        // Set up save buttons (only handle top buttons now)
+        const saveButtons = document.querySelectorAll('#saveSettings');
         saveButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const activeTab = document.querySelector('.settings-tab.active');
@@ -126,8 +119,8 @@
             });
         });
         
-        // Set up reset buttons
-        const resetButtons = document.querySelectorAll('#resetSettings, #resetSettingsBottom');
+        // Set up reset buttons (only handle top buttons now)
+        const resetButtons = document.querySelectorAll('#resetSettings');
         resetButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const activeTab = document.querySelector('.settings-tab.active');
