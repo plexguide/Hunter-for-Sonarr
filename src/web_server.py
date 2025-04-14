@@ -126,3 +126,20 @@ if __name__ == "__main__":
     
     # Run the Flask app
     app.run(host='0.0.0.0', port=9705, debug=False, threaded=True)
+
+from flask import Flask, render_template
+import logging
+
+app = Flask(__name__)
+logger = logging.getLogger('huntarr.web')
+
+@app.route('/')
+def index():
+    return "Huntarr Web UI - Placeholder"
+
+def start_web_server(host='0.0.0.0', port=8988):
+    logger.info(f"Starting web server on {host}:{port}")
+    app.run(host=host, port=port)
+
+if __name__ == "__main__":
+    start_web_server()

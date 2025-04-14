@@ -9,6 +9,8 @@ services:
     restart: unless-stopped
     ports:
       - "9705:8988"
+    volumes:
+      - ./config:/config
     environment:
       - API_KEY=your-api-key
       - API_URL=http://your-sonarr-address:8989
