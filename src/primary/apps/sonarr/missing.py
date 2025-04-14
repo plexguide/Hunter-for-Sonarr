@@ -107,7 +107,6 @@ def process_missing_episodes(restart_cycle_flag: Callable[[], bool] = lambda: Fa
         config_refresh_settings()
     
     # Get the current value directly at the start of processing
-    # Update this line to use "hunt_missing_shows" instead of "hunt_missing_episodes"
     HUNT_MISSING_EPISODES = settings_manager.get_setting("sonarr", "hunt_missing_shows", 3)
     RANDOM_MISSING = settings_manager.get_setting("sonarr", "random_missing", True)
     SKIP_SERIES_REFRESH = settings_manager.get_setting("sonarr", "skip_series_refresh", False)
@@ -186,7 +185,18 @@ def process_missing_episodes(restart_cycle_flag: Callable[[], bool] = lambda: Fa
         series_id = episode.get("seriesId")
         episode_num = episode.get("episodeNumber", "?")
         season_num = episode.get("seasonNumber", "?")
-        series_title = episode.get("series", {}).get("title", "Unknown Series")
+        
+        # Fix series title extraction - the series data might be nested differently than expected
+        series_title = "Unknown Series"
+        if "series" in episode and isinstance(episode["series"], dict) and "title" in episode["series"]:
+            series_title = episode["series"]["title"]
+        # If we didn't get the title and have series_id, try to fetch it directly
+        elif series_id is not None:
+            from primary.apps.sonarr.api import arr_request
+            series_data = arr_request(f"series/{series_id}", method="GET")
+            if series_data and "title" in series_data:
+                series_title = series_data["title"]
+                
         episode_title = episode.get("title", "Unknown Title")
         
         # Get air date info
