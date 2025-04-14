@@ -52,55 +52,55 @@ DEFAULT_SETTINGS = {
         "minimum_download_queue_size": -1,
         "log_refresh_interval_seconds": 30
     },
-    "radarr": {            # Radarr-specific settings - all settings at this level, no nesting
+    "radarr": {            # Radarr-specific settings
         "hunt_missing_movies": 1,
         "hunt_upgrade_movies": 0,
+        "sleep_duration": 900,
+        "state_reset_interval_hours": 168,
         "monitored_only": True,
         "skip_future_releases": True,
         "skip_movie_refresh": False,
-        "sleep_duration": 900,
-        "state_reset_interval_hours": 168,
+        "random_missing": True,
+        "random_upgrades": True,
+        "debug_mode": False,
         "api_timeout": 60,
         "command_wait_delay": 1,
         "command_wait_attempts": 600,
         "minimum_download_queue_size": -1,
-        "debug_mode": False,
-        "random_missing": True,
-        "random_upgrades": True,
         "log_refresh_interval_seconds": 30
     },
-    "lidarr": {            # Lidarr-specific settings - all settings at this level, no nesting
+    "lidarr": {            # Lidarr-specific settings
         "hunt_missing_albums": 1,
         "hunt_upgrade_tracks": 0,
+        "sleep_duration": 900,
+        "state_reset_interval_hours": 168,
         "monitored_only": True,
         "skip_future_releases": True,
         "skip_artist_refresh": False,
-        "sleep_duration": 900,
-        "state_reset_interval_hours": 168,
+        "random_missing": True,
+        "random_upgrades": True,
+        "debug_mode": False,
         "api_timeout": 60,
         "command_wait_delay": 1,
         "command_wait_attempts": 600,
         "minimum_download_queue_size": -1,
-        "debug_mode": False,
-        "random_missing": True,
-        "random_upgrades": True,
         "log_refresh_interval_seconds": 30
     },
-    "readarr": {           # Readarr-specific settings - all settings at this level, no nesting
+    "readarr": {           # Readarr-specific settings
         "hunt_missing_books": 1,
         "hunt_upgrade_books": 0,
+        "sleep_duration": 900,
+        "state_reset_interval_hours": 168,
         "monitored_only": True,
         "skip_future_releases": True,
         "skip_author_refresh": False,
-        "sleep_duration": 900,
-        "state_reset_interval_hours": 168,
+        "random_missing": True,
+        "random_upgrades": True,
+        "debug_mode": False,
         "api_timeout": 60,
         "command_wait_delay": 1,
         "command_wait_attempts": 600,
         "minimum_download_queue_size": -1,
-        "debug_mode": False,
-        "random_missing": True,
-        "random_upgrades": True,
         "log_refresh_interval_seconds": 30
     }
 }
@@ -127,12 +127,22 @@ def load_settings() -> Dict[str, Any]:
                 # Deep merge user settings
                 _deep_update(settings, user_settings)
                 
+        # Remove any "huntarr" nested sections from app configs
+        for app in ["sonarr", "radarr", "lidarr", "readarr"]:
+            if app in settings and "huntarr" in settings[app]:
+                # Move all settings from app.huntarr directly to app level
+                for key, value in settings[app]["huntarr"].items():
+                    if key not in settings[app]:  # Don't overwrite existing settings
+                        settings[app][key] = value
+                # Remove the huntarr section
+                del settings[app]["huntarr"]
+                
         return settings
     except Exception as e:
         settings_logger.error(f"Error loading settings: {e}")
         return DEFAULT_SETTINGS.copy()
 
-# Get all settings - add this missing function
+# Get all settings
 def get_all_settings() -> Dict[str, Any]:
     """Get all settings as a dictionary"""
     return load_settings()
@@ -141,6 +151,16 @@ def get_all_settings() -> Dict[str, Any]:
 def save_settings(settings: Dict[str, Any]) -> bool:
     """Save settings to JSON file"""
     try:
+        # Clean up any potential huntarr sections before saving
+        for app in ["sonarr", "radarr", "lidarr", "readarr"]:
+            if app in settings and "huntarr" in settings[app]:
+                # Move all settings from app.huntarr directly to app level
+                for key, value in settings[app]["huntarr"].items():
+                    if key not in settings[app]:  # Don't overwrite existing settings
+                        settings[app][key] = value
+                # Remove the huntarr section
+                del settings[app]["huntarr"]
+        
         SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
         with open(SETTINGS_FILE, "w", encoding="utf-8") as file:
             json.dump(settings, file, indent=2)
@@ -169,70 +189,54 @@ def get_setting(section: str, key: str, default: Any = None) -> Any:
     """Get a specific setting from a section"""
     settings = load_settings()
     
-    # Check if the section exists
-    if section not in settings:
-        return default
+    # Check for settings directly in the section
+    if section in settings:
+        # Only check directly in the section, no huntarr sub-section backwards compatibility
+        if key in settings[section]:
+            return settings[section][key]
     
-    # Check if the key exists in the section
-    if key not in settings[section]:
-        return default
-    
-    # Return the setting value
-    return settings[section][key]
+    # Return the default if the setting doesn't exist
+    return default
 
-# Get the current app type
+# Get app type
 def get_app_type() -> str:
-    """Get the current app type from settings or environment"""
-    # Check for environment variable first
-    env_app_type = os.environ.get("APP_TYPE")
-    if env_app_type and env_app_type.lower() in ["sonarr", "radarr", "lidarr", "readarr"]:
-        return env_app_type.lower()
-    
-    # Fall back to settings file
-    app_type = get_setting("app_type", None)
-    if app_type and app_type.lower() in ["sonarr", "radarr", "lidarr", "readarr"]:
-        return app_type.lower()
-    
-    # Default to sonarr if nothing else is specified
-    return "sonarr"
-
-# Set the app type
-def set_app_type(app_type: str) -> bool:
-    """Set the app type"""
-    if app_type.lower() not in ["sonarr", "radarr", "lidarr", "readarr"]:
-        return False
-    
+    """Get the current app type"""
     settings = load_settings()
-    settings["app_type"] = app_type.lower()
-    return save_settings(settings)
+    return settings.get("app_type", "sonarr")
 
-# Get the API URL for the current app
+# Get API URL for the current app
 def get_api_url() -> str:
-    """Get the API URL for the current app"""
+    """Get the API URL for the current app type"""
     app_type = get_app_type()
-    api_url = os.environ.get(f"{app_type.upper()}_URL")
+    settings = load_settings()
     
-    if not api_url:
-        # Try to get from connections in settings
-        settings = load_settings()
-        connections = settings.get("connections", {})
-        api_url = connections.get(f"{app_type}_url", "")
+    # Try to get from connections first
+    connections = settings.get("connections", {})
+    if app_type in connections and "api_url" in connections[app_type]:
+        return connections[app_type]["api_url"]
     
-    return api_url
+    # Fallback to app section
+    if app_type in settings and "api_url" in settings[app_type]:
+        return settings[app_type]["api_url"]
+    
+    return ""
 
-# Get the API key for the current app
+# Get API key for the current app
 def get_api_key() -> str:
-    """Get the API key for the current app"""
+    """Get the API key for the current app type"""
     app_type = get_app_type()
-    api_key = os.environ.get(f"{app_type.upper()}_APIKEY")
+    settings = load_settings()
     
-    if not api_key:
-        # Try to get from connections in settings
-        settings = load_settings()
-        connections = settings.get("connections", {})
-        api_key = connections.get(f"{app_type}_apikey", "")
+    # Try to get from connections first
+    connections = settings.get("connections", {})
+    if app_type in connections and "api_key" in connections[app_type]:
+        return connections[app_type]["api_key"]
     
-    return api_key
+    # Fallback to app section
+    if app_type in settings and "api_key" in settings[app_type]:
+        return settings[app_type]["api_key"]
+    
+    return ""
 
 # Save API connection details
 def save_api_details(app_type: str, api_url: str, api_key: str) -> bool:
