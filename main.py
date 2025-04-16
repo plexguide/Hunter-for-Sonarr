@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Huntarr [Sonarr Edition] - Python Version
-Main entry point for the application
-"""
-
 import time
 import sys
 import os
@@ -19,6 +13,7 @@ from api import get_download_queue_size
 # Flag to indicate if cycle should restart
 restart_cycle = False
 
+
 def signal_handler(signum, frame):
     """Handle signals from the web UI for cycle restart"""
     global restart_cycle
@@ -26,23 +21,25 @@ def signal_handler(signum, frame):
         logger.warning("⚠️ Received restart signal from web UI. Immediately aborting current operations... ⚠️")
         restart_cycle = True
 
+
 # Register signal handler for SIGUSR1
 signal.signal(signal.SIGUSR1, signal_handler)
+
 
 def get_ip_address():
     """Get the host's IP address from API_URL for display"""
     try:
         from urllib.parse import urlparse
         from config import API_URL
-        
+
         # Extract the hostname/IP from the API_URL
         parsed_url = urlparse(API_URL)
         hostname = parsed_url.netloc
-        
+
         # Remove port if present
         if ':' in hostname:
             hostname = hostname.split(':')[0]
-            
+
         return hostname
     except Exception as e:
         # Fallback to the current method if there's an issue
@@ -53,46 +50,48 @@ def get_ip_address():
         except:
             return "YOUR_SERVER_IP"
 
+
 def force_reload_all_modules():
     """Force reload of all relevant modules to ensure fresh settings"""
     try:
         # Force reload the config module
         import config
         importlib.reload(config)
-        
+
         # Reload any modules that might cache config values
         import missing
         importlib.reload(missing)
-        
+
         import upgrade
         importlib.reload(upgrade)
-        
+
         # Call the refresh function to ensure settings are updated
         config.refresh_settings()
-        
+
         # Log the reloaded settings for verification
         logger.warning("⚠️ Settings reloaded from JSON file after restart signal ⚠️")
         config.log_configuration(logger)
-        
+
         return True
     except Exception as e:
         logger.error(f"Error reloading modules: {e}")
         return False
 
+
 def main_loop() -> None:
     """Main processing loop for Huntarr-Sonarr"""
     global restart_cycle
-    
+
     # Log welcome message for web interface
     logger.info("=== Huntarr [Sonarr Edition] Starting ===")
-    
+
     # Log web UI information if enabled
     if ENABLE_WEB_UI:
         server_ip = get_ip_address()
         logger.info(f"Web interface available at http://{server_ip}:8988")
-    
+
     logger.info("GitHub: https://github.com/plexguide/huntarr-sonarr")
-    
+
     while True:
         # Set restart_cycle flag to False at the beginning of each cycle
         restart_cycle = False
