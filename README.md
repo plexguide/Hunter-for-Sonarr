@@ -1,27 +1,15 @@
-<h2 align="center">Huntarr - Find Missing & Upgrade Media Items</h2> 
+<h2 align="center">Refresharr - Find Missing & Upgrade Media Items</h2> 
 
-<p align="center">
-  <img src="https://github.com/plexguide/Huntarr-Sonarr/blob/main/logo/128.png?raw=true" alt="Huntarr Logo" width="100" height="100">
-</p>
 
 ---
 
 <h2 align="center">Want to Help? Click the Star in the Upper-Right Corner! ⭐</h2> 
 
-<table>
-  <tr>
-    <td colspan="2"><img src="https://github.com/user-attachments/assets/34264f2e-928d-44e5-adb7-0dbd08fadfd0" width="100%"/></td>
-  </tr>
-</table> 
-
-**SCREENSHOTS:** [[1]](https://github.com/user-attachments/assets/01d1231e-3ed2-4b78-8156-ad0b948a4bc9) [[2]](https://github.com/user-attachments/assets/0cf61655-eb6f-4fdb-8582-fae8b0f99f68) [[3]](https://github.com/user-attachments/assets/8bdeae2f-0274-4c63-8e02-0c33c3bf8060) [[4]](https://github.com/user-attachments/assets/7a09be97-23b0-437a-aa04-2491ab24ab0f)
-
----
 
 **NOTE**: This utilizes Sonarr API Version - `5`. Legacy name of this program: Sonarr Hunter.
 
 **Change Log:**
-Visit: https://github.com/plexguide/Huntarr-Sonarr/releases/
+Visit: https://github.com/Refresharr/Refresharr/releases
 
 ## Table of Contents
 - [Overview](#overview)
@@ -44,19 +32,6 @@ Visit: https://github.com/plexguide/Huntarr-Sonarr/releases/
 
 This script continually searches your Sonarr library for shows with missing episodes and episodes that need quality upgrades. It automatically triggers searches for both missing episodes and episodes below your quality cutoff. It's designed to run continuously while being gentle on your indexers, helping you gradually complete your TV show collection with the best available quality.
 
-## Related Projects
-
-* [Huntarr - Radarr Edition](https://github.com/plexguide/Radarr-Hunter) - Sister version for Movies
-* [Huntarr - Lidarr Edition](https://github.com/plexguide/Lidarr-Hunter) - Sister version for Music
-* [Huntarr - Readarr Edition](https://github.com/plexguide/Huntarr-Readarr) - Sister version for Books
-* [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
-* Visit [PlexGuide](https://plexguide.com) for more great scripts
-
-## PayPal Donations – Building My Daughter's Future
-
-My 12-year-old daughter is passionate about singing, dancing, and exploring STEM. She consistently earns A-B honors and dreams of a bright future. Every donation goes directly into her college fund, helping turn those dreams into reality. Thank you for your generous support!
-
-[![Donate with PayPal button](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate?hosted_button_id=58AYJ68VVMGSC)
 
 ## Features
 
@@ -76,8 +51,6 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 - 📝 **Stateful Operation**: Processed state is now permanently saved between restarts
 - ⚙️ **Advanced Settings**: Control API timeout, command wait parameters, and more
 
-## Indexers Approving of Huntarr:
-* https://ninjacentral.co.za
 
 ## How It Works
 
@@ -201,7 +174,7 @@ The following environment variables can be configured:
   - When set to `true`, the script will skip refreshing series metadata before searching.
   - This can significantly reduce disk activity on your Sonarr server.
   - Default is `false` to maintain compatibility with previous behavior.
-  - Set to `true` if you notice excessive disk activity during Huntarr cycles.
+  - Set to `true` if you notice excessive disk activity during Refresharr cycles.
 
 - **COMMAND_WAIT_DELAY**
   - Certain operations like refreshing and searching happen asynchronously.  
@@ -219,7 +192,7 @@ The following environment variables can be configured:
 
 ## Web Interface
 
-Huntarr-Sonarr includes a real-time log viewer and settings management web interface that allows you to monitor and configure its operation directly from your browser.
+Refresharr-Sonarr includes a real-time log viewer and settings management web interface that allows you to monitor and configure its operation directly from your browser.
 
 <table>
   <tr>
@@ -237,7 +210,7 @@ Huntarr-Sonarr includes a real-time log viewer and settings management web inter
 - **Color-coded Log Entries**: Different log levels are displayed in different colors
 - **Auto-scrolling**: Automatically scrolls to the latest log entries
 - **Connection Status**: Shows whether the connection to the log stream is active
-- **Settings Management**: Configure Huntarr directly from the web interface
+- **Settings Management**: Configure Refresharr directly from the web interface
 - **Persistent Configuration**: All settings are saved to disk and persist across container restarts
 
 ### How to Access
@@ -248,11 +221,11 @@ The web interface is available on port 8988. Simply navigate to:
 http://YOUR_SERVER_IP:8988
 ```
 
-The URL will be displayed in the logs when Huntarr starts, using the same hostname you configured for your API_URL.
+The URL will be displayed in the logs when Refresharr starts, using the same hostname you configured for your API_URL.
 
 ### Web UI Settings
 
-The web interface allows you to configure all of Huntarr's settings without having to restart the container:
+The web interface allows you to configure all of Refresharr's settings without having to restart the container:
 
 <table>
   <tr>
@@ -308,13 +281,13 @@ If you disable the web interface, you don't need to expose the port in your Dock
 
 ## Persistent Storage
 
-Huntarr-Sonarr now stores all its configuration and state information in persistent storage, ensuring your settings and processed state are maintained across container restarts and updates.
+Refresharr-Sonarr now stores all its configuration and state information in persistent storage, ensuring your settings and processed state are maintained across container restarts and updates.
 
 ### Storage Locations
 
 The following directories are used for persistent storage:
 
-- `/config/settings/` - Contains configuration settings (huntarr.json)
+- `/config/settings/` - Contains configuration settings (refresharr.json)
 - `/config/stateful/` - Contains the state tracking files for processed shows and episodes
 
 ### Data Persistence
@@ -323,14 +296,14 @@ All data in these directories is maintained across container restarts. This mean
 
 1. Your settings configured via the web UI will be preserved
 2. The list of shows and episodes that have already been processed will be maintained
-3. After a container update or restart, Huntarr will continue from where it left off
+3. After a container update or restart, Refresharr will continue from where it left off
 
 ### Volume Mapping
 
 To ensure data persistence, make sure you map the `/config` directory to a persistent volume on your host system:
 
 ```bash
--v /mnt/user/appdata/huntarr-sonarr:/config
+-v /mnt/user/appdata/refresharr-sonarr:/config
 ```
 
 This mapping is included in all of the installation examples below.
@@ -341,13 +314,13 @@ This mapping is included in all of the installation examples below.
 
 ### Docker Run
 
-The simplest way to run Huntarr is via Docker:
+The simplest way to run Refresharr is via Docker:
 
 ```bash
-docker run -d --name huntarr-sonarr \
+docker run -d --name refresharr-sonarr \
   --restart always \
   -p 8988:8988 \
-  -v /mnt/user/appdata/huntarr-sonarr:/config \
+  -v /mnt/user/appdata/refresharr-sonarr:/config \
   -e API_KEY="your-api-key" \
   -e API_URL="http://your-sonarr-address:8989" \
   -e API_TIMEOUT="60" \
@@ -365,12 +338,12 @@ docker run -d --name huntarr-sonarr \
   -e MINIMUM_DOWNLOAD_QUEUE_SIZE="-1" \
   -e RANDOM_MISSING="true" \
   -e RANDOM_UPGRADES="true" \
-  huntarr/4sonarr:latest
+  refresharr/4sonarr:latest
 ```
 
 To check on the status of the program, you can use the web interface at http://YOUR_SERVER_IP:8988 or check the logs with:
 ```bash
-docker logs huntarr-sonarr
+docker logs refresharr-sonarr
 ```
 
 ### Docker Compose
@@ -380,14 +353,14 @@ For those who prefer Docker Compose, add this to your `docker-compose.yml` file:
 ```yaml
 version: "3.8"
 services:
-  huntarr-sonarr:
-    image: huntarr/4sonarr:latest
-    container_name: huntarr-sonarr
+  refresharr-sonarr:
+    image: refresharr/4sonarr:latest
+    container_name: refresharr-sonarr
     restart: always
     ports:
       - "8988:8988"
     volumes:
-      - /mnt/user/appdata/huntarr-sonarr:/config
+      - /mnt/user/appdata/refresharr-sonarr:/config
     environment:
       API_KEY: "your-api-key"
       API_URL: "http://your-sonarr-address:8989"
@@ -411,7 +384,7 @@ services:
 Then run:
 
 ```bash
-docker-compose up -d huntarr-sonarr
+docker-compose up -d refresharr-sonarr
 ```
 
 ### Unraid Users
@@ -419,10 +392,10 @@ docker-compose up -d huntarr-sonarr
 Run this from Command Line in Unraid:
 
 ```bash
-docker run -d --name huntarr-sonarr \
+docker run -d --name refresharr-sonarr \
   --restart always \
   -p 8988:8988 \
-  -v /mnt/user/appdata/huntarr-sonarr:/config \
+  -v /mnt/user/appdata/refresharr-sonarr:/config \
   -e API_KEY="your-api-key" \
   -e API_URL="http://your-sonarr-address:8989" \
   -e API_TIMEOUT="60" \
@@ -440,20 +413,20 @@ docker run -d --name huntarr-sonarr \
   -e MINIMUM_DOWNLOAD_QUEUE_SIZE="-1" \
   -e RANDOM_MISSING="true" \
   -e RANDOM_UPGRADES="true" \
-  huntarr/4sonarr:latest
+  refresharr/4sonarr:latest
 ```
 
 ### SystemD Service
 
 For a more permanent installation on Linux systems using SystemD:
 
-1. Save the script to `/usr/local/bin/huntarr.sh`
-2. Make it executable: `chmod +x /usr/local/bin/huntarr.sh`
-3. Create a systemd service file at `/etc/systemd/system/huntarr.service`:
+1. Save the script to `/usr/local/bin/refresharr.sh`
+2. Make it executable: `chmod +x /usr/local/bin/refresharr.sh`
+3. Create a systemd service file at `/etc/systemd/system/refresharr.service`:
 
 ```ini
 [Unit]
-Description=Huntarr Service
+Description=Refresharr Service
 After=network.target sonarr.service
 
 [Service]
@@ -477,7 +450,7 @@ Environment="MINIMUM_DOWNLOAD_QUEUE_SIZE=-1"
 Environment="RANDOM_MISSING=true"
 Environment="RANDOM_UPGRADES=true"
 ExecStartPre=/bin/sleep 30
-ExecStart=/usr/local/bin/huntarr.sh
+ExecStart=/usr/local/bin/refresharr.sh
 Restart=on-failure
 RestartSec=10
 
@@ -488,8 +461,8 @@ WantedBy=multi-user.target
 4. Enable and start the service:
 
 ```bash
-sudo systemctl enable huntarr
-sudo systemctl start huntarr
+sudo systemctl enable refresharr
+sudo systemctl start refresharr
 ```
 
 ## Use Cases
@@ -529,7 +502,7 @@ sudo systemctl start huntarr
 - **Connection Problems**: Ensure the Sonarr URL is accessible from where you're running the script
 - **Command Failures**: If search commands fail, try using the Sonarr UI to verify what commands are available in your version
 - **Web Interface Not Loading**: Make sure port 8988 is exposed in your Docker configuration and not blocked by a firewall
-- **Logs**: Check the container logs with `docker logs huntarr-sonarr` if running in Docker, or use the web interface
+- **Logs**: Check the container logs with `docker logs refresharr-sonarr` if running in Docker, or use the web interface
 - **Debug Mode**: Enable `DEBUG_MODE=true` to see detailed API responses and process flow
 - **Settings Not Persisting**: Verify your volume mount for `/config` is configured correctly
 - **State Files**: The script stores state in `/config/stateful/` - if something seems stuck, you can try deleting these files
@@ -545,5 +518,5 @@ This script helps automate the tedious process of finding missing episodes and q
 
 Thanks to: 
 
-* [IntensiveCareCub](https://www.reddit.com/user/IntensiveCareCub/) for the Hunter to Huntarr idea!
+* [IntensiveCareCub](https://www.reddit.com/user/IntensiveCareCub/) for the Hunter to Refresharr idea!
 * [ZPatten](https://github.com/zpatten) for adding the Queue Size and Delay Commands!
