@@ -1,5 +1,5 @@
 #!/bin/sh
-# Startup script for Huntarr-Sonarr that conditionally starts the web UI
+# Startup script for Refresharr that conditionally starts the web UI
 
 # Ensure the configuration directories exist and have proper permissions
 mkdir -p /config/settings /config/stateful

@@ -1,15 +1,9 @@
-#!/usr/bin/env python3
-"""
-State management for Huntarr-Sonarr
-Handles tracking which shows/episodes have been processed
-"""
-
 import os
 import time
 import pathlib
 from typing import List
-from utils.logger import logger
-from config import STATE_RESET_INTERVAL_HOURS
+from src.utils.logger import logger
+from src.config import STATE_RESET_INTERVAL_HOURS
 
 # State directory setup
 STATE_DIR = pathlib.Path("/config/stateful")

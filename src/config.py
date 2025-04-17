@@ -1,12 +1,6 @@
-#!/usr/bin/env python3
-"""
-Configuration module for Huntarr-Sonarr
-Handles all environment variables and configuration settings
-"""
-
 import os
 import logging
-import settings_manager
+import src.settings_manager as settings_manager
 
 # Web UI Configuration
 ENABLE_WEB_UI = os.environ.get("ENABLE_WEB_UI", "true").lower() == "true"
@@ -103,18 +97,18 @@ def refresh_settings():
     
     # Load settings directly from settings manager
     settings = settings_manager.get_all_settings()
-    huntarr_settings = settings.get("huntarr", {})
+    refresharr_settings = settings.get("refresharr", {})
     advanced_settings = settings.get("advanced", {})
     
     # Update global variables with fresh values
-    HUNT_MISSING_SHOWS = huntarr_settings.get("hunt_missing_shows", HUNT_MISSING_SHOWS)
-    HUNT_UPGRADE_EPISODES = huntarr_settings.get("hunt_upgrade_episodes", HUNT_UPGRADE_EPISODES)
-    SLEEP_DURATION = huntarr_settings.get("sleep_duration", SLEEP_DURATION)
-    STATE_RESET_INTERVAL_HOURS = huntarr_settings.get("state_reset_interval_hours", STATE_RESET_INTERVAL_HOURS)
-    MONITORED_ONLY = huntarr_settings.get("monitored_only", MONITORED_ONLY)
-    RANDOM_SELECTION = huntarr_settings.get("random_selection", RANDOM_SELECTION)
-    SKIP_FUTURE_EPISODES = huntarr_settings.get("skip_future_episodes", SKIP_FUTURE_EPISODES)
-    SKIP_SERIES_REFRESH = huntarr_settings.get("skip_series_refresh", SKIP_SERIES_REFRESH)
+    HUNT_MISSING_SHOWS = refresharr_settings.get("hunt_missing_shows", HUNT_MISSING_SHOWS)
+    HUNT_UPGRADE_EPISODES = refresharr_settings.get("hunt_upgrade_episodes", HUNT_UPGRADE_EPISODES)
+    SLEEP_DURATION = refresharr_settings.get("sleep_duration", SLEEP_DURATION)
+    STATE_RESET_INTERVAL_HOURS = refresharr_settings.get("state_reset_interval_hours", STATE_RESET_INTERVAL_HOURS)
+    MONITORED_ONLY = refresharr_settings.get("monitored_only", MONITORED_ONLY)
+    RANDOM_SELECTION = refresharr_settings.get("random_selection", RANDOM_SELECTION)
+    SKIP_FUTURE_EPISODES = refresharr_settings.get("skip_future_episodes", SKIP_FUTURE_EPISODES)
+    SKIP_SERIES_REFRESH = refresharr_settings.get("skip_series_refresh", SKIP_SERIES_REFRESH)
     
     # Advanced settings
     API_TIMEOUT = advanced_settings.get("api_timeout", API_TIMEOUT)
@@ -137,7 +131,7 @@ def refresh_settings():
     
     # Log the refresh for debugging
     import logging
-    logger = logging.getLogger("huntarr-sonarr")
+    logger = logging.getLogger("refresharrr")
     logger.debug(f"Settings refreshed: SLEEP_DURATION={SLEEP_DURATION}, HUNT_MISSING_SHOWS={HUNT_MISSING_SHOWS}")
     logger.debug(f"Advanced settings refreshed: API_TIMEOUT={API_TIMEOUT}, DEBUG_MODE={DEBUG_MODE}")
     logger.debug(f"Random settings: RANDOM_SELECTION={RANDOM_SELECTION}, RANDOM_MISSING={RANDOM_MISSING}, RANDOM_UPGRADES={RANDOM_UPGRADES}")
@@ -147,7 +141,7 @@ def log_configuration(logger):
     # Refresh settings from the settings manager
     refresh_settings()
     
-    logger.info("=== Huntarr [Sonarr Edition] Starting ===")
+    logger.info("=== Refresharr [Sonarr Edition] Starting ===")
     logger.info(f"API URL: {API_URL}")
     logger.info(f"API Timeout: {API_TIMEOUT}s")
     logger.info(f"Missing Content Configuration: HUNT_MISSING_SHOWS={HUNT_MISSING_SHOWS}")

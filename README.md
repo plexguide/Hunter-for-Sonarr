@@ -192,7 +192,7 @@ The following environment variables can be configured:
 
 ## Web Interface
 
-Refresharr-Sonarr includes a real-time log viewer and settings management web interface that allows you to monitor and configure its operation directly from your browser.
+Refresharr includes a real-time log viewer and settings management web interface that allows you to monitor and configure its operation directly from your browser.
 
 <table>
   <tr>
@@ -303,7 +303,7 @@ All data in these directories is maintained across container restarts. This mean
 To ensure data persistence, make sure you map the `/config` directory to a persistent volume on your host system:
 
 ```bash
--v /mnt/user/appdata/refresharr-sonarr:/config
+-v /mnt/user/appdata/refresharr:/config
 ```
 
 This mapping is included in all of the installation examples below.
@@ -317,10 +317,10 @@ This mapping is included in all of the installation examples below.
 The simplest way to run Refresharr is via Docker:
 
 ```bash
-docker run -d --name refresharr-sonarr \
+docker run -d --name refresharr \
   --restart always \
   -p 8988:8988 \
-  -v /mnt/user/appdata/refresharr-sonarr:/config \
+  -v /mnt/user/appdata/refresharrr:/config \
   -e API_KEY="your-api-key" \
   -e API_URL="http://your-sonarr-address:8989" \
   -e API_TIMEOUT="60" \
@@ -338,12 +338,12 @@ docker run -d --name refresharr-sonarr \
   -e MINIMUM_DOWNLOAD_QUEUE_SIZE="-1" \
   -e RANDOM_MISSING="true" \
   -e RANDOM_UPGRADES="true" \
-  refresharr/4sonarr:latest
+  maddogg7697/refresharr:latest
 ```
 
 To check on the status of the program, you can use the web interface at http://YOUR_SERVER_IP:8988 or check the logs with:
 ```bash
-docker logs refresharr-sonarr
+docker logs refresharr
 ```
 
 ### Docker Compose
@@ -353,14 +353,14 @@ For those who prefer Docker Compose, add this to your `docker-compose.yml` file:
 ```yaml
 version: "3.8"
 services:
-  refresharr-sonarr:
-    image: refresharr/4sonarr:latest
-    container_name: refresharr-sonarr
+  refresharrr:
+    image: maddogg7697/refresharr:latest
+    container_name: refresharr
     restart: always
     ports:
       - "8988:8988"
     volumes:
-      - /mnt/user/appdata/refresharr-sonarr:/config
+      - /mnt/user/appdata/refresharr:/config
     environment:
       API_KEY: "your-api-key"
       API_URL: "http://your-sonarr-address:8989"
@@ -384,7 +384,7 @@ services:
 Then run:
 
 ```bash
-docker-compose up -d refresharr-sonarr
+docker-compose up -d refresharrr
 ```
 
 ### Unraid Users
@@ -392,10 +392,10 @@ docker-compose up -d refresharr-sonarr
 Run this from Command Line in Unraid:
 
 ```bash
-docker run -d --name refresharr-sonarr \
+docker run -d --name refresharrr \
   --restart always \
   -p 8988:8988 \
-  -v /mnt/user/appdata/refresharr-sonarr:/config \
+  -v /mnt/user/appdata/refresharrr:/config \
   -e API_KEY="your-api-key" \
   -e API_URL="http://your-sonarr-address:8989" \
   -e API_TIMEOUT="60" \
@@ -413,7 +413,7 @@ docker run -d --name refresharr-sonarr \
   -e MINIMUM_DOWNLOAD_QUEUE_SIZE="-1" \
   -e RANDOM_MISSING="true" \
   -e RANDOM_UPGRADES="true" \
-  refresharr/4sonarr:latest
+  maddogg7697/refresharr:latest
 ```
 
 ### SystemD Service
@@ -502,7 +502,7 @@ sudo systemctl start refresharr
 - **Connection Problems**: Ensure the Sonarr URL is accessible from where you're running the script
 - **Command Failures**: If search commands fail, try using the Sonarr UI to verify what commands are available in your version
 - **Web Interface Not Loading**: Make sure port 8988 is exposed in your Docker configuration and not blocked by a firewall
-- **Logs**: Check the container logs with `docker logs refresharr-sonarr` if running in Docker, or use the web interface
+- **Logs**: Check the container logs with `docker logs refresharrr` if running in Docker, or use the web interface
 - **Debug Mode**: Enable `DEBUG_MODE=true` to see detailed API responses and process flow
 - **Settings Not Persisting**: Verify your volume mount for `/config` is configured correctly
 - **State Files**: The script stores state in `/config/stateful/` - if something seems stuck, you can try deleting these files

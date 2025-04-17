@@ -7,8 +7,8 @@ Handles all communication with the Sonarr API
 import requests
 import time
 from typing import List, Dict, Any, Optional, Union
-from utils.logger import logger, debug_log
-from config import API_KEY, API_URL, API_TIMEOUT, COMMAND_WAIT_DELAY, COMMAND_WAIT_ATTEMPTS
+from src.utils.logger import logger, debug_log
+from src.config import API_KEY, API_URL, API_TIMEOUT, COMMAND_WAIT_DELAY, COMMAND_WAIT_ATTEMPTS
 
 # Create a session for reuse
 session = requests.Session()

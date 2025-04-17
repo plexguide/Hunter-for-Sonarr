@@ -8,21 +8,21 @@ import random
 import time
 import datetime
 import importlib
-from utils.logger import logger
-from config import (
+from src.utils.logger import logger
+from src.config import (
     MONITORED_ONLY, 
     RANDOM_SELECTION,
     RANDOM_UPGRADES,
     SKIP_FUTURE_EPISODES,
     SKIP_SERIES_REFRESH
 )
-from api import get_cutoff_unmet, get_cutoff_unmet_total_pages, refresh_series, episode_search_episodes, sonarr_request
-from state import load_processed_ids, save_processed_id, truncate_processed_list, PROCESSED_UPGRADE_FILE
+from src.api import get_cutoff_unmet, get_cutoff_unmet_total_pages, refresh_series, episode_search_episodes, sonarr_request
+from src.state import load_processed_ids, save_processed_id, truncate_processed_list, PROCESSED_UPGRADE_FILE
 
 def get_current_upgrade_limit():
     """Get the current HUNT_UPGRADE_EPISODES value directly from config"""
     # Force reload the config module to get the latest value
-    import config
+    import src.config as config
     importlib.reload(config)
     return config.HUNT_UPGRADE_EPISODES
 

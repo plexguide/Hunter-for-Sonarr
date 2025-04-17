@@ -1,17 +1,12 @@
-#!/usr/bin/env python3
-"""
-Logging configuration for Huntarr-Sonarr
-"""
-
 import logging
 import sys
 import os
 import pathlib
 
 # Create log directory
-LOG_DIR = pathlib.Path("/tmp/huntarr-logs")
+LOG_DIR = pathlib.Path("/tmp/refresharr-logs")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
-LOG_FILE = LOG_DIR / "huntarr.log"
+LOG_FILE = LOG_DIR / "refresharr.log"
 
 # Global logger instance
 logger = None
@@ -29,14 +24,14 @@ def setup_logger(debug_mode=None):
     
     # Get DEBUG_MODE from config, but only if we haven't been given a value
     if debug_mode is None:
-        from config import DEBUG_MODE as CONFIG_DEBUG_MODE
+        from src.config import DEBUG_MODE as CONFIG_DEBUG_MODE
         use_debug_mode = CONFIG_DEBUG_MODE
     else:
         use_debug_mode = debug_mode
     
     if logger is None:
         # First-time setup
-        logger = logging.getLogger("huntarr-sonarr")
+        logger = logging.getLogger("refresharr")
     else:
         # Reset handlers to avoid duplicates
         for handler in logger.handlers[:]:

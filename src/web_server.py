@@ -14,9 +14,9 @@ import signal
 import sys
 from flask import Flask, render_template, Response, stream_with_context, request, jsonify, send_from_directory
 import logging
-from config import ENABLE_WEB_UI
-import settings_manager
-from utils.logger import setup_logger
+from src.config import ENABLE_WEB_UI
+import src.settings_manager
+from src.utils.logger import setup_logger
 
 # Check if web UI is disabled
 if not ENABLE_WEB_UI:
@@ -31,8 +31,8 @@ log.setLevel(logging.ERROR)
 app = Flask(__name__)
 
 # Log file location
-LOG_FILE = "/tmp/huntarr-logs/huntarr.log"
-LOG_DIR = pathlib.Path("/tmp/huntarr-logs")
+LOG_FILE = "/tmp/refresharr-logs/refresharr.log"
+LOG_DIR = pathlib.Path("/tmp/refresharr-logs")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 # Get the PID of the main process
@@ -104,26 +104,26 @@ def update_settings():
         
         # Get current settings to compare
         old_settings = settings_manager.get_all_settings()
-        old_huntarr = old_settings.get("huntarr", {})
+        old_refresharr = old_settings.get("refresharr", {})
         old_advanced = old_settings.get("advanced", {})
         old_ui = old_settings.get("ui", {})
         
         # Find changes
-        huntarr_changes = {}
+        refresharr_changes = {}
         advanced_changes = {}
         ui_changes = {}
         
         # Track if any real changes were made
         changes_made = False
         
-        # Update huntarr settings and track changes
-        if "huntarr" in data:
-            for key, value in data["huntarr"].items():
-                old_value = old_huntarr.get(key)
+        # Update refresharr settings and track changes
+        if "refresharr" in data:
+            for key, value in data["refresharr"].items():
+                old_value = old_refresharr.get(key)
                 if old_value != value:
-                    huntarr_changes[key] = {"old": old_value, "new": value}
+                    refresharr_changes[key] = {"old": old_value, "new": value}
                     changes_made = True
-                settings_manager.update_setting("huntarr", key, value)
+                settings_manager.update_setting("refresharr", key, value)
         
         # Update UI settings and track changes
         if "ui" in data:
@@ -153,22 +153,22 @@ def update_settings():
         
         if changes_made:
             with open(LOG_FILE, 'a') as f:
-                f.write(f"{timestamp} - huntarr-web - INFO - Settings updated by user\n")
+                f.write(f"{timestamp} - refresharr-web - INFO - Settings updated by user\n")
                 
-                # Log huntarr changes
-                for key, change in huntarr_changes.items():
-                    f.write(f"{timestamp} - huntarr-web - INFO - Changed {key} from {change['old']} to {change['new']}\n")
+                # Log refresharr changes
+                for key, change in refresharr_changes.items():
+                    f.write(f"{timestamp} - refresharr-web - INFO - Changed {key} from {change['old']} to {change['new']}\n")
                 
                 # Log advanced changes
                 for key, change in advanced_changes.items():
-                    f.write(f"{timestamp} - huntarr-web - INFO - Changed advanced.{key} from {change['old']} to {change['new']}\n")
+                    f.write(f"{timestamp} - refresharr-web - INFO - Changed advanced.{key} from {change['old']} to {change['new']}\n")
                 
                 # Log UI changes
                 for key, change in ui_changes.items():
-                    f.write(f"{timestamp} - huntarr-web - INFO - Changed UI.{key} from {change['old']} to {change['new']}\n")
+                    f.write(f"{timestamp} - refresharr-web - INFO - Changed UI.{key} from {change['old']} to {change['new']}\n")
                 
-                f.write(f"{timestamp} - huntarr-web - INFO - Settings saved successfully\n")
-                f.write(f"{timestamp} - huntarr-web - INFO - Restarting current cycle to apply new settings immediately\n")
+                f.write(f"{timestamp} - refresharr-web - INFO - Settings saved successfully\n")
+                f.write(f"{timestamp} - refresharr-web - INFO - Restarting current cycle to apply new settings immediately\n")
             
             # Try to signal the main process to restart the cycle
             main_pid = get_main_process_pid()
@@ -202,8 +202,8 @@ def reset_settings():
         # Log the reset
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(LOG_FILE, 'a') as f:
-            f.write(f"{timestamp} - huntarr-web - INFO - Settings reset to defaults by user\n")
-            f.write(f"{timestamp} - huntarr-web - INFO - Restarting current cycle to apply new settings immediately\n")
+            f.write(f"{timestamp} - refresharr-web - INFO - Settings reset to defaults by user\n")
+            f.write(f"{timestamp} - refresharr-web - INFO - Restarting current cycle to apply new settings immediately\n")
         
         # Try to signal the main process to restart the cycle
         main_pid = get_main_process_pid()
@@ -240,7 +240,7 @@ def update_theme():
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with open(LOG_FILE, 'a') as f:
                 new_mode = 'Dark' if data['dark_mode'] else 'Light'
-                f.write(f"{timestamp} - huntarr-web - INFO - Changed theme to {new_mode} Mode\n")
+                f.write(f"{timestamp} - refresharr-web - INFO - Changed theme to {new_mode} Mode\n")
         
         return jsonify({"success": True})
     except Exception as e:
@@ -276,8 +276,8 @@ if __name__ == "__main__":
     ip_address = get_ip_address()
     
     with open(LOG_FILE, 'a') as f:
-        f.write(f"{timestamp} - huntarr-web - INFO - Web server starting on port 8988\n")
-        f.write(f"{timestamp} - huntarr-web - INFO - Web interface available at http://{ip_address}:8988\n")
+        f.write(f"{timestamp} - refresharr-web - INFO - Web server starting on port 8988\n")
+        f.write(f"{timestamp} - refresharr-web - INFO - Web interface available at http://{ip_address}:8988\n")
     
     # Run the Flask app
     app.run(host='0.0.0.0', port=8988, debug=False, threaded=True)

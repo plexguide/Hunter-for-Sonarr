@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Settings manager for Huntarr-Sonarr
-Handles loading, saving, and providing settings from a JSON file
-"""
-
 import os
 import json
 import pathlib
@@ -18,14 +12,14 @@ settings_logger = logging.getLogger("settings_manager")
 SETTINGS_DIR = pathlib.Path("/config/settings")
 SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
 
-SETTINGS_FILE = SETTINGS_DIR / "huntarr.json"
+SETTINGS_FILE = SETTINGS_DIR / "refresharr.json"
 
 # Default settings
 DEFAULT_SETTINGS = {
     "ui": {
         "dark_mode": True
     },
-    "huntarr": {
+    "refresharr": {
         "sleep_duration": 900,  # 15 minutes in seconds
         "hunt_missing_shows": 1,
         "hunt_upgrade_episodes": 5,

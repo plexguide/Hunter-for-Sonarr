@@ -134,18 +134,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to check if settings have changed from original values
     function checkForChanges() {
-        if (!originalSettings.huntarr) return; // Don't check if original settings not loaded
+        if (!originalSettings.refresharr) return; // Don't check if original settings not loaded
         
         let hasChanges = false;
         
         // Check Basic Settings
-        if (parseInt(huntMissingShowsInput.value) !== originalSettings.huntarr.hunt_missing_shows) hasChanges = true;
-        if (parseInt(huntUpgradeEpisodesInput.value) !== originalSettings.huntarr.hunt_upgrade_episodes) hasChanges = true;
-        if (parseInt(sleepDurationInput.value) !== originalSettings.huntarr.sleep_duration) hasChanges = true;
-        if (parseInt(stateResetIntervalInput.value) !== originalSettings.huntarr.state_reset_interval_hours) hasChanges = true;
-        if (monitoredOnlyInput.checked !== originalSettings.huntarr.monitored_only) hasChanges = true;
-        if (skipFutureEpisodesInput.checked !== originalSettings.huntarr.skip_future_episodes) hasChanges = true;
-        if (skipSeriesRefreshInput.checked !== originalSettings.huntarr.skip_series_refresh) hasChanges = true;
+        if (parseInt(huntMissingShowsInput.value) !== originalSettings.refresharr.hunt_missing_shows) hasChanges = true;
+        if (parseInt(huntUpgradeEpisodesInput.value) !== originalSettings.refresharr.hunt_upgrade_episodes) hasChanges = true;
+        if (parseInt(sleepDurationInput.value) !== originalSettings.refresharr.sleep_duration) hasChanges = true;
+        if (parseInt(stateResetIntervalInput.value) !== originalSettings.refresharr.state_reset_interval_hours) hasChanges = true;
+        if (monitoredOnlyInput.checked !== originalSettings.refresharr.monitored_only) hasChanges = true;
+        if (skipFutureEpisodesInput.checked !== originalSettings.refresharr.skip_future_episodes) hasChanges = true;
+        if (skipSeriesRefreshInput.checked !== originalSettings.refresharr.skip_series_refresh) hasChanges = true;
         
         // Check Advanced Settings
         if (parseInt(apiTimeoutInput.value) !== originalSettings.advanced.api_timeout) hasChanges = true;
@@ -189,21 +189,21 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('/api/settings')
             .then(response => response.json())
             .then(data => {
-                const huntarr = data.huntarr || {};
+                const refresharr = data.refresharr || {};
                 const advanced = data.advanced || {};
                 
                 // Store original settings for comparison
                 originalSettings = JSON.parse(JSON.stringify(data));
                 
                 // Fill form with current settings - Basic settings
-                huntMissingShowsInput.value = huntarr.hunt_missing_shows !== undefined ? huntarr.hunt_missing_shows : 1;
-                huntUpgradeEpisodesInput.value = huntarr.hunt_upgrade_episodes !== undefined ? huntarr.hunt_upgrade_episodes : 5;
-                sleepDurationInput.value = huntarr.sleep_duration || 900;
+                huntMissingShowsInput.value = refresharr.hunt_missing_shows !== undefined ? refresharr.hunt_missing_shows : 1;
+                huntUpgradeEpisodesInput.value = refresharr.hunt_upgrade_episodes !== undefined ? refresharr.hunt_upgrade_episodes : 5;
+                sleepDurationInput.value = refresharr.sleep_duration || 900;
                 updateSleepDurationDisplay();
-                stateResetIntervalInput.value = huntarr.state_reset_interval_hours || 168;
-                monitoredOnlyInput.checked = huntarr.monitored_only !== false;
-                skipFutureEpisodesInput.checked = huntarr.skip_future_episodes !== false;
-                skipSeriesRefreshInput.checked = huntarr.skip_series_refresh === true;
+                stateResetIntervalInput.value = refresharr.state_reset_interval_hours || 168;
+                monitoredOnlyInput.checked = refresharr.monitored_only !== false;
+                skipFutureEpisodesInput.checked = refresharr.skip_future_episodes !== false;
+                skipSeriesRefreshInput.checked = refresharr.skip_series_refresh === true;
                 
                 // Fill form with current settings - Advanced settings
                 apiTimeoutInput.value = advanced.api_timeout || 60;
@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const settings = {
-            huntarr: {
+            refresharr: {
                 hunt_missing_shows: parseInt(huntMissingShowsInput.value) || 0,
                 hunt_upgrade_episodes: parseInt(huntUpgradeEpisodesInput.value) || 0,
                 sleep_duration: parseInt(sleepDurationInput.value) || 900,

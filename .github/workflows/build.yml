@@ -20,7 +20,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           driver: cloud
-          endpoint: "refresharr/refresharr"
+          endpoint: "maddogg7697/refresharr"
           install: true
       - name: Build and push
         uses: docker/build-push-action@v6

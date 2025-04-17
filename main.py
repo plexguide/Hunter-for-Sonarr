@@ -4,11 +4,11 @@ import os
 import socket
 import signal
 import importlib
-from utils.logger import logger
-from config import HUNT_MODE, SLEEP_DURATION, MINIMUM_DOWNLOAD_QUEUE_SIZE, ENABLE_WEB_UI, log_configuration, refresh_settings
-from missing import process_missing_episodes
-from state import check_state_reset, calculate_reset_time
-from api import get_download_queue_size
+from src.utils.logger import logger
+from src.config import HUNT_MODE, SLEEP_DURATION, MINIMUM_DOWNLOAD_QUEUE_SIZE, ENABLE_WEB_UI, log_configuration, refresh_settings
+from src.missing import process_missing_episodes
+from src.state import check_state_reset, calculate_reset_time
+from src.api import get_download_queue_size
 
 # Flag to indicate if cycle should restart
 restart_cycle = False
@@ -30,7 +30,7 @@ def get_ip_address():
     """Get the host's IP address from API_URL for display"""
     try:
         from urllib.parse import urlparse
-        from config import API_URL
+        from src.config import API_URL
 
         # Extract the hostname/IP from the API_URL
         parsed_url = urlparse(API_URL)
@@ -55,14 +55,14 @@ def force_reload_all_modules():
     """Force reload of all relevant modules to ensure fresh settings"""
     try:
         # Force reload the config module
-        import config
+        import src.config as config
         importlib.reload(config)
 
         # Reload any modules that might cache config values
-        import missing
+        import src.missing as missing
         importlib.reload(missing)
 
-        import upgrade
+        import src.upgrade as upgrade
         importlib.reload(upgrade)
 
         # Call the refresh function to ensure settings are updated
@@ -90,7 +90,7 @@ def main_loop() -> None:
         server_ip = get_ip_address()
         logger.info(f"Web interface available at http://{server_ip}:8988")
 
-    logger.info("GitHub: https://github.com/plexguide/huntarr-sonarr")
+    logger.info("GitHub: https://github.com/Refresharr/Refresharr")
 
     while True:
         # Set restart_cycle flag to False at the beginning of each cycle
@@ -100,13 +100,13 @@ def main_loop() -> None:
         force_reload_all_modules()
         
         # Import after reload to ensure we get fresh values
-        from config import HUNT_MODE, HUNT_MISSING_SHOWS, HUNT_UPGRADE_EPISODES
-        from upgrade import process_cutoff_upgrades
+        from src.config import HUNT_MODE, HUNT_MISSING_SHOWS, HUNT_UPGRADE_EPISODES
+        from src.upgrade import process_cutoff_upgrades
         
         # Check if state files need to be reset
         check_state_reset()
         
-        logger.info(f"=== Starting Huntarr-Sonarr cycle ===")
+        logger.info(f"=== Starting Refresharr cycle ===")
         
         # Track if any processing was done in this cycle
         processing_done = False
@@ -149,11 +149,10 @@ def main_loop() -> None:
         # Refresh settings before sleep to get the latest sleep_duration
         refresh_settings()
         # Import it directly from the settings manager to ensure latest value
-        from config import SLEEP_DURATION as CURRENT_SLEEP_DURATION
+        from src.config import SLEEP_DURATION as CURRENT_SLEEP_DURATION
         
         # Sleep at the end of the cycle only
         logger.info(f"Cycle complete. Sleeping {CURRENT_SLEEP_DURATION}s before next cycle...")
-        logger.info("⭐ Tool Great? Donate @ https://donate.plex.one for Daughter's College Fund!")
         
         # Log web UI information if enabled
         if ENABLE_WEB_UI:
@@ -185,7 +184,7 @@ if __name__ == "__main__":
     try:
         main_loop()
     except KeyboardInterrupt:
-        logger.info("Huntarr-Sonarr stopped by user.")
+        logger.info("Refresharr stopped by user.")
         sys.exit(0)
     except Exception as e:
         logger.exception(f"Unexpected error: {e}")
