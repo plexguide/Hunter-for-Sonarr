@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Web server for Huntarr-Sonarr
-Provides a web interface to view logs in real-time and manage settings
-"""
-
 import os
 import time
 import datetime
@@ -15,7 +9,7 @@ import sys
 from flask import Flask, render_template, Response, stream_with_context, request, jsonify, send_from_directory
 import logging
 from src.config import ENABLE_WEB_UI
-import src.settings_manager
+from src import settings_manager
 from src.utils.logger import setup_logger
 
 # Check if web UI is disabled
@@ -27,8 +21,14 @@ if not ENABLE_WEB_UI:
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'frontend', 'templates')
+STATIC_DIR = os.path.join(BASE_DIR, 'frontend', 'static')
+
 # Create Flask app
-app = Flask(__name__)
+app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
+
 
 # Log file location
 LOG_FILE = "/tmp/refresharr-logs/refresharr.log"
@@ -250,7 +250,7 @@ def get_ip_address():
     """Get the host's IP address from API_URL for display"""
     try:
         from urllib.parse import urlparse
-        from config import API_URL
+        from src.config import API_URL
         
         # Extract the hostname/IP from the API_URL
         parsed_url = urlparse(API_URL)

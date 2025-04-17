@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Sonarr API Helper Functions
-Handles all communication with the Sonarr API
-"""
-
 import requests
 import time
 from typing import List, Dict, Any, Optional, Union
