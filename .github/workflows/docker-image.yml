@@ -61,8 +61,8 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            refresharr/4sonarr:latest
-            refresharr/4sonarr:${{ github.sha }}
+            maddogg7697/refresharr:latest
+            maddogg7697/refresharr:${{ github.sha }}
       
       # 7b) Build & Push if on 'dev' branch
       - name: Build and Push (dev)
@@ -73,8 +73,8 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            refresharr/4sonarr:dev
-            refresharr/4sonarr:${{ github.sha }}
+            maddogg7697/refresharr:dev
+            maddogg7697/refresharr:${{ github.sha }}
       
       # 7c) Build & Push if it's a tag/release
       - name: Build and Push (release)
@@ -85,8 +85,8 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            refresharr/4sonarr:${{ steps.meta.outputs.VERSION }}
-            refresharr/4sonarr:latest
+            maddogg7697/refresharr:${{ steps.meta.outputs.VERSION }}
+            maddogg7697/refresharr:latest
       
       # 7d) Build & Push for any other branch
       - name: Build and Push (feature branch)
@@ -97,8 +97,8 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            refresharr/4sonarr:${{ steps.meta.outputs.BRANCH }}
-            refresharr/4sonarr:${{ github.sha }}
+            maddogg7697/refresharr:${{ steps.meta.outputs.BRANCH }}
+            maddogg7697/refresharr:${{ github.sha }}
       
       # 7e) Just build on pull requests
       - name: Build (PR)
