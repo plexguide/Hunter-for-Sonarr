@@ -21,8 +21,14 @@ if not ENABLE_WEB_UI:
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'frontend', 'templates')
+STATIC_DIR = os.path.join(BASE_DIR, 'frontend', 'static')
+
 # Create Flask app
-app = Flask(__name__)
+app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
+
 
 # Log file location
 LOG_FILE = "/tmp/refresharr-logs/refresharr.log"
@@ -271,7 +277,7 @@ if __name__ == "__main__":
     
     with open(LOG_FILE, 'a') as f:
         f.write(f"{timestamp} - refresharr-web - INFO - Web server starting on port 8988\n")
-        f.write(f"{timestamp} - refresharr-web - INFO - Web interface available at http://localhost:8988\n")
+        f.write(f"{timestamp} - refresharr-web - INFO - Web interface available at http://{ip_address}:8988\n")
     
     # Run the Flask app
     app.run(host='0.0.0.0', port=8988, debug=False, threaded=True)
