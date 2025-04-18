@@ -1,0 +1,9 @@
+{
+  "hunt_missing_books": 1,
+  "hunt_upgrade_books": 0,
+  "monitored_only": true,
+  "skip_future_releases": true,
+  "skip_author_refresh": false,
+  "log_refresh_interval_seconds": 30,
+  "api_timeout": 60
+}

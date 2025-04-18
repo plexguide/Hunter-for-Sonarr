@@ -1,0 +1,9 @@
+{
+  "hunt_missing_movies": 1,
+  "hunt_upgrade_movies": 0,
+  "monitored_only": true,
+  "skip_future_releases": true,
+  "skip_movie_refresh": false,
+  "log_refresh_interval_seconds": 30,
+  "api_timeout": 60
+}

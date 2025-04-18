@@ -1,0 +1,9 @@
+{
+  "hunt_missing_shows": 1,
+  "hunt_upgrade_episodes": 0,
+  "monitored_only": true,
+  "skip_future_episodes": true,
+  "skip_series_refresh": false,
+  "log_refresh_interval_seconds": 30,
+  "api_timeout": 60
+}
