@@ -18,21 +18,17 @@ jobs:
         with:
           fetch-depth: 0
       
-      # 2) List files to verify refresharr.py is present
-      - name: List files in directory
-        run: ls -la
-      
-      # 3) Set up QEMU for multi-architecture builds
+      # 2) Set up QEMU for multi-architecture builds
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         with:
           platforms: arm64,amd64
       
-      # 4) Set up Docker Buildx
+      # 3) Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       
-      # 5) Log in to Docker Hub
+      # 4) Log in to Docker Hub
       - name: Log in to Docker Hub
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
@@ -40,7 +36,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
       
-      # 6) Extract metadata (version, branch name, etc.)
+      # 5) Extract metadata (version, branch name, etc.)
       - name: Extract metadata
         id: meta
         run: |
@@ -52,7 +48,7 @@ jobs:
             echo "IS_TAG=false" >> $GITHUB_OUTPUT
           fi
       
-      # 7a) Build & Push if on 'main' branch
+      # 6a) Build & Push if on 'main' branch
       - name: Build and Push (main)
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: docker/build-push-action@v3
@@ -63,7 +59,7 @@ jobs:
           tags: |
             maddogg7697/refresharr:latest
       
-      # 7b) Build & Push if on 'dev' branch
+      # 6b) Build & Push if on 'dev' branch
       - name: Build and Push (dev)
         if: github.ref == 'refs/heads/dev' && github.event_name != 'pull_request'
         uses: docker/build-push-action@v3
@@ -74,7 +70,7 @@ jobs:
           tags: |
             maddogg7697/refresharr:dev
       
-      # 7c) Build & Push if it's a tag/release
+      # 6c) Build & Push if it's a tag/release
       - name: Build and Push (release)
         if: steps.meta.outputs.IS_TAG == 'true' && github.event_name != 'pull_request'
         uses: docker/build-push-action@v3
@@ -86,7 +82,7 @@ jobs:
             maddogg7697/refresharr:${{ steps.meta.outputs.VERSION }}
             maddogg7697/refresharr:latest
       
-      # 7d) Build & Push for any other branch
+      # 6d) Build & Push for any other branch
       - name: Build and Push (feature branch)
         if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && steps.meta.outputs.IS_TAG != 'true' && github.event_name != 'pull_request'
         uses: docker/build-push-action@v3
