@@ -197,7 +197,7 @@ Refresharr includes a real-time log viewer and settings management web interface
 <table>
   <tr>
     <td colspan="2"> 
-      <img width="100%" alt="image" src="https://github.com/user-attachments/assets/a076ea7e-9a7a-4e9b-a631-fa672068851d" />
+      <img width="100%" alt="image" src="https://github.com/user-attachments/assets/d631c64b-aa34-41e2-9827-3f9328c69151" />
       <p align="center"><em>Logger UI</em></p>
     </td>
   </tr>
