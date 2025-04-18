@@ -22,7 +22,7 @@ mkdir -p /config/locks
 run_service_loop() {
     local service=$1
     local lock_file="/config/locks/${service}.lock"
-    local sleep_time=60  # Default sleep time between cycles (can be adjusted per service)
+    local sleep_time=5  # Default sleep time between cycles (can be adjusted per service)
     
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting ${service} service loop"
     
