@@ -1,4 +1,6 @@
 {
+  "api_key": "your-radarr-api-key",
+  "app_url": "http://your-readarr-url:0000",
   "hunt_missing_books": 1,
   "hunt_upgrade_books": 0,
   "monitored_only": true,

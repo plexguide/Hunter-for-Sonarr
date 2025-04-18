@@ -1,4 +1,6 @@
 {
+  "api_key": "your-sonarr-api-key",
+  "app_url": "http://your-sonarr-url:8989",
   "hunt_missing_shows": 1,
   "hunt_upgrade_episodes": 0,
   "monitored_only": true,
