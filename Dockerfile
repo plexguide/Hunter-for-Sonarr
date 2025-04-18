@@ -28,5 +28,17 @@ RUN chmod +x /app/scripts/orchestrator.sh
 RUN mkdir -p /app/scripts/logs
 RUN chmod +x /app/scripts/logs/*.sh
 
+# Create service directories
+RUN mkdir -p /app/services/sonarr
+RUN mkdir -p /app/services/radarr
+RUN mkdir -p /app/services/lidarr
+RUN mkdir -p /app/services/readarr
+
+# Make service scripts executable
+RUN chmod +x /app/services/sonarr/sonarr.sh || true
+RUN chmod +x /app/services/radarr/radarr.sh || true
+RUN chmod +x /app/services/lidarr/lidarr.sh || true
+RUN chmod +x /app/services/readarr/readarr.sh || true
+
 # Set entry point
 CMD ["/app/scripts/start.sh"]

@@ -14,11 +14,17 @@ mkdir -p "$LOGS_DIR"
 mkdir -p /config/logs
 mkdir -p /config/locks
 
-# Make sure all scripts are executable
-chmod +x "$SERVICES_DIR/sonarr.sh"
-chmod +x "$SERVICES_DIR/radarr.sh"
-chmod +x "$SERVICES_DIR/readarr.sh"
-chmod +x "$SERVICES_DIR/lidarr.sh"
+# Create service-specific directories and ensure scripts are executable
+for service in sonarr radarr readarr lidarr; do
+    mkdir -p "$SERVICES_DIR/$service"
+    # Make sure the scripts are executable
+    if [ -f "$SERVICES_DIR/$service/$service.sh" ]; then
+        chmod +x "$SERVICES_DIR/$service/$service.sh"
+    else
+        echo "Warning: Service script $SERVICES_DIR/$service/$service.sh not found"
+    fi
+done
+
 chmod +x "$LOGS_DIR/log_manager.sh"
 
 # Function to continuously run a service in a loop
@@ -35,7 +41,7 @@ run_service_loop() {
         if mkdir "$lock_file" 2>/dev/null; then
             # Lock acquired, run the service
             echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting $service task..."
-            "$SERVICES_DIR/${service}.sh" >> "/config/logs/${service}.log" 2>&1
+            "$SERVICES_DIR/${service}/${service}.sh" >> "/config/logs/${service}.log" 2>&1
             
             # Release lock
             rmdir "$lock_file"

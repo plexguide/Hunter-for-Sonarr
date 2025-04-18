@@ -25,11 +25,16 @@ chmod +x "$SCRIPT_DIR/initialize_settings.sh"
 # Make sure orchestrator script is executable
 chmod +x "$SCRIPT_DIR/orchestrator.sh"
 
-# Make sure all service scripts are executable
-chmod +x "$SERVICES_DIR/sonarr.sh"
-chmod +x "$SERVICES_DIR/radarr.sh"
-chmod +x "$SERVICES_DIR/readarr.sh"
-chmod +x "$SERVICES_DIR/lidarr.sh"
+# Create service-specific directories and ensure scripts are executable
+for service in sonarr radarr readarr lidarr; do
+    mkdir -p "$SERVICES_DIR/$service"
+    # Make sure the scripts are executable
+    if [ -f "$SERVICES_DIR/$service/$service.sh" ]; then
+        chmod +x "$SERVICES_DIR/$service/$service.sh"
+    else
+        echo "Warning: Service script $SERVICES_DIR/$service/$service.sh not found"
+    fi
+done
 
 # Make sure log management script is executable
 chmod +x "$LOGS_DIR/log_manager.sh"
