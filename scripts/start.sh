@@ -7,15 +7,6 @@ echo "Initializing Huntarr container..."
 mkdir -p /config/settings
 mkdir -p /config/locks
 
-# Copy default.json to config if it doesn't exist
-if [ ! -f "/config/settings/huntarr.json" ]; then
-    echo "First run detected, copying default settings..."
-    cp /app/support/default.json /config/settings/huntarr.json
-fi
-
-# Create log directory
-mkdir -p /config/logs
-
 # Define script directory in a way that works on both Linux and macOS
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 SERVICES_DIR="$SCRIPT_DIR/../services"
@@ -24,6 +15,12 @@ LOGS_DIR="$SCRIPT_DIR/logs"
 # Make sure directories exist
 mkdir -p "$SERVICES_DIR"
 mkdir -p "$LOGS_DIR"
+
+# Make sure initialization script is executable
+chmod +x "$SCRIPT_DIR/initialize_settings.sh"
+
+# Run the initialization script to copy any missing settings files
+"$SCRIPT_DIR/initialize_settings.sh"
 
 # Make sure orchestrator script is executable
 chmod +x "$SCRIPT_DIR/orchestrator.sh"
