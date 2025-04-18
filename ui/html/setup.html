@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huntarr - Setup</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../img/favicon.png">
+</head>
+<body class="dark-mode">
+    <div class="setup-container">
+        <div class="logo-container">
+            <img src="../../logo/128.png" alt="Huntarr Logo" class="logo">
+            <h1>Huntarr Setup</h1>
+        </div>
+        <div class="setup-form">
+            <h2>First Time Setup</h2>
+            <form id="setupForm">
+                <div class="form-section">
+                    <h3>Admin Account</h3>
+                    <div class="form-group">
+                        <label for="adminUsername">Username</label>
+                        <input type="text" id="adminUsername" name="adminUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPassword">Password</label>
+                        <input type="password" id="adminPassword" name="adminPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="enable2FA">Enable Two-Factor Authentication</label>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="enable2FA" name="enable2FA">
+                            <span class="slider"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="twoFactorSetupSection" style="display: none;">
+                    <div class="form-section">
+                        <h3>Two-Factor Authentication</h3>
+                        <div class="qr-code-container">
+                            <div id="qrCode"></div>
+                        </div>
+                        <p>Scan this QR code with your authenticator app or enter the code manually:</p>
+                        <div class="form-group">
+                            <input type="text" id="secretKey" readonly>
+                            <button type="button" id="copySecret" class="btn btn-secondary">Copy</button>
+                        </div>
+                        <div class="form-group">
+                            <label for="verificationCode">Verification Code</label>
+                            <input type="text" id="verificationCode" name="verificationCode" placeholder="Enter code from authenticator app">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Configuration</button>
+                    <a href="login.html" class="btn btn-secondary">Back to Login</a>
+                </div>
+            </form>
+            <div id="setupError" class="error-message"></div>
+            <div id="setupSuccess" class="success-message"></div>
+        </div>
+    </div>
+    <script src="../js/qrcode.min.js"></script>
+    <script src="../js/setup.js"></script>
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huntarr - Dashboard</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../img/favicon.png">
+</head>
+<body class="dark-mode">
+    <header>
+        <div class="header-left">
+            <img src="../../logo/128.png" alt="Huntarr Logo" class="logo-small">
+            <h1>Huntarr</h1>
+        </div>
+        <div class="header-right">
+            <div class="user-info">
+                <span>Hi, <span id="username-display">User</span></span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active" data-tab="dashboard">Dashboard</a></li>
+                    <li><a href="#" data-tab="settings">Settings</a></li>
+                    <li><a href="#" data-tab="logs">Logs</a></li>
+                    <li><a href="#" id="logoutBtn">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Dashboard Tab -->
+        <section id="dashboard" class="tab-content active">
+            <div class="dashboard-header">
+                <h2>Service Status</h2>
+                <div class="refresh-button">
+                    <button id="refreshStatus" class="btn btn-secondary">Refresh</button>
+                </div>
+            </div>
+            <div class="service-grid">
+                <div class="service-card" id="sonarrCard">
+                    <div class="service-header">
+                        <h3>Sonarr</h3>
+                        <span class="status-badge" id="sonarrStatus">Unknown</span>
+                    </div>
+                    <div class="service-body">
+                        <div class="service-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Missing:</span>
+                                <span class="stat-value" id="sonarrMissing">--</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Upgrades:</span>
+                                <span class="stat-value" id="sonarrUpgrades">--</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Last Run:</span>
+                                <span class="stat-value" id="sonarrLastRun">--</span>
+                            </div>
+                        </div>
+                        <div class="service-actions">
+                            <button class="btn btn-primary" data-service="sonarr" data-action="run-missing">Run Missing</button>
+                            <button class="btn btn-primary" data-service="sonarr" data-action="run-upgrade">Run Upgrade</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="service-card" id="radarrCard">
+                    <div class="service-header">
+                        <h3>Radarr</h3>
+                        <span class="status-badge" id="radarrStatus">Unknown</span>
+                    </div>
+                    <div class="service-body">
+                        <div class="service-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Missing:</span>
+                                <span class="stat-value" id="radarrMissing">--</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Upgrades:</span>
+                                <span class="stat-value" id="radarrUpgrades">--</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Last Run:</span>
+                                <span class="stat-value" id="radarrLastRun">--</span>
+                            </div>
+                        </div>
+                        <div class="service-actions">
+                            <button class="btn btn-primary" data-service="radarr" data-action="run-missing">Run Missing</button>
+                            <button class="btn btn-primary" data-service="radarr" data-action="run-upgrade">Run Upgrade</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="service-card" id="lidarrCard">
+                    <div class="service-header">
+                        <h3>Lidarr</h3>
+                        <span class="status-badge" id="lidarrStatus">Unknown</span>
+                    </div>
+                    <div class="service-body">
+                        <div class="service-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Missing:</span>
+                                <span class="stat-value" id="lidarrMissing">--</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Upgrades:</span>
+                                <span class="stat-value" id="lidarrUpgrades">--</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Last Run:</span>
+                                <span class="stat-value" id="lidarrLastRun">--</span>
+                            </div>
+                        </div>
+                        <div class="service-actions">
+                            <button class="btn btn-primary" data-service="lidarr" data-action="run-missing">Run Missing</button>
+                            <button class="btn btn-primary" data-service="lidarr" data-action="run-upgrade">Run Upgrade</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="service-card" id="readarrCard">
+                    <div class="service-header">
+                        <h3>Readarr</h3>
+                        <span class="status-badge" id="readarrStatus">Unknown</span>
+                    </div>
+                    <div class="service-body">
+                        <div class="service-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Missing:</span>
+                                <span class="stat-value" id="readarrMissing">--</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Upgrades:</span>
+                                <span class="stat-value" id="readarrUpgrades">--</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Last Run:</span>
+                                <span class="stat-value" id="readarrLastRun">--</span>
+                            </div>
+                        </div>
+                        <div class="service-actions">
+                            <button class="btn btn-primary" data-service="readarr" data-action="run-missing">Run Missing</button>
+                            <button class="btn btn-primary" data-service="readarr" data-action="run-upgrade">Run Upgrade</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Tab -->
+        <section id="settings" class="tab-content">
+            <h2>Settings</h2>
+            <div class="settings-container">
+                <div class="tabs">
+                    <button class="tablinks active" onclick="openSettingsTab(event, 'sonarrSettings')">Sonarr</button>
+                    <button class="tablinks" onclick="openSettingsTab(event, 'radarrSettings')">Radarr</button>
+                    <button class="tablinks" onclick="openSettingsTab(event, 'lidarrSettings')">Lidarr</button>
+                    <button class="tablinks" onclick="openSettingsTab(event, 'readarrSettings')">Readarr</button>
+                    <button class="tablinks" onclick="openSettingsTab(event, 'userSettings')">User</button>
+                </div>
+
+                <div id="sonarrSettings" class="tabcontent active">
+                    <h3>Sonarr Settings</h3>
+                    <form id="sonarrForm">
+                        <div class="form-group">
+                            <label for="sonarr_api_key">API Key</label>
+                            <input type="text" id="sonarr_api_key" name="api_key">
+                        </div>
+                        <div class="form-group">
+                            <label for="sonarr_app_url">App URL</label>
+                            <input type="text" id="sonarr_app_url" name="app_url" placeholder="http://your-sonarr-url:8989">
+                        </div>
+                        <div class="form-group">
+                            <label for="sonarr_hunt_missing_shows">Hunt Missing Shows</label>
+                            <input type="number" id="sonarr_hunt_missing_shows" name="hunt_missing_shows" min="0" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="sonarr_hunt_upgrade_episodes">Hunt Upgrade Episodes</label>
+                            <input type="number" id="sonarr_hunt_upgrade_episodes" name="hunt_upgrade_episodes" min="0" value="0">
+                        </div>
+                        <div class="form-group checkbox">
+                            <label for="sonarr_monitored_only">Monitored Only</label>
+                            <input type="checkbox" id="sonarr_monitored_only" name="monitored_only" checked>
+                        </div>
+                        <div class="form-group checkbox">
+                            <label for="sonarr_skip_future_episodes">Skip Future Episodes</label>
+                            <input type="checkbox" id="sonarr_skip_future_episodes" name="skip_future_episodes" checked>
+                        </div>
+                        <div class="form-group checkbox">
+                            <label for="sonarr_skip_series_refresh">Skip Series Refresh</label>
+                            <input type="checkbox" id="sonarr_skip_series_refresh" name="skip_series_refresh">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Save Sonarr Settings</button>
+                            <button type="button" class="btn btn-secondary" id="testSonarr">Test Connection</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="radarrSettings" class="tabcontent">
+                    <h3>Radarr Settings</h3>
+                    <form id="radarrForm">
+                        <div class="form-group">
+                            <label for="radarr_api_key">API Key</label>
+                            <input type="text" id="radarr_api_key" name="api_key">
+                        </div>
+                        <div class="form-group">
+                            <label for="radarr_app_url">App URL</label>
+                            <input type="text" id="radarr_app_url" name="app_url" placeholder="http://your-radarr-url:7878">
+                        </div>
+                        <div class="form-group">
+                            <label for="radarr_hunt_missing_movies">Hunt Missing Movies</label>
+                            <input type="number" id="radarr_hunt_missing_movies" name="hunt_missing_movies" min="0" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="radarr_hunt_upgrade_movies">Hunt Upgrade Movies</label>
+                            <input type="number" id="radarr_hunt_upgrade_movies" name="hunt_upgrade_movies" min="0" value="0">
+                        </div>
+                        <div class="form-group checkbox">
+                            <label for="radarr_monitored_only">Monitored Only</label>
+                            <input type="checkbox" id="radarr_monitored_only" name="monitored_only" checked>
+                        </div>
+                        <div class="form-group checkbox">
+                            <label for="radarr_skip_future_releases">Skip Future Releases</label>
+                            <input type="checkbox" id="radarr_skip_future_releases" name="skip_future_releases" checked>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Save Radarr Settings</button>
+                            <button type="button" class="btn btn-secondary" id="testRadarr">Test Connection</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="lidarrSettings" class="tabcontent">
+                    <h3>Lidarr Settings</h3>
+                    <form id="lidarrForm">
+                        <div class="form-group">
+                            <label for="lidarr_api_key">API Key</label>
+                            <input type="text" id="lidarr_api_key" name="api_key">
+                        </div>
+                        <div class="form-group">
+                            <label for="lidarr_app_url">App URL</label>
+                            <input type="text" id="lidarr_app_url" name="app_url" placeholder="http://your-lidarr-url:8686">
+                        </div>
+                        <div class="form-group">
+                            <label for="lidarr_hunt_missing_albums">Hunt Missing Albums</label>
+                            <input type="number" id="lidarr_hunt_missing_albums" name="hunt_missing_albums" min="0" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="lidarr_hunt_upgrade_tracks">Hunt Upgrade Tracks</label>
+                            <input type="number" id="lidarr_hunt_upgrade_tracks" name="hunt_upgrade_tracks" min="0" value="0">
+                        </div>
+                        <div class="form-group checkbox">
+                            <label for="lidarr_monitored_only">Monitored Only</label>
+                            <input type="checkbox" id="lidarr_monitored_only" name="monitored_only" checked>
+                        </div>
+                        <div class="form-group checkbox">
+                            <label for="lidarr_skip_future_releases">Skip Future Releases</label>
+                            <input type="checkbox" id="lidarr_skip_future_releases" name="skip_future_releases" checked>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Save Lidarr Settings</button>
+                            <button type="button" class="btn btn-secondary" id="testLidarr">Test Connection</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="readarrSettings" class="tabcontent">
+                    <h3>Readarr Settings</h3>
+                    <form id="readarrForm">
+                        <div class="form-group">
+                            <label for="readarr_api_key">API Key</label>
+                            <input type="text" id="readarr_api_key" name="api_key">
+                        </div>
+                        <div class="form-group">
+                            <label for="readarr_app_url">App URL</label>
+                            <input type="text" id="readarr_app_url" name="app_url" placeholder="http://your-readarr-url:8787">
+                        </div>
+                        <div class="form-group">
+                            <label for="readarr_hunt_missing_books">Hunt Missing Books</label>
+                            <input type="number" id="readarr_hunt_missing_books" name="hunt_missing_books" min="0" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="readarr_hunt_upgrade_books">Hunt Upgrade Books</label>
+                            <input type="number" id="readarr_hunt_upgrade_books" name="hunt_upgrade_books" min="0" value="0">
+                        </div>
+                        <div class="form-group checkbox">
+                            <label for="readarr_monitored_only">Monitored Only</label>
+                            <input type="checkbox" id="readarr_monitored_only" name="monitored_only" checked>
+                        </div>
+                        <div class="form-group checkbox">
+                            <label for="readarr_skip_future_releases">Skip Future Releases</label>
+                            <input type="checkbox" id="readarr_skip_future_releases" name="skip_future_releases" checked>
+                        </div>
+                        <div class="form-group checkbox">
+                            <label for="readarr_refresh_author">Refresh Author</label>
+                            <input type="checkbox" id="readarr_refresh_author" name="refresh_author" checked>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Save Readarr Settings</button>
+                            <button type="button" class="btn btn-secondary" id="testReadarr">Test Connection</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="userSettings" class="tabcontent">
+                    <h3>User Settings</h3>
+                    <form id="userForm">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword" name="currentPassword">
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" name="newPassword">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmNewPassword">Confirm New Password</label>
+                            <input type="password" id="confirmNewPassword" name="confirmNewPassword">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="enable2FAUser">Two-Factor Authentication</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="enable2FAUser" name="enable2FAUser">
+                                <span class="slider"></span>
+                            </div>
+                        </div>
+                        
+                        <div id="twoFactorUserSection" style="display: none;">
+                            <div class="form-section">
+                                <h3>Two-Factor Authentication</h3>
+                                <div class="qr-code-container">
+                                    <div id="userQrCode"></div>
+                                </div>
+                                <p>Scan this QR code with your authenticator app or enter the code manually:</p>
+                                <div class="form-group">
+                                    <input type="text" id="userSecretKey" readonly>
+                                    <button type="button" id="copyUserSecret" class="btn btn-secondary">Copy</button>
+                                </div>
+                                <div class="form-group">
+                                    <label for="userVerificationCode">Verification Code</label>
+                                    <input type="text" id="userVerificationCode" name="userVerificationCode" placeholder="Enter code from authenticator app">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Save User Settings</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Logs Tab -->
+        <section id="logs" class="tab-content">
+            <div class="logs-header">
+                <h2>System Logs</h2>
+                <div class="logs-controls">
+                    <select id="logServiceFilter">
+                        <option value="all">All Services</option>
+                        <option value="sonarr">Sonarr</option>
+                        <option value="radarr">Radarr</option>
+                        <option value="lidarr">Lidarr</option>
+                        <option value="readarr">Readarr</option>
+                        <option value="system">System</option>
+                    </select>
+                    <button id="refreshLogs" class="btn btn-secondary">Refresh</button>
+                    <button id="clearLogs" class="btn btn-danger">Clear</button>
+                </div>
+            </div>
+            <div class="logs-container">
+                <pre id="logOutput" class="log-content"></pre>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Huntarr v1.0.0 | <a href="https://github.com/plexguide/Huntarr" target="_blank">GitHub</a></p>
+    </footer>
+
+    <script src="../js/main.js"></script>
+</body>
+</html>

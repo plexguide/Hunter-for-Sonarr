@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huntarr - Login</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/png" href="../img/favicon.png">
+</head>
+<body class="dark-mode">
+    <div class="login-container">
+        <div class="logo-container">
+            <img src="../../logo/128.png" alt="Huntarr Logo" class="logo">
+            <h1>Huntarr</h1>
+        </div>
+        <div class="login-form">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group" id="twoFactorGroup" style="display: none;">
+                    <label for="twoFactorCode">2FA Code</label>
+                    <input type="text" id="twoFactorCode" name="twoFactorCode" placeholder="Enter your 2FA code">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </div>
+            </form>
+            <div id="loginError" class="error-message"></div>
+            <p class="setup-link">First time setup? <a href="setup.html">Configure Huntarr</a></p>
+        </div>
+    </div>
+    <script src="../js/login.js"></script>
+</body>
+</html>
