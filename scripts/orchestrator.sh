@@ -6,21 +6,20 @@ echo "Starting Huntarr multi-threaded backend services with orchestrator..."
 # Define script directory in a way that works on both Linux and macOS
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 SERVICES_DIR="$SCRIPT_DIR/../services"
+LOGS_DIR="$SCRIPT_DIR/logs"
 
-# Make sure services directory exists
+# Make sure directories exist
 mkdir -p "$SERVICES_DIR"
+mkdir -p "$LOGS_DIR"
+mkdir -p /config/logs
+mkdir -p /config/locks
 
 # Make sure all scripts are executable
 chmod +x "$SERVICES_DIR/sonarr.sh"
 chmod +x "$SERVICES_DIR/radarr.sh"
 chmod +x "$SERVICES_DIR/readarr.sh"
 chmod +x "$SERVICES_DIR/lidarr.sh"
-
-# Create log directory
-mkdir -p /config/logs
-
-# Create locks directory
-mkdir -p /config/locks
+chmod +x "$LOGS_DIR/log_manager.sh"
 
 # Function to continuously run a service in a loop
 run_service_loop() {
@@ -58,19 +57,8 @@ run_service_loop "lidarr" &
 
 # Main loop for log rotation and container health monitoring
 while true; do
-    # Simple log rotation (keep logs from growing too large)
-    for log_file in /config/logs/*.log; do
-        if [ -f "$log_file" ]; then
-            # Get file size in a way that works on both Linux and macOS
-            file_size=$(wc -c < "$log_file")
-            # Rotate if file is larger than 10MB
-            if [ $file_size -gt 10485760 ]; then
-                echo "$(date '+%Y-%m-%d %H:%M:%S') - Rotating log file: $log_file"
-                mv "$log_file" "${log_file}.old"
-                touch "$log_file"
-            fi
-        fi
-    done
+    # Run the log rotation script
+    "$LOGS_DIR/log_manager.sh" >> "/config/logs/log_manager.log" 2>&1
     
     # Sleep before checking logs again
     sleep 300  # Check logs every 5 minutes
