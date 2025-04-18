@@ -1,11 +1,16 @@
 {
   "api_key": "your-radarr-api-key",
-  "app_url": "http://your-readarr-url:0000",
+  "app_url": "http://your-readarr-url:8787",
   "hunt_missing_books": 1,
-  "hunt_upgrade_books": 0,
+  "hunt_upgrade_books": 5,
   "monitored_only": true,
   "skip_future_releases": true,
   "skip_author_refresh": false,
-  "log_refresh_interval_seconds": 30,
-  "api_timeout": 60
+  "refresh_author": true,
+  "random_selection": true,
+  "sleep_duration": 900,
+  "state_reset_interval_hours": 168,
+  "api_timeout": 60,
+  "debug_mode": false,
+  "log_refresh_interval_seconds": 30
 }

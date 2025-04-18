@@ -2,9 +2,11 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Install required packages and dependencies
+# Install required packages and dependencies including nano
 RUN apt-get update && apt-get install -y \
     procps \
+    nano \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy application code
@@ -13,6 +15,7 @@ COPY . /app/
 # Create necessary directories
 RUN mkdir -p /config/settings
 RUN mkdir -p /config/logs
+RUN mkdir -p /config/stateful
 RUN chmod -R 755 /config
 
 # Set environment variables
@@ -49,6 +52,7 @@ RUN chmod +x /app/services/lidarr/missing.sh || true
 RUN chmod +x /app/services/lidarr/upgrade.sh || true
 RUN chmod +x /app/services/readarr/missing.sh || true
 RUN chmod +x /app/services/readarr/upgrade.sh || true
+RUN chmod +x /app/services/readarr/api_helper.sh || true
 
 # Set entry point
 CMD ["/app/scripts/start.sh"]
