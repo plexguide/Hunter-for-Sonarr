@@ -3,15 +3,27 @@
 # Readarr service script for Huntarr
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Readarr task started"
 
-# Add actual functionality here
-# For example:
-# 1. Get list of books from Readarr API
-# 2. Process each book
-# 3. Trigger searches for missing books
-# ...
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Simulate some work
-sleep 25
+# Make sure the sub-scripts are executable
+chmod +x "$SCRIPT_DIR/missing.sh"
+chmod +x "$SCRIPT_DIR/upgrade.sh"
+
+# Execute the missing content search module
+echo "$(date '+%Y-%m-%d %H:%M:%S') - Executing Readarr missing content module"
+"$SCRIPT_DIR/missing.sh"
+MISSING_STATUS=$?
+
+# Execute the quality upgrade module
+echo "$(date '+%Y-%m-%d %H:%M:%S') - Executing Readarr quality upgrade module"
+"$SCRIPT_DIR/upgrade.sh"
+UPGRADE_STATUS=$?
+
+# Check if any module failed
+if [ $MISSING_STATUS -ne 0 ] || [ $UPGRADE_STATUS -ne 0 ]; then
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - WARNING: One or more Readarr modules returned an error"
+fi
 
 # Echo app name and time at the end
 echo "Readarr task completed at $(date '+%Y-%m-%d %H:%M:%S')"

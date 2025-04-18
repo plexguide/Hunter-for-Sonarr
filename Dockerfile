@@ -40,5 +40,15 @@ RUN chmod +x /app/services/radarr/radarr.sh || true
 RUN chmod +x /app/services/lidarr/lidarr.sh || true
 RUN chmod +x /app/services/readarr/readarr.sh || true
 
+# Make module scripts executable
+RUN chmod +x /app/services/sonarr/missing.sh || true
+RUN chmod +x /app/services/sonarr/upgrade.sh || true
+RUN chmod +x /app/services/radarr/missing.sh || true
+RUN chmod +x /app/services/radarr/upgrade.sh || true
+RUN chmod +x /app/services/lidarr/missing.sh || true
+RUN chmod +x /app/services/lidarr/upgrade.sh || true
+RUN chmod +x /app/services/readarr/missing.sh || true
+RUN chmod +x /app/services/readarr/upgrade.sh || true
+
 # Set entry point
 CMD ["/app/scripts/start.sh"]
