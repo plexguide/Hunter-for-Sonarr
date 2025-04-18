@@ -7,79 +7,50 @@ echo "Starting Huntarr multi-threaded backend services..."
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Make sure all scripts are executable
-chmod +x "$SCRIPT_DIR/sonarr.sh"
-chmod +x "$SCRIPT_DIR/radarr.sh"
-chmod +x "$SCRIPT_DIR/readarr.sh"
-chmod +x "$SCRIPT_DIR/lidarr.sh"
+chmod +x "$SCRIPT_DIR/sonarr_task.sh"
+chmod +x "$SCRIPT_DIR/radarr_task.sh"
+chmod +x "$SCRIPT_DIR/readarr_task.sh"
+chmod +x "$SCRIPT_DIR/lidarr_task.sh"
 
 # Create log directory
 mkdir -p /config/logs
 
-# Function to check if a process is running
-check_process() {
-    local pid=$1
-    local name=$2
-    if ps -p $pid > /dev/null; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - $name is running (PID: $pid)"
-        return 0
+# Create locks directory
+mkdir -p /config/locks
+
+# Function to run a service once
+run_service() {
+    local service=$1
+    local lock_file="/config/locks/${service}.lock"
+    
+    # Check if lock exists
+    if mkdir "$lock_file" 2>/dev/null; then
+        # Lock acquired, run the service
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting $service task..."
+        "$SCRIPT_DIR/${service}_task.sh" >> "/config/logs/${service}.log" 2>&1
+        
+        # Release lock
+        rmdir "$lock_file"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - $service task completed"
     else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - WARNING: $name is not running! Restarting..."
-        return 1
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - $service is already running, skipping"
     fi
 }
 
-# Function to restart a service
-restart_service() {
-    local script=$1
-    local name=$2
-    local log_file=$3
-    
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - Restarting $name service..."
-    "$SCRIPT_DIR/$script" > "$log_file" 2>&1 &
-    local new_pid=$!
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $name restarted with PID: $new_pid"
-    echo $new_pid
-}
-
-# Start all services in background
-"$SCRIPT_DIR/sonarr.sh" > /config/logs/sonarr.log 2>&1 &
-SONARR_PID=$!
-
-"$SCRIPT_DIR/radarr.sh" > /config/logs/radarr.log 2>&1 &
-RADARR_PID=$!
-
-"$SCRIPT_DIR/readarr.sh" > /config/logs/readarr.log 2>&1 &
-READARR_PID=$!
-
-"$SCRIPT_DIR/lidarr.sh" > /config/logs/lidarr.log 2>&1 &
-LIDARR_PID=$!
-
-echo "All services started in parallel:"
-echo "Sonarr PID: $SONARR_PID"
-echo "Radarr PID: $RADARR_PID"
-echo "Readarr PID: $READARR_PID"
-echo "Lidarr PID: $LIDARR_PID"
-
-# Keep container running and monitor services
+# Main loop to keep container running
 while true; do
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - Main process monitoring all services..."
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting service execution cycle..."
     
-    # Check if services are still running and restart if needed
-    if ! check_process $SONARR_PID "Sonarr"; then
-        SONARR_PID=$(restart_service "sonarr.sh" "Sonarr" "/config/logs/sonarr.log")
-    fi
+    # Run all services in parallel
+    run_service "sonarr" &
+    run_service "radarr" &
+    run_service "readarr" &
+    run_service "lidarr" &
     
-    if ! check_process $RADARR_PID "Radarr"; then
-        RADARR_PID=$(restart_service "radarr.sh" "Radarr" "/config/logs/radarr.log")
-    fi
+    # Wait for all background processes to complete
+    wait
     
-    if ! check_process $READARR_PID "Readarr"; then
-        READARR_PID=$(restart_service "readarr.sh" "Readarr" "/config/logs/readarr.log")
-    fi
-    
-    if ! check_process $LIDARR_PID "Lidarr"; then
-        LIDARR_PID=$(restart_service "lidarr.sh" "Lidarr" "/config/logs/lidarr.log")
-    fi
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - All services completed their cycle"
     
     # Simple log rotation (keep logs from growing too large)
     for log_file in /config/logs/*.log; do
@@ -95,5 +66,6 @@ while true; do
         fi
     done
     
+    # Sleep before starting the next cycle
     sleep 60
 done
