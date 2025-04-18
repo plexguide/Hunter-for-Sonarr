@@ -11,7 +11,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') - Radarr task started"
 # ...
 
 # Simulate some work
-sleep 5
+sleep 10
 
 # Echo app name and time at the end
 echo "Radarr task completed at $(date '+%Y-%m-%d %H:%M:%S')"

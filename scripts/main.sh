@@ -18,40 +18,42 @@ mkdir -p /config/logs
 # Create locks directory
 mkdir -p /config/locks
 
-# Function to run a service once
-run_service() {
+# Function to continuously run a service in a loop
+run_service_loop() {
     local service=$1
     local lock_file="/config/locks/${service}.lock"
+    local sleep_time=60  # Default sleep time between cycles (can be adjusted per service)
     
-    # Check if lock exists
-    if mkdir "$lock_file" 2>/dev/null; then
-        # Lock acquired, run the service
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting $service task..."
-        "$SCRIPT_DIR/${service}_task.sh" >> "/config/logs/${service}.log" 2>&1
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting ${service} service loop"
+    
+    # Run the service in a continuous loop
+    while true; do
+        # Check if lock exists
+        if mkdir "$lock_file" 2>/dev/null; then
+            # Lock acquired, run the service
+            echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting $service task..."
+            "$SCRIPT_DIR/${service}_task.sh" >> "/config/logs/${service}.log" 2>&1
+            
+            # Release lock
+            rmdir "$lock_file"
+            echo "$(date '+%Y-%m-%d %H:%M:%S') - $service task completed, waiting ${sleep_time}s before next cycle"
+        else
+            echo "$(date '+%Y-%m-%d %H:%M:%S') - $service is already running, skipping this cycle"
+        fi
         
-        # Release lock
-        rmdir "$lock_file"
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - $service task completed"
-    else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - $service is already running, skipping"
-    fi
+        # Sleep before next iteration
+        sleep $sleep_time
+    done
 }
 
-# Main loop to keep container running
+# Start each service in its own background loop
+run_service_loop "sonarr" &
+run_service_loop "radarr" &
+run_service_loop "readarr" &
+run_service_loop "lidarr" &
+
+# Main loop for log rotation and container health monitoring
 while true; do
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting service execution cycle..."
-    
-    # Run all services in parallel
-    run_service "sonarr" &
-    run_service "radarr" &
-    run_service "readarr" &
-    run_service "lidarr" &
-    
-    # Wait for all background processes to complete
-    wait
-    
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - All services completed their cycle"
-    
     # Simple log rotation (keep logs from growing too large)
     for log_file in /config/logs/*.log; do
         if [ -f "$log_file" ]; then
@@ -66,6 +68,6 @@ while true; do
         fi
     done
     
-    # Sleep before starting the next cycle
-    sleep 60
+    # Sleep before checking logs again
+    sleep 300  # Check logs every 5 minutes
 done

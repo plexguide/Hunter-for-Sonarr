@@ -11,7 +11,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') - Readarr task started"
 # ...
 
 # Simulate some work
-sleep 5
+sleep 25
 
 # Echo app name and time at the end
 echo "Readarr task completed at $(date '+%Y-%m-%d %H:%M:%S')"

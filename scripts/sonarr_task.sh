@@ -11,7 +11,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') - Sonarr task started"
 # ...
 
 # Simulate some work
-sleep 5
+sleep 15
 
 # Echo app name and time at the end
 echo "Sonarr task completed at $(date '+%Y-%m-%d %H:%M:%S')"
