@@ -230,7 +230,7 @@ The web interface allows you to configure all of Refresharr's settings without h
 <table>
   <tr>
     <td colspan="2"> 
-      <img width="930" alt="image" src="https://github.com/user-attachments/assets/19aa9f3c-7641-4b82-8867-22ca2e47536b" />
+      <img width="930" alt="image" src="https://github.com/user-attachments/assets/eb0e35b3-7e36-42e6-8b7c-d40c1c548a35" />
       <p align="center"><em>Settings UI</em></p>
     </td>
   </tr>
