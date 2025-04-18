@@ -1,4 +1,21 @@
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('UI: DOM content loaded, initializing application...');
+
+    // Log UI initialization to server
+    fetch('/api/logs/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            message: 'UI client initialized and loaded successfully',
+            level: 'info',
+            service: 'ui'
+        })
+    }).catch(error => {
+        console.error('Failed to log UI initialization:', error);
+    });
+
     // Check if user is authenticated
     const token = localStorage.getItem('huntarr_token');
     const username = localStorage.getItem('huntarr_username');
@@ -539,4 +556,44 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+});
+
+// Add a window load event to verify complete UI load
+window.addEventListener('load', function() {
+    console.log('UI: Window fully loaded, all resources loaded successfully');
+    
+    // Log full UI load to server
+    fetch('/api/logs/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            message: 'UI fully loaded with all resources',
+            level: 'info',
+            service: 'ui'
+        })
+    }).catch(error => {
+        console.error('Failed to log UI full load:', error);
+    });
+});
+
+// Add error monitoring to catch UI errors
+window.addEventListener('error', function(e) {
+    console.error('UI ERROR:', e.message, 'at', e.filename, ':', e.lineno);
+    
+    // Log UI error to server
+    fetch('/api/logs/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            message: `UI error: ${e.message} at ${e.filename}:${e.lineno}`,
+            level: 'error',
+            service: 'ui'
+        })
+    }).catch(error => {
+        console.error('Failed to log UI error:', error);
+    });
 });

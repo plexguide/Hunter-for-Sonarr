@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huntarr - Loading...</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .loader {
+            border: 8px solid #444;
+            border-top: 8px solid #4caf50;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+        }
+        p {
+            margin: 0;
+            font-size: 16px;
+        }
+        .status {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #999;
+        }
+    </style>
+    <script>
+        // Check every second if API is available
+        let attempts = 0;
+        const maxAttempts = 30;
+        
+        function checkApiStatus() {
+            attempts++;
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = `Connecting to API (attempt ${attempts}/${maxAttempts})...`;
+            
+            fetch('/health')
+                .then(response => {
+                    if (response.ok) {
+                        statusElement.textContent = 'UI is ready! Redirecting...';
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1000);
+                    } else {
+                        checkAgainOrFail();
+                    }
+                })
+                .catch(() => {
+                    checkAgainOrFail();
+                });
+        }
+        
+        function checkAgainOrFail() {
+            if (attempts < maxAttempts) {
+                setTimeout(checkApiStatus, 1000);
+            } else {
+                document.getElementById('status').textContent = 'Could not connect to the API. Please check the logs.';
+                document.getElementById('status').style.color = '#f44336';
+            }
+        }
+        
+        // Start checking when page loads
+        window.addEventListener('load', () => {
+            setTimeout(checkApiStatus, 1000);
+        });
+    </script>
+</head>
+<body>
+    <img src="../../logo/128.png" alt="Huntarr Logo" class="logo">
+    <h1>Huntarr</h1>
+    <p>Starting up...</p>
+    <div class="loader"></div>
+    <div id="status" class="status">Initializing...</div>
+</body>
+</html>

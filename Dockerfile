@@ -2,11 +2,12 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Install required packages and dependencies including nano
+# Install required packages and dependencies including nginx
 RUN apt-get update && apt-get install -y \
     procps \
     nano \
     curl \
+    nginx \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy application code
@@ -21,6 +22,13 @@ RUN chmod -R 755 /config
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV CONFIG_DIR=/config
+
+# Configure nginx
+RUN mkdir -p /var/log/nginx
+RUN ln -sf /dev/stdout /var/log/nginx/access.log \
+    && ln -sf /dev/stderr /var/log/nginx/error.log
+COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
 
 # Expose port
 EXPOSE 9705
