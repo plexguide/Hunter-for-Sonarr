@@ -12,8 +12,18 @@ mkdir -p /config/settings
 SOURCE_DIR="/app/support"
 DEST_DIR="/config/settings"
 
-# Array of expected configuration files
-CONFIG_FILES=("sonarr.json" "radarr.json" "lidarr.json" "readarr.json")
+# Dynamically find all JSON files in the source directory
+echo "$(date '+%Y-%m-%d %H:%M:%S') - Looking for JSON configuration files in ${SOURCE_DIR}"
+CONFIG_FILES=()
+for json_file in "${SOURCE_DIR}"/*.json; do
+    if [ -f "$json_file" ]; then
+        # Extract just the filename from the path
+        filename=$(basename "$json_file")
+        CONFIG_FILES+=("$filename")
+    fi
+done
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') - Found ${#CONFIG_FILES[@]} configuration files: ${CONFIG_FILES[*]}"
 
 # Loop through each config file and copy if missing
 for config_file in "${CONFIG_FILES[@]}"; do
