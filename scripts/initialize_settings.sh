@@ -13,7 +13,7 @@ SOURCE_DIR="/app/support"
 DEST_DIR="/config/settings"
 
 # Array of expected configuration files
-CONFIG_FILES=("sonarr.json" "radarr.json" "lidarr.json" "readarr.json" "default.json")
+CONFIG_FILES=("sonarr.json" "radarr.json" "lidarr.json" "readarr.json")
 
 # Loop through each config file and copy if missing
 for config_file in "${CONFIG_FILES[@]}"; do
