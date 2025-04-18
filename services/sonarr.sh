@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Sonarr task script for Huntarr
+# Sonarr service script for Huntarr
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Sonarr task started"
 
 # Add actual functionality here

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Radarr task script for Huntarr
+# Radarr service script for Huntarr
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Radarr task started"
 
 # Add actual functionality here

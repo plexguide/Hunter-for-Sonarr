@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Lidarr task script for Huntarr
+# Lidarr service script for Huntarr
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Lidarr task started"
 
 # Add actual functionality here

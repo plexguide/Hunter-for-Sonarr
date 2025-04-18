@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Readarr task script for Huntarr
+# Readarr service script for Huntarr
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Readarr task started"
 
 # Add actual functionality here

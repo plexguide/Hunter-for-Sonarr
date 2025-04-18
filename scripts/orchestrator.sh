@@ -1,16 +1,20 @@
 #!/bin/bash
 
-# Main script to launch all Huntarr services in parallel
-echo "Starting Huntarr multi-threaded backend services..."
+# Orchestrator script to launch all Huntarr services in parallel
+echo "Starting Huntarr multi-threaded backend services with orchestrator..."
 
 # Define script directory in a way that works on both Linux and macOS
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SERVICES_DIR="$SCRIPT_DIR/../services"
+
+# Make sure services directory exists
+mkdir -p "$SERVICES_DIR"
 
 # Make sure all scripts are executable
-chmod +x "$SCRIPT_DIR/sonarr_task.sh"
-chmod +x "$SCRIPT_DIR/radarr_task.sh"
-chmod +x "$SCRIPT_DIR/readarr_task.sh"
-chmod +x "$SCRIPT_DIR/lidarr_task.sh"
+chmod +x "$SERVICES_DIR/sonarr.sh"
+chmod +x "$SERVICES_DIR/radarr.sh"
+chmod +x "$SERVICES_DIR/readarr.sh"
+chmod +x "$SERVICES_DIR/lidarr.sh"
 
 # Create log directory
 mkdir -p /config/logs
@@ -32,7 +36,7 @@ run_service_loop() {
         if mkdir "$lock_file" 2>/dev/null; then
             # Lock acquired, run the service
             echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting $service task..."
-            "$SCRIPT_DIR/${service}_task.sh" >> "/config/logs/${service}.log" 2>&1
+            "$SERVICES_DIR/${service}.sh" >> "/config/logs/${service}.log" 2>&1
             
             # Release lock
             rmdir "$lock_file"

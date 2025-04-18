@@ -24,6 +24,7 @@ EXPOSE 9705
 
 # Make scripts executable
 RUN chmod +x /app/scripts/*.sh
+RUN chmod +x /app/scripts/orchestrator.sh
 
 # Set entry point
 CMD ["/app/scripts/start.sh"]
