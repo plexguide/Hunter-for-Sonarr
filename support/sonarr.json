@@ -6,6 +6,11 @@
   "monitored_only": true,
   "skip_future_episodes": true,
   "skip_series_refresh": false,
-  "log_refresh_interval_seconds": 30,
-  "api_timeout": 60
+  "random_selection": true,
+  "random_upgrades": true,
+  "sleep_duration": 1200,
+  "state_reset_interval_hours": 168,
+  "api_timeout": 60,
+  "debug_mode": false,
+  "log_refresh_interval_seconds": 30
 }
