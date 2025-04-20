@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
+"""
+Huntarr-Sonarr - Automatically search for missing episodes and episode upgrades
+"""
+
 import os
-import time
-import logging
 import sys
+import time
+import random
+import logging
+import requests
+from datetime import datetime, timedelta
+import json
 import signal
 import api
 import state
@@ -13,13 +21,30 @@ import upgrade
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    handlers=[
+        logging.StreamHandler()
+    ]
 )
-logger = logging.getLogger('huntarr-sonarr')
+logger = logging.getLogger()
 
-# Get environment variables for configuration
-SLEEP_SECONDS = int(os.environ.get('SLEEP_SECONDS', 1500))
-COMMAND_WAIT_ATTEMPTS = int(os.environ.get('COMMAND_WAIT_ATTEMPTS', 600))
+# Environment variables with defaults
+API_KEY = os.environ.get('API_KEY', '')
+API_URL = os.environ.get('API_URL', 'http://localhost:8989')
+API_TIMEOUT = int(os.environ.get('API_TIMEOUT', '60'))
+MONITORED_ONLY = os.environ.get('MONITORED_ONLY', 'true').lower() == 'true'
+HUNT_MISSING_SHOWS = int(os.environ.get('HUNT_MISSING_SHOWS', '1'))
+HUNT_UPGRADE_EPISODES = int(os.environ.get('HUNT_UPGRADE_EPISODES', '0'))
+SLEEP_SECONDS = int(os.environ.get('SLEEP_SECONDS', '1800'))
+STATE_RESET_HOURS = int(os.environ.get('STATE_RESET_HOURS', '168'))
+RANDOM_MISSING = os.environ.get('RANDOM_MISSING', 'true').lower() == 'true'
+RANDOM_UPGRADES = os.environ.get('RANDOM_UPGRADES', 'true').lower() == 'true'
+SKIP_FUTURE_EPISODES = os.environ.get('SKIP_FUTURE_EPISODES', 'true').lower() == 'true'
+SKIP_SERIES_REFRESH = os.environ.get('SKIP_SERIES_REFRESH', 'true').lower() == 'true'
+COMMAND_WAIT_SECONDS = int(os.environ.get('COMMAND_WAIT_SECONDS', '1'))
+COMMAND_WAIT_ATTEMPTS = int(os.environ.get('COMMAND_WAIT_ATTEMPTS', '600'))
+MINIMUM_DOWNLOAD_QUEUE_SIZE = int(os.environ.get('MINIMUM_DOWNLOAD_QUEUE_SIZE', '-1'))
+LOG_EPISODE_ERRORS = os.environ.get('LOG_EPISODE_ERRORS', 'false').lower() == 'true'
+DEBUG_API_CALLS = os.environ.get('DEBUG_API_CALLS', 'false').lower() == 'true'
 
 # Global flag to control execution
 running = True
@@ -114,6 +139,7 @@ def main():
                 # Sleep between cycles
                 if running:
                     logger.info(f"Cycle {cycle_count} completed, sleeping for {SLEEP_SECONDS} seconds")
+                    logger.info("⭐ Tool Great? 💰 Donate 2 Daughter's College Fund - https://donate.plex.one")
                     for _ in range(SLEEP_SECONDS):
                         if not running:
                             break
@@ -122,6 +148,8 @@ def main():
             except Exception as e:
                 logger.error(f"Error during cycle {cycle_count}: {e}")
                 # Sleep a bit before retrying
+                logger.info(f"Sleeping for {SLEEP_SECONDS} seconds before next attempt...")
+                logger.info("⭐ Tool Great? 💰 Donate to my Daughter's College Fund - https://donate.plex.one")
                 time.sleep(10)
     
     except KeyboardInterrupt:

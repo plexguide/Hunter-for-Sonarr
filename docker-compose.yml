@@ -16,7 +16,7 @@ services:
       - MONITORED_ONLY=true
       - HUNT_MISSING_SHOWS=1
       - HUNT_UPGRADE_EPISODES=1
-      - SLEEP_SECONDS=1500
+      - SLEEP_SECONDS=1800
       - STATE_RESET_HOURS=168
       - RANDOM_MISSING=true
       - RANDOM_UPGRADES=true

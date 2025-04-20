@@ -5,7 +5,7 @@ echo "Starting Huntarr-Sonarr"
 echo "----------------------"
 
 # Install Python dependencies
-pip install -r /scripts/requirements.txt
+pip install --no-cache-dir -r /scripts/requirements.txt
 
 # Make the main script executable
 chmod +x /scripts/huntarr-sonarr.py
