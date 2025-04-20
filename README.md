@@ -14,11 +14,21 @@
   </tr>
 </table>
 
-## Huntarr-Sonarr Environment Variable Edition
+## Table of Contents
+- [Overview](#overview)
+- [Related Projects](#related-projects)
+- [Features](#features)
+- [How It Works](#how-it-works)
+- [Configuration Options](#configuration-options)
+- [Persistent Storage](#persistent-storage)
+- [Installation Methods](#installation-methods)
+  - [Docker Run](#docker-run)
+  - [Docker Compose](#docker-compose)
+- [Use Cases](#use-cases)
+- [Tips](#tips)
+- [Troubleshooting](#troubleshooting)
 
-This is a simplified version of Huntarr that works with Sonarr only and uses environment variables for configuration. All scripts are placed in the `/scripts` directory.
-
-### Overview
+## Overview
 
 Huntarr-Sonarr continuously searches your Sonarr library for:
 1. Shows with missing episodes
@@ -26,73 +36,60 @@ Huntarr-Sonarr continuously searches your Sonarr library for:
 
 It automatically triggers searches while being gentle on your indexers, helping you complete your collection with the best available quality.
 
-### Usage
+## Related Projects
 
-#### Docker Run
+* [Huntarr - Radarr Edition](https://github.com/plexguide/Radarr-Hunter) - Sister version for Movies
+* [Huntarr - Lidarr Edition](https://github.com/plexguide/Lidarr-Hunter) - Sister version for Music
+* [Huntarr - Readarr Edition](https://github.com/plexguide/Huntarr-Readarr) - Sister version for Books
+* [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
+* Visit [PlexGuide](https://plexguide.com) for more great scripts
 
-```bash
-docker run -d --name huntarr-sonarr \
-  --restart always \
-  -v /path/to/config:/config \
-  -e API_KEY=your-sonarr-api-key \
-  -e API_URL=http://sonarr:8989 \
-  -e MONITORED_ONLY=true \
-  -e HUNT_MISSING_SHOWS=1 \
-  -e HUNT_UPGRADE_EPISODES=0 \
-  -e SLEEP_SECONDS=1800 \
-  -e STATE_RESET_HOURS=168 \
-  -e RANDOM_MISSING=true \
-  -e RANDOM_UPGRADES=true \
-  -e SKIP_FUTURE_EPISODES=true \
-  -e SKIP_SERIES_REFRESH=true \
-  -e COMMAND_WAIT_SECONDS=1 \
-  -e COMMAND_WAIT_ATTEMPTS=600 \
-  -e MINIMUM_DOWNLOAD_QUEUE_SIZE=-1 \
-  -e LOG_EPISODE_ERRORS=false \
-  -e DEBUG_API_CALLS=false \
-  huntarr/4sonarr:latest
-```
+## PayPal Donations – Building My Daughter's Future
 
-#### Docker Compose
+My 12-year-old daughter is passionate about singing, dancing, and exploring STEM. She consistently earns A-B honors and dreams of a bright future. Every donation goes directly into her college fund, helping turn those dreams into reality. Thank you for your generous support!
 
-Create a `docker-compose.yml` file:
+[![Donate with PayPal button](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate?hosted_button_id=58AYJ68VVMGSC)
 
-```yaml
-version: "3.8"
-services:
-  huntarr-sonarr:
-    image: huntarr/4sonarr:latest
-    container_name: huntarr-sonarr
-    restart: unless-stopped
-    volumes:
-      - /path/to/config:/config
-    environment:
-      - API_KEY=your-sonarr-api-key
-      - API_URL=http://sonarr:8989
-      - API_TIMEOUT=60
-      - MONITORED_ONLY=true
-      - HUNT_MISSING_SHOWS=1
-      - HUNT_UPGRADE_EPISODES=0
-      - SLEEP_SECONDS=1800
-      - STATE_RESET_HOURS=168
-      - RANDOM_MISSING=true
-      - RANDOM_UPGRADES=true
-      - SKIP_FUTURE_EPISODES=true
-      - SKIP_SERIES_REFRESH=true
-      - COMMAND_WAIT_SECONDS=1
-      - COMMAND_WAIT_ATTEMPTS=600
-      - MINIMUM_DOWNLOAD_QUEUE_SIZE=-1
-      - LOG_EPISODE_ERRORS=false
-      - DEBUG_API_CALLS=false
-```
+## Features
 
-Then run:
+- 🔄 **Continuous Operation**: Runs indefinitely until manually stopped
+- 🎯 **Dual Targeting System**: Targets both missing items and quality upgrades
+- 🎲 **Separate Random Controls**: Separate toggles for random missing content and random upgrades
+- ⏱️ **Throttled Searches**: Includes configurable delays to prevent overloading indexers
+- 📊 **Status Reporting**: Provides clear feedback about what it's doing and which items it's searching for
+- 🛡️ **Error Handling**: Gracefully handles connection issues and API failures
+- 🔁 **State Tracking**: Remembers which items have been processed to avoid duplicate searches
+- ⚙️ **Configurable Reset Timer**: Automatically resets search history after a configurable period
+- 📦 **Modular Design**: Modern codebase with separated concerns for easier maintenance
+- 🔮 **Future Item Skipping**: Skip processing items with future release dates
+- 💾 **Reduced Disk Activity**: Option to skip metadata refresh before processing
+- 📝 **Stateful Operation**: Processed state is now permanently saved between restarts
+- ⚙️ **Advanced Settings**: Control API timeout, command wait parameters, and more
 
-```bash
-docker-compose up -d
-```
+## Indexers Approving of Huntarr:
+* https://ninjacentral.co.za
 
-### Configuration Options
+## How It Works
+
+1. **Initialization**: Connects to your Sonarr instance and analyzes your library
+2. **Missing Content**: 
+   - Identifies items with missing episodes
+   - Randomly or sequentially selects items to process (configurable)
+   - Refreshes metadata (optional) and triggers searches
+   - Skips items with future release dates (configurable)
+3. **Quality Upgrades**:
+   - Finds items that don't meet your quality cutoff settings
+   - Processes them in configurable batches
+   - Uses smart pagination to handle large libraries
+   - Can operate in random or sequential mode (configurable)
+   - Skips items with future release dates (configurable)
+4. **State Management**:
+   - Tracks which items have been processed
+   - Stores this information persistently in the `/config` volume
+   - Automatically resets this tracking after a configurable time period
+5. **Repeat Cycle**: Waits for a configurable period before starting the next cycle
+
+## Configuration Options
 
 | Environment Variable | Default | Description |
 |---------------------|---------|-------------|
@@ -159,58 +156,71 @@ To ensure data persistence, make sure you map the `/config` directory to a persi
 
 This mapping is included in all of the installation examples above.
 
-## Related Projects
+## Installation Methods
 
-* [Huntarr - Radarr Edition](https://github.com/plexguide/Radarr-Hunter) - Sister version for Movies
-* [Huntarr - Lidarr Edition](https://github.com/plexguide/Lidarr-Hunter) - Sister version for Music
-* [Huntarr - Readarr Edition](https://github.com/plexguide/Huntarr-Readarr) - Sister version for Books
-* [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
-* Visit [PlexGuide](https://plexguide.com) for more great scripts
+### Docker Run
 
-## PayPal Donations – Building My Daughter's Future
+```bash
+docker run -d --name huntarr-sonarr \
+  --restart always \
+  -v /path/to/config:/config \
+  -e API_KEY=your-sonarr-api-key \
+  -e API_URL=http://sonarr:8989 \
+  -e MONITORED_ONLY=true \
+  -e HUNT_MISSING_SHOWS=1 \
+  -e HUNT_UPGRADE_EPISODES=0 \
+  -e SLEEP_SECONDS=1800 \
+  -e STATE_RESET_HOURS=168 \
+  -e RANDOM_MISSING=true \
+  -e RANDOM_UPGRADES=true \
+  -e SKIP_FUTURE_EPISODES=true \
+  -e SKIP_SERIES_REFRESH=true \
+  -e COMMAND_WAIT_SECONDS=1 \
+  -e COMMAND_WAIT_ATTEMPTS=600 \
+  -e MINIMUM_DOWNLOAD_QUEUE_SIZE=-1 \
+  -e LOG_EPISODE_ERRORS=false \
+  -e DEBUG_API_CALLS=false \
+  huntarr/4sonarr:latest
+```
 
-My 12-year-old daughter is passionate about singing, dancing, and exploring STEM. She consistently earns A-B honors and dreams of a bright future. Every donation goes directly into her college fund, helping turn those dreams into reality. Thank you for your generous support!
+### Docker Compose
 
-[![Donate with PayPal button](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate?hosted_button_id=58AYJ68VVMGSC)
+Create a `docker-compose.yml` file:
 
-## Features
+```yaml
+version: "3.8"
+services:
+  huntarr-sonarr:
+    image: huntarr/4sonarr:latest
+    container_name: huntarr-sonarr
+    restart: unless-stopped
+    volumes:
+      - /path/to/config:/config
+    environment:
+      - API_KEY=your-sonarr-api-key
+      - API_URL=http://sonarr:8989
+      - API_TIMEOUT=60
+      - MONITORED_ONLY=true
+      - HUNT_MISSING_SHOWS=1
+      - HUNT_UPGRADE_EPISODES=0
+      - SLEEP_SECONDS=1800
+      - STATE_RESET_HOURS=168
+      - RANDOM_MISSING=true
+      - RANDOM_UPGRADES=true
+      - SKIP_FUTURE_EPISODES=true
+      - SKIP_SERIES_REFRESH=true
+      - COMMAND_WAIT_SECONDS=1
+      - COMMAND_WAIT_ATTEMPTS=600
+      - MINIMUM_DOWNLOAD_QUEUE_SIZE=-1
+      - LOG_EPISODE_ERRORS=false
+      - DEBUG_API_CALLS=false
+```
 
-- 🔄 **Continuous Operation**: Runs indefinitely until manually stopped
-- 🎯 **Dual Targeting System**: Targets both missing items and quality upgrades
-- 🎲 **Separate Random Controls**: Separate toggles for random missing content and random upgrades
-- ⏱️ **Throttled Searches**: Includes configurable delays to prevent overloading indexers
-- 📊 **Status Reporting**: Provides clear feedback about what it's doing and which items it's searching for
-- 🛡️ **Error Handling**: Gracefully handles connection issues and API failures
-- 🔁 **State Tracking**: Remembers which items have been processed to avoid duplicate searches
-- ⚙️ **Configurable Reset Timer**: Automatically resets search history after a configurable period
-- 📦 **Modular Design**: Modern codebase with separated concerns for easier maintenance
-- 🔮 **Future Item Skipping**: Skip processing items with future release dates
-- 💾 **Reduced Disk Activity**: Option to skip metadata refresh before processing
-- 📝 **Stateful Operation**: Processed state is now permanently saved between restarts
-- ⚙️ **Advanced Settings**: Control API timeout, command wait parameters, and more
+Then run:
 
-## Indexers Approving of Huntarr:
-* https://ninjacentral.co.za
-
-## How It Works
-
-1. **Initialization**: Connects to your Sonarr instance and analyzes your library
-2. **Missing Content**: 
-   - Identifies items with missing episodes
-   - Randomly or sequentially selects items to process (configurable)
-   - Refreshes metadata (optional) and triggers searches
-   - Skips items with future release dates (configurable)
-3. **Quality Upgrades**:
-   - Finds items that don't meet your quality cutoff settings
-   - Processes them in configurable batches
-   - Uses smart pagination to handle large libraries
-   - Can operate in random or sequential mode (configurable)
-   - Skips items with future release dates (configurable)
-4. **State Management**:
-   - Tracks which items have been processed
-   - Stores this information persistently in the `/config` volume
-   - Automatically resets this tracking after a configurable time period
-5. **Repeat Cycle**: Waits for a configurable period before starting the next cycle
+```bash
+docker-compose up -d
+```
 
 ## Use Cases
 
