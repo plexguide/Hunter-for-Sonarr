@@ -119,16 +119,6 @@ To view the logs, simply run:
 docker logs huntarr-sonarr
 ```
 
-### Running Manually
-
-If you want to run Huntarr-Sonarr manually, you can enter the container and run:
-
-```bash
-huntarr-sonarr
-```
-
-This will start the process with output directly to the console.
-
 ## Persistent Storage
 
 Huntarr stores all its configuration and state information in persistent storage, ensuring your settings and processed state are maintained across container restarts and updates.
