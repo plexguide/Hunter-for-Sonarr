@@ -39,16 +39,18 @@ docker run -d --name huntarr-sonarr \
   -e MONITORED_ONLY=true \
   -e HUNT_MISSING_SHOWS=1 \
   -e HUNT_UPGRADE_EPISODES=0 \
-  -e SLEEP_SECONDS=600 \
-  -e STATE_RESET_HOURS=72 \
+  -e SLEEP_SECONDS=1800 \
+  -e STATE_RESET_HOURS=168 \
   -e RANDOM_MISSING=true \
   -e RANDOM_UPGRADES=true \
   -e SKIP_FUTURE_EPISODES=true \
-  -e SKIP_SERIES_REFRESH=false \
-  -e COMMAND_WAIT_SECONDS=2 \
+  -e SKIP_SERIES_REFRESH=true \
+  -e COMMAND_WAIT_SECONDS=1 \
   -e COMMAND_WAIT_ATTEMPTS=600 \
   -e MINIMUM_DOWNLOAD_QUEUE_SIZE=-1 \
-  huntarr-sonarr:latest
+  -e LOG_EPISODE_ERRORS=false \
+  -e DEBUG_API_CALLS=false \
+  huntarr/4sonarr:latest
 ```
 
 #### Docker Compose
@@ -59,7 +61,7 @@ Create a `docker-compose.yml` file:
 version: "3.8"
 services:
   huntarr-sonarr:
-    image: huntarr-sonarr:latest
+    image: huntarr/4sonarr:latest
     container_name: huntarr-sonarr
     restart: unless-stopped
     volumes:
@@ -67,18 +69,21 @@ services:
     environment:
       - API_KEY=your-sonarr-api-key
       - API_URL=http://sonarr:8989
+      - API_TIMEOUT=60
       - MONITORED_ONLY=true
       - HUNT_MISSING_SHOWS=1
       - HUNT_UPGRADE_EPISODES=0
-      - SLEEP_SECONDS=600
-      - STATE_RESET_HOURS=72
+      - SLEEP_SECONDS=1800
+      - STATE_RESET_HOURS=168
       - RANDOM_MISSING=true
       - RANDOM_UPGRADES=true
       - SKIP_FUTURE_EPISODES=true
-      - SKIP_SERIES_REFRESH=false
-      - COMMAND_WAIT_SECONDS=2
+      - SKIP_SERIES_REFRESH=true
+      - COMMAND_WAIT_SECONDS=1
       - COMMAND_WAIT_ATTEMPTS=600
       - MINIMUM_DOWNLOAD_QUEUE_SIZE=-1
+      - LOG_EPISODE_ERRORS=false
+      - DEBUG_API_CALLS=false
 ```
 
 Then run:
@@ -97,7 +102,7 @@ docker-compose up -d
 | MONITORED_ONLY | true | Only process monitored shows and episodes |
 | HUNT_MISSING_SHOWS | 1 | Maximum number of missing shows to process per cycle |
 | HUNT_UPGRADE_EPISODES | 0 | Maximum number of episodes to upgrade per cycle |
-| SLEEP_SECONDS | 1500 | Time to wait between cycles (in seconds) |
+| SLEEP_SECONDS | 1800 | Time to wait between cycles (in seconds) |
 | STATE_RESET_HOURS | 168 | Hours after which processed items will be forgotten (0 to disable) |
 | RANDOM_MISSING | true | Select missing shows randomly instead of sequentially |
 | RANDOM_UPGRADES | true | Select upgrade episodes randomly instead of sequentially |
@@ -106,6 +111,8 @@ docker-compose up -d
 | COMMAND_WAIT_SECONDS | 1 | Time to wait between commands (in seconds) |
 | COMMAND_WAIT_ATTEMPTS | 600 | Maximum number of attempts for commands |
 | MINIMUM_DOWNLOAD_QUEUE_SIZE | -1 | Skip processing if queue is larger than this (use -1 to disable) |
+| LOG_EPISODE_ERRORS | false | Log individual episode errors |
+| DEBUG_API_CALLS | false | Log detailed API call information |
 
 ### Viewing Logs
 
