@@ -1,40 +1,42 @@
 FROM python:3.9-slim
+
 WORKDIR /app
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-# Install Flask for the web interface
-RUN pip install --no-cache-dir flask
-# Copy application files
-COPY *.py ./
-COPY utils/ ./utils/
-COPY web_server.py ./
-# Create templates directory and copy index.html
-RUN mkdir -p templates static/css static/js
-COPY templates/ ./templates/
-COPY static/ ./static/
-# Create required directories
-RUN mkdir -p /config/stateful /config/settings
-# Default environment variables
-ENV API_KEY="your-api-key" \
-API_URL="http://your-sonarr-address:8989" \
-API_TIMEOUT="60" \
-HUNT_MISSING_SHOWS=1 \
-HUNT_UPGRADE_EPISODES=5 \
-SLEEP_DURATION=900 \
-STATE_RESET_INTERVAL_HOURS=168 \
-RANDOM_SELECTION="true" \
-MONITORED_ONLY="true" \
-DEBUG_MODE="false" \
-ENABLE_WEB_UI="true" \
-SKIP_FUTURE_EPISODES="true" \
-SKIP_SERIES_REFRESH="false"
-# Create volume mount points
-VOLUME ["/config"]
-# Expose web interface port
-EXPOSE 8988
-# Add startup script that conditionally starts the web UI
-COPY start.sh .
-RUN chmod +x start.sh
-# Run the startup script which will decide what to launch
-CMD ["./start.sh"]
+
+# Install required packages and dependencies
+RUN apt-get update && apt-get install -y \
+    procps \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create necessary directories
+RUN mkdir -p /config/stateful
+RUN chmod -R 755 /config
+RUN mkdir -p /scripts
+
+# Set environment variables with defaults
+ENV PYTHONPATH=/app
+ENV CONFIG_DIR=/config
+ENV API_KEY=""
+ENV API_URL="http://localhost:8989"
+ENV API_TIMEOUT=60
+ENV MONITORED_ONLY=true
+ENV HUNT_MISSING_SHOWS=1
+ENV HUNT_UPGRADE_EPISODES=0
+ENV SLEEP_SECONDS=1800
+ENV STATE_RESET_HOURS=168
+ENV RANDOM_MISSING=true
+ENV RANDOM_UPGRADES=true
+ENV SKIP_FUTURE_EPISODES=true
+ENV SKIP_SERIES_REFRESH=true
+ENV COMMAND_WAIT_SECONDS=1
+ENV COMMAND_WAIT_ATTEMPTS=600
+ENV MINIMUM_DOWNLOAD_QUEUE_SIZE=-1
+ENV LOG_EPISODE_ERRORS=false
+ENV DEBUG_API_CALLS=false
+
+# Copy scripts
+COPY scripts /scripts
+RUN chmod -R +x /scripts
+
+# Set entry point
+ENTRYPOINT ["/scripts/start.sh"]
