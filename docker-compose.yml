@@ -1,17 +1,31 @@
+version: "3.8"
 services:
-  huntarr:
+  huntarr-sonarr:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: huntarr
+    container_name: huntarr-sonarr
+    restart: unless-stopped
     volumes:
-      - huntarr-config:/config
+      - huntarr-sonarr-config:/config
     environment:
       - TZ=America/New_York
-    ports:
-      - "9705:9705"
-    restart: unless-stopped
+      - API_KEY=your-sonarr-api-key
+      - API_URL=http://sonarr:8989
+      - API_TIMEOUT=60
+      - MONITORED_ONLY=true
+      - HUNT_MISSING_SHOWS=1
+      - HUNT_UPGRADE_EPISODES=0
+      - SLEEP_SECONDS=1500
+      - STATE_RESET_HOURS=168
+      - RANDOM_MISSING=true
+      - RANDOM_UPGRADES=true
+      - SKIP_FUTURE_EPISODES=true
+      - SKIP_SERIES_REFRESH=true
+      - COMMAND_WAIT_SECONDS=1
+      - COMMAND_WAIT_ATTEMPTS=600
+      - MINIMUM_DOWNLOAD_QUEUE_SIZE=-1
 
 volumes:
-  huntarr-config:
-    name: huntarr-config
+  huntarr-sonarr-config:
+    name: huntarr-sonarr-config

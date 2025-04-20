@@ -2,43 +2,39 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Install required packages and dependencies including nano
+# Install required packages and dependencies
 RUN apt-get update && apt-get install -y \
     procps \
-    nano \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy application code
-COPY . /app/
-
 # Create necessary directories
-RUN mkdir -p /config/settings
-RUN mkdir -p /config/logs
 RUN mkdir -p /config/stateful
 RUN chmod -R 755 /config
+RUN mkdir -p /scripts
 
-# Set environment variables
+# Set environment variables with defaults
 ENV PYTHONPATH=/app
 ENV CONFIG_DIR=/config
+ENV API_KEY=""
+ENV API_URL="http://localhost:8989"
+ENV API_TIMEOUT=60
+ENV MONITORED_ONLY=true
+ENV HUNT_MISSING_SHOWS=1
+ENV HUNT_UPGRADE_EPISODES=0
+ENV SLEEP_SECONDS=1500
+ENV STATE_RESET_HOURS=168
+ENV RANDOM_MISSING=true
+ENV RANDOM_UPGRADES=true
+ENV SKIP_FUTURE_EPISODES=true
+ENV SKIP_SERIES_REFRESH=true
+ENV COMMAND_WAIT_SECONDS=1
+ENV COMMAND_WAIT_ATTEMPTS=600
+ENV MINIMUM_DOWNLOAD_QUEUE_SIZE=-1
 
-# Expose port
-EXPOSE 9705
-
-# Make scripts executable
-RUN chmod +x /app/scripts/*.sh
-RUN chmod +x /app/scripts/orchestrator.sh
-RUN mkdir -p /app/scripts/logs
-RUN chmod +x /app/scripts/logs/*.sh
-
-# Create service directories
-RUN mkdir -p /app/services/sonarr
-RUN mkdir -p /app/services/radarr
-RUN mkdir -p /app/services/lidarr
-RUN mkdir -p /app/services/readarr
-
-# Make all service scripts executable in a single command
-RUN find /app/services -name "*.sh" -type f -exec chmod +x {} \;
+# Copy scripts
+COPY scripts /scripts
+RUN chmod -R +x /scripts
 
 # Set entry point
-CMD ["/app/scripts/start.sh"]
+ENTRYPOINT ["/scripts/start.sh"]

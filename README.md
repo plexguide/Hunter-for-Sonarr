@@ -13,42 +13,144 @@
     <td colspan="2"><img src="https://github.com/user-attachments/assets/34264f2e-928d-44e5-adb7-0dbd08fadfd0" width="100%"/></td>
   </tr>
 </table>
- 
-**NOTE**: Working to Intergrate Other Applications! If making changes in the UI do not appear to take effect after saving, type: `docker restart hunter`
 
-* Sonarr [Good]
-* Radarr [Not Incorporated Yet]
-* Lidarr [Not Incorporated Yet]
-* Readarr [Not Incorporated Yet]
+## Huntarr-Sonarr Environment Variable Edition
 
-## WARNING
+This is a simplified version of Huntarr that works with Sonarr only and uses environment variables for configuration. All scripts are placed in the `/scripts` directory.
 
-This uses a new repo `huntarr\huntarr` and does not utilize the env variable and requires the UI. Please read the documentation.
+### Overview
 
-**Change Log:**
-Visit: https://github.com/plexguide/Huntarr/releases/
+Huntarr-Sonarr continuously searches your Sonarr library for:
+1. Shows with missing episodes
+2. Episodes that need quality upgrades
 
-## Table of Contents
-- [Overview](#overview)
-- [Related Projects](#related-projects)
-- [Features](#features)
-- [How It Works](#how-it-works)
-- [Web Interface](#web-interface)
-- [Persistent Storage](#persistent-storage)
-- [Installation Methods](#installation-methods)
-  - [Docker Run](#docker-run)
-  - [Docker Compose](#docker-compose)
-  - [Unraid Users](#unraid-users)
-  - [SystemD Service](#systemd-service)
-- [Use Cases](#use-cases)
-- [Tips](#tips)
-- [Troubleshooting](#troubleshooting)
+It automatically triggers searches while being gentle on your indexers, helping you complete your collection with the best available quality.
 
-## Overview
+### Usage
 
-This application continually searches your media libraries for missing content and items that need quality upgrades. It automatically triggers searches for both missing items and those below your quality cutoff. It's designed to run continuously while being gentle on your indexers, helping you gradually complete your media collection with the best available quality.
+#### Docker Run
 
-For detailed documentation, please visit our [Wiki](https://github.com/plexguide/Huntarr/wiki).
+```bash
+docker run -d --name huntarr-sonarr \
+  --restart always \
+  -v /path/to/config:/config \
+  -e API_KEY=your-sonarr-api-key \
+  -e API_URL=http://sonarr:8989 \
+  -e MONITORED_ONLY=true \
+  -e HUNT_MISSING_SHOWS=1 \
+  -e HUNT_UPGRADE_EPISODES=0 \
+  -e SLEEP_SECONDS=600 \
+  -e STATE_RESET_HOURS=72 \
+  -e RANDOM_MISSING=true \
+  -e RANDOM_UPGRADES=true \
+  -e SKIP_FUTURE_EPISODES=true \
+  -e SKIP_SERIES_REFRESH=false \
+  -e COMMAND_WAIT_SECONDS=2 \
+  -e COMMAND_WAIT_ATTEMPTS=600 \
+  -e MINIMUM_DOWNLOAD_QUEUE_SIZE=-1 \
+  huntarr-sonarr:latest
+```
+
+#### Docker Compose
+
+Create a `docker-compose.yml` file:
+
+```yaml
+version: "3.8"
+services:
+  huntarr-sonarr:
+    image: huntarr-sonarr:latest
+    container_name: huntarr-sonarr
+    restart: unless-stopped
+    volumes:
+      - /path/to/config:/config
+    environment:
+      - API_KEY=your-sonarr-api-key
+      - API_URL=http://sonarr:8989
+      - MONITORED_ONLY=true
+      - HUNT_MISSING_SHOWS=1
+      - HUNT_UPGRADE_EPISODES=0
+      - SLEEP_SECONDS=600
+      - STATE_RESET_HOURS=72
+      - RANDOM_MISSING=true
+      - RANDOM_UPGRADES=true
+      - SKIP_FUTURE_EPISODES=true
+      - SKIP_SERIES_REFRESH=false
+      - COMMAND_WAIT_SECONDS=2
+      - COMMAND_WAIT_ATTEMPTS=600
+      - MINIMUM_DOWNLOAD_QUEUE_SIZE=-1
+```
+
+Then run:
+
+```bash
+docker-compose up -d
+```
+
+### Configuration Options
+
+| Environment Variable | Default | Description |
+|---------------------|---------|-------------|
+| API_KEY | (Required) | Your Sonarr API key |
+| API_URL | http://localhost:8989 | URL to your Sonarr instance |
+| API_TIMEOUT | 60 | Timeout for API requests in seconds |
+| MONITORED_ONLY | true | Only process monitored shows and episodes |
+| HUNT_MISSING_SHOWS | 1 | Maximum number of missing shows to process per cycle |
+| HUNT_UPGRADE_EPISODES | 0 | Maximum number of episodes to upgrade per cycle |
+| SLEEP_SECONDS | 1500 | Time to wait between cycles (in seconds) |
+| STATE_RESET_HOURS | 168 | Hours after which processed items will be forgotten (0 to disable) |
+| RANDOM_MISSING | true | Select missing shows randomly instead of sequentially |
+| RANDOM_UPGRADES | true | Select upgrade episodes randomly instead of sequentially |
+| SKIP_FUTURE_EPISODES | true | Skip processing episodes with future air dates |
+| SKIP_SERIES_REFRESH | true | Skip refreshing series metadata before processing |
+| COMMAND_WAIT_SECONDS | 1 | Time to wait between commands (in seconds) |
+| COMMAND_WAIT_ATTEMPTS | 600 | Maximum number of attempts for commands |
+| MINIMUM_DOWNLOAD_QUEUE_SIZE | -1 | Skip processing if queue is larger than this (use -1 to disable) |
+
+### Viewing Logs
+
+To view the logs, simply run:
+
+```bash
+docker logs huntarr-sonarr
+```
+
+### Running Manually
+
+If you want to run Huntarr-Sonarr manually, you can enter the container and run:
+
+```bash
+huntarr-sonarr
+```
+
+This will start the process with output directly to the console.
+
+## Persistent Storage
+
+Huntarr stores all its configuration and state information in persistent storage, ensuring your settings and processed state are maintained across container restarts and updates.
+
+### Storage Locations
+
+The following directories are used for persistent storage:
+
+- `/config/stateful/` - Contains the state tracking files for processed items
+
+### Data Persistence
+
+All data in these directories is maintained across container restarts. This means:
+
+1. The list of items that have already been processed will be maintained
+2. After a container update or restart, Huntarr will continue from where it left off
+
+### Volume Mapping
+
+To ensure data persistence, make sure you map the `/config` directory to a persistent volume on your host system:
+
+```bash
+-v /path/to/config:/config
+```
+
+This mapping is included in all of the installation examples above.
 
 ## Related Projects
 
@@ -75,10 +177,8 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 - 🔁 **State Tracking**: Remembers which items have been processed to avoid duplicate searches
 - ⚙️ **Configurable Reset Timer**: Automatically resets search history after a configurable period
 - 📦 **Modular Design**: Modern codebase with separated concerns for easier maintenance
-- 🌐 **Web Interface**: Real-time log viewer with day/night mode and settings management
 - 🔮 **Future Item Skipping**: Skip processing items with future release dates
 - 💾 **Reduced Disk Activity**: Option to skip metadata refresh before processing
-- 💿 **Persistent Configuration**: All settings are saved to disk and persist across container restarts
 - 📝 **Stateful Operation**: Processed state is now permanently saved between restarts
 - ⚙️ **Advanced Settings**: Control API timeout, command wait parameters, and more
 
@@ -87,9 +187,9 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 ## How It Works
 
-1. **Initialization**: Connects to your *Arr instance and analyzes your library
+1. **Initialization**: Connects to your Sonarr instance and analyzes your library
 2. **Missing Content**: 
-   - Identifies items with missing episodes/movies/etc.
+   - Identifies items with missing episodes
    - Randomly or sequentially selects items to process (configurable)
    - Refreshes metadata (optional) and triggers searches
    - Skips items with future release dates (configurable)
@@ -105,191 +205,6 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
    - Automatically resets this tracking after a configurable time period
 5. **Repeat Cycle**: Waits for a configurable period before starting the next cycle
 
-<table>
-  <tr>
-    <td width="50%">
-      <img src="https://github.com/user-attachments/assets/d758b9ae-ecef-4056-ba4e-a7fe363bd182" width="100%"/>
-      <p align="center"><em>Missing Content Demo</em></p>
-    </td>
-    <td width="50%">
-      <img src="https://github.com/user-attachments/assets/923033d5-fb86-4777-952f-638d8503f776" width="100%"/>
-      <p align="center"><em>Quality Upgrade Demo</em></p>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2">
-      <img src="https://github.com/user-attachments/assets/3e95f6d5-4a96-4bb8-a5b9-1d7b871ff94a" width="100%"/>
-      <p align="center"><em>State Management System</em></p>
-    </td>
-  </tr>
-</table>
-
-## Web Interface
-
-Huntarr includes a real-time log viewer and settings management web interface that allows you to monitor and configure its operation directly from your browser.
-
-<table>
-  <tr>
-    <td colspan="2"> 
-      <img width="100%" alt="image" src="https://github.com/user-attachments/assets/a076ea7e-9a7a-4e9b-a631-fa672068851d" />
-      <p align="center"><em>Logger UI</em></p>
-    </td>
-  </tr>
-</table>
-
-### Features
-
-- **Real-time Log Updates**: Logs refresh automatically every second
-- **Day/Night Mode**: Toggle between light and dark themes
-- **Color-coded Log Entries**: Different log levels are displayed in different colors
-- **Auto-scrolling**: Automatically scrolls to the latest log entries
-- **Connection Status**: Shows whether the connection to the log stream is active
-- **Settings Management**: Configure Huntarr directly from the web interface
-- **Persistent Configuration**: All settings are saved to disk and persist across container restarts
-
-### How to Access
-
-The web interface is available on port 9705. Simply navigate to:
-
-```
-http://YOUR_SERVER_IP:9705
-```
-
-The URL will be displayed in the logs when Huntarr starts, using the same hostname you configured for your API_URL.
-
-### Web UI Settings
-
-The web interface allows you to configure all of Huntarr's settings:
-
-<table>
-  <tr>
-    <td colspan="2"> 
-      <img width="930" alt="image" src="https://github.com/user-attachments/assets/19aa9f3c-7641-4b82-8867-22ca2e47536b" />
-      <p align="center"><em>Settings UI</em></p>
-    </td>
-  </tr>
-</table>
-
-All settings are now configured entirely through the web UI after initial setup.
-
-## Persistent Storage
-
-Huntarr stores all its configuration and state information in persistent storage, ensuring your settings and processed state are maintained across container restarts and updates.
-
-### Storage Locations
-
-The following directories are used for persistent storage:
-
-- `/config/settings/` - Contains configuration settings (huntarr.json)
-- `/config/stateful/` - Contains the state tracking files for processed items
-- `/config/user/` - Contains user authentication information
-
-### Data Persistence
-
-All data in these directories is maintained across container restarts. This means:
-
-1. Your settings configured via the web UI will be preserved
-2. The list of items that have already been processed will be maintained
-3. After a container update or restart, Huntarr will continue from where it left off
-
-### Volume Mapping
-
-To ensure data persistence, make sure you map the `/config` directory to a persistent volume on your host system:
-
-```bash
--v /mnt/user/appdata/huntarr:/config
-```
-
-This mapping is included in all of the installation examples below.
-
----
-
-## Installation Methods
-
-### Docker Run
-
-The simplest way to run Huntarr is via Docker (all configuration is done via the web UI):
-
-```bash
-docker run -d --name huntarr \
-  --restart always \
-  -p 9705:9705 \
-  -v /mnt/user/appdata/huntarr:/config \
-  huntarr/huntarr:dev
-```
-
-To check on the status of the program, you can use the web interface at http://YOUR_SERVER_IP:9705 or check the logs with:
-```bash
-docker logs huntarr
-```
-
-### Docker Compose
-
-For those who prefer Docker Compose, add this to your `docker-compose.yml` file:
-
-```yaml
-version: "3.8"
-services:
-  huntarr:
-    image: huntarr/huntarr:dev
-    container_name: huntarr
-    restart: always
-    ports:
-      - "9705:9705"
-    volumes:
-      - /mnt/user/appdata/huntarr:/config
-```
-
-Then run:
-
-```bash
-docker-compose up -d huntarr
-```
-
-### Unraid Users
-
-Run this from Command Line in Unraid:
-
-```bash
-docker run -d --name huntarr \
-  --restart always \
-  -p 9705:9705 \
-  -v /mnt/user/appdata/huntarr:/config \
-  huntarr/huntarr:dev
-```
-
-### SystemD Service
-
-For a more permanent installation on Linux systems using SystemD:
-
-1. Save a script with the Docker run command to `/usr/local/bin/huntarr.sh`
-2. Make it executable: `chmod +x /usr/local/bin/huntarr.sh`
-3. Create a systemd service file at `/etc/systemd/system/huntarr.service`:
-
-```ini
-[Unit]
-Description=Huntarr Service
-After=docker.service
-
-[Service]
-Type=simple
-User=root
-ExecStartPre=/bin/sleep 10
-ExecStart=/usr/local/bin/huntarr.sh
-Restart=on-failure
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-4. Enable and start the service:
-
-```bash
-sudo systemctl enable huntarr
-sudo systemctl start huntarr
-```
-
 ## Use Cases
 
 - **Library Completion**: Gradually fill in missing content in your media library
@@ -297,43 +212,30 @@ sudo systemctl start huntarr
 - **New Item Setup**: Automatically find media for newly added items
 - **Background Service**: Run it in the background to continuously maintain your library
 - **Smart Rotation**: With state tracking, ensures all content gets attention over time
-- **Real-time Monitoring**: Use the web interface to see what's happening at any time
 - **Disk Usage Optimization**: Skip refreshing metadata to reduce disk wear and tear
 - **Efficient Searching**: Skip processing items with future release dates to save resources
-- **Persistent Configuration**: Save your settings once and have them persist through updates
 - **Stateful Operation**: Maintain processing state across container restarts and updates
 
 ## Tips
 
-- **First-Time Setup**: After installation, navigate to the web interface and create your administrator account
-- **API Connection**: Configure the connection to your *Arr application through the Settings page
-- **Web Interface**: Use the web interface to adjust settings without restarting the container
-- **Adjusting Speed**: Lower the Sleep Duration to search more frequently (be careful with indexer limits)
-- **Batch Size Control**: Adjust Hunt Missing and Hunt Upgrade values based on your indexer's rate limits
-- **Monitored Status**: Set Monitored Only to false if you want to download all missing content regardless of monitored status
+- **API Connection**: Make sure your API_KEY and API_URL are correct
+- **Adjusting Speed**: Lower the SLEEP_SECONDS to search more frequently (be careful with indexer limits)
+- **Batch Size Control**: Adjust HUNT_MISSING_SHOWS and HUNT_UPGRADE_EPISODES values based on your indexer's rate limits
+- **Monitored Status**: Set MONITORED_ONLY to false if you want to download all missing content regardless of monitored status
 - **System Resources**: The application uses minimal resources and can run continuously on even low-powered systems
-- **Port Conflicts**: If port 9705 is already in use, map to a different host port (e.g., `-p 8080:9705`)
-- **Debugging Issues**: Enable Debug Mode temporarily to see detailed logs when troubleshooting
-- **Hard Drive Saving**: Enable Skip Series Refresh to reduce disk activity
-- **Search Efficiency**: Keep Skip Future Episodes enabled to avoid searching for unavailable content
-- **Persistent Storage**: Make sure to map the `/config` volume to preserve settings and state
-- **Dark Mode**: Toggle between light and dark themes in the web interface for comfortable viewing
-- **Settings Persistence**: Any settings changed in the web UI are saved immediately and permanently
-- **Random vs Sequential**: Configure Random Missing and Random Upgrades based on your preference for processing style
+- **Hard Drive Saving**: Enable SKIP_SERIES_REFRESH to reduce disk activity
+- **Search Efficiency**: Keep SKIP_FUTURE_EPISODES enabled to avoid searching for unavailable content
+- **Persistent Storage**: Make sure to map the `/config` volume to preserve state information
+- **Random vs Sequential**: Configure RANDOM_MISSING and RANDOM_UPGRADES based on your preference for processing style
 
 ## Troubleshooting
 
-- **API Key Issues**: Check that your API key is correct in the Settings page
-- **Connection Problems**: Ensure the API URL is accessible from where you're running the application
-- **Login Issues**: If you forget your password, you will need to delete the credentials file at `/config/user/credentials.json` and restart the container
-- **Web Interface Not Loading**: Make sure port 9705 is exposed in your Docker configuration and not blocked by a firewall
-- **Logs**: Check the container logs with `docker logs huntarr` if running in Docker, or use the web interface
-- **Debug Mode**: Enable Debug Mode in the Advanced Settings to see detailed API responses and process flow
+- **API Key Issues**: Check that your API_KEY is correct
+- **Connection Problems**: Ensure the API_URL is accessible from where you're running the application
+- **Logs**: Check the container logs with `docker logs huntarr-sonarr`
 - **Settings Not Persisting**: Verify your volume mount for `/config` is configured correctly
 - **State Files**: The application stores state in `/config/stateful/` - if something seems stuck, you can try deleting these files
-- **Excessive Disk Activity**: If you notice high disk usage, try enabling Skip Series Refresh
-- **Configuration Issues**: Settings now require a container restart to take effect - confirm the restart prompt when saving settings
-- **Container Restart Required**: When making significant changes to settings, always restart the container when prompted
+- **Excessive Disk Activity**: If you notice high disk usage, try enabling SKIP_SERIES_REFRESH
 
 ---
 
