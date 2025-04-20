@@ -23,6 +23,7 @@ COMMAND_WAIT_SECONDS = int(os.environ.get('COMMAND_WAIT_SECONDS', 1))
 MINIMUM_DOWNLOAD_QUEUE_SIZE = int(os.environ.get('MINIMUM_DOWNLOAD_QUEUE_SIZE', -1))
 HUNT_UPGRADE_EPISODES = int(os.environ.get('HUNT_UPGRADE_EPISODES', 0))
 MAX_CONSECUTIVE_ERRORS = 5  # Maximum number of consecutive errors before pausing
+LOG_EPISODE_ERRORS = os.environ.get('LOG_EPISODE_ERRORS', 'true').lower() == 'true'
 
 def find_episodes_needing_upgrade():
     """Find episodes that need quality upgrades."""
@@ -41,7 +42,8 @@ def find_episodes_needing_upgrade():
         
         episodes = api.get_episodes_by_series_id(series['id'])
         if not episodes:
-            logger.error(f"Failed to retrieve episodes for series '{series['title']}'")
+            if LOG_EPISODE_ERRORS:
+                logger.error(f"Failed to retrieve episodes for series '{series['title']}'")
             consecutive_errors += 1
             
             # If we have too many consecutive errors, take a break

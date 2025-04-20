@@ -11,6 +11,8 @@ API_KEY = os.environ.get('API_KEY', '')
 API_URL = os.environ.get('API_URL', 'http://localhost:8989')
 API_TIMEOUT = int(os.environ.get('API_TIMEOUT', 60))
 MAX_RETRIES = 3  # Number of retries for API calls
+LOG_EPISODE_ERRORS = os.environ.get('LOG_EPISODE_ERRORS', 'true').lower() == 'true'
+DEBUG_API_CALLS = os.environ.get('DEBUG_API_CALLS', 'false').lower() == 'true'
 
 # Configure logging
 logging.basicConfig(
@@ -32,6 +34,13 @@ def make_request(endpoint, method='GET', data=None, params=None, retries=MAX_RET
     url = f"{API_URL}/api/v3/{endpoint}"
     headers = get_headers()
     
+    if DEBUG_API_CALLS:
+        logger.debug(f"API Request: {method} {url}")
+        if params:
+            logger.debug(f"Params: {json.dumps(params)}")
+        if data:
+            logger.debug(f"Data: {json.dumps(data)}")
+    
     for attempt in range(retries + 1):
         try:
             if method == 'GET':
@@ -47,9 +56,34 @@ def make_request(endpoint, method='GET', data=None, params=None, retries=MAX_RET
                 return None
             
             response.raise_for_status()
+            
+            if DEBUG_API_CALLS:
+                if response.text:
+                    logger.debug(f"API Response: Status {response.status_code}")
+                    try:
+                        # Try to pretty-print JSON response for debugging
+                        resp_data = response.json()
+                        if isinstance(resp_data, list) and len(resp_data) > 10:
+                            # For large lists, just show the count and first few items
+                            logger.debug(f"Response contains {len(resp_data)} items. First few: {json.dumps(resp_data[:3])}")
+                        elif isinstance(resp_data, dict) and len(resp_data) > 20:
+                            # For large objects, just show keys
+                            logger.debug(f"Response contains {len(resp_data)} keys: {list(resp_data.keys())}")
+                        else:
+                            # For smaller responses, show the full content
+                            logger.debug(f"Response: {json.dumps(resp_data)[:1000]}" + ("..." if len(json.dumps(resp_data)) > 1000 else ""))
+                    except:
+                        # Fall back to just showing response text length if JSON parsing fails
+                        logger.debug(f"Response text length: {len(response.text)} characters")
+                else:
+                    logger.debug("API Response: Empty response body")
+            
             return response.json() if response.text.strip() else None
         
         except requests.exceptions.RequestException as e:
+            if DEBUG_API_CALLS:
+                logger.debug(f"API Request failed: {e}")
+                
             if attempt < retries:
                 wait_time = 2 ** attempt  # Exponential backoff
                 logger.warning(f"API request failed (attempt {attempt+1}/{retries+1}): {e}. Retrying in {wait_time} seconds...")
@@ -71,7 +105,8 @@ def get_episodes_by_series_id(series_id):
     try:
         return make_request('episode', params={'seriesId': series_id})
     except Exception as e:
-        logger.error(f"Exception retrieving episodes for series ID {series_id}: {e}")
+        if LOG_EPISODE_ERRORS:
+            logger.error(f"Exception retrieving episodes for series ID {series_id}: {e}")
         return []
 
 def refresh_series(series_id):

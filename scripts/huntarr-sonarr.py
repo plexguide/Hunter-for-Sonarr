@@ -58,7 +58,9 @@ def display_config():
         'SKIP_SERIES_REFRESH': os.environ.get('SKIP_SERIES_REFRESH'),
         'COMMAND_WAIT_SECONDS': os.environ.get('COMMAND_WAIT_SECONDS'),
         'COMMAND_WAIT_ATTEMPTS': os.environ.get('COMMAND_WAIT_ATTEMPTS'),
-        'MINIMUM_DOWNLOAD_QUEUE_SIZE': os.environ.get('MINIMUM_DOWNLOAD_QUEUE_SIZE')
+        'MINIMUM_DOWNLOAD_QUEUE_SIZE': os.environ.get('MINIMUM_DOWNLOAD_QUEUE_SIZE'),
+        'LOG_EPISODE_ERRORS': os.environ.get('LOG_EPISODE_ERRORS'),
+        'DEBUG_API_CALLS': os.environ.get('DEBUG_API_CALLS')
     }
     
     logger.info("=== Huntarr-Sonarr Configuration ===")

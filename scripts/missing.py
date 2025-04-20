@@ -24,6 +24,7 @@ COMMAND_WAIT_SECONDS = int(os.environ.get('COMMAND_WAIT_SECONDS', 1))
 MINIMUM_DOWNLOAD_QUEUE_SIZE = int(os.environ.get('MINIMUM_DOWNLOAD_QUEUE_SIZE', -1))
 HUNT_MISSING_SHOWS = int(os.environ.get('HUNT_MISSING_SHOWS', 1))
 MAX_CONSECUTIVE_ERRORS = 5  # Maximum number of consecutive errors before pausing
+LOG_EPISODE_ERRORS = os.environ.get('LOG_EPISODE_ERRORS', 'true').lower() == 'true'
 
 def check_download_queue():
     """Check if we should proceed based on download queue size."""
@@ -59,7 +60,8 @@ def get_shows_with_missing_episodes():
         # Get episodes for this series
         episodes = api.get_episodes_by_series_id(series['id'])
         if not episodes:
-            logger.error(f"Failed to retrieve episodes for series '{series['title']}'")
+            if LOG_EPISODE_ERRORS:
+                logger.error(f"Failed to retrieve episodes for series '{series['title']}'")
             error_series.append(series['title'])
             consecutive_errors += 1
             
@@ -87,7 +89,7 @@ def get_shows_with_missing_episodes():
             logger.debug(f"Series '{series['title']}' has {missing_count} missing episodes")
             shows_with_missing.append((series, missing_count))
     
-    if error_series:
+    if LOG_EPISODE_ERRORS and error_series:
         logger.warning(f"Failed to retrieve episodes for {len(error_series)} series: {', '.join(error_series[:5])}" + 
                       (f" and {len(error_series) - 5} more" if len(error_series) > 5 else ""))
     
