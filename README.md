@@ -24,6 +24,7 @@
 - [Installation Methods](#installation-methods)
   - [Docker Run](#docker-run)
   - [Docker Compose](#docker-compose)
+  - [Unraid Users](#unraid-users)
 - [Use Cases](#use-cases)
 - [Tips](#tips)
 - [Troubleshooting](#troubleshooting)
@@ -221,6 +222,32 @@ Then run:
 ```bash
 docker-compose up -d
 ```
+
+### Unraid Users
+
+For Unraid users, you can install Huntarr-Sonarr using the Community Applications plugin:
+
+1. Open the Unraid web interface and navigate to the **Apps** tab
+2. Search for "Huntarr" or "Huntarr-Sonarr" in the search box
+3. Click on the Huntarr-Sonarr app
+4. Fill in the following settings:
+   - **Container Name**: huntarr-sonarr
+   - **Host Path 1**: Choose a path for persistent storage, e.g., `/mnt/user/appdata/huntarr-sonarr`
+   - Set your environment variables:
+     - API_KEY: your-sonarr-api-key
+     - API_URL: http://tower:8989 (replace "tower" with your Sonarr container name or IP)
+     - Other variables as desired
+5. Click **Apply** to create the container
+
+Alternatively, you can add the container manually via the **Docker** tab:
+
+1. Click **Add Container** in the Docker tab
+2. Enter the following details:
+   - **Name**: huntarr-sonarr
+   - **Repository**: huntarr/4sonarr:latest
+   - Add a path mapping: `/config` to `/mnt/user/appdata/huntarr-sonarr`
+   - Add the environment variables as listed above
+3. Click **Apply** to create the container
 
 ## Use Cases
 
