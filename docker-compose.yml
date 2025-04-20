@@ -14,7 +14,7 @@ services:
       - API_URL=http://10.0.0.10:8989
       - API_TIMEOUT=60
       - MONITORED_ONLY=true
-      - HUNT_MISSING_SHOWS=0
+      - HUNT_MISSING_SHOWS=1
       - HUNT_UPGRADE_EPISODES=1
       - SLEEP_SECONDS=1500
       - STATE_RESET_HOURS=168
