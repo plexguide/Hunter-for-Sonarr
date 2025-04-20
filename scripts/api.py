@@ -22,6 +22,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger('huntarr-sonarr')
 
+# Add this near the top of the file with other globals
+SERIES_CACHE = {}  # Cache for series information
+
 def get_headers():
     """Return the headers needed for API requests."""
     return {
@@ -97,8 +100,21 @@ def get_series():
     return make_request('series')
 
 def get_series_by_id(series_id):
-    """Get a specific series by ID."""
-    return make_request(f'series/{series_id}')
+    """Get a specific series by ID with caching for better performance."""
+    global SERIES_CACHE
+    
+    # If we have this series in cache, return it
+    if series_id in SERIES_CACHE:
+        return SERIES_CACHE[series_id]
+    
+    # Otherwise, fetch it from the API
+    series = make_request(f'series/{series_id}')
+    
+    # If successful, cache it
+    if series:
+        SERIES_CACHE[series_id] = series
+        
+    return series
 
 def get_episodes_by_series_id(series_id):
     """Get all episodes for a series with more robust error handling."""
@@ -186,3 +202,35 @@ def check_api_connection():
     except requests.exceptions.RequestException as e:
         logger.error(f"API connection check failed: {e}")
         return False
+
+def get_quality_upgradable_episodes(page=1, page_size=100):
+    """Get episodes that need quality upgrades using the wanted/cutoff endpoint."""
+    try:
+        logger.info(f"Fetching quality upgrades - page {page}, page size {page_size}")
+        params = {
+            'page': page,
+            'pageSize': page_size,
+            'sortKey': 'airDateUtc',
+            'sortDirection': 'ascending',
+            'includeEpisode': True
+        }
+        
+        # For debugging, construct the URL that would be called
+        debug_url = f"{API_URL}/api/v3/wanted/cutoff?page={page}&pageSize={page_size}"
+        logger.info(f"API call: GET {debug_url}")
+        
+        # Make the request
+        result = make_request('wanted/cutoff', params=params)
+        
+        # Log the result size for debugging
+        if result:
+            total_records = result.get('totalRecords', 0)
+            records_count = len(result.get('records', []))
+            logger.info(f"Got {records_count} records (total: {total_records})")
+        else:
+            logger.warning("API returned no result")
+            
+        return result
+    except Exception as e:
+        logger.error(f"Exception retrieving quality upgradable episodes: {e}")
+        return None
