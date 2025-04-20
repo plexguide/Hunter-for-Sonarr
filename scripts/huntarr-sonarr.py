@@ -103,7 +103,7 @@ def main():
                 # Clean expired state
                 state.clean_expired_state()
                 
-                # Process missing shows
+                # Process missing shows with the new optimized approach
                 missing.process_missing_shows()
                 
                 # Process upgradable episodes

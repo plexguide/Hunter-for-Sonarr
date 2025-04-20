@@ -22,6 +22,7 @@ SKIP_FUTURE_EPISODES = os.environ.get('SKIP_FUTURE_EPISODES', 'true').lower() ==
 COMMAND_WAIT_SECONDS = int(os.environ.get('COMMAND_WAIT_SECONDS', 1))
 MINIMUM_DOWNLOAD_QUEUE_SIZE = int(os.environ.get('MINIMUM_DOWNLOAD_QUEUE_SIZE', -1))
 HUNT_UPGRADE_EPISODES = int(os.environ.get('HUNT_UPGRADE_EPISODES', 0))
+MAX_CONSECUTIVE_ERRORS = 5  # Maximum number of consecutive errors before pausing
 
 def find_episodes_needing_upgrade():
     """Find episodes that need quality upgrades."""
@@ -31,6 +32,7 @@ def find_episodes_needing_upgrade():
         return []
     
     upgradable_episodes = []
+    consecutive_errors = 0
     
     for series in all_series:
         # Skip unmonitored series if MONITORED_ONLY is True
@@ -39,7 +41,19 @@ def find_episodes_needing_upgrade():
         
         episodes = api.get_episodes_by_series_id(series['id'])
         if not episodes:
+            logger.error(f"Failed to retrieve episodes for series '{series['title']}'")
+            consecutive_errors += 1
+            
+            # If we have too many consecutive errors, take a break
+            if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
+                logger.warning(f"Reached {MAX_CONSECUTIVE_ERRORS} consecutive errors, pausing for 30 seconds")
+                time.sleep(30)
+                consecutive_errors = 0
+                
             continue
+        else:
+            # Reset error counter when successful
+            consecutive_errors = 0
         
         for episode in episodes:
             # Skip unmonitored episodes

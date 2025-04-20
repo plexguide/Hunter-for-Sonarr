@@ -4,12 +4,13 @@ import requests
 import logging
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Get environment variables
 API_KEY = os.environ.get('API_KEY', '')
 API_URL = os.environ.get('API_URL', 'http://localhost:8989')
 API_TIMEOUT = int(os.environ.get('API_TIMEOUT', 60))
+MAX_RETRIES = 3  # Number of retries for API calls
 
 # Configure logging
 logging.basicConfig(
@@ -26,30 +27,36 @@ def get_headers():
         'Content-Type': 'application/json'
     }
 
-def make_request(endpoint, method='GET', data=None, params=None):
-    """Make a request to the Sonarr API."""
+def make_request(endpoint, method='GET', data=None, params=None, retries=MAX_RETRIES):
+    """Make a request to the Sonarr API with retry capability."""
     url = f"{API_URL}/api/v3/{endpoint}"
     headers = get_headers()
     
-    try:
-        if method == 'GET':
-            response = requests.get(url, headers=headers, params=params, timeout=API_TIMEOUT)
-        elif method == 'POST':
-            response = requests.post(url, headers=headers, json=data, timeout=API_TIMEOUT)
-        elif method == 'PUT':
-            response = requests.put(url, headers=headers, json=data, timeout=API_TIMEOUT)
-        elif method == 'DELETE':
-            response = requests.delete(url, headers=headers, params=params, timeout=API_TIMEOUT)
-        else:
-            logger.error(f"Unsupported HTTP method: {method}")
-            return None
+    for attempt in range(retries + 1):
+        try:
+            if method == 'GET':
+                response = requests.get(url, headers=headers, params=params, timeout=API_TIMEOUT)
+            elif method == 'POST':
+                response = requests.post(url, headers=headers, json=data, timeout=API_TIMEOUT)
+            elif method == 'PUT':
+                response = requests.put(url, headers=headers, json=data, timeout=API_TIMEOUT)
+            elif method == 'DELETE':
+                response = requests.delete(url, headers=headers, params=params, timeout=API_TIMEOUT)
+            else:
+                logger.error(f"Unsupported HTTP method: {method}")
+                return None
+            
+            response.raise_for_status()
+            return response.json() if response.text.strip() else None
         
-        response.raise_for_status()
-        return response.json() if response.text.strip() else None
-    
-    except requests.exceptions.RequestException as e:
-        logger.error(f"API request failed: {e}")
-        return None
+        except requests.exceptions.RequestException as e:
+            if attempt < retries:
+                wait_time = 2 ** attempt  # Exponential backoff
+                logger.warning(f"API request failed (attempt {attempt+1}/{retries+1}): {e}. Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                logger.error(f"API request failed after {retries+1} attempts: {e}")
+                return None
 
 def get_series():
     """Get all series from Sonarr."""
@@ -60,8 +67,12 @@ def get_series_by_id(series_id):
     return make_request(f'series/{series_id}')
 
 def get_episodes_by_series_id(series_id):
-    """Get all episodes for a series."""
-    return make_request('episode', params={'seriesId': series_id})
+    """Get all episodes for a series with more robust error handling."""
+    try:
+        return make_request('episode', params={'seriesId': series_id})
+    except Exception as e:
+        logger.error(f"Exception retrieving episodes for series ID {series_id}: {e}")
+        return []
 
 def refresh_series(series_id):
     """Refresh a series."""
@@ -106,8 +117,13 @@ def is_date_in_future(air_date_str):
         return False
     
     try:
+        # Convert ISO format string to datetime with timezone info
         air_date = datetime.fromisoformat(air_date_str.replace('Z', '+00:00'))
-        return air_date > datetime.now()
+        
+        # Get current time with timezone info for proper comparison
+        now = datetime.now(timezone.utc)
+        
+        return air_date > now
     except ValueError:
         logger.error(f"Invalid date format: {air_date_str}")
         return False

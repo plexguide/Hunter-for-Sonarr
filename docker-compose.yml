@@ -10,7 +10,7 @@ services:
       - huntarr-sonarr-config:/config
     environment:
       - TZ=America/New_York
-      - API_KEY=a03c86b6292c4bd48cd5e3b84e5a4702"
+      - API_KEY=a03c86b6292c4bd48cd5e3b84e5a4702
       - API_URL=http://10.0.0.10:8989
       - API_TIMEOUT=60
       - MONITORED_ONLY=true
