@@ -24,7 +24,7 @@ from flask import Flask, render_template, request, jsonify, Response, send_from_
 # from src.primary.config import API_URL # No longer needed directly
 # Use only settings_manager
 from src.primary import settings_manager
-from src.primary.utils.logger import setup_logger, get_logger # Import get_logger
+from src.primary.utils.logger import setup_logger, get_logger, LOG_DIR # Import get_logger and LOG_DIR
 from src.primary.auth import (
     authenticate_request, user_exists, create_user, verify_user, create_session,
     logout, SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret,
@@ -53,8 +53,8 @@ app.register_blueprint(common_bp)
 # Lock for accessing the log files
 log_lock = threading.Lock()
 
-# Root directory for log files
-LOG_DIR = "/tmp/huntarr-logs"
+# Root directory for log files - Removed, now imported from logger
+# LOG_DIR = "/tmp/huntarr-logs"
 
 # Removed LOG_REFRESH_INTERVAL - fetch from settings if needed per request
 
@@ -93,7 +93,7 @@ def logs_stream():
         web_logger.warning(f"Invalid app type '{app_type}' requested for logs. Defaulting to 'sonarr'.")
         app_type = 'sonarr'  # Default to sonarr for invalid app types
 
-    log_file_path = settings_manager.LOG_DIR / f"huntarr-{app_type}.log"
+    log_file_path = LOG_DIR / f"huntarr-{app_type}.log" # Use imported LOG_DIR
     web_logger.info(f"Starting log stream for {app_type} from {log_file_path}")
 
     def generate():
@@ -271,13 +271,14 @@ def api_app_status(app_name):
     api_key = settings_manager.get_api_key(app_name)
     is_configured = bool(api_url and api_key)
     is_connected = False
+    api_timeout = settings_manager.get_setting(app_name, "api_timeout", 10) # Get api_timeout, default to 10
 
     if is_configured:
         try:
             api_module = importlib.import_module(f'src.primary.apps.{app_name}.api')
             check_connection = getattr(api_module, 'check_connection')
-            # Pass URL and Key explicitly
-            is_connected = check_connection(api_url, api_key)
+            # Pass URL, Key, and Timeout explicitly
+            is_connected = check_connection(api_url, api_key, api_timeout) # Pass api_timeout
         except (ImportError, AttributeError):
             web_logger.error(f"Could not find check_connection function for {app_name}.")
         except Exception as e:

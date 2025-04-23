@@ -110,6 +110,7 @@ def app_specific_loop(app_type: str) -> None:
             min_download_queue_size = app_settings.get("minimum_download_queue_size", -1)
             hunt_missing_count = app_settings.get(hunt_missing_setting, 0)
             hunt_upgrade_count = app_settings.get(hunt_upgrade_setting, 0)
+            api_timeout = app_settings.get("api_timeout", 10) # Get api_timeout, default to 10
 
             # Configure logging level based on current debug setting
             config.configure_logging(app_type)
@@ -130,8 +131,8 @@ def app_specific_loop(app_type: str) -> None:
         max_connection_attempts = 3
         while not api_connected and connection_attempts < max_connection_attempts and not stop_event.is_set():
             try:
-                # Pass loaded URL and Key explicitly
-                api_connected = check_connection(api_url, api_key) # Keep passing URL/Key here
+                # Pass loaded URL, Key, and Timeout explicitly
+                api_connected = check_connection(api_url, api_key, api_timeout) # Pass api_timeout
             except Exception as e:
                 app_logger.error(f"Error during connection check: {e}", exc_info=True)
                 api_connected = False # Ensure it's false on exception
@@ -157,7 +158,7 @@ def app_specific_loop(app_type: str) -> None:
         processing_done = False
         try:
             # Get download queue size
-            download_queue_size = get_queue_size(api_url, api_key) # Keep passing URL/Key here
+            download_queue_size = get_queue_size(api_url, api_key, api_timeout) # Pass api_timeout
 
             if min_download_queue_size < 0 or download_queue_size <= min_download_queue_size:
                 # Process Missing
