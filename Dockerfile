@@ -1,20 +1,25 @@
 FROM python:3.9-slim
 
-# Install required packages and dependencies
+# Install system dependencies early
 RUN apt-get update && apt-get install -y \
     procps \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create necessary directories
-RUN mkdir -p /config/stateful
-RUN mkdir -p /config/log && chmod -R 755 /config/log && touch /config/log/huntarr.log
-
-
+# Set working directory
 WORKDIR /app
 
-COPY . /app
+# Copy only requirements first to use Docker cache
+COPY requirements.txt ./
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . .
+
+# Create log directories at runtime (not build time)
+RUN mkdir -p /config/stateful
 
 # Set entry point
 CMD ["python", "main.py"]
