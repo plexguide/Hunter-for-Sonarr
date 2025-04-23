@@ -271,8 +271,8 @@ def list_configured_apps() -> Dict[str, bool]:
 # Add default settings structure including API keys
 DEFAULT_SETTINGS = get_all_default_settings()
 # Add default UI and Global settings if they exist
-DEFAULT_SETTINGS['ui'] = load_default_app_settings('ui')
-DEFAULT_SETTINGS['global'] = load_default_app_settings('global')
+# DEFAULT_SETTINGS['ui'] = load_default_app_settings('ui') # Commented out
+# DEFAULT_SETTINGS['global'] = load_default_app_settings('global') # Commented out
 
 # Ensure settings file exists on first load, merge with defaults
 if not SETTINGS_FILE.exists():
