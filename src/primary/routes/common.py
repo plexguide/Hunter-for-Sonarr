@@ -106,7 +106,11 @@ def setup_route():
             if create_user(username, password):
                 # Automatically log in the user after setup
                 session_token = create_session(username)
+                # Explicitly set username in Flask session
+                session['username'] = username 
+                session[SESSION_COOKIE_NAME] = session_token
                 response = jsonify({"success": True})
+                # Set cookie in the response
                 response.set_cookie(SESSION_COOKIE_NAME, session_token, httponly=True, samesite='Lax')
                 return response
             else:
@@ -175,8 +179,10 @@ def change_password_route():
 def setup_2fa():
     username = session.get('username')
     if not username:
+        logger.warning("2FA setup attempt failed: No username in session.") # Add logging
         return jsonify({"error": "Not authenticated"}), 401
 
+    # Pass username to generate_2fa_secret
     secret, uri = generate_2fa_secret(username)
     
     # Generate QR code
@@ -185,12 +191,14 @@ def setup_2fa():
     img.save(buffer, format="PNG")
     qr_code_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
+    logger.info(f"Generated 2FA setup for user: {username}") # Add logging
     return jsonify({"success": True, "secret": secret, "qr_code": qr_code_base64})
 
 @common_bp.route('/api/user/2fa/verify', methods=['POST'])
 def verify_2fa():
     username = session.get('username')
     if not username:
+        logger.warning("2FA verify attempt failed: No username in session.") # Add logging
         return jsonify({"error": "Not authenticated"}), 401
 
     data = request.json
@@ -199,10 +207,12 @@ def verify_2fa():
     if not otp_code:
         return jsonify({"success": False, "error": "OTP code is required"}), 400
 
-    # verify_2fa_code also enables 2FA if successful
+    # Pass username to verify_2fa_code
     if verify_2fa_code(username, otp_code, enable_on_verify=True):
+        logger.info(f"Successfully verified and enabled 2FA for user: {username}") # Add logging
         return jsonify({"success": True})
     else:
+        logger.warning(f"Invalid OTP code provided for user: {username}") # Add logging
         return jsonify({"success": False, "error": "Invalid OTP code"}), 400
 
 @common_bp.route('/api/user/2fa/disable', methods=['POST'])

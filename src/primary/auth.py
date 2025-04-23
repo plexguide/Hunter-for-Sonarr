@@ -143,11 +143,11 @@ def verify_user(username: str, password: str, otp_code: str = None) -> Tuple[boo
 def create_session(username: str) -> str:
     """Create a new session for an authenticated user"""
     session_id = secrets.token_hex(32)
-    username_hash = hash_username(username)
+    # Store the actual username, not the hash
     
     # Store session data
     active_sessions[session_id] = {
-        "username": username_hash,
+        "username": username, # Store actual username
         "created_at": time.time(),
         "expires_at": time.time() + SESSION_EXPIRY
     }
@@ -172,10 +172,11 @@ def verify_session(session_id: str) -> bool:
     return True
 
 def get_username_from_session(session_id: str) -> Optional[str]:
-    """Get the username hash from a session"""
+    """Get the username from a session"""
     if not session_id or session_id not in active_sessions:
         return None
     
+    # Return the stored username
     return active_sessions[session_id].get("username")
 
 def authenticate_request():
@@ -241,12 +242,12 @@ def is_2fa_enabled() -> bool:
     user_data = get_user_data()
     return user_data.get("2fa_enabled", False)
 
-def generate_2fa_secret() -> Tuple[str, str]:
+def generate_2fa_secret(username: str) -> Tuple[str, str]: # Added username parameter
     """
     Generate a new 2FA secret and QR code
     
     Returns:
-        Tuple[str, str]: (secret, qr_code_url)
+        Tuple[str, str]: (secret, qr_code_data_uri)
     """
     # Generate a random secret
     secret = pyotp.random_base32()
@@ -254,8 +255,8 @@ def generate_2fa_secret() -> Tuple[str, str]:
     # Create a TOTP object
     totp = pyotp.TOTP(secret)
     
-    # Get the provisioning URI
-    uri = totp.provisioning_uri(name="Huntarr", issuer_name="Huntarr")
+    # Get the provisioning URI - Use the actual username here
+    uri = totp.provisioning_uri(name=username, issuer_name="Huntarr") # Use username in URI
     
     # Generate QR code
     qr = qrcode.QRCode(
@@ -271,19 +272,21 @@ def generate_2fa_secret() -> Tuple[str, str]:
     
     # Convert to base64 string
     buffered = io.BytesIO()
-    img.save(buffered)
+    img.save(buffered, format="PNG") # Specify format
     img_str = base64.b64encode(buffered.getvalue()).decode()
     
-    # Store the secret temporarily
+    # Store the secret temporarily associated with the user
     user_data = get_user_data()
+    # Ensure we're modifying the correct user if multiple were possible
+    # For single user, this is fine.
     user_data["temp_2fa_secret"] = secret
     save_user_data(user_data)
     
     return secret, f"data:image/png;base64,{img_str}"
 
-def verify_2fa_code(code: str) -> bool:
+def verify_2fa_code(username: str, code: str, enable_on_verify: bool = False) -> bool: # Added username parameter
     """Verify a 2FA code against the temporary secret"""
-    user_data = get_user_data()
+    user_data = get_user_data() # Assumes single user
     temp_secret = user_data.get("temp_2fa_secret")
     
     if not temp_secret:
@@ -291,11 +294,12 @@ def verify_2fa_code(code: str) -> bool:
     
     totp = pyotp.TOTP(temp_secret)
     if totp.verify(code):
-        # Enable 2FA
-        user_data["2fa_enabled"] = True
-        user_data["2fa_secret"] = temp_secret
-        user_data.pop("temp_2fa_secret", None)
-        save_user_data(user_data)
+        if enable_on_verify: # Check if we should make it permanent
+            # Enable 2FA
+            user_data["2fa_enabled"] = True
+            user_data["2fa_secret"] = temp_secret
+            user_data.pop("temp_2fa_secret", None)
+            save_user_data(user_data)
         return True
     
     return False

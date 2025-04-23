@@ -329,7 +329,7 @@
                 }
                 
                 // Create user account with improved error handling
-                fetch('/api/setup', {
+                fetch('/setup', { // Corrected endpoint from /api/setup to /setup
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -337,7 +337,7 @@
                     body: JSON.stringify({
                         username: username,
                         password: password,
-                        confirm_password: confirmPassword
+                        confirm_password: confirmPassword // Keep confirm_password if backend expects it, otherwise remove
                     })
                 })
                 .then(response => {
@@ -364,9 +364,24 @@
                         accountCreated = true;
                         console.log('Account created successfully. User credentials should be saved to credentials.json');
                         
-                        // Generate 2FA setup - Use the correct endpoint
-                        fetch('/api/user/2fa/setup') // Corrected endpoint
-                            .then(response => response.json())
+                        // Generate 2FA setup - Use the correct endpoint and method
+                        fetch('/api/user/2fa/setup', { method: 'POST' }) // Specify POST method
+                            .then(response => {
+                                // Check for unauthorized specifically
+                                if (response.status === 401) {
+                                    throw new Error('Unauthorized - Session likely not established yet.');
+                                }
+                                if (!response.ok) {
+                                    // Try to parse error from JSON response
+                                    return response.json().then(errData => {
+                                        throw new Error(errData.error || `Server error: ${response.status}`);
+                                    }).catch(() => {
+                                        // Fallback if response is not JSON
+                                        throw new Error(`Server error: ${response.status}`);
+                                    });
+                                }
+                                return response.json();
+                            })
                             .then(twoFactorData => {
                                 if (twoFactorData.success) {
                                     // Use the correct property name for the QR code data
@@ -374,12 +389,14 @@
                                     secretKeyElement.textContent = twoFactorData.secret;
                                     showStep(2);
                                 } else {
-                                    showError('Failed to generate 2FA setup: ' + (twoFactorData.error || 'Unknown error')); // Use .error
+                                    // Use .error if available, otherwise provide a default
+                                    showError('Failed to generate 2FA setup: ' + (twoFactorData.error || 'Unknown error'));
                                 }
                             })
                             .catch(error => {
                                 console.error('Error generating 2FA:', error);
-                                showError('Failed to generate 2FA setup');
+                                // Display the specific error message caught
+                                showError('Failed to generate 2FA setup: ' + error.message);
                             });
                     } else {
                         showError(data.error || 'Failed to create account'); // Use .error
