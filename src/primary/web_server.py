@@ -19,6 +19,7 @@ import io
 # import requests # No longer used
 import logging
 import threading
+import importlib # Added import
 from flask import Flask, render_template, request, jsonify, Response, send_from_directory, redirect, url_for, session
 # from src.primary.config import API_URL # No longer needed directly
 # Use only settings_manager
@@ -88,7 +89,7 @@ def logs_stream():
     web_logger = get_logger("web_server") # Use a logger for web server messages
 
     # Validate app_type
-    if app_type not in settings_manager.KNOWN_APPS:
+    if app_type not in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
         web_logger.warning(f"Invalid app type '{app_type}' requested for logs. Defaulting to 'sonarr'.")
         app_type = 'sonarr'  # Default to sonarr for invalid app types
 
@@ -168,7 +169,7 @@ def logs_stream():
 def api_settings():
     if request.method == 'GET':
         # Return all settings using the new manager function
-        all_settings = settings_manager.load_all_app_settings()
+        all_settings = settings_manager.get_all_settings() # Corrected function name
         return jsonify(all_settings)
 
     elif request.method == 'POST':
@@ -183,7 +184,7 @@ def api_settings():
         app_name = list(data.keys())[0]
         settings_data = data[app_name]
 
-        if app_name not in settings_manager.KNOWN_APPS:
+        if app_name not in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
              # Allow saving settings for potentially unknown apps if needed, or return error
              web_logger.warning(f"Attempting to save settings for unknown app: {app_name}")
              # return jsonify({"success": False, "error": f"Unknown application type: {app_name}"}), 400
@@ -192,11 +193,11 @@ def api_settings():
             return jsonify({"success": False, "error": "Invalid settings data format for app."}), 400
 
         # Save settings for the specific app
-        success = settings_manager.save_app_settings(app_name, settings_data)
+        success = settings_manager.save_settings(app_name, settings_data) # Corrected function name
 
         if success:
             # Return the full updated config, as the frontend expects it
-            all_settings = settings_manager.load_all_app_settings()
+            all_settings = settings_manager.get_all_settings() # Corrected function name
             return jsonify(all_settings)
         else:
             return jsonify({"success": False, "error": f"Failed to save settings for {app_name}"}), 500
@@ -219,7 +220,7 @@ def api_reset_settings():
     app_name = data.get('app')
     web_logger = get_logger("web_server")
 
-    if not app_name or app_name not in settings_manager.KNOWN_APPS:
+    if not app_name or app_name not in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
         return jsonify({"success": False, "error": f"Invalid or missing app name: {app_name}"}), 400
 
     web_logger.info(f"Resetting settings for {app_name} to defaults.")
@@ -230,11 +231,11 @@ def api_reset_settings():
          return jsonify({"success": False, "error": f"Could not load default settings for {app_name}"}), 500
 
     # Save the default settings, overwriting the current ones
-    success = settings_manager.save_app_settings(app_name, default_settings)
+    success = settings_manager.save_settings(app_name, default_settings) # Corrected function name
 
     if success:
         # Return the full updated config after reset
-        all_settings = settings_manager.load_all_app_settings()
+        all_settings = settings_manager.get_all_settings() # Corrected function name
         return jsonify(all_settings)
     else:
         return jsonify({"success": False, "error": f"Failed to save reset settings for {app_name}"}), 500
@@ -242,29 +243,36 @@ def api_reset_settings():
 @app.route('/api/app-settings', methods=['GET'])
 def api_app_settings():
     app_type = request.args.get('app')
-    if not app_type or app_type not in settings_manager.KNOWN_APPS:
+    if not app_type or app_type not in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
         return jsonify({"success": False, "error": f"Invalid or missing app type: {app_type}"}), 400
 
     # Get API credentials using the updated settings_manager function
-    api_details = settings_manager.get_api_details(app_type)
+    # api_details = settings_manager.get_api_details(app_type) # Function does not exist
+    api_url = settings_manager.get_api_url(app_type)
+    api_key = settings_manager.get_api_key(app_type)
+    api_details = {"api_url": api_url, "api_key": api_key}
     return jsonify({"success": True, **api_details})
 
 @app.route('/api/configured-apps', methods=['GET'])
 def api_configured_apps():
     # Return the configured status of all apps using the updated settings_manager function
-    configured_apps = settings_manager.list_configured_apps()
-    return jsonify(configured_apps)
+    configured_apps_list = settings_manager.get_configured_apps() # Corrected function name
+    # Convert list to dict format expected by frontend
+    configured_status = {app: (app in configured_apps_list) for app in settings_manager.KNOWN_APP_TYPES}
+    return jsonify(configured_status)
 
 # --- Add Status Endpoint --- #
 @app.route('/api/status/<app_name>', methods=['GET'])
 def api_app_status(app_name):
     """Check connection status for a specific app."""
     web_logger = get_logger("web_server")
-    if app_name not in settings_manager.KNOWN_APPS:
+    if app_name not in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
         return jsonify({"configured": False, "connected": False, "error": "Invalid app name"}), 400
 
-    api_details = settings_manager.get_api_details(app_name)
-    is_configured = bool(api_details.get('api_url') and api_details.get('api_key'))
+    # api_details = settings_manager.get_api_details(app_name) # Function does not exist
+    api_url = settings_manager.get_api_url(app_name)
+    api_key = settings_manager.get_api_key(app_name)
+    is_configured = bool(api_url and api_key)
     is_connected = False
 
     if is_configured:
@@ -272,7 +280,7 @@ def api_app_status(app_name):
             api_module = importlib.import_module(f'src.primary.apps.{app_name}.api')
             check_connection = getattr(api_module, 'check_connection')
             # Pass URL and Key explicitly
-            is_connected = check_connection(api_details['api_url'], api_details['api_key'])
+            is_connected = check_connection(api_url, api_key)
         except (ImportError, AttributeError):
             web_logger.error(f"Could not find check_connection function for {app_name}.")
         except Exception as e:

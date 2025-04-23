@@ -95,7 +95,7 @@ def configure_logging(app_name: str = None):
 def log_configuration(app_name: str):
     """Log the current configuration settings for a specific app."""
     log = get_logger(app_name) # Use the specific app's logger
-    settings = settings_manager.load_app_settings(app_name)
+    settings = settings_manager.load_settings(app_name) # Corrected function name
 
     if not settings:
         log.error(f"Could not load settings for app: {app_name}. Cannot log configuration.")

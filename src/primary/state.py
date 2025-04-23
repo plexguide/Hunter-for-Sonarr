@@ -10,7 +10,6 @@ import time
 import json
 from typing import List, Dict, Any, Optional
 from src.primary.utils.logger import logger
-from src.primary.config import APP_TYPE
 from src.primary import settings_manager
 
 # Create state directories based on app type
@@ -25,6 +24,10 @@ def get_state_file_path(app_type: str, state_type: str) -> str:
     Returns:
         The absolute path to the state file
     """
+    if not app_type:
+        logger.error("get_state_file_path called without an app_type.")
+        return "/tmp/huntarr-state/unknown/error.json" 
+        
     if app_type == "sonarr":
         base_path = "/tmp/huntarr-state/sonarr"
     elif app_type == "radarr":
@@ -34,29 +37,28 @@ def get_state_file_path(app_type: str, state_type: str) -> str:
     elif app_type == "readarr":
         base_path = "/tmp/huntarr-state/readarr"
     else:
-        base_path = "/tmp/huntarr-state/unknown"
+        logger.warning(f"get_state_file_path called with unexpected app_type: {app_type}")
+        base_path = f"/tmp/huntarr-state/{app_type}"
     
-    # Ensure the directory exists
     os.makedirs(base_path, exist_ok=True)
     
     return f"{base_path}/{state_type}.json"
-
-# Define state file paths based on the get_state_file_path function
-PROCESSED_MISSING_FILE = get_state_file_path(APP_TYPE, "processed_missing")
-PROCESSED_UPGRADES_FILE = get_state_file_path(APP_TYPE, "processed_upgrades")
-LAST_RESET_FILE = get_state_file_path(APP_TYPE, "last_reset")
 
 def get_last_reset_time(app_type: str = None) -> datetime.datetime:
     """
     Get the last time the state was reset for a specific app type.
     
     Args:
-        app_type: The type of app to get last reset time for. If None, uses APP_TYPE.
+        app_type: The type of app to get last reset time for.
         
     Returns:
-        The datetime of the last reset, or a very old date if no reset has occurred.
+        The datetime of the last reset, or a very old date if no reset has occurred or app_type is invalid.
     """
-    current_app_type = app_type or APP_TYPE
+    if not app_type:
+        logger.error("get_last_reset_time called without app_type.")
+        return datetime.datetime.fromtimestamp(0)
+        
+    current_app_type = app_type
     reset_file = get_state_file_path(current_app_type, "last_reset")
     
     try:
@@ -67,7 +69,6 @@ def get_last_reset_time(app_type: str = None) -> datetime.datetime:
     except Exception as e:
         logger.error(f"Error reading last reset time for {current_app_type}: {e}")
     
-    # Default to a very old date if no reset has occurred
     return datetime.datetime.fromtimestamp(0)
 
 def set_last_reset_time(reset_time: datetime.datetime, app_type: str = None) -> None:
@@ -76,14 +77,16 @@ def set_last_reset_time(reset_time: datetime.datetime, app_type: str = None) -> 
     
     Args:
         reset_time: The datetime to set
-        app_type: The type of app to set last reset time for. If None, uses APP_TYPE.
+        app_type: The type of app to set last reset time for.
     """
-    current_app_type = app_type or APP_TYPE
+    if not app_type:
+        logger.error("set_last_reset_time called without app_type.")
+        return
+        
+    current_app_type = app_type
     reset_file = get_state_file_path(current_app_type, "last_reset")
     
     try:
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(reset_file), exist_ok=True)
         with open(reset_file, "w") as f:
             f.write(reset_time.isoformat())
     except Exception as e:
@@ -95,31 +98,30 @@ def check_state_reset(app_type: str = None) -> bool:
     If it's time to reset, clears the processed IDs and updates the last reset time.
     
     Args:
-        app_type: The type of app to check state reset for. If None, uses APP_TYPE.
+        app_type: The type of app to check state reset for.
         
     Returns:
         True if the state was reset, False otherwise.
     """
-    current_app_type = app_type or APP_TYPE
+    if not app_type:
+        logger.error("check_state_reset called without app_type.")
+        return False
+        
+    current_app_type = app_type
     
-    # Get reset interval from settings
-    reset_interval = settings_manager.get_setting("huntarr", "state_reset_interval_hours", 168)
+    reset_interval = settings_manager.get_setting(current_app_type, "state_reset_interval_hours", 168)
     
     last_reset = get_last_reset_time(current_app_type)
     now = datetime.datetime.now()
     
-    # Calculate the time delta since the last reset
     delta = now - last_reset
     hours_passed = delta.total_seconds() / 3600
     
-    # Reset if it's been longer than the reset interval
     if hours_passed >= reset_interval:
-        logger.info(f"State files for {current_app_type} have not been reset in {hours_passed:.1f} hours. Resetting now.")
+        logger.info(f"State files for {current_app_type} have not been reset in {hours_passed:.1f} hours (interval: {reset_interval}h). Resetting now.")
         
-        # Clear processed IDs
         clear_processed_ids(current_app_type)
         
-        # Update the last reset time
         set_last_reset_time(now, current_app_type)
         
         return True
@@ -131,11 +133,14 @@ def clear_processed_ids(app_type: str = None) -> None:
     Clear all processed IDs for a specific app type.
     
     Args:
-        app_type: The type of app to clear processed IDs for. If None, uses APP_TYPE.
+        app_type: The type of app to clear processed IDs for.
     """
-    current_app_type = app_type or APP_TYPE
+    if not app_type:
+        logger.error("clear_processed_ids called without app_type.")
+        return
+        
+    current_app_type = app_type
     
-    # Clear missing IDs
     missing_file = get_state_file_path(current_app_type, "processed_missing")
     try:
         if os.path.exists(missing_file):
@@ -145,7 +150,6 @@ def clear_processed_ids(app_type: str = None) -> None:
     except Exception as e:
         logger.error(f"Error clearing processed missing IDs for {current_app_type}: {e}")
     
-    # Clear upgrade IDs
     upgrades_file = get_state_file_path(current_app_type, "processed_upgrades")
     try:
         if os.path.exists(upgrades_file):
@@ -160,25 +164,26 @@ def calculate_reset_time(app_type: str = None) -> str:
     Calculate when the next state reset will occur.
     
     Args:
-        app_type: The type of app to calculate reset time for. If None, uses APP_TYPE.
+        app_type: The type of app to calculate reset time for.
         
     Returns:
         A string representation of when the next reset will occur.
     """
-    current_app_type = app_type or APP_TYPE
+    if not app_type:
+        logger.error("calculate_reset_time called without app_type.")
+        return "Next reset: Unknown (app type not provided)"
+        
+    current_app_type = app_type
     
-    # Get reset interval from settings
-    reset_interval = settings_manager.get_setting("huntarr", "state_reset_interval_hours", 168)
+    reset_interval = settings_manager.get_setting(current_app_type, "state_reset_interval_hours", 168)
     
     last_reset = get_last_reset_time(current_app_type)
     next_reset = last_reset + datetime.timedelta(hours=reset_interval)
     now = datetime.datetime.now()
     
-    # If the next reset is in the past, it will reset in the next cycle
     if next_reset < now:
         return "Next reset: at the start of the next cycle"
     
-    # Calculate time until next reset
     delta = next_reset - now
     hours = delta.total_seconds() / 3600
     
@@ -219,8 +224,6 @@ def save_processed_ids(filepath: str, ids: List[int]) -> None:
         ids: The list of IDs to save
     """
     try:
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
         with open(filepath, "w") as f:
             json.dump(ids, f)
     except Exception as e:
@@ -252,24 +255,24 @@ def truncate_processed_list(filepath: str, max_items: int = 1000) -> None:
     processed_ids = load_processed_ids(filepath)
     
     if len(processed_ids) > max_items:
-        # Keep only the most recent items (at the end of the list)
         processed_ids = processed_ids[-max_items:]
         save_processed_ids(filepath, processed_ids)
         logger.debug(f"Truncated {filepath} to {max_items} items")
 
-# Initialize state files for all app types
 def init_state_files() -> None:
     """Initialize state files for all app types"""
-    app_types = ["sonarr", "radarr", "lidarr", "readarr"]
+    app_types = settings_manager.KNOWN_APP_TYPES 
     
     for app_type in app_types:
         missing_file = get_state_file_path(app_type, "processed_missing")
         upgrades_file = get_state_file_path(app_type, "processed_upgrades")
+        reset_file = get_state_file_path(app_type, "last_reset")
         
-        # Initialize the files if they don't exist
         for filepath in [missing_file, upgrades_file]:
             if not os.path.exists(filepath):
                 save_processed_ids(filepath, [])
+        
+        if not os.path.exists(reset_file):
+             set_last_reset_time(datetime.datetime.fromtimestamp(0), app_type)
 
-# Run initialization
 init_state_files()

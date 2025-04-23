@@ -97,7 +97,7 @@ def app_specific_loop(app_type: str) -> None:
         # --- Load Settings for this Cycle --- #
         try:
             # Load all settings for this app for the current cycle
-            app_settings = settings_manager.load_app_settings(app_type)
+            app_settings = settings_manager.load_settings(app_type) # Corrected function name
             if not app_settings: # Handle case where loading fails
                 app_logger.error("Failed to load settings. Skipping cycle.")
                 stop_event.wait(60) # Wait a minute before retrying
@@ -210,7 +210,8 @@ def app_specific_loop(app_type: str) -> None:
 
 def start_app_threads():
     """Start threads for all configured and enabled apps."""
-    configured_apps = settings_manager.list_configured_apps()
+    configured_apps_list = settings_manager.get_configured_apps() # Corrected function name
+    configured_apps = {app: True for app in configured_apps_list} # Convert list to dict format expected below
 
     for app_type, is_configured in configured_apps.items():
         if is_configured:
@@ -240,7 +241,8 @@ def start_app_threads():
 
 def check_and_restart_threads():
     """Check if any threads have died and restart them if the app is still configured."""
-    configured_apps = settings_manager.list_configured_apps()
+    configured_apps_list = settings_manager.get_configured_apps() # Corrected function name
+    configured_apps = {app: True for app in configured_apps_list} # Convert list to dict format expected below
 
     for app_type, thread in list(app_threads.items()):
         if not thread.is_alive():
@@ -280,7 +282,7 @@ def start_huntarr():
         settings_manager.migrate_from_huntarr_json()
 
     # Log initial configuration for all known apps
-    for app_name in settings_manager.KNOWN_APPS:
+    for app_name in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
         try:
             config.log_configuration(app_name)
         except Exception as e:
