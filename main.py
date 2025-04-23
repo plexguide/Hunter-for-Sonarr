@@ -2,6 +2,10 @@ import sys
 import time
 from src.utils.logger import logger
 import signal
+import src.state as state
+import src.api as api
+import src.missing as missing
+import src.upgrade as upgrade
 from src.huntarr import (
     signal_handler,
     validate_config,

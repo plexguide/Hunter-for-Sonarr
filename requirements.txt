@@ -1,2 +1,14 @@
-requests>=2.25.0
-python-dateutil>=2.8.1
+annotated-types==0.7.0
+certifi==2025.1.31
+charset-normalizer==3.4.1
+idna==3.10
+pydantic==2.11.3
+pydantic-settings==2.9.1
+pydantic_core==2.33.1
+python-dateutil==2.9.0.post0
+python-dotenv==1.1.0
+requests==2.32.3
+six==1.17.0
+typing-inspection==0.4.0
+typing_extensions==4.13.2
+urllib3==2.4.0

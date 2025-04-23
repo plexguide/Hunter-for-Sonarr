@@ -1,7 +1,5 @@
 FROM python:3.9-slim
 
-WORKDIR /app
-
 # Install required packages and dependencies
 RUN apt-get update && apt-get install -y \
     procps \
@@ -10,8 +8,7 @@ RUN apt-get update && apt-get install -y \
 
 # Create necessary directories
 RUN mkdir -p /config/stateful
-RUN chmod -R 755 /config
-RUN mkdir -p /scripts
+RUN mkdir -p /config/log && chmod -R 755 /config/log && touch /config/log/huntarr.log
 
 # Set environment variables with defaults
 ENV PYTHONPATH=/app
@@ -34,9 +31,10 @@ ENV MINIMUM_DOWNLOAD_QUEUE_SIZE=-1
 ENV LOG_EPISODE_ERRORS=false
 ENV DEBUG_API_CALLS=false
 
-# Copy scripts
-COPY scripts /scripts
-RUN chmod -R +x /scripts
+WORKDIR /app
+
+COPY . /app
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Set entry point
-ENTRYPOINT ["/scripts/start.sh"]
+CMD ["python", "main.py"]

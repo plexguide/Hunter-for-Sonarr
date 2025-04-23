@@ -1,7 +1,8 @@
 import logging
 import os
 
-log_dir = "/config/log"
+log_dir = r"/config/log"
+os.makedirs(log_dir, exist_ok=True)
 format = '%(asctime)s - %(levelname)s - %(message)s'
 
 # Configure logging
