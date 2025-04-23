@@ -12,6 +12,7 @@ import pyotp
 import logging
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, Response, send_from_directory
 from src.primary import settings_manager # Use the updated settings manager
+from src.primary.utils.logger import get_logger # Import get_logger
 from src.primary.auth import (
     user_exists, create_user, verify_user, create_session, logout,
     SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret,
@@ -81,12 +82,24 @@ def login_route():
 
 @common_bp.route('/logout', methods=['POST'])
 def logout_route():
-    session_token = request.cookies.get(SESSION_COOKIE_NAME)
-    if session_token:
-        logout(session_token)
-    response = jsonify({"success": True})
-    response.delete_cookie(SESSION_COOKIE_NAME)
-    return response
+    logger = get_logger("common_routes") # Get logger
+    try:
+        session_token = request.cookies.get(SESSION_COOKIE_NAME)
+        if session_token:
+            logger.info(f"Logging out session token: {session_token[:8]}...") # Log part of token
+            logout(session_token) # Call the logout function from auth.py
+        else:
+            logger.warning("Logout attempt without session cookie.")
+
+        response = jsonify({"success": True})
+        # Ensure cookie deletion happens even if logout function had issues
+        response.delete_cookie(SESSION_COOKIE_NAME, path='/', samesite='Lax') # Specify path and samesite
+        logger.info("Logout successful, cookie deleted.")
+        return response
+    except Exception as e:
+        logger.error(f"Error during logout: {e}", exc_info=True)
+        # Return a JSON error response
+        return jsonify({"success": False, "error": "An internal server error occurred during logout."}), 500
 
 @common_bp.route('/setup', methods=['GET', 'POST'])
 def setup_route():
@@ -132,7 +145,8 @@ def get_user_info():
     if not username:
         return jsonify({"error": "Not authenticated"}), 401
     
-    two_fa_status = is_2fa_enabled(username)
+    # Pass username to is_2fa_enabled
+    two_fa_status = is_2fa_enabled(username) 
     return jsonify({"username": username, "is_2fa_enabled": two_fa_status})
 
 @common_bp.route('/api/user/change-username', methods=['POST'])

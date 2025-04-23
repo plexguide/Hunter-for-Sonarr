@@ -89,7 +89,9 @@ const huntarrUI = {
         
         // Theme
         this.elements.themeToggle = document.getElementById('themeToggle');
-        this.elements.currentPageTitle = document.getElementById('currentPageTitle');
+        
+        // Logout
+        this.elements.logoutLink = document.getElementById('logoutLink'); // Added logout link
     },
     
     // Set up event listeners
@@ -141,6 +143,11 @@ const huntarrUI = {
         // Theme
         if (this.elements.themeToggle) {
             this.elements.themeToggle.addEventListener('change', this.handleThemeToggle.bind(this));
+        }
+        
+        // Logout
+        if (this.elements.logoutLink) { // Added listener for logout
+            this.elements.logoutLink.addEventListener('click', this.logout.bind(this));
         }
         
         // Handle window hash change
@@ -739,6 +746,31 @@ const huntarrUI = {
             .catch(error => {
                 console.error('Error loading username:', error);
             });
+    },
+    
+    logout: function(e) { // Added logout function
+        e.preventDefault(); // Prevent default link behavior
+        console.log('[huntarrUI] Logging out...');
+        fetch('/logout', { // Use the correct endpoint defined in Flask
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('[huntarrUI] Logout successful, redirecting to login.');
+                window.location.href = '/login'; // Redirect to login page
+            } else {
+                console.error('[huntarrUI] Logout failed:', data.message);
+                this.showNotification('Logout failed. Please try again.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error during logout:', error);
+            this.showNotification('An error occurred during logout.', 'error');
+        });
     },
     
     // Utility functions

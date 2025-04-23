@@ -206,14 +206,14 @@ def authenticate_request():
     
     return None
 
-def logout():
+def logout(session_id: str): # Add session_id parameter
     """Log out the current user by invalidating their session"""
-    session_id = session.get(SESSION_COOKIE_NAME)
+    # Use the passed session_id
     if session_id and session_id in active_sessions:
         del active_sessions[session_id]
     
-    # Clear the session cookie
-    session.pop(SESSION_COOKIE_NAME, None)
+    # Clear the session cookie in Flask context (if available, otherwise handled by route)
+    # session.pop(SESSION_COOKIE_NAME, None) # This might be better handled solely in the route
 
 def get_user_data() -> Dict:
     """Get the user data from the credentials file"""
@@ -237,10 +237,10 @@ def save_user_data(user_data: Dict) -> bool:
         print(f"Error saving user data: {e}")
         return False
 
-def is_2fa_enabled() -> bool:
-    """Check if 2FA is enabled for the current user"""
-    user_data = get_user_data()
-    return user_data.get("2fa_enabled", False)
+def is_2fa_enabled(username): # Keep username param for consistency if needed elsewhere, but don't use it here for single user
+    """Check if 2FA is enabled for a user."""
+    user_data = get_user_data() # Use the existing function to load data
+    return user_data.get('2fa_enabled', False)
 
 def generate_2fa_secret(username: str) -> Tuple[str, str]: # Added username parameter
     """
