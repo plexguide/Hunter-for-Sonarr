@@ -19,10 +19,6 @@ from primary.apps.radarr.api import get_cutoff_unmet_movies, refresh_movie, movi
 # Get app-specific logger
 logger = get_logger("radarr")
 
-def get_current_upgrade_limit():
-    """Get the current HUNT_UPGRADE_MOVIES value directly from config"""
-    return settings_manager.get_setting("huntarr", "hunt_upgrade_movies", 0)
-
 def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
     """
     Process movies that need quality upgrades (cutoff unmet).
@@ -33,14 +29,12 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
     Returns:
         True if any processing was done, False otherwise
     """
-    # Reload settings to ensure the latest values are used
-    from primary.config import refresh_settings
-    refresh_settings("radarr")
-
     # Get the current value directly at the start of processing
-    HUNT_UPGRADE_MOVIES = get_current_upgrade_limit()
-    RANDOM_UPGRADES = settings_manager.get_setting("advanced", "random_upgrades", True)
-    SKIP_MOVIE_REFRESH = settings_manager.get_setting("advanced", "skip_movie_refresh", False)
+    # Use settings_manager directly instead of get_current_upgrade_limit
+    HUNT_UPGRADE_MOVIES = settings_manager.get_setting("radarr", "hunt_upgrade_movies", 0)
+    RANDOM_UPGRADES = settings_manager.get_setting("radarr", "random_upgrades", True)
+    SKIP_MOVIE_REFRESH = settings_manager.get_setting("radarr", "skip_movie_refresh", False)
+    MONITORED_ONLY = settings_manager.get_setting("radarr", "monitored_only", True)
     
     # Get app-specific state file
     PROCESSED_UPGRADE_FILE = get_state_file_path("radarr", "processed_upgrades")
@@ -106,7 +100,8 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
             break
         
         # Check again for the current limit in case it was changed during processing
-        current_limit = get_current_upgrade_limit()
+        # Use settings_manager directly instead of get_current_upgrade_limit
+        current_limit = settings_manager.get_setting("radarr", "hunt_upgrade_movies", 0)
         
         if movies_processed >= current_limit:
             logger.info(f"Reached HUNT_UPGRADE_MOVIES={current_limit} for this cycle.")
@@ -155,14 +150,16 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
             processing_done = True
             
             # Log with the current limit, not the initial one
-            current_limit = get_current_upgrade_limit()
+            # Use settings_manager directly instead of get_current_upgrade_limit
+            current_limit = settings_manager.get_setting("radarr", "hunt_upgrade_movies", 0)
             logger.info(f"Processed {movies_processed}/{current_limit} upgrade movies this cycle.")
         else:
             logger.warning(f"WARNING: Search command failed for movie ID {movie_id}.")
             continue
     
     # Log final status
-    current_limit = get_current_upgrade_limit()
+    # Use settings_manager directly instead of get_current_upgrade_limit
+    current_limit = settings_manager.get_setting("radarr", "hunt_upgrade_movies", 0)
     logger.info(f"Completed processing {movies_processed} upgrade movies for this cycle.")
     truncate_processed_list(PROCESSED_UPGRADE_FILE)
     

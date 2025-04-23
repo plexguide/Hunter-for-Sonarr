@@ -22,7 +22,10 @@ from src.primary.utils.logger import setup_logger
 logger = setup_logger()
 
 # Now import the rest of the modules
-from src.primary.config import SLEEP_DURATION, MINIMUM_DOWNLOAD_QUEUE_SIZE, log_configuration, refresh_settings
+# Import config module itself
+from src.primary import config
+# Import specific items needed directly
+from src.primary.config import SLEEP_DURATION, MINIMUM_DOWNLOAD_QUEUE_SIZE
 from src.primary.state import check_state_reset, calculate_reset_time
 from src.primary.utils.app_utils import get_ip_address
 from src.primary import keys_manager
@@ -53,313 +56,226 @@ signal.signal(signal.SIGUSR1, signal_handler)
 def force_reload_all_modules():
     """Force reload of all relevant modules to ensure fresh settings"""
     try:
+        # Reload config first
         importlib.reload(sys.modules['src.primary.config'])
         logger.debug("Reloaded src.primary.config module")
-    except (KeyError, ImportError) as e:
+        # Reload other potentially affected modules if necessary
+        # importlib.reload(sys.modules['src.primary.api'])
+        # importlib.reload(sys.modules['src.primary.state'])
+        # importlib.reload(sys.modules['src.primary.apps.sonarr.missing']) # etc.
+    except (KeyError, ImportError, AttributeError) as e:
         logger.error(f"Error reloading modules: {e}")
 
-# Find the refresh_settings function and modify it to accept an app_type parameter
-def refresh_settings(app_type=None):
-    """
-    Refresh settings from the config file.
-    
-    Args:
-        app_type: Optional app type to refresh settings for. If None, uses the global APP_TYPE.
-    """
-    from src.primary.config import log_configuration
-    
-    # If app_type is not provided, use the global APP_TYPE
-    if app_type is None:
-        from src.primary.config import APP_TYPE as current_app_type
-        app_type = current_app_type
-        
-    # Log the refresh
-    logger.debug(f"Refreshing settings for {app_type}")
-    
-    # Call the original log_configuration function
-    log_configuration()
+def check_restart(app_type: str, app_logger: logging.Logger) -> bool:
+    """Checks if a restart is flagged for the app type and logs a warning."""
+    if restart_cycles[app_type]:
+        app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
+        return True
+    return False
 
 def app_specific_loop(app_type: str) -> None:
     """
     Main processing loop for a specific Arr application
-    
+
     Args:
         app_type: The type of Arr application (sonarr, radarr, lidarr, readarr)
     """
     global restart_cycles
-    
+
     # Get app-specific logger
     from src.primary.utils.logger import get_logger
     app_logger = get_logger(app_type)
-    
+
     app_logger.info(f"=== Huntarr starting component for {app_type.title()} interaction ===")
-    
-    server_ip = get_ip_address()
-    app_logger.info(f"Web interface available at http://{server_ip}:9705")
-    
+
+    # server_ip = get_ip_address() # Removed redundant logging of web interface URL
+    # app_logger.info(f"Web interface available at http://{server_ip}:9705")
+
     # Import necessary modules based on app type
+    process_missing = None
+    process_upgrades = None
+    get_queue_size = lambda: 0 # Default to 0
+
     if app_type == "sonarr":
         from src.primary.apps.sonarr.missing import process_missing_episodes
         from src.primary.apps.sonarr.upgrade import process_cutoff_upgrades
-        from src.primary.api import get_download_queue_size as sonarr_get_download_queue_size
+        from src.primary.apps.sonarr.api import get_download_queue_size as get_queue_size
+        process_missing = process_missing_episodes
+        process_upgrades = process_cutoff_upgrades
+        hunt_missing_setting = "hunt_missing_shows"
+        hunt_upgrade_setting = "hunt_upgrade_episodes"
     elif app_type == "radarr":
         from src.primary.apps.radarr.missing import process_missing_movies
         from src.primary.apps.radarr.upgrade import process_cutoff_upgrades
-        from src.primary.apps.radarr.api import get_download_queue_size
+        from src.primary.apps.radarr.api import get_download_queue_size as get_queue_size
+        process_missing = process_missing_movies
+        process_upgrades = process_cutoff_upgrades
+        hunt_missing_setting = "hunt_missing_movies"
+        hunt_upgrade_setting = "hunt_upgrade_movies"
     elif app_type == "lidarr":
         from src.primary.apps.lidarr.missing import process_missing_albums
         from src.primary.apps.lidarr.upgrade import process_cutoff_upgrades
-        from src.primary.apps.lidarr.api import get_download_queue_size
+        from src.primary.apps.lidarr.api import get_download_queue_size as get_queue_size
+        process_missing = process_missing_albums
+        process_upgrades = process_cutoff_upgrades
+        hunt_missing_setting = "hunt_missing_albums"
+        hunt_upgrade_setting = "hunt_upgrade_tracks"
     elif app_type == "readarr":
         from src.primary.apps.readarr.missing import process_missing_books
         from src.primary.apps.readarr.upgrade import process_cutoff_upgrades
         # Placeholder for Readarr-specific API functions
-        sonarr_get_download_queue_size = lambda: 0  # Placeholder
-    
+        # from src.primary.apps.readarr.api import get_download_queue_size as get_queue_size
+        process_missing = process_missing_books
+        process_upgrades = process_cutoff_upgrades
+        hunt_missing_setting = "hunt_missing_books"
+        hunt_upgrade_setting = "hunt_upgrade_books"
+
     # Get API keys for this app
     api_url, api_key = keys_manager.get_api_keys(app_type)
-    
-    # Set the API credentials for this thread context
-    os.environ[f"{app_type.upper()}_API_URL"] = api_url
-    os.environ[f"{app_type.upper()}_API_KEY"] = api_key
-    
+
+    # Set the API credentials for this thread context (if needed by API functions)
+    # os.environ[f"{app_type.upper()}_API_URL"] = api_url
+    # os.environ[f"{app_type.upper()}_API_KEY"] = api_key
+
     while not stop_threads:
         restart_cycles[app_type] = False
-        
+
         # Always reload settings from huntarr.json at the start of each cycle
-        refresh_settings(app_type)
-        
+        # Use the config module's refresh_settings
+        config.refresh_settings(app_type)
+
         check_state_reset(app_type)
-        
+
         app_logger.info(f"=== Starting Huntarr {app_type} cycle ===")
-        
-        # Import check_connection with the correct app type
-        import_module = __import__('src.primary.api', fromlist=[''])
-        check_connection = getattr(import_module, 'check_connection')
-        
-        # Override the global APP_TYPE for this thread
-        os.environ["APP_TYPE"] = app_type
-        
+
+        # Import check_connection dynamically or have a central dispatcher
+        try:
+            import_module = importlib.import_module(f'src.primary.apps.{app_type}.api')
+            check_connection = getattr(import_module, 'check_connection')
+        except (ImportError, AttributeError):
+            app_logger.error(f"Could not find check_connection function for {app_type}. Skipping connection check.")
+            # Decide how to handle this - maybe skip the cycle?
+            time.sleep(config.SLEEP_DURATION) # Use config directly
+            continue
+
+        # Override the global APP_TYPE for this thread's context if needed by shared modules
+        # This might be risky if not managed carefully. Prefer passing app_type explicitly.
+        # os.environ["APP_TYPE"] = app_type
+
         api_connected = False
-        
         connection_attempts = 0
         while not api_connected and not restart_cycles[app_type] and not stop_threads:
-            refresh_settings(app_type)  # Ensure latest settings are loaded
-            
-            api_connected = check_connection(app_type)
+            # Reload settings before checking connection in case they changed
+            config.refresh_settings(app_type)
+
+            api_connected = check_connection() # Call the app-specific check_connection
             if not api_connected:
                 app_logger.error(f"Cannot connect to {app_type.title()}. Please check your API URL and API key.")
                 app_logger.info(f"Will retry in 10 seconds...")
-                
+
                 for _ in range(10):
                     time.sleep(1)
-                    if restart_cycles[app_type] or stop_threads:
+                    if check_restart(app_type, app_logger) or stop_threads:
                         break
-                
+                if restart_cycles[app_type] or stop_threads: break # Break outer loop too
+
                 connection_attempts += 1
                 if connection_attempts >= 3:
                     app_logger.warning(f"Multiple failed connection attempts to {app_type.title()}. Will try again next cycle.")
-                    break
-            
-            if restart_cycles[app_type]:
-                app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                continue
-        
+                    break # Break connection attempt loop
+
+            if check_restart(app_type, app_logger):
+                break # Break connection attempt loop to restart cycle
+
         if not api_connected:
             app_logger.error(f"Connection to {app_type} failed, skipping this cycle.")
-            time.sleep(10)
-            continue
-        
+            # Use config directly for sleep duration
+            sleep_duration = config.SLEEP_DURATION
+            sleep_start = time.time()
+            sleep_end = sleep_start + sleep_duration
+            while time.time() < sleep_end and not check_restart(app_type, app_logger) and not stop_threads:
+                 time.sleep(min(1, sleep_end - time.time()))
+            continue # Go to next main loop iteration
+
         processing_done = False
-        
-        # App-specific processing logic
-        if app_type == "sonarr":
-            # Get download queue size with the app-specific function
-            download_queue_size = sonarr_get_download_queue_size()
-            min_download_queue_size = MINIMUM_DOWNLOAD_QUEUE_SIZE
-            
-            if min_download_queue_size < 0 or (min_download_queue_size >= 0 and download_queue_size <= min_download_queue_size):
-                if restart_cycles[app_type]:
-                    app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                    continue
-                
-                # Get app-specific settings
-                from src.primary.config import HUNT_MISSING_SHOWS, HUNT_UPGRADE_EPISODES
-                
-                if HUNT_MISSING_SHOWS > 0:
-                    app_logger.info(f"Configured to look for {HUNT_MISSING_SHOWS} missing shows")
-                    if process_missing_episodes(lambda: restart_cycles[app_type]):
+
+        # Get download queue size
+        try:
+            download_queue_size = get_queue_size()
+            min_download_queue_size = config.MINIMUM_DOWNLOAD_QUEUE_SIZE # Use config directly
+        except Exception as e:
+            app_logger.error(f"Failed to get download queue size for {app_type}: {e}")
+            download_queue_size = 0 # Assume 0 if error
+            min_download_queue_size = -1 # Default to allow processing
+
+        if min_download_queue_size < 0 or (min_download_queue_size >= 0 and download_queue_size <= min_download_queue_size):
+            if check_restart(app_type, app_logger): continue
+
+            # Get app-specific settings using settings_manager
+            hunt_missing_count = keys_manager.settings_manager.get_setting(app_type, hunt_missing_setting, 0)
+            hunt_upgrade_count = keys_manager.settings_manager.get_setting(app_type, hunt_upgrade_setting, 0)
+
+            # Process Missing
+            if process_missing and hunt_missing_count > 0:
+                app_logger.info(f"Configured to look for {hunt_missing_count} missing items")
+                try:
+                    if process_missing(lambda: restart_cycles[app_type]):
                         processing_done = True
                     else:
-                        app_logger.info("No missing episodes processed - check if you have any missing episodes in Sonarr")
-                    
-                    if restart_cycles[app_type]:
-                        app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                        continue
-                else:
-                    app_logger.info("Missing shows search disabled (HUNT_MISSING_SHOWS=0)")
-                
-                if HUNT_UPGRADE_EPISODES > 0:
-                    app_logger.info(f"Configured to look for {HUNT_UPGRADE_EPISODES} quality upgrades")
-                    if process_cutoff_upgrades(lambda: restart_cycles[app_type]):
+                        app_logger.info(f"No missing items processed for {app_type}")
+                except Exception as e:
+                    app_logger.error(f"Error processing missing items for {app_type}: {e}", exc_info=True)
+
+                if check_restart(app_type, app_logger): continue
+            elif hunt_missing_count <= 0:
+                app_logger.info(f"Missing items search disabled ({hunt_missing_setting}=0)")
+
+            # Process Upgrades
+            if process_upgrades and hunt_upgrade_count > 0:
+                app_logger.info(f"Configured to look for {hunt_upgrade_count} quality upgrades")
+                try:
+                    if process_upgrades(lambda: restart_cycles[app_type]):
                         processing_done = True
                     else:
-                        app_logger.info("No quality upgrades processed - check if you have any cutoff unmet episodes in Sonarr")
-                    
-                    if restart_cycles[app_type]:
-                        app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                        continue
-                else:
-                    app_logger.info("Quality upgrades search disabled (HUNT_UPGRADE_EPISODES=0)")
-            else:
-                app_logger.info(f"Download queue size ({download_queue_size}) is above the minimum threshold ({min_download_queue_size}). Skipped processing.")
-        
-        elif app_type == "radarr":
-            # Get download queue size with the app-specific function
-            download_queue_size = get_download_queue_size()
-            min_download_queue_size = MINIMUM_DOWNLOAD_QUEUE_SIZE
-            
-            if min_download_queue_size < 0 or (min_download_queue_size >= 0 and download_queue_size <= min_download_queue_size):
-                if restart_cycles[app_type]:
-                    app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                    continue
-                
-                # Get app-specific settings
-                from src.primary.config import HUNT_MISSING_MOVIES, HUNT_UPGRADE_MOVIES
-                
-                if HUNT_MISSING_MOVIES > 0:
-                    app_logger.info(f"Configured to look for {HUNT_MISSING_MOVIES} missing movies")
-                    if process_missing_movies(lambda: restart_cycles[app_type]):
-                        processing_done = True
-                    else:
-                        app_logger.info("No missing movies processed - feature not yet fully implemented")
-                    
-                    if restart_cycles[app_type]:
-                        app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                        continue
-                else:
-                    app_logger.info("Missing movies search disabled (HUNT_MISSING_MOVIES=0)")
-                
-                if HUNT_UPGRADE_MOVIES > 0:
-                    app_logger.info(f"Configured to look for {HUNT_UPGRADE_MOVIES} quality upgrades")
-                    if process_cutoff_upgrades(lambda: restart_cycles[app_type]):
-                        processing_done = True
-                    else:
-                        app_logger.info("No quality upgrades processed - feature not yet fully implemented")
-                    
-                    if restart_cycles[app_type]:
-                        app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                        continue
-                else:
-                    app_logger.info("Quality upgrades search disabled (HUNT_UPGRADE_MOVIES=0)")
-            else:
-                app_logger.info(f"Download queue size ({download_queue_size}) is above the minimum threshold ({min_download_queue_size}). Skipped processing.")
-        
-        elif app_type == "lidarr":
-            # Get download queue size with the app-specific function
-            download_queue_size = get_download_queue_size()
-            min_download_queue_size = MINIMUM_DOWNLOAD_QUEUE_SIZE
-            
-            if min_download_queue_size < 0 or (min_download_queue_size >= 0 and download_queue_size <= min_download_queue_size):
-                if restart_cycles[app_type]:
-                    app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                    continue
-                
-                # Get app-specific settings
-                from src.primary.config import HUNT_MISSING_ALBUMS, HUNT_UPGRADE_TRACKS
-                
-                if HUNT_MISSING_ALBUMS > 0:
-                    app_logger.info(f"Configured to look for {HUNT_MISSING_ALBUMS} missing albums")
-                    if process_missing_albums(lambda: restart_cycles[app_type]):
-                        processing_done = True
-                    else:
-                        app_logger.info("No missing albums processed - feature not yet fully implemented")
-                    
-                    if restart_cycles[app_type]:
-                        app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                        continue
-                else:
-                    app_logger.info("Missing albums search disabled (HUNT_MISSING_ALBUMS=0)")
-                
-                if HUNT_UPGRADE_TRACKS > 0:
-                    app_logger.info(f"Configured to look for {HUNT_UPGRADE_TRACKS} quality upgrades")
-                    if process_cutoff_upgrades(lambda: restart_cycles[app_type]):
-                        processing_done = True
-                    else:
-                        app_logger.info("No quality upgrades processed - feature not yet fully implemented")
-                    
-                    if restart_cycles[app_type]:
-                        app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                        continue
-                else:
-                    app_logger.info("Quality upgrades search disabled (HUNT_UPGRADE_TRACKS=0)")
-            else:
-                app_logger.info(f"Download queue size ({download_queue_size}) is above the minimum threshold ({min_download_queue_size}). Skipped processing.")
-        
-        elif app_type == "readarr":
-            # Get download queue size with the app-specific function
-            download_queue_size = sonarr_get_download_queue_size()  # Placeholder - will be replaced with readarr-specific function
-            min_download_queue_size = MINIMUM_DOWNLOAD_QUEUE_SIZE
-            
-            if min_download_queue_size < 0 or (min_download_queue_size >= 0 and download_queue_size <= min_download_queue_size):
-                if restart_cycles[app_type]:
-                    app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                    continue
-                
-                # Get app-specific settings
-                from src.primary.config import HUNT_MISSING_BOOKS, HUNT_UPGRADE_BOOKS
-                
-                if HUNT_MISSING_BOOKS > 0:
-                    app_logger.info(f"Configured to look for {HUNT_MISSING_BOOKS} missing books")
-                    if process_missing_books(lambda: restart_cycles[app_type]):
-                        processing_done = True
-                    else:
-                        app_logger.info("No missing books processed - feature not yet fully implemented")
-                    
-                    if restart_cycles[app_type]:
-                        app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                        continue
-                else:
-                    app_logger.info("Missing books search disabled (HUNT_MISSING_BOOKS=0)")
-                
-                if HUNT_UPGRADE_BOOKS > 0:
-                    app_logger.info(f"Configured to look for {HUNT_UPGRADE_BOOKS} quality upgrades")
-                    if process_cutoff_upgrades(lambda: restart_cycles[app_type]):
-                        processing_done = True
-                    else:
-                        app_logger.info("No quality upgrades processed - feature not yet fully implemented")
-                    
-                    if restart_cycles[app_type]:
-                        app_logger.warning(f"⚠️ Restarting {app_type} cycle due to settings change... ⚠️")
-                        continue
-                else:
-                    app_logger.info("Quality upgrades search disabled (HUNT_UPGRADE_BOOKS=0)")
-            else:
-                app_logger.info(f"Download queue size ({download_queue_size}) is above the minimum threshold ({min_download_queue_size}). Skipped processing.")
-        
+                        app_logger.info(f"No quality upgrades processed for {app_type}")
+                except Exception as e:
+                    app_logger.error(f"Error processing quality upgrades for {app_type}: {e}", exc_info=True)
+
+                if check_restart(app_type, app_logger): continue
+            elif hunt_upgrade_count <= 0:
+                app_logger.info(f"Quality upgrades search disabled ({hunt_upgrade_setting}=0)")
+        else:
+            app_logger.info(f"Download queue size ({download_queue_size}) is above the minimum threshold ({min_download_queue_size}). Skipped processing.")
+
         calculate_reset_time(app_type)
-        
-        refresh_settings(app_type)
-        from src.primary.config import SLEEP_DURATION as CURRENT_SLEEP_DURATION
-        
-        app_logger.info(f"{app_type} cycle complete. Sleeping {CURRENT_SLEEP_DURATION}s before next cycle...")
-        
-        server_ip = get_ip_address()
-        app_logger.info(f"Web interface available at http://{server_ip}:9705")
-        
+
+        # Reload settings to get the current sleep duration for this app
+        config.refresh_settings(app_type)
+        # Use config directly for sleep duration
+        current_sleep_duration = config.SLEEP_DURATION
+
+        app_logger.info(f"{app_type} cycle complete. Sleeping {current_sleep_duration}s before next cycle...")
+
+        # server_ip = get_ip_address() # Removed redundant logging of web interface URL
+        # app_logger.info(f"Web interface available at http://{server_ip}:9705")
+
         sleep_start = time.time()
-        sleep_end = sleep_start + CURRENT_SLEEP_DURATION
-        
-        while time.time() < sleep_end and not restart_cycles[app_type] and not stop_threads:
-            time.sleep(min(1, sleep_end - time.time()))
-            
-            if int((time.time() - sleep_start) % 60) == 0 and time.time() < sleep_end - 10:
-                remaining = int(sleep_end - time.time())
-                app_logger.debug(f"{app_type} sleeping... {remaining}s remaining until next cycle")
-            
-            if restart_cycles[app_type]:
-                app_logger.warning(f"⚠️ {app_type} sleep interrupted due to settings change. Restarting cycle immediately... ⚠️")
-                break
+        sleep_end = sleep_start + current_sleep_duration
+
+        while time.time() < sleep_end and not stop_threads:
+            # Check for restart more frequently during sleep
+            if check_restart(app_type, app_logger):
+                 break # Break sleep loop to restart cycle
+
+            remaining_sleep = sleep_end - time.time()
+            check_interval = min(1, remaining_sleep) # Check every second or less
+
+            # Log remaining time periodically (e.g., every 60 seconds)
+            if int(time.time() - sleep_start) % 60 == 0 and remaining_sleep > 10:
+                 remaining_min = int(remaining_sleep // 60)
+                 app_logger.debug(f"{app_type} sleeping... {remaining_min}m remaining until next cycle")
+
+            time.sleep(check_interval)
 
 def start_app_threads():
     """Start threads for all configured apps"""
@@ -396,32 +312,23 @@ def shutdown_threads():
     
     logger.info("All threads stopped")
 
-def log_configuration(log):
-    """Log the current configuration settings"""
-    # Change the startup message to just say "Huntarr" instead of "Huntarr [Sonarr Edition]"
-    log.info("=" * 60)
-    log.info(f"Starting Huntarr v{__version__}")
-    log.info("=" * 60)
-    
-    # ...existing code...
-
 def start_huntarr():
     """Main entry point for Huntarr"""
-    # Log configuration settings
-    log_configuration(logger)
-    
+    # Log configuration settings using the config module's function
+    config.log_configuration(logger)
+
     try:
         # Start threads for all configured apps
         start_app_threads()
-        
+
         # Main loop to monitor threads
         while not stop_threads: # Check stop_threads flag
             # Check if any configured apps need threads started
             start_app_threads()
-            
+
             # Check if any threads have died and restart them
             check_and_restart_threads()
-            
+
             # Sleep for a bit
             time.sleep(5)
     except KeyboardInterrupt:

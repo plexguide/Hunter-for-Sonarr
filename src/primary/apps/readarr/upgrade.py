@@ -19,10 +19,6 @@ from primary.apps.readarr.api import get_cutoff_unmet_books, refresh_author, boo
 # Get app-specific logger
 logger = get_logger("readarr")
 
-def get_current_upgrade_limit():
-    """Get the current HUNT_UPGRADE_BOOKS value directly from config"""
-    return settings_manager.get_setting("huntarr", "hunt_upgrade_books", 0)
-
 def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
     """
     Process books that need quality upgrades (cutoff unmet).
@@ -33,14 +29,12 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
     Returns:
         True if any processing was done, False otherwise
     """
-    # Reload settings to ensure the latest values are used
-    from primary.config import refresh_settings
-    refresh_settings("readarr")
-
     # Get the current value directly at the start of processing
-    HUNT_UPGRADE_BOOKS = get_current_upgrade_limit()
-    RANDOM_UPGRADES = settings_manager.get_setting("advanced", "random_upgrades", True)
-    SKIP_AUTHOR_REFRESH = settings_manager.get_setting("advanced", "skip_author_refresh", False)
+    # Use settings_manager directly instead of get_current_upgrade_limit
+    HUNT_UPGRADE_BOOKS = settings_manager.get_setting("readarr", "hunt_upgrade_books", 0)
+    RANDOM_UPGRADES = settings_manager.get_setting("readarr", "random_upgrades", True)
+    SKIP_AUTHOR_REFRESH = settings_manager.get_setting("readarr", "skip_author_refresh", False)
+    MONITORED_ONLY = settings_manager.get_setting("readarr", "monitored_only", True)
     
     # Get app-specific state file
     PROCESSED_UPGRADE_FILE = get_state_file_path("readarr", "processed_upgrades")
@@ -106,7 +100,8 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
             break
         
         # Check again for the current limit in case it was changed during processing
-        current_limit = get_current_upgrade_limit()
+        # Use settings_manager directly instead of get_current_upgrade_limit
+        current_limit = settings_manager.get_setting("readarr", "hunt_upgrade_books", 0)
         
         if books_processed >= current_limit:
             logger.info(f"Reached HUNT_UPGRADE_BOOKS={current_limit} for this cycle.")
@@ -162,14 +157,16 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
             processing_done = True
             
             # Log with the current limit, not the initial one
-            current_limit = get_current_upgrade_limit()
+            # Use settings_manager directly instead of get_current_upgrade_limit
+            current_limit = settings_manager.get_setting("readarr", "hunt_upgrade_books", 0)
             logger.info(f"Processed {books_processed}/{current_limit} upgrade books this cycle.")
         else:
             logger.warning(f"WARNING: Search command failed for book ID {book_id}.")
             continue
     
     # Log final status
-    current_limit = get_current_upgrade_limit()
+    # Use settings_manager directly instead of get_current_upgrade_limit
+    current_limit = settings_manager.get_setting("readarr", "hunt_upgrade_books", 0)
     logger.info(f"Completed processing {books_processed} upgrade books for this cycle.")
     truncate_processed_list(PROCESSED_UPGRADE_FILE)
     

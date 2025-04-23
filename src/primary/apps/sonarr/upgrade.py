@@ -18,10 +18,6 @@ from primary.state import load_processed_ids, save_processed_id, truncate_proces
 # Get app-specific logger
 logger = get_logger("sonarr")
 
-def get_current_upgrade_limit():
-    """Get the current HUNT_UPGRADE_EPISODES value directly from config"""
-    return settings_manager.get_setting("huntarr", "hunt_upgrade_episodes", 0)
-
 def get_cutoff_unmet_episodes():
     """
     Get a list of episodes that need quality upgrades (cutoff unmet).
@@ -52,15 +48,14 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
     Returns:
         True if any processing was done, False otherwise
     """
-    # Reload settings to ensure the latest values are used
-    from primary.config import refresh_settings
-    refresh_settings("sonarr")
-
     # Get the current value directly at the start of processing
-    HUNT_UPGRADE_EPISODES = get_current_upgrade_limit()
-    RANDOM_UPGRADES = settings_manager.get_setting("advanced", "random_upgrades", True)
-    SKIP_SERIES_REFRESH = settings_manager.get_setting("advanced", "skip_series_refresh", False)
-    
+    # Use settings_manager directly instead of get_current_upgrade_limit
+    HUNT_UPGRADE_EPISODES = settings_manager.get_setting("sonarr", "hunt_upgrade_episodes", 0)
+    RANDOM_UPGRADES = settings_manager.get_setting("sonarr", "random_upgrades", True)
+    SKIP_SERIES_REFRESH = settings_manager.get_setting("sonarr", "skip_series_refresh", False)
+    SKIP_FUTURE_EPISODES = settings_manager.get_setting("sonarr", "skip_future_episodes", True)
+    MONITORED_ONLY = settings_manager.get_setting("sonarr", "monitored_only", True)
+
     # Get app-specific state file
     PROCESSED_UPGRADE_FILE = get_state_file_path("sonarr", "processed_upgrades")
 
@@ -125,7 +120,8 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
             break
         
         # Check again for the current limit in case it was changed during processing
-        current_limit = get_current_upgrade_limit()
+        # Use settings_manager directly instead of get_current_upgrade_limit
+        current_limit = settings_manager.get_setting("sonarr", "hunt_upgrade_episodes", 0)
         
         if episodes_processed >= current_limit:
             logger.info(f"Reached HUNT_UPGRADE_EPISODES={current_limit} for this cycle.")
@@ -188,14 +184,16 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
             processing_done = True
             
             # Log with the current limit, not the initial one
-            current_limit = get_current_upgrade_limit()
+            # Use settings_manager directly instead of get_current_upgrade_limit
+            current_limit = settings_manager.get_setting("sonarr", "hunt_upgrade_episodes", 0)
             logger.info(f"Processed {episodes_processed}/{current_limit} upgrade episodes this cycle.")
         else:
             logger.warning(f"WARNING: Search command failed for episode ID {episode_id}.")
             continue
     
     # Log final status
-    current_limit = get_current_upgrade_limit()
+    # Use settings_manager directly instead of get_current_upgrade_limit
+    current_limit = settings_manager.get_setting("sonarr", "hunt_upgrade_episodes", 0)
     logger.info(f"Completed processing {episodes_processed} upgrade episodes for this cycle.")
     truncate_processed_list(PROCESSED_UPGRADE_FILE)
     

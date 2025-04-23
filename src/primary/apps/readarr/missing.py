@@ -29,15 +29,14 @@ def process_missing_books(restart_cycle_flag: Callable[[], bool] = lambda: False
     Returns:
         True if any processing was done, False otherwise
     """
-    # Reload settings to ensure the latest values are used
-    from primary.config import refresh_settings
-    refresh_settings("readarr")
+    # Removed refresh_settings call
 
     # Get the current value directly at the start of processing
-    HUNT_MISSING_BOOKS = settings_manager.get_setting("huntarr", "hunt_missing_books", 1)
-    RANDOM_MISSING = settings_manager.get_setting("advanced", "random_missing", True)
-    SKIP_AUTHOR_REFRESH = settings_manager.get_setting("advanced", "skip_author_refresh", False)
-    
+    HUNT_MISSING_BOOKS = settings_manager.get_setting("readarr", "hunt_missing_books", 1)
+    RANDOM_MISSING = settings_manager.get_setting("readarr", "random_missing", True)
+    SKIP_AUTHOR_REFRESH = settings_manager.get_setting("readarr", "skip_author_refresh", False)
+    MONITORED_ONLY = settings_manager.get_setting("readarr", "monitored_only", True)
+
     # Get app-specific state file
     PROCESSED_MISSING_FILE = get_state_file_path("readarr", "processed_missing")
 
@@ -102,7 +101,7 @@ def process_missing_books(restart_cycle_flag: Callable[[], bool] = lambda: False
             break
         
         # Check again for the current limit in case it was changed during processing
-        current_limit = settings_manager.get_setting("huntarr", "hunt_missing_books", 1)
+        current_limit = settings_manager.get_setting("readarr", "hunt_missing_books", 1)
         
         if books_processed >= current_limit:
             logger.info(f"Reached HUNT_MISSING_BOOKS={current_limit} for this cycle.")
@@ -155,14 +154,14 @@ def process_missing_books(restart_cycle_flag: Callable[[], bool] = lambda: False
             processing_done = True
             
             # Log with the current limit, not the initial one
-            current_limit = settings_manager.get_setting("huntarr", "hunt_missing_books", 1)
+            current_limit = settings_manager.get_setting("readarr", "hunt_missing_books", 1)
             logger.info(f"Processed {books_processed}/{current_limit} missing books this cycle.")
         else:
             logger.warning(f"WARNING: Search command failed for book ID {book_id}.")
             continue
     
     # Log final status
-    current_limit = settings_manager.get_setting("huntarr", "hunt_missing_books", 1)
+    current_limit = settings_manager.get_setting("readarr", "hunt_missing_books", 1)
     logger.info(f"Completed processing {books_processed} missing books for this cycle.")
     truncate_processed_list(PROCESSED_MISSING_FILE)
     
