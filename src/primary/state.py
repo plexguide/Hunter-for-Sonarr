@@ -10,7 +10,7 @@ import time
 import json
 from typing import List, Dict, Any, Optional
 from src.primary.utils.logger import logger
-from src.primary.config import STATE_RESET_INTERVAL_HOURS, APP_TYPE
+from src.primary.config import APP_TYPE
 from src.primary import settings_manager
 
 # Create state directories based on app type

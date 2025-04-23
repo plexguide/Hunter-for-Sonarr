@@ -1,258 +1,148 @@
 #!/usr/bin/env python3
 """
 Configuration module for Huntarr
-Loads settings from the settings manager and provides them as constants
+Provides utility functions to access settings via settings_manager
+and perform configuration-related tasks like logging.
+Removes the old concept of loading a single app's config into global constants.
 """
 
 import os
 import sys
 import logging
-import importlib
 import traceback
 from src.primary import settings_manager
-from src.primary.utils.logger import logger
+from src.primary.utils.logger import logger, get_logger # Import get_logger
 
-# Get app type
-APP_TYPE = settings_manager.get_app_type()
+# Removed global constants like APP_TYPE, API_URL, API_KEY, SLEEP_DURATION etc.
+# Settings should be fetched directly using settings_manager when needed.
 
-# API Configuration directly from settings_manager
-API_URL = settings_manager.get_api_url()
-API_KEY = settings_manager.get_api_key()
+# Determine the hunt mode for a specific app
+def determine_hunt_mode(app_name: str) -> str:
+    """Determine the hunt mode for a specific app based on its settings."""
+    # Fetch settings directly for the given app
+    hunt_missing = 0
+    hunt_upgrade = 0
 
-# Web UI is always enabled
-ENABLE_WEB_UI = True
+    if app_name == "sonarr":
+        hunt_missing = settings_manager.get_setting(app_name, "hunt_missing_shows", 0)
+        hunt_upgrade = settings_manager.get_setting(app_name, "hunt_upgrade_episodes", 0)
+    elif app_name == "radarr":
+        hunt_missing = settings_manager.get_setting(app_name, "hunt_missing_movies", 0)
+        hunt_upgrade = settings_manager.get_setting(app_name, "hunt_upgrade_movies", 0)
+    elif app_name == "lidarr":
+        hunt_missing = settings_manager.get_setting(app_name, "hunt_missing_albums", 0)
+        hunt_upgrade = settings_manager.get_setting(app_name, "hunt_upgrade_tracks", 0)
+    elif app_name == "readarr":
+        hunt_missing = settings_manager.get_setting(app_name, "hunt_missing_books", 0)
+        hunt_upgrade = settings_manager.get_setting(app_name, "hunt_upgrade_books", 0)
+    else:
+        # Handle unknown app types if necessary, or just return disabled
+        return "disabled"
 
-# Base settings - read directly from app section, no more nested huntarr section
-API_TIMEOUT = settings_manager.get_setting(APP_TYPE, "api_timeout", 60)
-DEBUG_MODE = settings_manager.get_setting(APP_TYPE, "debug_mode", False)
-COMMAND_WAIT_DELAY = settings_manager.get_setting(APP_TYPE, "command_wait_delay", 1)
-COMMAND_WAIT_ATTEMPTS = settings_manager.get_setting(APP_TYPE, "command_wait_attempts", 600)
-MINIMUM_DOWNLOAD_QUEUE_SIZE = settings_manager.get_setting(APP_TYPE, "minimum_download_queue_size", -1)
-MONITORED_ONLY = settings_manager.get_setting(APP_TYPE, "monitored_only", True)
-LOG_REFRESH_INTERVAL_SECONDS = settings_manager.get_setting(APP_TYPE, "log_refresh_interval_seconds", 30)
-SLEEP_DURATION = settings_manager.get_setting(APP_TYPE, "sleep_duration", 900)
-STATE_RESET_INTERVAL_HOURS = settings_manager.get_setting(APP_TYPE, "state_reset_interval_hours", 168)
-RANDOM_MISSING = settings_manager.get_setting(APP_TYPE, "random_missing", True)
-RANDOM_UPGRADES = settings_manager.get_setting(APP_TYPE, "random_upgrades", True)
-
-# App-specific settings - read directly from app section
-if APP_TYPE == "sonarr":
-    HUNT_MISSING_SHOWS = settings_manager.get_setting(APP_TYPE, "hunt_missing_shows", 1)
-    HUNT_UPGRADE_EPISODES = settings_manager.get_setting(APP_TYPE, "hunt_upgrade_episodes", 0)
-    SKIP_FUTURE_EPISODES = settings_manager.get_setting(APP_TYPE, "skip_future_episodes", True)
-    SKIP_SERIES_REFRESH = settings_manager.get_setting(APP_TYPE, "skip_series_refresh", False)
-    
-elif APP_TYPE == "radarr":
-    HUNT_MISSING_MOVIES = settings_manager.get_setting(APP_TYPE, "hunt_missing_movies", 1)
-    HUNT_UPGRADE_MOVIES = settings_manager.get_setting(APP_TYPE, "hunt_upgrade_movies", 0)
-    SKIP_FUTURE_RELEASES = settings_manager.get_setting(APP_TYPE, "skip_future_releases", True)
-    SKIP_MOVIE_REFRESH = settings_manager.get_setting(APP_TYPE, "skip_movie_refresh", False)
-    
-elif APP_TYPE == "lidarr":
-    HUNT_MISSING_ALBUMS = settings_manager.get_setting(APP_TYPE, "hunt_missing_albums", 1)
-    HUNT_UPGRADE_TRACKS = settings_manager.get_setting(APP_TYPE, "hunt_upgrade_tracks", 0)
-    SKIP_FUTURE_RELEASES = settings_manager.get_setting(APP_TYPE, "skip_future_releases", True)
-    SKIP_ARTIST_REFRESH = settings_manager.get_setting(APP_TYPE, "skip_artist_refresh", False)
-    
-elif APP_TYPE == "readarr":
-    HUNT_MISSING_BOOKS = settings_manager.get_setting(APP_TYPE, "hunt_missing_books", 1)
-    HUNT_UPGRADE_BOOKS = settings_manager.get_setting(APP_TYPE, "hunt_upgrade_books", 0)
-    SKIP_FUTURE_RELEASES = settings_manager.get_setting(APP_TYPE, "skip_future_releases", True)
-    SKIP_AUTHOR_REFRESH = settings_manager.get_setting(APP_TYPE, "skip_author_refresh", False)
-
-# For backward compatibility with Sonarr (the initial implementation)
-if APP_TYPE != "sonarr":
-    # Add Sonarr specific variables for backward compatibility
-    HUNT_MISSING_SHOWS = 0
-    HUNT_UPGRADE_EPISODES = 0
-    SKIP_FUTURE_EPISODES = True
-    SKIP_SERIES_REFRESH = False
-
-# For backward compatibility with Radarr
-if APP_TYPE not in ["sonarr", "radarr"]:
-    # Add Radarr specific variables for backward compatibility
-    HUNT_MISSING_MOVIES = 0
-    HUNT_UPGRADE_MOVIES = 0
-    SKIP_MOVIE_REFRESH = False
-
-# For backward compatibility with Lidarr
-if APP_TYPE not in ["sonarr", "radarr", "lidarr"]:
-    # Add Lidarr specific variables for backward compatibility
-    HUNT_MISSING_ALBUMS = 0
-    HUNT_UPGRADE_TRACKS = 0
-    SKIP_ARTIST_REFRESH = False
-
-# For backward compatibility with Readarr
-if APP_TYPE not in ["sonarr", "radarr", "lidarr", "readarr"]:
-    # Add Readarr specific variables for backward compatibility
-    HUNT_MISSING_BOOKS = 0
-    HUNT_UPGRADE_BOOKS = 0
-    SKIP_AUTHOR_REFRESH = False
-
-# Determine the hunt mode based on settings
-def determine_hunt_mode():
-    """Determine the hunt mode based on current settings"""
-    if APP_TYPE == "sonarr":
-        if HUNT_MISSING_SHOWS > 0 and HUNT_UPGRADE_EPISODES > 0:
-            return "both"
-        elif HUNT_MISSING_SHOWS > 0:
-            return "missing"
-        elif HUNT_UPGRADE_EPISODES > 0:
-            return "upgrade"
-        else:
-            return "disabled"
-    elif APP_TYPE == "radarr":
-        if HUNT_MISSING_MOVIES > 0 and HUNT_UPGRADE_MOVIES > 0:
-            return "both"
-        elif HUNT_MISSING_MOVIES > 0:
-            return "missing"
-        elif HUNT_UPGRADE_MOVIES > 0:
-            return "upgrade"
-        else:
-            return "disabled"
-    elif APP_TYPE == "lidarr":
-        if HUNT_MISSING_ALBUMS > 0 and HUNT_UPGRADE_TRACKS > 0:
-            return "both"
-        elif HUNT_MISSING_ALBUMS > 0:
-            return "missing"
-        elif HUNT_UPGRADE_TRACKS > 0:
-            return "upgrade"
-        else:
-            return "disabled"
-    elif APP_TYPE == "readarr":
-        if HUNT_MISSING_BOOKS > 0 and HUNT_UPGRADE_BOOKS > 0:
-            return "both"
-        elif HUNT_MISSING_BOOKS > 0:
-            return "missing"
-        elif HUNT_UPGRADE_BOOKS > 0:
-            return "upgrade"
-        else:
-            return "disabled"
+    # Determine mode based on fetched values
+    if hunt_missing > 0 and hunt_upgrade > 0:
+        return "both"
+    elif hunt_missing > 0:
+        return "missing"
+    elif hunt_upgrade > 0:
+        return "upgrade"
     else:
         return "disabled"
 
-# Configure logging
-def configure_logging(app_logger=None):
-    """Configure logging based on DEBUG_MODE setting"""
+# Configure logging level based on an app's debug setting
+def configure_logging(app_name: str = None):
+    """Configure logging level based on the debug setting of a specific app or globally."""
     try:
-        # Configure based on DEBUG_MODE if a logger is provided
-        if app_logger:
-            if DEBUG_MODE:
-                app_logger.setLevel(logging.DEBUG)
-            else:
-                app_logger.setLevel(logging.INFO)
-        
-        # Always configure the root logger
+        debug_mode = False
+        log_instance = logger # Default to the main logger
+
+        if app_name:
+            debug_mode = settings_manager.get_setting(app_name, "debug_mode", False)
+            log_instance = get_logger(app_name) # Get the specific app logger
+        # else: # Optional: Could check a global debug setting if needed
+            # debug_mode = settings_manager.get_setting("global", "debug_mode", False)
+
+        level = logging.DEBUG if debug_mode else logging.INFO
+
+        # Configure the specific app logger
+        if app_name and log_instance:
+            log_instance.setLevel(level)
+
+        # Always configure the root logger as well (or adjust based on desired behavior)
+        # If you want root logger level controlled by a specific app, this needs refinement.
+        # For now, let's set the root logger based on the *last* app configured or global.
         root_logger = logging.getLogger()
-        if DEBUG_MODE:
-            root_logger.setLevel(logging.DEBUG)
-        else:
-            root_logger.setLevel(logging.INFO)
-        
-        return app_logger or root_logger
+        root_logger.setLevel(level)
+
+        # Optional: Configure handlers if not done elsewhere
+        # Example: Ensure handlers exist and set their level
+        # for handler in log_instance.handlers:
+        #     handler.setLevel(level)
+        # for handler in root_logger.handlers:
+        #     handler.setLevel(level)
+
     except Exception as e:
-        # Print directly to stderr since logging might not be working
-        print(f"CRITICAL ERROR in configure_logging: {str(e)}", file=sys.stderr)
+        print(f"CRITICAL ERROR in configure_logging for app '{app_name}': {str(e)}", file=sys.stderr)
         print(f"Traceback: {traceback.format_exc()}", file=sys.stderr)
         # Try to log it anyway
         if logger:
-            logger.error(f"Error in configure_logging: {str(e)}")
+            logger.error(f"Error in configure_logging for app '{app_name}': {str(e)}")
             logger.error(traceback.format_exc())
-        raise
+        # Decide whether to raise or continue
+        # raise
 
-# Log the configuration
-def log_configuration(app_logger=None):
-    """Log the current configuration settings"""
-    log = app_logger or logger
-    
-    log.info(f"Configuration loaded for app type: {APP_TYPE}")
-    log.info(f"API URL: {API_URL}")
-    log.info(f"API Key: {'[REDACTED]' if API_KEY else 'Not Set'}")
-    log.info(f"Debug Mode: {DEBUG_MODE}")
-    log.info(f"Hunt Mode: {determine_hunt_mode()}")
-    log.info(f"Sleep Duration: {SLEEP_DURATION} seconds")
-    log.info(f"State Reset Interval: {STATE_RESET_INTERVAL_HOURS} hours")
-    log.info(f"Monitored Only: {MONITORED_ONLY}")
-    log.info(f"Minimum Download Queue Size: {MINIMUM_DOWNLOAD_QUEUE_SIZE}")
-    
-    # App-specific settings
-    if APP_TYPE == "sonarr":
-        log.info(f"Hunt Missing Shows: {HUNT_MISSING_SHOWS}")
-        log.info(f"Hunt Upgrade Episodes: {HUNT_UPGRADE_EPISODES}")
-        log.info(f"Skip Future Episodes: {SKIP_FUTURE_EPISODES}")
-        log.info(f"Skip Series Refresh: {SKIP_SERIES_REFRESH}")
-    elif APP_TYPE == "radarr":
-        log.info(f"Hunt Missing Movies: {HUNT_MISSING_MOVIES}")
-        log.info(f"Hunt Upgrade Movies: {HUNT_UPGRADE_MOVIES}")
-        log.info(f"Skip Future Releases: {SKIP_FUTURE_RELEASES}")
-        log.info(f"Skip Movie Refresh: {SKIP_MOVIE_REFRESH}")
-    elif APP_TYPE == "lidarr":
-        log.info(f"Hunt Missing Albums: {HUNT_MISSING_ALBUMS}")
-        log.info(f"Hunt Upgrade Tracks: {HUNT_UPGRADE_TRACKS}")
-        log.info(f"Skip Future Releases: {SKIP_FUTURE_RELEASES}")
-        log.info(f"Skip Artist Refresh: {SKIP_ARTIST_REFRESH}")
-    elif APP_TYPE == "readarr":
-        log.info(f"Hunt Missing Books: {HUNT_MISSING_BOOKS}")
-        log.info(f"Hunt Upgrade Books: {HUNT_UPGRADE_BOOKS}")
-        log.info(f"Skip Future Releases: {SKIP_FUTURE_RELEASES}")
-        log.info(f"Skip Author Refresh: {SKIP_AUTHOR_REFRESH}")
+# Log the configuration for a specific app
+def log_configuration(app_name: str):
+    """Log the current configuration settings for a specific app."""
+    log = get_logger(app_name) # Use the specific app's logger
+    settings = settings_manager.load_app_settings(app_name)
 
-# Refresh settings from file
-def refresh_settings(app_type=None):
-    """
-    Refresh global settings from config file.
-    
-    Args:
-        app_type: Optional app type to refresh settings for. If None, uses the global APP_TYPE.
-    """
-    # Import at function level to avoid circular import
-    from src.primary.settings_manager import load_settings, get_setting
-    
-    # If app_type is provided, temporarily override the global APP_TYPE
-    global APP_TYPE
-    original_app_type = APP_TYPE
-    
-    try:
-        if app_type is not None:
-            APP_TYPE = app_type
-            
-        # Reload all settings for the current APP_TYPE
-        global MONITORED_ONLY, LOG_REFRESH_INTERVAL_SECONDS, SLEEP_DURATION
-        global STATE_RESET_INTERVAL_HOURS, RANDOM_MISSING, RANDOM_UPGRADES
-        global API_TIMEOUT, COMMAND_WAIT_DELAY, COMMAND_WAIT_ATTEMPTS, MINIMUM_DOWNLOAD_QUEUE_SIZE
-        
-        # Reload all the settings
-        MONITORED_ONLY = get_setting(APP_TYPE, "monitored_only", True)
-        LOG_REFRESH_INTERVAL_SECONDS = get_setting(APP_TYPE, "log_refresh_interval_seconds", 30)
-        SLEEP_DURATION = get_setting(APP_TYPE, "sleep_duration", 900)
-        STATE_RESET_INTERVAL_HOURS = get_setting(APP_TYPE, "state_reset_interval_hours", 168)
-        RANDOM_MISSING = get_setting(APP_TYPE, "random_missing", True)
-        RANDOM_UPGRADES = get_setting(APP_TYPE, "random_upgrades", True)
-        
-        # App-specific settings
-        # Load app-specific settings based on current APP_TYPE
-        if APP_TYPE == "sonarr":
-            global HUNT_MISSING_SHOWS, HUNT_UPGRADE_EPISODES
-            global SKIP_FUTURE_EPISODES, SKIP_SERIES_REFRESH
-            HUNT_MISSING_SHOWS = get_setting(APP_TYPE, "hunt_missing_shows", 1)
-            HUNT_UPGRADE_EPISODES = get_setting(APP_TYPE, "hunt_upgrade_episodes", 0)
-            SKIP_FUTURE_EPISODES = get_setting(APP_TYPE, "skip_future_episodes", True)
-            SKIP_SERIES_REFRESH = get_setting(APP_TYPE, "skip_series_refresh", False)
-        elif APP_TYPE == "radarr":
-            global HUNT_MISSING_MOVIES, HUNT_UPGRADE_MOVIES
-            global SKIP_FUTURE_RELEASES, SKIP_MOVIE_REFRESH
-            HUNT_MISSING_MOVIES = get_setting(APP_TYPE, "hunt_missing_movies", 1)
-            HUNT_UPGRADE_MOVIES = get_setting(APP_TYPE, "hunt_upgrade_movies", 0)
-            SKIP_FUTURE_RELEASES = get_setting(APP_TYPE, "skip_future_releases", True)
-            SKIP_MOVIE_REFRESH = get_setting(APP_TYPE, "skip_movie_refresh", False)
-        # Add other app types as needed
-        
-        # Log the new configuration
-        log_configuration()
-    finally:
-        # Restore original APP_TYPE if it was changed
-        if app_type is not None:
-            APP_TYPE = original_app_type
+    if not settings:
+        log.error(f"Could not load settings for app: {app_name}. Cannot log configuration.")
+        return
 
-# Configure logging based on settings
-configure_logging(logger)
+    api_url = settings.get("api_url", "")
+    api_key = settings.get("api_key", "")
+    debug_mode = settings.get("debug_mode", False)
+    sleep_duration = settings.get("sleep_duration", 900)
+    state_reset_interval = settings.get("state_reset_interval_hours", 168)
+    monitored_only = settings.get("monitored_only", True)
+    min_queue_size = settings.get("minimum_download_queue_size", -1)
+
+    log.info(f"--- Configuration for {app_name} ---")
+    log.info(f"API URL: {api_url}")
+    log.info(f"API Key: {'[REDACTED]' if api_key else 'Not Set'}")
+    log.info(f"Debug Mode: {debug_mode}")
+    log.info(f"Hunt Mode: {determine_hunt_mode(app_name)}")
+    log.info(f"Sleep Duration: {sleep_duration} seconds")
+    log.info(f"State Reset Interval: {state_reset_interval} hours")
+    log.info(f"Monitored Only: {monitored_only}")
+    log.info(f"Minimum Download Queue Size: {min_queue_size}")
+
+    # App-specific settings logging
+    if app_name == "sonarr":
+        log.info(f"Hunt Missing Shows: {settings.get('hunt_missing_shows', 0)}")
+        log.info(f"Hunt Upgrade Episodes: {settings.get('hunt_upgrade_episodes', 0)}")
+        log.info(f"Skip Future Episodes: {settings.get('skip_future_episodes', True)}")
+        log.info(f"Skip Series Refresh: {settings.get('skip_series_refresh', False)}")
+    elif app_name == "radarr":
+        log.info(f"Hunt Missing Movies: {settings.get('hunt_missing_movies', 0)}")
+        log.info(f"Hunt Upgrade Movies: {settings.get('hunt_upgrade_movies', 0)}")
+        log.info(f"Skip Future Releases: {settings.get('skip_future_releases', True)}")
+        log.info(f"Skip Movie Refresh: {settings.get('skip_movie_refresh', False)}")
+    elif app_name == "lidarr":
+        log.info(f"Hunt Missing Albums: {settings.get('hunt_missing_albums', 0)}")
+        log.info(f"Hunt Upgrade Tracks: {settings.get('hunt_upgrade_tracks', 0)}")
+        log.info(f"Skip Future Releases: {settings.get('skip_future_releases', True)}")
+        log.info(f"Skip Artist Refresh: {settings.get('skip_artist_refresh', False)}")
+    elif app_name == "readarr":
+        log.info(f"Hunt Missing Books: {settings.get('hunt_missing_books', 0)}")
+        log.info(f"Hunt Upgrade Books: {settings.get('hunt_upgrade_books', 0)}")
+        log.info(f"Skip Future Releases: {settings.get('skip_future_releases', True)}")
+        log.info(f"Skip Author Refresh: {settings.get('skip_author_refresh', False)}")
+    log.info(f"--- End Configuration for {app_name} ---")
+
+# Removed refresh_settings function - settings are loaded dynamically by settings_manager
+
+# Initial logging configuration (optional, could be done in main startup)
+# configure_logging() # Configure root logger based on global/default debug setting if desired
