@@ -236,29 +236,37 @@ const huntarrUI = {
         });
         
         // Show selected section
+        let newTitle = 'Home'; // Default title
         if (section === 'home' && this.elements.homeSection) {
             this.elements.homeSection.classList.add('active');
             this.elements.homeNav.classList.add('active');
-            this.elements.currentPageTitle.textContent = 'Home';
+            newTitle = 'Home';
             this.currentSection = 'home';
         } else if (section === 'logs' && this.elements.logsSection) {
             this.elements.logsSection.classList.add('active');
             this.elements.logsNav.classList.add('active');
-            this.elements.currentPageTitle.textContent = 'Logs';
+            newTitle = 'Logs';
             this.currentSection = 'logs';
             this.connectToLogs();
         } else if (section === 'settings' && this.elements.settingsSection) {
             this.elements.settingsSection.classList.add('active');
             this.elements.settingsNav.classList.add('active');
-            this.elements.currentPageTitle.textContent = 'Settings';
+            newTitle = 'Settings';
             this.currentSection = 'settings';
             this.loadAllSettings();
         } else {
-            // Default to home
-            this.elements.homeSection.classList.add('active');
-            this.elements.homeNav.classList.add('active');
-            this.elements.currentPageTitle.textContent = 'Home';
+            // Default to home if section is unknown or element missing
+            if (this.elements.homeSection) this.elements.homeSection.classList.add('active');
+            if (this.elements.homeNav) this.elements.homeNav.classList.add('active');
+            newTitle = 'Home';
             this.currentSection = 'home';
+        }
+
+        // Update the page title *only if the element exists*
+        if (this.elements.currentPageTitle) {
+            this.elements.currentPageTitle.textContent = newTitle;
+        } else {
+            console.warn("[huntarrUI] currentPageTitle element not found during section switch.");
         }
     },
     
