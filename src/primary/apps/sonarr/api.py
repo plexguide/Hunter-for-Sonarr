@@ -11,6 +11,7 @@ import time
 import datetime
 import traceback
 from typing import List, Dict, Any, Optional, Union
+# Correct the import path
 from src.primary.utils.logger import get_logger
 
 # Get logger for the Sonarr app

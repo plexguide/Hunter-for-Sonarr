@@ -9,7 +9,8 @@ import json
 import time
 import datetime
 from typing import List, Dict, Any, Optional, Union
-from primary.utils.logger import get_logger
+# Correct the import path
+from src.primary.utils.logger import get_logger
 
 # Get app-specific logger
 logger = get_logger("radarr")
@@ -33,8 +34,11 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type:
     Returns:
         The JSON response from the API, or None if the request failed
     """
-    from primary import keys_manager
-    api_url, api_key = keys_manager.get_api_keys(app_type)
+    # Correct the import path
+    from src.primary import settings_manager # Use settings_manager instead of keys_manager
+    # api_url, api_key = keys_manager.get_api_keys(app_type) # Old way
+    api_url = settings_manager.get_setting(app_type, "api_url")
+    api_key = settings_manager.get_setting(app_type, "api_key")
     
     if not api_url or not api_key:
         logger.error("API URL or API key is missing. Check your settings.")
