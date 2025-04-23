@@ -316,6 +316,7 @@ def api_stop_hunt():
 def start_web_server():
     """Start the web server in debug or production mode"""
     web_logger = get_logger("web_server")
+    web_logger.info("--- start_web_server function called ---") # Added log
     debug_mode = os.environ.get('DEBUG', 'false').lower() == 'true'
     host = '0.0.0.0'  # Listen on all interfaces
     port = int(os.environ.get('PORT', 9705))
@@ -323,9 +324,10 @@ def start_web_server():
     # Ensure the log directory exists
     os.makedirs(LOG_DIR, exist_ok=True)
 
-    web_logger.info(f"Starting web server on {host}:{port} (Debug: {debug_mode})")
+    web_logger.info(f"Attempting to start web server on {host}:{port} (Debug: {debug_mode})") # Modified log
     # In production, use Werkzeug's simple server or a proper WSGI server
+    web_logger.info("--- Calling app.run() ---") # Added log
     app.run(host=host, port=port, debug=debug_mode, use_reloader=False)
 
-# if __name__ == '__main__':
-#     start_web_server() # Usually started by a different entry point
+if __name__ == '__main__':
+    start_web_server() # Uncommented to allow direct execution
