@@ -186,19 +186,16 @@ def api_settings():
 
         if app_name not in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
              # Allow saving settings for potentially unknown apps if needed, or return error
-             web_logger.warning(f"Attempting to save settings for unknown app: {app_name}")
-             # return jsonify({"success": False, "error": f"Unknown application type: {app_name}"}), 400
+             # For now, let's restrict to known types
+             return jsonify({"success": False, "error": f"Unknown application type: {app_name}"}), 400
 
-        if not isinstance(settings_data, dict):
-            return jsonify({"success": False, "error": "Invalid settings data format for app."}), 400
-
-        # Save settings for the specific app
+        # Save the settings using the manager
         success = settings_manager.save_settings(app_name, settings_data) # Corrected function name
 
         if success:
-            # Return the full updated config, as the frontend expects it
-            all_settings = settings_manager.get_all_settings() # Corrected function name
-            return jsonify(all_settings)
+            # Return the full updated configuration
+            all_settings = settings_manager.get_all_settings() # Corrected: Use get_all_settings
+            return jsonify(all_settings) # Return the full config object
         else:
             return jsonify({"success": False, "error": f"Failed to save settings for {app_name}"}), 500
 
