@@ -6,15 +6,11 @@ Main entry point for Huntarr
 import sys
 import os
 
-# Add the current directory to the path to ensure imports work correctly
+# Ensure the src directory is in the Python path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-# Set up the Python path to find modules
-if os.path.exists('/app'):
-    sys.path.insert(0, '/app')
-
-# Now import the main function
-from src.primary.main import main
+# Import and run the main function from src.primary.main
+from src.primary.main import start_huntarr
 
 if __name__ == "__main__":
-    main()
+    start_huntarr()

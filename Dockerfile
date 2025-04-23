@@ -21,6 +21,7 @@ ENV APP_TYPE=sonarr
 EXPOSE 9705
 
 # Run start script
-COPY primary/start.sh /app/start.sh
+# Update path to copy from src/primary
+COPY src/primary/start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 CMD ["/app/start.sh"]

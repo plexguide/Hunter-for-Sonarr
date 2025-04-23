@@ -1,11 +1,14 @@
 from flask import Blueprint, render_template, request, redirect, session, jsonify, send_from_directory, Response, stream_with_context
 import datetime, os
+# Use src.primary imports
 from src.primary.auth import (
-    authenticate_request, user_exists, create_user, verify_user, create_session, logout, 
-    SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret, verify_2fa_code, disable_2fa, 
+    authenticate_request, user_exists, create_user, verify_user, create_session, logout,
+    SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret, verify_2fa_code, disable_2fa,
     change_username, change_password
 )
 from src.primary import settings_manager
+# Use src.primary import
+from src.primary.config import SLEEP_DURATION as sleep_duration
 
 common_bp = Blueprint('common', __name__)
 LOG_FILE = "/tmp/huntarr-logs/huntarr.log"
@@ -18,7 +21,8 @@ def before_common():
 
 @common_bp.route('/')
 def index():
-    from src.primary.config import SLEEP_DURATION as sleep_duration
+    # Use src.primary import (already done via global import)
+    # from src.primary.config import SLEEP_DURATION as sleep_duration
     return render_template('index.html', sleep_duration=sleep_duration)
 
 @common_bp.route('/settings')
