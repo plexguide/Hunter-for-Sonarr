@@ -271,13 +271,14 @@ def api_app_status(app_name):
     api_key = settings_manager.get_api_key(app_name)
     is_configured = bool(api_url and api_key)
     is_connected = False
+    api_timeout = settings_manager.get_setting(app_name, "api_timeout", 10) # Get api_timeout, default to 10
 
     if is_configured:
         try:
             api_module = importlib.import_module(f'src.primary.apps.{app_name}.api')
             check_connection = getattr(api_module, 'check_connection')
-            # Pass URL and Key explicitly
-            is_connected = check_connection(api_url, api_key)
+            # Pass URL, Key, and Timeout explicitly
+            is_connected = check_connection(api_url, api_key, api_timeout) # Pass api_timeout
         except (ImportError, AttributeError):
             web_logger.error(f"Could not find check_connection function for {app_name}.")
         except Exception as e:
