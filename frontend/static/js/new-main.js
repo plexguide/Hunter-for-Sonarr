@@ -74,8 +74,8 @@ const HuntarrUI = {
         this.elements.logConnectionStatus = document.getElementById('logConnectionStatus');
         
         // Settings
-        this.elements.saveSettingsButton = document.getElementById('saveSettingsButton');
-        this.elements.resetSettingsButton = document.getElementById('resetSettingsButton');
+        this.elements.saveSettingsButton = document.getElementById('saveSettingsButton'); // Corrected ID
+        this.elements.resetSettingsButton = document.getElementById('resetSettingsButton'); // Corrected ID
         
         // Status elements
         this.elements.sonarrHomeStatus = document.getElementById('sonarrHomeStatus');
@@ -446,11 +446,22 @@ const HuntarrUI = {
     
     saveSettings: function() {
         const app = this.currentSettingsTab;
+        console.log(`[HuntarrUI] saveSettings called for app: ${app}`); // Added log
         const settings = this.collectSettingsFromForm(app);
         
+        if (!settings) {
+            console.error(`[HuntarrUI] Failed to collect settings for app: ${app}`); // Added log
+            this.showNotification('Error collecting settings from form.', 'error');
+            return;
+        }
+        
+        console.log(`[HuntarrUI] Collected settings for ${app}:`, settings); // Added log
+
         // Add app_type to the payload
         settings.app_type = app;
         
+        console.log(`[HuntarrUI] Sending settings payload for ${app}:`, settings); // Added log
+
         // Use the correct endpoint /api/settings
         fetch(`/api/settings`, { // Corrected endpoint
             method: 'POST',

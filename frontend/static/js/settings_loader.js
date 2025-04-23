@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up tab switching
     setupTabSwitching();
     
-    // Set up save and reset buttons
-    setupSettingsButtons();
+    // REMOVED call to setupSettingsButtons
+    // setupSettingsButtons();
 });
 
 // Initialize settings
@@ -266,7 +266,8 @@ function setupTestConnectionButtons() {
     // Function emptied - no longer setting up test connection buttons
 }
 
-// Set up save and reset buttons
+// Set up save and reset buttons - REMOVED to avoid conflict with new-main.js
+/*
 function setupSettingsButtons() {
     // Save settings button
     const saveBtn = document.getElementById('saveSettingsButton');
@@ -284,6 +285,7 @@ function setupSettingsButtons() {
         });
     }
 }
+*/
 
 // Helper function to reload settings from server
 function reloadSettingsFromServer(app) {
@@ -370,36 +372,4 @@ function showNotification(message, type = 'info') {
             }
         }, 300);
     }, 3000);
-}
-
-// Reset current settings to defaults
-function resetCurrentSettings() {
-    const activeTab = document.querySelector('.settings-tab.active');
-    if (!activeTab) return;
-    
-    const app = activeTab.getAttribute('data-settings');
-    
-    if (confirm(`Are you sure you want to reset ${app} settings to defaults?`)) {
-        fetch('/api/settings/reset', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ app: app })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Settings reset to defaults.');
-                // Reload settings to reflect the reset
-                loadAppSettings(app);
-            } else {
-                alert('Error resetting settings: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Error resetting settings:', error);
-            alert('Error resetting settings: ' + error.message);
-        });
-    }
 }
