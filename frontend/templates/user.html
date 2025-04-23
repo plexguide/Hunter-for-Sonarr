@@ -524,7 +524,7 @@
                         return;
                     }
                     
-                    fetch('/api/user/verify-2fa', {
+                    fetch('/api/user/2fa/verify', { // Corrected endpoint
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -569,7 +569,8 @@
                         return;
                     }
                     
-                    fetch('/api/user/disable-2fa', {
+                    // Correct the API endpoint URL
+                    fetch('/api/user/2fa/disable', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

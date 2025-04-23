@@ -70,6 +70,7 @@
                 </button>
             </form>
         </div>
+        <!-- Removed Theme Toggle Section -->
     </div>
     
     <script>
@@ -97,14 +98,8 @@
                 // Clear previous errors
                 errorElement.textContent = '';
                 
-                // Basic validation
-                if (!username || !password) {
-                    errorElement.textContent = 'Username and password are required';
-                    return;
-                }
-                
                 // Send login request using JSON
-                fetch('/api/login', {
+                fetch('/login', { // Changed from /api/login
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -112,23 +107,49 @@
                     body: JSON.stringify({
                         username: username,
                         password: password,
-                        otp_code: twoFactorCode
+                        otp_code: twoFactorCode // Ensure this matches backend expectation
                     })
                 })
-                .then(response => response.json())
-                .then(data => {
+                .then(response => {
+                    console.log('Login response status:', response.status);
+                    console.log('Login response ok:', response.ok);
+                    // Check if the response is ok before trying to parse JSON
+                    if (!response.ok) {
+                        // Attempt to parse error from JSON response body
+                        return response.json().then(errData => {
+                            console.error('Login failed (server error):', errData);
+                            // Throw an error with the message from the backend
+                            throw new Error(errData.error || errData.message || `Server error: ${response.status}`);
+                        }).catch(() => {
+                            console.error('Login failed (non-JSON server error):', response.status);
+                            // Fallback if response is not JSON or parsing fails
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        });
+                    }
+                    // If response is ok, parse the JSON body
+                    return response.json();
+                })
+                .then(data => { // This block only runs if response.ok was true
+                    console.log('Login response data:', data);
                     if (data.success) {
+                        console.log('Login successful, redirecting to:', data.redirect || '/');
                         window.location.href = data.redirect || '/';
-                    } else if (data.needs_2fa) {
+                    } else if (data.needs_2fa || data.requires_2fa) { // Check for both possible keys
+                        console.log('Login requires 2FA.');
+                        // Only show 2FA input if needed
                         document.getElementById('twoFactorGroup').style.display = 'block';
-                        errorElement.textContent = 'Please enter your 2FA code';
+                        errorElement.textContent = data.error || data.message || 'Please enter your 2FA code'; // Use error first, then message
                     } else {
-                        errorElement.textContent = data.message || 'Invalid username or password';
+                        console.log('Login failed (data.success is false):', data.error || data.message);
+                        // Hide 2FA input if login fails for other reasons
+                        document.getElementById('twoFactorGroup').style.display = 'none';
+                        errorElement.textContent = data.error || data.message || 'Invalid username or password'; // Use error first, then message
                     }
                 })
-                .catch(error => {
-                    console.error('Login error:', error);
-                    errorElement.textContent = 'An error occurred during login';
+                .catch(error => { // Catches errors thrown from .then() blocks or network errors
+                    console.error('Login fetch/processing error:', error);
+                    // Display the specific error message caught
+                    errorElement.textContent = error.message || 'An error occurred during login';
                 });
             });
         });

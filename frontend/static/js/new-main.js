@@ -37,7 +37,6 @@ const huntarrUI = {
         
         this.cacheElements();
         this.setupEventListeners();
-        this.loadTheme();
         this.loadUsername();
         this.checkAppConnections();
         this.handleHashNavigation();
@@ -88,7 +87,7 @@ const huntarrUI = {
         this.elements.stopHuntButton = document.getElementById('stopHuntButton');
         
         // Theme
-        this.elements.themeToggle = document.getElementById('themeToggle');
+        // this.elements.themeToggle = document.getElementById('themeToggle'); // Removed theme toggle
         
         // Logout
         this.elements.logoutLink = document.getElementById('logoutLink'); // Added logout link
@@ -141,9 +140,9 @@ const huntarrUI = {
         }
         
         // Theme
-        if (this.elements.themeToggle) {
-            this.elements.themeToggle.addEventListener('change', this.handleThemeToggle.bind(this));
-        }
+        // if (this.elements.themeToggle) { // Removed theme toggle
+        //     this.elements.themeToggle.addEventListener('change', this.handleThemeToggle.bind(this));
+        // }
         
         // Logout
         if (this.elements.logoutLink) { // Added listener for logout
@@ -682,53 +681,6 @@ const huntarrUI = {
                 console.error('Error stopping hunt:', error);
                 this.showNotification('Error stopping hunt', 'error');
             });
-    },
-    
-    // Theme handling
-    loadTheme: function() {
-        fetch('/api/settings/theme')
-            .then(response => response.json())
-            .then(data => {
-                const isDarkMode = data.dark_mode || false;
-                // Save to localStorage for page transitions
-                localStorage.setItem('huntarr-dark-mode', isDarkMode);
-                this.setTheme(isDarkMode);
-            })
-            .catch(error => {
-                console.error('Error loading theme:', error);
-            });
-    },
-    
-    // Update theme functions to always use dark theme
-    setTheme: function(isDark) {
-        // Always force dark mode, ignore isDark parameter
-        document.body.classList.add('dark-theme');
-        document.body.classList.remove('light-theme');
-        localStorage.setItem('huntarr-dark-mode', 'true');
-        
-        // Update the toggle if it exists
-        if (this.elements.themeToggle) {
-            this.elements.themeToggle.checked = true;
-        }
-    },
-
-    handleThemeToggle: function(e) {
-        // Force dark mode regardless of toggle state
-        this.setTheme(true);
-        
-        // Store preference in localStorage immediately for page transitions
-        localStorage.setItem('huntarr-dark-mode', 'true');
-        
-        fetch('/api/settings/theme', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ dark_mode: true })
-        })
-        .catch(error => {
-            console.error('Error saving theme:', error);
-        });
     },
     
     // User
