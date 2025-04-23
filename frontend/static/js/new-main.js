@@ -18,7 +18,7 @@ const HuntarrUI = {
     },
     
     // Logo URL
-    logoUrl: 'https://github.com/plexguide/Huntarr/blob/main/logo/64.png?raw=true',
+    logoUrl: '/static/logo/64.png',
     
     // Element references
     elements: {},
