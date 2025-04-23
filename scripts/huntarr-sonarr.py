@@ -7,7 +7,7 @@ import os
 import sys
 import time
 import random
-import logging
+from src.utils.logger import logger
 import requests
 from datetime import datetime, timedelta
 import json
@@ -17,15 +17,8 @@ import state
 import missing
 import upgrade
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger()
+
+logger = logger.getLogger()
 
 # Environment variables with defaults
 API_KEY = os.environ.get('API_KEY', '')
