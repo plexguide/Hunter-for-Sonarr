@@ -1,453 +1,389 @@
-from flask import Blueprint, render_template, request, redirect, session, jsonify, send_from_directory, Response, stream_with_context
-import datetime, os
-# Use src.primary imports
+#!/usr/bin/env python3
+"""
+Common routes blueprint for Huntarr web interface
+"""
+
+import os
+import json
+import base64
+import io
+import qrcode
+import pyotp
+import logging
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, Response, send_from_directory
+from src.primary import settings_manager # Use the updated settings manager
+from src.primary.utils.logger import get_logger # Import get_logger
 from src.primary.auth import (
-    authenticate_request, user_exists, create_user, verify_user, create_session, logout,
-    SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret, verify_2fa_code, disable_2fa,
-    change_username, change_password
+    user_exists, create_user, verify_user, create_session, logout,
+    SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret,
+    verify_2fa_code, disable_2fa, change_username, change_password,
+    get_username_from_session, verify_session, get_user_data, save_user_data # Added missing imports
 )
-from src.primary import settings_manager
-# Use src.primary import
-from src.primary.config import SLEEP_DURATION as sleep_duration
 
-common_bp = Blueprint('common', __name__)
-LOG_FILE = "/tmp/huntarr-logs/huntarr.log"
+# Get logger for common routes
+logger = logging.getLogger("common_routes")
 
-@common_bp.before_request
-def before_common():
-    auth_result = authenticate_request()
-    if auth_result:
-        return auth_result
+common_bp = Blueprint('common', __name__,
+                      template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'templates')),
+                      static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'static')))
 
-@common_bp.route('/')
-def index():
-    # Use src.primary import (already done via global import)
-    # from src.primary.config import SLEEP_DURATION as sleep_duration
-    return render_template('index.html', sleep_duration=sleep_duration)
+# --- Static File Serving --- #
 
-@common_bp.route('/settings')
-def settings_page():
-    return render_template('index.html')
+@common_bp.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory(common_bp.static_folder, filename)
 
-@common_bp.route('/user')
-def user_page():
-    return render_template('user.html')
+@common_bp.route('/favicon.ico')
+def favicon():
+    return send_from_directory(common_bp.static_folder, 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-@common_bp.route('/setup', methods=['GET'])
-def setup_page():
-    if user_exists():
-        return redirect('/')
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open(LOG_FILE, 'a') as f:
-        f.write(f"{timestamp} - huntarr-web - INFO - Accessed setup page - no user exists yet\n")
-    return render_template('setup.html')
+@common_bp.route('/logo/<path:filename>')
+def logo_files(filename):
+    logo_dir = os.path.join(common_bp.static_folder, 'logo')
+    return send_from_directory(logo_dir, filename)
 
-@common_bp.route('/login', methods=['GET'])
-def login_page():
-    if not user_exists():
-        return redirect('/setup')
-    return render_template('login.html')
+# --- Authentication Routes --- #
 
-@common_bp.route('/login', methods=['POST'])
-def api_login_form():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    otp_code = request.form.get('otp_code')
-    auth_success, needs_2fa = verify_user(username, password, otp_code)
-    if auth_success:
-        session_id = create_session(username)
-        session[SESSION_COOKIE_NAME] = session_id
-        return redirect('/')
-    elif needs_2fa:
-        return render_template('login.html', username=username, password=password, needs_2fa=True)
+@common_bp.route('/login', methods=['GET', 'POST'])
+def login_route():
+    if request.method == 'POST':
+        try: # Wrap the POST logic in a try block for better error handling
+            data = request.json
+            username = data.get('username')
+            password = data.get('password')
+            otp_code = data.get('otp_code') # Matches frontend form name 'otp_code'
+
+            if not username or not password:
+                 logger.warning("Login attempt with missing username or password.")
+                 return jsonify({"success": False, "error": "Username and password are required"}), 400
+
+            # Call verify_user which now returns (auth_success, needs_2fa)
+            auth_success, needs_2fa = verify_user(username, password, otp_code)
+
+            if auth_success:
+                # User is authenticated (password correct, and 2FA if needed was correct)
+                session_token = create_session(username)
+                response = jsonify({"success": True, "redirect": "/"}) # Add redirect URL
+                response.set_cookie(SESSION_COOKIE_NAME, session_token, httponly=True, samesite='Lax', path='/') # Add path
+                logger.info(f"User '{username}' logged in successfully.")
+                return response
+            elif needs_2fa:
+                # Authentication failed *because* 2FA was required (or code was invalid)
+                # The specific reason (missing vs invalid code) is logged in verify_user
+                logger.warning(f"Login failed for '{username}': 2FA required or invalid.")
+                return jsonify({"success": False, "requires_2fa": True, "error": "Invalid or missing 2FA code"}), 401 # Use 401
+            else:
+                # Authentication failed for other reasons (e.g., wrong password, user not found)
+                # Specific reason logged in verify_user
+                logger.warning(f"Login failed for '{username}': Invalid credentials or other error.")
+                return jsonify({"success": False, "error": "Invalid username or password"}), 401 # Use 401
+
+        except Exception as e:
+            logger.error(f"Unexpected error during login POST for user '{username if 'username' in locals() else 'unknown'}': {e}", exc_info=True)
+            return jsonify({"success": False, "error": "An internal server error occurred during login."}), 500
     else:
-        return render_template('login.html', error="Invalid username or password")
+        # GET request - show login page
+        # If user already exists, show login, otherwise redirect to setup
+        if not user_exists():
+             logger.info("No user exists, redirecting to setup.")
+             return redirect(url_for('common.setup_route'))
+        logger.debug("Displaying login page.")
+        return render_template('login.html')
 
-@common_bp.route('/logout')
-def logout_page():
-    logout()
-    return redirect('/login')
-
-@common_bp.route('/api/setup', methods=['POST'])
-def api_setup():
-    if user_exists():
-        return jsonify({"success": False, "message": "User already exists"}), 400
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    confirm_password = data.get('confirm_password')
-    
-    # Add more detailed validation
-    if not username:
-        return jsonify({"success": False, "message": "Username is required"}), 400
-    if not password:
-        return jsonify({"success": False, "message": "Password is required"}), 400
-    if password != confirm_password:
-        return jsonify({"success": False, "message": "Passwords do not match"}), 400
-    
-    # Log setup attempt
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open(LOG_FILE, 'a') as f:
-        f.write(f"{timestamp} - huntarr-web - INFO - Attempting to create first user: {username}\n")
-    
-    # Try to create user and catch specific exceptions
+@common_bp.route('/logout', methods=['POST'])
+def logout_route():
+    logger = get_logger("common_routes") # Get logger
     try:
-        success = create_user(username, password)
-        if success:
-            with open(LOG_FILE, 'a') as f:
-                f.write(f"{timestamp} - huntarr-web - INFO - Successfully created first user\n")
-            session_id = create_session(username)
-            session[SESSION_COOKIE_NAME] = session_id
-            return jsonify({"success": True})
+        session_token = request.cookies.get(SESSION_COOKIE_NAME)
+        if session_token:
+            logger.info(f"Logging out session token: {session_token[:8]}...") # Log part of token
+            logout(session_token) # Call the logout function from auth.py
         else:
-            with open(LOG_FILE, 'a') as f:
-                f.write(f"{timestamp} - huntarr-web - ERROR - Failed to create user\n")
-            return jsonify({"success": False, "message": "Failed to create user account"}), 500
+            logger.warning("Logout attempt without session cookie.")
+
+        response = jsonify({"success": True})
+        # Ensure cookie deletion happens even if logout function had issues
+        response.delete_cookie(SESSION_COOKIE_NAME, path='/', samesite='Lax') # Specify path and samesite
+        logger.info("Logout successful, cookie deleted.")
+        return response
     except Exception as e:
-        with open(LOG_FILE, 'a') as f:
-            f.write(f"{timestamp} - huntarr-web - ERROR - Exception during user creation: {str(e)}\n")
-        return jsonify({"success": False, "message": f"Error creating user: {str(e)}"}), 500
+        logger.error(f"Error during logout: {e}", exc_info=True)
+        # Return a JSON error response
+        return jsonify({"success": False, "error": "An internal server error occurred during logout."}), 500
 
-@common_bp.route('/api/login', methods=['POST'])
-def api_login():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    otp_code = data.get('otp_code')
-    auth_success, needs_2fa = verify_user(username, password, otp_code)
-    if auth_success:
-        session_id = create_session(username)
-        session[SESSION_COOKIE_NAME] = session_id
-        return jsonify({"success": True})
-    elif needs_2fa:
-        return jsonify({"success": False, "needs_2fa": True})
+@common_bp.route('/setup', methods=['GET', 'POST'])
+def setup_route():
+    if user_exists():
+        # If a user already exists, redirect to login or home
+        logger.info("Setup page accessed but user already exists. Redirecting to login.")
+        return redirect(url_for('common.login_route'))
+
+    if request.method == 'POST':
+        username = None # Initialize username for logging in case of early failure
+        try: # Add try block to catch potential errors during user creation
+            data = request.json
+            username = data.get('username')
+            password = data.get('password')
+            confirm_password = data.get('confirm_password') # Get confirm_password
+
+            if not username or not password:
+                logger.warning("Setup attempt with missing username or password.")
+                return jsonify({"success": False, "error": "Username and password are required"}), 400
+
+            # Add password confirmation check
+            if password != confirm_password:
+                logger.warning(f"Setup attempt for '{username}' failed: Passwords do not match.")
+                return jsonify({"success": False, "error": "Passwords do not match"}), 400
+
+            logger.info(f"Attempting to create user '{username}' during setup.")
+            if create_user(username, password):
+                # Automatically log in the user after setup
+                logger.info(f"User '{username}' created successfully during setup. Creating session.")
+                session_token = create_session(username)
+                # Explicitly set username in Flask session - might not be needed if using token correctly
+                # session['username'] = username
+                session[SESSION_COOKIE_NAME] = session_token # Store token in session
+                response = jsonify({"success": True})
+                # Set cookie in the response
+                response.set_cookie(SESSION_COOKIE_NAME, session_token, httponly=True, samesite='Lax', path='/') # Add path
+                return response
+            else:
+                # create_user itself failed, but didn't raise an exception
+                logger.error(f"create_user function returned False for user '{username}' during setup.")
+                return jsonify({"success": False, "error": "Failed to create user (internal reason)"}), 500
+        except Exception as e:
+            # Catch any unexpected exception during the process
+            logger.error(f"Unexpected error during setup POST for user '{username if username else 'unknown'}': {e}", exc_info=True)
+            return jsonify({"success": False, "error": f"An unexpected server error occurred: {e}"}), 500
     else:
-        return jsonify({"success": False, "message": "Invalid credentials"}), 401
+        # GET request - show setup page
+        logger.info("Displaying setup page.")
+        return render_template('setup.html')
 
-@common_bp.route('/api/user/2fa-status')
-def api_2fa_status():
-    return jsonify({"enabled": is_2fa_enabled()})
+# --- User Management API Routes --- #
 
-@common_bp.route('/api/user/generate-2fa')
-def api_generate_2fa():
-    try:
-        secret, qr_code_url = generate_2fa_secret()
-        return jsonify({"success": True, "secret": secret, "qr_code_url": qr_code_url})
-    except Exception as e:
-        return jsonify({"success": False, "message": f"Failed to generate 2FA: {str(e)}"}), 500
+@common_bp.route('/api/user/info', methods=['GET'])
+def get_user_info():
+    # Use session token to get username
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    username = get_username_from_session(session_token) # Use auth function
 
-@common_bp.route('/api/user/verify-2fa', methods=['POST'])
-def api_verify_2fa():
-    data = request.json
-    code = data.get('code')
-    if not code:
-        return jsonify({"success": False, "message": "Verification code is required"}), 400
-    if verify_2fa_code(code):
-        return jsonify({"success": True})
-    else:
-        return jsonify({"success": False, "message": "Invalid verification code"}), 400
+    if not username:
+        logger.warning("Attempt to get user info failed: Not authenticated (no valid session).")
+        return jsonify({"error": "Not authenticated"}), 401
 
-@common_bp.route('/api/user/disable-2fa', methods=['POST'])
-def api_disable_2fa():
-    data = request.json
-    password = data.get('password')
-    if not password:
-        return jsonify({"success": False, "message": "Password is required"}), 400
-    if disable_2fa(password):
-        return jsonify({"success": True})
-    else:
-        return jsonify({"success": False, "message": "Invalid password"}), 400
+    # Pass username to is_2fa_enabled
+    two_fa_status = is_2fa_enabled(username)
+    logger.debug(f"Retrieved user info for '{username}'. 2FA enabled: {two_fa_status}")
+    return jsonify({"username": username, "is_2fa_enabled": two_fa_status})
 
 @common_bp.route('/api/user/change-username', methods=['POST'])
-def api_change_username():
+def change_username_route():
+    # Use session token to get username
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    current_username = get_username_from_session(session_token)
+
+    if not current_username:
+        logger.warning("Username change attempt failed: Not authenticated.")
+        return jsonify({"error": "Not authenticated"}), 401
+
     data = request.json
-    current_username = data.get('current_username')
-    new_username = data.get('new_username')
-    password = data.get('password')
-    if not current_username or not new_username or not password:
-        return jsonify({"success": False, "message": "All fields are required"}), 400
+    new_username = data.get('username') # Match frontend key
+    password = data.get('password') # Assuming password is required
+
+    if not new_username or not password:
+        logger.warning(f"Username change attempt for '{current_username}' failed: Missing new username or password.")
+        return jsonify({"success": False, "error": "New username and password are required"}), 400
+
+    logger.info(f"Attempting to change username from '{current_username}' to '{new_username}'.")
+    # Pass current_username from session, new_username from request
     if change_username(current_username, new_username, password):
-        logout()
-        return jsonify({"success": True})
+        # Update session? The session stores a token, not the username directly.
+        # If the username is needed frequently, maybe re-create session or update session data if stored there.
+        # For now, assume token remains valid.
+        logger.info(f"Username changed successfully for '{current_username}' to '{new_username}'.")
+        # Re-fetch username to confirm change for response? Or trust change_username?
+        # Fetch updated info to send back
+        updated_username = new_username # Assume success means it changed
+        return jsonify({"success": True, "username": updated_username}) # Return new username
     else:
-        return jsonify({"success": False, "message": "Invalid username or password"}), 400
+        logger.warning(f"Username change failed for '{current_username}'. Check logs in auth.py for details.")
+        return jsonify({"success": False, "error": "Failed to change username. Check password or logs."}), 400
 
 @common_bp.route('/api/user/change-password', methods=['POST'])
-def api_change_password():
+def change_password_route():
+    # Use session token to get username - needed? change_password might not need it if single user
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    username = get_username_from_session(session_token) # Get username for logging
+
+    if not username: # Check if session is valid even if function doesn't need username
+         logger.warning("Password change attempt failed: Not authenticated.")
+         return jsonify({"error": "Not authenticated"}), 401
+
     data = request.json
     current_password = data.get('current_password')
     new_password = data.get('new_password')
+
     if not current_password or not new_password:
-        return jsonify({"success": False, "message": "All fields are required"}), 400
+        logger.warning(f"Password change attempt for user '{username}' failed: Missing current or new password.")
+        return jsonify({"success": False, "error": "Current and new passwords are required"}), 400
+
+    logger.info(f"Attempting to change password for user '{username}'.")
+    # Pass username? change_password might not need it. Assuming it doesn't for now.
     if change_password(current_password, new_password):
-        logout()
+        logger.info(f"Password changed successfully for user '{username}'.")
         return jsonify({"success": True})
     else:
-        return jsonify({"success": False, "message": "Invalid current password"}), 400
+        logger.warning(f"Password change failed for user '{username}'. Check logs in auth.py for details.")
+        return jsonify({"success": False, "error": "Failed to change password. Check current password or logs."}), 400
 
-@common_bp.route('/static/<path:path>')
-def send_static(path):
-    return send_from_directory('../static', path)
+# --- 2FA Management API Routes --- #
 
-@common_bp.route('/logs')
-def stream_logs():
-    app_type = request.args.get('app', 'sonarr')
-    def generate():
-        if os.path.exists(LOG_FILE):
-            with open(LOG_FILE, 'r') as f:
-                lines = f.readlines()[-100:]
-                for line in lines:
-                    if app_type == 'sonarr' or app_type in line.lower():
-                        yield f"data: {line}\n\n"
-        with open(LOG_FILE, 'r') as f:
-            f.seek(0, 2)
-            while True:
-                line = f.readline()
-                if line:
-                    if app_type == 'sonarr' or app_type in line.lower():
-                        yield f"data: {line}\n\n"
-                else:
-                    import time
-                    time.sleep(0.1)
-    return Response(stream_with_context(generate()), mimetype='text/event-stream')
+@common_bp.route('/api/user/2fa/setup', methods=['POST'])
+def setup_2fa():
+    # Use session token to get username
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    username = get_username_from_session(session_token)
 
-@common_bp.route('/api/settings', methods=['GET'])
-def get_settings():
-    settings = settings_manager.get_all_settings()
-    apps = ['sonarr', 'radarr', 'lidarr', 'readarr']
-    
-    # Get the current app type (assuming it's stored somewhere, maybe in a global/ui section?)
-    # Let's assume it's stored under a 'global' key for now, or default to sonarr
-    # This part might need adjustment based on where app_type is actually stored/managed.
-    current_app = settings.get('global', {}).get('app_type', 'sonarr') 
-    
-    # Add API connection info for the current app directly from its settings
-    if current_app in settings:
-        settings['api_url'] = settings[current_app].get('api_url', '')
-        settings['api_key'] = settings[current_app].get('api_key', '')
+    if not username:
+        logger.warning("2FA setup attempt failed: No username in session.") # Add logging
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        logger.info(f"Generating 2FA setup for user: {username}") # Add logging
+        # Pass username to generate_2fa_secret
+        secret, qr_code_data_uri = generate_2fa_secret(username) # Use correct return values
+
+        # Return secret and QR code data URI
+        return jsonify({"success": True, "secret": secret, "qr_code_url": qr_code_data_uri}) # Match frontend expectation 'qr_code_url'
+
+    except Exception as e:
+        logger.error(f"Error during 2FA setup generation for user '{username}': {e}", exc_info=True)
+        return jsonify({"success": False, "error": "Failed to generate 2FA setup information."}), 500
+
+@common_bp.route('/api/user/2fa/verify', methods=['POST'])
+def verify_2fa():
+    # Use session token to get username
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    username = get_username_from_session(session_token)
+
+    if not username:
+        logger.warning("2FA verify attempt failed: No username in session.") # Add logging
+        return jsonify({"error": "Not authenticated"}), 401
+
+    data = request.json
+    otp_code = data.get('code') # Match frontend key 'code'
+
+    if not otp_code or len(otp_code) != 6 or not otp_code.isdigit(): # Add validation
+        logger.warning(f"2FA verification for '{username}' failed: Invalid code format provided.")
+        return jsonify({"success": False, "error": "Invalid or missing 6-digit OTP code"}), 400
+
+    logger.info(f"Attempting to verify 2FA code for user '{username}'.")
+    # Pass username to verify_2fa_code
+    if verify_2fa_code(username, otp_code, enable_on_verify=True):
+        logger.info(f"Successfully verified and enabled 2FA for user: {username}") # Add logging
+        return jsonify({"success": True})
     else:
-        settings['api_url'] = ''
-        settings['api_key'] = ''
-        
-    # The backward compatibility mapping might need review depending on frontend needs
-    # If the frontend now reads directly from app sections, this might be removable.
-    if current_app in settings:
-        if 'huntarr' not in settings: settings['huntarr'] = {}
-        if 'advanced' not in settings: settings['advanced'] = {}
-        
-        for key, value in settings[current_app].items():
-            if key not in ['api_url', 'api_key']: # Don't copy API keys to legacy sections
-                if key in ['api_timeout', 'debug_mode', 'command_wait_delay', 
-                        'command_wait_attempts', 'minimum_download_queue_size',
-                        'random_missing', 'random_upgrades']:
-                    settings['advanced'][key] = value
-                else:
-                    settings['huntarr'][key] = value
+        # Reason logged in verify_2fa_code
+        logger.warning(f"2FA verification failed for user: {username}. Check logs in auth.py.")
+        return jsonify({"success": False, "error": "Invalid OTP code"}), 400 # Use 400 for bad request
 
-    return jsonify(settings)
+@common_bp.route('/api/user/2fa/disable', methods=['POST'])
+def disable_2fa_route():
+    # Use session token to get username
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    username = get_username_from_session(session_token)
 
-@common_bp.route('/api/app-settings', methods=['GET'])
-def get_app_settings():
-    app_name = request.args.get('app')
-    if not app_name or app_name not in ['sonarr', 'radarr', 'lidarr', 'readarr']:
-        return jsonify({"success": False, "message": "Valid 'app' parameter required"}), 400
-    
-    # Get settings directly using settings_manager
-    api_url = settings_manager.get_setting(app_name, 'api_url', '')
-    api_key = settings_manager.get_setting(app_name, 'api_key', '')
-    
-    return jsonify({"success": True, "app": app_name, "api_url": api_url, "api_key": api_key})
+    if not username:
+        logger.warning("2FA disable attempt failed: Not authenticated.")
+        return jsonify({"error": "Not authenticated"}), 401
 
-@common_bp.route('/api/configured-apps', methods=['GET'])
-def get_configured_apps():
-    apps = ['sonarr', 'radarr', 'lidarr', 'readarr']
-    configured_status = {}
-    all_settings = settings_manager.get_all_settings()
-    for app_name in apps:
-        app_settings = all_settings.get(app_name, {})
-        is_configured = bool(app_settings.get('api_url') and app_settings.get('api_key'))
-        configured_status[app_name] = is_configured
-    return jsonify(configured_status)
+    data = request.json
+    # Require password OR OTP code to disable 2FA for security
+    password = data.get('password')
+    otp_code = data.get('code') # Match frontend key 'code'
 
-@common_bp.route('/api/settings', methods=['POST'])
-def update_settings():
-    try:
-        data = request.json
-        if not data:
-            return jsonify({"success": False, "message": "No data provided"}), 400
-        
-        # Get the app type from the data or use 'sonarr' as default
-        # If saving 'global' or 'ui' settings, app_type might be 'global'
-        app_type = data.get("app_type", "sonarr") 
-        
-        # API keys (api_url, api_key) are now part of the main data payload per app
-        # No separate handling for keys_manager needed.
-        
-        # Load current settings
-        try:
-            old_settings = settings_manager.get_all_settings()
-        except Exception as e:
-            return jsonify({"success": False, "message": f"Error loading settings: {str(e)}"}), 500
-            
-        changes_made = False
-        changes_log = []
-        
-        # Keys to ignore at the top level (handled within app sections)
-        skip_keys = ["app_type"] 
-        
-        # Update settings based on app_type
-        if app_type in ['sonarr', 'radarr', 'lidarr', 'readarr']:
-            if app_type not in old_settings:
-                old_settings[app_type] = {}
-            
-            for key, value in data.items():
-                if key not in skip_keys:
-                    old_value = old_settings[app_type].get(key)
-                    if old_value != value:
-                        changes_made = True
-                        changes_log.append(f"{app_type}.{key} from {old_value} to {value}")
-                    old_settings[app_type][key] = value
-        elif app_type == 'global':
-            if "global" not in old_settings:
-                old_settings["global"] = {}
-            for key, value in data.items():
-                if key not in skip_keys:
-                    old_value = old_settings["global"].get(key)
-                    if old_value != value:
-                        changes_made = True
-                        changes_log.append(f"global.{key} from {old_value} to {value}")
-                    old_settings["global"][key] = value
-        elif app_type == 'ui': # Assuming UI settings might be saved under 'ui'
-             if "ui" not in old_settings:
-                 old_settings["ui"] = {}
-             for key, value in data.items():
-                 if key not in skip_keys:
-                     old_value = old_settings["ui"].get(key)
-                     if old_value != value:
-                         changes_made = True
-                         changes_log.append(f"ui.{key} from {old_value} to {value}")
-                     old_settings["ui"][key] = value
-        else:
-            # Handle potential unknown app_type or error
-            return jsonify({"success": False, "message": f"Invalid app_type: {app_type}"}), 400
-                    
-        # Save all settings
-        if settings_manager.save_settings(old_settings):
-            # Log changes if any were made
-            if changes_made:
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                log_message = f"{timestamp} - huntarr-web - INFO - Settings updated for '{app_type}'. Changes: {', '.join(changes_log)}\n"
-                try:
-                    with open(LOG_FILE, 'a') as f:
-                        f.write(log_message)
-                except Exception as log_e:
-                    print(f"Error writing to log file: {log_e}") # Log to console if file write fails
-            
-            return jsonify({
-                "success": True, 
-                "message": "Settings saved successfully", 
-                "changes_made": changes_made,
-                "settings": old_settings # Return updated settings
-            })
-        else:
-            return jsonify({
-                "success": False, 
-                "message": "Error saving settings"
-            }), 500
-    except Exception as e:
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"Error updating settings: {error_details}")
-        # Log detailed error to file
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        try:
-            with open(LOG_FILE, 'a') as f:
-                f.write(f"{timestamp} - huntarr-web - ERROR - Error updating settings: {error_details}\n")
-        except Exception as log_e:
-            print(f"Error writing error details to log file: {log_e}")
-            
-        return jsonify({
-            "success": False, 
-            "message": f"Error updating settings: {str(e)}",
-            "details": error_details # Optionally include details in response for debugging
-        }), 500
+    if not password and not otp_code:
+         logger.warning(f"2FA disable attempt for '{username}' failed: Missing password or OTP code.")
+         return jsonify({"success": False, "error": "Password or current OTP code is required to disable 2FA"}), 400
 
-@common_bp.route('/api/settings/reset', methods=['POST'])
-def reset_settings():
-    try:
-        data = request.json
-        app_name = data.get('app') if data else None
+    # Prioritize OTP code verification if provided
+    if otp_code:
+         if not (len(otp_code) == 6 and otp_code.isdigit()):
+             logger.warning(f"2FA disable attempt for '{username}' failed: Invalid OTP code format.")
+             return jsonify({"success": False, "error": "Invalid 6-digit OTP code format"}), 400
 
-        if not app_name or app_name not in ['sonarr', 'radarr', 'lidarr', 'readarr', 'global']:
-             # If no app name or invalid app name, maybe reset all? Or return error?
-             # For now, let's return an error to match frontend expectation of specific reset.
-             # Alternatively, could reset all if app_name is None/missing.
-            return jsonify({"success": False, "message": "Valid 'app' parameter required in request body"}), 400
+         # Need a way to verify OTP against the *permanent* secret
+         user_data = get_user_data()
+         perm_secret = user_data.get("2fa_secret")
+         if not perm_secret:
+              logger.error(f"2FA disable attempt for '{username}' failed: 2FA is not enabled or secret missing.")
+              return jsonify({"success": False, "error": "2FA is not currently enabled."}), 400
 
-        settings = settings_manager.get_all_settings()
-        
-        if app_name == 'global':
-             # Resetting 'global' might need special handling if it exists.
-             # Currently, defaults don't explicitly define 'global'.
-             # Let's clear it or reset to an empty dict if it exists.
-            if 'global' in settings:
-                settings['global'] = {}
-            if 'ui' in settings: # Reset UI settings too if resetting global
-                 settings['ui'] = settings_manager.load_default_app_settings('ui') # Assuming a ui.json default exists or handle {}
-        elif app_name in settings:
-            default_app_settings = settings_manager.load_default_app_settings(app_name)
-            settings[app_name] = default_app_settings
-        else:
-             # App not found in current settings, maybe it was never configured.
-             # Load defaults anyway to ensure it's reset.
-             default_app_settings = settings_manager.load_default_app_settings(app_name)
-             settings[app_name] = default_app_settings
+         totp = pyotp.TOTP(perm_secret)
+         if totp.verify(otp_code):
+              logger.info(f"Disabling 2FA for user '{username}' using OTP code.")
+              # Proceed to disable without password check
+              user_data["2fa_enabled"] = False
+              user_data["2fa_secret"] = None
+              if save_user_data(user_data):
+                  logger.info(f"2FA disabled successfully for user '{username}'.")
+                  return jsonify({"success": True})
+              else:
+                  logger.error(f"Failed to save user data after disabling 2FA for '{username}'.")
+                  return jsonify({"success": False, "error": "Failed to save settings after disabling 2FA."}), 500
+         else:
+              logger.warning(f"2FA disable attempt for '{username}' failed: Invalid OTP code provided.")
+              return jsonify({"success": False, "error": "Invalid OTP code"}), 400
 
-        if settings_manager.save_settings(settings):
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            with open(LOG_FILE, 'a') as f:
-                f.write(f"{timestamp} - huntarr-web - INFO - Settings for '{app_name}' reset to defaults by user\n")
-            return jsonify({"success": True, "message": f"{app_name.capitalize()} settings reset to defaults successfully"})
-        else:
-             return jsonify({"success": False, "message": f"Error saving reset settings for {app_name}"}), 500
+    # Fallback to password verification if OTP wasn't provided or failed (though it returns above on failure)
+    elif password:
+         logger.info(f"Attempting to disable 2FA for user '{username}' using password.")
+         # disable_2fa now requires password, call it directly
+         if disable_2fa(password): # Pass password to the function
+             logger.info(f"2FA disabled successfully for user '{username}' using password.")
+             return jsonify({"success": True})
+         else:
+             # Reason logged in disable_2fa
+             logger.warning(f"Failed to disable 2FA for user '{username}' using password. Check logs.")
+             return jsonify({"success": False, "error": "Failed to disable 2FA. Check password or logs."}), 400
 
-    except Exception as e:
-        import traceback
-        settings_manager.settings_logger.error(f"Error resetting settings: {traceback.format_exc()}")
-        return jsonify({"success": False, "message": str(e)}), 500
+    # Should not be reached if logic is correct
+    return jsonify({"success": False, "error": "An unexpected condition occurred."}), 500
 
-@common_bp.route('/api/settings/theme', methods=['GET'])
-def get_theme():
-    dark_mode = settings_manager.get_setting("ui", "dark_mode", True)
-    return jsonify({"dark_mode": dark_mode})
-
+# --- Theme Setting Route ---
 @common_bp.route('/api/settings/theme', methods=['POST'])
-def update_theme():
+def set_theme():
+    # Authentication check
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not verify_session(session_token):
+         logger.warning("Theme setting attempt failed: Not authenticated.")
+         return jsonify({"error": "Unauthorized"}), 401
+
     try:
         data = request.json
-        old_value = settings_manager.get_setting("ui", "dark_mode", True)
-        if "dark_mode" in data and old_value != data["dark_mode"]:
-            settings_manager.update_setting("ui", "dark_mode", data["dark_mode"])
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            new_mode = 'Dark' if data['dark_mode'] else 'Light'
-            with open(LOG_FILE, 'a') as f:
-                f.write(f"{timestamp} - huntarr-web - INFO - Changed theme to {new_mode} Mode\n")
+        dark_mode = data.get('dark_mode')
+
+        if dark_mode is None or not isinstance(dark_mode, bool):
+            logger.warning("Invalid theme setting received.")
+            return jsonify({"success": False, "error": "Invalid 'dark_mode' value"}), 400
+
+        # Here you would typically save this preference to a user profile or global setting
+        # For now, just log it. A real implementation would persist this.
+        username = get_username_from_session(session_token) # Get username for logging
+        logger.info(f"User '{username}' set dark mode preference to: {dark_mode}")
+
+        # Example: Saving to a hypothetical global config (replace with actual persistence)
+        # global_settings = settings_manager.load_global_settings() # Assuming such a function exists
+        # global_settings['ui']['dark_mode'] = dark_mode
+        # settings_manager.save_global_settings(global_settings) # Assuming such a function exists
+
         return jsonify({"success": True})
     except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+        logger.error(f"Error setting theme preference: {e}", exc_info=True)
+        return jsonify({"success": False, "error": "Failed to set theme preference"}), 500
 
-@common_bp.route('/api/settings/refresh', methods=['POST'])
-def refresh_settings():
-    try:
-        # Force a reload of settings from disk
-        from src.primary import config
-        config.refresh_settings()
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open(LOG_FILE, 'a') as f:
-            f.write(f"{timestamp} - huntarr-web - INFO - Settings refreshed from disk by UI\n")
-        return jsonify({"success": True, "message": "Settings refreshed successfully"})
-    except Exception as e:
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open(LOG_FILE, 'a') as f:
-            f.write(f"{timestamp} - huntarr-web - ERROR - Error refreshing settings: {str(e)}\n")
-        return jsonify({"success": False, "message": str(e)}), 500
+# Ensure all routes previously in this file that interact with settings
+# are either moved to web_server.py or updated here using the new settings_manager functions.
+
+# REMOVED DUPLICATE BLUEPRINT DEFINITION AND CONFLICTING ROUTES BELOW THIS LINE

@@ -329,7 +329,7 @@
                 }
                 
                 // Create user account with improved error handling
-                fetch('/api/setup', {
+                fetch('/setup', { // Corrected endpoint from /api/setup to /setup
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -337,46 +337,74 @@
                     body: JSON.stringify({
                         username: username,
                         password: password,
-                        confirm_password: confirmPassword
+                        confirm_password: confirmPassword // Keep confirm_password if backend expects it, otherwise remove
                     })
                 })
                 .then(response => {
                     // Check if response is ok before parsing JSON
                     if (!response.ok) {
-                        return response.json().then(data => {
-                            throw new Error(data.message || `HTTP error! status: ${response.status}`);
-                        });
+                        // Check content type to see if it's likely JSON
+                        const contentType = response.headers.get("content-type");
+                        if (contentType && contentType.indexOf("application/json") !== -1) {
+                            // If it seems like JSON, try to parse it for an error message
+                            return response.json().then(data => {
+                                // Use data.error first, then data.message as fallback
+                                throw new Error(data.error || data.message || `Server error: ${response.status}`);
+                            });
+                        } else {
+                            // If not JSON (e.g., HTML error page), throw a generic HTTP error
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
                     }
+                    // If response is ok, parse the JSON body
                     return response.json();
                 })
-                .then(data => {
+                .then(data => { // This block only runs if response.ok was true and response.json() succeeded
                     if (data.success) {
                         accountCreated = true;
                         console.log('Account created successfully. User credentials should be saved to credentials.json');
                         
-                        // Generate 2FA setup
-                        fetch('/api/user/generate-2fa')
-                            .then(response => response.json())
+                        // Generate 2FA setup - Use the correct endpoint and method
+                        fetch('/api/user/2fa/setup', { method: 'POST' }) // Specify POST method
+                            .then(response => {
+                                // Check for unauthorized specifically
+                                if (response.status === 401) {
+                                    throw new Error('Unauthorized - Session likely not established yet.');
+                                }
+                                if (!response.ok) {
+                                    // Try to parse error from JSON response
+                                    return response.json().then(errData => {
+                                        throw new Error(errData.error || `Server error: ${response.status}`);
+                                    }).catch(() => {
+                                        // Fallback if response is not JSON
+                                        throw new Error(`Server error: ${response.status}`);
+                                    });
+                                }
+                                return response.json();
+                            })
                             .then(twoFactorData => {
                                 if (twoFactorData.success) {
-                                    qrCodeElement.innerHTML = `<img src="${twoFactorData.qr_code_url}" alt="QR Code">`;
+                                    // Use the correct property name for the QR code data
+                                    qrCodeElement.innerHTML = `<img src="data:image/png;base64,${twoFactorData.qr_code}" alt="QR Code">`; // Corrected property and format
                                     secretKeyElement.textContent = twoFactorData.secret;
                                     showStep(2);
                                 } else {
-                                    showError('Failed to generate 2FA setup: ' + twoFactorData.message);
+                                    // Use .error if available, otherwise provide a default
+                                    showError('Failed to generate 2FA setup: ' + (twoFactorData.error || 'Unknown error'));
                                 }
                             })
                             .catch(error => {
                                 console.error('Error generating 2FA:', error);
-                                showError('Failed to generate 2FA setup');
+                                // Display the specific error message caught
+                                showError('Failed to generate 2FA setup: ' + error.message);
                             });
                     } else {
-                        showError(data.message || 'Failed to create account');
+                        showError(data.error || 'Failed to create account'); // Use .error
                     }
                 })
-                .catch(error => {
+                .catch(error => { // Catches errors thrown from the .then blocks above or network errors
                     console.error('Setup error:', error);
-                    showError('Error: ' + error.message);
+                    showError('Error: ' + error.message); // Display the error message
                 });
             });
             
