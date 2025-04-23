@@ -354,16 +354,17 @@
                         accountCreated = true;
                         console.log('Account created successfully. User credentials should be saved to credentials.json');
                         
-                        // Generate 2FA setup
-                        fetch('/api/user/generate-2fa')
+                        // Generate 2FA setup - Use the correct endpoint
+                        fetch('/api/user/2fa/setup') // Corrected endpoint
                             .then(response => response.json())
                             .then(twoFactorData => {
                                 if (twoFactorData.success) {
-                                    qrCodeElement.innerHTML = `<img src="${twoFactorData.qr_code_url}" alt="QR Code">`;
+                                    // Use the correct property name for the QR code data
+                                    qrCodeElement.innerHTML = `<img src="data:image/png;base64,${twoFactorData.qr_code}" alt="QR Code">`; // Corrected property and format
                                     secretKeyElement.textContent = twoFactorData.secret;
                                     showStep(2);
                                 } else {
-                                    showError('Failed to generate 2FA setup: ' + twoFactorData.message);
+                                    showError('Failed to generate 2FA setup: ' + (twoFactorData.error || 'Unknown error')); // Use .error
                                 }
                             })
                             .catch(error => {
@@ -371,7 +372,7 @@
                                 showError('Failed to generate 2FA setup');
                             });
                     } else {
-                        showError(data.message || 'Failed to create account');
+                        showError(data.error || 'Failed to create account'); // Use .error
                     }
                 })
                 .catch(error => {

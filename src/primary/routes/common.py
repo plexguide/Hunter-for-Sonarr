@@ -95,21 +95,27 @@ def setup_route():
         return redirect(url_for('common.login_route'))
 
     if request.method == 'POST':
-        data = request.json
-        username = data.get('username')
-        password = data.get('password')
+        try: # Add try block to catch potential errors during user creation
+            data = request.json
+            username = data.get('username')
+            password = data.get('password')
 
-        if not username or not password:
-            return jsonify({"success": False, "error": "Username and password are required"}), 400
+            if not username or not password:
+                return jsonify({"success": False, "error": "Username and password are required"}), 400
 
-        if create_user(username, password):
-            # Automatically log in the user after setup
-            session_token = create_session(username)
-            response = jsonify({"success": True})
-            response.set_cookie(SESSION_COOKIE_NAME, session_token, httponly=True, samesite='Lax')
-            return response
-        else:
-            return jsonify({"success": False, "error": "Failed to create user"}), 500
+            if create_user(username, password):
+                # Automatically log in the user after setup
+                session_token = create_session(username)
+                response = jsonify({"success": True})
+                response.set_cookie(SESSION_COOKIE_NAME, session_token, httponly=True, samesite='Lax')
+                return response
+            else:
+                # create_user itself failed, but didn't raise an exception
+                return jsonify({"success": False, "error": "Failed to create user (internal reason)"}), 500
+        except Exception as e:
+            # Catch any unexpected exception during the process
+            logger.error(f"Unexpected error during setup POST: {e}", exc_info=True)
+            return jsonify({"success": False, "error": f"An unexpected server error occurred: {e}"}), 500
     else:
         # GET request - show setup page
         return render_template('setup.html')
