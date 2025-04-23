@@ -46,7 +46,7 @@ app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev_key_for_sessions')
 
 # Register blueprints
-app.register_blueprint(common_bp, url_prefix="/")
+app.register_blueprint(common_bp)
 
 # Removed MAIN_PID and signal-related code
 
