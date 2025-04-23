@@ -20,80 +20,58 @@ SETTINGS_DIR = pathlib.Path("/config")
 SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
 
 SETTINGS_FILE = SETTINGS_DIR / "huntarr.json"
+DEFAULT_CONFIGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'default_configs'))
 
-# Default settings - updated to have a flat structure with no global section or UI settings
-DEFAULT_SETTINGS = {
-    "app_type": "sonarr",  # Default app type
-    "connections": {},     # Holds API URLs and keys
-    "sonarr": {            # Sonarr-specific settings - all settings at this level, no nesting
-        "hunt_missing_shows": 1,
-        "hunt_upgrade_episodes": 0,
-        "sleep_duration": 900,
-        "state_reset_interval_hours": 168,
-        "monitored_only": True,
-        "skip_future_episodes": True,
-        "skip_series_refresh": False,
-        "random_missing": True,
-        "random_upgrades": True,
-        "debug_mode": False,
-        "api_timeout": 60,
-        "command_wait_delay": 1,
-        "command_wait_attempts": 600,
-        "minimum_download_queue_size": -1,
-        "log_refresh_interval_seconds": 30
-    },
-    "radarr": {            # Radarr-specific settings
-        "hunt_missing_movies": 1,
-        "hunt_upgrade_movies": 0,
-        "sleep_duration": 900,
-        "state_reset_interval_hours": 168,
-        "monitored_only": True,
-        "skip_future_releases": True,
-        "skip_movie_refresh": False,
-        "random_missing": True,
-        "random_upgrades": True,
-        "debug_mode": False,
-        "api_timeout": 60,
-        "command_wait_delay": 1,
-        "command_wait_attempts": 600,
-        "minimum_download_queue_size": -1,
-        "log_refresh_interval_seconds": 30
-    },
-    "lidarr": {            # Lidarr-specific settings
-        "hunt_missing_albums": 1,
-        "hunt_upgrade_tracks": 0,
-        "sleep_duration": 900,
-        "state_reset_interval_hours": 168,
-        "monitored_only": True,
-        "skip_future_releases": True,
-        "skip_artist_refresh": False,
-        "random_missing": True,
-        "random_upgrades": True,
-        "debug_mode": False,
-        "api_timeout": 60,
-        "command_wait_delay": 1,
-        "command_wait_attempts": 600,
-        "minimum_download_queue_size": -1,
-        "log_refresh_interval_seconds": 30
-    },
-    "readarr": {           # Readarr-specific settings
-        "hunt_missing_books": 1,
-        "hunt_upgrade_books": 0,
-        "sleep_duration": 900,
-        "state_reset_interval_hours": 168,
-        "monitored_only": True,
-        "skip_future_releases": True,
-        "skip_author_refresh": False,
-        "random_missing": True,
-        "random_upgrades": True,
-        "debug_mode": False,
-        "api_timeout": 60,
-        "command_wait_delay": 1,
-        "command_wait_attempts": 600,
-        "minimum_download_queue_size": -1,
-        "log_refresh_interval_seconds": 30
-    }
-}
+# Helper function to load default settings for a specific app
+def load_default_app_settings(app_name: str) -> Dict[str, Any]:
+    """Load default settings for a specific app from its JSON file."""
+    default_file = os.path.join(DEFAULT_CONFIGS_DIR, f"{app_name}.json")
+    try:
+        if os.path.exists(default_file):
+            with open(default_file, 'r') as f:
+                return json.load(f)
+        else:
+            settings_logger.warning(f"Default settings file not found for app: {app_name}")
+            return {}
+    except Exception as e:
+        settings_logger.error(f"Error loading default settings for {app_name}: {e}")
+        return {}
+
+# Helper function to get all default settings combined
+def get_all_default_settings() -> Dict[str, Any]:
+    """Load and combine default settings for all known apps."""
+    all_defaults = {}
+    for app_name in ['sonarr', 'radarr', 'lidarr', 'readarr']: # Add other apps if needed
+        defaults = load_default_app_settings(app_name)
+        if defaults:
+            all_defaults[app_name] = defaults
+    return all_defaults
+
+# Function to merge user settings with defaults
+def merge_settings_with_defaults(user_settings: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge user settings with default settings, ensuring all keys are present."""
+    merged_settings = {}
+    all_defaults = get_all_default_settings()
+
+    for app_name, app_defaults in all_defaults.items():
+        user_app_settings = user_settings.get(app_name, {})
+        # Start with defaults, then update with user settings
+        merged_app_settings = app_defaults.copy()
+        merged_app_settings.update(user_app_settings)
+        merged_settings[app_name] = merged_app_settings
+
+    # Include any apps the user might have added that are not in defaults (though unlikely)
+    for app_name, user_app_settings in user_settings.items():
+        if app_name not in merged_settings:
+             # Check if it looks like a valid app config (has api_key/api_url)
+             # Or decide if unknown sections should be kept or discarded
+            if isinstance(user_app_settings, dict) and ('api_key' in user_app_settings or 'api_url' in user_app_settings):
+                settings_logger.warning(f"Keeping unknown settings section: {app_name}")
+                merged_settings[app_name] = user_app_settings
+            else:
+                 settings_logger.warning(f"Discarding unknown or invalid settings section: {app_name}")
+
+    return merged_settings
 
 def _deep_update(d, u):
     """Recursively update a dictionary without overwriting entire nested dicts"""
@@ -105,40 +83,35 @@ def _deep_update(d, u):
 
 # Load settings from file
 def load_settings() -> Dict[str, Any]:
-    """Load settings from JSON file"""
+    """Load settings from JSON file and merge with defaults."""
+    user_settings = {}
     try:
-        # Start with default settings
-        settings = DEFAULT_SETTINGS.copy()
-        
-        # Then load from file if it exists
-        if SETTINGS_FILE.exists():
-            with open(SETTINGS_FILE, "r", encoding="utf-8") as file:
-                user_settings = json.load(file)
-                # Deep merge user settings
-                _deep_update(settings, user_settings)
-                
-        # Remove any "huntarr" nested sections from app configs
-        for app in ["sonarr", "radarr", "lidarr", "readarr"]:
-            if app in settings and "huntarr" in settings[app]:
-                # Move all settings from app.huntarr directly to app level
-                for key, value in settings[app]["huntarr"].items():
-                    if key not in settings[app]:  # Don't overwrite existing settings
-                        settings[app][key] = value
-                # Remove the huntarr section
-                del settings[app]["huntarr"]
-        
-        # Remove any "global" section
-        if "global" in settings:
-            del settings["global"]
-            
-        # Remove any "ui" section
-        if "ui" in settings:
-            del settings["ui"]
-                
-        return settings
+        if os.path.exists(SETTINGS_FILE):
+            with open(SETTINGS_FILE, 'r') as f:
+                content = f.read()
+                if content.strip(): # Check if file is not empty
+                    user_settings = json.loads(content)
+                else:
+                    settings_logger.warning(f"Settings file {SETTINGS_FILE} is empty. Using defaults.")
+        else:
+            settings_logger.warning(f"Settings file {SETTINGS_FILE} not found. Using defaults.")
+
+        # Remove legacy global/ui sections if they exist before merging
+        if "global" in user_settings:
+            del user_settings["global"]
+        if "ui" in user_settings:
+            del user_settings["ui"]
+
+        # Merge the loaded user settings with the defaults
+        merged_settings = merge_settings_with_defaults(user_settings)
+        return merged_settings
+
+    except json.JSONDecodeError as e:
+        settings_logger.error(f"Error decoding JSON from {SETTINGS_FILE}: {e}. Using defaults.")
+        return get_all_default_settings()
     except Exception as e:
-        settings_logger.error(f"Error loading settings: {e}")
-        return DEFAULT_SETTINGS.copy()
+        settings_logger.error(f"Error loading settings: {e}. Using defaults.")
+        return get_all_default_settings()
 
 # Get all settings
 def get_all_settings() -> Dict[str, Any]:

@@ -146,7 +146,7 @@ function loadAppSettings(app) {
 
 // Helper function to get default settings for any app
 function getDefaultSettings(app) {
-    switch(app) {
+    switch (app) {
         case 'sonarr':
             return {
                 api_url: '',
@@ -228,7 +228,13 @@ function getDefaultSettings(app) {
                 log_refresh_interval_seconds: 30
             };
         default:
-            return {};
+            // Return a generic structure or handle unknown apps
+            console.warn(`Requesting default settings for unknown app: ${app}`);
+            return {
+                api_url: '',
+                api_key: '',
+                // Add other common fields if applicable, or leave empty
+            };
     }
 }
 
