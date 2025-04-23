@@ -224,29 +224,51 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
 
 def get_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool) -> List[Dict[str, Any]]:
     """Get missing episodes from Sonarr."""
+    endpoint = "wanted/missing"
+    # Parameters for the request - Sonarr uses camelCase
+    # Simplify parameters: Remove sorting, add includeSeries
+    params = {
+        "page": 1,
+        "pageSize": 1000, # Fetch a large number, assuming no pagination needed for now
+        "includeSeries": "true" # Add includeSeries parameter
+    }
+    url = f"{api_url}/api/v3/{endpoint}"
+    sonarr_logger.debug(f"Requesting missing episodes from URL: {url} with params: {params}")
     try:
-        endpoint = f"{api_url}/api/v3/wanted/missing?page=1&pageSize=1000&sortKey=airDateUtc&sortDir=asc"
-        response = requests.get(endpoint, headers={"X-Api-Key": api_key}, timeout=api_timeout)
-        response.raise_for_status()
-        missing = response.json().get('records', [])
+        response = requests.get(url, headers={"X-Api-Key": api_key}, params=params, timeout=api_timeout)
+        sonarr_logger.debug(f"Sonarr API response status code: {response.status_code}") # Log status code
+        sonarr_logger.debug(f"Sonarr API raw response (first 500 chars): {response.text[:500]}") # Log raw response start
+        response.raise_for_status() # Check for HTTP errors (4xx or 5xx)
+        
+        data = response.json()
+        missing = data.get('records', [])
+        sonarr_logger.debug(f"Parsed {len(missing)} missing episode records from Sonarr API JSON.") # Log count after parsing
         
         if monitored_only:
             # Filter for monitored series and episodes if monitored_only is True
+            original_count = len(missing)
             filtered_missing = [
                 ep for ep in missing 
                 if ep.get('series', {}).get('monitored', False) and ep.get('monitored', False)
             ]
-            sonarr_logger.debug(f"Found {len(filtered_missing)} monitored missing episodes (out of {len(missing)} total).")
+            sonarr_logger.debug(f"Filtered for monitored_only=True: {len(filtered_missing)} monitored missing episodes remain (out of {original_count} total).") # Log count after filtering
             return filtered_missing
         else:
-            sonarr_logger.debug(f"Found {len(missing)} missing episodes (monitored_only is False).")
+            sonarr_logger.debug(f"Returning {len(missing)} missing episodes (monitored_only=False).")
             return missing
             
     except requests.exceptions.RequestException as e:
-        sonarr_logger.error(f"Error getting missing episodes from Sonarr: {e}")
+        # Log specific request exception details if possible
+        error_details = f"Error: {e}"
+        if e.response is not None:
+            error_details += f", Status Code: {e.response.status_code}, Response: {e.response.text[:500]}"
+        sonarr_logger.error(f"Error getting missing episodes from Sonarr: {error_details}")
+        return []
+    except json.JSONDecodeError as e:
+        sonarr_logger.error(f"Failed to decode JSON response from Sonarr: {e}. Response text (first 500 chars): {response.text[:500]}")
         return []
     except Exception as e:
-        sonarr_logger.error(f"An unexpected error occurred while getting missing episodes: {e}")
+        sonarr_logger.error(f"An unexpected error occurred getting missing episodes: {e}", exc_info=True) # Add exc_info for unexpected errors
         return []
 
 def get_cutoff_unmet_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool) -> List[Dict[str, Any]]:

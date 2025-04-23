@@ -62,6 +62,7 @@ def process_missing_episodes(
 
     # Get missing episodes from Sonarr API
     missing_episodes = sonarr_api.get_missing_episodes(api_url, api_key, api_timeout, monitored_only)
+    sonarr_logger.info(f"Received {len(missing_episodes)} missing episodes from Sonarr API (before filtering).") # Added log
     if not missing_episodes:
         sonarr_logger.info("No missing episodes found in Sonarr.")
         return False
