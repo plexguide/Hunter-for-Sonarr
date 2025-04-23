@@ -216,49 +216,58 @@ def get_settings():
     settings = settings_manager.get_all_settings()
     apps = ['sonarr', 'radarr', 'lidarr', 'readarr']
     
-    # Get the current app type
-    current_app = settings.get('app_type', 'sonarr')
+    # Get the current app type (assuming it's stored somewhere, maybe in a global/ui section?)
+    # Let's assume it's stored under a 'global' key for now, or default to sonarr
+    # This part might need adjustment based on where app_type is actually stored/managed.
+    current_app = settings.get('global', {}).get('app_type', 'sonarr') 
     
-    # Provide backward compatibility for the frontend
-    # Map app-specific settings to the legacy huntarr and advanced sections
-    # This ensures the UI can read settings with minimal changes
+    # Add API connection info for the current app directly from its settings
     if current_app in settings:
-        if 'huntarr' not in settings:
-            settings['huntarr'] = {}
-        if 'advanced' not in settings:
-            settings['advanced'] = {}
+        settings['api_url'] = settings[current_app].get('api_url', '')
+        settings['api_key'] = settings[current_app].get('api_key', '')
+    else:
+        settings['api_url'] = ''
+        settings['api_key'] = ''
         
-        # Copy app-specific settings to both the legacy structure and keep the app-specific structure
+    # The backward compatibility mapping might need review depending on frontend needs
+    # If the frontend now reads directly from app sections, this might be removable.
+    if current_app in settings:
+        if 'huntarr' not in settings: settings['huntarr'] = {}
+        if 'advanced' not in settings: settings['advanced'] = {}
+        
         for key, value in settings[current_app].items():
-            # Advanced settings
-            if key in ['api_timeout', 'debug_mode', 'command_wait_delay', 
-                    'command_wait_attempts', 'minimum_download_queue_size',
-                    'random_missing', 'random_upgrades']:
-                settings['advanced'][key] = value
-            # Huntarr settings
-            else:
-                settings['huntarr'][key] = value
-    
-    # Add API connection info for the current app
-    for app_name in apps:
-        api_url, api_key = __import__("src.primary.keys_manager", fromlist=[""]).get_api_keys(app_name)
-        if app_name == current_app:
-            settings['api_url'] = api_url
-            settings['api_key'] = api_key
-    
+            if key not in ['api_url', 'api_key']: # Don't copy API keys to legacy sections
+                if key in ['api_timeout', 'debug_mode', 'command_wait_delay', 
+                        'command_wait_attempts', 'minimum_download_queue_size',
+                        'random_missing', 'random_upgrades']:
+                    settings['advanced'][key] = value
+                else:
+                    settings['huntarr'][key] = value
+
     return jsonify(settings)
 
 @common_bp.route('/api/app-settings', methods=['GET'])
 def get_app_settings():
     app_name = request.args.get('app')
-    if not app_name:
-        return jsonify({"success": False, "message": "App parameter required"}), 400
-    api_url, api_key = __import__("src.primary.keys_manager", fromlist=[""]).get_api_keys(app_name)
+    if not app_name or app_name not in ['sonarr', 'radarr', 'lidarr', 'readarr']:
+        return jsonify({"success": False, "message": "Valid 'app' parameter required"}), 400
+    
+    # Get settings directly using settings_manager
+    api_url = settings_manager.get_setting(app_name, 'api_url', '')
+    api_key = settings_manager.get_setting(app_name, 'api_key', '')
+    
     return jsonify({"success": True, "app": app_name, "api_url": api_url, "api_key": api_key})
 
 @common_bp.route('/api/configured-apps', methods=['GET'])
 def get_configured_apps():
-    return jsonify(__import__("src.primary.keys_manager", fromlist=[""]).list_configured_apps())
+    apps = ['sonarr', 'radarr', 'lidarr', 'readarr']
+    configured_status = {}
+    all_settings = settings_manager.get_all_settings()
+    for app_name in apps:
+        app_settings = all_settings.get(app_name, {})
+        is_configured = bool(app_settings.get('api_url') and app_settings.get('api_key'))
+        configured_status[app_name] = is_configured
+    return jsonify(configured_status)
 
 @common_bp.route('/api/settings', methods=['POST'])
 def update_settings():
@@ -268,30 +277,14 @@ def update_settings():
             return jsonify({"success": False, "message": "No data provided"}), 400
         
         # Get the app type from the data or use 'sonarr' as default
-        app_type = data.get("app_type", "sonarr")
+        # If saving 'global' or 'ui' settings, app_type might be 'global'
+        app_type = data.get("app_type", "sonarr") 
         
-        # Handle API connection info if provided
-        if "api_url" in data and "api_key" in data:
-            try:
-                # Import locally to avoid circular imports
-                from src.primary import keys_manager
-                keys_manager.save_api_keys(app_type, data["api_url"], data["api_key"])
-            except ImportError:
-                # Try alternative import path
-                try:
-                    from primary import keys_manager
-                    keys_manager.save_api_keys(app_type, data["api_url"], data["api_key"])
-                except Exception as e:
-                    return jsonify({"success": False, "message": f"Error saving API keys: {str(e)}"}), 500
+        # API keys (api_url, api_key) are now part of the main data payload per app
+        # No separate handling for keys_manager needed.
         
-        # Process all settings at the app level - no nesting
+        # Load current settings
         try:
-            # Try to import with src.primary path first
-            from src.primary import settings_manager
-            old_settings = settings_manager.get_all_settings()
-        except ImportError:
-            # If that fails, try without the src prefix
-            from primary import settings_manager
             old_settings = settings_manager.get_all_settings()
         except Exception as e:
             return jsonify({"success": False, "message": f"Error loading settings: {str(e)}"}), 500
@@ -299,54 +292,62 @@ def update_settings():
         changes_made = False
         changes_log = []
         
-        # Ignore app_type and API keys, as they're handled separately
-        skip_keys = ["app_type", "api_url", "api_key"]
+        # Keys to ignore at the top level (handled within app sections)
+        skip_keys = ["app_type"] 
         
-        # Update all other settings directly in the app section
-        if app_type != 'global':
-            # Ensure app section exists
+        # Update settings based on app_type
+        if app_type in ['sonarr', 'radarr', 'lidarr', 'readarr']:
             if app_type not in old_settings:
                 old_settings[app_type] = {}
-                
-            # Copy all settings to the app section
+            
             for key, value in data.items():
                 if key not in skip_keys:
-                    old_value = old_settings.get(app_type, {}).get(key)
+                    old_value = old_settings[app_type].get(key)
                     if old_value != value:
                         changes_made = True
                         changes_log.append(f"{app_type}.{key} from {old_value} to {value}")
                     old_settings[app_type][key] = value
-        else:
-            # Handle global settings
+        elif app_type == 'global':
             if "global" not in old_settings:
                 old_settings["global"] = {}
-                
-            # Handle UI settings separately
-            if "ui" in data:
-                if "ui" not in old_settings:
-                    old_settings["ui"] = {}
-                for key, value in data["ui"].items():
-                    old_value = old_settings.get("ui", {}).get(key)
-                    if old_value != value:
-                        changes_made = True
-                        changes_log.append(f"ui.{key} from {old_value} to {value}")
-                    old_settings["ui"][key] = value
-            
-            # Copy remaining global settings
             for key, value in data.items():
-                if key not in skip_keys and key != "ui":
-                    old_value = old_settings.get("global", {}).get(key)
+                if key not in skip_keys:
+                    old_value = old_settings["global"].get(key)
                     if old_value != value:
                         changes_made = True
                         changes_log.append(f"global.{key} from {old_value} to {value}")
                     old_settings["global"][key] = value
+        elif app_type == 'ui': # Assuming UI settings might be saved under 'ui'
+             if "ui" not in old_settings:
+                 old_settings["ui"] = {}
+             for key, value in data.items():
+                 if key not in skip_keys:
+                     old_value = old_settings["ui"].get(key)
+                     if old_value != value:
+                         changes_made = True
+                         changes_log.append(f"ui.{key} from {old_value} to {value}")
+                     old_settings["ui"][key] = value
+        else:
+            # Handle potential unknown app_type or error
+            return jsonify({"success": False, "message": f"Invalid app_type: {app_type}"}), 400
                     
         # Save all settings
         if settings_manager.save_settings(old_settings):
+            # Log changes if any were made
+            if changes_made:
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                log_message = f"{timestamp} - huntarr-web - INFO - Settings updated for '{app_type}'. Changes: {', '.join(changes_log)}\n"
+                try:
+                    with open(LOG_FILE, 'a') as f:
+                        f.write(log_message)
+                except Exception as log_e:
+                    print(f"Error writing to log file: {log_e}") # Log to console if file write fails
+            
             return jsonify({
                 "success": True, 
                 "message": "Settings saved successfully", 
-                "changes_made": changes_made
+                "changes_made": changes_made,
+                "settings": old_settings # Return updated settings
             })
         else:
             return jsonify({
@@ -357,21 +358,62 @@ def update_settings():
         import traceback
         error_details = traceback.format_exc()
         print(f"Error updating settings: {error_details}")
+        # Log detailed error to file
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        try:
+            with open(LOG_FILE, 'a') as f:
+                f.write(f"{timestamp} - huntarr-web - ERROR - Error updating settings: {error_details}\n")
+        except Exception as log_e:
+            print(f"Error writing error details to log file: {log_e}")
+            
         return jsonify({
             "success": False, 
             "message": f"Error updating settings: {str(e)}",
-            "details": error_details
+            "details": error_details # Optionally include details in response for debugging
         }), 500
 
 @common_bp.route('/api/settings/reset', methods=['POST'])
 def reset_settings():
     try:
-        settings_manager.save_settings(settings_manager.DEFAULT_SETTINGS)
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open(LOG_FILE, 'a') as f:
-            f.write(f"{timestamp} - huntarr-web - INFO - Settings reset to defaults by user\n")
-        return jsonify({"success": True, "message": "Settings reset to defaults successfully"})
+        data = request.json
+        app_name = data.get('app') if data else None
+
+        if not app_name or app_name not in ['sonarr', 'radarr', 'lidarr', 'readarr', 'global']:
+             # If no app name or invalid app name, maybe reset all? Or return error?
+             # For now, let's return an error to match frontend expectation of specific reset.
+             # Alternatively, could reset all if app_name is None/missing.
+            return jsonify({"success": False, "message": "Valid 'app' parameter required in request body"}), 400
+
+        settings = settings_manager.get_all_settings()
+        
+        if app_name == 'global':
+             # Resetting 'global' might need special handling if it exists.
+             # Currently, defaults don't explicitly define 'global'.
+             # Let's clear it or reset to an empty dict if it exists.
+            if 'global' in settings:
+                settings['global'] = {}
+            if 'ui' in settings: # Reset UI settings too if resetting global
+                 settings['ui'] = settings_manager.load_default_app_settings('ui') # Assuming a ui.json default exists or handle {}
+        elif app_name in settings:
+            default_app_settings = settings_manager.load_default_app_settings(app_name)
+            settings[app_name] = default_app_settings
+        else:
+             # App not found in current settings, maybe it was never configured.
+             # Load defaults anyway to ensure it's reset.
+             default_app_settings = settings_manager.load_default_app_settings(app_name)
+             settings[app_name] = default_app_settings
+
+        if settings_manager.save_settings(settings):
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            with open(LOG_FILE, 'a') as f:
+                f.write(f"{timestamp} - huntarr-web - INFO - Settings for '{app_name}' reset to defaults by user\n")
+            return jsonify({"success": True, "message": f"{app_name.capitalize()} settings reset to defaults successfully"})
+        else:
+             return jsonify({"success": False, "message": f"Error saving reset settings for {app_name}"}), 500
+
     except Exception as e:
+        import traceback
+        settings_manager.settings_logger.error(f"Error resetting settings: {traceback.format_exc()}")
         return jsonify({"success": False, "message": str(e)}), 500
 
 @common_bp.route('/api/settings/theme', methods=['GET'])

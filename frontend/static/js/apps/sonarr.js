@@ -241,18 +241,18 @@
         },
         
         updateSaveButtonState: function(hasChanges) {
-            if (app.elements.saveSettingsButton && app.elements.saveSettingsBottomButton) {
-                app.elements.saveSettingsButton.disabled = !hasChanges;
-                app.elements.saveSettingsBottomButton.disabled = !hasChanges;
-                
+            // Use the HuntarrUI instance to access elements
+            const saveButton = window.HuntarrUI?.elements?.saveSettingsButton;
+            if (saveButton) {
+                saveButton.disabled = !hasChanges;
                 if (hasChanges) {
-                    app.elements.saveSettingsButton.classList.remove('disabled-button');
-                    app.elements.saveSettingsBottomButton.classList.remove('disabled-button');
+                    saveButton.classList.remove('disabled-button'); // Assuming 'disabled-button' class handles visual state
                 } else {
-                    app.elements.saveSettingsButton.classList.add('disabled-button');
-                    app.elements.saveSettingsBottomButton.classList.add('disabled-button');
+                    saveButton.classList.add('disabled-button');
                 }
             }
+            // Remove references to non-existent bottom button
+            // if (app.elements.saveSettingsBottomButton) { ... }
         },
         
         getSettingsPayload: function() {

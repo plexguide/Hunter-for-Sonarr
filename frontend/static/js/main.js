@@ -3,296 +3,403 @@
 // Wait for DOM content to be loaded before initializing the app
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize the core application
-    if (window.huntarrApp) {
-        window.huntarrApp.init();
+    if (window.HuntarrApp) { // Changed from huntarrApp to HuntarrApp to match object name
+        window.HuntarrApp.init();
     } else {
         console.error('Error: Huntarr core module not loaded');
     }
 });
 
-// Add to the initialization section
+// Define the HuntarrApp object
 const HuntarrApp = {
+    // ... (keep existing properties like currentSection, currentApp, etc.) ...
+    currentSection: 'home',
+    currentApp: 'sonarr',
+    currentSettingsTab: 'sonarr',
+    autoScroll: true,
+    darkMode: false,
+    eventSources: {},
+    configuredApps: {
+        sonarr: false,
+        radarr: false,
+        lidarr: false
+    },
+    elements: {},
+    originalSettings: {}, // Added to store original settings for comparison
+
     init: function() {
-        // ...existing code...
+        this.cacheElements();
+        this.setupEventListeners();
+        this.loadTheme();
+        this.loadUsername();
+        this.checkAppConnections();
+        this.handleHashNavigation(); // Handle initial section based on hash
         
-        // Initialize settings if we're on the settings page
+        // Initialize settings if we're on the settings page or hash points to settings
         if (window.location.pathname === '/settings' || window.location.hash === '#settings') {
             this.initializeSettings();
         }
     },
-    
-    // ...existing code...
-    
-    // Add this new method
-    initializeSettings: function() {
-        console.log("Initializing settings...");
+
+    cacheElements: function() {
+        // Cache all necessary DOM elements
+        this.elements.navItems = document.querySelectorAll('.nav-item');
+        this.elements.homeNav = document.getElementById('homeNav');
+        this.elements.logsNav = document.getElementById('logsNav');
+        this.elements.settingsNav = document.getElementById('settingsNav');
+        this.elements.userNav = document.getElementById('userNav');
         
-        // Make sure the settings tab buttons exist
-        const settingsTabs = document.querySelectorAll('.settings-tab');
-        if (settingsTabs.length > 0) {
-            // Find the active tab
-            const activeTab = document.querySelector('.settings-tab.active');
-            if (activeTab) {
-                const tabName = activeTab.getAttribute('data-settings');
-                console.log("Loading settings for: " + tabName);
-                
-                // Load settings for the active tab
-                this.loadSettings(tabName);
-                
-                // Set up event listeners for tab switching if not already done
-                settingsTabs.forEach(tab => {
-                    tab.addEventListener('click', (e) => {
-                        // Update active tab
-                        settingsTabs.forEach(t => t.classList.remove('active'));
-                        e.target.classList.add('active');
-                        
-                        // Show selected settings panel
-                        const app = e.target.getAttribute('data-settings');
-                        const panels = document.querySelectorAll('.app-settings-panel');
-                        panels.forEach(panel => panel.classList.remove('active'));
-                        
-                        const selectedPanel = document.getElementById(`${app}Settings`);
-                        if (selectedPanel) {
-                            selectedPanel.classList.add('active');
-                            this.loadSettings(app);
-                        }
-                    });
-                });
+        this.elements.sections = document.querySelectorAll('.content-section');
+        this.elements.homeSection = document.getElementById('homeSection');
+        this.elements.logsSection = document.getElementById('logsSection');
+        this.elements.settingsSection = document.getElementById('settingsSection');
+        this.elements.userSection = document.getElementById('userSection'); // Assuming a user section exists
+
+        this.elements.appTabs = document.querySelectorAll('.app-tab');
+        this.elements.settingsTabs = document.querySelectorAll('.settings-tab');
+        this.elements.appSettingsPanels = document.querySelectorAll('.app-settings-panel');
+
+        this.elements.logsContainer = document.getElementById('logsContainer');
+        this.elements.autoScrollCheckbox = document.getElementById('autoScrollCheckbox');
+        this.elements.clearLogsButton = document.getElementById('clearLogsButton');
+        this.elements.logConnectionStatus = document.getElementById('logConnectionStatus');
+
+        this.elements.saveSettingsButton = document.getElementById('saveSettingsButton');
+        this.elements.resetSettingsButton = document.getElementById('resetSettingsButton');
+        
+        this.elements.sonarrHomeStatus = document.getElementById('sonarrHomeStatus');
+        this.elements.radarrHomeStatus = document.getElementById('radarrHomeStatus');
+        this.elements.lidarrHomeStatus = document.getElementById('lidarrHomeStatus');
+        this.elements.readarrHomeStatus = document.getElementById('readarrHomeStatus'); // Added Readarr status
+
+        this.elements.startHuntButton = document.getElementById('startHuntButton');
+        this.elements.stopHuntButton = document.getElementById('stopHuntButton');
+
+        this.elements.themeToggle = document.getElementById('themeToggle');
+        this.elements.currentPageTitle = document.getElementById('currentPageTitle');
+        this.elements.usernameDisplay = document.getElementById('username'); // For top bar
+    },
+
+    setupEventListeners: function() {
+        // Navigation
+        this.elements.navItems.forEach(item => {
+            item.addEventListener('click', this.handleNavigation.bind(this));
+        });
+
+        // App tabs (Logs page)
+        this.elements.appTabs.forEach(tab => {
+            tab.addEventListener('click', this.handleAppTabChange.bind(this));
+        });
+
+        // Settings tabs
+        this.elements.settingsTabs.forEach(tab => {
+            tab.addEventListener('click', this.handleSettingsTabChange.bind(this));
+        });
+
+        // Logs controls
+        if (this.elements.autoScrollCheckbox) {
+            this.elements.autoScrollCheckbox.addEventListener('change', (e) => {
+                this.autoScroll = e.target.checked;
+            });
+        }
+        if (this.elements.clearLogsButton) {
+            this.elements.clearLogsButton.addEventListener('click', this.clearLogs.bind(this));
+        }
+
+        // Settings controls
+        if (this.elements.saveSettingsButton) {
+            this.elements.saveSettingsButton.addEventListener('click', this.saveSettings.bind(this));
+        }
+        if (this.elements.resetSettingsButton) {
+            this.elements.resetSettingsButton.addEventListener('click', this.resetSettings.bind(this));
+        }
+
+        // Actions
+        if (this.elements.startHuntButton) {
+            this.elements.startHuntButton.addEventListener('click', this.startHunt.bind(this));
+        }
+        if (this.elements.stopHuntButton) {
+            this.elements.stopHuntButton.addEventListener('click', this.stopHunt.bind(this));
+        }
+
+        // Theme toggle
+        if (this.elements.themeToggle) {
+            this.elements.themeToggle.addEventListener('change', this.handleThemeToggle.bind(this));
+        }
+
+        // Window hash changes
+        window.addEventListener('hashchange', this.handleHashNavigation.bind(this));
+    },
+    
+    handleNavigation: function(e) {
+        e.preventDefault();
+        const target = e.currentTarget;
+        const section = target.getAttribute('href').substring(1);
+        window.location.hash = section; // Use hash for SPA navigation
+    },
+
+    handleHashNavigation: function() {
+        const hash = window.location.hash || '#home';
+        const section = hash.substring(1);
+        this.switchSection(section);
+    },
+
+    switchSection: function(section) {
+        this.currentSection = section;
+
+        // Hide all sections
+        this.elements.sections.forEach(s => s.classList.remove('active'));
+        // Deactivate all nav items
+        this.elements.navItems.forEach(n => n.classList.remove('active'));
+
+        // Activate the target section and nav item
+        const targetSection = document.getElementById(section + 'Section');
+        const targetNav = document.querySelector(`.nav-item[href="#${section}"]`);
+
+        if (targetSection) {
+            targetSection.classList.add('active');
+            if (this.elements.currentPageTitle) {
+                this.elements.currentPageTitle.textContent = this.capitalizeFirst(section);
+            }
+        } else {
+            // Fallback to home if section not found
+            this.elements.homeSection.classList.add('active');
+            section = 'home';
+            if (this.elements.currentPageTitle) {
+                this.elements.currentPageTitle.textContent = 'Home';
             }
         }
-    },
-    
-    // Modify the loadSettings method to ensure it's logging and running correctly
-    loadSettings: function(app) {
-        console.log(`Loading settings for ${app}...`);
+
+        if (targetNav) {
+            targetNav.classList.add('active');
+        }
+
+        // Section-specific actions
+        if (section === 'logs') {
+            this.connectToLogs();
+        } else {
+            this.disconnectAllEventSources(); // Disconnect logs when leaving the page
+        }
         
-        fetch(`/api/settings/${app}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch settings');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log(`Settings data for ${app}:`, data);
-                const container = document.getElementById(`${app}Settings`);
-                if (!container) {
-                    console.error(`Container for ${app} settings not found`);
-                    return;
-                }
-                
-                // Clear previous content
-                container.innerHTML = '';
-                
-                // Use the appropriate form generator based on app
-                switch(app) {
-                    case 'sonarr':
-                        SettingsForms.generateSonarrForm(container, data);
-                        break;
-                    case 'radarr':
-                        SettingsForms.generateRadarrForm(container, data);
-                        break;
-                    case 'lidarr':
-                        SettingsForms.generateLidarrForm(container, data);
-                        break;
-                    case 'readarr':
-                        SettingsForms.generateReadarrForm(container, data);
-                        break;
-                    case 'global':
-                        SettingsForms.generateGlobalForm(container, data);
-                        break;
-                }
-                
-                // Update any duration displays
-                if (typeof SettingsForms.updateDurationDisplay === 'function') {
-                    SettingsForms.updateDurationDisplay();
-                }
-            })
-            .catch(error => {
-                console.error(`Error loading ${app} settings:`, error);
-                const container = document.getElementById(`${app}Settings`);
-                if (container) {
-                    container.innerHTML = `<div class="error-message">Error loading settings: ${error.message}</div>`;
-                }
-            });
-    },
-    
-    // ...existing code...
-};
-
-// Initialize the app when the DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    HuntarrApp.init();
-});
-
-// ...existing code...
-            panelElement.classList.add('active');
-            this.currentSettingsTab = tab;
-            this.loadSettings(tab);
+        if (section === 'settings') {
+            this.initializeSettings(); // Load settings when entering the settings section
         }
     },
     
+    initializeSettings: function() {
+        console.log("Initializing settings...");
+        const activeTab = document.querySelector('.settings-tab.active');
+        const defaultTab = 'sonarr'; // Or load from a saved preference
+        this.currentSettingsTab = activeTab ? activeTab.getAttribute('data-settings') : defaultTab;
+        
+        // Ensure the correct panel is visible
+        this.elements.appSettingsPanels.forEach(panel => panel.classList.remove('active'));
+        const activePanel = document.getElementById(`${this.currentSettingsTab}Settings`);
+        if (activePanel) {
+            activePanel.classList.add('active');
+        }
+        
+        // Ensure the correct tab is highlighted
+        this.elements.settingsTabs.forEach(tab => {
+            if (tab.getAttribute('data-settings') === this.currentSettingsTab) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+
+        this.loadAllSettings(); // Load settings for all tabs
+    },
+
+    handleAppTabChange: function(e) {
+        const app = e.target.getAttribute('data-app');
+        if (!app || app === this.currentApp) return;
+
+        this.currentApp = app;
+        this.elements.appTabs.forEach(tab => tab.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        // Reconnect logs for the new app
+        this.connectToLogs(); 
+    },
+
+    handleSettingsTabChange: function(e) {
+        const tab = e.target.getAttribute('data-settings');
+        if (!tab || tab === this.currentSettingsTab) return;
+
+        this.currentSettingsTab = tab;
+
+        // Update active tab styling
+        this.elements.settingsTabs.forEach(t => t.classList.remove('active'));
+        e.target.classList.add('active');
+
+        // Show the corresponding settings panel
+        this.elements.appSettingsPanels.forEach(panel => panel.classList.remove('active'));
+        const panelElement = document.getElementById(`${tab}Settings`);
+        if (panelElement) {
+            panelElement.classList.add('active');
+            // Settings for this tab should already be loaded by loadAllSettings
+            // If not, call this.loadSettings(tab) here.
+        }
+    },
+
     // Logs handling
     connectToLogs: function() {
-        // Disconnect any existing event sources
-        this.disconnectAllEventSources();
+        this.disconnectAllEventSources(); // Ensure only one connection
         
-        if (this.configuredApps[this.currentApp]) {
-            this.connectEventSource(this.currentApp);
-            this.elements.logConnectionStatus.textContent = 'Connecting...';
-            this.elements.logConnectionStatus.className = '';
-        } else {
-            this.elements.logConnectionStatus.textContent = 'Not Configured';
-            this.elements.logConnectionStatus.className = 'status-disconnected';
-        }
-    },
-    
-    connectEventSource: function(app) {
-        if (this.eventSources[app]) {
-            this.eventSources[app].close();
-        }
+        // Use the unified /logs endpoint, filtering happens server-side or client-side if needed
+        // For now, assuming server sends all logs and we might filter later if necessary
+        const logUrl = `/logs?app=${this.currentApp}`; // Pass current app context if needed by backend
         
         try {
-            const eventSource = new EventSource(`/api/logs/${app}`);
-            
+            const eventSource = new EventSource(logUrl);
+            this.eventSources['logs'] = eventSource; // Store under a generic key
+
             eventSource.onopen = () => {
-                this.elements.logConnectionStatus.textContent = 'Connected';
-                this.elements.logConnectionStatus.className = 'status-connected';
+                if (this.elements.logConnectionStatus) {
+                    this.elements.logConnectionStatus.textContent = 'Connected';
+                    this.elements.logConnectionStatus.className = 'status-connected';
+                }
             };
-            
+
             eventSource.onmessage = (event) => {
-                const logData = JSON.parse(event.data);
-                this.addLogMessage(logData);
+                // Assuming event.data is a string log line
+                this.addLogMessage(event.data);
             };
-            
+
             eventSource.onerror = () => {
-                this.elements.logConnectionStatus.textContent = 'Disconnected';
-                this.elements.logConnectionStatus.className = 'status-disconnected';
-                
-                // Try to reconnect after a delay
+                if (this.elements.logConnectionStatus) {
+                    this.elements.logConnectionStatus.textContent = 'Disconnected';
+                    this.elements.logConnectionStatus.className = 'status-disconnected';
+                }
+                eventSource.close();
+                // Optional: Implement retry logic
                 setTimeout(() => {
-                    if (this.currentSection === 'logs' && this.currentApp === app) {
-                        this.connectEventSource(app);
+                    if (this.currentSection === 'logs') { // Only reconnect if still on logs page
+                        this.connectToLogs();
                     }
                 }, 5000);
             };
-            
-            this.eventSources[app] = eventSource;
         } catch (error) {
-            console.error('Error connecting to event source:', error);
-            this.elements.logConnectionStatus.textContent = 'Connection Error';
-            this.elements.logConnectionStatus.className = 'status-disconnected';
+            console.error('Error connecting to logs event source:', error);
+            if (this.elements.logConnectionStatus) {
+                this.elements.logConnectionStatus.textContent = 'Error';
+                this.elements.logConnectionStatus.className = 'status-disconnected';
+            }
         }
     },
-    
+
     disconnectAllEventSources: function() {
         Object.values(this.eventSources).forEach(source => {
-            if (source && source.readyState !== 2) {
+            if (source && source.readyState !== EventSource.CLOSED) {
                 source.close();
             }
         });
+        this.eventSources = {}; // Clear sources
     },
-    
-    addLogMessage: function(logData) {
+
+    addLogMessage: function(logLine) {
         if (!this.elements.logsContainer) return;
-        
+
         const logEntry = document.createElement('div');
-        logEntry.className = `log-entry log-${logData.level.toLowerCase()}`;
-        logEntry.textContent = logData.message;
+        logEntry.className = 'log-entry';
+        // Add level-based coloring (similar to new-main.js)
+        if (logLine.includes(' - INFO - ')) logEntry.classList.add('log-info');
+        else if (logLine.includes(' - WARNING - ')) logEntry.classList.add('log-warning');
+        else if (logLine.includes(' - ERROR - ')) logEntry.classList.add('log-error');
+        else if (logLine.includes(' - DEBUG - ')) logEntry.classList.add('log-debug');
         
+        logEntry.textContent = logLine;
         this.elements.logsContainer.appendChild(logEntry);
-        
+
         if (this.autoScroll) {
             this.elements.logsContainer.scrollTop = this.elements.logsContainer.scrollHeight;
         }
     },
-    
+
     clearLogs: function() {
         if (this.elements.logsContainer) {
             this.elements.logsContainer.innerHTML = '';
         }
     },
-    
+
     // Settings handling
     loadAllSettings: function() {
-        this.loadSettings('global');
-        this.loadSettings('sonarr');
-        this.loadSettings('radarr');
-        this.loadSettings('lidarr');
-    },
-    
-    loadSettings: function(app) {
-        fetch(`/api/settings/${app}`)
+        // Fetch combined settings
+        fetch('/api/settings') // Use the combined endpoint
             .then(response => response.json())
             .then(data => {
-                this.populateSettingsForm(app, data);
+                this.originalSettings = JSON.parse(JSON.stringify(data)); // Store originals
+                // Populate forms for each app section present in the data
+                ['global', 'sonarr', 'radarr', 'lidarr', 'readarr', 'ui'].forEach(app => {
+                    if (data[app]) {
+                        this.populateSettingsForm(app, data[app]);
+                    }
+                    // Populate API keys if they exist at top level (backward compatibility)
+                    if (app !== 'global' && app !== 'ui' && data.api_url && data.api_key && app === data.global?.app_type) {
+                         this.populateApiSettings(app, data.api_url, data.api_key);
+                    }
+                    // Populate API keys from the app section itself (new structure)
+                    else if (data[app] && data[app].api_url !== undefined && data[app].api_key !== undefined) {
+                         this.populateApiSettings(app, data[app].api_url, data[app].api_key);
+                    }
+                });
             })
             .catch(error => {
-                console.error(`Error loading ${app} settings:`, error);
+                console.error('Error loading all settings:', error);
+                this.showNotification('Error loading settings', 'error');
             });
     },
     
+    // Separate function to populate API fields to avoid duplication
+    populateApiSettings: function(app, apiUrl, apiKey) {
+        const urlInput = document.getElementById(`${app}_api_url`);
+        const keyInput = document.getElementById(`${app}_api_key`);
+        if (urlInput) urlInput.value = apiUrl || '';
+        if (keyInput) keyInput.value = apiKey || '';
+    },
+
+    // Simplified loadSettings - now part of loadAllSettings
+    // loadSettings: function(app) { ... }, 
+
     populateSettingsForm: function(app, settings) {
         const container = document.getElementById(`${app}Settings`);
         if (!container) return;
-        
-        // If we already populated this container, don't do it again
-        if (container.querySelector('.settings-group')) return;
-        
-        // Create groups based on settings categories
-        const groups = {};
-        
-        // For demonstration, create some example settings
-        // In reality, this would dynamically create settings based on the API response
-        if (app === 'sonarr' || app === 'radarr' || app === 'lidarr') {
-            container.innerHTML = `
-                <div class="settings-group">
-                    <h3>${this.capitalizeFirst(app)} Connection</h3>
-                    <div class="setting-item">
-                        <label for="${app}_url">URL:</label>
-                        <input type="text" id="${app}_url" value="${settings.url || ''}">
-                        <p class="setting-help">Base URL for ${this.capitalizeFirst(app)} (e.g., http://localhost:8989)</p>
-                    </div>
-                    <div class="setting-item">
-                        <label for="${app}_api_key">API Key:</label>
-                        <input type="text" id="${app}_api_key" value="${settings.api_key || ''}">
-                        <p class="setting-help">API key for ${this.capitalizeFirst(app)}</p>
-                    </div>
-                </div>
-                
-                <div class="settings-group">
-                    <h3>Search Settings</h3>
-                    <div class="setting-item">
-                        <label for="${app}_search_type">Search Type:</label>
-                        <select id="${app}_search_type">
-                            <option value="random" ${settings.search_type === 'random' ? 'selected' : ''}>Random</option>
-                            <option value="sequential" ${settings.search_type === 'sequential' ? 'selected' : ''}>Sequential</option>
-                        </select>
-                        <p class="setting-help">How to select items to search</p>
-                    </div>
-                    <div class="setting-item">
-                        <label for="${app}_search_interval">Search Interval:</label>
-                        <input type="number" id="${app}_search_interval" value="${settings.search_interval || 15}" min="1">
-                        <p class="setting-help">Interval between searches (seconds)</p>
-                    </div>
-                    <div class="setting-item">
-                        <label for="${app}_enabled">Enable ${this.capitalizeFirst(app)}:</label>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="${app}_enabled" ${settings.enabled ? 'checked' : ''}>
-                            <span class="toggle-slider"></span>
-                        </label>
-                        <p class="setting-help">Toggle ${this.capitalizeFirst(app)} functionality</p>
-                    </div>
-                </div>
-            `;
+
+        // Use SettingsForms helper if available (assuming it exists and works)
+        if (window.SettingsForms && typeof window.SettingsForms[`generate${this.capitalizeFirst(app)}Form`] === 'function') {
+            container.innerHTML = ''; // Clear previous
+            window.SettingsForms[`generate${this.capitalizeFirst(app)}Form`](container, settings);
+        } else {
+            // Basic fallback population (similar to previous logic but simplified)
+            console.warn(`Settings form generator for ${app} not found. Using basic population.`);
+            for (const key in settings) {
+                const input = container.querySelector(`#${app}_${key}`);
+                if (input) {
+                    if (input.type === 'checkbox') {
+                        input.checked = settings[key];
+                    } else {
+                        input.value = settings[key];
+                    }
+                }
+            }
         }
+        // Populate API fields separately using the dedicated function
+        this.populateApiSettings(app, settings.api_url, settings.api_key);
     },
-    
+
     saveSettings: function() {
         const app = this.currentSettingsTab;
         const settings = this.collectSettingsFromForm(app);
-        
-        fetch(`/api/settings/${app}`, {
+        settings.app_type = app; // Add app_type for the backend
+
+        // Simple check for changes (can be enhanced)
+        // if (JSON.stringify(settings) === JSON.stringify(this.originalSettings[app])) {
+        //     this.showNotification('No changes detected.', 'info');
+        //     return;
+        // }
+
+        fetch(`/api/settings`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -303,13 +410,15 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 this.showNotification('Settings saved successfully', 'success');
-                
-                // Update connection status if connection settings changed
-                if (app !== 'global') {
-                    this.checkAppConnection(app);
-                }
+                // Update original settings after save
+                this.originalSettings = JSON.parse(JSON.stringify(data.settings || this.originalSettings));
+                // Re-populate form to reflect saved state and update originals
+                this.populateSettingsForm(app, this.originalSettings[app]); 
+                this.populateApiSettings(app, this.originalSettings[app]?.api_url, this.originalSettings[app]?.api_key);
+                // Check connections again as API keys might have changed
+                this.checkAppConnections(); 
             } else {
-                this.showNotification('Error saving settings', 'error');
+                this.showNotification(`Error saving settings: ${data.message || 'Unknown error'}`, 'error');
             }
         })
         .catch(error => {
@@ -317,21 +426,25 @@ document.addEventListener('DOMContentLoaded', function() {
             this.showNotification('Error saving settings', 'error');
         });
     },
-    
+
     resetSettings: function() {
-        if (confirm('Are you sure you want to reset these settings to default values?')) {
-            const app = this.currentSettingsTab;
-            
-            fetch(`/api/settings/${app}/reset`, {
-                method: 'POST'
+        const app = this.currentSettingsTab;
+        if (confirm(`Are you sure you want to reset ${app.toUpperCase()} settings to default values?`)) {
+            fetch(`/api/settings/reset`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ app: app })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    this.showNotification('Settings reset to defaults', 'success');
-                    this.loadSettings(app);
+                    this.showNotification(`${this.capitalizeFirst(app)} settings reset to defaults`, 'success');
+                    // Reload all settings to reflect the reset
+                    this.loadAllSettings(); 
                 } else {
-                    this.showNotification('Error resetting settings', 'error');
+                    this.showNotification(`Error resetting settings: ${data.message || 'Unknown error'}`, 'error');
                 }
             })
             .catch(error => {
@@ -340,189 +453,178 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     },
-    
+
     collectSettingsFromForm: function(app) {
         const settings = {};
-        
-        // Collect all input values for the current app
         const container = document.getElementById(`${app}Settings`);
         if (!container) return settings;
-        
-        // Get all inputs
+
         const inputs = container.querySelectorAll('input, select');
         inputs.forEach(input => {
-            const id = input.id;
-            const key = id.replace(`${app}_`, '');
+            // Extract key name correctly (e.g., from 'sonarr_api_key' to 'api_key')
+            const key = input.id.startsWith(`${app}_`) ? input.id.substring(app.length + 1) : input.id;
             
-            // Handle different input types
-            if (input.type === 'checkbox') {
-                settings[key] = input.checked;
-            } else if (input.type === 'number') {
-                settings[key] = parseInt(input.value, 10);
-            } else {
-                settings[key] = input.value;
+            if (key) { // Ensure key is not empty
+                if (input.type === 'checkbox') {
+                    settings[key] = input.checked;
+                } else if (input.type === 'number') {
+                    // Try parsing as float first, then int, fallback to string
+                    const num = parseFloat(input.value);
+                    settings[key] = isNaN(num) ? input.value : num;
+                } else {
+                    settings[key] = input.value;
+                }
             }
         });
-        
         return settings;
     },
-    
+
     // App connections
     checkAppConnections: function() {
-        this.checkAppConnection('sonarr');
-        this.checkAppConnection('radarr');
-        this.checkAppConnection('lidarr');
-    },
-    
-    checkAppConnection: function(app) {
-        fetch(`/api/status/${app}`)
+        // Fetch the configuration status for all apps
+        fetch('/api/configured-apps')
             .then(response => response.json())
             .then(data => {
-                this.updateConnectionStatus(app, data.connected);
-                this.configuredApps[app] = data.configured;
+                this.configuredApps = data;
+                // Update status indicators based on the fetched data
+                Object.keys(this.configuredApps).forEach(app => {
+                    // For now, just update based on configured status
+                    // A real connection check might be needed separately
+                    this.updateConnectionStatus(app, this.configuredApps[app]); 
+                });
             })
             .catch(error => {
-                console.error(`Error checking ${app} connection:`, error);
-                this.updateConnectionStatus(app, false);
+                console.error('Error fetching configured apps:', error);
+                // Assume all are disconnected on error
+                Object.keys(this.configuredApps).forEach(app => {
+                    this.updateConnectionStatus(app, false);
+                });
             });
     },
     
-    updateConnectionStatus: function(app, connected) {
+    // Simplified connection check - maybe call a dedicated /api/status/{app} later
+    // checkAppConnection: function(app) { ... },
+
+    updateConnectionStatus: function(app, isConnected) {
+        // Update status badges on the Home page
         const statusElement = this.elements[`${app}HomeStatus`];
-        if (!statusElement) return;
-        
-        if (connected) {
-            statusElement.className = 'status-badge connected';
-            statusElement.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
-        } else {
-            statusElement.className = 'status-badge not-connected';
-            statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Connected';
+        if (statusElement) {
+            if (isConnected) {
+                statusElement.className = 'status-badge connected';
+                statusElement.innerHTML = '<i class="fas fa-check-circle"></i> Configured'; // Changed text
+            } else {
+                statusElement.className = 'status-badge not-connected';
+                statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Configured'; // Changed text
+            }
         }
+        // Potentially update status elsewhere (e.g., settings page)
     },
-    
+
     // User actions
     startHunt: function() {
         fetch('/api/hunt/start', { method: 'POST' })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    this.showNotification('Hunt started successfully', 'success');
-                } else {
-                    this.showNotification('Failed to start hunt', 'error');
-                }
+                this.showNotification(data.message || (data.success ? 'Hunt started' : 'Failed to start hunt'), data.success ? 'success' : 'error');
             })
             .catch(error => {
                 console.error('Error starting hunt:', error);
                 this.showNotification('Error starting hunt', 'error');
             });
     },
-    
+
     stopHunt: function() {
         fetch('/api/hunt/stop', { method: 'POST' })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    this.showNotification('Hunt stopped successfully', 'success');
-                } else {
-                    this.showNotification('Failed to stop hunt', 'error');
-                }
+                this.showNotification(data.message || (data.success ? 'Hunt stopped' : 'Failed to stop hunt'), data.success ? 'success' : 'error');
             })
             .catch(error => {
                 console.error('Error stopping hunt:', error);
                 this.showNotification('Error stopping hunt', 'error');
             });
     },
-    
+
     // Theme handling
     loadTheme: function() {
         fetch('/api/settings/theme')
             .then(response => response.json())
             .then(data => {
-                const isDarkMode = data.dark_mode || false;
-                this.setTheme(isDarkMode);
+                this.setTheme(data.dark_mode);
             })
             .catch(error => {
                 console.error('Error loading theme:', error);
+                // Default to dark mode on error?
+                this.setTheme(true); 
             });
     },
-    
+
     setTheme: function(isDark) {
         this.darkMode = isDark;
-        
         if (isDark) {
             document.body.classList.add('dark-theme');
+            document.body.classList.remove('light-theme');
         } else {
             document.body.classList.remove('dark-theme');
+            document.body.classList.add('light-theme');
         }
-        
         if (this.elements.themeToggle) {
             this.elements.themeToggle.checked = isDark;
         }
+        // Store preference
+        localStorage.setItem('huntarr-dark-mode', isDark);
     },
-    
+
     handleThemeToggle: function(e) {
         const isDarkMode = e.target.checked;
         this.setTheme(isDarkMode);
-        
+        // Save theme preference to backend
         fetch('/api/settings/theme', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ dark_mode: isDarkMode })
-        })
-        .catch(error => {
-            console.error('Error saving theme:', error);
-        });
+        }).catch(error => console.error('Error saving theme:', error));
     },
-    
-    // User
+
+    // User info
     loadUsername: function() {
-        const usernameElement = document.getElementById('username');
-        if (!usernameElement) return;
-        
-        fetch('/api/user/info')
+        // Assuming username is fetched elsewhere or passed via template
+        // If fetched via API:
+        /*
+        fetch('/api/user/info') // Example endpoint
             .then(response => response.json())
             .then(data => {
-                if (data.username) {
-                    usernameElement.textContent = data.username;
+                if (data.username && this.elements.usernameDisplay) {
+                    this.elements.usernameDisplay.textContent = data.username;
                 }
             })
-            .catch(error => {
-                console.error('Error loading username:', error);
-            });
+            .catch(error => console.error('Error loading username:', error));
+        */
     },
-    
+
     // Utility functions
-    showNotification: function(message, type) {
-        // Create a notification element
+    showNotification: function(message, type = 'info') {
+        const container = document.getElementById('notification-container') || document.body;
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
         notification.textContent = message;
         
-        // Add to the document
-        document.body.appendChild(notification);
+        // Remove existing notifications
+        const existing = container.querySelector('.notification');
+        if (existing) existing.remove();
         
-        // Fade in
+        container.appendChild(notification);
+
+        // Auto-remove after a delay
         setTimeout(() => {
-            notification.classList.add('show');
-        }, 10);
-        
-        // Remove after a delay
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
+            notification.classList.add('fade-out');
+            setTimeout(() => notification.remove(), 500); // Match fade-out duration
         }, 3000);
     },
-    
+
     capitalizeFirst: function(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
+        return string ? string.charAt(0).toUpperCase() + string.slice(1) : '';
     }
 };
-
-// Initialize when document is ready
-document.addEventListener('DOMContentLoaded', function() {
-    HuntarrUI.init();
-});

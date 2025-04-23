@@ -74,8 +74,8 @@ const HuntarrUI = {
         this.elements.logConnectionStatus = document.getElementById('logConnectionStatus');
         
         // Settings
-        this.elements.saveSettingsButton = document.getElementById('saveSettingsButton');
-        this.elements.resetSettingsButton = document.getElementById('resetSettingsButton');
+        this.elements.saveSettingsButton = document.getElementById('saveSettingsButton'); // Corrected ID
+        this.elements.resetSettingsButton = document.getElementById('resetSettingsButton'); // Corrected ID
         
         // Status elements
         this.elements.sonarrHomeStatus = document.getElementById('sonarrHomeStatus');
@@ -446,9 +446,24 @@ const HuntarrUI = {
     
     saveSettings: function() {
         const app = this.currentSettingsTab;
+        console.log(`[HuntarrUI] saveSettings called for app: ${app}`); // Added log
         const settings = this.collectSettingsFromForm(app);
         
-        fetch(`/api/settings/${app}`, {
+        if (!settings) {
+            console.error(`[HuntarrUI] Failed to collect settings for app: ${app}`); // Added log
+            this.showNotification('Error collecting settings from form.', 'error');
+            return;
+        }
+        
+        console.log(`[HuntarrUI] Collected settings for ${app}:`, settings); // Added log
+
+        // Add app_type to the payload
+        settings.app_type = app;
+        
+        console.log(`[HuntarrUI] Sending settings payload for ${app}:`, settings); // Added log
+
+        // Use the correct endpoint /api/settings
+        fetch(`/api/settings`, { // Corrected endpoint
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -460,12 +475,16 @@ const HuntarrUI = {
             if (data.success) {
                 this.showNotification('Settings saved successfully', 'success');
                 
+                // Reload settings to update original values and check connection status
+                this.loadSettings(app, true); // Force reload
+
                 // Update connection status if connection settings changed
-                if (app !== 'global') {
-                    this.checkAppConnection(app);
-                }
+                // This might be handled within loadSettings now
+                // if (app !== 'global') {
+                //     this.checkAppConnection(app);
+                // }
             } else {
-                this.showNotification('Error saving settings', 'error');
+                this.showNotification(`Error saving settings: ${data.message || 'Unknown error'}`, 'error');
             }
         })
         .catch(error => {
@@ -478,14 +497,20 @@ const HuntarrUI = {
         if (confirm('Are you sure you want to reset these settings to default values?')) {
             const app = this.currentSettingsTab;
             
-            fetch(`/api/settings/${app}/reset`, {
-                method: 'POST'
+            // Use POST /api/settings/reset and send app name in body
+            fetch(`/api/settings/reset`, { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ app: app }) // Send app name in body
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     this.showNotification('Settings reset to defaults', 'success');
-                    this.loadSettings(app);
+                    // Reload settings for the current app
+                    this.loadSettings(app); 
                 } else {
                     this.showNotification('Error resetting settings', 'error');
                 }

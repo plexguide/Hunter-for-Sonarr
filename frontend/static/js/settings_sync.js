@@ -22,30 +22,23 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Listen for clicks on save buttons and trigger proper reload
-    const saveButtons = document.querySelectorAll('.save-button, [id^="saveSettings"]');
-    saveButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Determine which app's settings are being saved
-            let app = 'global';
+    // const saveButtons = document.querySelectorAll('.save-button, [id^="saveSettings"]');
+    // saveButtons.forEach(button => {
+    //     button.addEventListener('click', function() {
+    //         // Determine which app's settings are being saved
+    //         let app = 'global'; 
+    //         const activeSettingsTab = document.querySelector('.settings-tab.active');
+    //         if (activeSettingsTab) {
+    //             app = activeSettingsTab.getAttribute('data-settings') || 'global';
+    //         }
             
-            if (window.huntarrApp && window.huntarrApp.currentApp) {
-                app = window.huntarrApp.currentApp;
-            }
-            
-            // After a short delay to allow the save to complete
-            setTimeout(() => {
-                // Force reload settings from server
-                if (window.reloadSettingsFromServer) {
-                    window.reloadSettingsFromServer(app);
-                }
-                
-                // Dispatch the event for anyone listening
-                if (window.HuntarrEvents) {
-                    window.HuntarrEvents.dispatchSettingsChanged(app);
-                }
-            }, 500);
-        });
-    });
+    //         // Dispatch the event after a short delay to allow save operation to potentially complete
+    //         setTimeout(() => {
+    //             console.log(`Settings sync: Dispatching settings-changed for ${app}`);
+    //             window.HuntarrEvents.dispatchSettingsChanged(app);
+    //         }, 100); // Delay to ensure save logic runs first
+    //     });
+    // });
 });
 
 // Helper to parse numeric values consistently
