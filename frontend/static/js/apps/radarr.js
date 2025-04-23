@@ -241,8 +241,8 @@
         },
         
         updateSaveButtonState: function(hasChanges) {
-            // Use the HuntarrUI instance to access elements
-            const saveButton = window.HuntarrUI?.elements?.saveSettingsButton;
+            // Use the huntarrUI instance to access elements
+            const saveButton = window.huntarrUI?.elements?.saveSettingsButton;
             if (saveButton) {
                 saveButton.disabled = !hasChanges;
                 if (hasChanges) {

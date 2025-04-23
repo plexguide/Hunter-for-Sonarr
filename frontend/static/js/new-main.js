@@ -3,7 +3,7 @@
  * Main JavaScript file for handling UI interactions and API communication
  */
 
-const HuntarrUI = {
+const huntarrUI = {
     // Current state
     currentSection: 'home',
     currentApp: 'sonarr',
@@ -446,21 +446,21 @@ const HuntarrUI = {
     
     saveSettings: function() {
         const app = this.currentSettingsTab;
-        console.log(`[HuntarrUI] saveSettings called for app: ${app}`); // Added log
+        console.log(`[huntarrUI] saveSettings called for app: ${app}`); // Added log
         const settings = this.collectSettingsFromForm(app);
         
         if (!settings) {
-            console.error(`[HuntarrUI] Failed to collect settings for app: ${app}`); // Added log
+            console.error(`[huntarrUI] Failed to collect settings for app: ${app}`); // Added log
             this.showNotification('Error collecting settings from form.', 'error');
             return;
         }
         
-        console.log(`[HuntarrUI] Collected settings for ${app}:`, settings); // Added log
+        console.log(`[huntarrUI] Collected settings for ${app}:`, settings); // Added log
 
         // Add app_type to the payload
         settings.app_type = app;
         
-        console.log(`[HuntarrUI] Sending settings payload for ${app}:`, settings); // Added log
+        console.log(`[huntarrUI] Sending settings payload for ${app}:`, settings); // Added log
 
         // Use the correct endpoint /api/settings
         fetch(`/api/settings`, { // Corrected endpoint
@@ -717,8 +717,8 @@ const HuntarrUI = {
 };
 
 // Initialize when document is ready
-document.addEventListener('DOMContentLoaded', function() {
-    HuntarrUI.init();
+document.addEventListener('DOMContentLoaded', () => {
+    huntarrUI.init();
     
     // Restore logo from session storage if available
     const cachedLogoSrc = sessionStorage.getItem('huntarr-logo-src');
@@ -734,3 +734,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.applyLogoToAllElements();
     }
 });
+
+// Expose huntarrUI to the global scope for access by app modules
+window.huntarrUI = huntarrUI;
