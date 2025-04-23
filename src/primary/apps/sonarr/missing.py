@@ -7,7 +7,8 @@ import time
 import random
 from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
-from src.primary.state import load_processed_items, save_processed_items
+# Correct the import names
+from src.primary.state import load_processed_ids, save_processed_ids
 from src.primary.apps.sonarr import api as sonarr_api # Import the updated api module
 
 # Get logger for the Sonarr app
@@ -54,7 +55,8 @@ def process_missing_episodes(
         return False
 
     # Load already processed episode IDs for Sonarr
-    processed_episode_ids: Set[int] = load_processed_items(PROCESSED_MISSING_FILE)
+    # Use the correct function name
+    processed_episode_ids: Set[int] = set(load_processed_ids(PROCESSED_MISSING_FILE))
     sonarr_logger.debug(f"Loaded {len(processed_episode_ids)} processed missing episode IDs for Sonarr.")
 
     # Get missing episodes from Sonarr API
@@ -156,7 +158,8 @@ def process_missing_episodes(
     # Update the set of processed episode IDs and save to state file
     if processed_in_this_run:
         updated_processed_ids = processed_episode_ids.union(processed_in_this_run)
-        save_processed_items(PROCESSED_MISSING_FILE, list(updated_processed_ids))
+        # Use the correct function name
+        save_processed_ids(PROCESSED_MISSING_FILE, list(updated_processed_ids))
         sonarr_logger.info(f"Saved {len(processed_in_this_run)} newly processed missing episode IDs for Sonarr. Total processed: {len(updated_processed_ids)}.")
     elif processed_any: # Check if we attempted processing but didn't succeed in saving any new IDs
         sonarr_logger.info("Attempted missing episode processing, but no new episodes were marked as successfully processed.")

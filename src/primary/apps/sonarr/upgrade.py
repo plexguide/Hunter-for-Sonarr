@@ -7,7 +7,8 @@ import time
 import random
 from typing import List, Dict, Any, Set, Callable # Added Callable
 from src.primary.utils.logger import get_logger
-from src.primary.state import load_processed_items, save_processed_items
+# Correct the import names
+from src.primary.state import load_processed_ids, save_processed_ids
 from src.primary.apps.sonarr import api as sonarr_api # Import the updated api module
 from src.primary.apps.sonarr.missing import wait_for_command # Reuse wait function
 
@@ -46,7 +47,8 @@ def process_cutoff_upgrades(
         return False
 
     # Load already processed episode IDs for upgrades
-    processed_upgrade_ids: Set[int] = load_processed_items(PROCESSED_UPGRADES_FILE)
+    # Use the correct function name
+    processed_upgrade_ids: Set[int] = set(load_processed_ids(PROCESSED_UPGRADES_FILE))
     sonarr_logger.debug(f"Loaded {len(processed_upgrade_ids)} processed upgrade episode IDs for Sonarr.")
 
     # Get cutoff unmet episodes from Sonarr API
@@ -148,7 +150,8 @@ def process_cutoff_upgrades(
     # Update the set of processed upgrade episode IDs and save to state file
     if processed_in_this_run:
         updated_processed_ids = processed_upgrade_ids.union(processed_in_this_run)
-        save_processed_items(PROCESSED_UPGRADES_FILE, list(updated_processed_ids))
+        # Use the correct function name
+        save_processed_ids(PROCESSED_UPGRADES_FILE, list(updated_processed_ids))
         sonarr_logger.info(f"Saved {len(processed_in_this_run)} newly processed upgrade episode IDs for Sonarr. Total processed for upgrades: {len(updated_processed_ids)}.")
     elif processed_any:
         sonarr_logger.info("Attempted upgrade processing, but no new episodes were marked as successfully processed.")

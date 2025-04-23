@@ -11,7 +11,6 @@ import os
 import json
 from typing import List, Callable, Dict, Optional
 from primary.utils.logger import get_logger
-from primary.config import MONITORED_ONLY
 from primary import settings_manager
 from primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
 from primary.apps.readarr.api import get_cutoff_unmet_books, refresh_author, book_search

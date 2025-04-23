@@ -11,7 +11,6 @@ import os
 import json
 from typing import List, Callable, Dict, Optional
 from src.primary.utils.logger import get_logger, debug_log
-from src.primary.config import MONITORED_ONLY
 from src.primary import settings_manager
 from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
 from src.primary.apps.lidarr.api import get_albums_with_missing_tracks, refresh_artist, album_search
@@ -33,6 +32,8 @@ def process_missing_albums(restart_cycle_flag: Callable[[], bool] = lambda: Fals
     HUNT_MISSING_ALBUMS = settings_manager.get_setting("huntarr", "hunt_missing_albums", 1)
     RANDOM_MISSING = settings_manager.get_setting("advanced", "random_missing", True)
     SKIP_ARTIST_REFRESH = settings_manager.get_setting("advanced", "skip_artist_refresh", False)
+    # Fetch monitored_only setting using settings_manager
+    MONITORED_ONLY = settings_manager.get_setting("lidarr", "monitored_only", True)
     
     # Get app-specific state file
     PROCESSED_MISSING_FILE = get_state_file_path("lidarr", "processed_missing")

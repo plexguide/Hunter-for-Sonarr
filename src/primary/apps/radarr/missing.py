@@ -11,7 +11,6 @@ import os
 import json
 from typing import List, Callable, Dict, Optional
 from src.primary.utils.logger import get_logger, debug_log
-from src.primary.config import MONITORED_ONLY
 from src.primary import settings_manager
 from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
 from src.primary.apps.radarr.api import get_movies_with_missing, refresh_movie, movie_search
