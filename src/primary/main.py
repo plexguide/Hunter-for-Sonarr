@@ -405,7 +405,7 @@ def log_configuration(log):
     
     # ...existing code...
 
-def main():
+def start_huntarr():
     """Main entry point for Huntarr"""
     # Log configuration settings
     log_configuration(logger)
@@ -415,7 +415,7 @@ def main():
         start_app_threads()
         
         # Main loop to monitor threads
-        while True:
+        while not stop_threads: # Check stop_threads flag
             # Check if any configured apps need threads started
             start_app_threads()
             
@@ -432,6 +432,3 @@ def main():
         logger.exception(f"Unexpected error: {e}")
         shutdown_threads()
         sys.exit(1)
-
-if __name__ == "__main__":
-    main()
