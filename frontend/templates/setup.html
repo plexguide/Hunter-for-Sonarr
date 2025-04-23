@@ -343,13 +343,23 @@
                 .then(response => {
                     // Check if response is ok before parsing JSON
                     if (!response.ok) {
-                        return response.json().then(data => {
-                            throw new Error(data.message || `HTTP error! status: ${response.status}`);
-                        });
+                        // Check content type to see if it's likely JSON
+                        const contentType = response.headers.get("content-type");
+                        if (contentType && contentType.indexOf("application/json") !== -1) {
+                            // If it seems like JSON, try to parse it for an error message
+                            return response.json().then(data => {
+                                // Use data.error first, then data.message as fallback
+                                throw new Error(data.error || data.message || `Server error: ${response.status}`);
+                            });
+                        } else {
+                            // If not JSON (e.g., HTML error page), throw a generic HTTP error
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
                     }
+                    // If response is ok, parse the JSON body
                     return response.json();
                 })
-                .then(data => {
+                .then(data => { // This block only runs if response.ok was true and response.json() succeeded
                     if (data.success) {
                         accountCreated = true;
                         console.log('Account created successfully. User credentials should be saved to credentials.json');
@@ -375,9 +385,9 @@
                         showError(data.error || 'Failed to create account'); // Use .error
                     }
                 })
-                .catch(error => {
+                .catch(error => { // Catches errors thrown from the .then blocks above or network errors
                     console.error('Setup error:', error);
-                    showError('Error: ' + error.message);
+                    showError('Error: ' + error.message); // Display the error message
                 });
             });
             
