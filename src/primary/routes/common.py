@@ -247,7 +247,6 @@ Common API routes for Huntarr web interface
 from flask import Blueprint, request, jsonify, current_app
 from src.primary import settings_manager # Import the updated settings manager
 from src.primary.utils.logger import logger # Use the central logger
-from src.primary.auth import token_required
 from src.primary.apps.sonarr import api as sonarr_api # Keep for connection check example
 from src.primary.apps.radarr import api as radarr_api # Keep for connection check example
 # Add imports for other app APIs if needed for connection checks
@@ -257,8 +256,7 @@ common_bp = Blueprint('common', __name__, url_prefix='/api')
 # --- Settings Routes --- #
 
 @common_bp.route('/settings', methods=['GET'])
-@token_required
-def get_settings(current_user):
+def get_settings():
     """Get all settings for all applications."""
     try:
         all_settings = settings_manager.get_all_settings()
@@ -270,8 +268,7 @@ def get_settings(current_user):
         return jsonify({"error": "Failed to retrieve settings"}), 500
 
 @common_bp.route('/settings', methods=['POST'])
-@token_required
-def update_settings(current_user):
+def update_settings():
     """Update settings for one or more applications."""
     data = request.get_json()
     if not data:
@@ -304,8 +301,7 @@ def update_settings(current_user):
         return jsonify({"message": "Settings updated successfully.", "details": results}), 200
 
 @common_bp.route('/settings/reset/<app_name>', methods=['POST'])
-@token_required
-def reset_settings(current_user, app_name):
+def reset_settings(app_name):
     """Reset settings for a specific application to defaults."""
     if app_name not in settings_manager.KNOWN_APP_TYPES and app_name != "ui":
         return jsonify({"error": f"Invalid application name: {app_name}"}), 400
@@ -327,8 +323,7 @@ def reset_settings(current_user, app_name):
         return jsonify({"error": f"An error occurred while resetting settings for {app_name}"}), 500
 
 @common_bp.route('/settings/theme', methods=['GET'])
-@token_required
-def get_theme_setting(current_user):
+def get_theme_setting():
     """Get the current theme setting."""
     try:
         # Assume theme is stored under a special 'ui' app settings file
@@ -339,8 +334,7 @@ def get_theme_setting(current_user):
         return jsonify({"error": "Failed to retrieve theme setting"}), 500
 
 @common_bp.route('/settings/theme', methods=['POST'])
-@token_required
-def update_theme_setting(current_user):
+def update_theme_setting():
     """Update the theme setting."""
     data = request.get_json()
     if not data or 'theme' not in data:
@@ -367,8 +361,7 @@ def update_theme_setting(current_user):
 # --- Application Status and Info --- #
 
 @common_bp.route('/configured-apps', methods=['GET'])
-@token_required
-def get_configured_apps(current_user):
+def get_configured_apps():
     """Get a list of applications that are configured (API URL/Key set)."""
     try:
         apps = settings_manager.get_configured_apps()
@@ -378,8 +371,7 @@ def get_configured_apps(current_user):
         return jsonify({"error": "Failed to retrieve configured applications"}), 500
 
 @common_bp.route('/status/<app_name>', methods=['GET'])
-@token_required
-def get_app_status(current_user, app_name):
+def get_app_status(app_name):
     """Check the connection status for a specific application."""
     if app_name not in settings_manager.KNOWN_APP_TYPES:
         return jsonify({"error": f"Unknown application type: {app_name}"}), 400
