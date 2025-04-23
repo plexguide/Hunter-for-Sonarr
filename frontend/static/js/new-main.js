@@ -286,11 +286,13 @@ const huntarrUI = {
         // Switch to the selected settings panel
         this.elements.appSettingsPanels.forEach(panel => {
             panel.classList.remove('active');
+            panel.style.display = 'none'; // Explicitly hide
         });
         
         const panelElement = document.getElementById(`${tab}Settings`);
         if (panelElement) {
             panelElement.classList.add('active');
+            panelElement.style.display = 'block'; // Explicitly show
             this.currentSettingsTab = tab;
             // Ensure settings are populated for this tab using the stored originalSettings
             this.populateSettingsForm(tab, this.originalSettings[tab] || {});
