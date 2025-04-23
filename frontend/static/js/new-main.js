@@ -448,7 +448,11 @@ const HuntarrUI = {
         const app = this.currentSettingsTab;
         const settings = this.collectSettingsFromForm(app);
         
-        fetch(`/api/settings/${app}`, {
+        // Add app_type to the payload
+        settings.app_type = app;
+        
+        // Use the correct endpoint /api/settings
+        fetch(`/api/settings`, { // Corrected endpoint
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -460,12 +464,16 @@ const HuntarrUI = {
             if (data.success) {
                 this.showNotification('Settings saved successfully', 'success');
                 
+                // Reload settings to update original values and check connection status
+                this.loadSettings(app, true); // Force reload
+
                 // Update connection status if connection settings changed
-                if (app !== 'global') {
-                    this.checkAppConnection(app);
-                }
+                // This might be handled within loadSettings now
+                // if (app !== 'global') {
+                //     this.checkAppConnection(app);
+                // }
             } else {
-                this.showNotification('Error saving settings', 'error');
+                this.showNotification(`Error saving settings: ${data.message || 'Unknown error'}`, 'error');
             }
         })
         .catch(error => {
@@ -478,14 +486,20 @@ const HuntarrUI = {
         if (confirm('Are you sure you want to reset these settings to default values?')) {
             const app = this.currentSettingsTab;
             
-            fetch(`/api/settings/${app}/reset`, {
-                method: 'POST'
+            // Use POST /api/settings/reset and send app name in body
+            fetch(`/api/settings/reset`, { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ app: app }) // Send app name in body
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     this.showNotification('Settings reset to defaults', 'success');
-                    this.loadSettings(app);
+                    // Reload settings for the current app
+                    this.loadSettings(app); 
                 } else {
                     this.showNotification('Error resetting settings', 'error');
                 }

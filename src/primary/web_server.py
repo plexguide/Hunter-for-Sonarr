@@ -21,7 +21,8 @@ import logging
 import threading
 from flask import Flask, render_template, request, jsonify, Response, send_from_directory, redirect, url_for, session
 from src.primary.config import API_URL
-from src.primary import settings_manager, keys_manager
+# Use only settings_manager
+from src.primary import settings_manager
 from src.primary.utils.logger import setup_logger
 from src.primary.auth import (
     authenticate_request, user_exists, create_user, verify_user, create_session, 
@@ -202,19 +203,19 @@ def api_app_settings():
     if app_type not in ['sonarr', 'radarr', 'lidarr', 'readarr']:
         return jsonify({"success": False, "message": f"Invalid app type: {app_type}"})
     
-    # Get API credentials for the specified app type
-    api_url, api_key = keys_manager.get_api_keys(app_type)
+    # Get API credentials using settings_manager
+    api_details = settings_manager.get_api_details(app_type)
     
     return jsonify({
         "success": True,
-        "api_url": api_url,
-        "api_key": api_key
+        "api_url": api_details.get("api_url", ""),
+        "api_key": api_details.get("api_key", "")
     })
 
 @app.route('/api/configured-apps', methods=['GET'])
 def api_configured_apps():
-    # Return the configured status of all apps
-    configured_apps = keys_manager.list_configured_apps()
+    # Return the configured status of all apps using settings_manager
+    configured_apps = settings_manager.list_configured_apps()
     return jsonify(configured_apps)
 
 def start_web_server():

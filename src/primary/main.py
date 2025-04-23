@@ -23,12 +23,11 @@ logger = setup_logger()
 
 # Now import the rest of the modules
 # Import config module itself
-from src.primary import config
+from src.primary import config, settings_manager, keys_manager
 # Import specific items needed directly
 from src.primary.config import SLEEP_DURATION, MINIMUM_DOWNLOAD_QUEUE_SIZE
 from src.primary.state import check_state_reset, calculate_reset_time
 from src.primary.utils.app_utils import get_ip_address
-from src.primary import keys_manager
 
 # Flags to indicate if cycles should restart for each app
 restart_cycles = {
@@ -279,8 +278,8 @@ def app_specific_loop(app_type: str) -> None:
 
 def start_app_threads():
     """Start threads for all configured apps"""
-    # Check which apps are configured
-    configured_apps = keys_manager.list_configured_apps()
+    # Check which apps are configured using settings_manager
+    configured_apps = settings_manager.list_configured_apps()
     
     for app_type, is_configured in configured_apps.items():
         if is_configured and app_type not in app_threads:

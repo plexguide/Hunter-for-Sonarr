@@ -279,6 +279,60 @@
                 api_timeout: this.elements.apiTimeoutInput ? parseInt(this.elements.apiTimeoutInput.value) || 60 : 60,
                 log_refresh_interval_seconds: 30 // Default value
             };
+        },
+        
+        saveSettings: function() {
+            const payload = this.getSettingsPayload();
+            
+            // Use POST /api/settings endpoint
+            fetch('/api/settings', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update original settings and API key data attributes after successful save
+                    const settings = data.settings || {}; // Assuming backend returns the saved settings
+                    if (readarrModule.elements.apiUrlInput) readarrModule.elements.apiUrlInput.dataset.originalValue = settings.api_url;
+                    if (readarrModule.elements.apiKeyInput) readarrModule.elements.apiKeyInput.dataset.originalValue = settings.api_key;
+                    
+                    // Update the rest of originalSettings
+                    if (settings.readarr) app.originalSettings.readarr = {...settings.readarr};
+                    
+                    // Update configuration status
+                    app.configuredApps.readarr = !!(settings.api_url && settings.api_key);
+                    
+                    // Update connection status
+                    app.updateConnectionStatus();
+                    
+                    // Update home page connection status
+                    app.updateHomeConnectionStatus();
+                    
+                    // Update logs connection status
+                    app.updateLogsConnectionStatus();
+                    
+                    // Disable save buttons
+                    readarrModule.updateSaveButtonState(false);
+                    
+                    // Show success message
+                    if (data.changes_made) {
+                        alert('Settings saved successfully and cycle restarted to apply changes!');
+                    } else {
+                        // Even if no changes were made according to backend, confirm save
+                        alert('Settings saved successfully.'); 
+                    }
+                } else {
+                    alert('Error saving settings: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error saving settings:', error);
+                alert('Error saving settings: ' + error.message);
+            });
         }
     };
     
@@ -348,7 +402,60 @@
         }
     };
     
-    // Add the Readarr module to the app for reference
+    // Attach Readarr-specific methods to the global app object
     app.readarrModule = readarrModule;
+    
+    // Override the global saveSettings function for Readarr
+    app.saveSettings = function() {
+        const payload = readarrModule.getSettingsPayload();
+        
+        // Use POST /api/settings endpoint
+        fetch('/api/settings', { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update original values after successful save
+                if (readarrModule.elements.apiUrlInput) readarrModule.elements.apiUrlInput.dataset.originalValue = settings.api_url;
+                if (readarrModule.elements.apiKeyInput) readarrModule.elements.apiKeyInput.dataset.originalValue = settings.api_key;
+                
+                // Update the rest of originalSettings
+                if (settings.readarr) app.originalSettings.readarr = {...settings.readarr};
+                
+                // Update configuration status
+                app.configuredApps.readarr = !!(settings.api_url && settings.api_key);
+                
+                // Update connection status
+                app.updateConnectionStatus();
+                
+                // Update home page connection status
+                app.updateHomeConnectionStatus();
+                
+                // Update logs connection status
+                app.updateLogsConnectionStatus();
+                
+                // Disable save buttons
+                readarrModule.updateSaveButtonState(false);
+                
+                // Show success message
+                if (data.changes_made) {
+                    alert('Settings saved successfully and cycle restarted to apply changes!');
+                } else {
+                    alert('No changes detected.');
+                }
+            } else {
+                alert('Error saving settings: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error saving settings:', error);
+            alert('Error saving settings: ' + error.message);
+        });
+    };
 
-})(window.huntarrApp);
+})(window.huntarrApp); // Pass the global app object

@@ -25,17 +25,24 @@ DEFAULT_CONFIGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'd
 # Helper function to load default settings for a specific app
 def load_default_app_settings(app_name: str) -> Dict[str, Any]:
     """Load default settings for a specific app from its JSON file."""
+    # Include api_url and api_key in the defaults expected structure
+    default_structure = {'api_url': '', 'api_key': ''} 
     default_file = os.path.join(DEFAULT_CONFIGS_DIR, f"{app_name}.json")
     try:
         if os.path.exists(default_file):
             with open(default_file, 'r') as f:
-                return json.load(f)
+                app_defaults = json.load(f)
+                # Ensure base keys exist even if not in the file
+                default_structure.update(app_defaults) 
+                return default_structure
         else:
             settings_logger.warning(f"Default settings file not found for app: {app_name}")
-            return {}
+            # Return the base structure even if file is missing
+            return default_structure 
     except Exception as e:
         settings_logger.error(f"Error loading default settings for {app_name}: {e}")
-        return {}
+        # Return the base structure on error
+        return default_structure 
 
 # Helper function to get all default settings combined
 def get_all_default_settings() -> Dict[str, Any]:
@@ -53,23 +60,41 @@ def merge_settings_with_defaults(user_settings: Dict[str, Any]) -> Dict[str, Any
     merged_settings = {}
     all_defaults = get_all_default_settings()
 
+    # Ensure 'ui' settings are handled if they exist
+    if 'ui' in user_settings:
+         merged_settings['ui'] = load_default_app_settings('ui') # Assuming ui.json exists
+         merged_settings['ui'].update(user_settings.get('ui', {}))
+
+    # Ensure 'global' settings are handled if they exist
+    if 'global' in user_settings:
+         merged_settings['global'] = load_default_app_settings('global') # Assuming global.json exists
+         merged_settings['global'].update(user_settings.get('global', {}))
+
     for app_name, app_defaults in all_defaults.items():
+        # Skip ui/global as handled above
+        if app_name in ['ui', 'global']: 
+            continue
+            
         user_app_settings = user_settings.get(app_name, {})
         # Start with defaults, then update with user settings
         merged_app_settings = app_defaults.copy()
         merged_app_settings.update(user_app_settings)
         merged_settings[app_name] = merged_app_settings
 
-    # Include any apps the user might have added that are not in defaults (though unlikely)
+    # Include any apps the user might have added that are not in defaults
     for app_name, user_app_settings in user_settings.items():
-        if app_name not in merged_settings:
-             # Check if it looks like a valid app config (has api_key/api_url)
-             # Or decide if unknown sections should be kept or discarded
+        if app_name not in merged_settings and app_name not in ['ui', 'global']:
+             # Keep unknown sections if they look like app configs
             if isinstance(user_app_settings, dict) and ('api_key' in user_app_settings or 'api_url' in user_app_settings):
                 settings_logger.warning(f"Keeping unknown settings section: {app_name}")
                 merged_settings[app_name] = user_app_settings
-            else:
-                 settings_logger.warning(f"Discarding unknown or invalid settings section: {app_name}")
+            # else: # Optionally discard unknown sections
+            #    settings_logger.warning(f"Discarding unknown settings section: {app_name}")
+                
+    # Remove the legacy 'connections' section if it exists
+    if "connections" in merged_settings:
+        del merged_settings["connections"]
+        settings_logger.info("Removed legacy 'connections' section from settings.")
 
     return merged_settings
 
@@ -119,30 +144,16 @@ def get_all_settings() -> Dict[str, Any]:
     return load_settings()
 
 # Save settings to file
-def save_settings(settings: Dict[str, Any]) -> bool:
-    """Save settings to JSON file"""
+def save_settings(settings_data: Dict[str, Any]) -> bool:
+    """Save settings to the JSON file."""
     try:
-        # Clean up any potential huntarr sections before saving
-        for app in ["sonarr", "radarr", "lidarr", "readarr"]:
-            if app in settings and "huntarr" in settings[app]:
-                # Move all settings from app.huntarr directly to app level
-                for key, value in settings[app]["huntarr"].items():
-                    if key not in settings[app]:  # Don't overwrite existing settings
-                        settings[app][key] = value
-                # Remove the huntarr section
-                del settings[app]["huntarr"]
-        
-        # Remove global section if present
-        if "global" in settings:
-            del settings["global"]
+        # Remove the legacy 'connections' section before saving
+        if "connections" in settings_data:
+            del settings_data["connections"]
             
-        # Remove UI section if present
-        if "ui" in settings:
-            del settings["ui"]
-        
-        SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
-        with open(SETTINGS_FILE, "w", encoding="utf-8") as file:
-            json.dump(settings, file, indent=2)
+        with open(SETTINGS_FILE, 'w') as f:
+            json.dump(settings_data, f, indent=2)
+        settings_logger.info(f"Settings saved successfully to {SETTINGS_FILE}")
         return True
     except Exception as e:
         settings_logger.error(f"Error saving settings: {e}")
@@ -238,14 +249,40 @@ def save_api_details(app_type: str, api_url: str, api_key: str) -> bool:
 # Get API details for a specific app
 def get_api_details(app_type: str) -> Dict[str, str]:
     """Get API connection details for an app"""
-    settings = load_settings()
-    connections = settings.get("connections", {})
-    
+    settings = get_all_settings()
+    app_settings = settings.get(app_type, {})
     return {
-        "api_url": connections.get(f"{app_type.lower()}_url", ""),
-        "api_key": connections.get(f"{app_type.lower()}_apikey", "")
+        "api_url": app_settings.get("api_url", ""),
+        "api_key": app_settings.get("api_key", "")
     }
 
-# Initialize settings file if it doesn't exist
+# List configured apps
+def list_configured_apps() -> Dict[str, bool]:
+    """Check which apps have both API URL and API Key configured."""
+    apps = ['sonarr', 'radarr', 'lidarr', 'readarr']
+    configured_status = {}
+    all_settings = get_all_settings() # Use the existing function to get all settings
+    for app_name in apps:
+        app_settings = all_settings.get(app_name, {})
+        is_configured = bool(app_settings.get('api_url') and app_settings.get('api_key'))
+        configured_status[app_name] = is_configured
+    return configured_status
+
+# Add default settings structure including API keys
+DEFAULT_SETTINGS = get_all_default_settings()
+# Add default UI and Global settings if they exist
+DEFAULT_SETTINGS['ui'] = load_default_app_settings('ui')
+DEFAULT_SETTINGS['global'] = load_default_app_settings('global')
+
+# Ensure settings file exists on first load, merge with defaults
 if not SETTINGS_FILE.exists():
-    save_settings(load_settings())
+    settings_logger.info("Settings file not found. Creating with default settings.")
+    save_settings(DEFAULT_SETTINGS)
+else:
+    # Load existing settings and merge with defaults to ensure all keys are present
+    current_settings = get_all_settings() # This loads from file
+    merged = merge_settings_with_defaults(current_settings)
+    # Save back if changes were made during merge (e.g., new defaults added or legacy removed)
+    if merged != current_settings: 
+        settings_logger.info("Merging settings with new defaults/structure.")
+        save_settings(merged)
