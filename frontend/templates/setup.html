@@ -191,10 +191,10 @@
                 <div class="qr-code-container">
                     <p>Scan this QR code with your authenticator app:</p>
                     <div class="qr-code" id="qrCode">
-                        <!-- QR code will be inserted here -->
+                        <img src="" alt="QR Code" style="display: none;"> <!-- Add img tag, initially hidden -->
                     </div>
                     <p>Or enter this code manually in your app:</p>
-                    <div class="secret-key" id="secretKey">ABCDEFGHIJKLMNOP</div>
+                    <div class="secret-key" id="secretKey">Generating...</div>
                     
                     <div class="form-group">
                         <label for="verificationCode">
@@ -384,8 +384,15 @@
                             })
                             .then(twoFactorData => {
                                 if (twoFactorData.success) {
-                                    // Use the correct property name for the QR code data
-                                    qrCodeElement.innerHTML = `<img src="data:image/png;base64,${twoFactorData.qr_code}" alt="QR Code">`; // Corrected property and format
+                                    // Use the correct property 'qr_code_url' and set the img src directly
+                                    const qrCodeImg = qrCodeElement.querySelector('img'); // Find the img tag within the div
+                                    if (qrCodeImg) {
+                                         qrCodeImg.src = twoFactorData.qr_code_url; // Set src directly
+                                         qrCodeImg.style.display = 'block'; // Ensure it's visible
+                                    } else {
+                                        // Fallback if img tag wasn't there initially
+                                        qrCodeElement.innerHTML = `<img src="${twoFactorData.qr_code_url}" alt="QR Code" style="display: block; max-width: 100%; height: auto;">`;
+                                    }
                                     secretKeyElement.textContent = twoFactorData.secret;
                                     showStep(2);
                                 } else {
@@ -411,13 +418,13 @@
             // 2FA setup navigation
             twoFactorNextButton.addEventListener('click', function() {
                 const code = verificationCodeInput.value;
-                if (!code) {
-                    showError('Please enter the verification code');
+                if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) { // Add validation
+                    showError('Please enter a valid 6-digit verification code');
                     return;
                 }
                 
-                // Verify 2FA code
-                fetch('/api/user/verify-2fa', {
+                // Verify 2FA code - Use the correct endpoint
+                fetch('/api/user/2fa/verify', { // Corrected endpoint
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

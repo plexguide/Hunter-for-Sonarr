@@ -452,37 +452,64 @@
             const enableTwoFactorButton = document.getElementById('enableTwoFactor');
             if (enableTwoFactorButton) {
                 enableTwoFactorButton.addEventListener('click', function() {
-                    fetch('/api/user/generate-2fa')
-                        .then(response => response.json())
+                    // Correct the fetch URL to the actual setup endpoint
+                    fetch('/api/user/2fa/setup', { method: 'POST' }) // Use POST and correct URL
+                        .then(response => {
+                            // Add error handling for non-ok responses
+                            if (!response.ok) {
+                                return response.json().then(errData => {
+                                    throw new Error(errData.error || `Server error: ${response.status}`);
+                                }).catch(() => {
+                                    // Fallback if response is not JSON
+                                    throw new Error(`Server error: ${response.status}`);
+                                });
+                            }
+                            return response.json();
+                        })
                         .then(data => {
-                            // Show QR code for scanning
-                            if (document.getElementById('qrCode')) {
-                                // Make sure we're using the correct property from the API response
-                                document.getElementById('qrCode').src = data.qr_code_url;
-                                console.log("QR code URL set to:", data.qr_code_url);
-                            }
-                            
-                            // Show secret key for manual entry
-                            if (document.getElementById('secretKey')) {
-                                document.getElementById('secretKey').textContent = data.secret;
-                                console.log("Secret key set to:", data.secret);
-                            }
-                            
-                            // Switch from the enable section to the setup section
-                            if (document.getElementById('enableTwoFactorSection')) {
-                                document.getElementById('enableTwoFactorSection').style.display = 'none';
-                            }
-                            if (document.getElementById('setupTwoFactorSection')) {
-                                document.getElementById('setupTwoFactorSection').style.display = 'block';
+                            if (data.success) { // Check for success flag
+                                // Show QR code for scanning
+                                const qrCodeImg = document.getElementById('qrCode'); // Get the img element
+                                if (qrCodeImg) {
+                                    // Use the correct property 'qr_code_url' from the API response
+                                    qrCodeImg.src = data.qr_code_url;
+                                    console.log("QR code URL set to:", data.qr_code_url);
+                                }
+
+                                // Show secret key for manual entry
+                                const secretKeyEl = document.getElementById('secretKey');
+                                if (secretKeyEl) {
+                                    secretKeyEl.textContent = data.secret;
+                                    console.log("Secret key set to:", data.secret);
+                                }
+
+                                // Switch from the enable section to the setup section
+                                const enableSection = document.getElementById('enableTwoFactorSection');
+                                if (enableSection) {
+                                    enableSection.style.display = 'none';
+                                }
+                                const setupSection = document.getElementById('setupTwoFactorSection');
+                                if (setupSection) {
+                                    setupSection.style.display = 'block';
+                                }
+                            } else {
+                                // Handle backend failure reported in JSON
+                                throw new Error(data.error || 'Failed to generate 2FA setup.');
                             }
                         })
                         .catch(error => {
                             console.error('Error setting up 2FA:', error);
-                            alert('Failed to set up 2FA. Please try again. Error: ' + error.message);
+                            // Display error to the user (e.g., in a status element)
+                            const statusElement = document.getElementById('twoFactorStatus'); // Or another appropriate element
+                            if (statusElement) {
+                                statusElement.innerHTML = `<span style="color: red;">Error: ${error.message}</span>`;
+                            } else {
+                                alert('Failed to set up 2FA. Please try again. Error: ' + error.message);
+                            }
                         });
                 });
             }
-            
+
             // Verify 2FA
             const verifyTwoFactorButton = document.getElementById('verifyTwoFactor');
             if (verifyTwoFactorButton) {
@@ -497,7 +524,7 @@
                         return;
                     }
                     
-                    fetch('/api/user/verify-2fa', {
+                    fetch('/api/user/2fa/verify', { // Corrected endpoint
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -542,7 +569,8 @@
                         return;
                     }
                     
-                    fetch('/api/user/disable-2fa', {
+                    // Correct the API endpoint URL
+                    fetch('/api/user/2fa/disable', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
