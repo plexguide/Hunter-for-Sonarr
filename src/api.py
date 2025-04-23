@@ -25,6 +25,7 @@ logger = logging.getLogger('huntarr-sonarr')
 # Add this near the top of the file with other globals
 SERIES_CACHE = {}  # Cache for series information
 
+
 def get_headers():
     """Return the headers needed for API requests."""
     return {
@@ -32,18 +33,19 @@ def get_headers():
         'Content-Type': 'application/json'
     }
 
+
 def make_request(endpoint, method='GET', data=None, params=None, retries=MAX_RETRIES):
     """Make a request to the Sonarr API with retry capability."""
     url = f"{API_URL}/api/v3/{endpoint}"
     headers = get_headers()
-    
+
     if DEBUG_API_CALLS:
         logger.debug(f"API Request: {method} {url}")
         if params:
             logger.debug(f"Params: {json.dumps(params)}")
         if data:
             logger.debug(f"Data: {json.dumps(data)}")
-    
+
     for attempt in range(retries + 1):
         try:
             if method == 'GET':
@@ -57,9 +59,9 @@ def make_request(endpoint, method='GET', data=None, params=None, retries=MAX_RET
             else:
                 logger.error(f"Unsupported HTTP method: {method}")
                 return None
-            
+
             response.raise_for_status()
-            
+
             if DEBUG_API_CALLS:
                 if response.text:
                     logger.debug(f"API Response: Status {response.status_code}")
@@ -80,13 +82,13 @@ def make_request(endpoint, method='GET', data=None, params=None, retries=MAX_RET
                         logger.debug(f"Response text length: {len(response.text)} characters")
                 else:
                     logger.debug("API Response: Empty response body")
-            
+
             return response.json() if response.text.strip() else None
-        
+
         except requests.exceptions.RequestException as e:
             if DEBUG_API_CALLS:
                 logger.debug(f"API Request failed: {e}")
-                
+
             if attempt < retries:
                 wait_time = 2 ** attempt  # Exponential backoff
                 logger.warning(f"API request failed (attempt {attempt+1}/{retries+1}): {e}. Retrying in {wait_time} seconds...")
@@ -95,26 +97,29 @@ def make_request(endpoint, method='GET', data=None, params=None, retries=MAX_RET
                 logger.error(f"API request failed after {retries+1} attempts: {e}")
                 return None
 
+
 def get_series():
     """Get all series from Sonarr."""
     return make_request('series')
 
+
 def get_series_by_id(series_id):
     """Get a specific series by ID with caching for better performance."""
     global SERIES_CACHE
-    
+
     # If we have this series in cache, return it
     if series_id in SERIES_CACHE:
         return SERIES_CACHE[series_id]
-    
+
     # Otherwise, fetch it from the API
     series = make_request(f'series/{series_id}')
-    
+
     # If successful, cache it
     if series:
         SERIES_CACHE[series_id] = series
-        
+    
     return series
+
 
 def get_episodes_by_series_id(series_id):
     """Get all episodes for a series with more robust error handling."""
@@ -124,6 +129,7 @@ def get_episodes_by_series_id(series_id):
         if LOG_EPISODE_ERRORS:
             logger.error(f"Exception retrieving episodes for series ID {series_id}: {e}")
         return []
+
 
 def refresh_series(series_id):
     """Refresh a series."""
@@ -136,6 +142,7 @@ def refresh_series(series_id):
         logger.info(f"Refresh request sent for series ID {series_id}")
     return result
 
+
 def search_for_episode(episode_id):
     """Search for a specific episode."""
     data = {
@@ -146,6 +153,7 @@ def search_for_episode(episode_id):
     if result:
         logger.info(f"Search request sent for episode ID {episode_id}")
     return result
+
 
 def search_for_series(series_id):
     """Search for all episodes in a series."""
@@ -158,26 +166,29 @@ def search_for_series(series_id):
         logger.info(f"Search request sent for all episodes in series ID {series_id}")
     return result
 
+
 def get_queue():
     """Get the current download queue."""
     return make_request('queue')
+
 
 def is_date_in_future(air_date_str):
     """Check if a date is in the future."""
     if not air_date_str:
         return False
-    
+
     try:
         # Convert ISO format string to datetime with timezone info
         air_date = datetime.fromisoformat(air_date_str.replace('Z', '+00:00'))
-        
+
         # Get current time with timezone info for proper comparison
         now = datetime.now(timezone.utc)
-        
+
         return air_date > now
     except ValueError:
         logger.error(f"Invalid date format: {air_date_str}")
         return False
+
 
 def get_queue_size():
     """Get the current size of the download queue."""
@@ -185,6 +196,7 @@ def get_queue_size():
     if queue:
         return len(queue['records']) if 'records' in queue else 0
     return 0
+
 
 def check_api_connection():
     """Check if the API is reachable."""
@@ -203,6 +215,7 @@ def check_api_connection():
         logger.error(f"API connection check failed: {e}")
         return False
 
+
 def get_quality_upgradable_episodes(page=1, page_size=100):
     """Get episodes that need quality upgrades using the wanted/cutoff endpoint."""
     try:
@@ -214,14 +227,14 @@ def get_quality_upgradable_episodes(page=1, page_size=100):
             'sortDirection': 'ascending',
             'includeEpisode': True
         }
-        
+
         # For debugging, construct the URL that would be called
         debug_url = f"{API_URL}/api/v3/wanted/cutoff?page={page}&pageSize={page_size}"
         logger.info(f"API call: GET {debug_url}")
-        
+
         # Make the request
         result = make_request('wanted/cutoff', params=params)
-        
+
         # Log the result size for debugging
         if result:
             total_records = result.get('totalRecords', 0)
@@ -229,7 +242,7 @@ def get_quality_upgradable_episodes(page=1, page_size=100):
             logger.info(f"Got {records_count} records (total: {total_records})")
         else:
             logger.warning("API returned no result")
-            
+
         return result
     except Exception as e:
         logger.error(f"Exception retrieving quality upgradable episodes: {e}")
