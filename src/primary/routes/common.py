@@ -63,6 +63,7 @@ def login_route():
             if auth_success:
                 # User is authenticated (password correct, and 2FA if needed was correct)
                 session_token = create_session(username)
+                session[SESSION_COOKIE_NAME] = session_token # Store token in Flask session immediately
                 response = jsonify({"success": True, "redirect": "/"}) # Add redirect URL
                 response.set_cookie(SESSION_COOKIE_NAME, session_token, httponly=True, samesite='Lax', path='/') # Add path
                 logger.info(f"User '{username}' logged in successfully.")
