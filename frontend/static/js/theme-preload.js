@@ -62,6 +62,20 @@
                 };
             }
         });
+
+        // Check if the logo source needs updating
+        document.querySelectorAll('img[alt*="Logo"]').forEach(img => {
+            // Check if the src is not the correct static path
+            const currentSrc = new URL(img.src, window.location.origin).pathname;
+            if (currentSrc !== LOGO_URL) {
+                // Check against the old incorrect path as well, just in case
+                if (currentSrc === '/logo/64.png') {
+                    img.src = LOGO_URL;
+                }
+                // You might want to add more specific checks or broader updates here
+                // For now, we only correct the specific incorrect path found
+            }
+        });
     };
     
     // Apply logo as soon as DOM is interactive
