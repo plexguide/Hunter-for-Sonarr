@@ -20,15 +20,7 @@ from primary import settings_manager
 from primary.api import get_cutoff_unmet, get_cutoff_unmet_total_pages, refresh_series, episode_search_episodes, arr_request
 from primary.state import load_processed_ids, save_processed_id, truncate_processed_list, PROCESSED_UPGRADE_FILE
 
-def get_current_upgrade_limit():
-    """Get the current HUNT_UPGRADE_EPISODES value directly from config"""
-    # Force reload the config module to get the latest value
-    from primary import config
-    importlib.reload(config)
-    return config.HUNT_UPGRADE_EPISODES
-
-# Ensure RANDOM_UPGRADES is dynamically reloaded at the start of each cycle
-# Updated logic to reload settings before processing upgrades
+# Removed get_current_upgrade_limit function
 
 def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
     """
@@ -40,13 +32,14 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
     Returns:
         True if any processing was done, False otherwise
     """
-    # Reload settings to ensure the latest values are used
-    from primary.config import refresh_settings
-    refresh_settings()
+    # Removed refresh_settings call
 
     # Get the current value directly at the start of processing
-    HUNT_UPGRADE_EPISODES = get_current_upgrade_limit()
+    HUNT_UPGRADE_EPISODES = settings_manager.get_setting("huntarr", "hunt_upgrade_episodes", 0)
     RANDOM_UPGRADES = settings_manager.get_setting("advanced", "random_upgrades", True)
+    SKIP_SERIES_REFRESH = settings_manager.get_setting("advanced", "skip_series_refresh", False)
+    SKIP_FUTURE_EPISODES = settings_manager.get_setting("huntarr", "skip_future_episodes", True)
+    MONITORED_ONLY = settings_manager.get_setting("huntarr", "monitored_only", True)
 
     logger.info("=== Checking for Quality Upgrades (Cutoff Unmet) ===")
 
@@ -104,8 +97,8 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
             break
             
         # Check again to make sure we're using the current limit
-        # This ensures if settings changed during processing, we use the new value
-        current_limit = get_current_upgrade_limit()
+        # Use settings_manager directly instead of get_current_upgrade_limit
+        current_limit = settings_manager.get_setting("huntarr", "hunt_upgrade_episodes", 0)
         
         if episodes_processed >= current_limit:
             logger.info(f"Reached HUNT_UPGRADE_EPISODES={current_limit} for this cycle.")
@@ -157,7 +150,7 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
                 break
                 
             # Check again for the current limit in case it was changed during processing
-            current_limit = get_current_upgrade_limit()
+            current_limit = settings_manager.get_setting("huntarr", "hunt_upgrade_episodes", 0)
             
             if episodes_processed >= current_limit:
                 break
@@ -249,7 +242,7 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
                 processing_done = True
                 
                 # Log with the current limit, not the initial one
-                current_limit = get_current_upgrade_limit()
+                current_limit = settings_manager.get_setting("huntarr", "hunt_upgrade_episodes", 0)
                 logger.info(f"Processed {episodes_processed}/{current_limit} upgrade episodes this cycle.")
             else:
                 logger.warning(f"WARNING: Search command failed for episode ID {episode_id}.")
@@ -272,7 +265,7 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
             break
     
     # Log with the current limit, not the initial one
-    current_limit = get_current_upgrade_limit()
+    current_limit = settings_manager.get_setting("huntarr", "hunt_upgrade_episodes", 0)
     logger.info(f"Completed processing {episodes_processed} upgrade episodes for this cycle.")
     truncate_processed_list(PROCESSED_UPGRADE_FILE)
     

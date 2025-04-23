@@ -29,15 +29,14 @@ def process_missing_movies(restart_cycle_flag: Callable[[], bool] = lambda: Fals
     Returns:
         True if any processing was done, False otherwise
     """
-    # Reload settings to ensure the latest values are used
-    from src.primary.config import refresh_settings
-    refresh_settings("radarr")
+    # Removed refresh_settings call
 
     # Get the current value directly at the start of processing
-    HUNT_MISSING_MOVIES = settings_manager.get_setting("huntarr", "hunt_missing_movies", 1)
-    RANDOM_MISSING = settings_manager.get_setting("advanced", "random_missing", True)
-    SKIP_MOVIE_REFRESH = settings_manager.get_setting("advanced", "skip_movie_refresh", False)
-    
+    HUNT_MISSING_MOVIES = settings_manager.get_setting("radarr", "hunt_missing_movies", 1)
+    RANDOM_MISSING = settings_manager.get_setting("radarr", "random_missing", True)
+    SKIP_MOVIE_REFRESH = settings_manager.get_setting("radarr", "skip_movie_refresh", False)
+    MONITORED_ONLY = settings_manager.get_setting("radarr", "monitored_only", True)
+
     # Get app-specific state file
     PROCESSED_MISSING_FILE = get_state_file_path("radarr", "processed_missing")
 
@@ -102,7 +101,7 @@ def process_missing_movies(restart_cycle_flag: Callable[[], bool] = lambda: Fals
             break
         
         # Check again for the current limit in case it was changed during processing
-        current_limit = settings_manager.get_setting("huntarr", "hunt_missing_movies", 1)
+        current_limit = settings_manager.get_setting("radarr", "hunt_missing_movies", 1)
         
         if movies_processed >= current_limit:
             logger.info(f"Reached HUNT_MISSING_MOVIES={current_limit} for this cycle.")
@@ -144,14 +143,14 @@ def process_missing_movies(restart_cycle_flag: Callable[[], bool] = lambda: Fals
             processing_done = True
             
             # Log with the current limit, not the initial one
-            current_limit = settings_manager.get_setting("huntarr", "hunt_missing_movies", 1)
+            current_limit = settings_manager.get_setting("radarr", "hunt_missing_movies", 1)
             logger.info(f"Processed {movies_processed}/{current_limit} missing movies this cycle.")
         else:
             logger.warning(f"WARNING: Search command failed for movie ID {movie_id}.")
             continue
     
     # Log final status
-    current_limit = settings_manager.get_setting("huntarr", "hunt_missing_movies", 1)
+    current_limit = settings_manager.get_setting("radarr", "hunt_missing_movies", 1)
     logger.info(f"Completed processing {movies_processed} missing movies for this cycle.")
     truncate_processed_list(PROCESSED_MISSING_FILE)
     

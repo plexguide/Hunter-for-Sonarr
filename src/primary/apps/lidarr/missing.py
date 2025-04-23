@@ -29,10 +29,6 @@ def process_missing_albums(restart_cycle_flag: Callable[[], bool] = lambda: Fals
     Returns:
         True if any processing was done, False otherwise
     """
-    # Reload settings to ensure the latest values are used
-    from primary.config import refresh_settings
-    refresh_settings("lidarr")
-
     # Get the current value directly at the start of processing
     HUNT_MISSING_ALBUMS = settings_manager.get_setting("huntarr", "hunt_missing_albums", 1)
     RANDOM_MISSING = settings_manager.get_setting("advanced", "random_missing", True)

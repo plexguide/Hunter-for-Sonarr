@@ -92,13 +92,11 @@ def process_missing_episodes(restart_cycle_flag: Callable[[], bool] = lambda: Fa
     Returns:
         True if any processing was done, False otherwise
     """
-    # Reload settings to ensure the latest values are used
-    from primary.config import refresh_settings
-    refresh_settings()
-
     # Get the current value directly at the start of processing
     HUNT_MISSING_SHOWS = settings_manager.get_setting("huntarr", "hunt_missing_shows", 1)
     RANDOM_MISSING = settings_manager.get_setting("advanced", "random_missing", True)
+    SKIP_SERIES_REFRESH = settings_manager.get_setting("advanced", "skip_series_refresh", False)
+    MONITORED_ONLY = settings_manager.get_setting("huntarr", "monitored_only", True)
 
     logger.info("=== Checking for Missing Episodes ===")
 
