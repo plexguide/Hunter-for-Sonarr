@@ -1,0 +1,1 @@
+''' TODO create a basic class that takes in generic values that all the ARR's have so we can refine them later in ither routes'''
