@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
+import os
+from src.utils.logger import logger
+'''TODO add a function here that starts the FLask / api app'''
 """
 Huntarr-Sonarr - Automatically search for missing episodes and episode upgrades
 """
-
-import os
-from src.utils.logger import logger
 
 
 settings = {}
