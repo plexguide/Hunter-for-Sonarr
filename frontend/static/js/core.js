@@ -319,58 +319,6 @@ const huntarrApp = {
         }
     },
     
-    // Event source for logs
-    connectEventSource: function(app) {
-        if (!this.elements.logsElement) return; // Skip if not on logs page
-        
-        if (this.eventSource) {
-            this.eventSource.close();
-        }
-        
-        this.eventSource = new EventSource(`/logs`);
-        
-        this.eventSource.onopen = () => {
-            if (this.elements.statusElement) {
-                this.elements.statusElement.textContent = 'Connected';
-                this.elements.statusElement.className = 'status-connected';
-            }
-        };
-        
-        this.eventSource.onerror = () => {
-            if (this.elements.statusElement) {
-                this.elements.statusElement.textContent = 'Disconnected';
-                this.elements.statusElement.className = 'status-disconnected';
-            }
-            
-            // Attempt to reconnect after 5 seconds
-            setTimeout(() => {
-                this.connectEventSource();
-            }, 5000);
-        };
-        
-        this.eventSource.onmessage = (event) => {
-            const logEntry = document.createElement('div');
-            logEntry.className = 'log-entry';
-            
-            // Add appropriate class for log level
-            if (event.data.includes(' - INFO - ')) {
-                logEntry.classList.add('log-info');
-            } else if (event.data.includes(' - WARNING - ')) {
-                logEntry.classList.add('log-warning');
-            } else if (event.data.includes(' - ERROR - ')) {
-                logEntry.classList.add('log-error');
-            } else if (event.data.includes(' - DEBUG - ')) {
-                logEntry.classList.add('log-debug');
-            }
-            
-            logEntry.textContent = event.data;
-            this.elements.logsElement.appendChild(logEntry);
-            
-            // Auto-scroll to bottom if enabled
-            this.scrollToBottom();
-        };
-    },
-    
     // Status updates
     updateHomeConnectionStatus: function() {
         // Check current configured state
