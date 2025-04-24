@@ -150,11 +150,9 @@ const huntarrUI = {
         }
         
         // Handle window hash change
-        window.addEventListener('hashchange', this.handleHashNavigation.bind(this));
+        window.addEventListener('hashchange', () => this.handleHashNavigation(window.location.hash)); // Ensure hash is passed
 
-        // Add listeners to settings forms AFTER they are populated
-        // This needs to be done dynamically or delegated
-        // Option: Use event delegation on the settings form container
+        // Settings form delegation
         const settingsFormContainer = document.querySelector('.settings-form');
         if (settingsFormContainer) {
             settingsFormContainer.addEventListener('input', (event) => {
@@ -174,6 +172,10 @@ const huntarrUI = {
                  }
             });
         }
+
+        // Initial setup based on hash or default to home
+        const initialHash = window.location.hash || '#home';
+        this.handleHashNavigation(initialHash);
     },
     
     // Setup logo handling to prevent flashing during navigation
@@ -217,10 +219,8 @@ const huntarrUI = {
         }
     },
     
-    handleHashNavigation: function() {
-        const hash = window.location.hash || '#home';
-        const section = hash.substring(1);
-        
+    handleHashNavigation: function(hash) {
+        const section = hash.substring(1) || 'home';
         this.switchSection(section);
     },
     
@@ -237,34 +237,56 @@ const huntarrUI = {
         
         // Show selected section
         let newTitle = 'Home'; // Default title
+        const sponsorsSection = document.getElementById('sponsorsSection'); // Get sponsors section element
+        const sponsorsNav = document.getElementById('sponsorsNav'); // Get sponsors nav element
+
         if (section === 'home' && this.elements.homeSection) {
             this.elements.homeSection.classList.add('active');
-            this.elements.homeNav.classList.add('active');
+            if (this.elements.homeNav) this.elements.homeNav.classList.add('active');
             newTitle = 'Home';
             this.currentSection = 'home';
+            // Disconnect logs if switching away from logs
+            this.disconnectAllEventSources(); 
         } else if (section === 'logs' && this.elements.logsSection) {
             this.elements.logsSection.classList.add('active');
-            this.elements.logsNav.classList.add('active');
+            if (this.elements.logsNav) this.elements.logsNav.classList.add('active');
             newTitle = 'Logs';
             this.currentSection = 'logs';
             this.connectToLogs();
         } else if (section === 'settings' && this.elements.settingsSection) {
             this.elements.settingsSection.classList.add('active');
-            this.elements.settingsNav.classList.add('active');
+            if (this.elements.settingsNav) this.elements.settingsNav.classList.add('active');
             newTitle = 'Settings';
             this.currentSection = 'settings';
             this.loadAllSettings();
+            // Disconnect logs if switching away from logs
+            this.disconnectAllEventSources(); 
+        } else if (section === 'sponsors' && sponsorsSection) { // ADDED sponsors case
+            sponsorsSection.classList.add('active');
+            if (sponsorsNav) sponsorsNav.classList.add('active');
+            newTitle = 'Project Sponsors';
+            this.currentSection = 'sponsors';
+            // Set the iframe source when switching to this section
+            const sponsorsFrame = document.getElementById('sponsorsFrame');
+            if (sponsorsFrame && (!sponsorsFrame.src || sponsorsFrame.src === 'about:blank')) { // Set src only if not already set or blank
+                sponsorsFrame.src = 'https://github.com/sponsors/plexguide';
+            }
+            // Disconnect logs if switching away from logs
+            this.disconnectAllEventSources();
         } else {
             // Default to home if section is unknown or element missing
             if (this.elements.homeSection) this.elements.homeSection.classList.add('active');
             if (this.elements.homeNav) this.elements.homeNav.classList.add('active');
             newTitle = 'Home';
             this.currentSection = 'home';
+            // Disconnect logs if switching away from logs
+            this.disconnectAllEventSources(); 
         }
 
-        // Update the page title *only if the element exists*
-        if (this.elements.currentPageTitle) {
-            this.elements.currentPageTitle.textContent = newTitle;
+        // Update the page title
+        const pageTitleElement = document.getElementById('currentPageTitle');
+        if (pageTitleElement) {
+            pageTitleElement.textContent = newTitle;
         } else {
             console.warn("[huntarrUI] currentPageTitle element not found during section switch.");
         }

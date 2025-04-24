@@ -14,10 +14,10 @@ import pathlib
 import base64
 import io
 import qrcode
-import pyotp
-import logging
+import pyotp # Ensure pyotp is imported
 from typing import Dict, Any, Optional, Tuple
 from flask import request, redirect, url_for, session
+from .utils.logger import logger # Ensure logger is imported
 
 # User directory setup
 USER_DIR = pathlib.Path("/config/user")
@@ -31,8 +31,45 @@ SESSION_COOKIE_NAME = "huntarr_session"
 # Store active sessions
 active_sessions = {}
 
-# Get a logger instance for this module
-logger = logging.getLogger(__name__)
+# --- Add Helper functions for user data ---
+def get_user_data() -> Dict[str, Any]:
+    """Load user data from the credentials file."""
+    if not USER_FILE.exists():
+        logger.warning(f"Attempted to get user data, but file not found: {USER_FILE}")
+        return {}
+    try:
+        with open(USER_FILE, 'r') as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        logger.error(f"Error decoding JSON from user file: {USER_FILE}")
+        return {}
+    except Exception as e:
+        logger.error(f"Error reading user file {USER_FILE}: {e}", exc_info=True)
+        return {}
+
+def save_user_data(user_data: Dict[str, Any]) -> bool:
+    """Save user data to the credentials file."""
+    try:
+        logger.debug(f"Attempting to save user data to: {USER_FILE}")
+        # Ensure directory exists (though it should from startup)
+        USER_DIR.mkdir(parents=True, exist_ok=True)
+        
+        with open(USER_FILE, 'w') as f:
+            json.dump(user_data, f, indent=4) # Add indent for readability
+        
+        # Set permissions after writing
+        try:
+            os.chmod(USER_FILE, 0o644)
+            logger.debug(f"Set permissions 0o644 on {USER_FILE}")
+        except Exception as e_perm:
+            logger.warning(f"Could not set permissions on file {USER_FILE}: {e_perm}")
+            
+        logger.info(f"User data saved successfully to {USER_FILE}")
+        return True
+    except Exception as e:
+        logger.error(f"Error saving user file {USER_FILE}: {e}", exc_info=True)
+        return False
+# --- End Helper functions ---
 
 def hash_password(password: str) -> str:
     """Hash a password for storage"""
@@ -228,29 +265,6 @@ def logout(session_id: str):
     # Clear the session cookie in Flask context (if available, otherwise handled by route)
     # session.pop(SESSION_COOKIE_NAME, None) # This might be better handled solely in the route
 
-def get_user_data() -> Dict:
-    """Get the user data from the credentials file"""
-    if not user_exists():
-        return {}
-    
-    try:
-        with open(USER_FILE, 'r') as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Error reading user data from {USER_FILE}: {e}", exc_info=True)
-        return {}
-
-def save_user_data(user_data: Dict) -> bool:
-    """Save the user data to the credentials file"""
-    try:
-        with open(USER_FILE, 'w') as f:
-            json.dump(user_data, f)
-        logger.info(f"User data saved successfully to {USER_FILE}")
-        return True
-    except Exception as e:
-        logger.error(f"Error saving user data to {USER_FILE}: {e}", exc_info=True)
-        return False
-
 def is_2fa_enabled(username):
     """Check if 2FA is enabled for a user."""
     user_data = get_user_data()
@@ -331,7 +345,7 @@ def verify_2fa_code(username: str, code: str, enable_on_verify: bool = False) ->
         return False
 
 def disable_2fa(password: str) -> bool:
-    """Disable 2FA for the current user"""
+    """Disable 2FA for the current user (using only password - kept for potential other uses)"""
     user_data = get_user_data()
     
     # Verify password
@@ -339,13 +353,44 @@ def disable_2fa(password: str) -> bool:
         user_data["2fa_enabled"] = False
         user_data["2fa_secret"] = None
         if save_user_data(user_data):
-            logger.info("2FA disabled successfully.")
+            logger.info("2FA disabled successfully (password only).")
             return True
         else:
-            logger.error("Failed to save user data after disabling 2FA.")
+            logger.error("Failed to save user data after disabling 2FA (password only).")
             return False
     else:
-        logger.warning("Failed to disable 2FA: Invalid password provided.")
+        logger.warning("Failed to disable 2FA (password only): Invalid password provided.")
+        return False
+
+def disable_2fa_with_password_and_otp(username: str, password: str, otp_code: str) -> bool:
+    """Disable 2FA for the specified user, requiring both password and OTP code."""
+    user_data = get_user_data() # Assuming this gets data for the logged-in user implicitly
+    
+    # 1. Verify Password
+    if not verify_password(user_data.get("password", ""), password):
+        logger.warning(f"Failed to disable 2FA for '{username}': Invalid password provided.")
+        return False
+        
+    # 2. Verify OTP Code against permanent secret
+    perm_secret = user_data.get("2fa_secret")
+    if not user_data.get("2fa_enabled") or not perm_secret:
+        logger.error(f"Failed to disable 2FA for '{username}': 2FA is not enabled or secret missing.")
+        # Should ideally not happen if called from the correct UI state, but good to check
+        return False 
+        
+    totp = pyotp.TOTP(perm_secret)
+    if not totp.verify(otp_code):
+        logger.warning(f"Failed to disable 2FA for '{username}': Invalid OTP code provided.")
+        return False
+        
+    # 3. Both verified, proceed to disable
+    user_data["2fa_enabled"] = False
+    user_data["2fa_secret"] = None
+    if save_user_data(user_data):
+        logger.info(f"2FA disabled successfully for '{username}' after verifying password and OTP.")
+        return True
+    else:
+        logger.error(f"Failed to save user data after disabling 2FA for '{username}'.")
         return False
 
 def change_username(current_username: str, new_username: str, password: str) -> bool:

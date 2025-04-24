@@ -155,6 +155,10 @@
                         <label for="newUsername">New Username:</label>
                         <input type="text" id="newUsername" class="form-control">
                     </div>
+                    <div class="setting-item"> <!-- Added password field -->
+                        <label for="currentPasswordForUsernameChange">Current Password:</label>
+                        <input type="password" id="currentPasswordForUsernameChange" class="form-control" required>
+                    </div>
                     <button id="saveUsername" class="user-button save-button">Save Username</button>
                     <div id="usernameStatus" style="display: none;"></div>
                 </div>
@@ -209,8 +213,12 @@
                     
                     <div id="disableTwoFactorSection" style="display: none;">
                         <div class="setting-item">
-                            <label for="disableCode">Verification Code:</label>
-                            <input type="text" id="disableCode" class="form-control" placeholder="000000" maxlength="6">
+                            <label for="currentPasswordFor2FADisable">Current Password:</label>
+                            <input type="password" id="currentPasswordFor2FADisable" class="form-control" placeholder="Enter your password" required>
+                        </div>
+                        <div class="setting-item"> <!-- Added OTP code field -->
+                            <label for="otpCodeFor2FADisable">Current OTP Code:</label>
+                            <input type="text" id="otpCodeFor2FADisable" class="form-control" placeholder="000000" maxlength="6" required>
                         </div>
                         <button id="disableTwoFactor" class="user-button danger-button">Disable 2FA</button>
                         <div id="disableStatus" style="display: none;"></div>
@@ -280,22 +288,33 @@
                     }
                 });
             
-            // Get 2FA status
-            fetch('/api/user/2fa-status')
-                .then(response => response.json())
+            // Get 2FA status - Changed endpoint to /api/user/info
+            fetch('/api/user/info') 
+                .then(response => {
+                    if (!response.ok) { // Add check for non-OK responses
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    const twoFactorEnabled = document.getElementById('twoFactorEnabled');
-                    if (twoFactorEnabled) {
-                        twoFactorEnabled.textContent = data.enabled ? 'Enabled' : 'Disabled';
+                    const twoFactorEnabledElement = document.getElementById('twoFactorEnabled'); // Renamed variable for clarity
+                    const isEnabled = data.is_2fa_enabled; // Use the correct key from /api/user/info
+
+                    if (twoFactorEnabledElement) {
+                        twoFactorEnabledElement.textContent = isEnabled ? 'Enabled' : 'Disabled';
                     }
                     
                     // Show appropriate 2FA sections
-                    if (data.enabled) {
+                    if (isEnabled) {
                         if (document.getElementById('disableTwoFactorSection')) {
                             document.getElementById('disableTwoFactorSection').style.display = 'block';
                         }
                         if (document.getElementById('enableTwoFactorSection')) {
                             document.getElementById('enableTwoFactorSection').style.display = 'none';
+                        }
+                        // Hide setup section if already enabled
+                        if (document.getElementById('setupTwoFactorSection')) {
+                            document.getElementById('setupTwoFactorSection').style.display = 'none';
                         }
                     } else {
                         if (document.getElementById('disableTwoFactorSection')) {
@@ -304,13 +323,18 @@
                         if (document.getElementById('enableTwoFactorSection')) {
                             document.getElementById('enableTwoFactorSection').style.display = 'block';
                         }
+                         // Hide setup section initially when disabled
+                        if (document.getElementById('setupTwoFactorSection')) {
+                            document.getElementById('setupTwoFactorSection').style.display = 'none';
+                        }
                     }
                 })
                 .catch(error => {
-                    console.error('Error fetching 2FA status:', error);
-                    const twoFactorEnabled = document.getElementById('twoFactorEnabled');
-                    if (twoFactorEnabled) {
-                        twoFactorEnabled.textContent = 'Unknown';
+                    console.error('Error fetching user info for 2FA status:', error); // Updated error message
+                    const twoFactorEnabledElement = document.getElementById('twoFactorEnabled');
+                    if (twoFactorEnabledElement) {
+                        // Provide a more specific error message
+                        twoFactorEnabledElement.textContent = 'Error loading status'; 
                     }
                 });
         }
@@ -345,6 +369,7 @@
             if (saveUsernameButton) {
                 saveUsernameButton.addEventListener('click', function() {
                     const newUsername = document.getElementById('newUsername').value.trim();
+                    const currentPassword = document.getElementById('currentPasswordForUsernameChange').value; // Get password
                     const statusElement = document.getElementById('usernameStatus');
                     
                     if (!newUsername) {
@@ -354,34 +379,85 @@
                         return;
                     }
                     
+                    // Add check for password
+                    if (!currentPassword) {
+                        statusElement.textContent = 'Current password is required';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                        return;
+                    }
+
                     fetch('/api/user/change-username', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ username: newUsername })
+                        // Include password in the request body
+                        body: JSON.stringify({ username: newUsername, password: currentPassword }) 
                     })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            statusElement.textContent = 'Username updated successfully';
+                            statusElement.textContent = 'Username updated successfully. You will be logged out shortly.'; // Updated message
                             statusElement.className = 'status-success';
-                            document.getElementById('username').textContent = newUsername;
-                            document.getElementById('currentUsername').textContent = newUsername;
+                            statusElement.style.display = 'block';
+
+                            // Update displayed usernames (optional, as user will be logged out)
+                            if (document.getElementById('username')) {
+                                document.getElementById('username').textContent = newUsername;
+                            }
+                            if (document.getElementById('currentUsername')) {
+                                document.getElementById('currentUsername').textContent = newUsername;
+                            }
+                            
+                            // Clear input fields
                             document.getElementById('newUsername').value = '';
+                            document.getElementById('currentPasswordForUsernameChange').value = '';
+
+                            // Wait a moment for the user to see the message, then logout
+                            setTimeout(() => {
+                                fetch('/logout', { // Call logout endpoint
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                })
+                                .then(logoutResponse => logoutResponse.json())
+                                .then(logoutData => {
+                                    if (logoutData.success) {
+                                        console.log('Logout successful after username change.');
+                                        window.location.href = '/login'; // Redirect to login
+                                    } else {
+                                        console.error('Automatic logout failed:', logoutData.error);
+                                        // Display error or fallback
+                                        statusElement.textContent = 'Username updated, but auto-logout failed. Please logout manually.';
+                                        statusElement.className = 'status-error';
+                                    }
+                                })
+                                .catch(logoutError => {
+                                    console.error('Error during automatic logout:', logoutError);
+                                    statusElement.textContent = 'Username updated, but an error occurred during logout. Please logout manually.';
+                                    statusElement.className = 'status-error';
+                                });
+                            }, 3000); // 3-second delay
+
                         } else {
-                            statusElement.textContent = data.message || 'Failed to update username';
+                            // Use error message from backend if available
+                            statusElement.textContent = data.error || 'Failed to update username'; 
                             statusElement.className = 'status-error';
+                            statusElement.style.display = 'block'; // Show error
+                            // Keep error message displayed longer if needed
+                            setTimeout(() => {
+                                statusElement.style.display = 'none';
+                            }, 5000);
                         }
                         
-                        statusElement.style.display = 'block';
-                        setTimeout(() => {
-                            statusElement.style.display = 'none';
-                        }, 5000);
+                        // No need for the general status display timeout here anymore
+                        // as success leads to logout and error has its own timeout
                     })
                     .catch(error => {
                         console.error('Error updating username:', error);
-                        statusElement.textContent = 'An error occurred';
+                        statusElement.textContent = 'An error occurred while updating username.'; // More specific error
                         statusElement.className = 'status-error';
                         statusElement.style.display = 'block';
                     });
@@ -424,20 +500,54 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            statusElement.textContent = 'Password updated successfully';
+                            statusElement.textContent = 'Password updated successfully. You will be logged out shortly.'; // Updated message
                             statusElement.className = 'status-success';
+                            statusElement.style.display = 'block'; // Show message before logout
+                            
+                            // Clear password fields
                             document.getElementById('currentPassword').value = '';
                             document.getElementById('newPassword').value = '';
                             document.getElementById('confirmPassword').value = '';
+
+                            // Wait a moment, then logout
+                            setTimeout(() => {
+                                fetch('/logout', { // Call logout endpoint
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                })
+                                .then(logoutResponse => logoutResponse.json())
+                                .then(logoutData => {
+                                    if (logoutData.success) {
+                                        console.log('Logout successful after password change.');
+                                        window.location.href = '/login'; // Redirect to login
+                                    } else {
+                                        console.error('Automatic logout failed:', logoutData.error);
+                                        // Display error or fallback
+                                        statusElement.textContent = 'Password updated, but auto-logout failed. Please logout manually.';
+                                        statusElement.className = 'status-error';
+                                    }
+                                })
+                                .catch(logoutError => {
+                                    console.error('Error during automatic logout:', logoutError);
+                                    statusElement.textContent = 'Password updated, but an error occurred during logout. Please logout manually.';
+                                    statusElement.className = 'status-error';
+                                });
+                            }, 3000); // 3-second delay
+
                         } else {
                             statusElement.textContent = data.message || 'Failed to update password';
                             statusElement.className = 'status-error';
+                            statusElement.style.display = 'block'; // Show error
+                            // Keep error message displayed longer if needed
+                            setTimeout(() => {
+                                statusElement.style.display = 'none';
+                            }, 5000);
                         }
                         
-                        statusElement.style.display = 'block';
-                        setTimeout(() => {
-                            statusElement.style.display = 'none';
-                        }, 5000);
+                        // No need for the general status display timeout here anymore
+                        // as success leads to logout and error has its own timeout
                     })
                     .catch(error => {
                         console.error('Error updating password:', error);
@@ -559,42 +669,60 @@
             const disableTwoFactorButton = document.getElementById('disableTwoFactor');
             if (disableTwoFactorButton) {
                 disableTwoFactorButton.addEventListener('click', function() {
-                    const code = document.getElementById('disableCode').value.trim();
+                    // Get both password and OTP code
+                    const password = document.getElementById('currentPasswordFor2FADisable').value;
+                    const otpCode = document.getElementById('otpCodeFor2FADisable').value.trim(); // Get OTP code
                     const statusElement = document.getElementById('disableStatus');
                     
-                    if (!code || code.length !== 6) {
-                        statusElement.textContent = 'Please enter a valid 6-digit code';
+                    // Validate both inputs
+                    if (!password) {
+                        statusElement.textContent = 'Please enter your current password';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                        return;
+                    }
+                    if (!otpCode || otpCode.length !== 6 || !/^\d{6}$/.test(otpCode)) { // Validate OTP code
+                        statusElement.textContent = 'Please enter a valid 6-digit OTP code';
                         statusElement.className = 'status-error';
                         statusElement.style.display = 'block';
                         return;
                     }
                     
-                    // Correct the API endpoint URL
+                    // Send both password and OTP code to the backend
                     fetch('/api/user/2fa/disable', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ code: code })
+                        // Send both password and code
+                        body: JSON.stringify({ password: password, code: otpCode }) 
                     })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
                             statusElement.textContent = '2FA disabled successfully';
                             statusElement.className = 'status-success';
+                            // Clear the input fields
+                            document.getElementById('currentPasswordFor2FADisable').value = ''; 
+                            document.getElementById('otpCodeFor2FADisable').value = ''; // Clear OTP field
                             setTimeout(() => {
                                 fetchUserData(); // Refresh the page data
+                                statusElement.style.display = 'none';
                             }, 2000);
                         } else {
-                            statusElement.textContent = data.message || 'Failed to disable 2FA';
+                            // Use error message from backend
+                            statusElement.textContent = data.error || 'Failed to disable 2FA. Check password and OTP code.'; 
                             statusElement.className = 'status-error';
+                            statusElement.style.display = 'block';
+                            // Optionally hide error message after some time
+                            setTimeout(() => {
+                                statusElement.style.display = 'none';
+                            }, 5000);
                         }
-                        
-                        statusElement.style.display = 'block';
                     })
                     .catch(error => {
                         console.error('Error disabling 2FA:', error);
-                        statusElement.textContent = 'An error occurred';
+                        statusElement.textContent = 'An error occurred while disabling 2FA.';
                         statusElement.className = 'status-error';
                         statusElement.style.display = 'block';
                     });
