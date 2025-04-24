@@ -25,7 +25,6 @@
 - [Overview](#overview)
 - [Other Projects](#other-projects)
 - [Community](#community)
-- [PayPal Donations – For My Daughter's College Fund](#paypal-donations--for-my-daughters-college-fund)
 - [Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
 - [How It Works](#how-it-works)
 - [Web Interface](#web-interface)
@@ -38,6 +37,7 @@
   - [Unraid Users](#unraid-users)
 - [Tips](#tips)
 - [Troubleshooting](#troubleshooting)
+- [Change Log](#change-log)
 
 ## Overview
 
@@ -253,5 +253,5 @@ docker run -d --name huntarr \
 - **Command Timeouts**: Adjust command_wait_attempts and command_wait_delay in advanced settings
 - **Debug Information**: Enable Debug Mode temporarily to see detailed API responses in the logs
 
-**Change Log:**
+## Change Log
 Visit: https://github.com/plexguide/Huntarr/releases/
