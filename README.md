@@ -61,46 +61,77 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 [![Donate with PayPal button](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate?hosted_button_id=58AYJ68VVMGSC)
 
-## Features
+## Useful Features
 
-- 🔄 **Continuous Operation**: Runs indefinitely until manually stopped
-- 🎯 **Dual Targeting System**: Targets both missing items and quality upgrades
-- 🎲 **Separate Random Controls**: Separate toggles for random missing content and random upgrades
-- ⏱️ **Throttled Searches**: Includes configurable delays to prevent overloading indexers
-- 📊 **Status Reporting**: Provides clear feedback about what it's doing and which items it's searching for
-- 🛡️ **Error Handling**: Gracefully handles connection issues and API failures
-- 🔁 **State Tracking**: Remembers which items have been processed to avoid duplicate searches
-- ⚙️ **Configurable Reset Timer**: Automatically resets search history after a configurable period
-- 📦 **Modular Design**: Modern codebase with separated concerns for easier maintenance
-- 🌐 **Web Interface**: Real-time log viewer with day/night mode and settings management
-- 🔮 **Future Item Skipping**: Skip processing items with future release dates
-- 💾 **Reduced Disk Activity**: Option to skip metadata refresh before processing
-- 💿 **Persistent Configuration**: All settings are saved to disk and persist across container restarts
-- 📝 **Stateful Operation**: Processed state is now permanently saved between restarts
-- ⚙️ **Advanced Settings**: Control API timeout, command wait parameters, and more
+🚀 **24/7 Background Operation** - Silently enhances your media library while respecting indexer rate limits
+🎯 **Complete Media Management** - Automatically hunts for both missing content and quality upgrades in one solution
+🔄 **True State Persistence** - Maintains progress across container restarts with persistent configuration
+🛡️ **Indexer Protection** - Customizable batch sizes, timing controls, and rate limiting keep your indexers happy
+🌐 **Modern Web Dashboard** - Intuitive interface with real-time colored logs and instant settings management
+💾 **Resource Optimization** - Skip metadata refreshes to dramatically reduce disk I/O on your media server
+🔮 **Smart Content Handling** - Skips unreleased content and offers independent randomization for efficient processing
+🧩 **Multi-Application Support** - Single interface manages Sonarr, Radarr, Lidarr, and Readarr (unified platform)
+🔒 **Secure User System** - User authentication with optional two-factor protection for your media automation
+⚙️ **Advanced Customization** - Fine-tune every aspect from search intervals to automatic state reset timing
 
 ## Indexers Approving of Huntarr:
 * https://ninjacentral.co.za
 
 ## How It Works
 
-1. **Initialization**: Connects to your *Arr instance and analyzes your library
-2. **Missing Content**: 
-   - Identifies items with missing episodes/movies/etc.
-   - Randomly or sequentially selects items to process (configurable)
-   - Refreshes metadata (optional) and triggers searches
-   - Skips items with future release dates (configurable)
-3. **Quality Upgrades**:
-   - Finds items that don't meet your quality cutoff settings
-   - Processes them in configurable batches
-   - Uses smart pagination to handle large libraries
-   - Can operate in random or sequential mode (configurable)
-   - Skips items with future release dates (configurable)
-4. **State Management**:
-   - Tracks which items have been processed
-   - Stores this information persistently in the `/config` volume
-   - Automatically resets this tracking after a configurable time period
-5. **Repeat Cycle**: Waits for a configurable period before starting the next cycle
+### 🔄 Continuous Automation Cycle
+
+<table>
+  <tr>
+    <td width="10%" align="center"><h3>1️⃣</h3></td>
+    <td width="90%">
+      <h3>Connect & Analyze</h3>
+      <p>Huntarr connects to your Sonarr/Radarr/Lidarr/Readarr instance and analyzes your media library to identify both missing content and potential quality upgrades.</p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><h3>2️⃣</h3></td>
+    <td>
+      <h3>Hunt Missing Content</h3>
+      <ul>
+        <li>📊 <strong>Smart Selection:</strong> Choose between random or sequential processing</li>
+        <li>🔍 <strong>Efficient Refreshing:</strong> Optionally skip metadata refresh to reduce disk I/O</li>
+        <li>🔮 <strong>Future-Aware:</strong> Automatically skip content with future release dates</li>
+        <li>🎯 <strong>Precise Control:</strong> Set exactly how many items to process per cycle</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><h3>3️⃣</h3></td>
+    <td>
+      <h3>Hunt Quality Upgrades</h3>
+      <ul>
+        <li>⬆️ <strong>Quality Improvement:</strong> Find content below your quality cutoff settings</li>
+        <li>📦 <strong>Batch Processing:</strong> Configure exactly how many upgrades to process at once</li>
+        <li>📚 <strong>Large Library Support:</strong> Smart pagination handles even massive libraries</li>
+        <li>🔀 <strong>Flexible Modes:</strong> Choose between random or sequential processing</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><h3>4️⃣</h3></td>
+    <td>
+      <h3>State Management</h3>
+      <ul>
+        <li>📝 <strong>History Tracking:</strong> Remembers which items have been processed</li>
+        <li>💾 <strong>Persistent Storage:</strong> State data is saved in the <code>/config</code> directory</li>
+        <li>⏱️ <strong>Automatic Reset:</strong> State is cleared after your configured time period (default: 7 days)</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><h3>5️⃣</h3></td>
+    <td>
+      <h3>Repeat & Rest</h3>
+      <p>Huntarr waits for your configured interval (adjustable in settings) before starting the next cycle. This ensures your indexers aren't overloaded while maintaining continuous improvement of your library.</p>
+    </td>
+  </tr>
+</table>
 
 <table>
   <tr>
@@ -133,16 +164,6 @@ Huntarr includes a real-time log viewer and settings management web interface th
     </td>
   </tr>
 </table>
-
-### Features
-
-- **Real-time Log Updates**: Logs refresh automatically every second
-- **Day/Night Mode**: Toggle between light and dark themes
-- **Color-coded Log Entries**: Different log levels are displayed in different colors
-- **Auto-scrolling**: Automatically scrolls to the latest log entries
-- **Connection Status**: Shows whether the connection to the log stream is active
-- **Settings Management**: Configure Huntarr directly from the web interface
-- **Persistent Configuration**: All settings are saved to disk and persist across container restarts
 
 ### How to Access
 
