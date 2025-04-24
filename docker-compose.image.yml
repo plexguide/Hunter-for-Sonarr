@@ -1,0 +1,3 @@
+services:
+  huntarr:
+    image: huntarr/huntarr:latest
