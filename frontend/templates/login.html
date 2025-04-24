@@ -122,12 +122,22 @@
                     console.log('Login successful, redirecting to:', data.redirect || '/');
                     window.location.href = data.redirect || '/';
                 } else if (data.requires_2fa) { // Check for requires_2fa field from backend
-                    console.log('Login requires 2FA.');
-                    // Show 2FA input if needed
-                    twoFactorGroup.style.display = 'block';
-                    errorElement.textContent = data.error || 'Please enter your 2FA code'; // Use error message from backend
-                    errorElement.style.display = 'block';
-                    otpInput.focus(); // Focus the OTP input
+                    // 2FA is required
+                    twoFactorGroup.style.display = 'block'; // Ensure 2FA field is visible
+                    if (requestBody.otp_code) {
+                        // 2FA code WAS provided in this request, but was invalid (backend confirmed)
+                        console.log('Login failed: Invalid 2FA code provided.');
+                        errorElement.textContent = data.error || 'Invalid 2FA code'; // Show the specific error from backend
+                        errorElement.style.display = 'block';
+                        otpInput.focus(); // Focus the OTP input again
+                        otpInput.select(); // Select the text for easy replacement
+                    } else {
+                        // 2FA code was NOT provided in this request, this is the first prompt
+                        console.log('Login requires 2FA.');
+                        errorElement.textContent = 'Please enter your 6-digit 2FA code.'; // Show a neutral prompt instead of backend error
+                        errorElement.style.display = 'block'; // Show the prompt
+                        otpInput.focus(); // Focus the OTP input
+                    }
                 } else {
                     // Handle other login failures (e.g., bad password, server error)
                     console.log('Login failed:', data.error || `HTTP error! status: ${status}`);
