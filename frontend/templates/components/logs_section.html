@@ -1,5 +1,14 @@
 <section id="logsSection" class="content-section">
     <div class="section-header">
+        <!-- Add Log Tabs -->
+        <div class="log-tabs">
+            <button class="log-tab active" data-app="all">All</button>
+            <button class="log-tab" data-app="sonarr">Sonarr</button>
+            <button class="log-tab" data-app="radarr">Radarr</button>
+            <button class="log-tab" data-app="lidarr">Lidarr</button>
+            <button class="log-tab" data-app="readarr">Readarr</button>
+            <button class="log-tab" data-app="system">System</button>
+        </div>
         <div class="log-controls">
             <div class="connection-status">
                 Status: <span id="logConnectionStatus" class="status-disconnected">Disconnected</span>
