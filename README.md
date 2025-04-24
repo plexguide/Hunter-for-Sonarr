@@ -50,8 +50,8 @@ For detailed documentation, please visit our [Wiki](https://github.com/plexguide
 ## Other Projects
 
 * [Legacy Huntarr - Radarr Edition](https://github.com/plexguide/Radarr-Hunter) - Sister version for Movies
-* [Huntarr - Lidarr Edition](https://github.com/plexguide/Lidarr-Hunter) - Sister version for Music
-* [Huntarr - Readarr Edition](https://github.com/plexguide/Huntarr-Readarr) - Sister version for Books
+* [Current Huntarr - Lidarr Edition](https://github.com/plexguide/Lidarr-Hunter) - Sister version for Music
+* [Current Huntarr - Readarr Edition](https://github.com/plexguide/Huntarr-Readarr) - Sister version for Books
 * [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
 * Visit [PlexGuide](https://plexguide.com) for more great scripts
 
@@ -265,36 +265,16 @@ docker run -d --name huntarr \
   -e TZ=America/New_York \
   huntarr/huntarr:latest
 ```
-
-## Use Cases
-
-Huntarr serves multiple purposes in maintaining and enhancing your media collection:
-
-- **Complete Your Library**: Automatically search for and download missing content for your media collection
-- **Enhance Media Quality**: Systematically upgrade the quality of your existing content when better versions become available
-- **Process New Additions**: When you add new series or movies, Huntarr will automatically start finding the content
-- **Efficient Resource Usage**: Runs silently in the background with minimal system resources
-- **Smart Content Rotation**: The state tracking system ensures all content gets attention over time, not just recent additions
-- **Real-time Monitoring**: Monitor Huntarr's activity through the intuitive web interface
-- **Reduce Storage Wear**: Options to skip metadata refreshing help reduce unnecessary disk operations
-- **Optimize Searches**: Skip items with future release dates to focus resources on available content
-- **Persistent Settings**: Configure once and forget - all settings persist through container updates
-- **Continuous Operation**: Maintain state across restarts, picking up right where it left off
-
 ## Tips
 
 - **First-Time Setup**: Navigate to the web interface after installation to create your admin account with 2FA option
 - **API Connections**: Configure connections to your *Arr applications through the dedicated settings pages
-- **Search Frequency**: Adjust Sleep Duration (default: 900 seconds) based on your indexer's rate limits
+- **Search Frequency**: Adjust Sleep Duration (default: 900 seconds) based on your indexer's rate limits.
 - **Batch Processing**: Set Hunt Missing and Upgrade values to control how many items are processed per cycle
 - **Queue Management**: Use Minimum Download Queue Size to pause searching when downloads are backed up
 - **Skip Processing**: Enable Skip Series/Movie Refresh to significantly reduce disk I/O and database load
 - **Future Content**: Keep Skip Future Items enabled to avoid searching for unreleased content
 - **Authentication**: Enable two-factor authentication for additional security on your Huntarr instance
-- **Theme Selection**: Toggle between light and dark themes for comfortable viewing in any environment
-- **Logs Access**: View real-time, color-coded logs directly in the web UI for easy troubleshooting
-- **Storage Planning**: Ensure sufficient space in your persistent volume mount for log files and state data
-- **Container Updates**: Use the `latest` tag to automatically receive the newest features and fixes
 
 ## Troubleshooting
 
@@ -304,9 +284,6 @@ Huntarr serves multiple purposes in maintaining and enhancing your media collect
 - **Web Interface Not Loading**: Confirm port 9705 is correctly mapped and not blocked by firewalls
 - **Logs Not Showing**: Check permissions on the `/config/logs/` directory inside your container
 - **Missing State Data**: State files in `/config/stateful/` track processed items; verify permissions
-- **High CPU Usage**: Consider increasing Sleep Duration and enabling Skip Series/Movie Refresh
 - **Docker Volume Issues**: Ensure your volume mount for `/config` has correct permissions and ownership
-- **Slow Performance**: Check the Minimum Download Queue Size setting if downloads are backing up
-- **Interface Rendering**: Try a different browser if the web UI doesn't display correctly
 - **Command Timeouts**: Adjust command_wait_attempts and command_wait_delay in advanced settings
 - **Debug Information**: Enable Debug Mode temporarily to see detailed API responses in the logs
