@@ -255,6 +255,7 @@ docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
   -v /mnt/user/appdata/huntarr:/config \
+  -e TZ=America/New_York \
   huntarr/huntarr:dev
 ```
 
