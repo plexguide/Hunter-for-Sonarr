@@ -117,25 +117,6 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
   </tr>
 </table>
 
-<table>
-  <tr>
-    <td width="50%">
-      <img src="https://github.com/user-attachments/assets/d758b9ae-ecef-4056-ba4e-a7fe363bd182" width="100%"/>
-      <p align="center"><em>Missing Content Demo</em></p>
-    </td>
-    <td width="50%">
-      <img src="https://github.com/user-attachments/assets/923033d5-fb86-4777-952f-638d8503f776" width="100%"/>
-      <p align="center"><em>Quality Upgrade Demo</em></p>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2">
-      <img src="https://github.com/user-attachments/assets/3e95f6d5-4a96-4bb8-a5b9-1d7b871ff94a" width="100%"/>
-      <p align="center"><em>State Management System</em></p>
-    </td>
-  </tr>
-</table>
-
 ## Web Interface
 
 Huntarr includes a real-time log viewer and settings management web interface that allows you to monitor and configure its operation directly from your browser.
