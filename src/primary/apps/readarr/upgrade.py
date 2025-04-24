@@ -66,8 +66,6 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
     
     logger.info(f"Found {len(upgrade_books)} books that need quality upgrades.")
     processed_upgrade_ids = load_processed_ids(PROCESSED_UPGRADE_FILE)
-    books_processed = 0
-    processing_done = False
     
     # Filter out already processed books
     unprocessed_books = [book for book in upgrade_books if book.get("id") not in processed_upgrade_ids]
@@ -92,8 +90,34 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
         logger.info("🔄 Received restart signal before processing books. Aborting...")
         return False
     
+    # Create a list of books to process, limited by HUNT_UPGRADE_BOOKS
+    books_to_process = unprocessed_books[:min(len(unprocessed_books), HUNT_UPGRADE_BOOKS)]
+    
+    # Log a summary of all books that will be processed
+    if books_to_process:
+        logger.info(f"Selected {len(books_to_process)} books for quality upgrades this cycle:")
+        for idx, book in enumerate(books_to_process):
+            title = book.get("title", "Unknown Title")
+            
+            # Get author name
+            author_name = "Unknown Author"
+            if "author" in book and isinstance(book["author"], dict):
+                author_name = book["author"].get("authorName", "Unknown Author")
+            elif "author" in book and isinstance(book["author"], str):
+                author_name = book["author"]
+                
+            # Get quality information
+            quality_name = "Unknown"
+            if "quality" in book and book["quality"]:
+                quality_name = book["quality"].get("quality", {}).get("name", "Unknown")
+                
+            book_id = book.get("id")
+            logger.info(f" {idx+1}. \"{title}\" by {author_name} - Current quality: {quality_name} (ID: {book_id})")
+    
     # Process up to HUNT_UPGRADE_BOOKS books
-    for book in unprocessed_books:
+    books_processed = 0
+    processing_done = False
+    for book in books_to_process:
         # Check for restart signal before each book
         if restart_cycle_flag():
             logger.info("🔄 Received restart signal during book processing. Aborting...")

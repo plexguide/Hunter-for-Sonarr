@@ -146,20 +146,58 @@ def get_logger(app_type: str) -> logging.Logger:
     Returns:
         A logger specific to the app type.
     """
-    # Create a logger with the name "Huntarr" instead of including the app type
-    app_specific_logger = logging.getLogger(f"Huntarr")
-    
-    if app_type in APP_LOG_FILES:
-        log_name = f"huntarr.{app_type}"
-        if log_name not in app_loggers:
-            # Set up the logger if it doesn't exist
-            return setup_logger(app_type=app_type)
+    # Check if we already have this logger configured
+    log_name = f"huntarr.{app_type}"
+    if log_name in app_loggers:
         return app_loggers[log_name]
+    
+    # If not, set up a new logger properly
+    if app_type in APP_LOG_FILES:
+        # Create the logger with the correct name
+        app_logger = logging.getLogger(log_name)
+        
+        # Prevent propagation to avoid duplicate logs
+        app_logger.propagate = False
+        
+        # Get debug mode setting
+        try:
+            from primary import config
+            debug_mode = getattr(config, "DEBUG_MODE", False)
+        except ImportError:
+            debug_mode = False
+            
+        # Set appropriate log level
+        app_logger.setLevel(logging.DEBUG if debug_mode else logging.INFO)
+        
+        # Create console handler
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.DEBUG if debug_mode else logging.INFO)
+        
+        # Create file handler
+        log_file = APP_LOG_FILES[app_type]
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG if debug_mode else logging.INFO)
+        
+        # Set format for this app
+        log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        formatter = logging.Formatter(
+            log_format,
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        
+        console_handler.setFormatter(formatter)
+        file_handler.setFormatter(formatter)
+        
+        # Add handlers
+        app_logger.addHandler(console_handler)
+        app_logger.addHandler(file_handler)
+        
+        # Store in our cache
+        app_loggers[log_name] = app_logger
+        return app_logger
     else:
         # Return the main logger if the app type is not recognized
         return logger
-
-    return app_specific_logger
 
 def debug_log(message: str, data: object = None, app_type: Optional[str] = None) -> None:
     """
