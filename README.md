@@ -4,12 +4,6 @@
   <img src="frontend/static/logo/128.png" alt="Huntarr Logo" width="100" height="100">
 </p>
 
-<p align="center">
-  <a href="https://discord.gg/VQbZCGzQsn" target="_blank">
-    <img src="frontend/static/images/discord.png" alt="Discord" width="48" height="48">
-  </a>
-</p>
-
 ---
 
 <h2 align="center">Want to Help? Click the Star in the Upper-Right Corner! ⭐</h2> 
@@ -29,6 +23,9 @@
 
 ## Table of Contents
 - [Overview](#overview)
+- [Other Projects](#other-projects)
+- [PayPal Donations – For My Daughter's College Fund](#paypal-donations--for-my-daughters-college-fund)
+- [Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
 - [How It Works](#how-it-works)
 - [Web Interface](#web-interface)
   - [How to Access](#how-to-access)
@@ -54,6 +51,14 @@ For detailed documentation, please visit our [Wiki](https://github.com/plexguide
 * [Current Huntarr - Readarr Edition](https://github.com/plexguide/Huntarr-Readarr) - Sister version for Books
 * [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
 * Visit [PlexGuide](https://plexguide.com) for more great scripts
+
+<p align="center">
+  Join the community on Discord!
+  <br>
+  <a href="https://discord.gg/VQbZCGzQsn" target="_blank">
+    <img src="frontend/static/images/discord.png" alt="Discord" width="48" height="48">
+  </a>
+</p>
 
 ## PayPal Donations – For My Daughter's College Fund
 
