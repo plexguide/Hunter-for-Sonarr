@@ -14,10 +14,12 @@
   </tr>
 </table>
  
-* Sonarr [Good]
-* Radarr [Good]
-* Lidarr [Not Ready]
-* Readarr [Not Ready]
+| Application | Status        |
+| :---------- | :------------ |
+| Sonarr      | **✅ Ready**  |
+| Radarr      | **✅ Ready**  |
+| Lidarr      | **❌ Not Ready** |
+| Readarr     | **❌ Not Ready** |
 
 <p align="center">
   <a href="https://discord.gg/VQbZCGzQsn" target="_blank">
