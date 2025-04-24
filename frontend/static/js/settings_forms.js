@@ -281,14 +281,23 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="hunt_missing_albums">Missing Albums to Search:</label>
-                    <input type="number" id="hunt_missing_albums" min="0" value="${settings.hunt_missing_albums || 1}">
-                    <p class="setting-help">Number of missing albums to search per cycle (0 to disable)</p>
+                    <label for="hunt_missing_mode">Missing Search Mode:</label>
+                    <select id="hunt_missing_mode">
+                        <option value="artist" ${settings.hunt_missing_mode === 'album' ? '' : 'selected'}>Artist</option>
+                        <option value="album" ${settings.hunt_missing_mode === 'album' ? 'selected' : ''}>Album</option>
+                    </select>
+                    <p class="setting-help">Whether to search by artist (all missing albums for artist) or individual albums</p>
                 </div>
                 <div class="setting-item">
-                    <label for="hunt_upgrade_tracks">Tracks to Upgrade:</label>
-                    <input type="number" id="hunt_upgrade_tracks" min="0" value="${settings.hunt_upgrade_tracks || 0}">
-                    <p class="setting-help">Number of tracks to search for quality upgrades per cycle (0 to disable)</p>
+                    <label for="hunt_missing_items">Missing Items to Search:</label>
+                    <input type="number" id="hunt_missing_items" min="0" value="${settings.hunt_missing_items || 1}">
+                    <p class="setting-help">Number of artists with missing albums to search per cycle (0 to disable)</p>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="hunt_upgrade_items">Items to Upgrade:</label>
+                    <input type="number" id="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items || 0}">
+                    <p class="setting-help">Number of albums to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
                     <label for="lidarr_sleep_duration">Search Interval:</label>
