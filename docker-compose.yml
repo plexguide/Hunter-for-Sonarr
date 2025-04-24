@@ -1,5 +1,8 @@
 services:
   huntarr:
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: huntarr
     ports:
       - "9705:9705"
