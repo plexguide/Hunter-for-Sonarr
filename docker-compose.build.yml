@@ -1,5 +1,0 @@
-services:
-  huntarr:
-    build:
-      context: .
-      dockerfile: Dockerfile
