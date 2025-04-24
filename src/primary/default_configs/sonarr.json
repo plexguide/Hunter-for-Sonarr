@@ -1,7 +1,7 @@
 {
   "api_url": "",
   "api_key": "",
-  "hunt_missing_shows": 1,
+  "hunt_missing_shows": 5,
   "hunt_upgrade_episodes": 0,
   "sleep_duration": 900,
   "state_reset_interval_hours": 168,
