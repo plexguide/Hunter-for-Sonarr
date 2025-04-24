@@ -327,7 +327,7 @@ sudo systemctl start huntarr
 - **Connection Problems**: Ensure the API URL is accessible from where you're running the application
 - **Login Issues**: If you forget your password, you will need to delete the credentials file at `/config/user/credentials.json` and restart the container
 - **Web Interface Not Loading**: Make sure port 9705 is exposed in your Docker configuration and not blocked by a firewall
-- **Logs**: Check the container logs with `docker logs huntarr` if running in Docker, or use the web interface
+- **Logs**: Check the container logs with `docker logs huntarr` if running in Docker, or check the log files in `/config/logs/` within the container/volume, or use the web interface.
 - **Debug Mode**: Enable Debug Mode in the Advanced Settings to see detailed API responses and process flow
 - **Settings Not Persisting**: Verify your volume mount for `/config` is configured correctly
 - **State Files**: The application stores state in `/config/stateful/` - if something seems stuck, you can try deleting these files

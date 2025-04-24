@@ -10,8 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
 # Create necessary directories
-RUN mkdir -p /config/settings /config/stateful /config/user /tmp/huntarr-logs
-RUN chmod -R 755 /config /tmp/huntarr-logs
+RUN mkdir -p /config/settings /config/stateful /config/user /config/logs
+RUN chmod -R 755 /config
 
 # Set environment variables
 ENV PYTHONPATH=/app
