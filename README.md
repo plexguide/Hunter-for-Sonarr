@@ -20,11 +20,10 @@
 * Readarr [Not Ready]
 
 <p align="center">
-  <img src="frontend/static/images/discord.png" alt="Discord" width="48" height="48">
+  <a href="https://discord.gg/VQbZCGzQsn" target="_blank">
+    <img src="frontend/static/images/discord.png" alt="Discord" width="48" height="48">
+  </a>
 </p>
-
-**Change Log:**
-Visit: https://github.com/plexguide/Huntarr/releases/
 
 ## Table of Contents
 - [Overview](#overview)
@@ -243,3 +242,6 @@ docker run -d --name huntarr \
 - **Docker Volume Issues**: Ensure your volume mount for `/config` has correct permissions and ownership
 - **Command Timeouts**: Adjust command_wait_attempts and command_wait_delay in advanced settings
 - **Debug Information**: Enable Debug Mode temporarily to see detailed API responses in the logs
+
+**Change Log:**
+Visit: https://github.com/plexguide/Huntarr/releases/
