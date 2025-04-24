@@ -24,6 +24,7 @@
 ## Table of Contents
 - [Overview](#overview)
 - [Other Projects](#other-projects)
+- [Community](#community)
 - [PayPal Donations – For My Daughter's College Fund](#paypal-donations--for-my-daughters-college-fund)
 - [Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
 - [How It Works](#how-it-works)
@@ -51,6 +52,8 @@ For detailed documentation, please visit our [Wiki](https://github.com/plexguide
 * [Current Huntarr - Readarr Edition](https://github.com/plexguide/Huntarr-Readarr) - Sister version for Books
 * [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
 * Visit [PlexGuide](https://plexguide.com) for more great scripts
+
+## Community
 
 <p align="center">
   Join the community on Discord!
