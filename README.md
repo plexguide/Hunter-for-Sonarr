@@ -125,7 +125,6 @@ Huntarr includes a real-time log viewer and settings management web interface th
   <tr>
     <td colspan="2"> 
       <img width="100%" alt="image" src="https://github.com/user-attachments/assets/438e2013-2a54-4cf2-8418-63b0c6124730" />
-" />
       <p align="center"><em>Logger UI</em></p>
     </td>
   </tr>
