@@ -1,8 +1,9 @@
 {
   "api_url": "",
   "api_key": "",
-  "hunt_missing_albums": 1,
-  "hunt_upgrade_tracks": 0,
+  "hunt_missing_mode": "artist",
+  "hunt_missing_items": 1,
+  "hunt_upgrade_items": 0,
   "sleep_duration": 900,
   "state_reset_interval_hours": 168,
   "monitored_only": true,

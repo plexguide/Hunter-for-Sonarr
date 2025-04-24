@@ -1,172 +1,172 @@
 #!/usr/bin/env python3
 """
-Quality Upgrade Processing for Lidarr
-Handles searching for tracks/albums that need quality upgrades in Lidarr
+Lidarr cutoff upgrade processing module for Huntarr
+Handles albums that do not meet the configured quality cutoff.
 """
 
-import random
 import time
+import random
 import datetime
-import os
-import json
-from typing import List, Callable, Dict, Optional
+from typing import List, Dict, Any, Set, Callable 
 from src.primary.utils.logger import get_logger
-from src.primary import settings_manager
-from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
-from src.primary.apps.lidarr.api import get_cutoff_unmet_albums, refresh_artist, album_search
+from src.primary.state import load_processed_ids, save_processed_ids, get_state_file_path
+from src.primary.apps.lidarr import api as lidarr_api 
+from src.primary.apps.lidarr.missing import wait_for_command # Reuse wait function
 
-# Get app-specific logger
-logger = get_logger("lidarr")
+# Get logger for the Lidarr app
+lidarr_logger = get_logger("lidarr")
 
-def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
-    """
-    Process tracks that need quality upgrades (cutoff unmet).
-    
-    Args:
-        restart_cycle_flag: Function that returns whether to restart the cycle
-    
-    Returns:
-        True if any processing was done, False otherwise
-    """
-    # Get the current value directly at the start of processing
-    # Use settings_manager directly instead of get_current_upgrade_limit
-    HUNT_UPGRADE_TRACKS = settings_manager.get_setting("lidarr", "hunt_upgrade_tracks", 0)
-    RANDOM_UPGRADES = settings_manager.get_setting("lidarr", "random_upgrades", True)
-    SKIP_ARTIST_REFRESH = settings_manager.get_setting("lidarr", "skip_artist_refresh", False)
-    MONITORED_ONLY = settings_manager.get_setting("lidarr", "monitored_only", True)
-    
-    # Get app-specific state file
-    PROCESSED_UPGRADE_FILE = get_state_file_path("lidarr", "processed_upgrades")
+# State file for processed upgrades (stores album IDs)
+PROCESSED_UPGRADES_FILE = get_state_file_path("lidarr", "processed_upgrades")
 
-    logger.info("=== Checking for Quality Upgrades (Cutoff Unmet) ===")
+def process_cutoff_upgrades(
+    app_settings: Dict[str, Any], 
+    stop_check: Callable[[], bool] 
+) -> bool: 
+    """Process cutoff unmet albums in Lidarr for quality upgrades."""
+    lidarr_logger.info("Starting cutoff upgrade processing cycle for Lidarr.")
+    processed_any = False 
 
-    # Skip if HUNT_UPGRADE_TRACKS is set to 0
-    if HUNT_UPGRADE_TRACKS <= 0:
-        logger.info("HUNT_UPGRADE_TRACKS is set to 0, skipping quality upgrades")
+    # Extract necessary settings
+    api_url = app_settings.get("api_url")
+    api_key = app_settings.get("api_key")
+    api_timeout = app_settings.get("api_timeout", 90) # Lidarr can be slower
+    monitored_only = app_settings.get("monitored_only", True)
+    skip_future_releases = app_settings.get("skip_future_releases", True)
+    skip_artist_refresh = app_settings.get("skip_artist_refresh", False) # Reuse setting name
+    random_upgrades = app_settings.get("random_upgrades", True) # Default random to True?
+    # Use hunt_upgrade_items as the setting name
+    hunt_upgrade_items = app_settings.get("hunt_upgrade_items", 0) 
+    command_wait_delay = app_settings.get("command_wait_delay", 5)
+    command_wait_attempts = app_settings.get("command_wait_attempts", 120) # Increase wait for Lidarr?
+
+    if not api_url or not api_key:
+        lidarr_logger.error("API URL or Key not configured. Cannot process upgrades.")
         return False
 
-    # Check for restart signal
-    if restart_cycle_flag():
-        logger.info("🔄 Received restart signal before starting quality upgrades. Aborting...")
+    if hunt_upgrade_items <= 0:
+        lidarr_logger.info("'hunt_upgrade_items' setting is 0 or less. Skipping upgrade processing.")
         return False
-    
-    # Get albums needing quality upgrades
-    logger.info("Retrieving albums that need quality upgrades...")
-    upgrade_albums = get_cutoff_unmet_albums()
-    
-    if not upgrade_albums:
-        logger.info("No albums found that need quality upgrades.")
+
+    # Load already processed album IDs for upgrades
+    processed_upgrade_ids: Set[int] = set(load_processed_ids(PROCESSED_UPGRADES_FILE))
+    lidarr_logger.debug(f"Loaded {len(processed_upgrade_ids)} processed upgrade album IDs for Lidarr.")
+
+    # Get cutoff unmet albums from Lidarr API
+    cutoff_unmet_albums = lidarr_api.get_cutoff_unmet_albums(api_url, api_key, api_timeout, monitored_only)
+    if cutoff_unmet_albums is None: # API call failed
+         lidarr_logger.error("Failed to get cutoff unmet albums from Lidarr API.")
+         return False
+         
+    lidarr_logger.info(f"Received {len(cutoff_unmet_albums)} cutoff unmet albums from Lidarr API (after monitored filter if applied).")
+    if not cutoff_unmet_albums:
+        lidarr_logger.info("No cutoff unmet albums found in Lidarr requiring processing.")
         return False
-    
-    # Check for restart signal after retrieving albums
-    if restart_cycle_flag():
-        logger.info("🔄 Received restart signal after retrieving upgrade albums. Aborting...")
+
+    if stop_check(): lidarr_logger.info("Stop requested during upgrade processing."); return processed_any
+
+    # Filter out already processed albums for upgrades
+    albums_to_consider = [album for album in cutoff_unmet_albums if album['id'] not in processed_upgrade_ids]
+    lidarr_logger.info(f"Found {len(albums_to_consider)} new cutoff unmet albums to process for upgrades.")
+
+    # Filter out future releases if configured
+    if skip_future_releases:
+        now = datetime.datetime.now(datetime.timezone.utc) # Use timezone-aware comparison
+        original_count = len(albums_to_consider)
+        
+        filtered_albums = []
+        for album in albums_to_consider:
+            release_date_str = album.get('releaseDate')
+            if release_date_str:
+                try:
+                    # Handle both YYYY-MM-DD and ISO-8601 format with Z timezone
+                    if 'T' in release_date_str:  # ISO-8601 format like 2014-06-10T00:00:00Z
+                        # Remove the Z and parse with proper format
+                        date_str = release_date_str.rstrip('Z')
+                        release_date = datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
+                    else:  # Simple date format YYYY-MM-DD
+                        release_date = datetime.datetime.strptime(release_date_str, '%Y-%m-%d').replace(tzinfo=datetime.timezone.utc)
+                    
+                    if release_date < now:
+                        filtered_albums.append(album)
+                    # else: # Debug logging for skipped future albums
+                    #     lidarr_logger.debug(f"Skipping future album ID {album.get('id')} ('{album.get('title')}') for upgrade with release date {release_date_str}")
+                except ValueError as e:
+                    lidarr_logger.warning(f"Could not parse release date '{release_date_str}' for upgrade album ID {album.get('id')}. Error: {e}. Including it anyway.")
+                    filtered_albums.append(album)
+            else:
+                 filtered_albums.append(album) # Include albums without a release date
+
+        albums_to_consider = filtered_albums
+        skipped_count = original_count - len(albums_to_consider)
+        if skipped_count > 0:
+            lidarr_logger.info(f"Skipped {skipped_count} future albums based on release date for upgrades.")
+
+
+    if not albums_to_consider:
+        lidarr_logger.info("No cutoff unmet albums left to process for upgrades after filtering.")
         return False
-    
-    logger.info(f"Found {len(upgrade_albums)} albums that need quality upgrades.")
-    processed_upgrade_ids = load_processed_ids(PROCESSED_UPGRADE_FILE)
-    albums_processed = 0
-    processing_done = False
-    
-    # Filter out already processed albums
-    unprocessed_albums = [album for album in upgrade_albums if album.get("id") not in processed_upgrade_ids]
-    
-    if not unprocessed_albums:
-        logger.info("All upgrade albums have already been processed. Skipping.")
-        return False
-    
-    logger.info(f"Found {len(unprocessed_albums)} upgrade albums that haven't been processed yet.")
-    
-    # Randomize if requested
-    if RANDOM_UPGRADES:
-        logger.info("Using random selection for quality upgrades (RANDOM_UPGRADES=true)")
-        random.shuffle(unprocessed_albums)
+
+    # Select albums to search based on configuration
+    if random_upgrades:
+        lidarr_logger.debug(f"Randomly selecting up to {hunt_upgrade_items} cutoff unmet albums for upgrade search.")
+        albums_to_search = random.sample(albums_to_consider, min(len(albums_to_consider), hunt_upgrade_items))
     else:
-        logger.info("Using sequential selection for quality upgrades (RANDOM_UPGRADES=false)")
-        # Sort by title for consistent ordering
-        unprocessed_albums.sort(key=lambda x: x.get("title", ""))
-    
-    # Check for restart signal before processing albums
-    if restart_cycle_flag():
-        logger.info("🔄 Received restart signal before processing albums. Aborting...")
+        # Sort by release date? Or artist name? Let's stick to API order for now (artist name default)
+        lidarr_logger.debug(f"Selecting the first {hunt_upgrade_items} cutoff unmet albums for upgrade search.")
+        albums_to_search = albums_to_consider[:hunt_upgrade_items]
+
+    album_ids_to_search = [album['id'] for album in albums_to_search]
+
+    if not album_ids_to_search:
+        lidarr_logger.info("No albums selected for upgrade search.")
         return False
-    
-    # Process up to HUNT_UPGRADE_TRACKS albums
-    for album in unprocessed_albums:
-        # Check for restart signal before each album
-        if restart_cycle_flag():
-            logger.info("🔄 Received restart signal during album processing. Aborting...")
-            break
-        
-        # Check again for the current limit in case it was changed during processing
-        # Use settings_manager directly instead of get_current_upgrade_limit
-        current_limit = settings_manager.get_setting("lidarr", "hunt_upgrade_tracks", 0)
-        
-        if albums_processed >= current_limit:
-            logger.info(f"Reached HUNT_UPGRADE_TRACKS={current_limit} for this cycle.")
-            break
-        
-        album_id = album.get("id")
-        title = album.get("title", "Unknown Title")
-        artist_id = album.get("artistId")
-        artist_name = "Unknown Artist"
-        
-        # Look for artist name in the album
-        if "artist" in album and isinstance(album["artist"], dict):
-            artist_name = album["artist"].get("artistName", "Unknown Artist")
-        elif "artist" in album and isinstance(album["artist"], str):
-            artist_name = album["artist"]
-        
-        # Get quality information
-        quality_info = ""
-        if "quality" in album and album["quality"]:
-            quality_name = album["quality"].get("quality", {}).get("name", "Unknown")
-            quality_info = f" (Current quality: {quality_name})"
-        
-        logger.info(f"Processing quality upgrade for: \"{title}\" by {artist_name}{quality_info} (Album ID: {album_id})")
-        
-        # Refresh the artist information if SKIP_ARTIST_REFRESH is false
-        if not SKIP_ARTIST_REFRESH and artist_id is not None:
-            logger.info(" - Refreshing artist information...")
-            refresh_res = refresh_artist(artist_id)
-            if not refresh_res:
-                logger.warning("WARNING: Refresh command failed. Skipping this album.")
-                continue
-            logger.info(f"Refresh command completed successfully.")
-            
-            # Small delay after refresh to allow Lidarr to process
-            time.sleep(2)
+
+    lidarr_logger.info(f"Selected {len(album_ids_to_search)} cutoff unmet albums to search for upgrades: {album_ids_to_search}")
+
+    processed_in_this_run = set()
+
+    # Optional: Refresh artists for selected albums before searching?
+    if not skip_artist_refresh:
+         artist_ids_to_refresh = {album['artistId'] for album in albums_to_search if album.get('artistId')}
+         lidarr_logger.info(f"Refreshing {len(artist_ids_to_refresh)} artists related to selected upgrade albums (skip_artist_refresh=False).")
+         for artist_id in artist_ids_to_refresh:
+             if stop_check(): lidarr_logger.info("Stop requested during artist refresh for upgrades."); break
+             lidarr_logger.debug(f"Attempting to refresh artist ID: {artist_id} before upgrade search.")
+             refresh_command = lidarr_api.refresh_artist(api_url, api_key, api_timeout, artist_id)
+             if refresh_command and refresh_command.get('id'):
+                 # Don't wait excessively long
+                 wait_for_command(api_url, api_key, api_timeout, refresh_command['id'], command_wait_delay, 10, f"RefreshArtist {artist_id} (Upgrade)", stop_check, log_success=False)
+             else:
+                 lidarr_logger.warning(f"Failed to trigger RefreshArtist command for artist ID: {artist_id} before upgrade search.")
+         if stop_check(): lidarr_logger.info("Stop requested after artist refresh for upgrades."); return processed_any # Exit if stopped
+
+
+    # Trigger Album Search for the selected batch
+    lidarr_logger.debug(f"Attempting AlbumSearch for upgrade album IDs: {album_ids_to_search}")
+    search_command = lidarr_api.search_albums(api_url, api_key, api_timeout, album_ids_to_search)
+
+    if search_command and search_command.get('id'):
+        if wait_for_command(
+            api_url, api_key, api_timeout, search_command['id'],
+            command_wait_delay, command_wait_attempts, f"AlbumSearch (Upgrade) {len(album_ids_to_search)} albums", stop_check
+        ):
+            # Mark albums as processed for upgrades if search command completed successfully
+            processed_in_this_run.update(album_ids_to_search)
+            processed_any = True 
+            lidarr_logger.info(f"Successfully processed upgrade search for {len(album_ids_to_search)} albums.")
         else:
-            reason = "SKIP_ARTIST_REFRESH=true" if SKIP_ARTIST_REFRESH else "artist_id is None"
-            logger.info(f" - Skipping artist refresh ({reason})")
-        
-        # Check for restart signal before searching
-        if restart_cycle_flag():
-            logger.info(f"🔄 Received restart signal before searching for {title}. Aborting...")
-            break
-        
-        # Search for the album
-        logger.info(" - Searching for quality upgrade...")
-        search_res = album_search([album_id])
-        if search_res:
-            logger.info(f"Search command completed successfully.")
-            # Mark as processed
-            save_processed_id(PROCESSED_UPGRADE_FILE, album_id)
-            albums_processed += 1
-            processing_done = True
-            
-            # Log with the current limit, not the initial one
-            # Use settings_manager directly instead of get_current_upgrade_limit
-            current_limit = settings_manager.get_setting("lidarr", "hunt_upgrade_tracks", 0)
-            logger.info(f"Processed {albums_processed}/{current_limit} upgrade albums this cycle.")
-        else:
-            logger.warning(f"WARNING: Search command failed for album ID {album_id}.")
-            continue
-    
-    # Log final status
-    # Use settings_manager directly instead of get_current_upgrade_limit
-    current_limit = settings_manager.get_setting("lidarr", "hunt_upgrade_tracks", 0)
-    logger.info(f"Completed processing {albums_processed} upgrade albums for this cycle.")
-    truncate_processed_list(PROCESSED_UPGRADE_FILE)
-    
-    return processing_done
+            lidarr_logger.warning(f"Album upgrade search command (ID: {search_command['id']}) did not complete successfully or timed out. Albums will not be marked as processed for upgrades yet.")
+    else:
+        lidarr_logger.error(f"Failed to trigger upgrade search command (AlbumSearch) for albums {album_ids_to_search}.")
+
+    # Update the set of processed upgrade album IDs and save to state file
+    if processed_in_this_run:
+        updated_processed_ids = processed_upgrade_ids.union(processed_in_this_run)
+        save_processed_ids(PROCESSED_UPGRADES_FILE, list(updated_processed_ids))
+        lidarr_logger.info(f"Saved {len(processed_in_this_run)} newly processed upgrade album IDs for Lidarr. Total processed for upgrades: {len(updated_processed_ids)}.")
+    elif processed_any:
+        lidarr_logger.info("Attempted upgrade processing, but no new albums were marked as successfully processed.")
+
+    lidarr_logger.info("Finished cutoff upgrade processing cycle for Lidarr.")
+    return processed_any

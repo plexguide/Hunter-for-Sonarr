@@ -29,9 +29,14 @@ def determine_hunt_mode(app_name: str) -> str:
     elif app_name == "radarr":
         hunt_missing = settings_manager.get_setting(app_name, "hunt_missing_movies", 0)
         hunt_upgrade = settings_manager.get_setting(app_name, "hunt_upgrade_movies", 0)
-    elif app_name == "lidarr":
-        hunt_missing = settings_manager.get_setting(app_name, "hunt_missing_albums", 0)
-        hunt_upgrade = settings_manager.get_setting(app_name, "hunt_upgrade_tracks", 0)
+    elif app_name.lower() == 'lidarr':
+        # Use hunt_missing_items instead of hunt_missing_albums
+        hunt_missing = settings_manager.get_setting(app_name, "hunt_missing_items", 0)
+        # Use hunt_upgrade_items instead of hunt_upgrade_albums
+        hunt_upgrade = settings_manager.get_setting(app_name, "hunt_upgrade_items", 0) 
+        
+        # For Lidarr, also include the hunt_missing_mode
+        hunt_missing_mode = settings_manager.get_setting(app_name, "hunt_missing_mode", "artist")
     elif app_name == "readarr":
         hunt_missing = settings_manager.get_setting(app_name, "hunt_missing_books", 0)
         hunt_upgrade = settings_manager.get_setting(app_name, "hunt_upgrade_books", 0)
@@ -130,11 +135,15 @@ def log_configuration(app_name: str):
         log.info(f"Hunt Upgrade Movies: {settings.get('hunt_upgrade_movies', 0)}")
         log.info(f"Skip Future Releases: {settings.get('skip_future_releases', True)}")
         log.info(f"Skip Movie Refresh: {settings.get('skip_movie_refresh', False)}")
-    elif app_name == "lidarr":
-        log.info(f"Hunt Missing Albums: {settings.get('hunt_missing_albums', 0)}")
-        log.info(f"Hunt Upgrade Tracks: {settings.get('hunt_upgrade_tracks', 0)}")
-        log.info(f"Skip Future Releases: {settings.get('skip_future_releases', True)}")
-        log.info(f"Skip Artist Refresh: {settings.get('skip_artist_refresh', False)}")
+    elif app_name.lower() == 'lidarr':
+        log.info(f"Mode: {settings.get('hunt_missing_mode', 'artist')}")
+        log.info(f"Hunt Missing Items: {settings.get('hunt_missing_items', 0)}")
+        # Use hunt_upgrade_items
+        log.info(f"Hunt Upgrade Items: {settings.get('hunt_upgrade_items', 0)}") 
+        log.info(f"Sleep Duration: {settings.get('sleep_duration', 900)} seconds")
+        log.info(f"State Reset Interval: {settings.get('state_reset_interval_hours', 168)} hours")
+        log.info(f"Monitored Only: {settings.get('monitored_only', True)}")
+        log.info(f"Minimum Download Queue Size: {settings.get('minimum_download_queue_size', -1)}")
     elif app_name == "readarr":
         log.info(f"Hunt Missing Books: {settings.get('hunt_missing_books', 0)}")
         log.info(f"Hunt Upgrade Books: {settings.get('hunt_upgrade_books', 0)}")
