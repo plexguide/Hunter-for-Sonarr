@@ -24,8 +24,6 @@ Visit: https://github.com/plexguide/Huntarr/releases/
 
 ## Table of Contents
 - [Overview](#overview)
-- [Other Projects](#other-projects)
-- [Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
 - [How It Works](#how-it-works)
 - [Web Interface](#web-interface)
   - [How to Access](#how-to-access)
@@ -158,7 +156,7 @@ The web interface allows you to configure all of Huntarr's settings:
 To ensure data persistence, make sure you map the `/config` directory to a persistent volume on your host system:
 
 ```bash
--v /mnt/user/appdata/huntarr:/config
+-v /your-path/appdata/huntarr:/config
 ```
 
 ---
@@ -173,7 +171,7 @@ The simplest way to run Huntarr is via Docker (all configuration is done via the
 docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
-  -v /mnt/user/appdata/huntarr:/config \
+  -v /your-path/huntarr:/config \
   -e TZ=America/New_York \
   huntarr/huntarr:latest
 ```
@@ -196,7 +194,7 @@ services:
     ports:
       - "9705:9705"
     volumes:
-      - /mnt/user/appdata/huntarr:/config
+      - /your-path/huntarr:/config
     environment:
       - TZ=America/New_York
 ```
