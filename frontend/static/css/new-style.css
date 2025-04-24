@@ -478,6 +478,79 @@ input:checked + .slider:before {
     color: white;
 }
 
+.log-tabs {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 15px; /* Add some space below the tabs */
+}
+
+.log-tab {
+    padding: 8px 20px;
+    background-color: var(--bg-tertiary);
+    border: none;
+    border-radius: 20px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.3s;
+    cursor: pointer; /* Add cursor pointer */
+}
+
+.log-tab.active {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.log-tab:hover {
+    background-color: var(--accent-hover);
+    color: white;
+}
+
+/* Adjust log controls layout if needed */
+.log-controls {
+    display: flex;
+    justify-content: flex-end; /* Align controls to the right */
+    align-items: center;
+    gap: 15px;
+    flex-grow: 1; /* Allow controls to take remaining space */
+}
+
+/* Ensure section header handles flex layout properly */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.app-tabs, .log-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.app-tab, .settings-tab {
+    padding: 8px 20px;
+    background-color: var(--bg-tertiary);
+    border: none;
+    border-radius: 20px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.app-tab.active, .settings-tab.active {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.app-tab:hover, .settings-tab:hover {
+    background-color: var(--accent-hover);
+    color: white;
+}
+
 .log-options {
     display: flex;
     align-items: center;

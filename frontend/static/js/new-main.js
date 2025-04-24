@@ -8,6 +8,7 @@ const huntarrUI = {
     currentSection: 'home',
     currentApp: 'sonarr',
     currentSettingsTab: 'sonarr',
+    currentLogApp: 'sonarr', // Added currentLogApp to track the selected log tab
     autoScroll: true,
     darkMode: false,
     eventSources: {},
@@ -61,8 +62,9 @@ const huntarrUI = {
         this.elements.logsSection = document.getElementById('logsSection');
         this.elements.settingsSection = document.getElementById('settingsSection');
         
-        // App tabs
-        this.elements.appTabs = document.querySelectorAll('.app-tab');
+        // App tabs & Settings Tabs
+        this.elements.appTabs = document.querySelectorAll('.app-tab'); // For logs section
+        this.elements.logTabs = document.querySelectorAll('.log-tab'); // Added log tabs
         this.elements.settingsTabs = document.querySelectorAll('.settings-tab');
         this.elements.appSettingsPanels = document.querySelectorAll('.app-settings-panel');
         
@@ -107,6 +109,11 @@ const huntarrUI = {
         // Settings tabs
         this.elements.settingsTabs.forEach(tab => {
             tab.addEventListener('click', this.handleSettingsTabChange.bind(this));
+        });
+        
+        // Log tabs (New)
+        this.elements.logTabs.forEach(tab => {
+            tab.addEventListener('click', this.handleLogTabChange.bind(this));
         });
         
         // Logs
@@ -307,6 +314,23 @@ const huntarrUI = {
         this.connectToLogs();
     },
     
+    // Log tab switching (New)
+    handleLogTabChange: function(e) {
+        const app = e.target.getAttribute('data-app');
+        if (!app || app === this.currentLogApp) return; // Do nothing if same tab clicked
+        
+        // Update active tab
+        this.elements.logTabs.forEach(tab => {
+            tab.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        // Switch to the selected app logs
+        this.currentLogApp = app;
+        this.clearLogs(); // Clear existing logs before switching
+        this.connectToLogs(); // Reconnect to the new log source
+    },
+
     // Settings tab switching
     handleSettingsTabChange: function(e) {
         const tab = e.target.getAttribute('data-settings');
@@ -341,20 +365,21 @@ const huntarrUI = {
         // Disconnect any existing event sources
         this.disconnectAllEventSources();
         
-        // Connect to unified logs stream
-        this.connectEventSource();
+        // Connect to logs stream for the currentLogApp
+        this.connectEventSource(this.currentLogApp); // Pass the selected app
         this.elements.logConnectionStatus.textContent = 'Connecting...';
         this.elements.logConnectionStatus.className = '';
     },
     
-    connectEventSource: function() {
+    connectEventSource: function(appType = 'all') { // Default to 'all', accept appType
         // Close any existing event source
         if (this.eventSources.logs) {
             this.eventSources.logs.close();
         }
         
         try {
-            const eventSource = new EventSource(`/logs`);
+            // Append the app type to the URL
+            const eventSource = new EventSource(`/logs?app=${appType}`); 
             
             eventSource.onopen = () => {
                 this.elements.logConnectionStatus.textContent = 'Connected';
@@ -362,17 +387,21 @@ const huntarrUI = {
             };
             
             eventSource.onmessage = (event) => {
+                if (!this.elements.logsContainer) return;
+                
                 const logEntry = document.createElement('div');
                 logEntry.className = 'log-entry';
                 
                 // Add appropriate class for log level
-                if (event.data.includes(' - INFO - ')) {
+                // Simplified check - adjust if log format changes
+                const lowerData = event.data.toLowerCase();
+                if (lowerData.includes('info')) {
                     logEntry.classList.add('log-info');
-                } else if (event.data.includes(' - WARNING - ')) {
+                } else if (lowerData.includes('warning')) {
                     logEntry.classList.add('log-warning');
-                } else if (event.data.includes(' - ERROR - ')) {
+                } else if (lowerData.includes('error')) {
                     logEntry.classList.add('log-error');
-                } else if (event.data.includes(' - DEBUG - ')) {
+                } else if (lowerData.includes('debug')) {
                     logEntry.classList.add('log-debug');
                 }
                 
@@ -391,8 +420,9 @@ const huntarrUI = {
                 
                 // Try to reconnect after a delay
                 setTimeout(() => {
+                    // Only reconnect if the logs section is still active
                     if (this.currentSection === 'logs') {
-                        this.connectEventSource();
+                        this.connectEventSource(this.currentLogApp); // Use current app type
                     }
                 }, 5000);
             };

@@ -4,10 +4,13 @@ Web server for Huntarr
 Provides a web interface to view logs in real-time, manage settings, and includes authentication
 """
 
+import asyncio
 import os
-import time
 import datetime
-import pathlib
+from threading import Lock
+from primary.utils.logger import LOG_DIR, APP_LOG_FILES, MAIN_LOG_FILE # Import log constants
+from primary import settings_manager # Import settings_manager
+
 # import socket # No longer used
 import json
 # import signal # No longer used for reload
@@ -51,20 +54,20 @@ app.register_blueprint(common_bp)
 # Removed MAIN_PID and signal-related code
 
 # Lock for accessing the log files
-log_lock = threading.Lock()
+log_lock = Lock()
 
-# Root directory for log files - Removed, now imported from logger
-# LOG_DIR = "/tmp/huntarr-logs"
+# Define known log files based on logger config
+KNOWN_LOG_FILES = {
+    "sonarr": APP_LOG_FILES.get("sonarr"),
+    "radarr": APP_LOG_FILES.get("radarr"),
+    "lidarr": APP_LOG_FILES.get("lidarr"),
+    "readarr": APP_LOG_FILES.get("readarr"),
+    "system": MAIN_LOG_FILE, # Map 'system' to the main huntarr log
+}
+# Filter out None values if an app log file doesn't exist
+KNOWN_LOG_FILES = {k: v for k, v in KNOWN_LOG_FILES.items() if v}
 
-# Removed LOG_REFRESH_INTERVAL - fetch from settings if needed per request
-
-# Removed get_main_process_pid and trigger_settings_reload functions
-
-@app.before_request
-def before_request():
-    auth_result = authenticate_request()
-    if auth_result:
-        return auth_result
+ALL_APP_LOG_FILES = list(KNOWN_LOG_FILES.values()) # List of all individual log file paths
 
 @app.route('/')
 def home():
@@ -83,86 +86,98 @@ def logs_stream():
     """
     Event stream for logs.
     Filter logs by app type using the 'app' query parameter.
+    Supports 'all', 'system', 'sonarr', 'radarr', 'lidarr', 'readarr'.
     Example: /logs?app=sonarr
     """
-    app_type = request.args.get('app', 'sonarr')  # Default to sonarr if no app specified
-    web_logger = get_logger("web_server") # Use a logger for web server messages
+    app_type = request.args.get('app', 'all')  # Default to 'all' if no app specified
+    web_logger = get_logger("web_server")
 
-    # Validate app_type
-    if app_type not in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
-        web_logger.warning(f"Invalid app type '{app_type}' requested for logs. Defaulting to 'sonarr'.")
-        app_type = 'sonarr'  # Default to sonarr for invalid app types
+    valid_app_types = list(KNOWN_LOG_FILES.keys()) + ['all']
+    if app_type not in valid_app_types:
+        web_logger.warning(f"Invalid app type '{app_type}' requested for logs. Defaulting to 'all'.")
+        app_type = 'all'
 
-    log_file_path = LOG_DIR / f"huntarr-{app_type}.log" # Use imported LOG_DIR
-    web_logger.info(f"Starting log stream for {app_type} from {log_file_path}")
+    web_logger.info(f"Starting log stream for app type: {app_type}")
 
     def generate():
+        """Generate log events for the SSE stream."""
         try:
-            if not log_file_path.exists():
-                # Create the file if it doesn't exist
-                web_logger.info(f"Log file {log_file_path} not found. Creating.")
-                log_file_path.touch()
-                with open(log_file_path, 'a') as f:
-                    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    f.write(f"{timestamp} - {app_type.upper()} - INFO - Log file created\n")
-
-            # Initial position - start near the end (e.g., last 10KB or 100 lines)
-            # Reading the whole file initially can be slow for large logs
-            initial_lines = []
-            try:
-                with open(log_file_path, 'rb') as f:
-                    f.seek(0, os.SEEK_END)
-                    end_pos = f.tell()
-                    f.seek(max(0, end_pos - 10240), os.SEEK_SET) # Read last 10KB approx
-                    initial_content = f.read().decode('utf-8', errors='ignore')
-                    initial_lines = initial_content.splitlines(True)[-100:] # Get last 100 lines
-                    pos = end_pos
-            except Exception as e:
-                 web_logger.error(f"Error reading initial log content: {e}")
-                 pos = 0 # Start from beginning on error
-
-            # Send initial lines
-            for line in initial_lines:
-                 yield f"data: {line.strip()}\n\n"
-
-            while True:
-                # Check if file still exists (it might be rotated)
-                if not log_file_path.exists():
-                    web_logger.warning(f"Log file {log_file_path} disappeared. Stopping stream.")
-                    break
-
-                current_pos = 0
-                lines = []
-                try:
-                    with log_lock:
-                        with open(log_file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                            f.seek(pos)
-                            lines = f.readlines()
-                            current_pos = f.tell()
-                except FileNotFoundError:
-                     web_logger.warning(f"Log file {log_file_path} disappeared during read. Stopping stream.")
-                     break
-                except Exception as e:
-                     web_logger.error(f"Error reading log file {log_file_path}: {e}")
-                     # Decide whether to break or wait and retry
-                     time.sleep(5)
-                     continue
-
-                if lines:
-                    pos = current_pos
-                    for line in lines:
-                        yield f"data: {line.strip()}\n\n"
+            # Determine which log files to follow
+            if app_type == 'all':
+                log_files_to_follow = list(KNOWN_LOG_FILES.items())
+            else:
+                log_file = KNOWN_LOG_FILES.get(app_type)
+                if log_file:
+                    log_files_to_follow = [(app_type, log_file)]
                 else:
-                    # No new lines, wait a bit
-                    # Fetch interval from settings dynamically if desired
-                    # log_refresh_interval = settings_manager.get_setting(app_type, "log_refresh_interval_seconds", 1)
-                    time.sleep(1) # Check every second
+                    web_logger.warning(f"No log file found for app type: {app_type}")
+                    yield f"data: No logs available for {app_type}\n\n"
+                    return
 
+            # Send a connection confirmation message
+            yield f"data: Starting log stream for {app_type}...\n\n"
+
+            # Track file positions for each log
+            positions = {}
+            last_check = {}
+
+            # Main log streaming loop
+            while True:
+                had_content = False
+                for name, path in log_files_to_follow:
+                    try:
+                        # Skip checking too frequently to reduce CPU usage
+                        now = datetime.datetime.now()
+                        if name in last_check and (now - last_check[name]).total_seconds() < 0.2:
+                            continue
+                        
+                        last_check[name] = now
+                        
+                        # Check if file exists
+                        if not os.path.exists(path):
+                            continue
+
+                        # Get current size to detect truncation
+                        current_size = os.path.getsize(path)
+                        
+                        # Initialize position if needed or handle truncation
+                        if name not in positions or current_size < positions[name]:
+                            positions[name] = 0
+                            
+                            # For initial connection, start from end minus 10KB
+                            if name not in positions:
+                                positions[name] = max(0, current_size - 10240)
+                                
+                        # Read new content
+                        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                            f.seek(positions[name])
+                            new_lines = f.readlines()
+                            if new_lines:
+                                had_content = True
+                                positions[name] = f.tell()
+                                for line in new_lines:
+                                    yield f"data: {line.strip()}\n\n"
+                    except Exception as e:
+                        web_logger.error(f"Error reading log file {path}: {e}")
+                        yield f"data: ERROR: Problem reading {name} log: {str(e)}\n\n"
+                        # Reset position on error
+                        positions.pop(name, None)
+                
+                # If no content was found, wait before checking again
+                if not had_content:
+                    # This is crucial - yield blank data to keep connection alive
+                    yield f"data: \n\n"
+                    time.sleep(0.5)
+        except GeneratorExit:
+            web_logger.info(f"Client disconnected from log stream for {app_type}")
         except Exception as e:
-            web_logger.error(f"Error in log stream generator for {app_type}: {e}", exc_info=True)
-        finally:
-            web_logger.info(f"Stopping log stream for {app_type}")
+            web_logger.error(f"Error in log stream generator: {e}", exc_info=True)
+            yield f"data: ERROR: Log streaming failed: {str(e)}\n\n"
 
+    # Make sure we import time module for sleep
+    import time
+    
+    # Return the SSE response
     return Response(generate(), mimetype='text/event-stream')
 
 @app.route('/api/settings', methods=['GET', 'POST'])
