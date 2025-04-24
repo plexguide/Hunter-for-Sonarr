@@ -354,6 +354,7 @@
                 // Create user account with improved error handling
                 fetch('/setup', { // Corrected endpoint from /api/setup to /setup
                     method: 'POST',
+                    redirect: 'error', // Add this line to prevent following redirects
                     headers: {
                         'Content-Type': 'application/json'
                     },

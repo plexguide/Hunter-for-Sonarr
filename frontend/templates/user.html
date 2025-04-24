@@ -564,7 +564,8 @@
                             }, 3000); // 3-second delay
 
                         } else {
-                            statusElement.textContent = data.message || 'Failed to update password';
+                            // Use error message from backend if available
+                            statusElement.textContent = data.error || 'Failed to update password'; // Use data.error
                             statusElement.className = 'status-error';
                             statusElement.style.display = 'block'; // Show error
                             // Keep error message displayed longer if needed

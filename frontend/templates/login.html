@@ -115,13 +115,13 @@
                     console.log('Login response ok:', response.ok);
                     // Check if the response is ok before trying to parse JSON
                     if (!response.ok) {
-                        // Attempt to parse error from JSON response body
+                        // Attempt to parse error from JSON response body, especially for 401
                         return response.json().then(errData => {
                             console.error('Login failed (server error):', errData);
                             // Throw an error with the message from the backend
                             throw new Error(errData.error || errData.message || `Server error: ${response.status}`);
-                        }).catch(() => {
-                            console.error('Login failed (non-JSON server error):', response.status);
+                        }).catch((parseError) => { // Catch potential JSON parsing errors
+                            console.error('Login failed (non-JSON server error or parse error):', response.status, parseError);
                             // Fallback if response is not JSON or parsing fails
                             throw new Error(`HTTP error! status: ${response.status}`);
                         });

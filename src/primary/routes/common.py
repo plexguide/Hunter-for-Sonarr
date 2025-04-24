@@ -10,7 +10,7 @@ import io
 import qrcode
 import pyotp
 import logging
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for, make_response
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for, make_response, session # Import session
 from src.primary import settings_manager # Use the updated settings manager
 from src.primary.utils.logger import get_logger # Import get_logger
 from src.primary.auth import (create_user, user_exists, verify_user, 
@@ -19,8 +19,7 @@ from src.primary.auth import (create_user, user_exists, verify_user,
                             change_username as auth_change_username, 
                             change_password as auth_change_password, 
                             get_username_from_session, SESSION_COOKIE_NAME, 
-                            set_session_cookie, clear_session_cookie, 
-                            get_user_info, validate_password_strength) # Import validate_password_strength
+                            validate_password_strength, create_session, logout, verify_session, disable_2fa_with_password_and_otp) # Import validate_password_strength, create_session, logout, verify_session, disable_2fa_with_password_and_otp
 
 # Get logger for common routes
 logger = logging.getLogger("common_routes")

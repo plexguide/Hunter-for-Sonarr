@@ -15,6 +15,7 @@ import base64
 import io
 import qrcode
 import pyotp # Ensure pyotp is imported
+import re # Import the re module for regex
 from typing import Dict, Any, Optional, Tuple
 from flask import request, redirect, url_for, session
 from .utils.logger import logger # Ensure logger is imported
@@ -92,6 +93,28 @@ def hash_username(username: str) -> str:
     """Create a normalized hash of the username"""
     # Convert to lowercase and hash
     return hashlib.sha256(username.lower().encode()).hexdigest()
+
+def validate_password_strength(password: str) -> Optional[str]:
+    """Validate password strength based on defined criteria.
+
+    Args:
+        password: The password string to validate.
+
+    Returns:
+        An error message string if validation fails, None otherwise.
+    """
+    if len(password) < 10:
+        return "Password must be at least 10 characters long."
+    if not re.search(r"\d", password):
+        return "Password must include at least one number."
+    if not re.search(r"[A-Z]", password):
+        return "Password must include at least one uppercase letter."
+    # Use a common set of special characters for validation
+    if not re.search(r"[@$!%*?&]", password):
+        return "Password must include at least one special character (@$!%*?&)."
+    
+    # If all checks pass
+    return None
 
 def user_exists() -> bool:
     """Check if a user has been created"""
