@@ -177,26 +177,6 @@ The web interface allows you to configure all of Huntarr's settings:
 
 All settings are now configured entirely through the web UI after initial setup.
 
-## Persistent Storage
-
-Huntarr stores all its configuration and state information in persistent storage, ensuring your settings and processed state are maintained across container restarts and updates.
-
-### Storage Locations
-
-The following directories are used for persistent storage:
-
-- `/config/settings/` - Contains configuration settings (huntarr.json)
-- `/config/stateful/` - Contains the state tracking files for processed items
-- `/config/user/` - Contains user authentication information
-
-### Data Persistence
-
-All data in these directories is maintained across container restarts. This means:
-
-1. Your settings configured via the web UI will be preserved
-2. The list of items that have already been processed will be maintained
-3. After a container update or restart, Huntarr will continue from where it left off
-
 ### Volume Mapping
 
 To ensure data persistence, make sure you map the `/config` directory to a persistent volume on your host system:
