@@ -17,7 +17,8 @@ from src.primary.auth import (
     user_exists, create_user, verify_user, create_session, logout,
     SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret,
     verify_2fa_code, disable_2fa, change_username, change_password,
-    get_username_from_session, verify_session, get_user_data, save_user_data # Added missing imports
+    get_username_from_session, verify_session, get_user_data, save_user_data, # Added missing imports
+    disable_2fa_with_password_and_otp # Added missing import
 )
 
 # Get logger for common routes
@@ -291,7 +292,6 @@ def verify_2fa():
 
 @common_bp.route('/api/user/2fa/disable', methods=['POST'])
 def disable_2fa_route():
-    # Use session token to get username
     session_token = request.cookies.get(SESSION_COOKIE_NAME)
     username = get_username_from_session(session_token)
 
@@ -300,57 +300,28 @@ def disable_2fa_route():
         return jsonify({"error": "Not authenticated"}), 401
 
     data = request.json
-    # Require password OR OTP code to disable 2FA for security
     password = data.get('password')
-    otp_code = data.get('code') # Match frontend key 'code'
+    otp_code = data.get('code')
 
-    if not password and not otp_code:
+    # Require BOTH password and OTP code
+    if not password or not otp_code:
          logger.warning(f"2FA disable attempt for '{username}' failed: Missing password or OTP code.")
-         return jsonify({"success": False, "error": "Password or current OTP code is required to disable 2FA"}), 400
+         return jsonify({"success": False, "error": "Both password and current OTP code are required to disable 2FA"}), 400
 
-    # Prioritize OTP code verification if provided
-    if otp_code:
-         if not (len(otp_code) == 6 and otp_code.isdigit()):
-             logger.warning(f"2FA disable attempt for '{username}' failed: Invalid OTP code format.")
-             return jsonify({"success": False, "error": "Invalid 6-digit OTP code format"}), 400
+    if not (len(otp_code) == 6 and otp_code.isdigit()):
+        logger.warning(f"2FA disable attempt for '{username}' failed: Invalid OTP code format.")
+        return jsonify({"success": False, "error": "Invalid 6-digit OTP code format"}), 400
 
-         # Need a way to verify OTP against the *permanent* secret
-         user_data = get_user_data()
-         perm_secret = user_data.get("2fa_secret")
-         if not perm_secret:
-              logger.error(f"2FA disable attempt for '{username}' failed: 2FA is not enabled or secret missing.")
-              return jsonify({"success": False, "error": "2FA is not currently enabled."}), 400
-
-         totp = pyotp.TOTP(perm_secret)
-         if totp.verify(otp_code):
-              logger.info(f"Disabling 2FA for user '{username}' using OTP code.")
-              # Proceed to disable without password check
-              user_data["2fa_enabled"] = False
-              user_data["2fa_secret"] = None
-              if save_user_data(user_data):
-                  logger.info(f"2FA disabled successfully for user '{username}'.")
-                  return jsonify({"success": True})
-              else:
-                  logger.error(f"Failed to save user data after disabling 2FA for '{username}'.")
-                  return jsonify({"success": False, "error": "Failed to save settings after disabling 2FA."}), 500
-         else:
-              logger.warning(f"2FA disable attempt for '{username}' failed: Invalid OTP code provided.")
-              return jsonify({"success": False, "error": "Invalid OTP code"}), 400
-
-    # Fallback to password verification if OTP wasn't provided or failed (though it returns above on failure)
-    elif password:
-         logger.info(f"Attempting to disable 2FA for user '{username}' using password.")
-         # disable_2fa now requires password, call it directly
-         if disable_2fa(password): # Pass password to the function
-             logger.info(f"2FA disabled successfully for user '{username}' using password.")
-             return jsonify({"success": True})
-         else:
-             # Reason logged in disable_2fa
-             logger.warning(f"Failed to disable 2FA for user '{username}' using password. Check logs.")
-             return jsonify({"success": False, "error": "Failed to disable 2FA. Check password or logs."}), 400
-
-    # Should not be reached if logic is correct
-    return jsonify({"success": False, "error": "An unexpected condition occurred."}), 500
+    # Call a function that verifies both password and OTP
+    if disable_2fa_with_password_and_otp(username, password, otp_code):
+        logger.info(f"2FA disabled successfully for user '{username}' using password and OTP.")
+        return jsonify({"success": True})
+    else:
+        # Reason logged in disable_2fa_with_password_and_otp
+        logger.warning(f"Failed to disable 2FA for user '{username}' using password and OTP. Check logs.")
+        # Provide a more specific error if possible, otherwise generic
+        # The auth function should log the specific reason (bad pass, bad otp)
+        return jsonify({"success": False, "error": "Failed to disable 2FA. Invalid password or OTP code."}), 400
 
 # --- Theme Setting Route ---
 @common_bp.route('/api/settings/theme', methods=['POST'])
