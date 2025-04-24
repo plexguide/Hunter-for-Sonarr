@@ -23,9 +23,20 @@ RUN poetry config virtualenvs.in-project true && \
 FROM base AS runtime
 
 RUN mkdir -p /config/settings /config/stateful /config/user /config/logs
-RUN chmod -R 755 /config
 
-# Set environment variables
+RUN adduser -u 1000 --disabled-password --gecos "" python && \
+    chown -R python:python /config
+
+# non-root user
+USER python
+
+ENV DEBUG=false
+
+COPY --from=builder /app/.venv ./.venv
+COPY src/ /app/src/
+COPY frontend/ /app/frontend/
+COPY main.py routes.py /app/
+
 ENV PYTHONPATH=/app
 # ENV APP_TYPE=sonarr # APP_TYPE is likely managed via config now, remove if not needed
 
