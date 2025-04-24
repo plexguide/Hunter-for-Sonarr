@@ -42,7 +42,7 @@
         </div>
         <div class="login-form">
             <h2>Log in to your account</h2>
-            <form action="/login" method="POST">
+            <form action="/login" method="POST" id="loginForm">
                 <div class="form-group">
                     <label for="username">
                         <i class="fas fa-user"></i>
@@ -58,13 +58,14 @@
                     <input type="password" id="password" name="password" required>
                 </div>
                 <div class="form-group" id="twoFactorGroup" style="display: none;">
-                    <label for="twoFactorCode">
+                    <label for="twoFactorCode"> <!-- Changed from 'otp' to 'twoFactorCode' for consistency -->
                         <i class="fas fa-shield-alt"></i>
                         <span>2FA Code</span>
                     </label>
-                    <input type="text" id="twoFactorCode" name="otp_code" placeholder="000000" maxlength="6">
+                    <!-- Add id="twoFactorCode" to the input -->
+                    <input type="text" id="twoFactorCode" name="otp" placeholder="Enter 6-digit code" maxlength="6" autocomplete="off">
                 </div>
-                <div class="error-message" id="loginError"></div>
+                <div class="error-message" id="errorMessage"></div>
                 <button type="submit" class="login-button">
                     <i class="fas fa-sign-in-alt"></i> Log In
                 </button>
@@ -72,85 +73,89 @@
         </div>
         <!-- Removed Theme Toggle Section -->
     </div>
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Apply logo loaded class if image is already complete
-            const logoImg = document.querySelector('.login-logo');
-            if (logoImg && logoImg.complete) {
-                logoImg.classList.add('loaded');
+        const loginForm = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const otpInput = document.getElementById('twoFactorCode'); // Use the new ID
+        const twoFactorGroup = document.getElementById('twoFactorGroup');
+        const errorElement = document.getElementById('errorMessage');
+
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            errorElement.textContent = ''; // Clear previous errors
+            errorElement.style.display = 'none';
+
+            const username = usernameInput.value;
+            const password = passwordInput.value;
+            // Base request body
+            let requestBody = {
+                username: username,
+                password: password
+            };
+
+            // If 2FA input is visible and has a value, add it to the request body
+            if (twoFactorGroup.style.display !== 'none' && otpInput.value) {
+                requestBody.otp_code = otpInput.value; // Use 'otp_code' key expected by backend
             }
-            
-            // Always set dark theme
-            document.body.classList.add('dark-theme');
-            localStorage.setItem('huntarr-dark-mode', 'true');
-            
-            // Form submission handling
-            const loginForm = document.querySelector('form');
-            loginForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
-                const twoFactorCode = document.getElementById('twoFactorCode').value;
-                const errorElement = document.getElementById('loginError');
-                
-                // Clear previous errors
-                errorElement.textContent = '';
-                
-                // Send login request using JSON
-                fetch('/login', { // Changed from /api/login
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password,
-                        otp_code: twoFactorCode // Ensure this matches backend expectation
-                    })
-                })
-                .then(response => {
-                    console.log('Login response status:', response.status);
-                    console.log('Login response ok:', response.ok);
-                    // Check if the response is ok before trying to parse JSON
-                    if (!response.ok) {
-                        // Attempt to parse error from JSON response body, especially for 401
-                        return response.json().then(errData => {
-                            console.error('Login failed (server error):', errData);
-                            // Throw an error with the message from the backend
-                            throw new Error(errData.error || errData.message || `Server error: ${response.status}`);
-                        }).catch((parseError) => { // Catch potential JSON parsing errors
-                            console.error('Login failed (non-JSON server error or parse error):', response.status, parseError);
-                            // Fallback if response is not JSON or parsing fails
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        });
-                    }
-                    // If response is ok, parse the JSON body
-                    return response.json();
-                })
-                .then(data => { // This block only runs if response.ok was true
-                    console.log('Login response data:', data);
-                    if (data.success) {
-                        console.log('Login successful, redirecting to:', data.redirect || '/');
-                        window.location.href = data.redirect || '/';
-                    } else if (data.needs_2fa || data.requires_2fa) { // Check for both possible keys
-                        console.log('Login requires 2FA.');
-                        // Only show 2FA input if needed
-                        document.getElementById('twoFactorGroup').style.display = 'block';
-                        errorElement.textContent = data.error || data.message || 'Please enter your 2FA code'; // Use error first, then message
+
+            fetch('/login', { // Changed from /api/login to /login
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody) // Send the constructed body
+            })
+            .then(response => {
+                // Store status for later use
+                const status = response.status;
+                // Try to parse JSON regardless of status code, as 401 might have a JSON body
+                return response.json().then(data => ({ status, ok: response.ok, data }));
+            })
+            .then(({ status, ok, data }) => { // Destructure the object
+                console.log('Login response status:', status);
+                console.log('Login response ok:', ok);
+                console.log('Login response data:', data);
+
+                if (ok && data.success) { // Check ok status AND success field
+                    console.log('Login successful, redirecting to:', data.redirect || '/');
+                    window.location.href = data.redirect || '/';
+                } else if (data.requires_2fa) { // Check for requires_2fa field from backend
+                    // 2FA is required
+                    twoFactorGroup.style.display = 'block'; // Ensure 2FA field is visible
+                    if (requestBody.otp_code) {
+                        // 2FA code WAS provided in this request, but was invalid (backend confirmed)
+                        console.log('Login failed: Invalid 2FA code provided.');
+                        errorElement.textContent = data.error || 'Invalid 2FA code'; // Show the specific error from backend
+                        errorElement.style.display = 'block';
+                        otpInput.focus(); // Focus the OTP input again
+                        otpInput.select(); // Select the text for easy replacement
                     } else {
-                        console.log('Login failed (data.success is false):', data.error || data.message);
-                        // Hide 2FA input if login fails for other reasons
-                        document.getElementById('twoFactorGroup').style.display = 'none';
-                        errorElement.textContent = data.error || data.message || 'Invalid username or password'; // Use error first, then message
+                        // 2FA code was NOT provided in this request, this is the first prompt
+                        console.log('Login requires 2FA.');
+                        errorElement.textContent = 'Please enter your 6-digit 2FA code.'; // Show a neutral prompt instead of backend error
+                        errorElement.style.display = 'block'; // Show the prompt
+                        otpInput.focus(); // Focus the OTP input
                     }
-                })
-                .catch(error => { // Catches errors thrown from .then() blocks or network errors
-                    console.error('Login fetch/processing error:', error);
-                    // Display the specific error message caught
-                    errorElement.textContent = error.message || 'An error occurred during login';
-                });
+                } else {
+                    // Handle other login failures (e.g., bad password, server error)
+                    console.log('Login failed:', data.error || `HTTP error! status: ${status}`);
+                    // Hide 2FA input if login fails for other reasons
+                    twoFactorGroup.style.display = 'none';
+                    otpInput.value = ''; // Clear OTP input on failure
+                    errorElement.textContent = data.error || `Login failed (status: ${status})`; // Use backend error or generic
+                    errorElement.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                // Catch network errors or JSON parsing errors
+                console.error('Login fetch/processing error:', error);
+                errorElement.textContent = 'Login failed. Could not connect to server or invalid response.';
+                errorElement.style.display = 'block';
+                // Hide 2FA input on network/parse error
+                twoFactorGroup.style.display = 'none';
+                otpInput.value = '';
             });
         });
     </script>
