@@ -2,6 +2,10 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
+#Get Version
+ARG HUNTARR_VERSION
+ENV HUNTARR_VERSION=${HUNTARR_VERSION:-unknown}
+
 # Install required packages from the root requirements file
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
