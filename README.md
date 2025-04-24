@@ -14,12 +14,10 @@
   </tr>
 </table>
  
-**NOTE**: Working to Intergrate Other Applications! If making changes in the UI do not appear to take effect after saving, type: `docker restart hunter`
-
 * Sonarr [Good]
-* Radarr [Not Incorporated Yet]
-* Lidarr [Not Incorporated Yet]
-* Readarr [Not Incorporated Yet]
+* Radarr [Good]
+* Lidarr [Not Ready]
+* Readarr [Not Ready]
 
 ## WARNING
 
@@ -50,9 +48,9 @@ This application continually searches your media libraries for missing content a
 
 For detailed documentation, please visit our [Wiki](https://github.com/plexguide/Huntarr/wiki).
 
-## Related Projects
+## Other Projects
 
-* [Huntarr - Radarr Edition](https://github.com/plexguide/Radarr-Hunter) - Sister version for Movies
+* [Legacy Huntarr - Radarr Edition](https://github.com/plexguide/Radarr-Hunter) - Sister version for Movies
 * [Huntarr - Lidarr Edition](https://github.com/plexguide/Lidarr-Hunter) - Sister version for Music
 * [Huntarr - Readarr Edition](https://github.com/plexguide/Huntarr-Readarr) - Sister version for Books
 * [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
@@ -60,7 +58,7 @@ For detailed documentation, please visit our [Wiki](https://github.com/plexguide
 
 ## PayPal Donations – Building My Daughter's Future
 
-My 12-year-old daughter is passionate about singing, dancing, and exploring STEM. She consistently earns A-B honors and dreams of a bright future. Every donation goes directly into her college fund, helping turn those dreams into reality. Thank you for your generous support!
+My 12-year-old daughter is passionate about singing, dancing, and exploring STEM. She consistently earns A-B honors and school citizenship awards! Every donation goes directly into her college fund. Thank you for your generous support!
 
 [![Donate with PayPal button](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate?hosted_button_id=58AYJ68VVMGSC)
 
@@ -215,6 +213,7 @@ docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
   -v /mnt/user/appdata/huntarr:/config \
+  -e TZ=America/New_York \
   huntarr/huntarr:dev
 ```
 
@@ -228,7 +227,6 @@ docker logs huntarr
 For those who prefer Docker Compose, add this to your `docker-compose.yml` file:
 
 ```yaml
-version: "3.8"
 services:
   huntarr:
     image: huntarr/huntarr:dev
@@ -238,6 +236,8 @@ services:
       - "9705:9705"
     volumes:
       - /mnt/user/appdata/huntarr:/config
+    environment:
+      - TZ=America/New_York
 ```
 
 Then run:
@@ -260,48 +260,39 @@ docker run -d --name huntarr \
 
 ### SystemD Service
 
-For a more permanent installation on Linux systems using SystemD:
+For a more permanent installation on Linux systems, it's recommended to use Docker's built-in restart policies with either `docker run` or `docker-compose` as shown above. This ensures the container restarts automatically with your server.
 
-1. Save a script with the Docker run command to `/usr/local/bin/huntarr.sh`
-2. Make it executable: `chmod +x /usr/local/bin/huntarr.sh`
-3. Create a systemd service file at `/etc/systemd/system/huntarr.service`:
-
-```ini
-[Unit]
-Description=Huntarr Service
-After=docker.service
-
-[Service]
-Type=simple
-User=root
-ExecStartPre=/bin/sleep 10
-ExecStart=/usr/local/bin/huntarr.sh
-Restart=on-failure
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-4. Enable and start the service:
+If you still prefer using SystemD to manage Docker containers, you can use Docker's integration with SystemD:
 
 ```bash
-sudo systemctl enable huntarr
-sudo systemctl start huntarr
+# Enable Docker to start on boot
+sudo systemctl enable docker
+
+# Ensure Docker starts your containers on system boot
+docker run -d --name huntarr \
+  --restart always \
+  -p 9705:9705 \
+  -v /path/to/your/config:/config \
+  -e TZ=Your/Timezone \
+  huntarr/huntarr:dev
 ```
+
+The `--restart always` flag ensures that Docker will automatically restart the container if it crashes or when the system reboots.
 
 ## Use Cases
 
-- **Library Completion**: Gradually fill in missing content in your media library
-- **Quality Improvement**: Automatically upgrade item quality as better versions become available
-- **New Item Setup**: Automatically find media for newly added items
-- **Background Service**: Run it in the background to continuously maintain your library
-- **Smart Rotation**: With state tracking, ensures all content gets attention over time
-- **Real-time Monitoring**: Use the web interface to see what's happening at any time
-- **Disk Usage Optimization**: Skip refreshing metadata to reduce disk wear and tear
-- **Efficient Searching**: Skip processing items with future release dates to save resources
-- **Persistent Configuration**: Save your settings once and have them persist through updates
-- **Stateful Operation**: Maintain processing state across container restarts and updates
+Huntarr serves multiple purposes in maintaining and enhancing your media collection:
+
+- **Complete Your Library**: Automatically search for and download missing content for your media collection
+- **Enhance Media Quality**: Systematically upgrade the quality of your existing content when better versions become available
+- **Process New Additions**: When you add new series or movies, Huntarr will automatically start finding the content
+- **Efficient Resource Usage**: Runs silently in the background with minimal system resources
+- **Smart Content Rotation**: The state tracking system ensures all content gets attention over time, not just recent additions
+- **Real-time Monitoring**: Monitor Huntarr's activity through the intuitive web interface
+- **Reduce Storage Wear**: Options to skip metadata refreshing help reduce unnecessary disk operations
+- **Optimize Searches**: Skip items with future release dates to focus resources on available content
+- **Persistent Settings**: Configure once and forget - all settings persist through container updates
+- **Continuous Operation**: Maintain state across restarts, picking up right where it left off
 
 ## Tips
 
