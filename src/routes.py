@@ -8,6 +8,10 @@ static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'fron
 
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
+@app.context_processor
+def inject_version():
+    return { 'version': os.environ.get('HUNTARR_VERSION','unknown') }
+    
 def get_ui_preference():
     """Determine which UI to use based on config and user preference"""
     # Check if ui_settings.json exists
