@@ -69,8 +69,6 @@ def process_cutoff_upgrades(app_settings: Dict[str, Any], restart_cycle_flag: Ca
     
     logger.info(f"Found {len(upgrade_movies)} movies that need quality upgrades.")
     processed_upgrade_ids = load_processed_ids(PROCESSED_UPGRADE_FILE)
-    movies_processed = 0
-    processing_done = False
     
     # Filter out already processed movies
     unprocessed_movies = [movie for movie in upgrade_movies if movie.get("id") not in processed_upgrade_ids]
@@ -95,8 +93,26 @@ def process_cutoff_upgrades(app_settings: Dict[str, Any], restart_cycle_flag: Ca
         logger.info("🔄 Received restart signal before processing movies. Aborting...")
         return False
     
+    # Create a list of movies to process, limited by hunt_upgrade_movies
+    movies_to_process = unprocessed_movies[:min(len(unprocessed_movies), hunt_upgrade_movies)]
+    
+    # Log a summary of all movies that will be processed
+    if movies_to_process:
+        logger.info(f"Selected {len(movies_to_process)} movies for quality upgrades this cycle:")
+        for idx, movie in enumerate(movies_to_process):
+            title = movie.get("title", "Unknown Title")
+            year = movie.get("year", "Unknown Year")
+            movie_id = movie.get("id")
+            quality_name = "Unknown"
+            if "movieFile" in movie and movie["movieFile"]:
+                quality = movie["movieFile"].get("quality", {})
+                quality_name = quality.get("quality", {}).get("name", "Unknown")
+            logger.info(f" {idx+1}. \"{title}\" ({year}) - Current quality: {quality_name} (ID: {movie_id})")
+    
     # Process up to hunt_upgrade_movies movies
-    for movie in unprocessed_movies:
+    movies_processed = 0
+    processing_done = False
+    for movie in movies_to_process:
         # Check for restart signal before each movie
         if restart_cycle_flag():
             logger.info("🔄 Received restart signal during movie processing. Aborting...")
