@@ -325,7 +325,4 @@ def start_web_server():
     web_logger.info(f"Attempting to start web server on {host}:{port} (Debug: {debug_mode})") # Modified log
     # In production, use Werkzeug's simple server or a proper WSGI server
     web_logger.info("--- Calling app.run() ---") # Added log
-    app.run(host=host, port=port, debug=debug_mode, use_reloader=False)
-
-if __name__ == '__main__':
-    start_web_server() # Uncommented to allow direct execution
+    app.run(host=host, port=port, debug=debug_mode, use_reloader=False) # Keep this line if needed for direct execution testing, but it's now handled by root main.py
