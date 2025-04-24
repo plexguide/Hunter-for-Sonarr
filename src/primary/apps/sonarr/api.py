@@ -223,53 +223,82 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         return False
 
 def get_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool) -> List[Dict[str, Any]]:
-    """Get missing episodes from Sonarr."""
+    """Get missing episodes from Sonarr, handling pagination."""
     endpoint = "wanted/missing"
-    # Parameters for the request - Sonarr uses camelCase
-    # Simplify parameters: Remove sorting, add includeSeries
-    params = {
-        "page": 1,
-        "pageSize": 1000, # Fetch a large number, assuming no pagination needed for now
-        "includeSeries": "true" # Add includeSeries parameter
-    }
-    url = f"{api_url}/api/v3/{endpoint}"
-    sonarr_logger.debug(f"Requesting missing episodes from URL: {url} with params: {params}")
-    try:
-        response = requests.get(url, headers={"X-Api-Key": api_key}, params=params, timeout=api_timeout)
-        sonarr_logger.debug(f"Sonarr API response status code: {response.status_code}") # Log status code
-        sonarr_logger.debug(f"Sonarr API raw response (first 500 chars): {response.text[:500]}") # Log raw response start
-        response.raise_for_status() # Check for HTTP errors (4xx or 5xx)
+    page = 1
+    page_size = 1000 # Adjust page size if needed, but 1000 is usually good
+    all_missing_episodes = []
+    
+    while True:
+        # Parameters for the request
+        params = {
+            "page": page,
+            "pageSize": page_size,
+            "includeSeries": "true"
+        }
+        url = f"{api_url}/api/v3/{endpoint}"
+        sonarr_logger.debug(f"Requesting missing episodes page {page} from URL: {url} with params: {params}")
         
-        data = response.json()
-        missing = data.get('records', [])
-        sonarr_logger.debug(f"Parsed {len(missing)} missing episode records from Sonarr API JSON.") # Log count after parsing
-        
-        if monitored_only:
-            # Filter for monitored series and episodes if monitored_only is True
-            original_count = len(missing)
-            filtered_missing = [
-                ep for ep in missing 
-                if ep.get('series', {}).get('monitored', False) and ep.get('monitored', False)
-            ]
-            sonarr_logger.debug(f"Filtered for monitored_only=True: {len(filtered_missing)} monitored missing episodes remain (out of {original_count} total).") # Log count after filtering
-            return filtered_missing
-        else:
-            sonarr_logger.debug(f"Returning {len(missing)} missing episodes (monitored_only=False).")
-            return missing
+        try:
+            response = requests.get(url, headers={"X-Api-Key": api_key}, params=params, timeout=api_timeout)
+            sonarr_logger.debug(f"Sonarr API response status code for page {page}: {response.status_code}")
+            # Log raw response start only on first page or if debugging intensely
+            if page == 1:
+                 sonarr_logger.debug(f"Sonarr API raw response (first 500 chars, page 1): {response.text[:500]}")
+            response.raise_for_status() # Check for HTTP errors (4xx or 5xx)
             
-    except requests.exceptions.RequestException as e:
-        # Log specific request exception details if possible
-        error_details = f"Error: {e}"
-        if e.response is not None:
-            error_details += f", Status Code: {e.response.status_code}, Response: {e.response.text[:500]}"
-        sonarr_logger.error(f"Error getting missing episodes from Sonarr: {error_details}")
-        return []
-    except json.JSONDecodeError as e:
-        sonarr_logger.error(f"Failed to decode JSON response from Sonarr: {e}. Response text (first 500 chars): {response.text[:500]}")
-        return []
-    except Exception as e:
-        sonarr_logger.error(f"An unexpected error occurred getting missing episodes: {e}", exc_info=True) # Add exc_info for unexpected errors
-        return []
+            data = response.json()
+            records = data.get('records', [])
+            total_records_on_page = len(records)
+            sonarr_logger.debug(f"Parsed {total_records_on_page} missing episode records from Sonarr API JSON (page {page}).")
+            
+            if not records: # No more records found
+                sonarr_logger.debug(f"No more records found on page {page}. Stopping pagination.")
+                break
+                
+            all_missing_episodes.extend(records)
+            
+            # Check if this was the last page
+            # Sonarr's totalRecords in the response reflects the grand total, not just the page
+            # So, we check if the number received is less than the requested page size
+            if total_records_on_page < page_size:
+                sonarr_logger.debug(f"Received {total_records_on_page} records (less than page size {page_size}). Assuming last page.")
+                break
+                
+            # Prepare for the next page
+            page += 1
+            # Optional: Add a small delay between pages if hitting API limits
+            # time.sleep(0.1)
+
+        except requests.exceptions.RequestException as e:
+            error_details = f"Error: {e}"
+            if e.response is not None:
+                error_details += f", Status Code: {e.response.status_code}, Response: {e.response.text[:500]}"
+            sonarr_logger.error(f"Error getting missing episodes from Sonarr (page {page}): {error_details}")
+            # Decide whether to return partial results or fail completely
+            # Returning partial results might be better than nothing
+            break # Stop pagination on error
+        except json.JSONDecodeError as e:
+            sonarr_logger.error(f"Failed to decode JSON response from Sonarr (page {page}): {e}. Response text (first 500 chars): {response.text[:500]}")
+            break # Stop pagination on error
+        except Exception as e:
+            sonarr_logger.error(f"An unexpected error occurred getting missing episodes (page {page}): {e}", exc_info=True)
+            break # Stop pagination on error
+
+    sonarr_logger.info(f"Total missing episodes fetched across all pages: {len(all_missing_episodes)}")
+
+    # Apply monitored filter after fetching all pages
+    if monitored_only:
+        original_count = len(all_missing_episodes)
+        filtered_missing = [
+            ep for ep in all_missing_episodes 
+            if ep.get('series', {}).get('monitored', False) and ep.get('monitored', False)
+        ]
+        sonarr_logger.debug(f"Filtered for monitored_only=True: {len(filtered_missing)} monitored missing episodes remain (out of {original_count} total).")
+        return filtered_missing # FIX: Return the filtered list
+    else:
+        sonarr_logger.debug(f"Returning {len(all_missing_episodes)} missing episodes (monitored_only=False).")
+        return all_missing_episodes
 
 def get_cutoff_unmet_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool) -> List[Dict[str, Any]]:
     """Get cutoff unmet episodes from Sonarr."""
