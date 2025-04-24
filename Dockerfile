@@ -38,10 +38,7 @@ COPY frontend/ /app/frontend/
 COPY main.py routes.py /app/
 
 ENV PYTHONPATH=/app
-# ENV APP_TYPE=sonarr # APP_TYPE is likely managed via config now, remove if not needed
 
-# Expose port
 EXPOSE 9705
 
-# Run the main application using the new entry point
-CMD ["python3", "main.py"]
+ENTRYPOINT ["/app/.venv/bin/python3", "./main.py"]
