@@ -19,10 +19,6 @@
 * Lidarr [Not Ready]
 * Readarr [Not Ready]
 
-## WARNING
-
-This uses a new repo `huntarr\huntarr` and does not utilize the env variable and requires the UI. Please read the documentation.
-
 **Change Log:**
 Visit: https://github.com/plexguide/Huntarr/releases/
 
@@ -57,7 +53,7 @@ For detailed documentation, please visit our [Wiki](https://github.com/plexguide
 
 ## PayPal Donations – Building My Daughter's Future
 
-My 12-year-old daughter is passionate about singing, dancing, and exploring STEM. She consistently earns A-B honors and school citizenship awards! Every donation goes directly into her college fund. Thank you for your generous support!
+My 12-year-old daughter is passionate about singing, dancing, and exploring STEM. She consistently earns A-B honors! Every donation goes directly into her college fund!
 
 [![Donate with PayPal button](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate?hosted_button_id=58AYJ68VVMGSC)
 
