@@ -171,7 +171,7 @@ docker run -d --name huntarr-sonarr \
   -e MINIMUM_DOWNLOAD_QUEUE_SIZE=-1 \
   -e LOG_EPISODE_ERRORS=false \
   -e DEBUG_API_CALLS=false \
-  huntarr/4sonarr:latest
+  huntarr/4sonarr:4.0.0
 ```
 
 ### Docker Compose
@@ -182,7 +182,7 @@ Create a `docker-compose.yml` file:
 version: "3.8"
 services:
   huntarr-sonarr:
-    image: huntarr/4sonarr:latest
+    image: huntarr/4sonarr:4.0.0
     container_name: huntarr-sonarr
     restart: unless-stopped
     volumes:
@@ -234,7 +234,7 @@ Alternatively, you can add the container manually via the **Docker** tab:
 1. Click **Add Container** in the Docker tab
 2. Enter the following details:
    - **Name**: huntarr-sonarr
-   - **Repository**: huntarr/4sonarr:latest
+   - **Repository**: huntarr/4sonarr:4.0.0
    - Add a path mapping: `/config` to `/mnt/user/appdata/huntarr-sonarr`
    - Add the environment variables as listed above
 3. Click **Apply** to create the container
