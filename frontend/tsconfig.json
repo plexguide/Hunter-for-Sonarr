@@ -8,19 +8,33 @@
     ],
     "allowJs": true,
     "skipLibCheck": true,
+    "baseUrl": "src",
+    "checkJs": false,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "strict": true,
-    "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
     "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "typeRoots": ["node_modules/@types", "typings"],
+    "paths": {
+          "*": [
+              "*"
+          ]
+      },
   },
   "include": [
-    "src"
+    "src",
+    "./typings/*.ts",
   ]
 }
