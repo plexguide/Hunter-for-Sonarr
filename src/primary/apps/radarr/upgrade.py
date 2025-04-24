@@ -9,7 +9,7 @@ import time
 import datetime
 import os
 import json
-from typing import List, Callable, Dict, Optional
+from typing import List, Callable, Dict, Optional, Any
 # Correct import path
 from src.primary.utils.logger import get_logger
 from src.primary import settings_manager
@@ -19,31 +19,34 @@ from src.primary.apps.radarr.api import get_cutoff_unmet_movies, refresh_movie, 
 # Get app-specific logger
 logger = get_logger("radarr")
 
-def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
+def process_cutoff_upgrades(app_settings: Dict[str, Any], restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
     """
     Process movies that need quality upgrades (cutoff unmet).
     
     Args:
+        app_settings: Dictionary containing settings for Radarr.
         restart_cycle_flag: Function that returns whether to restart the cycle
     
     Returns:
         True if any processing was done, False otherwise
     """
-    # Get the current value directly at the start of processing
-    # Use settings_manager directly instead of get_current_upgrade_limit
-    HUNT_UPGRADE_MOVIES = settings_manager.get_setting("radarr", "hunt_upgrade_movies", 0)
-    RANDOM_UPGRADES = settings_manager.get_setting("radarr", "random_upgrades", True)
-    SKIP_MOVIE_REFRESH = settings_manager.get_setting("radarr", "skip_movie_refresh", False)
-    MONITORED_ONLY = settings_manager.get_setting("radarr", "monitored_only", True)
+    # Get settings from the passed dictionary
+    api_url = app_settings.get("api_url")
+    api_key = app_settings.get("api_key")
+    api_timeout = app_settings.get("api_timeout", 90)
+    hunt_upgrade_movies = app_settings.get("hunt_upgrade_movies", 0)
+    random_upgrades = app_settings.get("random_upgrades", True)
+    skip_movie_refresh = app_settings.get("skip_movie_refresh", False)
+    monitored_only = app_settings.get("monitored_only", True)
     
     # Get app-specific state file
     PROCESSED_UPGRADE_FILE = get_state_file_path("radarr", "processed_upgrades")
 
     logger.info("=== Checking for Quality Upgrades (Cutoff Unmet) ===")
 
-    # Skip if HUNT_UPGRADE_MOVIES is set to 0
-    if HUNT_UPGRADE_MOVIES <= 0:
-        logger.info("HUNT_UPGRADE_MOVIES is set to 0, skipping quality upgrades")
+    # Skip if hunt_upgrade_movies is set to 0
+    if hunt_upgrade_movies <= 0:
+        logger.info("hunt_upgrade_movies is set to 0, skipping quality upgrades")
         return False
 
     # Check for restart signal
@@ -53,7 +56,7 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
     
     # Get movies needing quality upgrades
     logger.info("Retrieving movies that need quality upgrades...")
-    upgrade_movies = get_cutoff_unmet_movies()
+    upgrade_movies = get_cutoff_unmet_movies(api_url, api_key, api_timeout, monitored_only)
     
     if not upgrade_movies:
         logger.info("No movies found that need quality upgrades.")
@@ -79,7 +82,7 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
     logger.info(f"Found {len(unprocessed_movies)} upgrade movies that haven't been processed yet.")
     
     # Randomize if requested
-    if RANDOM_UPGRADES:
+    if random_upgrades:
         logger.info("Using random selection for quality upgrades (RANDOM_UPGRADES=true)")
         random.shuffle(unprocessed_movies)
     else:
@@ -92,7 +95,7 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
         logger.info("🔄 Received restart signal before processing movies. Aborting...")
         return False
     
-    # Process up to HUNT_UPGRADE_MOVIES movies
+    # Process up to hunt_upgrade_movies movies
     for movie in unprocessed_movies:
         # Check for restart signal before each movie
         if restart_cycle_flag():
@@ -100,11 +103,10 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
             break
         
         # Check again for the current limit in case it was changed during processing
-        # Use settings_manager directly instead of get_current_upgrade_limit
-        current_limit = settings_manager.get_setting("radarr", "hunt_upgrade_movies", 0)
+        current_limit = app_settings.get("hunt_upgrade_movies", 0)
         
         if movies_processed >= current_limit:
-            logger.info(f"Reached HUNT_UPGRADE_MOVIES={current_limit} for this cycle.")
+            logger.info(f"Reached hunt_upgrade_movies={current_limit} for this cycle.")
             break
         
         movie_id = movie.get("id")
@@ -120,10 +122,10 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
         
         logger.info(f"Processing quality upgrade for: \"{title}\" ({year}){quality_info} (Movie ID: {movie_id})")
         
-        # Refresh the movie information if SKIP_MOVIE_REFRESH is false
-        if not SKIP_MOVIE_REFRESH:
+        # Refresh the movie information if skip_movie_refresh is false
+        if not skip_movie_refresh:
             logger.info(" - Refreshing movie information...")
-            refresh_res = refresh_movie(movie_id)
+            refresh_res = refresh_movie(api_url, api_key, api_timeout, movie_id)
             if not refresh_res:
                 logger.warning("WARNING: Refresh command failed. Skipping this movie.")
                 continue
@@ -132,7 +134,7 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
             # Small delay after refresh to allow Radarr to process
             time.sleep(2)
         else:
-            logger.info(" - Skipping movie refresh (SKIP_MOVIE_REFRESH=true)")
+            logger.info(" - Skipping movie refresh (skip_movie_refresh=true)")
         
         # Check for restart signal before searching
         if restart_cycle_flag():
@@ -141,7 +143,7 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
         
         # Search for the movie
         logger.info(" - Searching for quality upgrade...")
-        search_res = movie_search([movie_id])
+        search_res = movie_search(api_url, api_key, api_timeout, [movie_id])
         if search_res:
             logger.info(f"Search command completed successfully.")
             # Mark as processed
@@ -150,17 +152,15 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
             processing_done = True
             
             # Log with the current limit, not the initial one
-            # Use settings_manager directly instead of get_current_upgrade_limit
-            current_limit = settings_manager.get_setting("radarr", "hunt_upgrade_movies", 0)
+            current_limit = app_settings.get("hunt_upgrade_movies", 0)
             logger.info(f"Processed {movies_processed}/{current_limit} upgrade movies this cycle.")
         else:
             logger.warning(f"WARNING: Search command failed for movie ID {movie_id}.")
             continue
     
     # Log final status
-    # Use settings_manager directly instead of get_current_upgrade_limit
-    current_limit = settings_manager.get_setting("radarr", "hunt_upgrade_movies", 0)
-    logger.info(f"Completed processing {movies_processed} upgrade movies for this cycle.")
+    current_limit = app_settings.get("hunt_upgrade_movies", 0)
+    logger.info(f"Completed processing {movies_processed} upgrade movies this cycle.")
     truncate_processed_list(PROCESSED_UPGRADE_FILE)
     
     return processing_done

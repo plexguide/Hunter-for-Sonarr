@@ -581,7 +581,8 @@ input:checked + .slider:before {
 }
 
 .logs {
-    height: calc(100vh - 160px);
+    /* Reduce height by 15% from original calc(100vh - 160px) */
+    height: calc(85vh - 160px);
     background-color: var(--log-bg);
     border: 1px solid var(--log-border);
     border-radius: 8px;
@@ -592,6 +593,7 @@ input:checked + .slider:before {
     word-wrap: break-word;
     line-height: 1.5;
     font-size: 14px;
+    margin-bottom: 20px; /* Add margin to create space between logs and footer */
 }
 
 .log-entry {

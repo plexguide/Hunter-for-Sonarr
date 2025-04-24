@@ -8,26 +8,33 @@
 <style>
     .banner-footer {
         text-align: center;
-        padding: 20px;
-        margin-top: 30px;
+        padding: 15px 20px;
+        margin-top: 15px;
+        margin-bottom: 10px;
         background-color: var(--bg-secondary);
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-color);
+        position: relative;
+        z-index: 10;
     }
     
     .banner-footer p {
         margin: 0;
         font-size: 1.1em;
         color: var(--text-primary);
+        font-weight: 500;
     }
     
     .banner-footer a {
         color: var(--accent-color);
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 600;
+        transition: color 0.2s, text-decoration 0.2s;
     }
     
     .banner-footer a:hover {
         text-decoration: underline;
+        color: var(--accent-hover);
     }
 </style>
