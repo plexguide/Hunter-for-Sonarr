@@ -49,6 +49,13 @@ static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..',
 
 # Create Flask app
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+
+@app.context_processor
+def inject_version():
+    # reads the Git tag you baked in via HUNTARR_VERSION
+    return {'version': os.environ.get('HUNTARR_VERSION', 'unknown')}
+    
+
 app.secret_key = os.environ.get('SECRET_KEY', 'dev_key_for_sessions')
 
 # Register blueprints
