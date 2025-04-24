@@ -21,6 +21,8 @@
 | Lidarr      | **❌ Not Ready** |
 | Readarr     | **❌ Not Ready** |
 
+Keep in mind this is very early in program development. If you have a very special collection, always test before mass deployment.
+
 ## Table of Contents
 - [Overview](#overview)
 - [Other Projects](#other-projects)
