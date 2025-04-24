@@ -61,19 +61,6 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 [![Donate with PayPal button](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate?hosted_button_id=58AYJ68VVMGSC)
 
-## Useful Features
-
-🚀 **24/7 Background Operation** - Silently enhances your media library while respecting indexer rate limits
-🎯 **Complete Media Management** - Automatically hunts for both missing content and quality upgrades in one solution
-🔄 **True State Persistence** - Maintains progress across container restarts with persistent configuration
-🛡️ **Indexer Protection** - Customizable batch sizes, timing controls, and rate limiting keep your indexers happy
-🌐 **Modern Web Dashboard** - Intuitive interface with real-time colored logs and instant settings management
-💾 **Resource Optimization** - Skip metadata refreshes to dramatically reduce disk I/O on your media server
-🔮 **Smart Content Handling** - Skips unreleased content and offers independent randomization for efficient processing
-🧩 **Multi-Application Support** - Single interface manages Sonarr, Radarr, Lidarr, and Readarr (unified platform)
-🔒 **Secure User System** - User authentication with optional two-factor protection for your media automation
-⚙️ **Advanced Customization** - Fine-tune every aspect from search intervals to automatic state reset timing
-
 ## Indexers Approving of Huntarr:
 * https://ninjacentral.co.za
 
@@ -296,43 +283,30 @@ Huntarr serves multiple purposes in maintaining and enhancing your media collect
 
 ## Tips
 
-- **First-Time Setup**: After installation, navigate to the web interface and create your administrator account
-- **API Connection**: Configure the connection to your *Arr application through the Settings page
-- **Web Interface**: Use the web interface to adjust settings without restarting the container
-- **Adjusting Speed**: Lower the Sleep Duration to search more frequently (be careful with indexer limits)
-- **Batch Size Control**: Adjust Hunt Missing and Hunt Upgrade values based on your indexer's rate limits
-- **Monitored Status**: Set Monitored Only to false if you want to download all missing content regardless of monitored status
-- **System Resources**: The application uses minimal resources and can run continuously on even low-powered systems
-- **Port Conflicts**: If port 9705 is already in use, map to a different host port (e.g., `-p 8080:9705`)
-- **Debugging Issues**: Enable Debug Mode temporarily to see detailed logs when troubleshooting
-- **Hard Drive Saving**: Enable Skip Series Refresh to reduce disk activity
-- **Search Efficiency**: Keep Skip Future Episodes enabled to avoid searching for unavailable content
-- **Persistent Storage**: Make sure to map the `/config` volume to preserve settings and state
-- **Dark Mode**: Toggle between light and dark themes in the web interface for comfortable viewing
-- **Settings Persistence**: Any settings changed in the web UI are saved immediately and permanently
-- **Random vs Sequential**: Configure Random Missing and Random Upgrades based on your preference for processing style
+- **First-Time Setup**: Navigate to the web interface after installation to create your admin account with 2FA option
+- **API Connections**: Configure connections to your *Arr applications through the dedicated settings pages
+- **Search Frequency**: Adjust Sleep Duration (default: 900 seconds) based on your indexer's rate limits
+- **Batch Processing**: Set Hunt Missing and Upgrade values to control how many items are processed per cycle
+- **Queue Management**: Use Minimum Download Queue Size to pause searching when downloads are backed up
+- **Skip Processing**: Enable Skip Series/Movie Refresh to significantly reduce disk I/O and database load
+- **Future Content**: Keep Skip Future Items enabled to avoid searching for unreleased content
+- **Authentication**: Enable two-factor authentication for additional security on your Huntarr instance
+- **Theme Selection**: Toggle between light and dark themes for comfortable viewing in any environment
+- **Logs Access**: View real-time, color-coded logs directly in the web UI for easy troubleshooting
+- **Storage Planning**: Ensure sufficient space in your persistent volume mount for log files and state data
+- **Container Updates**: Use the `latest` tag to automatically receive the newest features and fixes
 
 ## Troubleshooting
 
-- **API Key Issues**: Check that your API key is correct in the Settings page
-- **Connection Problems**: Ensure the API URL is accessible from where you're running the application
-- **Login Issues**: If you forget your password, you will need to delete the credentials file at `/config/user/credentials.json` and restart the container
-- **Web Interface Not Loading**: Make sure port 9705 is exposed in your Docker configuration and not blocked by a firewall
-- **Logs**: Check the container logs with `docker logs huntarr` if running in Docker, or check the log files in `/config/logs/` within the container/volume, or use the web interface.
-- **Debug Mode**: Enable Debug Mode in the Advanced Settings to see detailed API responses and process flow
-- **Settings Not Persisting**: Verify your volume mount for `/config` is configured correctly
-- **State Files**: The application stores state in `/config/stateful/` - if something seems stuck, you can try deleting these files
-- **Excessive Disk Activity**: If you notice high disk usage, try enabling Skip Series Refresh
-- **Configuration Issues**: Settings now require a container restart to take effect - confirm the restart prompt when saving settings
-- **Container Restart Required**: When making significant changes to settings, always restart the container when prompted
-
----
-
-This application helps automate the tedious process of finding missing content and quality upgrades in your media collection, running quietly in the background while respecting your indexers' rate limits.
-
----
-
-Thanks to: 
-
-* [IntensiveCareCub](https://www.reddit.com/user/IntensiveCareCub/) for the Hunter to Huntarr idea!
-* [ZPatten](https://github.com/zpatten) for adding the Queue Size and Delay Commands!
+- **API Connection Issues**: Verify your API key and URL in the Settings page (check for missing http:// or https://)
+- **Authentication Problems**: If you forget your password, delete `/config/user/credentials.json` and restart
+- **Two-Factor Authentication**: If locked out of 2FA, remove credentials file to reset your account
+- **Web Interface Not Loading**: Confirm port 9705 is correctly mapped and not blocked by firewalls
+- **Logs Not Showing**: Check permissions on the `/config/logs/` directory inside your container
+- **Missing State Data**: State files in `/config/stateful/` track processed items; verify permissions
+- **High CPU Usage**: Consider increasing Sleep Duration and enabling Skip Series/Movie Refresh
+- **Docker Volume Issues**: Ensure your volume mount for `/config` has correct permissions and ownership
+- **Slow Performance**: Check the Minimum Download Queue Size setting if downloads are backing up
+- **Interface Rendering**: Try a different browser if the web UI doesn't display correctly
+- **Command Timeouts**: Adjust command_wait_attempts and command_wait_delay in advanced settings
+- **Debug Information**: Enable Debug Mode temporarily to see detailed API responses in the logs
