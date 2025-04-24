@@ -11,7 +11,7 @@ import pathlib
 from typing import Dict, Optional
 
 # Create log directory
-LOG_DIR = pathlib.Path("/tmp/huntarr-logs")
+LOG_DIR = pathlib.Path("/config/logs") # Changed path
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 # Default log file for general messages
@@ -19,10 +19,10 @@ MAIN_LOG_FILE = LOG_DIR / "huntarr.log"
 
 # App-specific log files
 APP_LOG_FILES = {
-    "sonarr": LOG_DIR / "huntarr-sonarr.log",
-    "radarr": LOG_DIR / "huntarr-radarr.log",
-    "lidarr": LOG_DIR / "huntarr-lidarr.log",
-    "readarr": LOG_DIR / "huntarr-readarr.log"
+    "sonarr": LOG_DIR / "sonarr.log", # Updated filename
+    "radarr": LOG_DIR / "radarr.log", # Updated filename
+    "lidarr": LOG_DIR / "lidarr.log", # Updated filename
+    "readarr": LOG_DIR / "readarr.log" # Updated filename
 }
 
 # Global logger instances
