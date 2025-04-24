@@ -2,8 +2,8 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Install required packages
-COPY src/primary/requirements.txt /app/
+# Install required packages from the root requirements file
+COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
@@ -15,13 +15,10 @@ RUN chmod -R 755 /config /tmp/huntarr-logs
 
 # Set environment variables
 ENV PYTHONPATH=/app
-ENV APP_TYPE=sonarr
+# ENV APP_TYPE=sonarr # APP_TYPE is likely managed via config now, remove if not needed
 
 # Expose port
 EXPOSE 9705
 
-# Run start script
-# Update path to copy from src/primary
-COPY src/primary/start.sh /app/start.sh
-RUN chmod +x /app/start.sh
-CMD ["/app/start.sh"]
+# Run the main application using the new entry point
+CMD ["python3", "main.py"]

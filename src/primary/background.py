@@ -274,8 +274,8 @@ def shutdown_threads():
     logger.info("All app threads stopped.")
 
 def start_huntarr():
-    """Main entry point for Huntarr."""
-    logger.info(f"--- Starting Huntarr v{__version__} --- ")
+    """Main entry point for Huntarr background tasks."""
+    logger.info(f"--- Starting Huntarr Background Tasks v{__version__} --- ")
 
     # Perform initial settings migration if specified (e.g., via env var or arg)
     if os.environ.get("HUNTARR_RUN_MIGRATION", "false").lower() == "true":
@@ -289,10 +289,6 @@ def start_huntarr():
         except Exception as e:
             logger.error(f"Error logging initial configuration for {app_name}: {e}")
 
-    # Register signal handlers for graceful shutdown
-    signal.signal(signal.SIGINT, shutdown_handler)
-    signal.signal(signal.SIGTERM, shutdown_handler)
-
     try:
         # Main loop: Start and monitor app threads
         while not stop_event.is_set():
@@ -303,9 +299,8 @@ def start_huntarr():
     except Exception as e:
         logger.exception(f"Unexpected error in main monitoring loop: {e}")
     finally:
-        logger.info("Main loop exited. Shutting down...")
+        logger.info("Background task main loop exited. Shutting down threads...")
         if not stop_event.is_set():
              stop_event.set() # Ensure stop is signaled if loop exited unexpectedly
         shutdown_threads()
-        logger.info("--- Huntarr stopped --- ")
-        sys.exit(0)
+        logger.info("--- Huntarr Background Tasks stopped --- ")
