@@ -10,23 +10,17 @@ import io
 import qrcode
 import pyotp
 import logging
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for, make_response, session # Import session
-from src.primary import settings_manager # Use the updated settings manager
-from src.primary.utils.logger import get_logger # Import get_logger
-from src.primary.auth import (create_user, user_exists, verify_user, 
-                            generate_2fa_secret, verify_2fa_code, 
-                            disable_2fa, is_2fa_enabled, 
-                            change_username as auth_change_username, 
-                            change_password as auth_change_password, 
-                            get_username_from_session, SESSION_COOKIE_NAME, 
-                            validate_password_strength, create_session, logout, verify_session, disable_2fa_with_password_and_otp) # Import validate_password_strength, create_session, logout, verify_session, disable_2fa_with_password_and_otp
+# Add render_template, send_from_directory, session
+from flask import Blueprint, request, jsonify, make_response, redirect, url_for, current_app, render_template, send_from_directory, session
+from ..auth import (
+    verify_user, create_session, get_username_from_session, SESSION_COOKIE_NAME,
+    change_username as auth_change_username, change_password as auth_change_password,
+    validate_password_strength, logout, verify_session, disable_2fa_with_password_and_otp,
+    user_exists, create_user, generate_2fa_secret, verify_2fa_code, is_2fa_enabled # Add missing auth imports
+)
+from ..utils.logger import logger # Ensure logger is imported
 
-# Get logger for common routes
-logger = logging.getLogger("common_routes")
-
-common_bp = Blueprint('common', __name__,
-                      template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'templates')),
-                      static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'static')))
+common_bp = Blueprint('common', __name__)
 
 # --- Static File Serving --- #
 
@@ -94,7 +88,6 @@ def login_route():
 
 @common_bp.route('/logout', methods=['POST'])
 def logout_route():
-    logger = get_logger("common_routes") # Get logger
     try:
         session_token = request.cookies.get(SESSION_COOKIE_NAME)
         if session_token:
@@ -115,7 +108,7 @@ def logout_route():
 
 @common_bp.route('/setup', methods=['GET', 'POST'])
 def setup():
-    if user_exists():
+    if user_exists(): # This function should now be defined via import
         # If a user already exists, redirect to login or home
         logger.info("Setup page accessed but user already exists. Redirecting to login.")
         return redirect(url_for('common.login_route'))
@@ -145,7 +138,7 @@ def setup():
                 return jsonify({"success": False, "error": password_error}), 400
 
             logger.info(f"Attempting to create user '{username}' during setup.")
-            if create_user(username, password):
+            if create_user(username, password): # This function should now be defined via import
                 # Automatically log in the user after setup
                 logger.info(f"User '{username}' created successfully during setup. Creating session.")
                 session_token = create_session(username)
@@ -167,7 +160,7 @@ def setup():
     else:
         # GET request - show setup page
         logger.info("Displaying setup page.")
-        return render_template('setup.html')
+        return render_template('setup.html') # This function should now be defined via import
 
 # --- User Management API Routes --- #
 
@@ -182,7 +175,7 @@ def get_user_info_route():
         return jsonify({"error": "Not authenticated"}), 401
 
     # Pass username to is_2fa_enabled
-    two_fa_status = is_2fa_enabled(username)
+    two_fa_status = is_2fa_enabled(username) # This function should now be defined via import
     logger.debug(f"Retrieved user info for '{username}'. 2FA enabled: {two_fa_status}")
     return jsonify({"username": username, "is_2fa_enabled": two_fa_status})
 
@@ -263,7 +256,7 @@ def setup_2fa():
     try:
         logger.info(f"Generating 2FA setup for user: {username}") # Add logging
         # Pass username to generate_2fa_secret
-        secret, qr_code_data_uri = generate_2fa_secret(username) # Use correct return values
+        secret, qr_code_data_uri = generate_2fa_secret(username) # This function should now be defined via import
 
         # Return secret and QR code data URI
         return jsonify({"success": True, "secret": secret, "qr_code_url": qr_code_data_uri}) # Match frontend expectation 'qr_code_url'
@@ -291,7 +284,7 @@ def verify_2fa():
 
     logger.info(f"Attempting to verify 2FA code for user '{username}'.")
     # Pass username to verify_2fa_code
-    if verify_2fa_code(username, otp_code, enable_on_verify=True):
+    if verify_2fa_code(username, otp_code, enable_on_verify=True): # This function should now be defined via import
         logger.info(f"Successfully verified and enabled 2FA for user: {username}") # Add logging
         return jsonify({"success": True})
     else:
