@@ -21,7 +21,7 @@
 | Lidarr      | **❌ Not Ready** |
 | Readarr     | **❌ Not Ready** |
 
-Keep in mind this is very early in program development. If you have a very special collection hand picked collection (because some are special), test before you deploy.
+Keep in mind this is very early in program development. If you have a very special hand picked collection (because some users are extra special), test before you deploy.
 
 ## Table of Contents
 - [Overview](#overview)
