@@ -37,7 +37,6 @@ Visit: https://github.com/plexguide/Huntarr/releases/
   - [Docker Run](#docker-run)
   - [Docker Compose](#docker-compose)
   - [Unraid Users](#unraid-users)
-  - [SystemD Service](#systemd-service)
 - [Use Cases](#use-cases)
 - [Tips](#tips)
 - [Troubleshooting](#troubleshooting)
@@ -214,7 +213,7 @@ docker run -d --name huntarr \
   -p 9705:9705 \
   -v /mnt/user/appdata/huntarr:/config \
   -e TZ=America/New_York \
-  huntarr/huntarr:dev
+  huntarr/huntarr:latest
 ```
 
 To check on the status of the program, you can use the web interface at http://YOUR_SERVER_IP:9705 or check the logs with:
@@ -229,7 +228,7 @@ For those who prefer Docker Compose, add this to your `docker-compose.yml` file:
 ```yaml
 services:
   huntarr:
-    image: huntarr/huntarr:dev
+    image: huntarr/huntarr:latest
     container_name: huntarr
     restart: always
     ports:
@@ -256,29 +255,8 @@ docker run -d --name huntarr \
   -p 9705:9705 \
   -v /mnt/user/appdata/huntarr:/config \
   -e TZ=America/New_York \
-  huntarr/huntarr:dev
+  huntarr/huntarr:latest
 ```
-
-### SystemD Service
-
-For a more permanent installation on Linux systems, it's recommended to use Docker's built-in restart policies with either `docker run` or `docker-compose` as shown above. This ensures the container restarts automatically with your server.
-
-If you still prefer using SystemD to manage Docker containers, you can use Docker's integration with SystemD:
-
-```bash
-# Enable Docker to start on boot
-sudo systemctl enable docker
-
-# Ensure Docker starts your containers on system boot
-docker run -d --name huntarr \
-  --restart always \
-  -p 9705:9705 \
-  -v /path/to/your/config:/config \
-  -e TZ=Your/Timezone \
-  huntarr/huntarr:dev
-```
-
-The `--restart always` flag ensures that Docker will automatically restart the container if it crashes or when the system reboots.
 
 ## Use Cases
 
