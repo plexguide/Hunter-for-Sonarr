@@ -4,6 +4,12 @@
   <img src="frontend/static/logo/128.png" alt="Huntarr Logo" width="100" height="100">
 </p>
 
+<p align="center">
+  <a href="https://discord.gg/VQbZCGzQsn" target="_blank">
+    <img src="frontend/static/images/discord.png" alt="Discord" width="48" height="48">
+  </a>
+</p>
+
 ---
 
 <h2 align="center">Want to Help? Click the Star in the Upper-Right Corner! ⭐</h2> 
@@ -20,12 +26,6 @@
 | Radarr      | **✅ Ready**  |
 | Lidarr      | **❌ Not Ready** |
 | Readarr     | **❌ Not Ready** |
-
-<p align="center">
-  <a href="https://discord.gg/VQbZCGzQsn" target="_blank">
-    <img src="frontend/static/images/discord.png" alt="Discord" width="48" height="48">
-  </a>
-</p>
 
 ## Table of Contents
 - [Overview](#overview)
