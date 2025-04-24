@@ -19,6 +19,10 @@
 * Lidarr [Not Ready]
 * Readarr [Not Ready]
 
+<p align="center">
+  <img src="frontend/static/images/discord.png" alt="Discord" width="48" height="48">
+</p>
+
 **Change Log:**
 Visit: https://github.com/plexguide/Huntarr/releases/
 
