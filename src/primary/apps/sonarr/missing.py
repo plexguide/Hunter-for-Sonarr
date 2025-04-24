@@ -99,7 +99,24 @@ def process_missing_episodes(
         episodes_to_search = episodes_to_process[:hunt_missing_shows]
 
     sonarr_logger.info(f"Selected {len(episodes_to_search)} missing episodes to search.")
-
+    
+    # Add detailed listing of episodes being processed
+    if episodes_to_search:
+        sonarr_logger.info(f"Episodes selected for processing in this cycle:")
+        for idx, episode in enumerate(episodes_to_search):
+            series_title = episode.get('series', {}).get('title', 'Unknown Series')
+            episode_title = episode.get('title', 'Unknown Episode')
+            season_number = episode.get('seasonNumber', 'Unknown Season')
+            episode_number = episode.get('episodeNumber', 'Unknown Episode')
+                
+            episode_id = episode.get("id")
+            try:
+                season_episode = f"S{season_number:02d}E{episode_number:02d}"
+            except (ValueError, TypeError):
+                season_episode = f"S{season_number}E{episode_number}"
+                
+            sonarr_logger.info(f" {idx+1}. {series_title} - {season_episode} - \"{episode_title}\" (ID: {episode_id})")
+    
     # Group episodes by series for potential refresh
     series_to_refresh: Dict[int, List[int]] = {}
     series_titles: Dict[int, str] = {} # Store titles for logging

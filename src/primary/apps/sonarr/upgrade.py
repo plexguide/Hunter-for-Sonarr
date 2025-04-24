@@ -90,7 +90,24 @@ def process_cutoff_upgrades(
         episodes_to_search = episodes_to_process[:hunt_upgrade_episodes]
 
     sonarr_logger.info(f"Selected {len(episodes_to_search)} cutoff unmet episodes to search for upgrades.")
-
+    
+    # Add detailed listing of episodes being upgraded
+    if episodes_to_search:
+        sonarr_logger.info(f"Episodes selected for quality upgrades in this cycle:")
+        for idx, episode in enumerate(episodes_to_search):
+            series_title = episode.get('series', {}).get('title', 'Unknown Series')
+            episode_title = episode.get('title', 'Unknown Episode')
+            season_number = episode.get('seasonNumber', 'Unknown Season')
+            episode_number = episode.get('episodeNumber', 'Unknown Episode')
+            
+            # Get quality information
+            quality_name = "Unknown"
+            if "quality" in episode and episode["quality"]:
+                quality_name = episode["quality"].get("quality", {}).get("name", "Unknown")
+                
+            episode_id = episode.get("id")
+            sonarr_logger.info(f" {idx+1}. {series_title} - S{season_number:02d}E{episode_number:02d} - \"{episode_title}\" - Current quality: {quality_name} (ID: {episode_id})")
+    
     # Group episodes by series for potential refresh
     series_to_process: Dict[int, List[int]] = {}
     series_titles: Dict[int, str] = {} # Store titles for logging
