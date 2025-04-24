@@ -109,9 +109,9 @@ def validate_password_strength(password: str) -> Optional[str]:
         return "Password must include at least one number."
     if not re.search(r"[A-Z]", password):
         return "Password must include at least one uppercase letter."
-    # Use a common set of special characters for validation
-    if not re.search(r"[@$!%*?&]", password):
-        return "Password must include at least one special character (@$!%*?&)."
+    # Check for any non-alphanumeric character (including space)
+    if not re.search(r"[^A-Za-z0-9]", password):
+        return "Password must include at least one special character (any non-letter, non-digit)."
     
     # If all checks pass
     return None
