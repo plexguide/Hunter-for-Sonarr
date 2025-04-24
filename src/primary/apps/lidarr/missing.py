@@ -214,8 +214,12 @@ def process_missing_content(
         if not album_ids_to_search:
              lidarr_logger.info("No specific albums selected to search.")
              return False
-             
-        lidarr_logger.info(f"Selected {len(album_ids_to_search)} specific albums to search: {album_ids_to_search}")
+        
+        # Log more details about the selected albums
+        album_details = [f"{album.get('title', 'Unknown')} by {album.get('artist', {}).get('artistName', 'Unknown Artist')} (ID: {album['id']})" for album in albums_to_search]
+        lidarr_logger.info(f"Selected {len(album_ids_to_search)} specific albums to search:")
+        for album_detail in album_details:
+            lidarr_logger.info(f" - {album_detail}")
 
         # Optional: Refresh artists for selected albums? (Could be many API calls)
         # Let's skip artist refresh in album mode for now unless skip_artist_refresh is explicitly False.

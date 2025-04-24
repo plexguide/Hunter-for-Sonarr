@@ -122,7 +122,11 @@ def process_cutoff_upgrades(
         lidarr_logger.info("No albums selected for upgrade search.")
         return False
 
-    lidarr_logger.info(f"Selected {len(album_ids_to_search)} cutoff unmet albums to search for upgrades: {album_ids_to_search}")
+    # Log more details about the selected albums for upgrade
+    album_details = [f"{album.get('title', 'Unknown')} by {album.get('artist', {}).get('artistName', 'Unknown Artist')} (ID: {album['id']}, Quality: {album.get('quality', {}).get('quality', {}).get('name', 'Unknown')})" for album in albums_to_search]
+    lidarr_logger.info(f"Selected {len(album_ids_to_search)} cutoff unmet albums to search for upgrades:")
+    for album_detail in album_details:
+        lidarr_logger.info(f" - {album_detail}")
 
     processed_in_this_run = set()
 
