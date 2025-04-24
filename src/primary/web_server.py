@@ -51,6 +51,9 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev_key_for_sessions')
 # Register blueprints
 app.register_blueprint(common_bp)
 
+# Register the authentication check to run before requests
+app.before_request(authenticate_request)
+
 # Removed MAIN_PID and signal-related code
 
 # Lock for accessing the log files
