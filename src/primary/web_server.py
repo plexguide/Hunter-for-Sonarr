@@ -97,11 +97,48 @@ def logs_stream():
         web_logger.warning(f"Invalid app type '{app_type}' requested for logs. Defaulting to 'all'.")
         app_type = 'all'
 
-    web_logger.info(f"Starting log stream for app type: {app_type}")
+    # Use a client identifier to track connections
+    client_id = request.remote_addr
+    current_time = datetime.datetime.now().strftime("%H:%M:%S")
+    
+    web_logger.info(f"Starting log stream for app type: {app_type} (client: {client_id}, time: {current_time})")
+
+    # Import needed modules
+    import time
+    from pathlib import Path
+    import threading
+
+    # Track active connections to limit resource usage
+    if not hasattr(app, 'active_log_streams'):
+        app.active_log_streams = {}
+        app.log_stream_lock = threading.Lock()
+
+    # Clean up stale connections (older than 60 seconds without activity)
+    with app.log_stream_lock:
+        current_time = time.time()
+        stale_clients = [c for c, t in app.active_log_streams.items() 
+                         if current_time - t > 60]
+        for client in stale_clients:
+            app.active_log_streams.pop(client, None)
+            web_logger.debug(f"Removed stale log stream connection for client: {client}")
+        
+        # Update this client's timestamp
+        app.active_log_streams[client_id] = current_time
+        
+        # If too many connections, return an error for new ones
+        if len(app.active_log_streams) > 10:  # Limit to 10 concurrent connections
+            oldest_client = min(app.active_log_streams.items(), key=lambda x: x[1])[0]
+            if client_id != oldest_client and len(app.active_log_streams) > 3:
+                web_logger.warning(f"Too many log stream connections ({len(app.active_log_streams)}). Rejecting new connection from {client_id}")
+                return Response("data: Too many active connections. Please try again later.\n\n", 
+                               mimetype='text/event-stream')
 
     def generate():
         """Generate log events for the SSE stream."""
         try:
+            # Initialize last activity time
+            last_activity = time.time()
+            
             # Determine which log files to follow
             if app_type == 'all':
                 log_files_to_follow = list(KNOWN_LOG_FILES.items())
@@ -120,38 +157,62 @@ def logs_stream():
             # Track file positions for each log
             positions = {}
             last_check = {}
+            
+            # Keep-alive counter to send periodic keep-alive messages
+            keep_alive_counter = 0
+            
+            # Convert string paths to Path objects
+            log_files_to_follow = [(name, Path(path) if isinstance(path, str) else path) 
+                                  for name, path in log_files_to_follow]
 
             # Main log streaming loop
             while True:
                 had_content = False
+                current_time = time.time()
+                
+                # Update client activity timestamp periodically
+                if current_time - last_activity > 10:
+                    with app.log_stream_lock:
+                        app.active_log_streams[client_id] = current_time
+                    last_activity = current_time
+                
+                # Increment keep-alive counter
+                keep_alive_counter += 1
+                
+                # Check each log file
                 for name, path in log_files_to_follow:
                     try:
                         # Skip checking too frequently to reduce CPU usage
                         now = datetime.datetime.now()
-                        if name in last_check and (now - last_check[name]).total_seconds() < 0.2:
+                        if name in last_check and (now - last_check[name]).total_seconds() < 0.5:  # Reduced polling frequency
                             continue
                         
                         last_check[name] = now
                         
                         # Check if file exists
-                        if not os.path.exists(path):
+                        if not path.exists():
                             continue
 
                         # Get current size to detect truncation
-                        current_size = os.path.getsize(path)
+                        current_size = path.stat().st_size
                         
                         # Initialize position if needed or handle truncation
                         if name not in positions or current_size < positions[name]:
-                            positions[name] = 0
-                            
-                            # For initial connection, start from end minus 10KB
-                            if name not in positions:
-                                positions[name] = max(0, current_size - 10240)
+                            # For initial connection or truncated file, start from end minus 10KB 
+                            # but use a smaller value (5KB) to reduce initial load
+                            positions[name] = max(0, current_size - 5120)
                                 
-                        # Read new content
+                        # Read new content - use a with block for proper resource cleanup
                         with open(path, 'r', encoding='utf-8', errors='ignore') as f:
                             f.seek(positions[name])
-                            new_lines = f.readlines()
+                            # Read a limited number of lines at once to prevent memory issues
+                            new_lines = []
+                            for _ in range(100):  # Limit to 100 lines per check
+                                line = f.readline()
+                                if not line:
+                                    break
+                                new_lines.append(line)
+                            
                             if new_lines:
                                 had_content = True
                                 positions[name] = f.tell()
@@ -164,22 +225,38 @@ def logs_stream():
                         # Reset position on error
                         positions.pop(name, None)
                 
-                # If no content was found, wait before checking again
+                # Send a keep-alive comment every ~30 seconds to prevent timeout
+                # but only if we haven't had any real content
                 if not had_content:
-                    # Keep the connection alive but don't send anything visible to the client
-                    # Instead of yielding visible empty data, just sleep
+                    if keep_alive_counter >= 60:  # ~30 seconds (60 * 0.5s sleep)
+                        yield f": keepalive {time.time()}\n\n"  # Send a comment (prefixed with :) that won't display
+                        keep_alive_counter = 0
+                    
+                    # Sleep between checks to prevent high CPU usage
                     time.sleep(0.5)
+                else:
+                    # Reset keep-alive counter when we've sent actual content
+                    keep_alive_counter = 0
+                    # Shorter sleep when actively sending content
+                    time.sleep(0.1)
         except GeneratorExit:
-            web_logger.info(f"Client disconnected from log stream for {app_type}")
+            # Clean up when client disconnects
+            with app.log_stream_lock:
+                app.active_log_streams.pop(client_id, None)
+            web_logger.info(f"Client {client_id} disconnected from log stream for {app_type}")
         except Exception as e:
             web_logger.error(f"Error in log stream generator: {e}", exc_info=True)
             yield f"data: ERROR: Log streaming failed: {str(e)}\n\n"
+            
+            # Clean up on error
+            with app.log_stream_lock:
+                app.active_log_streams.pop(client_id, None)
 
-    # Make sure we import time module for sleep
-    import time
-    
-    # Return the SSE response with a longer timeout
-    return Response(generate(), mimetype='text/event-stream')
+    # Return the SSE response with appropriate headers for better streaming
+    response = Response(generate(), mimetype='text/event-stream')
+    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['X-Accel-Buffering'] = 'no'  # Disable nginx buffering if using nginx
+    return response
 
 @app.route('/api/settings', methods=['GET', 'POST'])
 def api_settings():
