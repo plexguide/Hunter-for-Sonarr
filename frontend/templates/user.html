@@ -155,6 +155,10 @@
                         <label for="newUsername">New Username:</label>
                         <input type="text" id="newUsername" class="form-control">
                     </div>
+                    <div class="setting-item"> <!-- Added password field -->
+                        <label for="currentPasswordForUsernameChange">Current Password:</label>
+                        <input type="password" id="currentPasswordForUsernameChange" class="form-control" required>
+                    </div>
                     <button id="saveUsername" class="user-button save-button">Save Username</button>
                     <div id="usernameStatus" style="display: none;"></div>
                 </div>
@@ -345,6 +349,7 @@
             if (saveUsernameButton) {
                 saveUsernameButton.addEventListener('click', function() {
                     const newUsername = document.getElementById('newUsername').value.trim();
+                    const currentPassword = document.getElementById('currentPasswordForUsernameChange').value; // Get password
                     const statusElement = document.getElementById('usernameStatus');
                     
                     if (!newUsername) {
@@ -354,34 +359,85 @@
                         return;
                     }
                     
+                    // Add check for password
+                    if (!currentPassword) {
+                        statusElement.textContent = 'Current password is required';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                        return;
+                    }
+
                     fetch('/api/user/change-username', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ username: newUsername })
+                        // Include password in the request body
+                        body: JSON.stringify({ username: newUsername, password: currentPassword }) 
                     })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            statusElement.textContent = 'Username updated successfully';
+                            statusElement.textContent = 'Username updated successfully. You will be logged out shortly.'; // Updated message
                             statusElement.className = 'status-success';
-                            document.getElementById('username').textContent = newUsername;
-                            document.getElementById('currentUsername').textContent = newUsername;
+                            statusElement.style.display = 'block';
+
+                            // Update displayed usernames (optional, as user will be logged out)
+                            if (document.getElementById('username')) {
+                                document.getElementById('username').textContent = newUsername;
+                            }
+                            if (document.getElementById('currentUsername')) {
+                                document.getElementById('currentUsername').textContent = newUsername;
+                            }
+                            
+                            // Clear input fields
                             document.getElementById('newUsername').value = '';
+                            document.getElementById('currentPasswordForUsernameChange').value = '';
+
+                            // Wait a moment for the user to see the message, then logout
+                            setTimeout(() => {
+                                fetch('/logout', { // Call logout endpoint
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                })
+                                .then(logoutResponse => logoutResponse.json())
+                                .then(logoutData => {
+                                    if (logoutData.success) {
+                                        console.log('Logout successful after username change.');
+                                        window.location.href = '/login'; // Redirect to login
+                                    } else {
+                                        console.error('Automatic logout failed:', logoutData.error);
+                                        // Display error or fallback
+                                        statusElement.textContent = 'Username updated, but auto-logout failed. Please logout manually.';
+                                        statusElement.className = 'status-error';
+                                    }
+                                })
+                                .catch(logoutError => {
+                                    console.error('Error during automatic logout:', logoutError);
+                                    statusElement.textContent = 'Username updated, but an error occurred during logout. Please logout manually.';
+                                    statusElement.className = 'status-error';
+                                });
+                            }, 3000); // 3-second delay
+
                         } else {
-                            statusElement.textContent = data.message || 'Failed to update username';
+                            // Use error message from backend if available
+                            statusElement.textContent = data.error || 'Failed to update username'; 
                             statusElement.className = 'status-error';
+                            statusElement.style.display = 'block'; // Show error
+                            // Keep error message displayed longer if needed
+                            setTimeout(() => {
+                                statusElement.style.display = 'none';
+                            }, 5000);
                         }
                         
-                        statusElement.style.display = 'block';
-                        setTimeout(() => {
-                            statusElement.style.display = 'none';
-                        }, 5000);
+                        // No need for the general status display timeout here anymore
+                        // as success leads to logout and error has its own timeout
                     })
                     .catch(error => {
                         console.error('Error updating username:', error);
-                        statusElement.textContent = 'An error occurred';
+                        statusElement.textContent = 'An error occurred while updating username.'; // More specific error
                         statusElement.className = 'status-error';
                         statusElement.style.display = 'block';
                     });
@@ -424,20 +480,54 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            statusElement.textContent = 'Password updated successfully';
+                            statusElement.textContent = 'Password updated successfully. You will be logged out shortly.'; // Updated message
                             statusElement.className = 'status-success';
+                            statusElement.style.display = 'block'; // Show message before logout
+                            
+                            // Clear password fields
                             document.getElementById('currentPassword').value = '';
                             document.getElementById('newPassword').value = '';
                             document.getElementById('confirmPassword').value = '';
+
+                            // Wait a moment, then logout
+                            setTimeout(() => {
+                                fetch('/logout', { // Call logout endpoint
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                })
+                                .then(logoutResponse => logoutResponse.json())
+                                .then(logoutData => {
+                                    if (logoutData.success) {
+                                        console.log('Logout successful after password change.');
+                                        window.location.href = '/login'; // Redirect to login
+                                    } else {
+                                        console.error('Automatic logout failed:', logoutData.error);
+                                        // Display error or fallback
+                                        statusElement.textContent = 'Password updated, but auto-logout failed. Please logout manually.';
+                                        statusElement.className = 'status-error';
+                                    }
+                                })
+                                .catch(logoutError => {
+                                    console.error('Error during automatic logout:', logoutError);
+                                    statusElement.textContent = 'Password updated, but an error occurred during logout. Please logout manually.';
+                                    statusElement.className = 'status-error';
+                                });
+                            }, 3000); // 3-second delay
+
                         } else {
                             statusElement.textContent = data.message || 'Failed to update password';
                             statusElement.className = 'status-error';
+                            statusElement.style.display = 'block'; // Show error
+                            // Keep error message displayed longer if needed
+                            setTimeout(() => {
+                                statusElement.style.display = 'none';
+                            }, 5000);
                         }
                         
-                        statusElement.style.display = 'block';
-                        setTimeout(() => {
-                            statusElement.style.display = 'none';
-                        }, 5000);
+                        // No need for the general status display timeout here anymore
+                        // as success leads to logout and error has its own timeout
                     })
                     .catch(error => {
                         console.error('Error updating password:', error);
