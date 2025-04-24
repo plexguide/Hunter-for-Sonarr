@@ -149,6 +149,8 @@ Huntarr includes a real-time log viewer and settings management web interface th
   </tr>
 </table>
 
+<img width="1353" alt="image" src="" />
+
 ### How to Access
 
 The web interface is available on port 9705. Simply navigate to:
@@ -166,13 +168,11 @@ The web interface allows you to configure all of Huntarr's settings:
 <table>
   <tr>
     <td colspan="2"> 
-      <img width="930" alt="image" src="https://github.com/user-attachments/assets/19aa9f3c-7641-4b82-8867-22ca2e47536b" />
+      <img width="930" alt="image" src="[https://github.com/user-attachments/assets/19aa9f3c-7641-4b82-8867-22ca2e47536b" />
       <p align="center"><em>Settings UI</em></p>
     </td>
   </tr>
 </table>
-
-All settings are now configured entirely through the web UI after initial setup.
 
 ### Volume Mapping
 
@@ -181,8 +181,6 @@ To ensure data persistence, make sure you map the `/config` directory to a persi
 ```bash
 -v /mnt/user/appdata/huntarr:/config
 ```
-
-This mapping is included in all of the installation examples below.
 
 ---
 
