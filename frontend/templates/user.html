@@ -339,6 +339,16 @@
                 });
         }
         
+        // Password validation function (same as in setup.html)
+        function validatePassword(password) {
+            // At least 10 characters, 1 number, 1 special character, 1 uppercase letter
+            const regex = /^(?=.*\d)(?=.*[@$!%*?&])(?=.*[A-Z])[A-Za-z\d@$!%*?&]{10,}$/; 
+            if (!regex.test(password)) {
+                return 'Password must be at least 10 characters long and include at least one number, one special character (@$!%*?&), and one uppercase letter.'; 
+            }
+            return null; // Password is valid
+        }
+
         function setupEventListeners() {
             // Fix navigation
             document.querySelectorAll('.nav-item').forEach(item => {
@@ -368,12 +378,20 @@
             const saveUsernameButton = document.getElementById('saveUsername');
             if (saveUsernameButton) {
                 saveUsernameButton.addEventListener('click', function() {
-                    const newUsername = document.getElementById('newUsername').value.trim();
+                    const newUsername = document.getElementById('newUsername').value.trim(); // Trim whitespace
                     const currentPassword = document.getElementById('currentPasswordForUsernameChange').value; // Get password
                     const statusElement = document.getElementById('usernameStatus');
                     
                     if (!newUsername) {
                         statusElement.textContent = 'Username cannot be empty';
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                        return;
+                    }
+
+                    // Add username length validation
+                    if (newUsername.length < 3) {
+                        statusElement.textContent = 'Username must be at least 3 characters long';
                         statusElement.className = 'status-error';
                         statusElement.style.display = 'block';
                         return;
@@ -486,6 +504,15 @@
                         statusElement.style.display = 'block';
                         return;
                     }
+
+                    // Validate new password complexity
+                    const passwordError = validatePassword(newPassword);
+                    if (passwordError) {
+                        statusElement.textContent = passwordError;
+                        statusElement.className = 'status-error';
+                        statusElement.style.display = 'block';
+                        return;
+                    }
                     
                     fetch('/api/user/change-password', {
                         method: 'POST',
@@ -537,7 +564,8 @@
                             }, 3000); // 3-second delay
 
                         } else {
-                            statusElement.textContent = data.message || 'Failed to update password';
+                            // Use error message from backend if available
+                            statusElement.textContent = data.error || 'Failed to update password'; // Use data.error
                             statusElement.className = 'status-error';
                             statusElement.style.display = 'block'; // Show error
                             // Keep error message displayed longer if needed

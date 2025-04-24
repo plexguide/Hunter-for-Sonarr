@@ -39,7 +39,6 @@ const huntarrUI = {
         this.setupEventListeners();
         this.loadUsername();
         this.checkAppConnections();
-        this.handleHashNavigation();
         
         // Ensure logo is applied
         if (typeof window.applyLogoToAllElements === 'function') {

@@ -10,16 +10,16 @@ import io
 import qrcode
 import pyotp
 import logging
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, Response, send_from_directory
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for, make_response, session # Import session
 from src.primary import settings_manager # Use the updated settings manager
 from src.primary.utils.logger import get_logger # Import get_logger
-from src.primary.auth import (
-    user_exists, create_user, verify_user, create_session, logout,
-    SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret,
-    verify_2fa_code, disable_2fa, change_username, change_password,
-    get_username_from_session, verify_session, get_user_data, save_user_data, # Added missing imports
-    disable_2fa_with_password_and_otp # Added missing import
-)
+from src.primary.auth import (create_user, user_exists, verify_user, 
+                            generate_2fa_secret, verify_2fa_code, 
+                            disable_2fa, is_2fa_enabled, 
+                            change_username as auth_change_username, 
+                            change_password as auth_change_password, 
+                            get_username_from_session, SESSION_COOKIE_NAME, 
+                            validate_password_strength, create_session, logout, verify_session, disable_2fa_with_password_and_otp) # Import validate_password_strength, create_session, logout, verify_session, disable_2fa_with_password_and_otp
 
 # Get logger for common routes
 logger = logging.getLogger("common_routes")
@@ -114,7 +114,7 @@ def logout_route():
         return jsonify({"success": False, "error": "An internal server error occurred during logout."}), 500
 
 @common_bp.route('/setup', methods=['GET', 'POST'])
-def setup_route():
+def setup():
     if user_exists():
         # If a user already exists, redirect to login or home
         logger.info("Setup page accessed but user already exists. Redirecting to login.")
@@ -126,16 +126,23 @@ def setup_route():
             data = request.json
             username = data.get('username')
             password = data.get('password')
-            confirm_password = data.get('confirm_password') # Get confirm_password
+            confirm_password = data.get('confirm_password')
 
-            if not username or not password:
-                logger.warning("Setup attempt with missing username or password.")
-                return jsonify({"success": False, "error": "Username and password are required"}), 400
+            # Basic validation
+            if not username or not password or not confirm_password:
+                return jsonify({"success": False, "error": "Missing required fields"}), 400
+            
+            # Add username length validation
+            if len(username.strip()) < 3:
+                return jsonify({"success": False, "error": "Username must be at least 3 characters long"}), 400
 
-            # Add password confirmation check
             if password != confirm_password:
-                logger.warning(f"Setup attempt for '{username}' failed: Passwords do not match.")
                 return jsonify({"success": False, "error": "Passwords do not match"}), 400
+
+            # Validate password strength using the backend function
+            password_error = validate_password_strength(password)
+            if password_error:
+                return jsonify({"success": False, "error": password_error}), 400
 
             logger.info(f"Attempting to create user '{username}' during setup.")
             if create_user(username, password):
@@ -165,7 +172,7 @@ def setup_route():
 # --- User Management API Routes --- #
 
 @common_bp.route('/api/user/info', methods=['GET'])
-def get_user_info():
+def get_user_info_route():
     # Use session token to get username
     session_token = request.cookies.get(SESSION_COOKIE_NAME)
     username = get_username_from_session(session_token) # Use auth function
@@ -190,16 +197,18 @@ def change_username_route():
         return jsonify({"error": "Not authenticated"}), 401
 
     data = request.json
-    new_username = data.get('username') # Match frontend key
-    password = data.get('password') # Assuming password is required
+    new_username = data.get('username')
+    password = data.get('password') # Get password from request
 
-    if not new_username or not password:
-        logger.warning(f"Username change attempt for '{current_username}' failed: Missing new username or password.")
-        return jsonify({"success": False, "error": "New username and password are required"}), 400
+    if not new_username or not password: # Check if password is provided
+        return jsonify({"success": False, "error": "New username and current password are required"}), 400
 
-    logger.info(f"Attempting to change username from '{current_username}' to '{new_username}'.")
-    # Pass current_username from session, new_username from request
-    if change_username(current_username, new_username, password):
+    # Add username length validation
+    if len(new_username.strip()) < 3:
+        return jsonify({"success": False, "error": "Username must be at least 3 characters long"}), 400
+
+    # Call the change_username function from auth.py
+    if auth_change_username(current_username, new_username, password):
         # Update session? The session stores a token, not the username directly.
         # If the username is needed frequently, maybe re-create session or update session data if stored there.
         # For now, assume token remains valid.
@@ -232,7 +241,7 @@ def change_password_route():
 
     logger.info(f"Attempting to change password for user '{username}'.")
     # Pass username? change_password might not need it. Assuming it doesn't for now.
-    if change_password(current_password, new_password):
+    if auth_change_password(current_password, new_password):
         logger.info(f"Password changed successfully for user '{username}'.")
         return jsonify({"success": True})
     else:
