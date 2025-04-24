@@ -24,16 +24,17 @@ Visit: https://github.com/plexguide/Huntarr/releases/
 
 ## Table of Contents
 - [Overview](#overview)
-- [Related Projects](#related-projects)
-- [Features](#features)
+- [Other Projects](#other-projects)
+- [Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
 - [How It Works](#how-it-works)
 - [Web Interface](#web-interface)
-- [Persistent Storage](#persistent-storage)
+  - [How to Access](#how-to-access)
+  - [Web UI Settings](#web-ui-settings)
+  - [Volume Mapping](#volume-mapping)
 - [Installation Methods](#installation-methods)
   - [Docker Run](#docker-run)
   - [Docker Compose](#docker-compose)
   - [Unraid Users](#unraid-users)
-- [Use Cases](#use-cases)
 - [Tips](#tips)
 - [Troubleshooting](#troubleshooting)
 
@@ -51,7 +52,7 @@ For detailed documentation, please visit our [Wiki](https://github.com/plexguide
 * [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
 * Visit [PlexGuide](https://plexguide.com) for more great scripts
 
-## PayPal Donations – Building My Daughter's Future
+## PayPal Donations – For My Daughter's College Fund
 
 My 12-year-old daughter is passionate about singing, dancing, and exploring STEM. She consistently earns A-B honors! Every donation goes directly into her college fund!
 
