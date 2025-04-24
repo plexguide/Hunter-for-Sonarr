@@ -12,7 +12,7 @@
   "random_missing": true,
   "random_upgrades": true,
   "debug_mode": false,
-  "api_timeout": 90,
+  "api_timeout": 120,
   "command_wait_delay": 1,
   "command_wait_attempts": 600,
   "minimum_download_queue_size": -1,
