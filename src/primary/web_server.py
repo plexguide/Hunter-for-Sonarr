@@ -156,7 +156,8 @@ def logs_stream():
                                 had_content = True
                                 positions[name] = f.tell()
                                 for line in new_lines:
-                                    yield f"data: {line.strip()}\n\n"
+                                    if line.strip():  # Only send non-empty lines
+                                        yield f"data: {line.strip()}\n\n"
                     except Exception as e:
                         web_logger.error(f"Error reading log file {path}: {e}")
                         yield f"data: ERROR: Problem reading {name} log: {str(e)}\n\n"
@@ -165,8 +166,8 @@ def logs_stream():
                 
                 # If no content was found, wait before checking again
                 if not had_content:
-                    # This is crucial - yield blank data to keep connection alive
-                    yield f"data: \n\n"
+                    # Keep the connection alive but don't send anything visible to the client
+                    # Instead of yielding visible empty data, just sleep
                     time.sleep(0.5)
         except GeneratorExit:
             web_logger.info(f"Client disconnected from log stream for {app_type}")
@@ -177,7 +178,7 @@ def logs_stream():
     # Make sure we import time module for sleep
     import time
     
-    # Return the SSE response
+    # Return the SSE response with a longer timeout
     return Response(generate(), mimetype='text/event-stream')
 
 @app.route('/api/settings', methods=['GET', 'POST'])
