@@ -134,14 +134,42 @@ def get_scenes_with_missing(api_url: str, api_key: str, api_timeout: int, monito
     Returns:
         A list of scene objects with missing files, or None if the request failed.
     """
-    # Use the arr_request with passed arguments
-    scenes = arr_request(api_url, api_key, api_timeout, "scene")
-    if scenes is None: # Check for None explicitly, as an empty list is valid
-        whisparr_logger.error("Failed to retrieve scenes from Whisparr API.")
+    # First, get all series
+    series = arr_request(api_url, api_key, api_timeout, "series")
+    if series is None:
+        whisparr_logger.error("Failed to retrieve series from Whisparr API.")
         return None
     
+    if monitored_only:
+        # Filter for monitored series only if requested
+        series = [s for s in series if s.get("monitored", False)]
+    
+    # Now get episodes for each series
+    all_episodes = []
+    for show in series:
+        series_id = show.get("id")
+        if not series_id:
+            continue
+            
+        # Get episodes for this series
+        episodes = arr_request(api_url, api_key, api_timeout, f"episode?seriesId={series_id}")
+        if episodes is None:
+            whisparr_logger.error(f"Failed to retrieve episodes for series ID {series_id}.")
+            continue
+            
+        # Add series information to each episode for better context
+        for episode in episodes:
+            episode["series"] = {
+                "id": show.get("id"),
+                "title": show.get("title", "Unknown"),
+                "monitored": show.get("monitored", False)
+            }
+            
+        all_episodes.extend(episodes)
+    
+    # Filter for missing episodes
     missing_scenes = []
-    for scene in scenes:
+    for scene in all_episodes:
         is_monitored = scene.get("monitored", False)
         has_file = scene.get("hasFile", False)
         # Apply monitored_only filter if requested
@@ -164,12 +192,8 @@ def get_cutoff_unmet_scenes(api_url: str, api_key: str, api_timeout: int, monito
     Returns:
         A list of scene objects that need quality upgrades, or None if the request failed.
     """
-    whisparr_logger.debug("Fetching all scenes to determine cutoff unmet status...")
-    scenes = arr_request(api_url, api_key, api_timeout, "scene")
-    if scenes is None:
-        whisparr_logger.error("Failed to retrieve scenes from Whisparr API for cutoff check.")
-        return None
-
+    whisparr_logger.debug("Fetching all series to determine cutoff unmet status...")
+    
     # Need quality profile information to determine cutoff unmet status.
     # Fetch quality profiles first.
     profiles = arr_request(api_url, api_key, api_timeout, "qualityprofile")
@@ -179,13 +203,46 @@ def get_cutoff_unmet_scenes(api_url: str, api_key: str, api_timeout: int, monito
     
     # Create a map for easy lookup: profile_id -> cutoff_format_score (or cutoff quality ID)
     profile_cutoff_map = {p['id']: p.get('cutoff') for p in profiles}
+    
+    # First, get all series
+    series = arr_request(api_url, api_key, api_timeout, "series")
+    if series is None:
+        whisparr_logger.error("Failed to retrieve series from Whisparr API for cutoff check.")
+        return None
+    
+    if monitored_only:
+        # Filter for monitored series only if requested
+        series = [s for s in series if s.get("monitored", False)]
+    
+    # Now get episodes for each series
+    all_episodes = []
+    for show in series:
+        series_id = show.get("id")
+        if not series_id:
+            continue
+            
+        # Get episodes for this series
+        episodes = arr_request(api_url, api_key, api_timeout, f"episode?seriesId={series_id}")
+        if episodes is None:
+            whisparr_logger.error(f"Failed to retrieve episodes for series ID {series_id}.")
+            continue
+            
+        # Add series information to each episode for better context
+        for episode in episodes:
+            episode["series"] = {
+                "id": show.get("id"),
+                "title": show.get("title", "Unknown"),
+                "monitored": show.get("monitored", False)
+            }
+            
+        all_episodes.extend(episodes)
 
     unmet_scenes = []
-    for scene in scenes:
+    for scene in all_episodes:
         is_monitored = scene.get("monitored", False)
         has_file = scene.get("hasFile", False)
         profile_id = scene.get("qualityProfileId")
-        scene_file = scene.get("sceneFile")
+        scene_file = scene.get("episodeFile")  # Changed from "sceneFile" to "episodeFile"
 
         # Apply monitored_only filter if requested
         if not monitored_only or is_monitored:
@@ -215,8 +272,8 @@ def refresh_scene(api_url: str, api_key: str, api_timeout: int, scene_id: int) -
     """
     endpoint = "command"
     data = {
-        "name": "RefreshScene", 
-        "sceneIds": [scene_id]
+        "name": "RefreshEpisode", 
+        "episodeIds": [scene_id]
     }
     
     # Use the arr_request function
@@ -248,8 +305,8 @@ def scene_search(api_url: str, api_key: str, api_timeout: int, scene_ids: List[i
         
     endpoint = "command"
     data = {
-        "name": "ScenesSearch",
-        "sceneIds": scene_ids
+        "name": "EpisodeSearch",
+        "episodeIds": scene_ids
     }
     
     # Use the arr_request function
