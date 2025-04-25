@@ -120,8 +120,8 @@ def process_missing_scenes(
         scenes_to_search = random.sample(unprocessed_scenes, min(len(unprocessed_scenes), hunt_missing_scenes))
     else:
         logger.info(f"Selecting the first {hunt_missing_scenes} missing scenes (sorted by title).")
-        # Sort by sceneName for consistent ordering if not random
-        unprocessed_scenes.sort(key=lambda x: x.get("sceneName", ""))
+        # Sort by title for consistent ordering if not random
+        unprocessed_scenes.sort(key=lambda x: x.get("title", ""))
         scenes_to_search = unprocessed_scenes[:hunt_missing_scenes]
     
     logger.info(f"Selected {len(scenes_to_search)} missing scenes to search.")
@@ -141,7 +141,7 @@ def process_missing_scenes(
              break
 
         scene_id = scene.get("id")
-        title = scene.get("sceneName", "Unknown Title")
+        title = scene.get("title", "Unknown Title")
         season_episode = f"S{scene.get('seasonNumber', 0):02d}E{scene.get('episodeNumber', 0):02d}"
         
         logger.info(f"Processing missing scene: \"{title}\" - {season_episode} (Scene ID: {scene_id})")
