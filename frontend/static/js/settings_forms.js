@@ -536,11 +536,7 @@ const SettingsForms = {
                     <input type="text" id="whisparr_api_key" value="${settings.api_key || ''}">
                     <p class="setting-help">API key for Whisparr</p>
                 </div>
-                <div class="setting-item">
-                    <button type="button" id="test-whisparr-button" class="test-button">Test Connection</button>
-                    <span id="whisparr-connection-status" class="connection-status"></span>
-                    <span id="whisparr-version" class="app-version"></span>
-                </div>
+                <!-- Removed the test connection button -->
             </div>
             
             <div class="settings-group">
