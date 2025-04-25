@@ -521,6 +521,135 @@ const SettingsForms = {
         `;
     },
     
+    // Generate Whisparr settings form
+    generateWhisparrForm: function(container, settings = {}) {
+        container.innerHTML = `
+            <div class="settings-group">
+                <h3>Whisparr Connection</h3>
+                <div class="setting-item">
+                    <label for="whisparr_api_url">URL:</label>
+                    <input type="text" id="whisparr_api_url" value="${settings.api_url || ''}">
+                    <p class="setting-help">Base URL for Whisparr (e.g., http://localhost:6969)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_api_key">API Key:</label>
+                    <input type="text" id="whisparr_api_key" value="${settings.api_key || ''}">
+                    <p class="setting-help">API key for Whisparr</p>
+                </div>
+                <div class="setting-item">
+                    <button type="button" id="test-whisparr-button" class="test-button">Test Connection</button>
+                    <span id="whisparr-connection-status" class="connection-status"></span>
+                    <span id="whisparr-version" class="app-version"></span>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Search Settings</h3>
+                <div class="setting-item">
+                    <label for="hunt_missing_scenes">Missing Scenes to Search:</label>
+                    <input type="number" id="hunt_missing_scenes" min="0" value="${settings.hunt_missing_scenes || 1}">
+                    <p class="setting-help">Number of missing scenes to search per cycle (0 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="hunt_upgrade_scenes">Scenes to Upgrade:</label>
+                    <input type="number" id="hunt_upgrade_scenes" min="0" value="${settings.hunt_upgrade_scenes || 0}">
+                    <p class="setting-help">Number of scenes to search for quality upgrades per cycle (0 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_sleep_duration">Search Interval:</label>
+                    <input type="number" id="whisparr_sleep_duration" min="60" value="${settings.sleep_duration || 900}">
+                    <p class="setting-help">Time between searches in seconds (<span id="whisparr_sleep_duration_hours"></span>)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_state_reset_interval_hours">Reset Interval:</label>
+                    <input type="number" id="whisparr_state_reset_interval_hours" min="1" value="${settings.state_reset_interval_hours || 168}">
+                    <p class="setting-help">Hours between state resets (default: 168 = 7 days)</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Additional Options</h3>
+                <div class="setting-item">
+                    <label for="whisparr_monitored_only">Monitored Only:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="whisparr_monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Only search for monitored items</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_skip_future_releases">Skip Future Releases:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="whisparr_skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip searching for scenes with future release dates</p>
+                </div>
+                <div class="setting-item">
+                    <label for="skip_scene_refresh">Skip Scene Refresh:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="skip_scene_refresh" ${settings.skip_scene_refresh === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip refreshing scene metadata before searching</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Advanced Settings</h3>
+                <div class="setting-item">
+                    <label for="whisparr_random_missing">Random Missing:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="whisparr_random_missing" ${settings.random_missing !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Select random missing items instead of sequential order</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_random_upgrades">Random Upgrades:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="whisparr_random_upgrades" ${settings.random_upgrades !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Select random items for quality upgrades</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_debug_mode">Debug Mode:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="whisparr_debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_api_timeout">API Timeout:</label>
+                    <input type="number" id="whisparr_api_timeout" min="10" max="300" value="${settings.api_timeout || 120}">
+                    <p class="setting-help">Timeout for API requests in seconds</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_command_wait_delay">Command Wait Delay:</label>
+                    <input type="number" id="whisparr_command_wait_delay" min="1" value="${settings.command_wait_delay || 1}">
+                    <p class="setting-help">Delay between checking command status in seconds</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_command_wait_attempts">Command Wait Attempts:</label>
+                    <input type="number" id="whisparr_command_wait_attempts" min="1" value="${settings.command_wait_attempts || 600}">
+                    <p class="setting-help">Maximum number of status check attempts</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_minimum_download_queue_size">Min Download Queue Size:</label>
+                    <input type="number" id="whisparr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
+                    <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_log_refresh_interval_seconds">Log Refresh Interval:</label>
+                    <input type="number" id="whisparr_log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
+                    <p class="setting-help">Interval in seconds to refresh log display</p>
+                </div>
+            </div>
+        `;
+    },
+    
     // Update duration display - e.g., convert seconds to hours
     updateDurationDisplay: function() {
         // Function to update a specific sleep duration display
@@ -546,5 +675,6 @@ const SettingsForms = {
         updateSleepDisplay('radarr_sleep_duration', 'radarr_sleep_duration_hours');
         updateSleepDisplay('lidarr_sleep_duration', 'lidarr_sleep_duration_hours');
         updateSleepDisplay('readarr_sleep_duration', 'readarr_sleep_duration_hours');
+        updateSleepDisplay('whisparr_sleep_duration', 'whisparr_sleep_duration_hours'); // Added Whisparr
     }
 };

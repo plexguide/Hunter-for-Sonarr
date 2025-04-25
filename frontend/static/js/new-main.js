@@ -15,7 +15,9 @@ const huntarrUI = {
     configuredApps: {
         sonarr: false,
         radarr: false,
-        lidarr: false
+        lidarr: false,
+        readarr: false, // Added readarr
+        whisparr: false // Added whisparr
     },
     originalSettings: {}, // Store the full original settings object
     
@@ -82,6 +84,8 @@ const huntarrUI = {
         this.elements.sonarrHomeStatus = document.getElementById('sonarrHomeStatus');
         this.elements.radarrHomeStatus = document.getElementById('radarrHomeStatus');
         this.elements.lidarrHomeStatus = document.getElementById('lidarrHomeStatus');
+        this.elements.readarrHomeStatus = document.getElementById('readarrHomeStatus'); // Added readarr
+        this.elements.whisparrHomeStatus = document.getElementById('whisparrHomeStatus'); // Added whisparr
         
         // Actions
         this.elements.startHuntButton = document.getElementById('startHuntButton');
@@ -537,6 +541,19 @@ const huntarrUI = {
             SettingsForms.updateDurationDisplay();
         }
 
+        // Initialize app-specific JS handlers after form is populated/generated
+        if (app === 'sonarr' && typeof setupSonarrForm === 'function') {
+            setupSonarrForm();
+        } else if (app === 'radarr' && typeof setupRadarrForm === 'function') {
+            setupRadarrForm();
+        } else if (app === 'lidarr' && typeof setupLidarrForm === 'function') {
+            setupLidarrForm();
+        } else if (app === 'readarr' && typeof setupReadarrForm === 'function') {
+            setupReadarrForm();
+        } else if (app === 'whisparr' && typeof setupWhisparrForm === 'function') { // Added Whisparr
+            setupWhisparrForm();
+        }
+
         // Ensure save/reset buttons are initially disabled after populating
         this.updateSaveResetButtonState(app, false);
     },
@@ -681,6 +698,8 @@ const huntarrUI = {
         this.checkAppConnection('sonarr');
         this.checkAppConnection('radarr');
         this.checkAppConnection('lidarr');
+        this.checkAppConnection('readarr'); // Added readarr
+        this.checkAppConnection('whisparr'); // Added whisparr
     },
     
     checkAppConnection: function(app) {

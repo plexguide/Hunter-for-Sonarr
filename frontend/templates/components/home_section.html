@@ -2,7 +2,48 @@
     <div class="dashboard-grid stack-layout">
         <div class="card welcome-card">
             <h2>Welcome to Huntarr!</h2>
-            <p>Your Media Hunter for Sonarr, Radarr, Lidarr & Readarr</p> <!-- Updated text -->
+            <p>Your Media Hunter for Sonarr, Radarr, Lidarr, Readarr & Whisparr</p> <!-- Updated to include Whisparr -->
+        </div>
+
+        <!-- Add App Status Cards Section -->
+        <div class="card">
+            <h3>App Status</h3>
+            <div class="app-status-grid">
+                <div class="app-status-card">
+                    <img src="/static/logo/64.png" alt="Sonarr Logo" class="app-logo">
+                    <h4>Sonarr</h4>
+                    <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                    <p>Status of Sonarr connection.</p>
+                </div>
+                
+                <div class="app-status-card">
+                    <img src="/static/logo/64.png" alt="Radarr Logo" class="app-logo">
+                    <h4>Radarr</h4>
+                    <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                    <p>Status of Radarr connection.</p>
+                </div>
+                
+                <div class="app-status-card">
+                    <img src="/static/logo/64.png" alt="Lidarr Logo" class="app-logo">
+                    <h4>Lidarr</h4>
+                    <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                    <p>Status of Lidarr connection.</p>
+                </div>
+
+                <div class="app-status-card">
+                    <img src="/static/logo/64.png" alt="Readarr Logo" class="app-logo">
+                    <h4>Readarr</h4>
+                    <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                    <p>Status of Readarr connection.</p>
+                </div>
+
+                <div class="app-status-card">
+                    <img src="/static/logo/64.png" alt="Whisparr Logo" class="app-logo">
+                    <h4>Whisparr</h4>
+                    <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                    <p>Status of Whisparr connection.</p>
+                </div>
+            </div>
         </div>
 
         <div class="card info-card">
@@ -55,6 +96,67 @@
     
     .resource-list li {
         margin-bottom: 10px;
+    }
+    
+    /* App Status Grid Styles */
+    .app-status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 15px;
+    }
+    
+    .app-status-card {
+        background-color: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+    }
+    
+    .app-status-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .app-status-card img {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 10px;
+    }
+    
+    .app-status-card h4 {
+        margin: 0 0 10px;
+        font-size: 1.1em;
+    }
+    
+    .app-status-card p {
+        font-size: 0.85em;
+        color: var(--text-muted);
+        margin-top: 10px;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 500;
+    }
+    
+    .status-badge.connected {
+        background-color: #4caf50;
+        color: white;
+    }
+    
+    .status-badge.not-connected {
+        background-color: #f44336;
+        color: white;
+    }
+    
+    .status-badge.loading {
+        background-color: #ffb74d;
+        color: #333;
     }
     
     .banner-footer {
