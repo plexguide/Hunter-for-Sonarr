@@ -19,7 +19,10 @@
 | Sonarr      | **✅ Ready**  |
 | Radarr      | **✅ Ready**  |
 | Lidarr      | **✅ Ready**  |
-| Readarr     | **❌ Not Ready** |
+| Readarr     | **✅ Ready**  |
+| Whisparr     | **❌ Not Ready** |
+| Bazarr    | **❌ Not Ready** |
+
 
 Keep in mind this is very early in program development. If you have a very special hand picked collection (because some users are extra special), test before you deploy.
 
