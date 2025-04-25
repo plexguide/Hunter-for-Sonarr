@@ -22,7 +22,8 @@ APP_LOG_FILES = {
     "sonarr": LOG_DIR / "sonarr.log", # Updated filename
     "radarr": LOG_DIR / "radarr.log", # Updated filename
     "lidarr": LOG_DIR / "lidarr.log", # Updated filename
-    "readarr": LOG_DIR / "readarr.log" # Updated filename
+    "readarr": LOG_DIR / "readarr.log", # Updated filename
+    "whisparr": LOG_DIR / "whisparr.log" # Added Whisparr
 }
 
 # Global logger instances
