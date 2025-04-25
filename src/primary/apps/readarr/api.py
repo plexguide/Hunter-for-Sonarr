@@ -21,6 +21,97 @@ session = requests.Session()
 # Default API timeout in seconds
 API_TIMEOUT = 30
 
+def check_connection(api_url: str, api_key: str, timeout: int = 30) -> bool:
+    """
+    Check if we can connect to the Readarr API.
+    
+    Args:
+        api_url: The base URL of the Readarr API
+        api_key: The API key for authentication
+        timeout: Timeout in seconds for the request
+        
+    Returns:
+        True if connection successful, False otherwise
+    """
+    if not api_url or not api_key:
+        logger.error("API URL or API key is missing. Cannot check connection.")
+        return False
+    
+    try:
+        # Clean up API URL
+        api_url = api_url.rstrip('/')
+        url = f"{api_url}/api/v1/system/status"
+        
+        # Headers
+        headers = {
+            "X-Api-Key": api_key,
+            "Content-Type": "application/json"
+        }
+        
+        # Make the request
+        response = session.get(url, headers=headers, timeout=timeout)
+        response.raise_for_status()
+        
+        # Verify we got a valid JSON response
+        response.json()
+        
+        logger.info(f"Successfully connected to Readarr API at {api_url}")
+        return True
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to connect to Readarr API: {e}")
+        return False
+    except ValueError:
+        logger.error("Received invalid JSON response from Readarr API")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error checking Readarr connection: {e}")
+        return False
+
+def get_download_queue_size(api_url: str = None, api_key: str = None, timeout: int = 30) -> int:
+    """
+    Get the current size of the download queue.
+    
+    Args:
+        api_url: Optional API URL (if not provided, will be fetched from settings)
+        api_key: Optional API key (if not provided, will be fetched from settings)
+        timeout: Timeout in seconds for the request
+    
+    Returns:
+        The number of items in the download queue, or 0 if the request failed
+    """
+    try:
+        # If API URL and key are provided, use them directly
+        if api_url and api_key:
+            # Clean up API URL
+            api_url = api_url.rstrip('/')
+            url = f"{api_url}/api/v1/queue"
+            
+            # Headers
+            headers = {
+                "X-Api-Key": api_key,
+                "Content-Type": "application/json"
+            }
+            
+            # Make the request
+            response = session.get(url, headers=headers, timeout=timeout)
+            response.raise_for_status()
+            
+            # Parse JSON response
+            data = response.json()
+            if "totalRecords" in data:
+                return data["totalRecords"]
+            return 0
+        else:
+            # Use the arr_request function if API URL and key aren't provided
+            response = arr_request("queue")
+            if response and "totalRecords" in response:
+                return response["totalRecords"]
+            return 0
+    except Exception as e:
+        logger.error(f"Error getting download queue size: {e}")
+        return 0
+
 def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type: str = "readarr") -> Any:
     """
     Make a request to the Readarr API.
@@ -80,18 +171,6 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type:
     except requests.exceptions.RequestException as e:
         logger.error(f"API request failed: {e}")
         return None
-
-def get_download_queue_size() -> int:
-    """
-    Get the current size of the download queue.
-    
-    Returns:
-        The number of items in the download queue, or 0 if the request failed
-    """
-    response = arr_request("queue")
-    if response and "totalRecords" in response:
-        return response["totalRecords"]
-    return 0
 
 def get_books_with_missing_files() -> List[Dict]:
     """

@@ -18,23 +18,30 @@ from src.primary.apps.readarr.api import get_books_with_missing_files, refresh_a
 # Get app-specific logger
 logger = get_logger("readarr")
 
-def process_missing_books(restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
+def process_missing_books(app_settings: Dict = None, restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
     """
     Process books that are missing from the library.
 
     Args:
+        app_settings: Dictionary containing all app settings (optional)
         restart_cycle_flag: Function that returns whether to restart the cycle
 
     Returns:
         True if any processing was done, False otherwise
     """
-    # Removed refresh_settings call
-
-    # Get the current value directly at the start of processing
-    HUNT_MISSING_BOOKS = settings_manager.get_setting("readarr", "hunt_missing_books", 1)
-    RANDOM_MISSING = settings_manager.get_setting("readarr", "random_missing", True)
-    SKIP_AUTHOR_REFRESH = settings_manager.get_setting("readarr", "skip_author_refresh", False)
-    MONITORED_ONLY = settings_manager.get_setting("readarr", "monitored_only", True)
+    # Use app_settings if provided, otherwise fetch from settings_manager
+    if app_settings is None:
+        # Fallback to direct settings if app_settings not provided
+        HUNT_MISSING_BOOKS = settings_manager.get_setting("readarr", "hunt_missing_books", 1)
+        RANDOM_MISSING = settings_manager.get_setting("readarr", "random_missing", True)
+        SKIP_AUTHOR_REFRESH = settings_manager.get_setting("readarr", "skip_author_refresh", False)
+        MONITORED_ONLY = settings_manager.get_setting("readarr", "monitored_only", True)
+    else:
+        # Use values from app_settings
+        HUNT_MISSING_BOOKS = app_settings.get("hunt_missing_books", 1)
+        RANDOM_MISSING = app_settings.get("random_missing", True)
+        SKIP_AUTHOR_REFRESH = app_settings.get("skip_author_refresh", False)
+        MONITORED_ONLY = app_settings.get("monitored_only", True)
 
     # Get app-specific state file
     PROCESSED_MISSING_FILE = get_state_file_path("readarr", "processed_missing")
@@ -100,7 +107,10 @@ def process_missing_books(restart_cycle_flag: Callable[[], bool] = lambda: False
             break
         
         # Check again for the current limit in case it was changed during processing
-        current_limit = settings_manager.get_setting("readarr", "hunt_missing_books", 1)
+        if app_settings is None:
+            current_limit = settings_manager.get_setting("readarr", "hunt_missing_books", 1)
+        else:
+            current_limit = HUNT_MISSING_BOOKS  # Use the value from app_settings
         
         if books_processed >= current_limit:
             logger.info(f"Reached HUNT_MISSING_BOOKS={current_limit} for this cycle.")
@@ -152,15 +162,21 @@ def process_missing_books(restart_cycle_flag: Callable[[], bool] = lambda: False
             books_processed += 1
             processing_done = True
             
-            # Log with the current limit, not the initial one
-            current_limit = settings_manager.get_setting("readarr", "hunt_missing_books", 1)
+            # Log with the current limit
+            if app_settings is None:
+                current_limit = settings_manager.get_setting("readarr", "hunt_missing_books", 1)
+            else:
+                current_limit = HUNT_MISSING_BOOKS
             logger.info(f"Processed {books_processed}/{current_limit} missing books this cycle.")
         else:
             logger.warning(f"WARNING: Search command failed for book ID {book_id}.")
             continue
     
     # Log final status
-    current_limit = settings_manager.get_setting("readarr", "hunt_missing_books", 1)
+    if app_settings is None:
+        current_limit = settings_manager.get_setting("readarr", "hunt_missing_books", 1)
+    else:
+        current_limit = HUNT_MISSING_BOOKS
     logger.info(f"Completed processing {books_processed} missing books for this cycle.")
     truncate_processed_list(PROCESSED_MISSING_FILE)
     
