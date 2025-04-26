@@ -339,21 +339,11 @@
                 });
         }
         
-        // Password validation function (same as in setup.html)
+        // Password validation function
         function validatePassword(password) {
-            // At least 10 characters, 1 number, 1 uppercase letter, 1 non-alphanumeric character
+            // Only check for minimum length of 10 characters
             if (password.length < 10) {
                 return 'Password must be at least 10 characters long.';
-            }
-            if (!/\d/.test(password)) {
-                return 'Password must include at least one number.';
-            }
-            if (!/[A-Z]/.test(password)) {
-                return 'Password must include at least one uppercase letter.';
-            }
-            // Check for any character that is NOT a letter or digit
-            if (!/[^A-Za-z0-9]/.test(password)) { 
-                return 'Password must include at least one special character (any non-letter, non-digit).'; 
             }
             return null; // Password is valid
         }
