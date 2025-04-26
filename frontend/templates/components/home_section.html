@@ -47,9 +47,13 @@
                 <div class="app-stats-grid">
                     <!-- Sonarr Card -->
                     <div class="app-stats-card sonarr">
-                        <span id="sonarrHomeStatus" class="status-badge box-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                        <img src="/static/arrs/48-sonarr.png" alt="Sonarr Logo" class="app-logo">
-                        <h4>Sonarr</h4>
+                        <div class="status-container">
+                            <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        </div>
+                        <div class="app-content">
+                            <img src="/static/arrs/48-sonarr.png" alt="Sonarr Logo" class="app-logo">
+                            <h4>Sonarr</h4>
+                        </div>
                         <div class="stats-numbers">
                             <div class="stat-box">
                                 <span class="stat-number" id="sonarr-hunted">6</span>
@@ -64,9 +68,13 @@
                     
                     <!-- Radarr Card -->
                     <div class="app-stats-card radarr">
-                        <span id="radarrHomeStatus" class="status-badge box-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                        <img src="/static/arrs/48-radarr.png" alt="Radarr Logo" class="app-logo">
-                        <h4>Radarr</h4>
+                        <div class="status-container">
+                            <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        </div>
+                        <div class="app-content">
+                            <img src="/static/arrs/48-radarr.png" alt="Radarr Logo" class="app-logo">
+                            <h4>Radarr</h4>
+                        </div>
                         <div class="stats-numbers">
                             <div class="stat-box">
                                 <span class="stat-number" id="radarr-hunted">0</span>
@@ -81,9 +89,13 @@
                     
                     <!-- Lidarr Card -->
                     <div class="app-stats-card lidarr">
-                        <span id="lidarrHomeStatus" class="status-badge box-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                        <img src="/static/arrs/48-lidarr.png" alt="Lidarr Logo" class="app-logo">
-                        <h4>Lidarr</h4>
+                        <div class="status-container">
+                            <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        </div>
+                        <div class="app-content">
+                            <img src="/static/arrs/48-lidarr.png" alt="Lidarr Logo" class="app-logo">
+                            <h4>Lidarr</h4>
+                        </div>
                         <div class="stats-numbers">
                             <div class="stat-box">
                                 <span class="stat-number" id="lidarr-hunted">0</span>
@@ -98,9 +110,13 @@
                     
                     <!-- Readarr Card -->
                     <div class="app-stats-card readarr">
-                        <span id="readarrHomeStatus" class="status-badge box-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                        <img src="/static/arrs/48-readarr.png" alt="Readarr Logo" class="app-logo">
-                        <h4>Readarr</h4>
+                        <div class="status-container">
+                            <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        </div>
+                        <div class="app-content">
+                            <img src="/static/arrs/48-readarr.png" alt="Readarr Logo" class="app-logo">
+                            <h4>Readarr</h4>
+                        </div>
                         <div class="stats-numbers">
                             <div class="stat-box">
                                 <span class="stat-number" id="readarr-hunted">0</span>
@@ -115,9 +131,13 @@
                     
                     <!-- Whisparr Card -->
                     <div class="app-stats-card whisparr">
-                        <span id="whisparrHomeStatus" class="status-badge box-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                        <img src="/static/arrs/48-whisparr.png" alt="Whisparr Logo" class="app-logo">
-                        <h4>Whisparr</h4>
+                        <div class="status-container">
+                            <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        </div>
+                        <div class="app-content">
+                            <img src="/static/arrs/48-whisparr.png" alt="Whisparr Logo" class="app-logo">
+                            <h4>Whisparr</h4>
+                        </div>
                         <div class="stats-numbers">
                             <div class="stat-box">
                                 <span class="stat-number" id="whisparr-hunted">0</span>
@@ -245,11 +265,12 @@
     
     .app-stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 20px;
         margin-bottom: 20px;
     }
     
+    /* Enhanced card styling */
     .app-stats-card {
         background-color: var(--bg-secondary);
         border-radius: 8px;
@@ -258,35 +279,65 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
         position: relative;
-        overflow: hidden;
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-height: 200px;
+        min-height: 220px;
+        justify-content: space-between;
     }
     
     .app-stats-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
     }
+
+    /* Status container styling */
+    .status-container {
+        width: 100%;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: center;
+    }
     
-    .app-stats-card h4 {
-        margin: 8px 0;
-        font-size: 1.2em;
+    .status-badge {
+        padding: 6px 18px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* App content styling */
+    .app-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 5px;
     }
     
     .app-logo {
         width: 48px;
         height: 48px;
-        margin-top: 10px;
+        margin-bottom: 10px;
     }
-
-    /* New box layout for stats */
+    
+    .app-stats-card h4 {
+        margin: 0;
+        font-size: 1.2em;
+        font-weight: 600;
+    }
+    
+    /* Stats display styling */
     .stats-numbers {
         display: flex;
-        gap: 10px;
-        margin-top: 20px;
+        gap: 15px;
         width: 100%;
+        padding-top: 10px;
+        margin-top: auto;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .stat-box {
@@ -297,13 +348,13 @@
     }
 
     .stat-number {
-        font-size: 3rem;
+        font-size: 2.5rem;
         font-weight: 700;
         line-height: 1;
     }
     
     .stat-label {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         margin-top: 5px;
         color: var(--text-secondary);
     }
@@ -329,19 +380,20 @@
         color: #c300e6;
     }
     
-    /* Status badge restyled as a box at the top */
-    .status-badge.box-badge {
-        position: absolute;
-        top: 0;
-        right: 0;
-        left: 0;
-        padding: 5px;
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
-        border-top-left-radius: 8px;
-        border-top-right-radius: 8px;
-        font-weight: 600;
-        font-size: 0.8rem;
+    /* Status badge colors */
+    .status-badge.connected {
+        background-color: #4caf50;
+        color: white;
+    }
+    
+    .status-badge.not-connected {
+        background-color: #f44336;
+        color: white;
+    }
+    
+    .status-badge.loading {
+        background-color: #ffb74d;
+        color: #333;
     }
     
     /* Stats action buttons */
@@ -379,22 +431,6 @@
     .action-button.danger:hover {
         background-color: #f44336;
         color: white;
-    }
-
-    /* Status badge colors */
-    .status-badge.connected {
-        background-color: #4caf50;
-        color: white;
-    }
-    
-    .status-badge.not-connected {
-        background-color: #f44336;
-        color: white;
-    }
-    
-    .status-badge.loading {
-        background-color: #ffb74d;
-        color: #333;
     }
     
     /* Responsive adjustments */
