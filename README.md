@@ -52,9 +52,6 @@ For detailed documentation, please visit our [Wiki](https://github.com/plexguide
 
 ## Other Projects
 
-* [Legacy Huntarr - Radarr Edition](https://github.com/plexguide/Radarr-Hunter) - Sister version for Movies
-* [Legacy Huntarr - Lidarr Edition](https://github.com/plexguide/Lidarr-Hunter) - Sister version for Music
-* [Legacy Huntarr - Readarr Edition](https://github.com/plexguide/Huntarr-Readarr) - Sister version for Books
 * [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
 * Visit [PlexGuide](https://plexguide.com) for more great scripts
 
@@ -135,7 +132,7 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 ## Web Interface
 
-Huntarr's live homepage will provide you statics about how many hunts have been pursed regarding missing media and upgrade searches!
+Huntarr's live homepage will provide you statics about how many hunts have been pursed regarding missing media and upgrade searches! Note: Numbers reflected are but all required for testing... damn you Whisparr!
 
 <table>
   <tr>
