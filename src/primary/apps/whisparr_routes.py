@@ -3,12 +3,12 @@
 from flask import Blueprint, request, jsonify
 import datetime, os, requests
 from src.primary import keys_manager
-from src.primary.state import get_state_file_path
-from src.primary.apps.whisparr.api import check_connection
+from src.primary.state import get_state_file_path, reset_state_file
+from src.primary.utils.logger import get_logger, APP_LOG_FILES
+import traceback
 
 whisparr_bp = Blueprint('whisparr', __name__)
-
-LOG_FILE = "/tmp/huntarr-logs/huntarr.log"
+whisparr_logger = get_logger("whisparr")
 
 # Make sure we're using the correct state files
 PROCESSED_MISSING_FILE = get_state_file_path("whisparr", "processed_missing") 
@@ -20,45 +20,42 @@ def test_connection():
     data = request.json
     api_url = data.get('api_url')
     api_key = data.get('api_key')
-
+    
     if not api_url or not api_key:
         return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
-
-    headers = {'X-Api-Key': api_key}
-    test_url = f"{api_url.rstrip('/')}/api/v3/system/status"
-
+        
+    whisparr_logger.info(f"Testing connection to Whisparr API at {api_url}")
+    
+    # For Whisparr, use api/v3
+    url = f"{api_url}/api/v3/system/status"
+    headers = {
+        "X-Api-Key": api_key,
+        "Content-Type": "application/json"
+    }
+    
     try:
-        response = requests.get(test_url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
-
-        # Save keys if connection is successful
-        keys_manager.save_api_keys("whisparr", api_url, api_key)
-
-        # Ensure the response is valid JSON
+        
         try:
             response_data = response.json()
+            version = response_data.get('version', 'unknown')
+            whisparr_logger.info(f"Successfully connected to Whisparr API version: {version}")
+            
+            return jsonify({
+                "success": True,
+                "message": "Successfully connected to Whisparr API",
+                "version": version
+            })
         except ValueError:
-            return jsonify({"success": False, "message": "Invalid JSON response from Whisparr API"}), 500
-
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open(LOG_FILE, 'a') as f:
-            f.write(f"{timestamp} - whisparr - INFO - Successfully connected to Whisparr API\n")
-
-        return jsonify({"success": True, "message": "Successfully connected to Whisparr API"})
-
-    except requests.exceptions.Timeout:
-        return jsonify({"success": False, "message": "Connection timed out"}), 504
+            error_msg = "Invalid JSON response from Whisparr API"
+            whisparr_logger.error(f"{error_msg}. Response content: {response.text[:200]}")
+            return jsonify({"success": False, "message": error_msg}), 500
+            
     except requests.exceptions.RequestException as e:
-        error_message = f"Connection failed: {str(e)}"
-        if e.response is not None:
-            try:
-                error_details = e.response.json()
-                error_message += f" - {error_details.get('message', 'No details')}"
-            except ValueError:
-                error_message += f" - Status Code: {e.response.status_code}"
-        return jsonify({"success": False, "message": error_message}), 500
-    except Exception as e:
-        return jsonify({"success": False, "message": f"An unexpected error occurred: {str(e)}"}), 500
+        error_msg = f"Connection test failed: {str(e)}"
+        whisparr_logger.error(error_msg)
+        return jsonify({"success": False, "message": error_msg}), 500
 
 # Function to check if Whisparr is configured
 def is_configured():
@@ -93,19 +90,21 @@ def get_versions():
 
 @whisparr_bp.route('/logs', methods=['GET'])
 def get_logs():
-    """Get recent log entries for Whisparr from the huntarr log file"""
+    """Get recent log entries for Whisparr from the whisparr log file"""
     try:
-        with open(LOG_FILE, 'r') as f:
+        log_file = APP_LOG_FILES.get('whisparr')
+        if not log_file or not os.path.exists(log_file):
+            return jsonify({"success": False, "message": "Whisparr log file not found"}), 404
+            
+        with open(log_file, 'r') as f:
             log_content = f.readlines()
         
-        # Filter log entries related to Whisparr
-        whisparr_logs = [line for line in log_content if " - whisparr - " in line]
-        
         # Return the most recent 100 log entries
-        recent_logs = whisparr_logs[-100:] if len(whisparr_logs) > 100 else whisparr_logs
+        recent_logs = log_content[-100:] if len(log_content) > 100 else log_content
         
         return jsonify({"success": True, "logs": recent_logs})
     except Exception as e:
+        whisparr_logger.error(f"Error reading log file: {str(e)}")
         return jsonify({"success": False, "message": f"Error reading log file: {str(e)}"}), 500
 
 @whisparr_bp.route('/clear-processed', methods=['POST'])
@@ -114,13 +113,15 @@ def clear_processed():
     try:
         data = request.json
         if data.get('missing'):
-            with open(PROCESSED_MISSING_FILE, 'w') as f:
-                f.write('[]')
+            reset_state_file("whisparr", "processed_missing")
+            whisparr_logger.info("Reset Whisparr missing state")
         
         if data.get('upgrades'):
-            with open(PROCESSED_UPGRADES_FILE, 'w') as f:
-                f.write('[]')
+            reset_state_file("whisparr", "processed_upgrades")
+            whisparr_logger.info("Reset Whisparr upgrades state")
         
         return jsonify({"success": True, "message": "Processed files cleared successfully"})
     except Exception as e:
-        return jsonify({"success": False, "message": f"Error clearing processed files: {str(e)}"}), 500
+        error_msg = f"Error clearing processed files: {str(e)}"
+        whisparr_logger.error(error_msg)
+        return jsonify({"success": False, "message": error_msg}), 500

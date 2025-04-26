@@ -6,40 +6,46 @@ Handles albums that do not meet the configured quality cutoff.
 
 import time
 import random
-import datetime
-from typing import List, Dict, Any, Set, Callable 
+from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
-from src.primary.state import load_processed_ids, save_processed_ids, get_state_file_path
-from src.primary.apps.lidarr import api as lidarr_api 
-from src.primary.apps.lidarr.missing import wait_for_command # Reuse wait function
-from src.primary.stats_manager import increment_stat  # Import the stats increment function
+from src.primary.state import load_processed_ids, save_processed_ids, get_state_file_path, truncate_processed_list
+from src.primary.apps.lidarr import api as lidarr_api
+from src.primary.stats_manager import increment_stat
 
-# Get logger for the Lidarr app
+# Get logger for the app
 lidarr_logger = get_logger("lidarr")
 
-# State file for processed upgrades (stores album IDs)
+# State file for processed cutoff upgrades
 PROCESSED_UPGRADES_FILE = get_state_file_path("lidarr", "processed_upgrades")
 
 def process_cutoff_upgrades(
-    app_settings: Dict[str, Any], 
-    stop_check: Callable[[], bool] 
-) -> bool: 
-    """Process cutoff unmet albums in Lidarr for quality upgrades."""
-    lidarr_logger.info("Starting cutoff upgrade processing cycle for Lidarr.")
-    processed_any = False 
-
+    app_settings: Dict[str, Any],
+    stop_check: Callable[[], bool] # Function to check if stop is requested
+) -> bool:
+    """
+    Process quality cutoff upgrades for Lidarr based on settings.
+    
+    Args:
+        app_settings: Dictionary containing all settings for Lidarr
+        stop_check: A function that returns True if the process should stop
+        
+    Returns:
+        True if any albums were processed for upgrades, False otherwise.
+    """
+    lidarr_logger.info("Starting quality cutoff upgrades processing cycle for Lidarr.")
+    processed_any = False
+    
     # Extract necessary settings
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
-    api_timeout = app_settings.get("api_timeout", 90) # Lidarr can be slower
+    api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
-    skip_future_releases = app_settings.get("skip_future_releases", True)
-    skip_artist_refresh = app_settings.get("skip_artist_refresh", False) # Reuse setting name
-    random_upgrades = app_settings.get("random_upgrades", True) # Default random to True?
-    # Use hunt_upgrade_items as the setting name
-    hunt_upgrade_items = app_settings.get("hunt_upgrade_items", 0) 
+    skip_artist_refresh = app_settings.get("skip_artist_refresh", False)
+    random_upgrades = app_settings.get("random_upgrades", False)
+    hunt_upgrade_items = app_settings.get("hunt_upgrade_items", 0)
     command_wait_delay = app_settings.get("command_wait_delay", 5)
-    command_wait_attempts = app_settings.get("command_wait_attempts", 120) # Increase wait for Lidarr?
+    command_wait_attempts = app_settings.get("command_wait_attempts", 12)
+    state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)  # Add this line to get the stateful reset interval
 
     if not api_url or not api_key:
         lidarr_logger.error("API URL or Key not configured. Cannot process upgrades.")
@@ -71,7 +77,7 @@ def process_cutoff_upgrades(
     lidarr_logger.info(f"Found {len(albums_to_consider)} new cutoff unmet albums to process for upgrades.")
 
     # Filter out future releases if configured
-    if skip_future_releases:
+    if skip_artist_refresh:
         now = datetime.datetime.now(datetime.timezone.utc) # Use timezone-aware comparison
         original_count = len(albums_to_consider)
         
@@ -178,5 +184,5 @@ def process_cutoff_upgrades(
     elif processed_any:
         lidarr_logger.info("Attempted upgrade processing, but no new albums were marked as successfully processed.")
 
-    lidarr_logger.info("Finished cutoff upgrade processing cycle for Lidarr.")
+    lidarr_logger.info("Finished quality cutoff upgrades processing cycle for Lidarr.")
     return processed_any

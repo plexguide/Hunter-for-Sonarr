@@ -9,7 +9,7 @@ from typing import List, Dict, Any, Set, Callable
 # Correct import path
 from src.primary.utils.logger import get_logger
 # Correct the import names
-from src.primary.state import load_processed_ids, save_processed_ids
+from src.primary.state import load_processed_ids, save_processed_ids, get_state_file_path
 from src.primary.apps.sonarr import api as sonarr_api # Import the updated api module
 from src.primary.stats_manager import increment_stat
 
@@ -17,7 +17,7 @@ from src.primary.stats_manager import increment_stat
 sonarr_logger = get_logger("sonarr")
 
 # State file for processed missing episodes
-PROCESSED_MISSING_FILE = "processed_missing_sonarr.json"
+PROCESSED_MISSING_FILE = get_state_file_path("sonarr", "processed_missing")
 
 def process_missing_episodes(
     app_settings: Dict[str, Any],
@@ -47,6 +47,7 @@ def process_missing_episodes(
     hunt_missing_shows = app_settings.get("hunt_missing_shows", 0)
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
+    state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)  # Add this line to get the stateful reset interval
 
     if not api_url or not api_key:
         sonarr_logger.error("API URL or Key not configured in settings. Cannot process missing episodes.")

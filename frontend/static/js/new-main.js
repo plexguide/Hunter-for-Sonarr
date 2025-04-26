@@ -497,71 +497,45 @@ huntarrUI = {
     },
     
     populateSettingsForm: function(app, appSettings) {
-        const container = document.getElementById(`${app}Settings`);
-        if (!container) {
-            console.warn(`[huntarrUI] Container not found for populating settings: ${app}Settings`);
+        // Cache the form for this app
+        const form = document.getElementById(`${app}Settings`);
+        if (!form) {
+            console.error(`[huntarrUI] Could not find settings form for app: ${app}`);
             return;
         }
-        console.log(`[huntarrUI] Populating settings form for ${app}`, appSettings);
-
-        // Use SettingsForms to generate the form structure if not already present
-        // This assumes SettingsForms is available globally or imported
-        if (typeof SettingsForms !== 'undefined' && !container.querySelector('.settings-group')) {
-             const formGenerator = SettingsForms[`generate${this.capitalizeFirst(app)}Form`];
-             if (formGenerator) {
-                 console.log(`[huntarrUI] Generating form structure for ${app}`);
-                 formGenerator(container, appSettings); // Generate structure AND populate initial values
-             } else {
-                 console.warn(`[huntarrUI] Form generator not found for ${app}`);
-             }
+        
+        // Check if SettingsForms is loaded to generate the form
+        if (typeof SettingsForms !== 'undefined') {
+            const formFunction = SettingsForms[`generate${app.charAt(0).toUpperCase()}${app.slice(1)}Form`];
+            if (typeof formFunction === 'function') {
+                formFunction(form, appSettings);
+                
+                // For Sonarr instances, set up the instance management
+                if (app === 'sonarr' && appSettings.instances && typeof SettingsForms.setupInstanceManagement === 'function') {
+                    try {
+                        SettingsForms.setupInstanceManagement(form, 'sonarr', appSettings.instances.length);
+                    } catch (e) {
+                        console.error(`[huntarrUI] Error setting up instance management:`, e);
+                    }
+                }
+                
+                // Update duration displays for this app
+                if (typeof SettingsForms.updateDurationDisplay === 'function') {
+                    try {
+                        SettingsForms.updateDurationDisplay();
+                    } catch (e) {
+                        console.error(`[huntarrUI] Error updating duration display:`, e);
+                    }
+                }
+            } else {
+                console.error(`[huntarrUI] Form generator function not found for app: ${app}`);
+            }
         } else {
-             // If form structure exists, just update values
-             console.log(`[huntarrUI] Updating existing form values for ${app}`);
-             const inputs = container.querySelectorAll('input, select, textarea');
-             inputs.forEach(input => {
-                 const key = input.id.replace(`${app}_`, ''); // Get the setting key from the ID
-
-                 if (appSettings.hasOwnProperty(key)) {
-                     const value = appSettings[key];
-                     if (input.type === 'checkbox') {
-                         input.checked = value === true;
-                     } else if (input.type === 'radio') {
-                         // Handle radio buttons if necessary (check by value)
-                         if (input.value === String(value)) {
-                             input.checked = true;
-                         }
-                     } else {
-                         input.value = value;
-                     }
-                 } else {
-                      // Optional: Clear or set default for fields not in settings?
-                      // console.warn(`[huntarrUI] Setting key "${key}" not found in settings for ${app}`);
-                 }
-             });
+            console.error('[huntarrUI] SettingsForms is not defined');
+            return;
         }
-
-        // Special handling for duration displays if needed (might be better in SettingsForms)
-        if (typeof SettingsForms !== 'undefined' && typeof SettingsForms.updateDurationDisplay === 'function') {
-            SettingsForms.updateDurationDisplay();
-        }
-
-        // Initialize app-specific JS handlers after form is populated/generated
-        if (app === 'sonarr' && typeof setupSonarrForm === 'function') {
-            setupSonarrForm();
-        } else if (app === 'radarr' && typeof setupRadarrForm === 'function') {
-            setupRadarrForm();
-        } else if (app === 'lidarr' && typeof setupLidarrForm === 'function') {
-            setupLidarrForm();
-        } else if (app === 'readarr' && typeof setupReadarrForm === 'function') {
-            setupReadarrForm();
-        } else if (app === 'whisparr' && typeof setupWhisparrForm === 'function') { // Added Whisparr
-            setupWhisparrForm();
-        }
-
-        // Ensure save/reset buttons are initially disabled after populating
-        this.updateSaveResetButtonState(app, false);
     },
-
+    
     // Called when any setting input changes in the active tab
     handleSettingChange: function() {
         console.log(`[huntarrUI] Setting change detected in tab: ${this.currentSettingsTab}`);
@@ -1131,7 +1105,12 @@ huntarrUI = {
     
     // Test connection for a specific instance
     testInstanceConnection: function(appName, instanceId, url, apiKey) {
-        console.log(`Testing connection for ${appName} instance ${instanceId} with URL: ${url}`); // Add logging
+        console.log(`Testing connection for ${appName} instance ${instanceId} with URL: ${url}`);
+        
+        // Make sure instanceId is treated as a number
+        instanceId = parseInt(instanceId, 10);
+        
+        // Find the status span where we'll display the result
         const statusSpan = document.getElementById(`${appName}_instance_${instanceId}_status`);
         if (!statusSpan) {
             console.error(`Status span not found for ${appName} instance ${instanceId}`);
@@ -1141,6 +1120,16 @@ huntarrUI = {
         // Show testing status
         statusSpan.textContent = 'Testing...';
         statusSpan.className = 'connection-status testing';
+        
+        // Validate URL and API key
+        if (!url || !apiKey) {
+            statusSpan.textContent = 'Missing URL or API key';
+            statusSpan.className = 'connection-status error';
+            return;
+        }
+        
+        // Clean up the URL by removing trailing slashes
+        url = url.trim().replace(/\/+$/, '');
         
         // Make the API request to test the connection
         fetch(`/api/${appName}/test-connection`, {
@@ -1154,22 +1143,33 @@ huntarrUI = {
             })
         })
         .then(response => {
-            console.log(`Connection test response status: ${response.status}`);
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+                }).catch(err => {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                });
+            }
             return response.json();
         })
         .then(data => {
-            console.log(`Connection test response data:`, data);
+            console.log(`Connection test response data for ${appName} instance ${instanceId}:`, data);
             if (data.success) {
-                statusSpan.textContent = 'Connected';
+                statusSpan.textContent = data.message || 'Connected';
                 statusSpan.className = 'connection-status success';
+                
+                // If a version was returned, display it
+                if (data.version) {
+                    statusSpan.textContent += ` (v${data.version})`;
+                }
             } else {
                 statusSpan.textContent = data.message || 'Failed';
                 statusSpan.className = 'connection-status error';
             }
         })
         .catch(error => {
-            console.error('Error testing connection:', error);
-            statusSpan.textContent = 'Error';
+            console.error(`Error testing connection for ${appName} instance ${instanceId}:`, error);
+            statusSpan.textContent = error.message || 'Error';
             statusSpan.className = 'connection-status error';
         });
     },

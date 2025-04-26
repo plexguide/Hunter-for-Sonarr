@@ -10,6 +10,7 @@ import json
 import pathlib
 import logging
 import shutil
+import subprocess
 from typing import Dict, Any, Optional, List
 
 # Create a simple logger for settings_manager
@@ -174,8 +175,41 @@ def get_configured_apps() -> List[str]:
             configured.append(app_name)
     return configured
 
-# Removed get_app_type() as it's no longer relevant in this manager
-# Removed get_all_default_settings() as load_settings handles defaults per app
+def apply_timezone(timezone: str) -> bool:
+    """Apply the specified timezone to the container.
+    
+    Args:
+        timezone: The timezone to set (e.g., 'UTC', 'America/New_York')
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Set TZ environment variable
+        os.environ['TZ'] = timezone
+        
+        # Create symlink for localtime (common approach in containers)
+        zoneinfo_path = f"/usr/share/zoneinfo/{timezone}"
+        if os.path.exists(zoneinfo_path):
+            # Remove existing symlink if it exists
+            if os.path.exists("/etc/localtime"):
+                os.remove("/etc/localtime")
+            
+            # Create new symlink
+            os.symlink(zoneinfo_path, "/etc/localtime")
+            
+            # Also update /etc/timezone file if it exists
+            with open("/etc/timezone", "w") as f:
+                f.write(f"{timezone}\n")
+                
+            settings_logger.info(f"Timezone set to {timezone}")
+            return True
+        else:
+            settings_logger.error(f"Timezone file not found: {zoneinfo_path}")
+            return False
+    except Exception as e:
+        settings_logger.error(f"Error setting timezone: {str(e)}")
+        return False
 
 # Example usage (for testing purposes, remove later)
 if __name__ == "__main__":

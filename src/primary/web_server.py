@@ -415,6 +415,31 @@ def api_stop_hunt():
     # if pid: os.kill(pid, signal.SIGTERM)
     return jsonify({"success": True, "message": "Hunt control endpoint (stop) - functionality may change."})
 
+@app.route('/api/settings/apply-timezone', methods=['POST'])
+def apply_timezone_setting():
+    """Apply timezone setting to the container."""
+    data = request.json
+    timezone = data.get('timezone')
+    web_logger = get_logger("web_server")
+    
+    if not timezone:
+        return jsonify({"success": False, "error": "No timezone specified"}), 400
+        
+    web_logger.info(f"Applying timezone setting: {timezone}")
+    
+    # Save the timezone to general settings
+    general_settings = settings_manager.load_settings("general")
+    general_settings["timezone"] = timezone
+    settings_manager.save_settings("general", general_settings)
+    
+    # Apply the timezone to the container
+    success = settings_manager.apply_timezone(timezone)
+    
+    if success:
+        return jsonify({"success": True, "message": f"Timezone set to {timezone}. Container restart may be required for full effect."})
+    else:
+        return jsonify({"success": False, "error": f"Failed to apply timezone {timezone}"}), 500
+
 
 def start_web_server():
     """Start the web server in debug or production mode"""
