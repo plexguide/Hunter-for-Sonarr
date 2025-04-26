@@ -18,7 +18,7 @@ logger = get_logger("readarr")
 # Use a session for better performance
 session = requests.Session()
 
-# Default API timeout in seconds
+# Default API timeout in seconds - used as fallback only
 API_TIMEOUT = 30
 
 def check_connection(api_url: str, api_key: str, timeout: int = 30) -> bool:
@@ -130,6 +130,8 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type:
     # api_url, api_key = keys_manager.get_api_keys(app_type) # Old way
     api_url = settings_manager.get_setting(app_type, "api_url")
     api_key = settings_manager.get_setting(app_type, "api_key")
+    # Get user-configured timeout, fall back to default if not set
+    api_timeout = settings_manager.get_setting(app_type, "api_timeout", API_TIMEOUT)
     
     if not api_url or not api_key:
         logger.error("API URL or API key is missing. Check your settings.")
@@ -149,13 +151,13 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type:
     
     try:
         if method == "GET":
-            response = session.get(url, headers=headers, timeout=API_TIMEOUT)
+            response = session.get(url, headers=headers, timeout=api_timeout)
         elif method == "POST":
-            response = session.post(url, headers=headers, json=data, timeout=API_TIMEOUT)
+            response = session.post(url, headers=headers, json=data, timeout=api_timeout)
         elif method == "PUT":
-            response = session.put(url, headers=headers, json=data, timeout=API_TIMEOUT)
+            response = session.put(url, headers=headers, json=data, timeout=api_timeout)
         elif method == "DELETE":
-            response = session.delete(url, headers=headers, timeout=API_TIMEOUT)
+            response = session.delete(url, headers=headers, timeout=api_timeout)
         else:
             logger.error(f"Unsupported HTTP method: {method}")
             return None

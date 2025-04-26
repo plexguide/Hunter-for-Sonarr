@@ -19,6 +19,7 @@ def test_connection():
     data = request.json
     api_url = data.get('api_url')
     api_key = data.get('api_key')
+    api_timeout = data.get('api_timeout', 60)  # Get timeout from request or use default of 60
 
     if not api_url or not api_key:
         return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
@@ -28,8 +29,8 @@ def test_connection():
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     try:
-        # This is similar to: curl -H "X-Api-Key: api-key" http://ip-address/api/v1/system/status
-        response = requests.get(test_url, headers=headers, timeout=10)
+        # Use the specified timeout value
+        response = requests.get(test_url, headers=headers, timeout=api_timeout)
         
         # Check status code explicitly
         if response.status_code == 401:
@@ -46,6 +47,9 @@ def test_connection():
             # Save the API keys only if connection test is successful
             settings_manager.save_setting("readarr", "api_url", api_url)
             settings_manager.save_setting("readarr", "api_key", api_key)
+            # Also save the timeout if provided
+            if 'api_timeout' in data:
+                settings_manager.save_setting("readarr", "api_timeout", api_timeout)
             
             with open(LOG_FILE, 'a') as f:
                 f.write(f"{timestamp} - readarr - INFO - Connection test successful: {api_url}\n")
