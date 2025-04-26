@@ -53,6 +53,13 @@ export async function POST({ request }) {
         ...newSettings.sonarr
       };
       
+      // Add explicit handling for Sonarr instances array
+      if (Array.isArray(newSettings.sonarr.instances)) {
+        // Use the new instances array completely, as it should contain all instances
+        updatedConfig.sonarr.instances = JSON.parse(JSON.stringify(newSettings.sonarr.instances));
+        console.log("Saved Sonarr instances:", updatedConfig.sonarr.instances);
+      }
+      
       // Explicitly handle numeric fields
       if (newSettings.sonarr.missingEpisodesSearch !== undefined) {
         updatedConfig.sonarr.missingEpisodesSearch = Number(newSettings.sonarr.missingEpisodesSearch);

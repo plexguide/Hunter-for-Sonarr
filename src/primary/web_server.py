@@ -4,7 +4,6 @@ Web server for Huntarr
 Provides a web interface to view logs in real-time, manage settings, and includes authentication
 """
 
-import asyncio
 import os
 import datetime
 from threading import Lock
@@ -23,7 +22,7 @@ import io
 import logging
 import threading
 import importlib # Added import
-from flask import Flask, render_template, request, jsonify, Response, send_from_directory, redirect, url_for, session
+from flask import Flask, render_template, request, jsonify, Response, send_from_directory, redirect, url_for, session, stream_with_context # Added stream_with_context
 # from src.primary.config import API_URL # No longer needed directly
 # Use only settings_manager
 from src.primary import settings_manager
@@ -109,16 +108,18 @@ def logs_stream():
         web_logger.warning(f"Invalid app type '{app_type}' requested for logs. Defaulting to 'all'.")
         app_type = 'all'
 
-    # Use a client identifier to track connections
-    client_id = request.remote_addr
-    current_time = datetime.datetime.now().strftime("%H:%M:%S")
-    
-    web_logger.info(f"Starting log stream for app type: {app_type} (client: {client_id}, time: {current_time})")
-
     # Import needed modules
     import time
     from pathlib import Path
     import threading
+    import datetime # Added datetime import
+
+    # Use a client identifier to track connections
+    # Use request.remote_addr directly for client_id
+    client_id = request.remote_addr 
+    current_time_str = datetime.datetime.now().strftime("%H:%M:%S") # Renamed variable
+
+    web_logger.info(f"Starting log stream for app type: {app_type} (client: {client_id}, time: {current_time_str})")
 
     # Track active connections to limit resource usage
     if not hasattr(app, 'active_log_streams'):
@@ -128,29 +129,36 @@ def logs_stream():
     # Clean up stale connections (older than 60 seconds without activity)
     with app.log_stream_lock:
         current_time = time.time()
-        stale_clients = [c for c, t in app.active_log_streams.items() 
+        stale_clients = [c for c, t in app.active_log_streams.items()
                          if current_time - t > 60]
         for client in stale_clients:
-            app.active_log_streams.pop(client, None)
-            web_logger.debug(f"Removed stale log stream connection for client: {client}")
-        
-        # Update this client's timestamp
-        app.active_log_streams[client_id] = current_time
-        
+            # Check if client exists before popping, avoid KeyError
+            if client in app.active_log_streams:
+                app.active_log_streams.pop(client)
+                web_logger.debug(f"Removed stale log stream connection for client: {client}")
+
         # If too many connections, return an error for new ones
-        if len(app.active_log_streams) > 10:  # Limit to 10 concurrent connections
-            oldest_client = min(app.active_log_streams.items(), key=lambda x: x[1])[0]
-            if client_id != oldest_client and len(app.active_log_streams) > 3:
-                web_logger.warning(f"Too many log stream connections ({len(app.active_log_streams)}). Rejecting new connection from {client_id}")
-                return Response("data: Too many active connections. Please try again later.\n\n", 
-                               mimetype='text/event-stream')
+        # Increased limit slightly and check before adding the new client
+        MAX_LOG_CONNECTIONS = 10 # Define as constant
+        if len(app.active_log_streams) >= MAX_LOG_CONNECTIONS:
+            web_logger.warning(f"Too many log stream connections ({len(app.active_log_streams)}). Rejecting new connection from {client_id}")
+            # Send SSE formatted error message
+            return Response("event: error\ndata: Too many active connections. Please try again later.\n\n",
+                           mimetype='text/event-stream', status=429) # Use 429 status code
+
+        # Add/Update this client's timestamp *after* checking the limit
+        app.active_log_streams[client_id] = current_time
+        web_logger.debug(f"Active log streams: {len(app.active_log_streams)} clients. Added/Updated: {client_id}")
+
 
     def generate():
-        """Generate log events for the SSE stream."""
+        """Generate log events for the SSE stream.""" # Corrected docstring
+        client_ip = request.remote_addr # Get client IP for logging
+        web_logger.info(f"Log stream generator started for {app_type} (Client: {client_ip})")
         try:
             # Initialize last activity time
             last_activity = time.time()
-            
+
             # Determine which log files to follow
             if app_type == 'all':
                 log_files_to_follow = list(KNOWN_LOG_FILES.items())
@@ -160,112 +168,161 @@ def logs_stream():
                     log_files_to_follow = [(app_type, log_file)]
                 else:
                     web_logger.warning(f"No log file found for app type: {app_type}")
-                    yield f"data: No logs available for {app_type}\n\n"
+                    yield f"data: No logs available for {app_type}\\n\\n"
                     return
 
             # Send a connection confirmation message
-            yield f"data: Starting log stream for {app_type}...\n\n"
+            yield f"data: Starting log stream for {app_type}...\\n\\n"
+            web_logger.debug(f"Sent connection confirmation for {app_type} (Client: {client_ip})")
 
             # Track file positions for each log
             positions = {}
             last_check = {}
-            
+
             # Keep-alive counter to send periodic keep-alive messages
             keep_alive_counter = 0
-            
+
             # Convert string paths to Path objects
-            log_files_to_follow = [(name, Path(path) if isinstance(path, str) else path) 
-                                  for name, path in log_files_to_follow]
+            log_files_to_follow = [(name, Path(path) if isinstance(path, str) else path)
+                                  for name, path in log_files_to_follow if path] # Ensure path is not None
 
             # Main log streaming loop
             while True:
                 had_content = False
                 current_time = time.time()
-                
+
                 # Update client activity timestamp periodically
                 if current_time - last_activity > 10:
                     with app.log_stream_lock:
-                        app.active_log_streams[client_id] = current_time
+                        # Check if client is still tracked before updating
+                        if client_id in app.active_log_streams:
+                             app.active_log_streams[client_id] = current_time
+                        else:
+                             # Client might have been removed due to timeout or disconnect
+                             web_logger.warning(f"Client {client_id} no longer in active streams during activity update. Stopping generator.")
+                             break # Exit the loop if client is gone
                     last_activity = current_time
-                
+
                 # Increment keep-alive counter
                 keep_alive_counter += 1
-                
+
                 # Check each log file
                 for name, path in log_files_to_follow:
                     try:
                         # Skip checking too frequently to reduce CPU usage
                         now = datetime.datetime.now()
-                        if name in last_check and (now - last_check[name]).total_seconds() < 0.5:  # Reduced polling frequency
-                            continue
-                        
-                        last_check[name] = now
-                        
-                        # Check if file exists
-                        if not path.exists():
+                        # Use a shorter interval (e.g., 0.2s) for potentially faster updates
+                        if name in last_check and (now - last_check[name]).total_seconds() < 0.2:
                             continue
 
+                        last_check[name] = now
+
+                        # Check if file exists
+                        if not path.exists():
+                            # Log only once if file doesn't exist
+                            if positions.get(name) != -1: # Use -1 to mark as 'not found'
+                                web_logger.warning(f"Log file {path} not found for {name}. Skipping.")
+                                positions[name] = -1 # Mark as not found
+                            continue
+                        elif positions.get(name) == -1:
+                             web_logger.info(f"Log file {path} found again for {name}. Resuming.")
+                             positions.pop(name, None) # Remove the 'not found' marker
+
                         # Get current size to detect truncation
-                        current_size = path.stat().st_size
-                        
+                        try:
+                            current_size = path.stat().st_size
+                        except FileNotFoundError:
+                             web_logger.warning(f"Log file {path} disappeared during stat check for {name}. Skipping.")
+                             positions[name] = -1 # Mark as not found
+                             continue
+
                         # Initialize position if needed or handle truncation
-                        if name not in positions or current_size < positions[name]:
-                            # For initial connection or truncated file, start from end minus 10KB 
-                            # but use a smaller value (5KB) to reduce initial load
-                            positions[name] = max(0, current_size - 5120)
-                                
+                        if name not in positions or current_size < positions.get(name, 0):
+                            start_pos = max(0, current_size - 5120) # Start near the end
+                            web_logger.debug(f"Initializing/Resetting position for {name} ({path}) to {start_pos} (size: {current_size})")
+                            positions[name] = start_pos
+
                         # Read new content - use a with block for proper resource cleanup
-                        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-                            f.seek(positions[name])
-                            # Read a limited number of lines at once to prevent memory issues
-                            new_lines = []
-                            for _ in range(100):  # Limit to 100 lines per check
-                                line = f.readline()
-                                if not line:
-                                    break
-                                new_lines.append(line)
-                            
-                            if new_lines:
-                                had_content = True
-                                positions[name] = f.tell()
-                                for line in new_lines:
-                                    if line.strip():  # Only send non-empty lines
-                                        yield f"data: {line.strip()}\n\n"
-                    except Exception as e:
-                        web_logger.error(f"Error reading log file {path}: {e}")
-                        yield f"data: ERROR: Problem reading {name} log: {str(e)}\n\n"
-                        # Reset position on error
-                        positions.pop(name, None)
-                
-                # Send a keep-alive comment every ~30 seconds to prevent timeout
-                # but only if we haven't had any real content
+                        try:
+                            with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                                f.seek(positions[name])
+                                # Read a limited number of lines at once
+                                new_lines = []
+                                lines_read = 0
+                                max_lines_per_check = 100 # Limit lines per check
+
+                                while lines_read < max_lines_per_check:
+                                    line = f.readline()
+                                    if not line:
+                                        break # End of file reached
+                                    new_lines.append(line)
+                                    lines_read += 1
+
+                                if new_lines:
+                                    had_content = True
+                                    new_position = f.tell()
+                                    web_logger.debug(f"Read {len(new_lines)} new lines from {name}. New position: {new_position}")
+                                    positions[name] = new_position
+                                    for line in new_lines:
+                                        stripped_line = line.strip()
+                                        if stripped_line:  # Only send non-empty lines
+                                            # Prefix with app name for clarity on 'all' tab
+                                            prefix = f"[{name.upper()}] " if app_type == 'all' else ""
+                                            yield f"data: {prefix}{stripped_line}\\n\\n"
+                        except FileNotFoundError:
+                             web_logger.warning(f"Log file {path} disappeared during read for {name}. Skipping.")
+                             positions[name] = -1 # Mark as not found
+                             continue
+                        except Exception as read_err:
+                             web_logger.error(f"Error reading log file {path} for {name}: {read_err}", exc_info=True)
+                             yield f"data: ERROR: Problem reading {name} log: {str(read_err)}\\n\\n"
+                             # Don't reset position immediately, maybe temporary issue
+                             # Consider adding a backoff mechanism if errors persist
+
+                    except Exception as file_loop_err:
+                        # Catch errors related to a specific file but continue the main loop
+                        web_logger.error(f"Error processing file {name} ({path}) in log stream: {file_loop_err}", exc_info=True)
+                        yield f"data: ERROR: Unexpected issue processing {name} log.\\n\\n"
+
+                # Send a keep-alive comment every ~15 seconds (adjust interval if needed)
+                # but only if we haven't had any real content in this iteration
                 if not had_content:
-                    if keep_alive_counter >= 60:  # ~30 seconds (60 * 0.5s sleep)
-                        yield f": keepalive {time.time()}\n\n"  # Send a comment (prefixed with :) that won't display
+                    # Interval: 15 seconds / 0.2s sleep = 75 checks
+                    if keep_alive_counter >= 75:
+                        yield f": keepalive {time.time()}\\n\\n"
+                        web_logger.debug(f"Sent keepalive for {app_type} (Client: {client_ip})")
                         keep_alive_counter = 0
-                    
-                    # Sleep between checks to prevent high CPU usage
-                    time.sleep(0.5)
+
+                    # Sleep longer when idle
+                    time.sleep(0.2)
                 else:
                     # Reset keep-alive counter when we've sent actual content
                     keep_alive_counter = 0
-                    # Shorter sleep when actively sending content
-                    time.sleep(0.1)
+                    # Shorter sleep when actively sending content to be responsive
+                    time.sleep(0.05) # Reduced sleep when active
+
         except GeneratorExit:
             # Clean up when client disconnects
-            with app.log_stream_lock:
-                app.active_log_streams.pop(client_id, None)
-            web_logger.info(f"Client {client_id} disconnected from log stream for {app_type}")
+            web_logger.info(f"Client {client_id} disconnected from log stream for {app_type}. Cleaning up.")
         except Exception as e:
-            web_logger.error(f"Error in log stream generator: {e}", exc_info=True)
-            yield f"data: ERROR: Log streaming failed: {str(e)}\n\n"
-            
-            # Clean up on error
+            web_logger.error(f"Unhandled error in log stream generator for {app_type} (Client: {client_id}): {e}", exc_info=True)
+            try:
+                # Ensure error message is properly formatted for SSE
+                yield f"event: error\ndata: ERROR: Log streaming failed unexpectedly: {str(e)}\n\n"
+            except Exception as yield_err:
+                 web_logger.error(f"Error yielding final error message to client {client_id}: {yield_err}")
+        finally:
+            # Ensure cleanup happens regardless of how the generator exits
             with app.log_stream_lock:
-                app.active_log_streams.pop(client_id, None)
+                removed_client = app.active_log_streams.pop(client_id, None)
+                if removed_client:
+                     web_logger.info(f"Successfully removed client {client_id} from active log streams.")
+                else:
+                     web_logger.warning(f"Client {client_id} was already removed from active log streams before finally block.")
+            web_logger.info(f"Log stream generator finished for {app_type} (Client: {client_id})")
 
     # Return the SSE response with appropriate headers for better streaming
-    response = Response(generate(), mimetype='text/event-stream')
+    response = Response(stream_with_context(generate()), mimetype='text/event-stream') # Use stream_with_context
     response.headers['Cache-Control'] = 'no-cache'
     response.headers['X-Accel-Buffering'] = 'no'  # Disable nginx buffering if using nginx
     return response
