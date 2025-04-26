@@ -394,28 +394,36 @@ const huntarrUI = {
             eventSource.onmessage = (event) => {
                 if (!this.elements.logsContainer) return;
                 
-                const logEntry = document.createElement('div');
-                logEntry.className = 'log-entry';
-                
-                // Add appropriate class for log level
-                // Simplified check - adjust if log format changes
-                const lowerData = event.data.toLowerCase();
-                if (lowerData.includes('info')) {
-                    logEntry.classList.add('log-info');
-                } else if (lowerData.includes('warning')) {
-                    logEntry.classList.add('log-warning');
-                } else if (lowerData.includes('error')) {
-                    logEntry.classList.add('log-error');
-                } else if (lowerData.includes('debug')) {
-                    logEntry.classList.add('log-debug');
-                }
-                
-                logEntry.textContent = event.data;
-                this.elements.logsContainer.appendChild(logEntry);
-                
-                // Auto-scroll to bottom if enabled
-                if (this.autoScroll) {
-                    this.elements.logsContainer.scrollTop = this.elements.logsContainer.scrollHeight;
+                try {
+                    // Try to parse the data as JSON first
+                    let logData = null;
+                    try {
+                        logData = JSON.parse(event.data);
+                    } catch (e) {
+                        // Not JSON, use as plain text
+                        logData = { level: 'info', message: event.data };
+                    }
+                    
+                    // Create log entry element
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    
+                    // Add appropriate class for log level
+                    const level = logData.level ? logData.level.toLowerCase() : 'info';
+                    logEntry.classList.add(`log-${level}`);
+                    
+                    // Set the message content
+                    logEntry.textContent = logData.message || event.data;
+                    
+                    // Add to logs container
+                    this.elements.logsContainer.appendChild(logEntry);
+                    
+                    // Auto-scroll to bottom if enabled
+                    if (this.autoScroll) {
+                        this.elements.logsContainer.scrollTop = this.elements.logsContainer.scrollHeight;
+                    }
+                } catch (error) {
+                    console.error('[huntarrUI] Error processing log message:', error);
                 }
             };
             
