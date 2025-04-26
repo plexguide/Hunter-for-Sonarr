@@ -49,6 +49,7 @@ def app_specific_loop(app_type: str) -> None:
     process_upgrades = None
     get_queue_size = None
     check_connection = None
+    get_configured_instances = None  # For multiple instances support
     hunt_missing_setting = ""
     hunt_upgrade_setting = ""
 
@@ -56,6 +57,13 @@ def app_specific_loop(app_type: str) -> None:
         api_module = importlib.import_module(f'src.primary.apps.{app_type}.api')
         check_connection = getattr(api_module, 'check_connection')
         get_queue_size = getattr(api_module, 'get_download_queue_size', lambda: 0) # Default if not found
+
+        # Import app-specific main module for multi-instance support
+        try:
+            app_main_module = importlib.import_module(f'src.primary.apps.{app_type}')
+            get_configured_instances = getattr(app_main_module, 'get_configured_instances', None)
+        except (ImportError, AttributeError):
+            app_logger.debug(f"No get_configured_instances found for {app_type}, will use single instance mode")
 
         if app_type == "sonarr":
             missing_module = importlib.import_module('src.primary.apps.sonarr.missing')
@@ -112,17 +120,8 @@ def app_specific_loop(app_type: str) -> None:
                 stop_event.wait(60) # Wait a minute before retrying
                 continue
 
-            # Get specific settings needed for this cycle
-            api_url = app_settings.get("api_url", "")
-            api_key = app_settings.get("api_key", "")
+            # Get global settings needed for cycle timing
             sleep_duration = app_settings.get("sleep_duration", 900)
-            min_download_queue_size = app_settings.get("minimum_download_queue_size", -1)
-            hunt_missing_count = app_settings.get(hunt_missing_setting, 0)
-            hunt_upgrade_count = app_settings.get(hunt_upgrade_setting, 0)
-            api_timeout = app_settings.get("api_timeout", 10) # Get api_timeout, default to 10
-
-            # Configure logging level based on current debug setting
-            config.configure_logging(app_type)
 
         except Exception as e:
             app_logger.error(f"Error loading settings for cycle: {e}", exc_info=True)
@@ -134,89 +133,134 @@ def app_specific_loop(app_type: str) -> None:
 
         app_logger.info(f"=== Starting {app_type.upper()} cycle ===")
 
-        # --- Connection Check --- #
-        api_connected = False
-        connection_attempts = 0
-        max_connection_attempts = 3
-        while not api_connected and connection_attempts < max_connection_attempts and not stop_event.is_set():
+        # Check if we need to use multi-instance mode
+        instances_to_process = []
+        
+        if get_configured_instances:
+            # Multi-instance mode supported
             try:
-                # Pass loaded URL, Key, and Timeout explicitly
-                api_connected = check_connection(api_url, api_key, api_timeout) # Pass api_timeout
+                instances_to_process = get_configured_instances()
+                if instances_to_process:
+                    app_logger.info(f"Found {len(instances_to_process)} configured {app_type} instances to process")
+                else:
+                    app_logger.warning(f"No configured {app_type} instances found")
+                    stop_event.wait(sleep_duration)
+                    continue
             except Exception as e:
-                app_logger.error(f"Error during connection check: {e}", exc_info=True)
-                api_connected = False # Ensure it's false on exception
+                app_logger.error(f"Error getting configured instances: {e}", exc_info=True)
+                stop_event.wait(60)
+                continue
+        else:
+            # Single instance mode
+            instances_to_process = [app_settings]
+        
+        # Process each instance
+        cycle_processed_anything = False
+        for instance_settings in instances_to_process:
+            if stop_event.is_set():
+                break
+                
+            instance_name = instance_settings.get("instance_name", "Default")
+            app_logger.info(f"Processing {app_type} instance: {instance_name}")
+            
+            # Get instance-specific settings
+            api_url = instance_settings.get("api_url", "")
+            api_key = instance_settings.get("api_key", "")
+            api_timeout = instance_settings.get("api_timeout", 10)
+            min_download_queue_size = instance_settings.get("minimum_download_queue_size", -1)
+            hunt_missing_count = instance_settings.get(hunt_missing_setting, 0)
+            hunt_upgrade_count = instance_settings.get(hunt_upgrade_setting, 0)
+
+            # --- Connection Check for this instance --- #
+            api_connected = False
+            connection_attempts = 0
+            max_connection_attempts = 3
+            while not api_connected and connection_attempts < max_connection_attempts and not stop_event.is_set():
+                try:
+                    # Pass loaded URL, Key, and Timeout explicitly
+                    api_connected = check_connection(api_url, api_key, api_timeout)
+                except Exception as e:
+                    app_logger.error(f"Error during connection check for {instance_name}: {e}", exc_info=True)
+                    api_connected = False # Ensure it's false on exception
+
+                if not api_connected:
+                    connection_attempts += 1
+                    app_logger.error(f"{app_type.title()} instance {instance_name} connection failed (Attempt {connection_attempts}/{max_connection_attempts}). Check API URL/Key.")
+                    if connection_attempts < max_connection_attempts:
+                        app_logger.info(f"Retrying connection in 10 seconds...")
+                        # Wait for 10 seconds, but check stop_event frequently
+                        stop_event.wait(10)
+                    else:
+                        app_logger.warning(f"Max connection attempts reached for instance {instance_name}. Skipping this instance.")
+                        break # Exit connection loop
 
             if not api_connected:
-                connection_attempts += 1
-                app_logger.error(f"{app_type.title()} connection failed (Attempt {connection_attempts}/{max_connection_attempts}). Check API URL/Key.")
-                if connection_attempts < max_connection_attempts:
-                    app_logger.info(f"Retrying connection in 10 seconds...")
-                    # Wait for 10 seconds, but check stop_event frequently
-                    stop_event.wait(10)
+                # Skip this instance and move to the next one
+                app_logger.info(f"Skipping {app_type} instance {instance_name} due to connection failure.")
+                continue
+
+            # --- Processing Logic for this instance --- #
+            instance_processed_anything = False
+            try:
+                # Get download queue size
+                download_queue_size = get_queue_size(api_url, api_key, api_timeout)
+
+                if min_download_queue_size < 0 or download_queue_size <= min_download_queue_size:
+                    # Process Missing
+                    if process_missing and hunt_missing_count > 0:
+                        app_logger.info(f"Checking for {hunt_missing_count} missing items in {instance_name}...")
+                        try:
+                            # Pass the full instance_settings dictionary and the stop check function
+                            if process_missing(instance_settings, stop_event.is_set):
+                                instance_processed_anything = True
+                                cycle_processed_anything = True
+                            else:
+                                app_logger.info(f"No missing items processed for instance {instance_name}.")
+                        except Exception as e:
+                            app_logger.error(f"Error processing missing items for instance {instance_name}: {e}", exc_info=True)
+
+                    if stop_event.is_set(): break # Check if stopped during processing
+
+                    # Process Upgrades
+                    if process_upgrades and hunt_upgrade_count > 0:
+                        app_logger.info(f"Checking for {hunt_upgrade_count} quality upgrades in {instance_name}...")
+                        try:
+                            # Pass the full instance_settings dictionary and the stop check function
+                            if process_upgrades(instance_settings, stop_event.is_set):
+                                instance_processed_anything = True
+                                cycle_processed_anything = True
+                            else:
+                                app_logger.info(f"No quality upgrades processed for instance {instance_name}.")
+                        except Exception as e:
+                            app_logger.error(f"Error processing quality upgrades for instance {instance_name}: {e}", exc_info=True)
+
                 else:
-                    app_logger.warning(f"Max connection attempts reached. Skipping cycle.")
-                    break # Exit connection loop
+                    app_logger.info(f"Download queue size ({download_queue_size}) exceeds minimum ({min_download_queue_size}) for instance {instance_name}. Skipping processing.")
 
-        if not api_connected:
-            # Sleep for the configured duration before the next cycle attempt
-            app_logger.info(f"Sleeping for {sleep_duration}s before retrying connection.")
-            stop_event.wait(sleep_duration)
-            continue # Go to next main loop iteration
+            except Exception as e:
+                app_logger.error(f"Error during processing logic for instance {instance_name}: {e}", exc_info=True)
+                # Continue to the next instance
 
-        # --- Processing Logic --- #
-        processing_done = False
-        try:
-            # Get download queue size
-            download_queue_size = get_queue_size(api_url, api_key, api_timeout) # Pass api_timeout
-
-            if min_download_queue_size < 0 or download_queue_size <= min_download_queue_size:
-                # Process Missing
-                if process_missing and hunt_missing_count > 0:
-                    app_logger.info(f"Checking for {hunt_missing_count} missing items...")
-                    try:
-                        # Pass the full app_settings dictionary and the stop check function
-                        if process_missing(app_settings, stop_event.is_set): # Pass app_settings dict
-                            processing_done = True
-                        else:
-                            app_logger.info(f"No missing items processed.")
-                    except Exception as e:
-                        app_logger.error(f"Error processing missing items: {e}", exc_info=True)
-
-                if stop_event.is_set(): continue # Check if stopped during processing
-
-                # Process Upgrades
-                if process_upgrades and hunt_upgrade_count > 0:
-                    app_logger.info(f"Checking for {hunt_upgrade_count} quality upgrades...")
-                    try:
-                        # Pass the full app_settings dictionary and the stop check function
-                        if process_upgrades(app_settings, stop_event.is_set): # Pass app_settings dict
-                            processing_done = True
-                        else:
-                            app_logger.info(f"No quality upgrades processed.")
-                    except Exception as e:
-                        app_logger.error(f"Error processing quality upgrades: {e}", exc_info=True)
-
+            # Log instance completion
+            if instance_processed_anything:
+                app_logger.info(f"=== {app_type.upper()} instance {instance_name} finished. Processed items. ===")
             else:
-                app_logger.info(f"Download queue size ({download_queue_size}) exceeds minimum ({min_download_queue_size}). Skipping processing.")
-
-        except Exception as e:
-            app_logger.error(f"Error during processing logic: {e}", exc_info=True)
-            # Decide whether to continue to sleep or retry sooner
+                app_logger.info(f"=== {app_type.upper()} instance {instance_name} finished. No items processed. ===")
 
         # --- Cycle End & Sleep --- #
         calculate_reset_time(app_type) # Pass app_type here if needed by the function
 
         # Log cycle completion
-        if processing_done:
-            app_logger.info(f"=== {app_type.upper()} cycle finished. Processed items. ===")
+        if cycle_processed_anything:
+            app_logger.info(f"=== {app_type.upper()} cycle finished. Processed items across instances. ===")
         else:
-            app_logger.info(f"=== {app_type.upper()} cycle finished. No items processed. ===")
+            app_logger.info(f"=== {app_type.upper()} cycle finished. No items processed in any instance. ===")
 
         # Sleep until the next cycle, checking stop_event periodically
-        app_logger.info(f"Sleeping for {sleep_duration} seconds...")
+        app_logger.info(f"Sleeping for {sleep_duration} seconds before next cycle...")
         stop_event.wait(sleep_duration) # Use wait() for interruptible sleep
 
-    app_logger.info(f"=== [{app_type.upper()}] Thread stopped ===")
+    app_logger.info(f"=== [{app_type.upper()}] Thread stopped ====")
 
 def start_app_threads():
     """Start threads for all configured and enabled apps."""

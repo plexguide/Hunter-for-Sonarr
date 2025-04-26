@@ -4,8 +4,12 @@ from flask import Blueprint, request, jsonify
 import datetime, os, requests
 from src.primary import keys_manager
 from src.primary.state import get_state_file_path
+from src.primary.settings_manager import load_settings
+import logging
+from src.primary.utils.logger import get_logger
 
 sonarr_bp = Blueprint('sonarr', __name__)
+sonarr_logger = get_logger("sonarr")
 
 LOG_FILE = "/tmp/huntarr-logs/huntarr.log"
 
@@ -56,8 +60,8 @@ def test_connection():
         try:
             response_data = response.json()
             
-            # Save keys if connection is successful
-            keys_manager.save_api_keys("sonarr", api_url, api_key)
+            # Save keys if connection is successful - Not saving here anymore since we use instances
+            # keys_manager.save_api_keys("sonarr", api_url, api_key)
             
             with open(LOG_FILE, 'a') as f:
                 f.write(f"{timestamp} - sonarr - INFO - Successfully connected to Sonarr API version: {response_data.get('version', 'unknown')}\n")
@@ -134,6 +138,61 @@ def test_connection():
 
 # Function to check if Sonarr is configured
 def is_configured():
-    """Check if Sonarr API credentials are configured"""
-    api_url, api_key = keys_manager.get_api_keys("sonarr")
+    """Check if Sonarr API credentials are configured by checking if at least one instance is enabled"""
+    settings = load_settings("sonarr")
+    
+    if not settings:
+        sonarr_logger.debug("No settings found for Sonarr")
+        return False
+        
+    # Check if instances are configured
+    if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
+        for instance in settings["instances"]:
+            if instance.get("enabled", True) and instance.get("api_url") and instance.get("api_key"):
+                sonarr_logger.debug(f"Found configured Sonarr instance: {instance.get('name', 'Unnamed')}")
+                return True
+                
+        sonarr_logger.debug("No enabled Sonarr instances found with valid API URL and key")
+        return False
+    
+    # Fallback to legacy single-instance config
+    api_url = settings.get("api_url")
+    api_key = settings.get("api_key")
     return bool(api_url and api_key)
+
+# Get all valid instances from settings
+def get_configured_instances():
+    """Get all configured and enabled Sonarr instances"""
+    settings = load_settings("sonarr")
+    instances = []
+    
+    if not settings:
+        sonarr_logger.debug("No settings found for Sonarr")
+        return instances
+        
+    # Check if instances are configured
+    if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
+        for instance in settings["instances"]:
+            if instance.get("enabled", True) and instance.get("api_url") and instance.get("api_key"):
+                # Create a settings object for this instance by combining global settings with instance-specific ones
+                instance_settings = settings.copy()
+                # Remove instances list to avoid confusion
+                if "instances" in instance_settings:
+                    del instance_settings["instances"]
+                
+                # Override with instance-specific connection settings
+                instance_settings["api_url"] = instance.get("api_url")
+                instance_settings["api_key"] = instance.get("api_key")
+                instance_settings["instance_name"] = instance.get("name", "Default")
+                
+                instances.append(instance_settings)
+    else:
+        # Fallback to legacy single-instance config
+        api_url = settings.get("api_url")
+        api_key = settings.get("api_key")
+        if api_url and api_key:
+            settings["instance_name"] = "Default"
+            instances.append(settings)
+    
+    sonarr_logger.info(f"Found {len(instances)} configured and enabled Sonarr instances")
+    return instances

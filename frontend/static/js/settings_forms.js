@@ -6,23 +6,76 @@
 const SettingsForms = {
     // Generate Sonarr settings form - Updated to use direct app settings without nesting
     generateSonarrForm: function(container, settings = {}) {
-        // Settings are now directly at the root level, not nested under 'sonarr'
+        // Make sure the instances array exists
+        if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
+            settings.instances = [{
+                name: "Default",
+                api_url: settings.api_url || "",
+                api_key: settings.api_key || "",
+                enabled: true
+            }];
+        }
         
-        container.innerHTML = `
+        // Create a container for instances with a scrollable area for many instances
+        let instancesHtml = `
             <div class="settings-group">
-                <h3>Sonarr Connection</h3>
-                <div class="setting-item">
-                    <label for="sonarr_api_url">URL:</label>
-                    <input type="text" id="sonarr_api_url" value="${settings.api_url || ''}">
-                    <p class="setting-help">Base URL for Sonarr (e.g., http://localhost:8989)</p>
+                <h3>Sonarr Instances</h3>
+                <div class="instances-container">
+        `;
+        
+        // Generate form elements for each instance
+        settings.instances.forEach((instance, index) => {
+            instancesHtml += `
+                <div class="instance-item" data-instance-id="${index}">
+                    <div class="instance-header">
+                        <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
+                        <div class="instance-actions">
+                            <label class="toggle-switch instance-toggle">
+                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
+                        </div>
+                    </div>
+                    <div class="instance-content">
+                        <div class="setting-item">
+                            <label for="sonarr_instance_${index}_name">Name:</label>
+                            <input type="text" id="sonarr_instance_${index}_name" value="${instance.name || ''}">
+                            <p class="setting-help">Friendly name for this Sonarr instance</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="sonarr_instance_${index}_api_url">URL:</label>
+                            <input type="text" id="sonarr_instance_${index}_api_url" value="${instance.api_url || ''}">
+                            <p class="setting-help">Base URL for Sonarr (e.g., http://localhost:8989)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="sonarr_instance_${index}_api_key">API Key:</label>
+                            <input type="text" id="sonarr_instance_${index}_api_key" value="${instance.api_key || ''}">
+                            <p class="setting-help">API key for Sonarr</p>
+                        </div>
+                        <div class="setting-item">
+                            <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
+                            <span class="connection-status" id="sonarr_instance_${index}_status"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="setting-item">
-                    <label for="sonarr_api_key">API Key:</label>
-                    <input type="text" id="sonarr_api_key" value="${settings.api_key || ''}">
-                    <p class="setting-help">API key for Sonarr</p>
+            `;
+        });
+        
+        // Add a button to add new instances (limit to 9 total)
+        instancesHtml += `
+                <div class="add-instance-container">
+                    <button type="button" id="add-sonarr-instance" class="add-instance-btn" ${settings.instances.length >= 9 ? 'disabled' : ''}>
+                        Add Sonarr Instance (${settings.instances.length}/9)
+                    </button>
                 </div>
-                <!-- Removed the connection status indicator -->
             </div>
+        </div>
+        `;
+        
+        // Continue with the rest of the settings form
+        container.innerHTML = `
+            ${instancesHtml}
             
             <div class="settings-group">
                 <h3>Search Settings</h3>
@@ -129,6 +182,9 @@ const SettingsForms = {
                 </div>
             </div>
         `;
+
+        // Add event listeners for the instance management
+        this.setupInstanceManagement(container, 'sonarr', settings.instances.length);
     },
     
     // Generate Radarr settings form
@@ -644,6 +700,67 @@ const SettingsForms = {
                 </div>
             </div>
         `;
+    },
+    
+    // Setup instance management (add/remove/test)
+    setupInstanceManagement: function(container, appName, instanceCount) {
+        // Button to add a new instance
+        const addBtn = container.querySelector(`#add-${appName}-instance`);
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                if (instanceCount >= 9) return; // Max 9 instances
+                
+                // Trigger custom event to be handled by main.js
+                container.dispatchEvent(new CustomEvent('addInstance', {
+                    detail: { appName: appName }
+                }));
+            });
+        }
+        
+        // Buttons to remove instances
+        const removeBtns = container.querySelectorAll('.remove-instance-btn');
+        removeBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const instanceItem = e.target.closest('.instance-item');
+                if (instanceItem) {
+                    const instanceId = instanceItem.dataset.instanceId;
+                    // Trigger custom event to be handled by main.js
+                    container.dispatchEvent(new CustomEvent('removeInstance', {
+                        detail: { 
+                            appName: appName,
+                            instanceId: parseInt(instanceId)
+                        }
+                    }));
+                }
+            });
+        });
+        
+        // Test connection buttons
+        const testBtns = container.querySelectorAll('.test-connection-btn');
+        testBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const instanceId = e.target.dataset.instanceId;
+                const urlInput = document.getElementById(`${appName}_instance_${instanceId}_api_url`);
+                const keyInput = document.getElementById(`${appName}_instance_${instanceId}_api_key`);
+                const statusSpan = document.getElementById(`${appName}_instance_${instanceId}_status`);
+                
+                if (!urlInput || !keyInput || !statusSpan) return;
+                
+                // Show testing status
+                statusSpan.textContent = 'Testing...';
+                statusSpan.className = 'connection-status testing';
+                
+                // Trigger custom event to be handled by main.js
+                container.dispatchEvent(new CustomEvent('testConnection', {
+                    detail: { 
+                        appName: appName,
+                        instanceId: parseInt(instanceId),
+                        url: urlInput.value,
+                        apiKey: keyInput.value
+                    }
+                }));
+            });
+        });
     },
     
     // Update duration display - e.g., convert seconds to hours
