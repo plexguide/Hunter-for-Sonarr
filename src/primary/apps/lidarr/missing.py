@@ -10,7 +10,8 @@ import datetime # Import datetime
 from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.state import load_processed_ids, save_processed_ids, get_state_file_path
-from src.primary.apps.lidarr import api as lidarr_api 
+from src.primary.apps.lidarr import api as lidarr_api
+from src.primary.stats_manager import increment_stat  # Import the stats increment function
 
 # Get logger for the Lidarr app
 lidarr_logger = get_logger("lidarr")
@@ -192,6 +193,11 @@ def process_missing_content(
                     # Mark all initially identified missing albums for this artist as processed
                     processed_in_this_run.update(missing_album_ids_for_artist)
                     processed_any = True
+                    
+                    # Increment the hunted statistics for Lidarr
+                    increment_stat("lidarr", "hunted", len(missing_album_ids_for_artist))
+                    lidarr_logger.debug(f"Incremented lidarr hunted statistics by {len(missing_album_ids_for_artist)}")
+                    
                     lidarr_logger.info(f"Successfully processed ArtistSearch for artist {artist_id}. Marked {len(missing_album_ids_for_artist)} related albums as processed.")
                 else:
                     lidarr_logger.warning(f"ArtistSearch command (ID: {search_command['id']}) for artist {artist_id} did not complete successfully or timed out. Albums will not be marked as processed yet.")
@@ -248,6 +254,11 @@ def process_missing_content(
             ):
                 processed_in_this_run.update(album_ids_to_search)
                 processed_any = True
+                
+                # Increment the hunted statistics for Lidarr
+                increment_stat("lidarr", "hunted", len(album_ids_to_search))
+                lidarr_logger.debug(f"Incremented lidarr hunted statistics by {len(album_ids_to_search)}")
+                
                 lidarr_logger.info(f"Successfully processed AlbumSearch for {len(album_ids_to_search)} albums.")
             else:
                 lidarr_logger.warning(f"AlbumSearch command (ID: {search_command['id']}) did not complete successfully or timed out. Albums will not be marked as processed yet.")

@@ -14,6 +14,7 @@ from src.primary.utils.logger import get_logger, debug_log
 from src.primary import settings_manager
 from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
 from src.primary.apps.readarr.api import get_books_with_missing_files, refresh_author, book_search
+from src.primary.stats_manager import increment_stat  # Import the stats increment function
 
 # Get app-specific logger
 logger = get_logger("readarr")
@@ -161,6 +162,10 @@ def process_missing_books(app_settings: Dict = None, restart_cycle_flag: Callabl
             save_processed_id(PROCESSED_MISSING_FILE, book_id)
             books_processed += 1
             processing_done = True
+            
+            # Increment the hunted statistics for Readarr
+            increment_stat("readarr", "hunted", 1)
+            logger.debug(f"Incremented readarr hunted statistics by 1")
             
             # Log with the current limit
             if app_settings is None:

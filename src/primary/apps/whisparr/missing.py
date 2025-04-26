@@ -13,6 +13,7 @@ from typing import List, Callable, Dict, Optional, Any, Set
 from src.primary.utils.logger import get_logger, debug_log
 from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
 from src.primary.apps.whisparr.api import get_scenes_with_missing, refresh_scene, scene_search
+from src.primary.stats_manager import increment_stat  # Import the stats increment function
 
 # Get app-specific logger
 logger = get_logger("whisparr")
@@ -173,6 +174,10 @@ def process_missing_scenes(
             processed_in_this_run.add(scene_id)
             scenes_processed += 1
             processing_done = True
+            
+            # Increment the hunted statistics for Whisparr
+            increment_stat("whisparr", "hunted", 1)
+            logger.debug(f"Incremented whisparr hunted statistics by 1")
 
             # Log progress
             current_limit = app_settings.get("hunt_missing_scenes", 1)

@@ -12,6 +12,7 @@ from src.primary.utils.logger import get_logger
 from src.primary.state import load_processed_ids, save_processed_ids, get_state_file_path
 from src.primary.apps.lidarr import api as lidarr_api 
 from src.primary.apps.lidarr.missing import wait_for_command # Reuse wait function
+from src.primary.stats_manager import increment_stat  # Import the stats increment function
 
 # Get logger for the Lidarr app
 lidarr_logger = get_logger("lidarr")
@@ -158,6 +159,11 @@ def process_cutoff_upgrades(
             # Mark albums as processed for upgrades if search command completed successfully
             processed_in_this_run.update(album_ids_to_search)
             processed_any = True 
+            
+            # Increment the upgraded statistics for Lidarr
+            increment_stat("lidarr", "upgraded", len(album_ids_to_search))
+            lidarr_logger.debug(f"Incremented lidarr upgraded statistics by {len(album_ids_to_search)}")
+            
             lidarr_logger.info(f"Successfully processed upgrade search for {len(album_ids_to_search)} albums.")
         else:
             lidarr_logger.warning(f"Album upgrade search command (ID: {search_command['id']}) did not complete successfully or timed out. Albums will not be marked as processed for upgrades yet.")
