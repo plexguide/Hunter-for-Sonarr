@@ -42,123 +42,107 @@
 
         <!-- Added statistics card after the welcome card -->
         <div class="card stats-card">
-            <h3>Media Statistics</h3>
+            <h3>App Statistics</h3>
             <div class="media-stats-container">
                 <div class="app-stats-grid">
                     <div class="app-stats-card sonarr">
                         <img src="/static/arrs/48-sonarr.png" alt="Sonarr Logo" class="app-logo">
                         <h4>Sonarr</h4>
-                        <div class="stats-data">
-                            <div class="stat-item">
-                                <span class="stat-number" id="sonarr-hunted">0</span>
-                                <span class="stat-label">Hunted Media</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number" id="sonarr-upgraded">0</span>
-                                <span class="stat-label">Upgraded Media</span>
+                        <div class="stats-data combined">
+                            <div class="stat-row">
+                                <div class="stat-item">
+                                    <span class="stat-number" id="sonarr-hunted">0</span>
+                                    <span class="stat-label">Missing</span>
+                                </div>
+                                <div class="stat-divider">|</div>
+                                <div class="stat-item">
+                                    <span class="stat-number" id="sonarr-upgraded">0</span>
+                                    <span class="stat-label">Upgrades</span>
+                                </div>
                             </div>
                         </div>
+                        <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                     </div>
                     
                     <div class="app-stats-card radarr">
                         <img src="/static/arrs/48-radarr.png" alt="Radarr Logo" class="app-logo">
                         <h4>Radarr</h4>
-                        <div class="stats-data">
-                            <div class="stat-item">
-                                <span class="stat-number" id="radarr-hunted">0</span>
-                                <span class="stat-label">Hunted Media</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number" id="radarr-upgraded">0</span>
-                                <span class="stat-label">Upgraded Media</span>
+                        <div class="stats-data combined">
+                            <div class="stat-row">
+                                <div class="stat-item">
+                                    <span class="stat-number" id="radarr-hunted">0</span>
+                                    <span class="stat-label">Missing</span>
+                                </div>
+                                <div class="stat-divider">|</div>
+                                <div class="stat-item">
+                                    <span class="stat-number" id="radarr-upgraded">0</span>
+                                    <span class="stat-label">Upgrades</span>
+                                </div>
                             </div>
                         </div>
+                        <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                     </div>
                     
                     <div class="app-stats-card lidarr">
                         <img src="/static/arrs/48-lidarr.png" alt="Lidarr Logo" class="app-logo">
                         <h4>Lidarr</h4>
-                        <div class="stats-data">
-                            <div class="stat-item">
-                                <span class="stat-number" id="lidarr-hunted">0</span>
-                                <span class="stat-label">Hunted Media</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number" id="lidarr-upgraded">0</span>
-                                <span class="stat-label">Upgraded Media</span>
+                        <div class="stats-data combined">
+                            <div class="stat-row">
+                                <div class="stat-item">
+                                    <span class="stat-number" id="lidarr-hunted">0</span>
+                                    <span class="stat-label">Missing</span>
+                                </div>
+                                <div class="stat-divider">|</div>
+                                <div class="stat-item">
+                                    <span class="stat-number" id="lidarr-upgraded">0</span>
+                                    <span class="stat-label">Upgrades</span>
+                                </div>
                             </div>
                         </div>
+                        <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                     </div>
                     
                     <div class="app-stats-card readarr">
                         <img src="/static/arrs/48-readarr.png" alt="Readarr Logo" class="app-logo">
                         <h4>Readarr</h4>
-                        <div class="stats-data">
-                            <div class="stat-item">
-                                <span class="stat-number" id="readarr-hunted">0</span>
-                                <span class="stat-label">Hunted Media</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number" id="readarr-upgraded">0</span>
-                                <span class="stat-label">Upgraded Media</span>
+                        <div class="stats-data combined">
+                            <div class="stat-row">
+                                <div class="stat-item">
+                                    <span class="stat-number" id="readarr-hunted">0</span>
+                                    <span class="stat-label">Missing</span>
+                                </div>
+                                <div class="stat-divider">|</div>
+                                <div class="stat-item">
+                                    <span class="stat-number" id="readarr-upgraded">0</span>
+                                    <span class="stat-label">Upgrades</span>
+                                </div>
                             </div>
                         </div>
+                        <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                     </div>
                     
                     <div class="app-stats-card whisparr">
                         <img src="/static/arrs/48-whisparr.png" alt="Whisparr Logo" class="app-logo">
                         <h4>Whisparr</h4>
-                        <div class="stats-data">
-                            <div class="stat-item">
-                                <span class="stat-number" id="whisparr-hunted">0</span>
-                                <span class="stat-label">Hunted Media</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number" id="whisparr-upgraded">0</span>
-                                <span class="stat-label">Upgraded Media</span>
+                        <div class="stats-data combined">
+                            <div class="stat-row">
+                                <div class="stat-item">
+                                    <span class="stat-number" id="whisparr-hunted">0</span>
+                                    <span class="stat-label">Missing</span>
+                                </div>
+                                <div class="stat-divider">|</div>
+                                <div class="stat-item">
+                                    <span class="stat-number" id="whisparr-upgraded">0</span>
+                                    <span class="stat-label">Upgrades</span>
+                                </div>
                             </div>
                         </div>
+                        <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                     </div>
                 </div>
                 <div class="stats-actions">
                     <button id="refresh-stats" class="action-button"><i class="fas fa-sync-alt"></i> Refresh</button>
                     <button id="reset-stats" class="action-button danger"><i class="fas fa-trash"></i> Reset</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add App Status Cards Section -->
-        <div class="card">
-            <h3>App Status</h3>
-            <div class="app-status-grid">
-                <div class="app-status-card">
-                    <img src="/static/arrs/48-sonarr.png" alt="Sonarr Logo" class="app-logo">
-                    <h4>Sonarr</h4>
-                    <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                </div>
-                
-                <div class="app-status-card">
-                    <img src="/static/arrs/48-radarr.png" alt="Radarr Logo" class="app-logo">
-                    <h4>Radarr</h4>
-                    <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                </div>
-                
-                <div class="app-status-card">
-                    <img src="/static/arrs/48-lidarr.png" alt="Lidarr Logo" class="app-logo">
-                    <h4>Lidarr</h4>
-                    <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                </div>
-
-                <div class="app-status-card">
-                    <img src="/static/arrs/48-readarr.png" alt="Readarr Logo" class="app-logo">
-                    <h4>Readarr</h4>
-                    <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                </div>
-
-                <div class="app-status-card">
-                    <img src="/static/arrs/48-whisparr.png" alt="Whisparr Logo" class="app-logo">
-                    <h4>Whisparr</h4>
-                    <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                 </div>
             </div>
         </div>
@@ -266,6 +250,7 @@
     /* Media Stats Styles */
     .media-stats-container {
         padding: 10px;
+        text-align: center; /* Center all content */
     }
     
     .app-stats-grid {
@@ -279,11 +264,16 @@
         background-color: var(--bg-secondary);
         border-radius: 8px;
         padding: 15px;
-        text-align: center;
+        text-align: center; /* Ensure text is centered */
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Center all content horizontally */
+        justify-content: space-between; /* Distribute content vertically */
+        min-height: 180px; /* Ensure consistent card height */
     }
     
     .app-stats-card:hover {
@@ -292,15 +282,45 @@
     }
     
     .app-stats-card h4 {
-        margin: 10px 0;
+        margin: 5px 0;
         font-size: 1.2em;
+        width: 100%; /* Full width for proper centering */
+    }
+    
+    .app-logo {
+        margin: 0 auto; /* Center the logo image */
+        display: block; /* Make it a block element for margin auto to work */
+        width: 48px;
+        height: 48px;
     }
     
     .stats-data {
         display: flex;
         flex-direction: column;
         gap: 15px;
-        margin-top: 15px;
+        margin: 10px 0;
+        width: 100%; /* Full width for proper alignment */
+    }
+    
+    /* New combined stats styles */
+    .stats-data.combined {
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+    
+    .stat-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .stat-divider {
+        color: var(--text-secondary);
+        opacity: 0.5;
+        font-size: 1.8em;
+        margin: 0 5px;
+        line-height: 1;
     }
     
     .stat-item {
@@ -320,6 +340,12 @@
         font-size: 0.85em;
         opacity: 0.8;
         margin-top: 5px;
+    }
+    
+    .app-stats-card .status-badge {
+        margin-top: auto; /* Push to bottom of flex container */
+        margin-bottom: 5px;
+        min-width: 100px; /* Consistent width for status badges */
     }
     
     /* App-specific accent colors */
@@ -395,6 +421,9 @@
         text-align: center;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transition: transform 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Center all content horizontally */
     }
     
     .app-status-card:hover {
@@ -405,11 +434,15 @@
         width: 48px;
         height: 48px;
         margin-bottom: 10px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
     
     .app-status-card h4 {
         margin: 0 0 10px;
         font-size: 1.1em;
+        width: 100%; /* Full width for proper centering */
     }
     
     .status-badge {

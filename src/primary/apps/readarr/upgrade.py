@@ -15,6 +15,7 @@ from src.primary.utils.logger import get_logger
 from src.primary import settings_manager
 from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
 from src.primary.apps.readarr.api import get_cutoff_unmet_books, refresh_author, book_search
+from src.primary.stats_manager import increment_stat  # Import the stats increment function
 
 # Get app-specific logger
 logger = get_logger("readarr")
@@ -189,6 +190,10 @@ def process_cutoff_upgrades(app_settings: Dict = None, restart_cycle_flag: Calla
             save_processed_id(PROCESSED_UPGRADE_FILE, book_id)
             books_processed += 1
             processing_done = True
+            
+            # Increment the upgraded statistics for Readarr
+            increment_stat("readarr", "upgraded", 1)
+            logger.debug(f"Incremented readarr upgraded statistics by 1")
             
             # Log with the current limit
             if app_settings is None:

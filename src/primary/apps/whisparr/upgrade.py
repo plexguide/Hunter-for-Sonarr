@@ -13,6 +13,7 @@ from typing import List, Callable, Dict, Optional, Any
 from src.primary.utils.logger import get_logger
 from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
 from src.primary.apps.whisparr.api import get_cutoff_unmet_scenes, refresh_scene, scene_search
+from src.primary.stats_manager import increment_stat  # Import the stats increment function
 
 # Get app-specific logger
 logger = get_logger("whisparr")
@@ -159,6 +160,10 @@ def process_cutoff_upgrades(app_settings: Dict[str, Any], restart_cycle_flag: Ca
             save_processed_id(PROCESSED_UPGRADES_FILE, scene_id)
             scenes_processed += 1
             processing_done = True
+            
+            # Increment the upgraded statistics for Whisparr
+            increment_stat("whisparr", "upgraded", 1)
+            logger.debug(f"Incremented whisparr upgraded statistics by 1")
             
             # Log progress
             logger.info(f"Processed {scenes_processed}/{len(scenes_to_process)} quality upgrades this cycle.")
