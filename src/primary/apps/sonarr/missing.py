@@ -11,6 +11,7 @@ from src.primary.utils.logger import get_logger
 # Correct the import names
 from src.primary.state import load_processed_ids, save_processed_ids
 from src.primary.apps.sonarr import api as sonarr_api # Import the updated api module
+from src.primary.stats_manager import increment_stat
 
 # Get logger for the Sonarr app
 sonarr_logger = get_logger("sonarr")
@@ -197,6 +198,10 @@ def process_missing_episodes(
                 processed_in_this_run.update(episode_ids)
                 processed_any = True # Mark that we did something
                 sonarr_logger.info(f"Successfully processed and searched for {len(episode_ids)} episodes in series {series_id}.")
+                
+                # Increment the hunted statistics
+                increment_stat("sonarr", "hunted", len(episode_ids))
+                sonarr_logger.debug(f"Incremented sonarr hunted statistics by {len(episode_ids)}")
             else:
                 sonarr_logger.warning(f"Episode search command (ID: {search_command_id}) for series {series_id} did not complete successfully or timed out. Episodes will not be marked as processed yet.")
         else:
