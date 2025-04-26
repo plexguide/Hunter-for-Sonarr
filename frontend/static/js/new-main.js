@@ -3,15 +3,12 @@
  * Main JavaScript file for handling UI interactions and API communication
  */
 
-huntarrUI = {
+const huntarrUI = {
     // Current state
-    currentSection: 'home',
-    currentApp: 'sonarr',
-    currentSettingsTab: 'sonarr',
-    currentLogApp: 'sonarr', // Added currentLogApp to track the selected log tab
-    autoScroll: true,
-    darkMode: false,
     eventSources: {},
+    currentSection: 'home', // Default section
+    currentLogApp: 'all', // Default log app
+    autoScroll: true,
     configuredApps: {
         sonarr: false,
         radarr: false,
@@ -379,7 +376,7 @@ huntarrUI = {
         this.elements.logConnectionStatus.className = '';
     },
     
-    connectEventSource: function(appType = 'all') { // Default to 'all', accept appType
+    connectEventSource: function(appType) {
         // Close any existing event source
         if (this.eventSources.logs) {
             this.eventSources.logs.close();
@@ -422,33 +419,78 @@ huntarrUI = {
                 }
             };
             
-            eventSource.onerror = () => {
-                this.elements.logConnectionStatus.textContent = 'Disconnected';
-                this.elements.logConnectionStatus.className = 'status-disconnected';
+            eventSource.onerror = (err) => {
+                console.error(`[huntarrUI] EventSource error for app ${this.currentLogApp}:`, err); // Use currentLogApp
+                if (this.elements.logConnectionStatus) {
+                    this.elements.logConnectionStatus.textContent = 'Error/Disconnected';
+                    this.elements.logConnectionStatus.className = 'status-disconnected';
+                }
                 
-                // Try to reconnect after a delay
-                setTimeout(() => {
-                    // Only reconnect if the logs section is still active
+                // Close the potentially broken source before reconnecting
+                if (this.eventSources.logs) {
+                    this.eventSources.logs.close();
+                    this.eventSources.logs = null; // Clear reference
+                    console.log(`[huntarrUI] Closed potentially broken log EventSource for ${this.currentLogApp}.`);
+                }
+
+                // Always attempt to reconnect after a delay
+                console.log(`[huntarrUI] Attempting to reconnect log stream for ${this.currentLogApp} in 5 seconds...`);
+                // Use a variable to store the timeout ID so it can be cleared if needed
+                if (this.logReconnectTimeout) {
+                    clearTimeout(this.logReconnectTimeout);
+                }
+                this.logReconnectTimeout = setTimeout(() => {
+                    // Check if we are *still* supposed to be connected to logs before reconnecting
                     if (this.currentSection === 'logs') {
-                        this.connectEventSource(this.currentLogApp); // Use current app type
+                         console.log(`[huntarrUI] Reconnecting log stream for ${this.currentLogApp}.`);
+                         this.connectEventSource(this.currentLogApp); 
+                    } else {
+                         console.log(`[huntarrUI] Log reconnect cancelled; user navigated away from logs section.`);
                     }
+                    this.logReconnectTimeout = null; // Clear the timeout ID after execution
                 }, 5000);
             };
             
             this.eventSources.logs = eventSource;
         } catch (error) {
             console.error('Error connecting to event source:', error);
-            this.elements.logConnectionStatus.textContent = 'Connection Error';
-            this.elements.logConnectionStatus.className = 'status-disconnected';
+            if (this.elements.logConnectionStatus) {
+                this.elements.logConnectionStatus.textContent = 'Connection Error';
+                this.elements.logConnectionStatus.className = 'status-disconnected';
+            }
         }
     },
     
     disconnectAllEventSources: function() {
-        Object.values(this.eventSources).forEach(source => {
-            if (source && source.readyState !== 2) {
-                source.close();
+        console.log('[huntarrUI] Disconnecting all event sources...');
+        // Clear any pending reconnect timeout
+        if (this.logReconnectTimeout) {
+            clearTimeout(this.logReconnectTimeout);
+            this.logReconnectTimeout = null;
+            console.log('[huntarrUI] Cleared pending log reconnect timeout.');
+        }
+        Object.keys(this.eventSources).forEach(key => {
+            const source = this.eventSources[key];
+            if (source && typeof source.close === 'function') {
+                 try {
+                     if (source.readyState !== EventSource.CLOSED) {
+                         source.close();
+                         console.log(`[huntarrUI] Closed event source for ${key}.`);
+                     } else {
+                         console.log(`[huntarrUI] Event source for ${key} was already closed.`);
+                     }
+                 } catch (e) {
+                     console.error(`[huntarrUI] Error closing event source for ${key}:`, e);
+                 }
             }
+            // Clear the reference
+            delete this.eventSources[key]; // Use delete
         });
+         // Reset status indicator if logs aren't the active section
+         if (this.currentSection !== 'logs' && this.elements.logConnectionStatus) {
+             this.elements.logConnectionStatus.textContent = 'Disconnected';
+             this.elements.logConnectionStatus.className = 'status-disconnected';
+         }
     },
     
     addLogMessage: function(logData) {
@@ -545,7 +587,14 @@ huntarrUI = {
     saveSettings: function() {
         const app = this.currentSettingsTab;
         console.log(`[huntarrUI] saveSettings called for app: ${app}`);
-        const settings = this.collectSettingsFromForm(app);
+        
+        // For apps with instances, use the special getFormSettings method
+        let settings;
+        if (app === 'sonarr') {
+            settings = this.getFormSettings('sonarr');
+        } else {
+            settings = this.collectSettingsFromForm(app);
+        }
 
         if (!settings) {
             console.error(`[huntarrUI] Failed to collect settings for app: ${app}`);
@@ -555,8 +604,7 @@ huntarrUI = {
 
         console.log(`[huntarrUI] Collected settings for ${app}:`, settings);
 
-        // Add app_type to the payload if needed by backend (confirm backend logic)
-        // Assuming the backend merges based on the top-level key matching the app name
+        // Add app_type to the payload if needed by backend
         const payload = { [app]: settings };
 
         console.log(`[huntarrUI] Sending settings payload for ${app}:`, payload);
@@ -567,7 +615,7 @@ huntarrUI = {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(payload) // Send payload structured as { appName: { settings... } }
+            body: JSON.stringify(payload)
         })
         .then(response => {
             if (!response.ok) {
@@ -581,34 +629,33 @@ huntarrUI = {
             }
             return response.json();
         })
-        .then(savedConfig => { // Backend returns the full, updated config
+        .then(savedConfig => {
             console.log('[huntarrUI] Settings saved successfully. Full config received:', savedConfig);
             this.showNotification('Settings saved successfully', 'success');
 
             // Update original settings state with the full config returned from backend
-            // Ensure savedConfig is the full object { sonarr: {...}, radarr: {...}, ... }
             if (typeof savedConfig === 'object' && savedConfig !== null) {
-                 this.originalSettings = JSON.parse(JSON.stringify(savedConfig));
+                this.originalSettings = JSON.parse(JSON.stringify(savedConfig));
             } else {
                 console.error('[huntarrUI] Invalid config received from backend after save:', savedConfig);
-                // Attempt to reload all settings as a fallback
                 this.loadAllSettings();
-                return; // Avoid further processing with invalid data
+                return;
             }
 
-            // Re-populate the current form with the saved data for consistency
+            // Re-populate the form with the saved data
             const currentAppSettings = this.originalSettings[app] || {};
+            
+            // Preserve instances data if missing in the response but was in our sent data
+            if (app === 'sonarr' && !currentAppSettings.instances && settings.instances) {
+                currentAppSettings.instances = settings.instances;
+            }
+            
             this.populateSettingsForm(app, currentAppSettings);
 
-            // Update connection status for the saved app
+            // Update connection status and UI
             this.checkAppConnection(app);
-
-            // Update general UI elements like home page statuses
-            this.updateHomeConnectionStatus(); // Assuming this function exists and works
-
-            // Disable save/reset buttons as changes are now saved
+            this.updateHomeConnectionStatus();
             this.updateSaveResetButtonState(app, false);
-
         })
         .catch(error => {
             console.error('Error saving settings:', error);
