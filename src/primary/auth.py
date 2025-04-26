@@ -105,15 +105,8 @@ def validate_password_strength(password: str) -> Optional[str]:
     """
     if len(password) < 10:
         return "Password must be at least 10 characters long."
-    if not re.search(r"\d", password):
-        return "Password must include at least one number."
-    if not re.search(r"[A-Z]", password):
-        return "Password must include at least one uppercase letter."
-    # Check for any non-alphanumeric character (including space)
-    if not re.search(r"[^A-Za-z0-9]", password):
-        return "Password must include at least one special character (any non-letter, non-digit)."
     
-    # If all checks pass
+    # If check passes
     return None
 
 def user_exists() -> bool:
