@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "normalize.css": "^8.0.1"
+  },
+  "devDependencies": {
+    "require-nocache": "^1.0.0"
+  }
+}

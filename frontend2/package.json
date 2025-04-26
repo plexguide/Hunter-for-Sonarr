@@ -1,0 +1,51 @@
+{
+  "name": "frontend2",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.7.0",
+    "@tanstack/react-query": "^5.74.4",
+    "classnames": "^2.5.1",
+    "jquery": "^3.7.1",
+    "lodash": "^4.17.21",
+    "normalize.css": "^8.0.1",
+    "postcss-color-mix": "^1.1.0",
+    "react": "^19.0.0",
+    "react-document-title": "^2.0.3",
+    "react-dom": "^19.0.0",
+    "react-focus-lock": "^2.13.6",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.5.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "@types/css-modules": "^1.0.5",
+    "@types/lodash": "^4.17.16",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react-swc": "^3.8.0",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.22.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "postcss": "^8.5.3",
+    "postcss-loader": "^8.1.1",
+    "postcss-mixins": "^11.0.3",
+    "postcss-nested": "^7.0.2",
+    "postcss-simple-vars": "^7.0.1",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "^8.26.1",
+    "typescript-plugin-css-modules": "^5.1.0",
+    "vite": "^6.3.1",
+    "vite-plugin-dts": "^4.5.3"
+  }
+}

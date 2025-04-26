@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",  // Can use a generic path for both or a specific one depending on your preference.
+    "target": "ES2022",  // Since this is for both app and node, using the higher version for compatibility
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],  // Combine the relevant libraries from both
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "jsx": "react-jsx",  // JSX support for React
+    "types": ["node"],  // Node types available globally
+    "moduleResolution": "bundler",  // To handle module resolution in bundler mode
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,  // No emitting of compiled code
+    "useDefineForClassFields": true,  // This is specific to the app target (can keep as a shared option)
+    "strict": true,  // Enable strict type checking
+    "noUnusedLocals": true,  // Ensure unused locals are flagged
+    "noUnusedParameters": true,  // Ensure unused parameters are flagged
+    "noFallthroughCasesInSwitch": true,  // Ensure no fall-through in switch cases
+    "noUncheckedSideEffectImports": true,  // Ensure no side-effect imports
+    "baseUrl": "./src", 
+    "paths": {
+          "Utilities/*": ["Utilities/*"],
+          "Components/*": ["Components/*"],
+          "Settings/*": ["Settings/*"],
+          "Store/*": ["Store/*"]
+        }
+  },
+  "include": [
+    "./src/**/*",  // Include source files for both app and node
+    "vite.config.ts",  // Include vite config for bundler logic
+    "./typings/*.ts",
+  ]
+}

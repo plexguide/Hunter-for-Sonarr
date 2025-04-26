@@ -6,9 +6,6 @@ __pycache__/
 # C extensions
 *.so
 
-# vertual enviornments
-.venv/
-
 # React files
 .idea/
 .vscode/
@@ -185,6 +182,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+.venv/
 .env
 .venv
 env/

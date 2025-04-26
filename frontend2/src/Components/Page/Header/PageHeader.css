@@ -1,0 +1,76 @@
+.header {
+    display: flex;
+    align-items: center;
+    background-color: #282c34;
+    padding: 1rem;
+    color: white;
+  }
+  
+  .logo {
+    height: 40px;
+    margin-right: 1rem;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+    margin: 0;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+    margin: 0;
+    opacity: 0.7;
+  }
+  .header {
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    height: 50;
+    background-color: var(--pageHeaderBackgroundColor);
+    color: var(--white);
+  }
+  
+  .logoContainer {
+    display: flex;
+    align-items: center;
+    flex: 0 0 50;
+    padding-left: 20px;
+  }
+  
+  .logoLink {
+    line-height: 0;
+  }
+  
+  .logo {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .sidebarToggleContainer {
+    display: none;
+    justify-content: center;
+    flex: 0 0 45px;
+    margin-right: 14px;
+  }
+  
+  .right {
+    display: flex;
+    justify-content: flex-end;
+    flex-grow: 1;
+  }
+  
+  
+  @media only screen and (max-width: 25) {
+    .logoContainer {
+      flex: 0 0 60px;
+    }
+  
+    .sidebarToggleContainer {
+      display: flex;
+    }
+  
+    .donate {
+      display: none;
+    }
+  }

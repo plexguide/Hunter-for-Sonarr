@@ -1,0 +1,61 @@
+.scroller {
+    /* Scrollbar styles */
+    scrollbar-color: var(--scrollbarBackgroundColor) transparent;
+    scrollbar-width: thin;
+
+    /* Webkit scrollbar styles */
+    &::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        min-height: 100px;
+        border: 1px solid transparent;
+        border-radius: 5px;
+        background-color: var(--scrollbarBackgroundColor);
+        background-clip: padding-box;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background-color: var(--scrollbarHoverBackgroundColor);
+    }
+
+    /* Additional property for smooth scrolling */
+    -webkit-overflow-scrolling: touch;
+}
+
+.none {
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+.vertical {
+    overflow-x: hidden;
+    overflow-y: scroll;
+
+    &.autoScroll {
+        overflow-y: auto;
+    }
+}
+
+.horizontal {
+    overflow-x: scroll;
+    overflow-y: hidden;
+
+    &.autoScroll {
+        overflow-x: auto;
+    }
+}
+
+.both {
+    overflow: scroll;
+
+    &.autoScroll {
+        overflow: auto;
+    }
+}
