@@ -9,6 +9,7 @@ import time
 from typing import List, Dict, Any, Optional, Union
 from primary.utils.logger import logger, debug_log
 from primary.config import API_KEY, API_URL, API_TIMEOUT, COMMAND_WAIT_DELAY, COMMAND_WAIT_ATTEMPTS, APP_TYPE
+from src.primary.stats_manager import get_stats, reset_stats
 
 # Create a session for reuse
 session = requests.Session()
@@ -355,3 +356,34 @@ def get_series_with_missing_episodes() -> List[Dict]:
     
     logger.debug(f"Processed missing episodes data into {len(result)} series with missing episodes")
     return result
+
+def get_media_stats():
+    """Get statistics for hunted and upgraded media"""
+    try:
+        stats = get_stats()
+        return jsonify({
+            "success": True,
+            "stats": stats
+        })
+    except Exception as e:
+        logger.error(f"Error retrieving media statistics: {e}")
+        return jsonify({
+            "success": False,
+            "message": "Error retrieving media statistics."
+        }), 500
+        
+def reset_media_stats():
+    """Reset statistics for hunted and upgraded media"""
+    try:
+        app_type = request.json.get('app_type') if request.json else None
+        reset_stats(app_type)
+        return jsonify({
+            "success": True,
+            "message": f"Successfully reset statistics for {'all apps' if app_type is None else app_type}."
+        })
+    except Exception as e:
+        logger.error(f"Error resetting media statistics: {e}")
+        return jsonify({
+            "success": False,
+            "message": "Error resetting media statistics."
+        }), 500

@@ -15,6 +15,7 @@ from src.primary.utils.logger import get_logger
 from src.primary import settings_manager
 from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
 from src.primary.apps.radarr.api import get_cutoff_unmet_movies, refresh_movie, movie_search
+from src.primary.stats_manager import increment_stat  # Import the stats increment function
 
 # Get app-specific logger
 logger = get_logger("radarr")
@@ -166,6 +167,10 @@ def process_cutoff_upgrades(app_settings: Dict[str, Any], restart_cycle_flag: Ca
             save_processed_id(PROCESSED_UPGRADE_FILE, movie_id)
             movies_processed += 1
             processing_done = True
+            
+            # Increment the upgraded statistics
+            increment_stat("radarr", "upgraded", 1)
+            logger.debug(f"Incremented radarr upgraded statistics by 1")
             
             # Log with the current limit, not the initial one
             current_limit = app_settings.get("hunt_upgrade_movies", 0)
