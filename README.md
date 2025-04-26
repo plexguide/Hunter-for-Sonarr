@@ -135,6 +135,17 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 ## Web Interface
 
+Huntarr's live homepage will provide you statics about how many hunts have been pursed regarding missing media and upgrade searches!
+
+<table>
+  <tr>
+    <td colspan="2"> 
+      <img width="100%" alt="image" src="https://github.com/user-attachments/assets/e3c64ca3-02ae-40b2-ad27-7cae3f686e5c" />
+      <p align="center"><em>Homepage</em></p>
+    </td>
+  </tr>
+</table>
+
 Huntarr includes a real-time log viewer and settings management web interface that allows you to monitor and configure its operation directly from your browser.
 
 <table>
