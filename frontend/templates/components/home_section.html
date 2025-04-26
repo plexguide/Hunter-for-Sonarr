@@ -1,5 +1,18 @@
 <section id="homeSection" class="content-section">
     <div class="dashboard-grid stack-layout">
+        <!-- Added donation and GitHub star section above the welcome card -->
+        <div class="card banner-card">
+            <div class="banner-content">
+                <p>
+                    <i class="fas fa-heart donation-icon"></i> 
+                    <a href="https://donate.plex.one" target="_blank">Donate to Daughter's College Fund</a>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                    <i class="fas fa-star star-icon"></i> 
+                    <a href="https://github.com/plexguide/huntarr" target="_blank">Star us on GitHub</a>
+                </p>
+            </div>
+        </div>
+
         <div class="card welcome-card">
             <h2>Welcome to Huntarr!</h2>
             <p>Your Media Hunter for Sonarr, Radarr, Lidarr, Readarr & Whisparr - Version 5.3</p> <!-- Updated to include Whisparr -->
@@ -13,46 +26,54 @@
                     <img src="/static/logo/64.png" alt="Sonarr Logo" class="app-logo">
                     <h4>Sonarr</h4>
                     <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                    <p>Status of Sonarr connection.</p>
                 </div>
                 
                 <div class="app-status-card">
                     <img src="/static/logo/64.png" alt="Radarr Logo" class="app-logo">
                     <h4>Radarr</h4>
                     <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                    <p>Status of Radarr connection.</p>
                 </div>
                 
                 <div class="app-status-card">
                     <img src="/static/logo/64.png" alt="Lidarr Logo" class="app-logo">
                     <h4>Lidarr</h4>
                     <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                    <p>Status of Lidarr connection.</p>
                 </div>
 
                 <div class="app-status-card">
                     <img src="/static/logo/64.png" alt="Readarr Logo" class="app-logo">
                     <h4>Readarr</h4>
                     <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                    <p>Status of Readarr connection.</p>
                 </div>
 
                 <div class="app-status-card">
                     <img src="/static/logo/64.png" alt="Whisparr Logo" class="app-logo">
                     <h4>Whisparr</h4>
                     <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                    <p>Status of Whisparr connection.</p>
                 </div>
             </div>
         </div>
 
         <div class="card info-card">
             <h3>Important Links</h3>
-            <ul class="resource-list">
-                <li><a href="https://discord.gg/VQbZCGzQsn" target="_blank">Discord community</a> for support and developers</li>
-                <li>To file issues, please visit: <a href="https://github.com/plexguide/Huntarr/issues" target="_blank">GitHub Issues</a></li>
-                <li>For documentation, check our <a href="https://github.com/plexguide/Huntarr/wiki" target="_blank">Wiki</a></li>
-            </ul>
+            <div class="important-links">
+                <a href="https://discord.gg/VQbZCGzQsn" target="_blank" class="link-button">
+                    <i class="fab fa-discord"></i>
+                    Discord Community
+                </a>
+                <a href="https://github.com/plexguide/Huntarr/issues" target="_blank" class="link-button">
+                    <i class="fas fa-bug"></i>
+                    GitHub Issues
+                </a>
+                <a href="https://github.com/plexguide/Huntarr/wiki" target="_blank" class="link-button">
+                    <i class="fas fa-book"></i>
+                    Documentation Wiki
+                </a>
+                <a href="https://store.elfhosted.com/elf/huntarr" target="_blank" class="link-button sponsor-button">
+                    <i class="fas fa-rocket"></i>
+                    ElfHosted.com
+                </a>
+            </div>
         </div>
 
         <div class="card thanks-card">
@@ -60,6 +81,7 @@
             <ul class="thanks-list">
                 <li>Thank you to <a href="https://github.com/zpatten" target="_blank">ZPatten</a>, <a href="https://github.com/FrancisAgostini" target="_blank">FrancisAgostini(maddogg7697)</a> and <a href="https://github.com/MacaidenXIII" target="_blank">MacaidenXIII</a> for really getting this project kickstarted with great ideas!</li>
                 <li>Thank you to <a href="https://ninjacentral.co.za" target="_blank">ninjacentral.co.za</a> for the original inspired insight on API indexer issues which also inspired the program.</li>
+                <li>Thank you to <a href="https://store.elfhosted.com/elf/huntarr" target="_blank">ElfHosted.com</a> for providing easy deployment of all ARR applications!</li>
                 <li>I thank my daughter who provides inspiration to do everything in life.</li>
                 <li>Thank you for using Huntarr ~ <a href="https://github.com/Admin9705/" target="_blank">Admin9705</a></li>
             </ul>
@@ -89,13 +111,69 @@
         margin-bottom: 10px;
     }
 
-    .resource-list {
-        text-align: left;
-        padding-left: 20px;
+    /* Banner card styles */
+    .banner-card {
+        background-color: var(--bg-secondary);
+        padding: 15px;
+        border-left: 4px solid var(--accent-color);
     }
-    
-    .resource-list li {
-        margin-bottom: 10px;
+
+    .banner-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    .donation-icon {
+        color: #ff6b6b;
+    }
+
+    .star-icon {
+        color: #ffd700;
+    }
+
+    /* Improved important links */
+    .important-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 15px;
+        justify-content: center;
+    }
+
+    .link-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background-color: var(--bg-tertiary);
+        border-radius: 8px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .link-button i {
+        font-size: 1.2em;
+    }
+
+    .link-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        background-color: var(--accent-color);
+        color: white;
+    }
+
+    .sponsor-button {
+        background-color: #4e54c8;
+        color: white;
+    }
+
+    .sponsor-button:hover {
+        background-color: #24c6dc;
     }
     
     /* App Status Grid Styles */
@@ -130,18 +208,13 @@
         font-size: 1.1em;
     }
     
-    .app-status-card p {
-        font-size: 0.85em;
-        color: var(--text-muted);
-        margin-top: 10px;
-    }
-    
     .status-badge {
         display: inline-block;
         padding: 5px 10px;
         border-radius: 20px;
         font-size: 0.85em;
         font-weight: 500;
+        margin-top: 5px;
     }
     
     .status-badge.connected {
@@ -182,5 +255,17 @@
     
     .banner-footer a:hover {
         text-decoration: underline;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .important-links {
+            flex-direction: column;
+        }
+        
+        .link-button {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
