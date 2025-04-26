@@ -3,7 +3,7 @@
  * Main JavaScript file for handling UI interactions and API communication
  */
 
-const huntarrUI = {
+huntarrUI = {
     // Current state
     currentSection: 'home',
     currentApp: 'sonarr',
@@ -48,6 +48,9 @@ const huntarrUI = {
         if (typeof window.applyLogoToAllElements === 'function') {
             window.applyLogoToAllElements();
         }
+        
+        // Initialize instance event handlers
+        this.setupInstanceEventHandlers();
     },
     
     // Cache DOM elements for better performance
@@ -965,6 +968,210 @@ const huntarrUI = {
         // This function should ideally call checkAppConnection for all relevant apps
         // or use the stored configuredApps status if checkAppConnection updates it.
         this.checkAppConnections(); // Re-check all connections after a save might be simplest
+    },
+    
+    // Get settings from the form, updated to handle instances
+    getFormSettings: function(app) {
+        const settings = {};
+        const form = document.getElementById(`${app}Settings`);
+        if (!form) return settings;
+        
+        // Special handling for instances (currently only for Sonarr)
+        if (app === 'sonarr' && form.querySelectorAll('.instance-item').length > 0) {
+            // Get instances settings
+            settings.instances = [];
+            const instanceItems = form.querySelectorAll('.instance-item');
+            
+            instanceItems.forEach((item, index) => {
+                const instanceId = item.dataset.instanceId;
+                const nameInput = document.getElementById(`${app}_instance_${instanceId}_name`);
+                const urlInput = document.getElementById(`${app}_instance_${instanceId}_api_url`);
+                const keyInput = document.getElementById(`${app}_instance_${instanceId}_api_key`);
+                const enabledInput = item.querySelector('.instance-enabled');
+                
+                if (urlInput && keyInput) {
+                    settings.instances.push({
+                        name: nameInput ? nameInput.value : `Instance ${index + 1}`,
+                        api_url: urlInput.value,
+                        api_key: keyInput.value,
+                        enabled: enabledInput ? enabledInput.checked : true
+                    });
+                }
+            });
+            
+            // Continue with the rest of the form fields
+            const inputs = form.querySelectorAll('input:not([id^="' + app + '_instance_"]), select');
+            inputs.forEach(input => {
+                // Skip buttons and instance-related elements
+                if (input.type === 'button' || input.classList.contains('instance-enabled')) {
+                    return;
+                }
+                
+                // Get the field name without app prefix and type suffix
+                let key = input.id;
+                if (key.startsWith(`${app}_`)) {
+                    key = key.substring(app.length + 1);
+                }
+                
+                if (input.type === 'checkbox') {
+                    settings[key] = input.checked;
+                } else if (input.type === 'number') {
+                    settings[key] = parseInt(input.value, 10);
+                } else {
+                    settings[key] = input.value;
+                }
+            });
+        } else {
+            // Standard settings form handling (unchanged)
+            const inputs = form.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.type === 'button') return;
+                
+                // Get the field name without app prefix and type suffix
+                let key = input.id;
+                if (key.startsWith(`${app}_`)) {
+                    key = key.substring(app.length + 1);
+                }
+                
+                if (input.type === 'checkbox') {
+                    settings[key] = input.checked;
+                } else if (input.type === 'number') {
+                    settings[key] = parseInt(input.value, 10);
+                } else {
+                    settings[key] = input.value;
+                }
+            });
+        }
+        
+        return settings;
+    },
+    
+    // Handle instance management events
+    setupInstanceEventHandlers: function() {
+        const settingsPanels = document.querySelectorAll('.app-settings-panel');
+        
+        settingsPanels.forEach(panel => {
+            panel.addEventListener('addInstance', (e) => {
+                this.addAppInstance(e.detail.appName);
+            });
+            
+            panel.addEventListener('removeInstance', (e) => {
+                this.removeAppInstance(e.detail.appName, e.detail.instanceId);
+            });
+            
+            panel.addEventListener('testConnection', (e) => {
+                this.testInstanceConnection(e.detail.appName, e.detail.instanceId, e.detail.url, e.detail.apiKey);
+            });
+        });
+    },
+    
+    // Add a new instance to the app
+    addAppInstance: function(appName) {
+        const container = document.getElementById(`${appName}Settings`);
+        if (!container) return;
+        
+        // Get current settings
+        const currentSettings = this.getFormSettings(appName);
+        
+        // Add new instance
+        if (!currentSettings.instances) {
+            currentSettings.instances = [];
+        }
+        
+        // Limit to 9 instances
+        if (currentSettings.instances.length >= 9) {
+            this.showNotification('Maximum of 9 instances allowed', 'error');
+            return;
+        }
+        
+        // Add new instance with a default name
+        currentSettings.instances.push({
+            name: `Instance ${currentSettings.instances.length + 1}`,
+            api_url: '',
+            api_key: '',
+            enabled: true
+        });
+        
+        // Regenerate form with new instance
+        SettingsForms[`generate${appName.charAt(0).toUpperCase()}${appName.slice(1)}Form`](container, currentSettings);
+        
+        // Update controls like duration displays
+        SettingsForms.updateDurationDisplay();
+        
+        this.showNotification('New instance added', 'success');
+    },
+    
+    // Remove an instance
+    removeAppInstance: function(appName, instanceId) {
+        const container = document.getElementById(`${appName}Settings`);
+        if (!container) return;
+        
+        // Get current settings
+        const currentSettings = this.getFormSettings(appName);
+        
+        // Remove the instance
+        if (currentSettings.instances && instanceId >= 0 && instanceId < currentSettings.instances.length) {
+            // Keep at least one instance
+            if (currentSettings.instances.length > 1) {
+                const removedName = currentSettings.instances[instanceId].name;
+                currentSettings.instances.splice(instanceId, 1);
+                
+                // Regenerate form
+                SettingsForms[`generate${appName.charAt(0).toUpperCase()}${appName.slice(1)}Form`](container, currentSettings);
+                
+                // Update controls like duration displays
+                SettingsForms.updateDurationDisplay();
+                
+                this.showNotification(`Instance "${removedName}" removed`, 'info');
+            } else {
+                this.showNotification('Cannot remove the last instance', 'error');
+            }
+        }
+    },
+    
+    // Test connection for a specific instance
+    testInstanceConnection: function(appName, instanceId, url, apiKey) {
+        console.log(`Testing connection for ${appName} instance ${instanceId} with URL: ${url}`); // Add logging
+        const statusSpan = document.getElementById(`${appName}_instance_${instanceId}_status`);
+        if (!statusSpan) {
+            console.error(`Status span not found for ${appName} instance ${instanceId}`);
+            return;
+        }
+        
+        // Show testing status
+        statusSpan.textContent = 'Testing...';
+        statusSpan.className = 'connection-status testing';
+        
+        // Make the API request to test the connection
+        fetch(`/api/${appName}/test-connection`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                api_url: url,
+                api_key: apiKey
+            })
+        })
+        .then(response => {
+            console.log(`Connection test response status: ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            console.log(`Connection test response data:`, data);
+            if (data.success) {
+                statusSpan.textContent = 'Connected';
+                statusSpan.className = 'connection-status success';
+            } else {
+                statusSpan.textContent = data.message || 'Failed';
+                statusSpan.className = 'connection-status error';
+            }
+        })
+        .catch(error => {
+            console.error('Error testing connection:', error);
+            statusSpan.textContent = 'Error';
+            statusSpan.className = 'connection-status error';
+        });
     },
 };
 
