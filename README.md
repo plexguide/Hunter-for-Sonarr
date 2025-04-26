@@ -10,12 +10,6 @@
 
 <table>
   <tr>
-    <td colspan="2"><img src="https://github.com/user-attachments/assets/4cc938e6-5d22-480a-aa10-6f267bb97617" width="100%"/></td>
-  </tr>
-</table>
-
-<table>
-  <tr>
     <td colspan="2"><img src="https://github.com/user-attachments/assets/1ea6ca9c-0909-4b6a-b573-f778b65af8b2" width="100%"/></td>
   </tr>
 </table>
