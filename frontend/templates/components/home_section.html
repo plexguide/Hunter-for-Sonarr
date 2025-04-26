@@ -1,6 +1,6 @@
 <section id="homeSection" class="content-section">
     <div class="dashboard-grid stack-layout">
-        <!-- Added donation and GitHub star section above the welcome card -->
+        <!-- Updated banner with version info -->
         <div class="card banner-card">
             <div class="banner-content">
                 <p>
@@ -9,13 +9,15 @@
                     &nbsp;&nbsp;|&nbsp;&nbsp;
                     <i class="fas fa-star star-icon"></i> 
                     <a href="https://github.com/plexguide/huntarr" target="_blank">Star us on GitHub</a>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                    <i class="fas fa-code-branch version-icon"></i> 
+                    <span id="version-number">Version <span id="version-value">5.3</span></span>
                 </p>
             </div>
         </div>
 
-        <!-- Combined welcome and important links cards -->
+        <!-- Important links card (removed welcome header) -->
         <div class="card info-card">
-            <h2>Welcome to Huntarr - Version 5.3</h2>
             <div class="important-links">
                 <a href="https://discord.gg/VQbZCGzQsn" target="_blank" class="link-button">
                     <i class="fab fa-discord"></i>
@@ -158,14 +160,33 @@
         </div>
 
         <div class="card thanks-card">
-            <h3>Special Thanks</h3>
-            <ul class="thanks-list">
-                <li>Thank you to <a href="https://github.com/zpatten" target="_blank">ZPatten</a>, <a href="https://github.com/FrancisAgostini" target="_blank">FrancisAgostini(maddogg7697)</a> and <a href="https://github.com/MacaidenXIII" target="_blank">MacaidenXIII</a> for really getting this project kickstarted with great ideas!</li>
-                <li>Thank you to <a href="https://ninjacentral.co.za" target="_blank">ninjacentral.co.za</a> for the original inspired insight on API indexer issues which also inspired the program.</li>
-                <li>Thank you to <a href="https://store.elfhosted.com/elf/huntarr" target="_blank">Get ElfHosted!</a> for providing easy deployment of all ARR applications!</li>
-                <li>I thank my daughter who provides inspiration to do everything in life.</li>
-                <li>Thank you for using Huntarr ~ <a href="https://github.com/Admin9705/" target="_blank">Admin9705</a></li>
-            </ul>
+            <h3><i class="fas fa-handshake"></i> Special Thanks</h3>
+            <div class="thanks-container">
+                <div class="thanks-item">
+                    <i class="fas fa-users thanks-icon"></i>
+                    <div class="thanks-text">
+                        Thank you to <a href="https://github.com/zpatten" target="_blank">ZPatten</a>, <a href="https://github.com/FrancisAgostini" target="_blank">FrancisAgostini(maddogg7697)</a> and <a href="https://github.com/MacaidenXIII" target="_blank">MacaidenXIII</a> for really getting this project kickstarted with great ideas!
+                    </div>
+                </div>
+                <div class="thanks-item">
+                    <i class="fas fa-lightbulb thanks-icon"></i>
+                    <div class="thanks-text">
+                        Thank you to <a href="https://ninjacentral.co.za" target="_blank">ninjacentral.co.za</a> for the original inspired insight on API indexer issues which also inspired the program.
+                    </div>
+                </div>
+                <div class="thanks-item">
+                    <i class="fas fa-server thanks-icon"></i>
+                    <div class="thanks-text">
+                        Thank you to <a href="https://store.elfhosted.com/elf/huntarr" target="_blank">Get ElfHosted!</a> for providing easy deployment of all ARR applications!
+                    </div>
+                </div>
+                <div class="thanks-item">
+                    <i class="fas fa-heart thanks-icon"></i>
+                    <div class="thanks-text">
+                        I thank my daughter who provides inspiration to do everything in life. Thank you for using Huntarr ~ <a href="https://github.com/Admin9705/" target="_blank">Admin9705</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     {% include 'components/footer.html' %}
@@ -443,5 +464,71 @@
             width: 100%;
             justify-content: center;
         }
+    }
+
+    /* Version display styling */
+    .version-icon {
+        color: #3498db;
+    }
+    
+    #version-number {
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    #version-value {
+        font-weight: 600;
+    }
+    
+    /* Enhanced Special Thanks styling */
+    .thanks-card h3 {
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .thanks-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .thanks-item {
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+        padding: 10px;
+        background-color: var(--bg-tertiary);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .thanks-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .thanks-icon {
+        font-size: 1.5rem;
+        color: var(--accent-color);
+        flex-shrink: 0;
+        margin-top: 3px;
+    }
+    
+    .thanks-text {
+        flex-grow: 1;
+        line-height: 1.5;
+    }
+    
+    .thanks-text a {
+        color: var(--accent-color);
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .thanks-text a:hover {
+        text-decoration: underline;
     }
 </style>
