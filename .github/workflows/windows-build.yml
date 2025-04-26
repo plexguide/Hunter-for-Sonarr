@@ -1,0 +1,107 @@
+name: Build Windows Executable
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller pywin32
+      
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller huntarr.spec
+        
+    - name: Install NSIS
+      run: |
+        choco install nsis -y
+        
+    - name: Create NSIS Installer
+      run: |
+        # Create NSIS script file
+        @"
+        !include "MUI2.nsh"
+        
+        Name "Huntarr"
+        OutFile "HuntarrSetup.exe"
+        InstallDir "$PROGRAMFILES\Huntarr"
+        
+        !define MUI_ICON "frontend\static\logo\256.png"
+        !define MUI_UNICON "frontend\static\logo\256.png"
+        
+        !insertmacro MUI_PAGE_WELCOME
+        !insertmacro MUI_PAGE_DIRECTORY
+        !insertmacro MUI_PAGE_INSTFILES
+        !insertmacro MUI_PAGE_FINISH
+        
+        !insertmacro MUI_LANGUAGE "English"
+        
+        Section "Install"
+          SetOutPath "$INSTDIR"
+          File /r "dist\Huntarr\*"
+          
+          # Create Start Menu shortcut
+          CreateDirectory "$SMPROGRAMS\Huntarr"
+          CreateShortcut "$SMPROGRAMS\Huntarr\Huntarr.lnk" "$INSTDIR\Huntarr.exe"
+          
+          # Create Desktop shortcut
+          CreateShortcut "$DESKTOP\Huntarr.lnk" "$INSTDIR\Huntarr.exe"
+          
+          # Write registry keys for uninstaller
+          WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Huntarr" "DisplayName" "Huntarr"
+          WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Huntarr" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
+          WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Huntarr" "DisplayIcon" "$INSTDIR\Huntarr.exe"
+          
+          # Write uninstaller
+          WriteUninstaller "$INSTDIR\Uninstall.exe"
+        SectionEnd
+        
+        Section "Uninstall"
+          Delete "$INSTDIR\Uninstall.exe"
+          RMDir /r "$INSTDIR"
+          Delete "$SMPROGRAMS\Huntarr\Huntarr.lnk"
+          RMDir "$SMPROGRAMS\Huntarr"
+          Delete "$DESKTOP\Huntarr.lnk"
+          
+          # Remove registry keys
+          DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Huntarr"
+        SectionEnd
+        "@ | Out-File -FilePath installer.nsi -Encoding ascii
+        
+        # Build the installer
+        & 'C:\Program Files (x86)\NSIS\makensis.exe' installer.nsi
+      
+    - name: Create ZIP archive
+      run: |
+        Compress-Archive -Path dist\Huntarr\* -DestinationPath Huntarr-Portable.zip
+        
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          HuntarrSetup.exe
+          Huntarr-Portable.zip
+        name: Huntarr ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
