@@ -1,10 +1,10 @@
 from flask import Blueprint, request, jsonify
 import datetime, os, requests
 from primary import keys_manager
+from src.primary.utils.logger import get_logger
 
 radarr_bp = Blueprint('radarr', __name__)
-
-LOG_FILE = "/tmp/huntarr-logs/huntarr.log"
+radarr_logger = get_logger("radarr")
 
 @radarr_bp.route('/test-connection', methods=['POST'])
 def test_connection():
@@ -23,6 +23,7 @@ def test_connection():
         "Content-Type": "application/json"
     }
     try:
+        radarr_logger.info(f"Testing connection to Radarr API at {api_url}")
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         keys_manager.save_api_keys("radarr", api_url, api_key)
@@ -30,15 +31,17 @@ def test_connection():
         # Ensure the response is valid JSON
         try:
             response_data = response.json()
+            radarr_logger.info(f"Successfully connected to Radarr API version: {response_data.get('version', 'unknown')}")
+            return jsonify({
+                "success": True, 
+                "message": "Successfully connected to Radarr API",
+                "version": response_data.get('version', 'unknown')
+            })
         except ValueError:
-            return jsonify({"success": False, "message": "Invalid JSON response from Radarr API"}), 500
-
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open(LOG_FILE, 'a') as f:
-            f.write(f"{timestamp} - radarr - INFO - Connection test successful: {api_url}\n")
-        return jsonify({"success": True, "data": response_data})
+            error_msg = "Invalid JSON response from Radarr API"
+            radarr_logger.error(f"{error_msg}. Response content: {response.text[:200]}")
+            return jsonify({"success": False, "message": error_msg}), 500
     except requests.exceptions.RequestException as e:
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open(LOG_FILE, 'a') as f:
-            f.write(f"{timestamp} - radarr - ERROR - Connection test failed: {api_url} - {str(e)}\n")
-        return jsonify({"success": False, "message": str(e)}), 500
+        error_msg = f"Connection test failed: {str(e)}"
+        radarr_logger.error(error_msg)
+        return jsonify({"success": False, "message": error_msg}), 500

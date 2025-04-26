@@ -26,21 +26,21 @@ def get_state_file_path(app_type: str, state_type: str) -> str:
     """
     if not app_type:
         logger.error("get_state_file_path called without an app_type.")
-        return "/tmp/huntarr-state/unknown/error.json" 
+        return "/config/state/unknown/error.json" 
         
     if app_type == "sonarr":
-        base_path = "/tmp/huntarr-state/sonarr"
+        base_path = "/config/state/sonarr"
     elif app_type == "radarr":
-        base_path = "/tmp/huntarr-state/radarr"
+        base_path = "/config/state/radarr"
     elif app_type == "lidarr":
-        base_path = "/tmp/huntarr-state/lidarr"
+        base_path = "/config/state/lidarr"
     elif app_type == "readarr":
-        base_path = "/tmp/huntarr-state/readarr"
+        base_path = "/config/state/readarr"
     elif app_type == "whisparr":
-        base_path = "/tmp/huntarr-state/whisparr"
+        base_path = "/config/state/whisparr"
     else:
         logger.warning(f"get_state_file_path called with unexpected app_type: {app_type}")
-        base_path = f"/tmp/huntarr-state/{app_type}"
+        base_path = f"/config/state/{app_type}"
     
     os.makedirs(base_path, exist_ok=True)
     
@@ -244,6 +244,31 @@ def save_processed_id(filepath: str, item_id: int) -> None:
     if item_id not in processed_ids:
         processed_ids.append(item_id)
         save_processed_ids(filepath, processed_ids)
+
+def reset_state_file(app_type: str, state_type: str) -> bool:
+    """
+    Reset a specific state file for an app type.
+    
+    Args:
+        app_type: The type of app (sonarr, radarr, etc.)
+        state_type: The type of state file (processed_missing, processed_upgrades)
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    if not app_type:
+        logger.error("reset_state_file called without app_type.")
+        return False
+        
+    filepath = get_state_file_path(app_type, state_type)
+    
+    try:
+        save_processed_ids(filepath, [])
+        logger.info(f"Reset {state_type} state file for {app_type}")
+        return True
+    except Exception as e:
+        logger.error(f"Error resetting {state_type} state file for {app_type}: {e}")
+        return False
 
 def truncate_processed_list(filepath: str, max_items: int = 1000) -> None:
     """

@@ -184,7 +184,7 @@ const SettingsForms = {
         `;
 
         // Add event listeners for the instance management
-        this.setupInstanceManagement(container, 'sonarr', settings.instances.length);
+        SettingsForms.setupInstanceManagement(container, 'sonarr', settings.instances.length);
     },
     
     // Generate Radarr settings form
@@ -702,67 +702,36 @@ const SettingsForms = {
         `;
     },
     
-    // Setup instance management (add/remove/test)
-    setupInstanceManagement: function(container, appName, instanceCount) {
-        // Button to add a new instance
-        const addBtn = container.querySelector(`#add-${appName}-instance`);
-        if (addBtn) {
-            addBtn.addEventListener('click', () => {
-                if (instanceCount >= 9) return; // Max 9 instances
-                
-                // Trigger custom event to be handled by main.js
-                container.dispatchEvent(new CustomEvent('addInstance', {
-                    detail: { appName: appName }
-                }));
-            });
-        }
-        
-        // Buttons to remove instances
-        const removeBtns = container.querySelectorAll('.remove-instance-btn');
-        removeBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const instanceItem = e.target.closest('.instance-item');
-                if (instanceItem) {
-                    const instanceId = instanceItem.dataset.instanceId;
-                    // Trigger custom event to be handled by main.js
-                    container.dispatchEvent(new CustomEvent('removeInstance', {
-                        detail: { 
-                            appName: appName,
-                            instanceId: parseInt(instanceId)
-                        }
-                    }));
-                }
-            });
-        });
-        
-        // Test connection buttons
-        const testBtns = container.querySelectorAll('.test-connection-btn');
-        testBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const instanceId = e.target.dataset.instanceId;
-                const urlInput = document.getElementById(`${appName}_instance_${instanceId}_api_url`);
-                const keyInput = document.getElementById(`${appName}_instance_${instanceId}_api_key`);
-                const statusSpan = document.getElementById(`${appName}_instance_${instanceId}_status`);
-                
-                if (!urlInput || !keyInput || !statusSpan) return;
-                
-                // Show testing status
-                statusSpan.textContent = 'Testing...';
-                statusSpan.className = 'connection-status testing';
-                
-                // Trigger custom event to be handled by main.js
-                container.dispatchEvent(new CustomEvent('testConnection', {
-                    detail: { 
-                        appName: appName,
-                        instanceId: parseInt(instanceId),
-                        url: urlInput.value,
-                        apiKey: keyInput.value
-                    }
-                }));
-            });
-        });
+    // Generate General settings form
+    generateGeneralForm: function(container, settings = {}) {
+        container.innerHTML = `
+            <div class="settings-group">
+                <h3>System Settings</h3>
+                <div class="setting-item">
+                    <label for="general_timezone">Timezone:</label>
+                    <select id="general_timezone">
+                        <option value="UTC" ${settings.timezone === 'UTC' ? 'selected' : ''}>UTC</option>
+                        <option value="America/New_York" ${settings.timezone === 'America/New_York' ? 'selected' : ''}>America/New_York (ET)</option>
+                        <option value="America/Chicago" ${settings.timezone === 'America/Chicago' ? 'selected' : ''}>America/Chicago (CT)</option>
+                        <option value="America/Denver" ${settings.timezone === 'America/Denver' ? 'selected' : ''}>America/Denver (MT)</option>
+                        <option value="America/Los_Angeles" ${settings.timezone === 'America/Los_Angeles' ? 'selected' : ''}>America/Los_Angeles (PT)</option>
+                        <option value="America/Anchorage" ${settings.timezone === 'America/Anchorage' ? 'selected' : ''}>America/Anchorage (AK)</option>
+                        <option value="America/Honolulu" ${settings.timezone === 'America/Honolulu' ? 'selected' : ''}>America/Honolulu (HI)</option>
+                        <option value="Europe/London" ${settings.timezone === 'Europe/London' ? 'selected' : ''}>Europe/London (GMT)</option>
+                        <option value="Europe/Paris" ${settings.timezone === 'Europe/Paris' ? 'selected' : ''}>Europe/Paris (CET)</option>
+                        <option value="Europe/Berlin" ${settings.timezone === 'Europe/Berlin' ? 'selected' : ''}>Europe/Berlin</option>
+                        <option value="Europe/Moscow" ${settings.timezone === 'Europe/Moscow' ? 'selected' : ''}>Europe/Moscow</option>
+                        <option value="Asia/Tokyo" ${settings.timezone === 'Asia/Tokyo' ? 'selected' : ''}>Asia/Tokyo</option>
+                        <option value="Asia/Shanghai" ${settings.timezone === 'Asia/Shanghai' ? 'selected' : ''}>Asia/Shanghai</option>
+                        <option value="Australia/Sydney" ${settings.timezone === 'Australia/Sydney' ? 'selected' : ''}>Australia/Sydney</option>
+                        <option value="Pacific/Auckland" ${settings.timezone === 'Pacific/Auckland' ? 'selected' : ''}>Pacific/Auckland</option>
+                    </select>
+                    <p class="setting-help">Container timezone. This will affect timestamps in logs and requires a container restart.</p>
+                </div>
+            </div>
+        `;
     },
-    
+
     // Update duration display - e.g., convert seconds to hours
     updateDurationDisplay: function() {
         // Function to update a specific sleep duration display
@@ -789,5 +758,67 @@ const SettingsForms = {
         updateSleepDisplay('lidarr_sleep_duration', 'lidarr_sleep_duration_hours');
         updateSleepDisplay('readarr_sleep_duration', 'readarr_sleep_duration_hours');
         updateSleepDisplay('whisparr_sleep_duration', 'whisparr_sleep_duration_hours'); // Added Whisparr
+    },
+    
+    // Setup instance management - test connection buttons and add/remove instance buttons
+    setupInstanceManagement: function(container, appName, instanceCount) {
+        console.log(`Setting up instance management for ${appName} with ${instanceCount} instances`);
+        
+        // Add listeners for test connection buttons
+        const testButtons = container.querySelectorAll('.test-connection-btn');
+        testButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const instanceId = button.getAttribute('data-instance-id');
+                const urlInput = document.getElementById(`${appName}_instance_${instanceId}_api_url`);
+                const keyInput = document.getElementById(`${appName}_instance_${instanceId}_api_key`);
+                
+                if (urlInput && keyInput) {
+                    // Dispatch event for main.js to handle the API call
+                    const event = new CustomEvent('testConnection', {
+                        detail: {
+                            appName: appName,
+                            instanceId: instanceId,
+                            url: urlInput.value,
+                            apiKey: keyInput.value
+                        }
+                    });
+                    container.dispatchEvent(event);
+                }
+            });
+        });
+        
+        // Add listener for adding new instance
+        const addButton = container.querySelector(`#add-${appName}-instance`);
+        if (addButton) {
+            addButton.addEventListener('click', () => {
+                // Dispatch event for main.js to handle adding an instance
+                const event = new CustomEvent('addInstance', {
+                    detail: {
+                        appName: appName
+                    }
+                });
+                container.dispatchEvent(event);
+            });
+        }
+        
+        // Add listeners for removing instances
+        const removeButtons = container.querySelectorAll('.remove-instance-btn');
+        removeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const instanceItem = button.closest('.instance-item');
+                if (instanceItem) {
+                    const instanceId = instanceItem.getAttribute('data-instance-id');
+                    
+                    // Dispatch event for main.js to handle removing the instance
+                    const event = new CustomEvent('removeInstance', {
+                        detail: {
+                            appName: appName,
+                            instanceId: instanceId
+                        }
+                    });
+                    container.dispatchEvent(event);
+                }
+            });
+        });
     }
 };

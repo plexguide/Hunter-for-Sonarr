@@ -5,43 +5,46 @@ Sonarr cutoff upgrade processing module for Huntarr
 
 import time
 import random
-from typing import List, Dict, Any, Set, Callable # Added Callable
-# Correct import path
+from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
-# Correct the import names
-from src.primary.state import load_processed_ids, save_processed_ids
-from src.primary.apps.sonarr import api as sonarr_api # Import the updated api module
-from src.primary.apps.sonarr.missing import wait_for_command # Reuse wait function
+from src.primary.state import load_processed_ids, save_processed_ids, get_state_file_path
+from src.primary.apps.sonarr import api as sonarr_api
 from src.primary.stats_manager import increment_stat
 
-# Get logger for the Sonarr app
+# Get logger for the app
 sonarr_logger = get_logger("sonarr")
 
-# State file for processed upgrades
-PROCESSED_UPGRADES_FILE = "processed_upgrades_sonarr.json"
+# State file for processed cutoff upgrades
+PROCESSED_UPGRADES_FILE = get_state_file_path("sonarr", "processed_upgrades")
 
 def process_cutoff_upgrades(
     app_settings: Dict[str, Any],
-    stop_check: Callable[[], bool]
+    stop_check: Callable[[], bool] # Function to check if stop is requested
 ) -> bool:
-    """Process cutoff unmet episodes in Sonarr for quality upgrades."""
-    sonarr_logger.info("Starting cutoff upgrade processing cycle for Sonarr.")
+    """
+    Process quality cutoff upgrades for Sonarr based on settings.
+
+    Args:
+        app_settings: Dictionary containing all settings for Sonarr.
+        stop_check: A function that returns True if the process should stop.
+
+    Returns:
+        True if any episodes were processed, False otherwise.
+    """
+    sonarr_logger.info("Starting quality cutoff upgrades processing cycle for Sonarr.")
     processed_any = False
 
-    # Extract necessary settings from app_settings
+    # Extract necessary settings
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
-    api_timeout = app_settings.get("api_timeout", 90)  # Increased default timeout
+    api_timeout = app_settings.get("api_timeout", 90)
     monitored_only = app_settings.get("monitored_only", True)
-    skip_future_episodes = app_settings.get("skip_future_episodes", True)
     skip_series_refresh = app_settings.get("skip_series_refresh", False)
     random_upgrades = app_settings.get("random_upgrades", False)
     hunt_upgrade_episodes = app_settings.get("hunt_upgrade_episodes", 0)
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
-    
-    # New setting to determine when to use random page selection (default to 1000 as threshold)
-    large_library_threshold = app_settings.get("large_library_threshold", 1000)
+    state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)  # Add this line to get the stateful reset interval
 
     if not api_url or not api_key:
         sonarr_logger.error("API URL or Key not configured in settings. Cannot process upgrades.")
@@ -87,7 +90,7 @@ def process_cutoff_upgrades(
         sonarr_logger.info(f"Found {len(episodes_to_process)} new cutoff unmet episodes to process for upgrades.")
         
         # Filter out future episodes if configured
-        if skip_future_episodes:
+        if skip_series_refresh:
             now_unix = time.time()
             original_count = len(episodes_to_process)
             # Ensure airDateUtc exists and is not None before parsing
@@ -107,7 +110,7 @@ def process_cutoff_upgrades(
         return processed_any
         
     # Filter out future episodes for random selection approach
-    if random_upgrades and skip_future_episodes:
+    if random_upgrades and skip_series_refresh:
         now_unix = time.time()
         original_count = len(episodes_to_search)
         episodes_to_search = [
