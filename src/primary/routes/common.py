@@ -357,6 +357,58 @@ def set_theme():
         logger.error(f"Error setting theme preference: {e}", exc_info=True)
         return jsonify({"success": False, "error": "Failed to set theme preference"}), 500
 
+# --- Stats Management API Routes --- #
+@common_bp.route('/api/stats', methods=['GET'])
+def get_stats_api():
+    """API endpoint to get media statistics"""
+    try:
+        # Import here to avoid circular imports
+        from ..stats_manager import get_stats
+        
+        # Get stats from stats_manager
+        stats = get_stats()
+        logger.debug(f"Retrieved stats for API response: {stats}")
+        
+        # Return success response with stats
+        return jsonify({"success": True, "stats": stats})
+    except Exception as e:
+        logger.error(f"Error retrieving stats: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@common_bp.route('/api/stats/reset', methods=['POST'])
+def reset_stats_api():
+    """API endpoint to reset media statistics"""
+    try:
+        # Import here to avoid circular imports
+        from ..stats_manager import reset_stats
+        
+        # Check if authenticated
+        session_token = request.cookies.get(SESSION_COOKIE_NAME)
+        if not verify_session(session_token):
+            logger.warning("Stats reset attempt failed: Not authenticated.")
+            return jsonify({"error": "Unauthorized"}), 401
+            
+        # Get app type from request if provided
+        data = request.json or {}
+        app_type = data.get('app_type')  # None will reset all
+        
+        if app_type is not None and app_type not in ["sonarr", "radarr", "lidarr", "readarr", "whisparr"]:
+            logger.warning(f"Invalid app_type for stats reset: {app_type}")
+            return jsonify({"success": False, "error": "Invalid app_type"}), 400
+            
+        # Reset stats
+        if reset_stats(app_type):
+            message = f"Reset statistics for {app_type}" if app_type else "Reset all statistics"
+            logger.info(message)
+            return jsonify({"success": True, "message": message})
+        else:
+            error_msg = f"Failed to reset statistics for {app_type}" if app_type else "Failed to reset all statistics"
+            logger.error(error_msg)
+            return jsonify({"success": False, "error": error_msg}), 500
+    except Exception as e:
+        logger.error(f"Error resetting stats: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+
 # Ensure all routes previously in this file that interact with settings
 # are either moved to web_server.py or updated here using the new settings_manager functions.
 
