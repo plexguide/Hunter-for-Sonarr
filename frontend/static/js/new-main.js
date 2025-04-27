@@ -17,6 +17,7 @@ const huntarrUI = {
         whisparr: false // Added whisparr
     },
     originalSettings: {}, // Store the full original settings object
+    settingsChanged: false, // Flag to track unsaved settings changes
     
     // Logo URL
     logoUrl: '/static/logo/64.png',
@@ -170,7 +171,7 @@ const huntarrUI = {
                 if (event.target.closest('.app-settings-panel.active')) {
                     // Check if the target is an input, select, or textarea within the active panel
                     if (event.target.matches('input, select, textarea')) {
-                        this.handleSettingChange();
+                        this.markSettingsAsChanged(); // Use the new function
                     }
                 }
             });
@@ -178,11 +179,24 @@ const huntarrUI = {
                  if (event.target.closest('.app-settings-panel.active')) {
                     // Handle changes for checkboxes and selects that use 'change' event
                     if (event.target.matches('input[type="checkbox"], select')) {
-                         this.handleSettingChange();
+                         this.markSettingsAsChanged(); // Use the new function
                     }
                  }
             });
         }
+
+        // Add listener for unsaved changes prompt (External Navigation)
+        window.onbeforeunload = (event) => {
+            if (this.settingsChanged) {
+                // Standard way to trigger the browser's confirmation dialog
+                event.preventDefault(); 
+                // Chrome requires returnValue to be set
+                event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                return 'You have unsaved changes. Are you sure you want to leave?'; // For older browsers
+            }
+            // If no changes, return undefined to allow navigation without prompt
+            return undefined; 
+        };
 
         // Initial setup based on hash or default to home
         const initialHash = window.location.hash || '#home';
@@ -218,14 +232,36 @@ const huntarrUI = {
     // Navigation handling
     handleNavigation: function(e) {
         e.preventDefault();
-        const href = e.currentTarget.getAttribute('href');
-        
-        if (href.startsWith('#')) {
-            // Internal navigation
-            window.location.hash = href;
+        const targetElement = e.currentTarget; // Get the clicked nav item
+        const href = targetElement.getAttribute('href'); 
+
+        if (!href) return; // Exit if no href
+
+        let targetSection = null;
+        let isInternalLink = href.startsWith('#');
+
+        if (isInternalLink) {
+            targetSection = href.substring(1) || 'home'; // Get section from hash, default to 'home' if only '#' 
         } else {
-            // External navigation - preserve state
-            localStorage.setItem('huntarr-logo-url', this.logoUrl);
+             // Handle external links (like /user) or non-hash links if needed
+             // For now, assume non-hash links navigate away
+        }
+
+        // Check for unsaved changes ONLY if navigating INTERNALLY away from settings
+        if (isInternalLink && this.currentSection === 'settings' && targetSection !== 'settings' && this.settingsChanged) {
+            if (!confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
+                return; // Stop navigation if user cancels
+            }
+            // User confirmed, reset flag before navigating
+            this.settingsChanged = false;
+            this.updateSaveResetButtonState(false); 
+        }
+
+        // Proceed with navigation
+        if (isInternalLink) {
+            window.location.hash = href; // Change hash to trigger handleHashNavigation
+        } else {
+            // If it's an external link (like /user), just navigate normally
             window.location.href = href;
         }
     },
@@ -365,30 +401,48 @@ const huntarrUI = {
 
     // Settings tab switching
     handleSettingsTabChange: function(e) {
-        const tab = e.target.getAttribute('data-settings');
-        if (!tab) return;
-        
-        // Update active tab
-        this.elements.settingsTabs.forEach(t => {
-            t.classList.remove('active');
-        });
-        e.target.classList.add('active');
-        
-        // Switch to the selected settings panel
+        // Use currentTarget to ensure we get the button, not the inner element
+        const targetTab = e.currentTarget;
+        const app = targetTab.dataset.app; // Use dataset.app as added in SettingsForms
+
+        if (!app) {
+             console.error("Settings tab clicked, but no data-app attribute found.");
+             return; // Should not happen if HTML is correct
+        }
+        e.preventDefault(); // Prevent default if it was an anchor
+
+        // Check for unsaved changes before switching tabs
+        if (this.settingsChanged) {
+            if (!confirm('You have unsaved changes on the current tab. Switch tabs anyway? Changes will be lost.')) {
+                return; // Stop tab switch if user cancels
+            }
+             // User confirmed, reset flag before switching
+            this.settingsChanged = false;
+            this.updateSaveResetButtonState(false);
+        }
+
+        // Remove active class from all tabs and panels
+        this.elements.settingsTabs.forEach(tab => tab.classList.remove('active'));
         this.elements.appSettingsPanels.forEach(panel => {
             panel.classList.remove('active');
             panel.style.display = 'none'; // Explicitly hide
         });
-        
-        const panelElement = document.getElementById(`${tab}Settings`);
+
+        // Set the target tab as active
+        targetTab.classList.add('active');
+
+        // Show the corresponding settings panel
+        const panelElement = document.getElementById(`${app}Settings`);
         if (panelElement) {
             panelElement.classList.add('active');
             panelElement.style.display = 'block'; // Explicitly show
-            this.currentSettingsTab = tab;
+            this.currentSettingsTab = app; // Update current tab state
             // Ensure settings are populated for this tab using the stored originalSettings
-            this.populateSettingsForm(tab, this.originalSettings[tab] || {});
-            // Reset save button state when switching tabs
-            this.updateSaveResetButtonState(tab, false);
+            this.populateSettingsForm(app, this.originalSettings[app] || {});
+            // Reset save button state when switching tabs (already done above if confirmed)
+            this.updateSaveResetButtonState(false); // Ensure it's disabled on new tab
+        } else {
+             console.error(`Settings panel not found for app: ${app}`);
         }
     },
     
@@ -548,6 +602,10 @@ const huntarrUI = {
     
     // Settings handling
     loadAllSettings: function() {
+        // Ensure buttons are disabled and flag is reset when loading settings section
+        this.settingsChanged = false;
+        this.updateSaveResetButtonState(false);
+        
         console.log("[huntarrUI] Loading all settings...");
         fetch(`/api/settings`) // Fetch the entire settings object
             .then(response => {
@@ -612,9 +670,12 @@ const huntarrUI = {
     },
     
     // Called when any setting input changes in the active tab
-    handleSettingChange: function() {
-        console.log(`[huntarrUI] Setting change detected in tab: ${this.currentSettingsTab}`);
-        this.updateSaveResetButtonState(this.currentSettingsTab, true); // Enable save button
+    markSettingsAsChanged() {
+        if (!this.settingsChanged) {
+            console.log("[huntarrUI] Settings marked as changed.");
+            this.settingsChanged = true;
+            this.updateSaveResetButtonState(true); // Enable buttons
+        }
     },
 
     saveSettings: function() {
@@ -688,7 +749,8 @@ const huntarrUI = {
             // Update connection status and UI
             this.checkAppConnection(app);
             this.updateHomeConnectionStatus();
-            this.updateSaveResetButtonState(app, false);
+            this.settingsChanged = false; // Reset flag after successful save
+            this.updateSaveResetButtonState(false); // Disable buttons after save
         })
         .catch(error => {
             console.error('Error saving settings:', error);
@@ -697,64 +759,44 @@ const huntarrUI = {
     },
 
     resetSettings: function() {
-        if (confirm('Are you sure you want to reset these settings to default values?')) {
-            const app = this.currentSettingsTab;
-            
-            // Use POST /api/settings/reset and send app name in body
-            fetch(`/api/settings/reset`, { 
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ app: app }) // Send app name in body
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.showNotification('Settings reset to defaults', 'success');
-                    // Reload settings for the current app
-                    this.loadSettings(app); 
-                } else {
-                    this.showNotification('Error resetting settings', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error resetting settings:', error);
-                this.showNotification('Error resetting settings', 'error');
-            });
+        const activeTab = document.querySelector('.settings-tab.active');
+        if (!activeTab) return;
+        const app = activeTab.dataset.app;
+
+        if (confirm(`Are you sure you want to reset ${this.capitalizeFirst(app)} settings to the last saved state?`)) {
+            // Reload settings for the current app from the stored original settings
+            this.populateSettingsForm(app, this.originalSettings[app] || {});
+            this.showNotification(`${this.capitalizeFirst(app)} settings reset to last saved state.`, 'info');
+            this.settingsChanged = false; // Reset flag after resetting form
+            this.updateSaveResetButtonState(false); // Disable buttons after reset
         }
     },
-    
-    collectSettingsFromForm: function(app) {
-        const settings = {};
-        
-        // Collect all input values for the current app
-        const container = document.getElementById(`${app}Settings`);
-        if (!container) return settings;
-        
-        // Get all inputs
-        const inputs = container.querySelectorAll('input, select');
-        inputs.forEach(input => {
-            if (input.type === 'button') return;
-            
-            // Get the field name without app prefix and type suffix
-            let key = input.id;
-            if (key.startsWith(`${app}_`)) {
-                key = key.substring(app.length + 1);
-            }
-            
-            if (input.type === 'checkbox') {
-                settings[key] = input.checked;
-            } else if (input.type === 'number') {
-                settings[key] = parseInt(input.value, 10);
+
+    // Add or modify this function to handle enabling/disabling save/reset
+    updateSaveResetButtonState(enable) { // Changed signature
+        const saveButton = this.elements.saveSettingsButton;
+        const resetButton = this.elements.resetSettingsButton;
+
+        if (saveButton) {
+            saveButton.disabled = !enable;
+            // Optional: Add/remove class for styling
+            if (enable) {
+                saveButton.classList.remove('disabled-button');
             } else {
-                settings[key] = input.value;
+                saveButton.classList.add('disabled-button');
             }
-        });
-        
-        return settings;
+        }
+        if (resetButton) {
+            // Reset button is typically enabled only when changes exist
+            resetButton.disabled = !enable;
+             if (enable) {
+                resetButton.classList.remove('disabled-button');
+            } else {
+                resetButton.classList.add('disabled-button');
+            }
+        }
     },
-    
+
     // App connections
     checkAppConnections: function() {
         this.checkAppConnection('sonarr');
@@ -1056,25 +1098,28 @@ const huntarrUI = {
     },
 
     // Add or modify this function to handle enabling/disabling save/reset
-    updateSaveResetButtonState: function(app, hasChanges) {
-        // Find buttons relevant to the current app context if they exist
-        // This might need adjustment based on actual button IDs/classes
-        const saveButton = this.elements.saveSettingsButton; // Assuming a general save button
-        const resetButton = this.elements.resetSettingsButton; // Assuming a general reset button
+    updateSaveResetButtonState(enable) { // Changed signature
+        const saveButton = this.elements.saveSettingsButton;
+        const resetButton = this.elements.resetSettingsButton;
 
         if (saveButton) {
-            saveButton.disabled = !hasChanges;
-            // Add/remove a class for styling disabled state if needed
-            if (hasChanges) {
-                saveButton.classList.remove('disabled-button'); // Example class
+            saveButton.disabled = !enable;
+            // Optional: Add/remove class for styling
+            if (enable) {
+                saveButton.classList.remove('disabled-button');
             } else {
-                saveButton.classList.add('disabled-button'); // Example class
+                saveButton.classList.add('disabled-button');
             }
         }
-        // Reset button logic (enable/disable based on changes or always enabled?)
-        // if (resetButton) {
-        //     resetButton.disabled = !hasChanges;
-        // }
+        if (resetButton) {
+            // Reset button is typically enabled only when changes exist
+            resetButton.disabled = !enable;
+             if (enable) {
+                resetButton.classList.remove('disabled-button');
+            } else {
+                resetButton.classList.add('disabled-button');
+            }
+        }
     },
 
     // Add updateHomeConnectionStatus if it doesn't exist or needs adjustment
