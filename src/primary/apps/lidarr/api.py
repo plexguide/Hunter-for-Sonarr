@@ -106,14 +106,32 @@ def get_system_status(api_url: str, api_key: str, api_timeout: int) -> Optional[
     """Get Lidarr system status."""
     return arr_request(api_url, api_key, api_timeout, "system/status")
 
-def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
+def check_connection(api_url: str, api_key: str, api_timeout: int = 30) -> bool:
     """Check the connection to Lidarr API."""
-    status = get_system_status(api_url, api_key, api_timeout)
-    if status is not None: # API request succeeded (even if status dict is empty)
+    try:
+        # Ensure api_url is properly formatted
+        if not api_url:
+            lidarr_logger.error("API URL is empty or not set")
+            return False
+            
+        # Make sure api_url has a scheme
+        if not (api_url.startswith('http://') or api_url.startswith('https://')):
+            lidarr_logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
+            return False
+            
+        # Ensure URL doesn't end with a slash before adding the endpoint
+        base_url = api_url.rstrip('/')
+        full_url = f"{base_url}/api/v1/system/status"
+        
+        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout)
+        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         lidarr_logger.info("Successfully connected to Lidarr.")
         return True
-    else:
-        lidarr_logger.error("Failed to connect to Lidarr (system/status check failed).")
+    except requests.exceptions.RequestException as e:
+        lidarr_logger.error(f"Error connecting to Lidarr: {e}")
+        return False
+    except Exception as e:
+        lidarr_logger.error(f"An unexpected error occurred during Lidarr connection check: {e}")
         return False
 
 def get_artists(api_url: str, api_key: str, api_timeout: int, artist_id: Optional[int] = None) -> Union[List, Dict, None]:

@@ -170,9 +170,20 @@ def get_configured_apps() -> List[str]:
     configured = []
     for app_name in KNOWN_APP_TYPES:
         settings = load_settings(app_name)
-        # Check if essential keys exist and have non-empty values
+        
+        # First check if there are valid instances configured (multi-instance mode)
+        if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
+            for instance in settings["instances"]:
+                if instance.get("enabled", True) and instance.get("api_url") and instance.get("api_key"):
+                    configured.append(app_name)
+                    break  # One valid instance is enough to consider the app configured
+            continue  # Skip the single-instance check if we already checked instances
+                
+        # Fallback to legacy single-instance config
         if settings.get("api_url") and settings.get("api_key"):
             configured.append(app_name)
+    
+    settings_logger.info(f"Configured apps: {configured}")
     return configured
 
 def apply_timezone(timezone: str) -> bool:
