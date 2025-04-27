@@ -62,10 +62,9 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           platforms: linux/amd64,linux/arm64
           cache-from: |
-            ${{ format('type=registry,ref=ghcr.io/{0}/build_cache:{1}-{2}-{3},mode=max', github.repository_owner) }}
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/build_cache:latest
           cache-to: |
-            ${{ format('type=registry,ref=ghcr.io/{0}/build_cache:{1}-{2}-{3}', github.repository_owner) || '' }}
-
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/build_cache:latest,mode=max
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
