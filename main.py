@@ -157,3 +157,14 @@ if __name__ == '__main__':
         logger.info("--- Huntarr Main Process Exiting ---")
         # Use os._exit(0) for a more forceful exit if necessary, but sys.exit(0) is generally preferred
         sys.exit(0)
+
+def get_version():
+    try:
+        with open('version.txt', 'r') as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return "Unknown"
+
+@app.context_processor
+def inject_version():
+    return dict(version=get_version())
