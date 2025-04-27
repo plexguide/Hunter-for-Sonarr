@@ -15,26 +15,35 @@ from src.primary.utils.logger import get_logger
 from src.primary import settings_manager
 from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
 from src.primary.apps.readarr.api import get_cutoff_unmet_books, refresh_author, book_search
+from src.primary.stats_manager import increment_stat  # Import the stats increment function
 
 # Get app-specific logger
 logger = get_logger("readarr")
 
-def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
+def process_cutoff_upgrades(app_settings: Dict = None, restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
     """
     Process books that need quality upgrades (cutoff unmet).
     
     Args:
+        app_settings: Dictionary containing all app settings (optional)
         restart_cycle_flag: Function that returns whether to restart the cycle
     
     Returns:
         True if any processing was done, False otherwise
     """
-    # Get the current value directly at the start of processing
-    # Use settings_manager directly instead of get_current_upgrade_limit
-    HUNT_UPGRADE_BOOKS = settings_manager.get_setting("readarr", "hunt_upgrade_books", 0)
-    RANDOM_UPGRADES = settings_manager.get_setting("readarr", "random_upgrades", True)
-    SKIP_AUTHOR_REFRESH = settings_manager.get_setting("readarr", "skip_author_refresh", False)
-    MONITORED_ONLY = settings_manager.get_setting("readarr", "monitored_only", True)
+    # Use app_settings if provided, otherwise fetch from settings_manager
+    if app_settings is None:
+        # Fallback to direct settings if app_settings not provided
+        HUNT_UPGRADE_BOOKS = settings_manager.get_setting("readarr", "hunt_upgrade_books", 0)
+        RANDOM_UPGRADES = settings_manager.get_setting("readarr", "random_upgrades", True)
+        SKIP_AUTHOR_REFRESH = settings_manager.get_setting("readarr", "skip_author_refresh", False)
+        MONITORED_ONLY = settings_manager.get_setting("readarr", "monitored_only", True)
+    else:
+        # Use values from app_settings
+        HUNT_UPGRADE_BOOKS = app_settings.get("hunt_upgrade_books", 0)
+        RANDOM_UPGRADES = app_settings.get("random_upgrades", True)
+        SKIP_AUTHOR_REFRESH = app_settings.get("skip_author_refresh", False)
+        MONITORED_ONLY = app_settings.get("monitored_only", True)
     
     # Get app-specific state file
     PROCESSED_UPGRADE_FILE = get_state_file_path("readarr", "processed_upgrades")
@@ -66,8 +75,6 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
     
     logger.info(f"Found {len(upgrade_books)} books that need quality upgrades.")
     processed_upgrade_ids = load_processed_ids(PROCESSED_UPGRADE_FILE)
-    books_processed = 0
-    processing_done = False
     
     # Filter out already processed books
     unprocessed_books = [book for book in upgrade_books if book.get("id") not in processed_upgrade_ids]
@@ -92,16 +99,44 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
         logger.info("🔄 Received restart signal before processing books. Aborting...")
         return False
     
+    # Create a list of books to process, limited by HUNT_UPGRADE_BOOKS
+    books_to_process = unprocessed_books[:min(len(unprocessed_books), HUNT_UPGRADE_BOOKS)]
+    
+    # Log a summary of all books that will be processed
+    if books_to_process:
+        logger.info(f"Selected {len(books_to_process)} books for quality upgrades this cycle:")
+        for idx, book in enumerate(books_to_process):
+            title = book.get("title", "Unknown Title")
+            
+            # Get author name
+            author_name = "Unknown Author"
+            if "author" in book and isinstance(book["author"], dict):
+                author_name = book["author"].get("authorName", "Unknown Author")
+            elif "author" in book and isinstance(book["author"], str):
+                author_name = book["author"]
+                
+            # Get quality information
+            quality_name = "Unknown"
+            if "quality" in book and book["quality"]:
+                quality_name = book["quality"].get("quality", {}).get("name", "Unknown")
+                
+            book_id = book.get("id")
+            logger.info(f" {idx+1}. \"{title}\" by {author_name} - Current quality: {quality_name} (ID: {book_id})")
+    
     # Process up to HUNT_UPGRADE_BOOKS books
-    for book in unprocessed_books:
+    books_processed = 0
+    processing_done = False
+    for book in books_to_process:
         # Check for restart signal before each book
         if restart_cycle_flag():
             logger.info("🔄 Received restart signal during book processing. Aborting...")
             break
         
         # Check again for the current limit in case it was changed during processing
-        # Use settings_manager directly instead of get_current_upgrade_limit
-        current_limit = settings_manager.get_setting("readarr", "hunt_upgrade_books", 0)
+        if app_settings is None:
+            current_limit = settings_manager.get_setting("readarr", "hunt_upgrade_books", 0)
+        else:
+            current_limit = HUNT_UPGRADE_BOOKS # Use the value from app_settings
         
         if books_processed >= current_limit:
             logger.info(f"Reached HUNT_UPGRADE_BOOKS={current_limit} for this cycle.")
@@ -156,17 +191,25 @@ def process_cutoff_upgrades(restart_cycle_flag: Callable[[], bool] = lambda: Fal
             books_processed += 1
             processing_done = True
             
-            # Log with the current limit, not the initial one
-            # Use settings_manager directly instead of get_current_upgrade_limit
-            current_limit = settings_manager.get_setting("readarr", "hunt_upgrade_books", 0)
+            # Increment the upgraded statistics for Readarr
+            increment_stat("readarr", "upgraded", 1)
+            logger.debug(f"Incremented readarr upgraded statistics by 1")
+            
+            # Log with the current limit
+            if app_settings is None:
+                current_limit = settings_manager.get_setting("readarr", "hunt_upgrade_books", 0)
+            else:
+                current_limit = HUNT_UPGRADE_BOOKS
             logger.info(f"Processed {books_processed}/{current_limit} upgrade books this cycle.")
         else:
             logger.warning(f"WARNING: Search command failed for book ID {book_id}.")
             continue
     
     # Log final status
-    # Use settings_manager directly instead of get_current_upgrade_limit
-    current_limit = settings_manager.get_setting("readarr", "hunt_upgrade_books", 0)
+    if app_settings is None:
+        current_limit = settings_manager.get_setting("readarr", "hunt_upgrade_books", 0)
+    else:
+        current_limit = HUNT_UPGRADE_BOOKS
     logger.info(f"Completed processing {books_processed} upgrade books for this cycle.")
     truncate_processed_list(PROCESSED_UPGRADE_FILE)
     

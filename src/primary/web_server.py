@@ -36,6 +36,9 @@ from src.primary.auth import (
 # Import blueprint for common routes
 from src.primary.routes.common import common_bp
 
+# Import blueprints for each app from the centralized blueprints module
+from src.primary.apps.blueprints import sonarr_bp, radarr_bp, lidarr_bp, readarr_bp, whisparr_bp
+
 # Disable Flask default logging
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -50,6 +53,11 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev_key_for_sessions')
 
 # Register blueprints
 app.register_blueprint(common_bp)
+app.register_blueprint(sonarr_bp, url_prefix='/api/sonarr')
+app.register_blueprint(radarr_bp, url_prefix='/api/radarr')
+app.register_blueprint(lidarr_bp, url_prefix='/api/lidarr')
+app.register_blueprint(readarr_bp, url_prefix='/api/readarr')
+app.register_blueprint(whisparr_bp, url_prefix='/api/whisparr')
 
 # Register the authentication check to run before requests
 app.before_request(authenticate_request)
@@ -65,6 +73,7 @@ KNOWN_LOG_FILES = {
     "radarr": APP_LOG_FILES.get("radarr"),
     "lidarr": APP_LOG_FILES.get("lidarr"),
     "readarr": APP_LOG_FILES.get("readarr"),
+    "whisparr": APP_LOG_FILES.get("whisparr"),
     "system": MAIN_LOG_FILE, # Map 'system' to the main huntarr log
 }
 # Filter out None values if an app log file doesn't exist

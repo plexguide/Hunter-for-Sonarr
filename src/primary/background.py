@@ -74,10 +74,12 @@ def app_specific_loop(app_type: str) -> None:
         elif app_type == "lidarr":
             missing_module = importlib.import_module('src.primary.apps.lidarr.missing')
             upgrade_module = importlib.import_module('src.primary.apps.lidarr.upgrade')
-            process_missing = getattr(missing_module, 'process_missing_albums')
+            # Use process_missing_content as the function name might change based on mode
+            process_missing = getattr(missing_module, 'process_missing_content') 
             process_upgrades = getattr(upgrade_module, 'process_cutoff_upgrades')
-            hunt_missing_setting = "hunt_missing_albums"
-            hunt_upgrade_setting = "hunt_upgrade_tracks"
+            hunt_missing_setting = "hunt_missing_items"
+            # Use hunt_upgrade_items
+            hunt_upgrade_setting = "hunt_upgrade_items" 
         elif app_type == "readarr":
             missing_module = importlib.import_module('src.primary.apps.readarr.missing')
             upgrade_module = importlib.import_module('src.primary.apps.readarr.upgrade')
@@ -85,6 +87,13 @@ def app_specific_loop(app_type: str) -> None:
             process_upgrades = getattr(upgrade_module, 'process_cutoff_upgrades')
             hunt_missing_setting = "hunt_missing_books"
             hunt_upgrade_setting = "hunt_upgrade_books"
+        elif app_type == "whisparr":
+            missing_module = importlib.import_module('src.primary.apps.whisparr.missing')
+            upgrade_module = importlib.import_module('src.primary.apps.whisparr.upgrade')
+            process_missing = getattr(missing_module, 'process_missing_scenes')
+            process_upgrades = getattr(upgrade_module, 'process_cutoff_upgrades')
+            hunt_missing_setting = "hunt_missing_scenes"
+            hunt_upgrade_setting = "hunt_upgrade_scenes"
         else:
             app_logger.error(f"Unsupported app_type: {app_type}")
             return # Exit thread if app type is invalid

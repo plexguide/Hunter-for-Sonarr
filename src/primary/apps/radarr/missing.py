@@ -14,6 +14,7 @@ from src.primary.utils.logger import get_logger, debug_log
 from src.primary import settings_manager
 from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
 from src.primary.apps.radarr.api import get_movies_with_missing, refresh_movie, movie_search
+from src.primary.stats_manager import increment_stat  # Import the stats increment function
 
 # Get app-specific logger
 logger = get_logger("radarr")
@@ -191,6 +192,10 @@ def process_missing_movies(
             processed_in_this_run.add(movie_id)
             movies_processed += 1
             processing_done = True
+            
+            # Increment the hunted statistics
+            increment_stat("radarr", "hunted", 1)
+            logger.debug(f"Incremented radarr hunted statistics by 1")
 
             # Log progress
             current_limit = app_settings.get("hunt_missing_movies", 1)

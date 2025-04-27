@@ -10,7 +10,7 @@
 
 <table>
   <tr>
-    <td colspan="2"><img src="https://github.com/user-attachments/assets/4cc938e6-5d22-480a-aa10-6f267bb97617" width="100%"/></td>
+    <td colspan="2"><img src="https://github.com/user-attachments/assets/1ea6ca9c-0909-4b6a-b573-f778b65af8b2" width="100%"/></td>
   </tr>
 </table>
  
@@ -18,8 +18,11 @@
 | :---------- | :------------ |
 | Sonarr      | **✅ Ready**  |
 | Radarr      | **✅ Ready**  |
-| Lidarr      | **❌ Not Ready** |
-| Readarr     | **❌ Not Ready** |
+| Lidarr      | **✅ Ready**  |
+| Readarr     | **✅ Ready**  |
+| Whisparr    | **✅ Ready**  |
+| Bazarr    | **❌ Not Ready** |
+
 
 Keep in mind this is very early in program development. If you have a very special hand picked collection (because some users are extra special), test before you deploy.
 
@@ -49,9 +52,6 @@ For detailed documentation, please visit our [Wiki](https://github.com/plexguide
 
 ## Other Projects
 
-* [Legacy Huntarr - Radarr Edition](https://github.com/plexguide/Radarr-Hunter) - Sister version for Movies
-* [Current Huntarr - Lidarr Edition](https://github.com/plexguide/Lidarr-Hunter) - Sister version for Music
-* [Current Huntarr - Readarr Edition](https://github.com/plexguide/Huntarr-Readarr) - Sister version for Books
 * [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
 * Visit [PlexGuide](https://plexguide.com) for more great scripts
 
@@ -131,6 +131,17 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 </table>
 
 ## Web Interface
+
+Huntarr's live homepage will provide you statics about how many hunts have been pursed regarding missing media and upgrade searches! Note: Numbers reflected are but all required for testing... damn you Whisparr!
+
+<table>
+  <tr>
+    <td colspan="2"> 
+      <img width="100%" alt="image" src="https://github.com/user-attachments/assets/e3c64ca3-02ae-40b2-ad27-7cae3f686e5c" />
+      <p align="center"><em>Homepage</em></p>
+    </td>
+  </tr>
+</table>
 
 Huntarr includes a real-time log viewer and settings management web interface that allows you to monitor and configure its operation directly from your browser.
 
