@@ -37,11 +37,13 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         radarr_logger.error("API URL or API key is missing. Check your settings.")
         return None
     
-    # Determine the API version
-    api_base = "api/v3"  # Radarr uses v3
+    # Ensure api_url has a scheme
+    if not (api_url.startswith('http://') or api_url.startswith('https://')):
+        radarr_logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
+        return None
     
     # Full URL - ensure no double slashes
-    url = f"{api_url.rstrip('/')}/{api_base}/{endpoint.lstrip('/')}"
+    url = f"{api_url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
     
     # Headers
     headers = {

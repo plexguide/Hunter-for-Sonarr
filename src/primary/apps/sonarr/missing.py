@@ -37,8 +37,8 @@ def process_missing_episodes(
     processed_any = False
 
     # Extract necessary settings
-    api_url = app_settings.get("api_url")
-    api_key = app_settings.get("api_key")
+    api_url = app_settings.get("api_url", "").strip()
+    api_key = app_settings.get("api_key", "").strip()
     api_timeout = app_settings.get("api_timeout", 90)  # Increased default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_episodes = app_settings.get("skip_future_episodes", True)
@@ -49,9 +49,23 @@ def process_missing_episodes(
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
     state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)  # Add this line to get the stateful reset interval
 
-    if not api_url or not api_key:
-        sonarr_logger.error("API URL or Key not configured in settings. Cannot process missing episodes.")
+    # Improved validation of API URL and key
+    if not api_url:
+        sonarr_logger.error("API URL is empty or not set")
         return False
+        
+    if not api_key:
+        sonarr_logger.error("API Key is not set")
+        return False
+        
+    # Ensure URL has proper format with auto-correction
+    if not (api_url.startswith('http://') or api_url.startswith('https://')):
+        old_url = api_url
+        api_url = f"http://{api_url}"
+        sonarr_logger.warning(f"API URL is missing http:// or https:// scheme: {old_url}")
+        sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
+        
+    sonarr_logger.debug(f"Using API URL: {api_url}")
 
     if hunt_missing_shows <= 0:
         sonarr_logger.info("'hunt_missing_shows' setting is 0 or less. Skipping missing episode processing.")
@@ -233,6 +247,13 @@ def wait_for_command(
     stop_check: Callable[[], bool] # Pass stop check function
 ) -> bool:
     """Wait for a Sonarr command to complete, checking for stop requests."""
+    # Ensure URL has proper format
+    if not (api_url.startswith('http://') or api_url.startswith('https://')):
+        old_url = api_url
+        api_url = f"http://{api_url}"
+        sonarr_logger.warning(f"API URL is missing http:// or https:// scheme in wait_for_command: {old_url}")
+        sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
+    
     sonarr_logger.debug(f"Waiting for Sonarr command '{command_name}' (ID: {command_id}) to complete...")
     for attempt in range(attempts):
         if stop_check():

@@ -40,8 +40,15 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
             sonarr_logger.error("No URL or API key provided")
             return None
         
-        # Construct the full URL
-        api_url = f"{api_url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
+        # Ensure api_url has a scheme
+        if not (api_url.startswith('http://') or api_url.startswith('https://')):
+            sonarr_logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
+            return None
+            
+        # Construct the full URL properly
+        full_url = f"{api_url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
+        
+        sonarr_logger.debug(f"Making {method} request to: {full_url}")
         
         # Set up headers
         headers = {
@@ -51,13 +58,13 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         
         try:
             if method.upper() == "GET":
-                response = session.get(api_url, headers=headers, timeout=api_timeout)
+                response = session.get(full_url, headers=headers, timeout=api_timeout)
             elif method.upper() == "POST":
-                response = session.post(api_url, headers=headers, json=data, timeout=api_timeout)
+                response = session.post(full_url, headers=headers, json=data, timeout=api_timeout)
             elif method.upper() == "PUT":
-                response = session.put(api_url, headers=headers, json=data, timeout=api_timeout)
+                response = session.put(full_url, headers=headers, json=data, timeout=api_timeout)
             elif method.upper() == "DELETE":
-                response = session.delete(api_url, headers=headers, timeout=api_timeout)
+                response = session.delete(full_url, headers=headers, timeout=api_timeout)
             else:
                 sonarr_logger.error(f"Unsupported HTTP method: {method}")
                 return None
@@ -268,7 +275,9 @@ def get_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored
                 "pageSize": page_size,
                 "includeSeries": "true"
             }
-            url = f"{api_url}/api/v3/{endpoint}"
+            # Ensure proper URL construction with scheme
+            base_url = api_url.rstrip('/')
+            url = f"{base_url}/api/v3/{endpoint.lstrip('/')}"
             sonarr_logger.debug(f"Requesting missing episodes page {page} (attempt {retry_count+1}/{retries_per_page+1})")
             
             try:
