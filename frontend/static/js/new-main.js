@@ -15,7 +15,9 @@ const huntarrUI = {
     configuredApps: {
         sonarr: false,
         radarr: false,
-        lidarr: false
+        lidarr: false,
+        readarr: false, // Added readarr
+        whisparr: false // Added whisparr
     },
     originalSettings: {}, // Store the full original settings object
     
@@ -40,6 +42,7 @@ const huntarrUI = {
         this.setupEventListeners();
         this.loadUsername();
         this.checkAppConnections();
+        this.loadMediaStats(); // Load media statistics
         
         // Ensure logo is applied
         if (typeof window.applyLogoToAllElements === 'function') {
@@ -82,6 +85,8 @@ const huntarrUI = {
         this.elements.sonarrHomeStatus = document.getElementById('sonarrHomeStatus');
         this.elements.radarrHomeStatus = document.getElementById('radarrHomeStatus');
         this.elements.lidarrHomeStatus = document.getElementById('lidarrHomeStatus');
+        this.elements.readarrHomeStatus = document.getElementById('readarrHomeStatus'); // Added readarr
+        this.elements.whisparrHomeStatus = document.getElementById('whisparrHomeStatus'); // Added whisparr
         
         // Actions
         this.elements.startHuntButton = document.getElementById('startHuntButton');
@@ -537,6 +542,19 @@ const huntarrUI = {
             SettingsForms.updateDurationDisplay();
         }
 
+        // Initialize app-specific JS handlers after form is populated/generated
+        if (app === 'sonarr' && typeof setupSonarrForm === 'function') {
+            setupSonarrForm();
+        } else if (app === 'radarr' && typeof setupRadarrForm === 'function') {
+            setupRadarrForm();
+        } else if (app === 'lidarr' && typeof setupLidarrForm === 'function') {
+            setupLidarrForm();
+        } else if (app === 'readarr' && typeof setupReadarrForm === 'function') {
+            setupReadarrForm();
+        } else if (app === 'whisparr' && typeof setupWhisparrForm === 'function') { // Added Whisparr
+            setupWhisparrForm();
+        }
+
         // Ensure save/reset buttons are initially disabled after populating
         this.updateSaveResetButtonState(app, false);
     },
@@ -681,6 +699,8 @@ const huntarrUI = {
         this.checkAppConnection('sonarr');
         this.checkAppConnection('radarr');
         this.checkAppConnection('lidarr');
+        this.checkAppConnection('readarr'); // Added readarr
+        this.checkAppConnection('whisparr'); // Added whisparr
     },
     
     checkAppConnection: function(app) {
@@ -784,6 +804,102 @@ const huntarrUI = {
         });
     },
     
+    // Media statistics handling
+    loadMediaStats: function() {
+        fetch('/api/stats')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.stats) {
+                    this.updateStatsDisplay(data.stats);
+                } else {
+                    console.error('Failed to load statistics:', data.message || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching statistics:', error);
+            });
+    },
+    
+    updateStatsDisplay: function(stats) {
+        // Update each app's statistics
+        const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr'];
+        const statTypes = ['hunted', 'upgraded'];
+        
+        apps.forEach(app => {
+            if (stats[app]) {
+                statTypes.forEach(type => {
+                    const element = document.getElementById(`${app}-${type}`);
+                    if (element) {
+                        // Animate the number change
+                        this.animateNumber(element, parseInt(element.textContent), stats[app][type] || 0);
+                    }
+                });
+            }
+        });
+    },
+    
+    animateNumber: function(element, start, end) {
+        const duration = 1000; // Animation duration in milliseconds
+        const startTime = performance.now();
+        
+        const updateNumber = (currentTime) => {
+            const elapsedTime = currentTime - startTime;
+            const progress = Math.min(elapsedTime / duration, 1);
+            
+            // Easing function for smooth animation
+            const easeOutQuad = progress * (2 - progress);
+            
+            const currentValue = Math.floor(start + (end - start) * easeOutQuad);
+            element.textContent = currentValue;
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateNumber);
+            } else {
+                element.textContent = end; // Ensure we end with the exact target number
+            }
+        };
+        
+        requestAnimationFrame(updateNumber);
+    },
+    
+    resetMediaStats: function(appType = null) {
+        const confirmMessage = appType 
+            ? `Are you sure you want to reset statistics for ${appType}?` 
+            : 'Are you sure you want to reset all media statistics?';
+            
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+        
+        const requestBody = appType ? { app_type: appType } : {};
+        
+        fetch('/api/stats/reset', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.showNotification(data.message, 'success');
+                    this.loadMediaStats(); // Refresh the stats display
+                } else {
+                    this.showNotification(data.message || 'Failed to reset statistics', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error resetting statistics:', error);
+                this.showNotification('Error resetting statistics', 'error');
+            });
+    },
+    
     // Utility functions
     showNotification: function(message, type) {
         // Create a notification element
@@ -855,6 +971,21 @@ const huntarrUI = {
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', () => {
     huntarrUI.init();
+    
+    // Add event listeners for media statistics buttons
+    const refreshStatsButton = document.getElementById('refresh-stats');
+    if (refreshStatsButton) {
+        refreshStatsButton.addEventListener('click', () => {
+            huntarrUI.loadMediaStats();
+        });
+    }
+    
+    const resetStatsButton = document.getElementById('reset-stats');
+    if (resetStatsButton) {
+        resetStatsButton.addEventListener('click', () => {
+            huntarrUI.resetMediaStats();
+        });
+    }
     
     // Restore logo from session storage if available
     const cachedLogoSrc = sessionStorage.getItem('huntarr-logo-src');

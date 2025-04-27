@@ -36,6 +36,8 @@ def get_state_file_path(app_type: str, state_type: str) -> str:
         base_path = "/tmp/huntarr-state/lidarr"
     elif app_type == "readarr":
         base_path = "/tmp/huntarr-state/readarr"
+    elif app_type == "whisparr":
+        base_path = "/tmp/huntarr-state/whisparr"
     else:
         logger.warning(f"get_state_file_path called with unexpected app_type: {app_type}")
         base_path = f"/tmp/huntarr-state/{app_type}"
