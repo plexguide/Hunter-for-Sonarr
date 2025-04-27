@@ -1,8 +1,9 @@
+import React from 'react';
 import Link from 'Components/Link/Link';
 import PageContent from 'Components/Page/PageContent';
 import PageContentBody from 'Components/Page/PageContentBody';
 import translate from 'Utilities/String/translate';
-import styles from './Settings.css';
+import styles from 'Settings/Css/Settings.module.css';
 
 function Settings() {
   return (

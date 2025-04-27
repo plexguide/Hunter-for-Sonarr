@@ -1,0 +1,96 @@
+// Dimensions
+$pageContentBodyPadding: 20px;
+$pageContentBodyPaddingSmallScreen: 10px;
+
+// Header
+$headerHeight: 60px;
+
+// Sidebar
+$sidebarWidth: 210px;
+
+// Toolbar
+$toolbarHeight: 60px;
+$toolbarButtonWidth: 60px;
+$toolbarSeparatorMargin: 20px;
+
+// Break Points
+$breakpointExtraSmall: 480px;
+$breakpointSmall: 768px;
+$breakpointMedium: 992px;
+$breakpointLarge: 1200px;
+$breakpointExtraLarge: 1450px;
+
+// Form
+$formGroupExtraSmallWidth: 550px;
+$formGroupSmallWidth: 650px;
+$formGroupMediumWidth: 800px;
+$formGroupLargeWidth: 1200px;
+$formLabelSmallWidth: 150px;
+$formLabelLargeWidth: 250px;
+$formLabelRightMarginWidth: 20px;
+
+// Drag
+$dragHandleWidth: 40px;
+$qualityProfileItemHeight: 30px;
+$qualityProfileItemDragSourcePadding: 4px;
+
+// Progress Bar
+$progressBarSmallHeight: 5px;
+$progressBarMediumHeight: 15px;
+$progressBarLargeHeight: 20px;
+
+// Jump Bar
+$jumpBarItemHeight: 25px;
+
+// Modal
+$modalBodyPadding: 30px;
+
+// Series
+$seriesIndexColumnPadding: 10px;
+$seriesIndexColumnPaddingSmallScreen: 5px;
+$seriesIndexOverviewInfoRowHeight: 21px;
+
+
+
+.container {
+    text-align: center;
+  }
+  
+  .message {
+    margin: 50px 0;
+    text-align: center;
+    font-weight: 300;
+    font-size: 36px;
+  }
+  
+  .imageContainer {
+    display: flex;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+  
+  .image {
+    height: 350px;
+  }
+  
+  .details {
+    margin: 20px;
+    text-align: left;
+    white-space: pre-wrap;
+  }
+  
+  .version {
+    margin-top: 20px;
+  }
+  
+  @media only screen and (max-width: $breakpointMedium) {
+    .image {
+      height: 250px;
+    }
+  }
+  
+  @media only screen and (max-width: $breakpointSmall) {
+    .image {
+      height: 150px;
+    }
+  }

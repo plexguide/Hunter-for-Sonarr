@@ -1,5 +1,6 @@
+import React from 'react';
 import { Navigate, Route } from 'react-router-dom';
-import Switch from 'Components/Router/Switch';
+import RouteSwitch from 'Components/Router/RouteSwitch';
 import getPathWithUrlBase from 'Utilities/getPathWithUrlBase';
 import MediaIndex from 'Media/Index/MediaIndex';
 import NotFound from 'Components/NotFound';
@@ -8,16 +9,13 @@ import Settings from 'Settings/Settings';
 function RedirectWithUrlBase() {
   return <Navigate to={getPathWithUrlBase('/')} />;
 }
-
+console.log('AppRoutes');
 function AppRoutes() {
   return (
-    <Switch>
+    <RouteSwitch>
       {/*
        Root
       */}
-
-      <Route path="/" element={<MediaIndex />} />
-
       {window.Huntarr.urlBase && (
         <Route
           path="/"
@@ -27,27 +25,21 @@ function AppRoutes() {
           render={RedirectWithUrlBase}
         />
       )}
-
+      <Route path="/" element={<NotFound />} />
 
       {/*
         Settings
       */}
 
       <Route path="/settings" element={<Settings />} />
-
-
-
-      {/*
-        System
-      */}
-
+      <Route path="/media" element={<MediaIndex />} />
 
       {/*
         Not Found
       */}
 
       <Route path="*" element={<NotFound />} />
-    </Switch>
+    </RouteSwitch>
   );
 }
 

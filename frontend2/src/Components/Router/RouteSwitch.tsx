@@ -11,7 +11,8 @@ interface SwitchProps {
   children: ReactNode;
 }
 
-function Switch({ children }: SwitchProps) {
+function RouteSwitch({ children }: SwitchProps) {
+  console.log('RouteSwitch');
   return (
     <Routes>
       {Children.map(children, (child) => {
@@ -35,4 +36,4 @@ function Switch({ children }: SwitchProps) {
   );
 }
 
-export default Switch;
+export default RouteSwitch;

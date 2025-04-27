@@ -9,7 +9,7 @@ import {
   useImperativeHandle,
   useRef,
 } from 'react';
-import styles from './Scroller.css';
+import styles from './Scroller.module.css';
 
 export interface OnScroll {
   scrollLeft: number;

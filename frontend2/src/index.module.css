@@ -1,0 +1,198 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --default-speed: 0.2s;
+  --slow-speed: 0.6s;
+  --fast-speed: 0.1s;
+
+  --pageContentBodyPadding: 20px;
+  --pageContentBodyPaddingSmallScreen: 10px;
+
+
+  --headerHeight: 60px;
+
+
+  --sidebarWidth: 210px;
+
+
+  --toolbarHeight: 60px;
+  --toolbarButtonWidth: 60px;
+  --toolbarSeparatorMargin: 20px;
+
+
+  --breakpointExtraSmall: 480px;
+  --breakpointSmall: 768px;
+  --breakpointMedium: 992px;
+  --breakpointLarge: 1200px;
+  --breakpointExtraLarge: 1450px;
+
+
+  --formGroupExtraSmallWidth: 550px;
+  --formGroupSmallWidth: 650px;
+  --formGroupMediumWidth: 800px;
+  --formGroupLargeWidth: 1200px;
+  --formLabelSmallWidth: 150px;
+  --formLabelLargeWidth: 250px;
+  --formLabelRightMarginWidth: 20px;
+
+
+  --dragHandleWidth: 40px;
+  --qualityProfileItemHeight: 30px;
+  --qualityProfileItemDragSourcePadding: 4px;
+
+
+  --progressBarSmallHeight: 5px;
+  --progressBarMediumHeight: 15px;
+  --progressBarLargeHeight: 20px;
+
+
+  --jumpBarItemHeight: 25px;
+
+
+  --modalBodyPadding: 30px;
+
+
+  --seriesIndexColumnPadding: 10px;
+  --seriesIndexColumnPaddingSmallScreen: 5px;
+  --seriesIndexOverviewInfoRowHeight: 21px;
+
+
+
+  --defaultFontFamily: 'Roboto, "open sans", "Helvetica Neue", Helvetica, Arial, sans-serif';
+  --monoSpaceFontFamily: '"Ubuntu Mono", Menlo, Monaco, Consolas, "Courier New", monospace';
+
+
+  --extraSmallFontSize: 11px;
+  --smallFontSize: 12px;
+  --defaultFontSize: 14px;
+  --intermediateFontSize: 15px;
+  --largeFontSize: 16px;
+
+
+  --lineHeight: 1.528571429;
+
+  --pageJumpBarZIndex: 10;
+  --modalZIndex: 1000;
+  --popperZIndex: 2000;
+
+}
+
+/* stylelint-disable */
+* {
+  box-sizing: border-box;
+}
+
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+*:focus {
+  outline: none;
+}
+/* stylelint-enable */
+
+html,
+body {
+  color: var(--textColor);
+  font-family: 'Roboto', 'open sans', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+}
+
+body {
+  font-size: 14px;
+  line-height: 1.528571429; /* 20/14 */
+}
+
+/* Override normalize */
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  margin: 0;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: 1.528571429; /* 20/14 */
+}
+
+/* Better defaults for unordererd lists */
+
+ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+@media only screen and (min-device-width: 375px) and (max-device-width: 812px) {
+  input,
+  optgroup,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}

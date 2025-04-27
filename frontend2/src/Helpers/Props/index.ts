@@ -1,27 +1,12 @@
-import * as align from './align';
-import * as filterBuilderTypes from './filterBuilderTypes';
-import * as filterBuilderValueTypes from './filterBuilderValueTypes';
-import * as filterTypes from './filterTypes';
-import * as icons from './icons';
-import * as inputTypes from './inputTypes';
-import * as kinds from './kinds';
-import * as messageTypes from './messageTypes';
-import * as scrollDirections from './scrollDirections';
-import * as sizes from './sizes';
-import * as sortDirections from './sortDirections';
-import * as tooltipPositions from './tooltipPositions';
-
-export {
-  align,
-  inputTypes,
-  filterBuilderTypes,
-  filterBuilderValueTypes,
-  filterTypes,
-  icons,
-  kinds,
-  messageTypes,
-  sizes,
-  scrollDirections,
-  sortDirections,
-  tooltipPositions
-};
+export * as align from './align';
+export * as filterBuilderTypes from './filterBuilderTypes';
+export * as filterBuilderValueTypes from './filterBuilderValueTypes';
+export * as filterTypes from './filterTypes';
+export * as icons from './icons';
+export * as inputTypes from './inputTypes';
+export * as kinds from './kinds';
+export * as messageTypes from './messageTypes';
+export * as scrollDirections from './scrollDirections';
+export * as sizes from './sizes';
+export * as sortDirections from './sortDirections';
+export * as tooltipPositions from './tooltipPositions';

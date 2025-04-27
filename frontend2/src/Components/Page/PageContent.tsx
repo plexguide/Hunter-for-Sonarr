@@ -1,6 +1,6 @@
 import React from 'react';
 import DocumentTitle from 'react-document-title';
-import styles from './PageContent.css';
+import styles from './PageContent.module.css';
 
 interface PageContentProps {
   className?: string;

@@ -2,12 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/png" href="/Logo/16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="/Logo/32.png" sizes="32x32" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <title>Huntarr</title>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+
+    <script>
+      window.Huntarr = { 
+        urlBase: '',
+        instanceName: 'Huntarr',
+        apiRoot: '/api',
+      };
+    </script>
+
+    <script type="module" src="/src/index.ts"></script>
   </body>
 </html>
