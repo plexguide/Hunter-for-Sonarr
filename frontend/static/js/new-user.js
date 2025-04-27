@@ -82,12 +82,12 @@
             return;
         }
         
-        fetch('/api/user/username', {
+        fetch('/api/user/change-username', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                new_username: newUsername,
-                current_password: currentPassword
+                username: newUsername,
+                password: currentPassword
             })
         })
         .then(response => response.json())
@@ -133,7 +133,7 @@
             return;
         }
         
-        fetch('/api/user/password', {
+        fetch('/api/user/change-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
