@@ -764,25 +764,60 @@ const huntarrUI = {
         fetch(`/api/status/${app}`)
             .then(response => response.json())
             .then(data => {
-                this.updateConnectionStatus(app, data.connected);
-                this.configuredApps[app] = data.configured;
+                // Pass the whole data object for sonarr, boolean for others
+                if (app === 'sonarr') {
+                    this.updateConnectionStatus(app, data); 
+                } else {
+                    this.updateConnectionStatus(app, data.connected);
+                }
+                this.configuredApps[app] = (app === 'sonarr') ? (data.total_configured > 0) : data.configured;
             })
             .catch(error => {
                 console.error(`Error checking ${app} connection:`, error);
-                this.updateConnectionStatus(app, false);
+                this.updateConnectionStatus(app, false); // Default to false on error
             });
     },
     
-    updateConnectionStatus: function(app, connected) {
+    updateConnectionStatus: function(app, statusData) {
         const statusElement = this.elements[`${app}HomeStatus`];
         if (!statusElement) return;
         
-        if (connected) {
-            statusElement.className = 'status-badge connected';
-            statusElement.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
+        if (app === 'sonarr') {
+            // Handle Sonarr's specific status object
+            if (typeof statusData === 'object' && statusData !== null && 
+                typeof statusData.total_configured === 'number' && 
+                typeof statusData.connected_count === 'number') {
+                
+                const total = statusData.total_configured;
+                const connected = statusData.connected_count;
+                
+                if (total > 0) {
+                    statusElement.innerHTML = `<i class="fas fa-plug"></i> Connected ${connected}/${total}`;
+                    if (connected > 0) {
+                        statusElement.className = 'status-badge connected';
+                    } else {
+                        statusElement.className = 'status-badge not-connected';
+                    }
+                } else {
+                    // No instances configured
+                    statusElement.className = 'status-badge not-configured'; // Consider adding CSS for this state
+                    statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Configured';
+                }
+            } else {
+                // Error or unexpected data format
+                statusElement.className = 'status-badge error';
+                statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+            }
         } else {
-            statusElement.className = 'status-badge not-connected';
-            statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Connected';
+            // Handle legacy boolean status for other apps
+            const connected = statusData; // Assuming boolean
+            if (connected) {
+                statusElement.className = 'status-badge connected';
+                statusElement.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
+            } else {
+                statusElement.className = 'status-badge not-connected';
+                statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Connected';
+            }
         }
     },
     
