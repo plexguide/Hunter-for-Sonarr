@@ -137,8 +137,36 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar Navigation -->
-        {% include 'components/sidebar.html' %}
+        <!-- Custom Sidebar Navigation with absolute URLs -->
+        <div class="sidebar">
+            <div class="logo-container">
+                <img src="/static/logo/64.png" alt="Huntarr Logo" class="logo" onload="this.classList.add('loaded')">
+                <h1>Huntarr</h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="/" class="nav-item" id="homeNav">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="/#logs" class="nav-item" id="logsNav">
+                    <i class="fas fa-list-alt"></i>
+                    <span>Logs</span>
+                </a>
+                <a href="/#settings" class="nav-item" id="settingsNav">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="/user" class="nav-item active" id="userNav">
+                    <i class="fas fa-user"></i>
+                    <span>User</span>
+                </a>
+                <a href="https://github.com/sponsors/plexguide" class="nav-item" target="_blank" rel="noopener noreferrer">
+                    <i class="fas fa-heart"></i>
+                    <span>Project Sponsors</span>
+                </a>
+            </nav>
+        </div>
         
         <!-- Main Content Area -->
         <div class="main-content">
