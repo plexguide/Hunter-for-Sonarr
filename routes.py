@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, send_file
 
 app = Flask(__name__)
 
@@ -40,10 +40,23 @@ def index():
 @app.route('/user')
 def user_page():
     """User settings page with UI switching capability"""
-    if get_ui_preference():
-        return redirect('/user/new')
-    else:
-        return render_template('user.html')
+    return render_template('user.html')
+
+@app.route('/user/new')
+def user_new_page():
+    """User settings page for new UI"""
+    return render_template('user.html')
+
+@app.route('/version.txt')
+def version_txt():
+    """Serve version.txt file directly"""
+    version_path = os.path.join(os.path.dirname(__file__), 'version.txt')
+    print(f"Serving version.txt from path: {version_path}")  # Debug log
+    try:
+        return send_file(version_path, mimetype='text/plain')
+    except Exception as e:
+        print(f"Error serving version.txt: {e}")  # Log any errors
+        return str(e), 500  # Return error message and 500 status code
 
 if __name__ == '__main__':
     app.run(debug=True)

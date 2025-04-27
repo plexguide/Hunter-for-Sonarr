@@ -425,28 +425,44 @@ def api_configured_apps():
 def api_app_status(app_name):
     """Check connection status for a specific app."""
     web_logger = get_logger("web_server")
-    if app_name not in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
+    
+    # First validate the app name
+    if app_name not in settings_manager.KNOWN_APP_TYPES:
+        web_logger.warning(f"Status check requested for invalid app name: {app_name}")
         return jsonify({"configured": False, "connected": False, "error": "Invalid app name"}), 400
 
-    # api_details = settings_manager.get_api_details(app_name) # Function does not exist
-    api_url = settings_manager.get_api_url(app_name)
-    api_key = settings_manager.get_api_key(app_name)
-    is_configured = bool(api_url and api_key)
-    is_connected = False
-    api_timeout = settings_manager.get_setting(app_name, "api_timeout", 10) # Get api_timeout, default to 10
+    try:
+        # Get API credentials safely with defaults
+        api_url = settings_manager.get_setting(app_name, "api_url", "") 
+        api_key = settings_manager.get_setting(app_name, "api_key", "")
+        is_configured = bool(api_url and api_key)
+        is_connected = False
+        api_timeout = settings_manager.get_setting(app_name, "api_timeout", 10)
 
-    if is_configured:
-        try:
-            api_module = importlib.import_module(f'src.primary.apps.{app_name}.api')
-            check_connection = getattr(api_module, 'check_connection')
-            # Pass URL, Key, and Timeout explicitly
-            is_connected = check_connection(api_url, api_key, api_timeout) # Pass api_timeout
-        except (ImportError, AttributeError):
-            web_logger.error(f"Could not find check_connection function for {app_name}.")
-        except Exception as e:
-            web_logger.error(f"Error checking connection for {app_name}: {e}")
-
-    return jsonify({"configured": is_configured, "connected": is_connected})
+        # Only attempt connection check if properly configured
+        if is_configured:
+            try:
+                # Import module safely
+                module_path = f'src.primary.apps.{app_name}.api'
+                api_module = importlib.import_module(module_path)
+                
+                if hasattr(api_module, 'check_connection'):
+                    check_connection = getattr(api_module, 'check_connection')
+                    # Use a short timeout to prevent long waits
+                    is_connected = check_connection(api_url, api_key, min(api_timeout, 5))
+                else:
+                    web_logger.warning(f"check_connection function not found in {module_path}")
+            except ImportError:
+                web_logger.error(f"Could not import API module for {app_name}")
+            except Exception as e:
+                web_logger.error(f"Error checking connection for {app_name}: {str(e)}")
+        
+        return jsonify({"configured": is_configured, "connected": is_connected}), 200
+    
+    except Exception as e:
+        web_logger.error(f"Unexpected error in status check for {app_name}: {str(e)}", exc_info=True)
+        # Return a valid response even on error to prevent UI issues
+        return jsonify({"configured": False, "connected": False, "error": "Internal error"}), 200
 
 # --- Add Hunt Control Endpoints --- #
 # These might need adjustment depending on how start/stop is managed now
@@ -513,3 +529,17 @@ def start_web_server():
     # In production, use Werkzeug's simple server or a proper WSGI server
     web_logger.info("--- Calling app.run() ---") # Added log
     app.run(host=host, port=port, debug=debug_mode, use_reloader=False) # Keep this line if needed for direct execution testing, but it's now handled by root main.py
+
+@app.route('/version.txt')
+def version_txt():
+    """Serve version.txt file directly"""
+    try:
+        # Use a direct absolute path reference
+        version_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'version.txt')
+        with open(version_path, 'r') as f:
+            version = f.read().strip()
+        return version, 200, {'Content-Type': 'text/plain'}
+    except Exception as e:
+        web_logger = get_logger("web_server")
+        web_logger.error(f"Error serving version.txt: {e}")
+        return "0.0.0", 200, {'Content-Type': 'text/plain'}  # Return fallback version instead of error
