@@ -30,10 +30,6 @@ const SettingsForms = {
                     <div class="instance-header">
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
-                            <label class="toggle-switch instance-toggle">
-                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <span class="toggle-slider"></span>
-                            </label>
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
                         </div>
                     </div>
@@ -52,6 +48,13 @@ const SettingsForms = {
                             <label for="sonarr_instance_${index}_api_key">API Key:</label>
                             <input type="text" id="sonarr_instance_${index}_api_key" value="${instance.api_key || ''}">
                             <p class="setting-help">API key for Sonarr</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="sonarr_instance_${index}_enabled">Enabled:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="sonarr_instance_${index}_enabled" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                         <div class="setting-item">
                             <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
@@ -237,6 +240,13 @@ const SettingsForms = {
                             <p class="setting-help">API key for Radarr</p>
                         </div>
                         <div class="setting-item">
+                            <label for="radarr_instance_${index}_enabled">Enabled:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="radarr_instance_${index}_enabled" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
                             <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
                             <span class="connection-status" id="radarr_instance_${index}_status"></span>
                         </div>
@@ -418,6 +428,13 @@ const SettingsForms = {
                             <label for="lidarr_instance_${index}_api_key">API Key:</label>
                             <input type="text" id="lidarr_instance_${index}_api_key" value="${instance.api_key || ''}">
                             <p class="setting-help">API key for Lidarr</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr_instance_${index}_enabled">Enabled:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="lidarr_instance_${index}_enabled" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                         <div class="setting-item">
                             <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
@@ -612,6 +629,13 @@ const SettingsForms = {
                             <p class="setting-help">API key for Readarr</p>
                         </div>
                         <div class="setting-item">
+                            <label for="readarr_instance_${index}_enabled">Enabled:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="readarr_instance_${index}_enabled" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
                             <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
                             <span class="connection-status" id="readarr_instance_${index}_status"></span>
                         </div>
@@ -793,6 +817,13 @@ const SettingsForms = {
                             <label for="whisparr_instance_${index}_api_key">API Key:</label>
                             <input type="text" id="whisparr_instance_${index}_api_key" value="${instance.api_key || ''}">
                             <p class="setting-help">API key for Whisparr</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="whisparr_instance_${index}_enabled">Enabled:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="whisparr_instance_${index}_enabled" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                         <div class="setting-item">
                             <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
