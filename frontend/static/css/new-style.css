@@ -905,19 +905,19 @@ input:checked + .slider:before {
 }
 
 .version-box {
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: rgba(255, 255, 255, 0.05); /* Darker background */
+    background-color: rgba(255, 255, 255, 0.08);
     padding: 12px 20px;
-    border-radius: 16px; /* More rounded corners */
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     font-size: 0.9rem;
     font-weight: 400;
     color: #d1d5db;
-    text-align: center;
     gap: 4px;
+    transition: background-color 0.3s ease;
 }
 
 .version-title {
@@ -930,4 +930,13 @@ input:checked + .slider:before {
     font-size: 0.8rem;
     font-weight: 400;
     color: #9ca3af; /* Lighter gray for version number */
+}
+.version-link {
+    text-decoration: none; /* Remove underline */
+    color: inherit; /* Keep inherited text color */
+    display: flex;
+    justify-content: center;
+}
+.version-box:hover {
+    background-color: rgba(255, 255, 255, 0.12); /* Slightly lighter on hover */
 }
