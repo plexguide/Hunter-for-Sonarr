@@ -5,16 +5,16 @@ from src.primary.utils.logger import get_logger
 from src.primary.state import get_state_file_path
 from src.primary.settings_manager import load_settings
 
-readarr_bp = Blueprint('readarr', __name__)
-readarr_logger = get_logger("readarr")
+whisparr_bp = Blueprint('whisparr', __name__)
+whisparr_logger = get_logger("whisparr")
 
 # Make sure we're using the correct state files
-PROCESSED_MISSING_FILE = get_state_file_path("readarr", "processed_missing") 
-PROCESSED_UPGRADES_FILE = get_state_file_path("readarr", "processed_upgrades")
+PROCESSED_MISSING_FILE = get_state_file_path("whisparr", "processed_missing") 
+PROCESSED_UPGRADES_FILE = get_state_file_path("whisparr", "processed_upgrades")
 
-@readarr_bp.route('/test-connection', methods=['POST'])
+@whisparr_bp.route('/test-connection', methods=['POST'])
 def test_connection():
-    """Test connection to a Readarr API instance with comprehensive diagnostics"""
+    """Test connection to a Whisparr API instance with comprehensive diagnostics"""
     data = request.json
     api_url = data.get('api_url')
     api_key = data.get('api_key')
@@ -24,16 +24,16 @@ def test_connection():
         return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
     
     # Log the test attempt
-    readarr_logger.info(f"Testing connection to Readarr API at {api_url}")
+    whisparr_logger.info(f"Testing connection to Whisparr API at {api_url}")
     
     # First check if URL is properly formatted
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
         error_msg = "API URL must start with http:// or https://"
-        readarr_logger.error(error_msg)
+        whisparr_logger.error(error_msg)
         return jsonify({"success": False, "message": error_msg}), 400
         
-    # For Readarr, use api/v1
-    api_base = "api/v1"
+    # For Whisparr, use api/v3
+    api_base = "api/v3"
     test_url = f"{api_url.rstrip('/')}/{api_base}/system/status"
     headers = {'X-Api-Key': api_key}
 
@@ -42,7 +42,7 @@ def test_connection():
         response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
         
         # Log HTTP status code for diagnostic purposes
-        readarr_logger.debug(f"Readarr API status code: {response.status_code}")
+        whisparr_logger.debug(f"Whisparr API status code: {response.status_code}")
         
         # Check HTTP status code
         response.raise_for_status()
@@ -52,24 +52,24 @@ def test_connection():
             response_data = response.json()
             
             # We no longer save keys here since we use instances
-            # keys_manager.save_api_keys("readarr", api_url, api_key)
+            # keys_manager.save_api_keys("whisparr", api_url, api_key)
             
-            readarr_logger.info(f"Successfully connected to Readarr API version: {response_data.get('version', 'unknown')}")
+            whisparr_logger.info(f"Successfully connected to Whisparr API version: {response_data.get('version', 'unknown')}")
 
             # Return success with some useful information
             return jsonify({
                 "success": True,
-                "message": "Successfully connected to Readarr API",
+                "message": "Successfully connected to Whisparr API",
                 "version": response_data.get('version', 'unknown')
             })
         except ValueError:
-            error_msg = "Invalid JSON response from Readarr API"
-            readarr_logger.error(f"{error_msg}. Response content: {response.text[:200]}")
+            error_msg = "Invalid JSON response from Whisparr API"
+            whisparr_logger.error(f"{error_msg}. Response content: {response.text[:200]}")
             return jsonify({"success": False, "message": error_msg}), 500
 
     except requests.exceptions.Timeout as e:
         error_msg = f"Connection timed out after {api_timeout} seconds"
-        readarr_logger.error(f"{error_msg}: {str(e)}")
+        whisparr_logger.error(f"{error_msg}: {str(e)}")
         return jsonify({"success": False, "message": error_msg}), 504
         
     except requests.exceptions.ConnectionError as e:
@@ -80,9 +80,9 @@ def test_connection():
             error_msg = "DNS resolution failed - check hostname"
         # Check for common connection refused errors
         elif "Connection refused" in details:
-            error_msg = "Connection refused - check if Readarr is running and the port is correct"
+            error_msg = "Connection refused - check if Whisparr is running and the port is correct"
         
-        readarr_logger.error(f"{error_msg}: {details}")
+        whisparr_logger.error(f"{error_msg}: {details}")
         return jsonify({"success": False, "message": f"{error_msg}: {details}"}), 502
         
     except requests.exceptions.RequestException as e:
@@ -99,7 +99,7 @@ def test_connection():
             elif status_code == 404:
                 error_message = "API endpoint not found: Check API URL"
             elif status_code >= 500:
-                error_message = f"Readarr server error (HTTP {status_code}): The Readarr server is experiencing issues"
+                error_message = f"Whisparr server error (HTTP {status_code}): The Whisparr server is experiencing issues"
             
             # Try to extract more error details if available
             try:
@@ -109,31 +109,31 @@ def test_connection():
                 if e.response.text:
                     error_message += f" - Response: {e.response.text[:200]}"
         
-        readarr_logger.error(error_message)
+        whisparr_logger.error(error_message)
         return jsonify({"success": False, "message": error_message}), 500
         
     except Exception as e:
         error_msg = f"An unexpected error occurred: {str(e)}"
-        readarr_logger.error(error_msg)
+        whisparr_logger.error(error_msg)
         return jsonify({"success": False, "message": error_msg}), 500
 
-# Function to check if Readarr is configured
+# Function to check if Whisparr is configured
 def is_configured():
-    """Check if Readarr API credentials are configured by checking if at least one instance is enabled"""
-    settings = load_settings("readarr")
+    """Check if Whisparr API credentials are configured by checking if at least one instance is enabled"""
+    settings = load_settings("whisparr")
     
     if not settings:
-        readarr_logger.debug("No settings found for Readarr")
+        whisparr_logger.debug("No settings found for Whisparr")
         return False
         
     # Check if instances are configured
     if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
         for instance in settings["instances"]:
             if instance.get("enabled", True) and instance.get("api_url") and instance.get("api_key"):
-                readarr_logger.debug(f"Found configured Readarr instance: {instance.get('name', 'Unnamed')}")
+                whisparr_logger.debug(f"Found configured Whisparr instance: {instance.get('name', 'Unnamed')}")
                 return True
                 
-        readarr_logger.debug("No enabled Readarr instances found with valid API URL and key")
+        whisparr_logger.debug("No enabled Whisparr instances found with valid API URL and key")
         return False
     
     # Fallback to legacy single-instance config
@@ -143,12 +143,12 @@ def is_configured():
 
 # Get all valid instances from settings
 def get_configured_instances():
-    """Get all configured and enabled Readarr instances"""
-    settings = load_settings("readarr")
+    """Get all configured and enabled Whisparr instances"""
+    settings = load_settings("whisparr")
     instances = []
     
     if not settings:
-        readarr_logger.debug("No settings found for Readarr")
+        whisparr_logger.debug("No settings found for Whisparr")
         return instances
         
     # Check if instances are configured
@@ -175,5 +175,5 @@ def get_configured_instances():
             settings["instance_name"] = "Default"
             instances.append(settings)
     
-    readarr_logger.info(f"Found {len(instances)} configured and enabled Readarr instances")
+    whisparr_logger.info(f"Found {len(instances)} configured and enabled Whisparr instances")
     return instances
