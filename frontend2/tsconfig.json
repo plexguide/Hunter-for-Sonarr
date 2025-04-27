@@ -23,7 +23,9 @@
           "Utilities/*": ["Utilities/*"],
           "Components/*": ["Components/*"],
           "Settings/*": ["Settings/*"],
-          "Store/*": ["Store/*"]
+          "Store/*": ["Store/*"],
+          "Helpers/*": ["src/Helpers/*"],
+          "Media/*": ["src/Media/*"]
         }
   },
   "include": [

@@ -1,6 +1,7 @@
 import { Navigate, Route } from 'react-router-dom';
 import Switch from 'Components/Router/Switch';
 import getPathWithUrlBase from 'Utilities/getPathWithUrlBase';
+import MediaIndex from 'Media/Index/MediaIndex';
 import NotFound from 'Components/NotFound';
 import Settings from 'Settings/Settings';
 
@@ -14,6 +15,8 @@ function AppRoutes() {
       {/*
        Root
       */}
+
+      <Route path="/" element={<MediaIndex />} />
 
       {window.Huntarr.urlBase && (
         <Route
