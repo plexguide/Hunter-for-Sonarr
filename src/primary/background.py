@@ -185,7 +185,12 @@ def app_specific_loop(app_type: str) -> None:
             monitored_only = app_settings.get("monitored_only", True)
             skip_future_episodes = app_settings.get("skip_future_episodes", True) # Example for Sonarr
             skip_series_refresh = app_settings.get("skip_series_refresh", True) # Example for Sonarr
-            # ... add others as needed based on process_missing/process_upgrades requirements
+            random_missing = app_settings.get("random_missing", False)
+            random_upgrades = app_settings.get("random_upgrades", False)
+            command_wait_delay = app_settings.get("command_wait_delay", 5)
+            command_wait_attempts = app_settings.get("command_wait_attempts", 12)
+            state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)
+            skip_cutoff_unmet = app_settings.get("skip_cutoff_unmet", True) # Example for Sonarr upgrade
 
             # --- Connection Check for this instance --- #
             api_connected = False
@@ -226,8 +231,22 @@ def app_specific_loop(app_type: str) -> None:
                     if process_missing and hunt_missing_count > 0:
                         app_logger.info(f"Checking for {hunt_missing_count} missing items in {instance_name}...")
                         try:
-                            # Pass the full instance_settings dictionary and the stop check function
-                            if process_missing(instance_details, stop_event.is_set):
+                            # Construct the settings dictionary expected by the processing functions
+                            merged_settings = {
+                                "api_url": api_url,
+                                "api_key": api_key,
+                                "api_timeout": api_timeout,
+                                "monitored_only": monitored_only,
+                                "skip_future_episodes": skip_future_episodes, # Specific to sonarr missing
+                                "skip_series_refresh": skip_series_refresh, # Specific to sonarr missing
+                                "random_missing": random_missing,
+                                "hunt_missing_shows": hunt_missing_count, # Pass the actual count
+                                "command_wait_delay": command_wait_delay,
+                                "command_wait_attempts": command_wait_attempts,
+                                "state_reset_interval_hours": state_reset_interval_hours
+                            }
+                            # Pass the merged settings dictionary and the stop check function
+                            if process_missing(merged_settings, stop_event.is_set):
                                 instance_processed_anything = True
                                 cycle_processed_anything = True
                             else:
@@ -239,10 +258,24 @@ def app_specific_loop(app_type: str) -> None:
 
                     # Process Upgrades
                     if process_upgrades and hunt_upgrade_count > 0:
-                        app_logger.info(f"Checking for {hunt_upgrade_count} quality upgrades in {instance_name}...")
+                        app_logger.info(f"Checking for {hunt_upgrade_count} items needing upgrade in {instance_name}...")
                         try:
-                            # Pass the full instance_settings dictionary and the stop check function
-                            if process_upgrades(instance_details, stop_event.is_set):
+                            # Construct the settings dictionary expected by the processing functions
+                            merged_settings = {
+                                "api_url": api_url,
+                                "api_key": api_key,
+                                "api_timeout": api_timeout,
+                                "monitored_only": monitored_only,
+                                "random_upgrades": random_upgrades,
+                                "hunt_upgrade_items": hunt_upgrade_count, # Pass the actual count
+                                "command_wait_delay": command_wait_delay,
+                                "command_wait_attempts": command_wait_attempts,
+                                "state_reset_interval_hours": state_reset_interval_hours,
+                                "skip_cutoff_unmet": skip_cutoff_unmet # Specific to sonarr upgrade
+                                # Add other settings needed by process_upgrades if any
+                            }
+                            # Pass the merged settings dictionary and the stop check function
+                            if process_upgrades(merged_settings, stop_event.is_set):
                                 instance_processed_anything = True
                                 cycle_processed_anything = True
                             else:
