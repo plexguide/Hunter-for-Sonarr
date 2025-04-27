@@ -16,7 +16,7 @@ const SettingsForms = {
             }];
         }
         
-        // Create a container for instances with a scrollable area for many instances
+        // Create a container for instances
         let instancesHtml = `
             <div class="settings-group">
                 <h3>Sonarr Instances</h3>
@@ -64,16 +64,16 @@ const SettingsForms = {
         
         // Add a button to add new instances (limit to 9 total)
         instancesHtml += `
-                <div class="add-instance-container">
-                    <button type="button" id="add-sonarr-instance" class="add-instance-btn" ${settings.instances.length >= 9 ? 'disabled' : ''}>
-                        Add Sonarr Instance (${settings.instances.length}/9)
-                    </button>
+                    <div class="add-instance-container">
+                        <button type="button" id="add-sonarr-instance" class="add-instance-btn" ${settings.instances.length >= 9 ? 'disabled' : ''}> 
+                            Add Sonarr Instance (${settings.instances.length}/9)
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-        `;
+        `; // Close settings-group
         
-        // Continue with the rest of the settings form
+        // Original structure: Combine HTML sequentially
         container.innerHTML = `
             ${instancesHtml}
             
