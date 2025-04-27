@@ -991,3 +991,24 @@ input:checked + .toggle-slider:before {
 .version-icon {
     margin-right: 5px;
 }
+
+.sidebar-version {
+    padding: 20px;
+    text-align: center;
+}
+
+.version-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.05); /* Very light overlay */
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: #bbb;
+    gap: 5px;
+}
+
+.version-icon {
+    font-size: 1rem;
+}
