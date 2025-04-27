@@ -422,25 +422,23 @@ const huntarrUI = {
                 if (!this.elements.logsContainer) return;
                 
                 try {
-                    // Try to parse the data as JSON first
-                    let logData = null;
-                    try {
-                        logData = JSON.parse(event.data);
-                    } catch (e) {
-                        // Not JSON, use as plain text
-                        logData = { level: 'info', message: event.data };
-                    }
-                    
                     // Create log entry element
                     const logEntry = document.createElement('div');
                     logEntry.className = 'log-entry';
                     
-                    // Add appropriate class for log level
-                    const level = logData.level ? logData.level.toLowerCase() : 'info';
-                    logEntry.classList.add(`log-${level}`);
+                    // The event.data should be used directly - server sends it as plain text
+                    logEntry.textContent = event.data;
                     
-                    // Set the message content
-                    logEntry.textContent = logData.message || event.data;
+                    // Detect log level from content for styling
+                    if (event.data.includes('[ERROR]') || event.data.includes('Error:')) {
+                        logEntry.classList.add('log-error');
+                    } else if (event.data.includes('[WARNING]') || event.data.includes('Warning:')) {
+                        logEntry.classList.add('log-warning');
+                    } else if (event.data.includes('[DEBUG]')) {
+                        logEntry.classList.add('log-debug');
+                    } else {
+                        logEntry.classList.add('log-info');
+                    }
                     
                     // Add to logs container
                     this.elements.logsContainer.appendChild(logEntry);
