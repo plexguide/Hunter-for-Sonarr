@@ -894,3 +894,49 @@ input:checked + .slider:before {
 .notification.info {
     background-color: var(--info-color);
 }
+
+.sidebar-version {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    margin-top: auto;
+    margin-bottom: 20px;
+}
+
+.version-box {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.08);
+    padding: 12px 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: #d1d5db;
+    gap: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.version-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ffffff; /* Brighter text for title */
+}
+
+.version-number {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #9ca3af; /* Lighter gray for version number */
+}
+.version-link {
+    text-decoration: none; /* Remove underline */
+    color: inherit; /* Keep inherited text color */
+    display: flex;
+    justify-content: center;
+}
+.version-box:hover {
+    background-color: rgba(255, 255, 255, 0.12); /* Slightly lighter on hover */
+}
