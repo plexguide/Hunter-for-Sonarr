@@ -232,14 +232,9 @@
     <!-- Add specific reference to new-user.js -->
     <script src="/static/js/new-user.js"></script>
     <script>
-        // Keeping this script for backward compatibility
+        // Initialize dark mode
         document.addEventListener('DOMContentLoaded', function() {
-            // Setup event listeners for buttons
-            setupEventListeners();
-        });
-        
-        function applyDarkMode() {
-            // Always use dark mode
+            // Apply dark theme
             document.body.classList.add('dark-theme');
             localStorage.setItem('huntarr-dark-mode', 'true');
             
@@ -251,81 +246,7 @@
                 },
                 body: JSON.stringify({ dark_mode: true })
             }).catch(error => console.error('Error saving theme:', error));
-        }
-        
-        function fetchUserData() {
-            // Get username
-            fetch('/api/user/info')
-                .then(response => response.json())
-                .then(data => {
-                    // Update username in topbar and form
-                    if (data.username) {
-                        if (document.getElementById('username')) {
-                            document.getElementById('username').textContent = data.username;
-                        }
-                        if (document.getElementById('currentUsername')) {
-                            document.getElementById('currentUsername').textContent = data.username;
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching user info:', error);
-                    const currentUsernameElement = document.getElementById('currentUsername');
-                    if (currentUsernameElement) {
-                        currentUsernameElement.textContent = 'Error loading username';
-                    }
-                });
-            
-            // Get 2FA status - Changed endpoint to /api/user/info
-            fetch('/api/user/info') 
-                .then(response => {
-                    if (!response.ok) { // Add check for non-OK responses
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const twoFactorEnabledElement = document.getElementById('twoFactorEnabled'); // Renamed variable for clarity
-                    const isEnabled = data.is_2fa_enabled; // Use the correct key from /api/user/info
-
-                    if (twoFactorEnabledElement) {
-                        twoFactorEnabledElement.textContent = isEnabled ? 'Enabled' : 'Disabled';
-                    }
-                    
-                    // Show appropriate 2FA sections
-                    if (isEnabled) {
-                        if (document.getElementById('disableTwoFactorSection')) {
-                            document.getElementById('disableTwoFactorSection').style.display = 'block';
-                        }
-                        if (document.getElementById('enableTwoFactorSection')) {
-                            document.getElementById('enableTwoFactorSection').style.display = 'none';
-                        }
-                        // Hide setup section if already enabled
-                        if (document.getElementById('setupTwoFactorSection')) {
-                            document.getElementById('setupTwoFactorSection').style.display = 'none';
-                        }
-                    } else {
-                        if (document.getElementById('disableTwoFactorSection')) {
-                            document.getElementById('disableTwoFactorSection').style.display = 'none';
-                        }
-                        if (document.getElementById('enableTwoFactorSection')) {
-                            document.getElementById('enableTwoFactorSection').style.display = 'block';
-                        }
-                         // Hide setup section initially when disabled
-                        if (document.getElementById('setupTwoFactorSection')) {
-                            document.getElementById('setupTwoFactorSection').style.display = 'none';
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching user info for 2FA status:', error); // Updated error message
-                    const twoFactorEnabledElement = document.getElementById('twoFactorEnabled');
-                    if (twoFactorEnabledElement) {
-                        // Provide a more specific error message
-                        twoFactorEnabledElement.textContent = 'Error loading status'; 
-                    }
-                });
-        }
+        });
         
         // Password validation function
         function validatePassword(password) {
