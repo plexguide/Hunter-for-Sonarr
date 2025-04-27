@@ -189,23 +189,76 @@ const SettingsForms = {
     
     // Generate Radarr settings form
     generateRadarrForm: function(container, settings = {}) {
-        // Settings are now directly at the root level, not nested under 'radarr'
+        // Make sure the instances array exists
+        if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
+            settings.instances = [{
+                name: "Default",
+                api_url: settings.api_url || "",
+                api_key: settings.api_key || "",
+                enabled: true
+            }];
+        }
         
-        container.innerHTML = `
+        // Create a container for instances with a scrollable area for many instances
+        let instancesHtml = `
             <div class="settings-group">
-                <h3>Radarr Connection</h3>
-                <div class="setting-item">
-                    <label for="radarr_api_url">URL:</label>
-                    <input type="text" id="radarr_api_url" value="${settings.api_url || ''}">
-                    <p class="setting-help">Base URL for Radarr (e.g., http://localhost:7878)</p>
+                <h3>Radarr Instances</h3>
+                <div class="instances-container">
+        `;
+        
+        // Generate form elements for each instance
+        settings.instances.forEach((instance, index) => {
+            instancesHtml += `
+                <div class="instance-item" data-instance-id="${index}">
+                    <div class="instance-header">
+                        <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
+                        <div class="instance-actions">
+                            <label class="toggle-switch instance-toggle">
+                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
+                        </div>
+                    </div>
+                    <div class="instance-content">
+                        <div class="setting-item">
+                            <label for="radarr_instance_${index}_name">Name:</label>
+                            <input type="text" id="radarr_instance_${index}_name" value="${instance.name || ''}">
+                            <p class="setting-help">Friendly name for this Radarr instance</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="radarr_instance_${index}_api_url">URL:</label>
+                            <input type="text" id="radarr_instance_${index}_api_url" value="${instance.api_url || ''}">
+                            <p class="setting-help">Base URL for Radarr (e.g., http://localhost:7878)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="radarr_instance_${index}_api_key">API Key:</label>
+                            <input type="text" id="radarr_instance_${index}_api_key" value="${instance.api_key || ''}">
+                            <p class="setting-help">API key for Radarr</p>
+                        </div>
+                        <div class="setting-item">
+                            <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
+                            <span class="connection-status" id="radarr_instance_${index}_status"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="setting-item">
-                    <label for="radarr_api_key">API Key:</label>
-                    <input type="text" id="radarr_api_key" value="${settings.api_key || ''}">
-                    <p class="setting-help">API key for Radarr</p>
+            `;
+        });
+        
+        // Add a button to add new instances (limit to 9 total)
+        instancesHtml += `
+                <div class="add-instance-container">
+                    <button type="button" id="add-radarr-instance" class="add-instance-btn" ${settings.instances.length >= 9 ? 'disabled' : ''}>
+                        Add Radarr Instance (${settings.instances.length}/9)
+                    </button>
                 </div>
-                <!-- Removed the connection status indicator -->
             </div>
+        </div>
+        `;
+        
+        // Continue with the rest of the settings form
+        container.innerHTML = `
+            ${instancesHtml}
             
             <div class="settings-group">
                 <h3>Search Settings</h3>
@@ -312,27 +365,83 @@ const SettingsForms = {
                 </div>
             </div>
         `;
+
+        // Add event listeners for the instance management
+        SettingsForms.setupInstanceManagement(container, 'radarr', settings.instances.length);
     },
     
     // Generate Lidarr settings form
     generateLidarrForm: function(container, settings = {}) {
-        // Settings are now directly at the root level, not nested under 'lidarr'
+        // Make sure the instances array exists
+        if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
+            settings.instances = [{
+                name: "Default",
+                api_url: settings.api_url || "",
+                api_key: settings.api_key || "",
+                enabled: true
+            }];
+        }
         
-        container.innerHTML = `
+        // Create a container for instances with a scrollable area for many instances
+        let instancesHtml = `
             <div class="settings-group">
-                <h3>Lidarr Connection</h3>
-                <div class="setting-item">
-                    <label for="lidarr_api_url">URL:</label>
-                    <input type="text" id="lidarr_api_url" value="${settings.api_url || ''}">
-                    <p class="setting-help">Base URL for Lidarr (e.g., http://localhost:8686)</p>
+                <h3>Lidarr Instances</h3>
+                <div class="instances-container">
+        `;
+        
+        // Generate form elements for each instance
+        settings.instances.forEach((instance, index) => {
+            instancesHtml += `
+                <div class="instance-item" data-instance-id="${index}">
+                    <div class="instance-header">
+                        <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
+                        <div class="instance-actions">
+                            <label class="toggle-switch instance-toggle">
+                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
+                        </div>
+                    </div>
+                    <div class="instance-content">
+                        <div class="setting-item">
+                            <label for="lidarr_instance_${index}_name">Name:</label>
+                            <input type="text" id="lidarr_instance_${index}_name" value="${instance.name || ''}">
+                            <p class="setting-help">Friendly name for this Lidarr instance</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr_instance_${index}_api_url">URL:</label>
+                            <input type="text" id="lidarr_instance_${index}_api_url" value="${instance.api_url || ''}">
+                            <p class="setting-help">Base URL for Lidarr (e.g., http://localhost:8686)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr_instance_${index}_api_key">API Key:</label>
+                            <input type="text" id="lidarr_instance_${index}_api_key" value="${instance.api_key || ''}">
+                            <p class="setting-help">API key for Lidarr</p>
+                        </div>
+                        <div class="setting-item">
+                            <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
+                            <span class="connection-status" id="lidarr_instance_${index}_status"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="setting-item">
-                    <label for="lidarr_api_key">API Key:</label>
-                    <input type="text" id="lidarr_api_key" value="${settings.api_key || ''}">
-                    <p class="setting-help">API key for Lidarr</p>
+            `;
+        });
+        
+        // Add a button to add new instances (limit to 9 total)
+        instancesHtml += `
+                <div class="add-instance-container">
+                    <button type="button" id="add-lidarr-instance" class="add-instance-btn" ${settings.instances.length >= 9 ? 'disabled' : ''}>
+                        Add Lidarr Instance (${settings.instances.length}/9)
+                    </button>
                 </div>
-                <!-- Removed the connection status indicator -->
             </div>
+        </div>
+        `;
+        
+        // Continue with the rest of the settings form
+        container.innerHTML = `
+            ${instancesHtml}
             
             <div class="settings-group">
                 <h3>Search Settings</h3>
@@ -448,27 +557,83 @@ const SettingsForms = {
                 </div>
             </div>
         `;
+
+        // Add event listeners for the instance management
+        SettingsForms.setupInstanceManagement(container, 'lidarr', settings.instances.length);
     },
     
     // Generate Readarr settings form
     generateReadarrForm: function(container, settings = {}) {
-        // Settings are now directly at the root level, not nested under 'readarr'
+        // Make sure the instances array exists
+        if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
+            settings.instances = [{
+                name: "Default",
+                api_url: settings.api_url || "",
+                api_key: settings.api_key || "",
+                enabled: true
+            }];
+        }
         
-        container.innerHTML = `
+        // Create a container for instances with a scrollable area for many instances
+        let instancesHtml = `
             <div class="settings-group">
-                <h3>Readarr Connection</h3>
-                <div class="setting-item">
-                    <label for="readarr_api_url">URL:</label>
-                    <input type="text" id="readarr_api_url" value="${settings.api_url || ''}">
-                    <p class="setting-help">Base URL for Readarr (e.g., http://localhost:8787)</p>
+                <h3>Readarr Instances</h3>
+                <div class="instances-container">
+        `;
+        
+        // Generate form elements for each instance
+        settings.instances.forEach((instance, index) => {
+            instancesHtml += `
+                <div class="instance-item" data-instance-id="${index}">
+                    <div class="instance-header">
+                        <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
+                        <div class="instance-actions">
+                            <label class="toggle-switch instance-toggle">
+                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
+                        </div>
+                    </div>
+                    <div class="instance-content">
+                        <div class="setting-item">
+                            <label for="readarr_instance_${index}_name">Name:</label>
+                            <input type="text" id="readarr_instance_${index}_name" value="${instance.name || ''}">
+                            <p class="setting-help">Friendly name for this Readarr instance</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="readarr_instance_${index}_api_url">URL:</label>
+                            <input type="text" id="readarr_instance_${index}_api_url" value="${instance.api_url || ''}">
+                            <p class="setting-help">Base URL for Readarr (e.g., http://localhost:8787)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="readarr_instance_${index}_api_key">API Key:</label>
+                            <input type="text" id="readarr_instance_${index}_api_key" value="${instance.api_key || ''}">
+                            <p class="setting-help">API key for Readarr</p>
+                        </div>
+                        <div class="setting-item">
+                            <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
+                            <span class="connection-status" id="readarr_instance_${index}_status"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="setting-item">
-                    <label for="readarr_api_key">API Key:</label>
-                    <input type="text" id="readarr_api_key" value="${settings.api_key || ''}">
-                    <p class="setting-help">API key for Readarr</p>
+            `;
+        });
+        
+        // Add a button to add new instances (limit to 9 total)
+        instancesHtml += `
+                <div class="add-instance-container">
+                    <button type="button" id="add-readarr-instance" class="add-instance-btn" ${settings.instances.length >= 9 ? 'disabled' : ''}>
+                        Add Readarr Instance (${settings.instances.length}/9)
+                    </button>
                 </div>
-                <!-- Removed the connection status indicator -->
             </div>
+        </div>
+        `;
+        
+        // Continue with the rest of the settings form
+        container.innerHTML = `
+            ${instancesHtml}
             
             <div class="settings-group">
                 <h3>Search Settings</h3>
@@ -575,25 +740,83 @@ const SettingsForms = {
                 </div>
             </div>
         `;
+
+        // Add event listeners for the instance management
+        SettingsForms.setupInstanceManagement(container, 'readarr', settings.instances.length);
     },
     
     // Generate Whisparr settings form
     generateWhisparrForm: function(container, settings = {}) {
-        container.innerHTML = `
+        // Make sure the instances array exists
+        if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
+            settings.instances = [{
+                name: "Default",
+                api_url: settings.api_url || "",
+                api_key: settings.api_key || "",
+                enabled: true
+            }];
+        }
+        
+        // Create a container for instances with a scrollable area for many instances
+        let instancesHtml = `
             <div class="settings-group">
-                <h3>Whisparr Connection</h3>
-                <div class="setting-item">
-                    <label for="whisparr_api_url">URL:</label>
-                    <input type="text" id="whisparr_api_url" value="${settings.api_url || ''}">
-                    <p class="setting-help">Base URL for Whisparr (e.g., http://localhost:6969)</p>
+                <h3>Whisparr Instances</h3>
+                <div class="instances-container">
+        `;
+        
+        // Generate form elements for each instance
+        settings.instances.forEach((instance, index) => {
+            instancesHtml += `
+                <div class="instance-item" data-instance-id="${index}">
+                    <div class="instance-header">
+                        <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
+                        <div class="instance-actions">
+                            <label class="toggle-switch instance-toggle">
+                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
+                        </div>
+                    </div>
+                    <div class="instance-content">
+                        <div class="setting-item">
+                            <label for="whisparr_instance_${index}_name">Name:</label>
+                            <input type="text" id="whisparr_instance_${index}_name" value="${instance.name || ''}">
+                            <p class="setting-help">Friendly name for this Whisparr instance</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="whisparr_instance_${index}_api_url">URL:</label>
+                            <input type="text" id="whisparr_instance_${index}_api_url" value="${instance.api_url || ''}">
+                            <p class="setting-help">Base URL for Whisparr (e.g., http://localhost:6969)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="whisparr_instance_${index}_api_key">API Key:</label>
+                            <input type="text" id="whisparr_instance_${index}_api_key" value="${instance.api_key || ''}">
+                            <p class="setting-help">API key for Whisparr</p>
+                        </div>
+                        <div class="setting-item">
+                            <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
+                            <span class="connection-status" id="whisparr_instance_${index}_status"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="setting-item">
-                    <label for="whisparr_api_key">API Key:</label>
-                    <input type="text" id="whisparr_api_key" value="${settings.api_key || ''}">
-                    <p class="setting-help">API key for Whisparr</p>
+            `;
+        });
+        
+        // Add a button to add new instances (limit to 9 total)
+        instancesHtml += `
+                <div class="add-instance-container">
+                    <button type="button" id="add-whisparr-instance" class="add-instance-btn" ${settings.instances.length >= 9 ? 'disabled' : ''}>
+                        Add Whisparr Instance (${settings.instances.length}/9)
+                    </button>
                 </div>
-                <!-- Removed the test connection button -->
             </div>
+        </div>
+        `;
+        
+        // Continue with the rest of the settings form
+        container.innerHTML = `
+            ${instancesHtml}
             
             <div class="settings-group">
                 <h3>Search Settings</h3>
@@ -700,6 +923,9 @@ const SettingsForms = {
                 </div>
             </div>
         `;
+
+        // Add event listeners for the instance management
+        SettingsForms.setupInstanceManagement(container, 'whisparr', settings.instances.length);
     },
     
     // Generate General settings form
