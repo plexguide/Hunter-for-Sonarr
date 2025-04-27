@@ -105,6 +105,32 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         print(traceback.format_exc(), file=sys.stderr)
         return None
 
+def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
+    """Checks connection by fetching system status."""
+    if not api_url:
+        sonarr_logger.error("API URL is empty or not set")
+        return False
+    if not api_key:
+        sonarr_logger.error("API Key is empty or not set")
+        return False
+
+    try:
+        # Use a shorter timeout for a quick connection check
+        quick_timeout = min(api_timeout, 15) 
+        status = get_system_status(api_url, api_key, quick_timeout)
+        if status and isinstance(status, dict) and 'version' in status:
+             # Log success only if debug is enabled to avoid clutter
+             sonarr_logger.debug(f"Connection check successful for {api_url}. Version: {status.get('version')}")
+             return True
+        else:
+             # Log details if the status response was unexpected
+             sonarr_logger.warning(f"Connection check for {api_url} returned unexpected status: {str(status)[:200]}")
+             return False
+    except Exception as e:
+        # Error should have been logged by arr_request, just indicate failure
+        sonarr_logger.error(f"Connection check failed for {api_url}")
+        return False
+
 def get_system_status(api_url: str, api_key: str, api_timeout: int) -> Dict:
     """
     Get Sonarr system status.
@@ -226,40 +252,6 @@ def command_status(api_url: str, api_key: str, api_timeout: int, command_id: str
     if response:
         return response
     return {}
-
-def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
-    """Check the connection to Sonarr API."""
-    try:
-        # Ensure api_url is properly formatted
-        if not api_url:
-            sonarr_logger.error("API URL is empty or not set")
-            return False
-        
-        # Trim any whitespace that may have been accidentally included
-        api_url = api_url.strip()
-        api_key = api_key.strip() if api_key else api_key
-            
-        # Make sure api_url has a scheme
-        if not (api_url.startswith('http://') or api_url.startswith('https://')):
-            old_url = api_url
-            api_url = f"http://{api_url}"
-            sonarr_logger.warning(f"API URL missing http(s) scheme: {old_url}. Auto-corrected to: {api_url}")
-            
-        # Ensure URL doesn't end with a slash before adding the endpoint
-        base_url = api_url.rstrip('/')
-        full_url = f"{base_url}/api/v3/system/status"
-        
-        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout)
-        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
-        sonarr_logger.info("Successfully connected to Sonarr.")
-        return True
-        
-    except requests.exceptions.RequestException as e:
-        sonarr_logger.error(f"Error connecting to Sonarr: {e}")
-        return False
-    except Exception as e:
-        sonarr_logger.error(f"An unexpected error occurred during Sonarr connection check: {e}")
-        return False
 
 def get_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool) -> List[Dict[str, Any]]:
     """Get missing episodes from Sonarr, handling pagination."""

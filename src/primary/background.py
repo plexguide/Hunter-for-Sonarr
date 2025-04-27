@@ -143,7 +143,8 @@ def app_specific_loop(app_type: str) -> None:
                 if instances_to_process:
                     app_logger.info(f"Found {len(instances_to_process)} configured {app_type} instances to process")
                 else:
-                    app_logger.warning(f"No configured {app_type} instances found")
+                    # No instances found via get_configured_instances
+                    app_logger.warning(f"No configured {app_type} instances found. Skipping cycle.")
                     stop_event.wait(sleep_duration)
                     continue
             except Exception as e:
@@ -151,10 +152,18 @@ def app_specific_loop(app_type: str) -> None:
                 stop_event.wait(60)
                 continue
         else:
-            # Single instance mode
-            instances_to_process = [app_settings]
-        
-        # Process each instance
+            # get_configured_instances function doesn't exist for this app type
+            app_logger.error(f"Multi-instance support function 'get_configured_instances' not found for {app_type}. Cannot process.")
+            stop_event.wait(sleep_duration)
+            continue
+            
+        # If after all checks, instances_to_process is still empty (shouldn't happen if logic above is correct, but good safety check)
+        if not instances_to_process:
+            app_logger.warning(f"No valid {app_type} instances to process this cycle (unexpected state). Skipping.")
+            stop_event.wait(sleep_duration)
+            continue
+            
+        # Process each instance dictionary returned by get_configured_instances
         cycle_processed_anything = False
         for instance_details in instances_to_process:
             if stop_event.is_set():
