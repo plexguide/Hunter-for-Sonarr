@@ -158,6 +158,10 @@ if __name__ == '__main__':
         # Use os._exit(0) for a more forceful exit if necessary, but sys.exit(0) is generally preferred
         sys.exit(0)
 
+from flask import Flask, render_template
+
+app = Flask(__name__)
+
 def get_version():
     try:
         with open('version.txt', 'r') as f:
@@ -168,3 +172,4 @@ def get_version():
 @app.context_processor
 def inject_version():
     return dict(version=get_version())
+
