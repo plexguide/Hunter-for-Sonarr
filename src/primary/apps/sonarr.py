@@ -119,6 +119,14 @@ def test_connection():
         sonarr_logger.error(error_msg)
         return jsonify({"success": False, "message": error_msg}), 500
 
+# --- Configuration and State --- #
+
+# --- Multi-Instance Support --- #
+
+# get_configured_instances function has been moved to src/primary/apps/sonarr/__init__.py
+
+# --- Reset State --- #
+
 # Function to check if Sonarr is configured
 def is_configured():
     """Check if Sonarr API credentials are configured by checking if at least one instance is enabled"""
@@ -142,68 +150,3 @@ def is_configured():
     api_url = settings.get("api_url")
     api_key = settings.get("api_key")
     return bool(api_url and api_key)
-
-# Get all valid instances from settings
-def get_configured_instances():
-    """Get all configured and enabled Sonarr instances"""
-    settings = load_settings("sonarr")
-    instances = []
-    
-    if not settings:
-        sonarr_logger.debug("No settings found for Sonarr")
-        return instances
-        
-    # Check if instances are configured
-    if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
-        for instance in settings["instances"]:
-            # Enhanced validation
-            api_url = instance.get("api_url", "").strip()
-            api_key = instance.get("api_key", "").strip()
-            
-            # Enhanced URL validation - ensure URL has proper scheme
-            if api_url and not (api_url.startswith('http://') or api_url.startswith('https://')):
-                sonarr_logger.warning(f"Instance '{instance.get('name', 'Unnamed')}' has URL without http(s) scheme: {api_url}")
-                api_url = f"http://{api_url}"
-                sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
-            
-            is_enabled = instance.get("enabled", True)
-            
-            # Only include properly configured instances
-            if is_enabled and api_url and api_key:
-                # Return only essential instance details
-                instance_data = {
-                    "instance_name": instance.get("name", "Default"),
-                    "api_url": api_url,
-                    "api_key": api_key,
-                }
-                instances.append(instance_data) # Append the minimal dict
-                sonarr_logger.debug(f"Found enabled instance \'{instance_data['instance_name']}\' for processing.")
-            elif not is_enabled:
-                sonarr_logger.debug(f"Skipping disabled instance: {instance.get('name', 'Unnamed')}")
-            else:
-                sonarr_logger.warning(f"Skipping instance '{instance.get('name', 'Unnamed')}' due to missing API URL or key")
-    else:
-        # Fallback to legacy single-instance config
-        api_url = settings.get("api_url", "").strip()
-        api_key = settings.get("api_key", "").strip()
-        
-        # Ensure URL has proper scheme
-        if api_url and not (api_url.startswith('http://') or api_url.startswith('https://')):
-            sonarr_logger.warning(f"API URL missing http(s) scheme: {api_url}")
-            api_url = f"http://{api_url}"
-            sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
-        
-        if api_url and api_key:
-            # Create a clean instance_data dict for the legacy instance
-            instance_data = {
-                "instance_name": "Default", # Hardcode name for legacy
-                "api_url": api_url,
-                "api_key": api_key,
-            }
-            instances.append(instance_data) # Append the clean dict
-            sonarr_logger.debug(f"Added legacy instance with URL: {api_url}")
-        else:
-            sonarr_logger.warning("No API URL or key found in legacy configuration")
-        
-    sonarr_logger.info(f"Found {len(instances)} configured and enabled Sonarr instances")
-    return instances
