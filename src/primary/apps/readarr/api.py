@@ -101,28 +101,31 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type:
         endpoint: The API endpoint to call
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data to send with the request
-        app_type: The app type (always readarr for this module)
+        app_type: The app type (readarr by default)
         
     Returns:
         The JSON response from the API, or None if the request failed
     """
-    # Correct the import path
-    from src.primary import settings_manager # Use settings_manager instead of keys_manager
-    # api_url, api_key = keys_manager.get_api_keys(app_type) # Old way
-    api_url = settings_manager.get_setting(app_type, "api_url")
-    api_key = settings_manager.get_setting(app_type, "api_key")
-    # Get user-configured timeout, fall back to default if not set
-    api_timeout = settings_manager.get_setting(app_type, "api_timeout", API_TIMEOUT)
+    # Load settings for this app
+    settings = load_settings(app_type)
+    api_url = settings.get('api_url', '')
+    api_key = settings.get('api_key', '')
+    api_timeout = settings.get('api_timeout', 60)
     
     if not api_url or not api_key:
         logger.error("API URL or API key is missing. Check your settings.")
+        return None
+    
+    # Ensure api_url has a scheme
+    if not (api_url.startswith('http://') or api_url.startswith('https://')):
+        logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
         return None
     
     # Determine the API version
     api_base = "api/v1"  # Readarr uses v1
     
     # Full URL
-    url = f"{api_url}/{api_base}/{endpoint}"
+    url = f"{api_url.rstrip('/')}/{api_base}/{endpoint.lstrip('/')}"
     
     # Headers
     headers = {

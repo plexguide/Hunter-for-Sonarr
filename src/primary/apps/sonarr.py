@@ -156,26 +156,57 @@ def get_configured_instances():
     # Check if instances are configured
     if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
         for instance in settings["instances"]:
-            if instance.get("enabled", True) and instance.get("api_url") and instance.get("api_key"):
+            # Enhanced validation
+            api_url = instance.get("api_url", "").strip()
+            api_key = instance.get("api_key", "").strip()
+            
+            # Enhanced URL validation - ensure URL has proper scheme
+            if api_url and not (api_url.startswith('http://') or api_url.startswith('https://')):
+                sonarr_logger.warning(f"Instance '{instance.get('name', 'Unnamed')}' has URL without http(s) scheme: {api_url}")
+                api_url = f"http://{api_url}"
+                sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
+            
+            is_enabled = instance.get("enabled", True)
+            
+            # Only include properly configured instances
+            if is_enabled and api_url and api_key:
                 # Create a settings object for this instance by combining global settings with instance-specific ones
                 instance_settings = settings.copy()
+                
                 # Remove instances list to avoid confusion
                 if "instances" in instance_settings:
                     del instance_settings["instances"]
                 
                 # Override with instance-specific connection settings
-                instance_settings["api_url"] = instance.get("api_url")
-                instance_settings["api_key"] = instance.get("api_key")
+                instance_settings["api_url"] = api_url
+                instance_settings["api_key"] = api_key
                 instance_settings["instance_name"] = instance.get("name", "Default")
                 
                 instances.append(instance_settings)
+                sonarr_logger.debug(f"Added instance '{instance_settings['instance_name']}' with URL: {api_url}")
+            elif not is_enabled:
+                sonarr_logger.debug(f"Skipping disabled instance: {instance.get('name', 'Unnamed')}")
+            else:
+                sonarr_logger.warning(f"Skipping instance '{instance.get('name', 'Unnamed')}' due to missing API URL or key")
     else:
         # Fallback to legacy single-instance config
-        api_url = settings.get("api_url")
-        api_key = settings.get("api_key")
+        api_url = settings.get("api_url", "").strip()
+        api_key = settings.get("api_key", "").strip()
+        
+        # Ensure URL has proper scheme
+        if api_url and not (api_url.startswith('http://') or api_url.startswith('https://')):
+            sonarr_logger.warning(f"API URL missing http(s) scheme: {api_url}")
+            api_url = f"http://{api_url}"
+            sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
+        
         if api_url and api_key:
             settings["instance_name"] = "Default"
+            settings["api_url"] = api_url
+            settings["api_key"] = api_key
             instances.append(settings)
+            sonarr_logger.debug(f"Added legacy instance with URL: {api_url}")
+        else:
+            sonarr_logger.warning("No API URL or key found in legacy configuration")
     
     sonarr_logger.info(f"Found {len(instances)} configured and enabled Sonarr instances")
     return instances
