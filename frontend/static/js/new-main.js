@@ -735,10 +735,14 @@ const huntarrUI = {
         // Get all inputs
         const inputs = container.querySelectorAll('input, select');
         inputs.forEach(input => {
-            const id = input.id;
-            const key = id.replace(`${app}_`, '');
+            if (input.type === 'button') return;
             
-            // Handle different input types
+            // Get the field name without app prefix and type suffix
+            let key = input.id;
+            if (key.startsWith(`${app}_`)) {
+                key = key.substring(app.length + 1);
+            }
+            
             if (input.type === 'checkbox') {
                 settings[key] = input.checked;
             } else if (input.type === 'number') {
@@ -764,54 +768,76 @@ const huntarrUI = {
         fetch(`/api/status/${app}`)
             .then(response => response.json())
             .then(data => {
-                // Pass the whole data object for sonarr, boolean for others
-                if (app === 'sonarr') {
-                    this.updateConnectionStatus(app, data); 
-                } else {
-                    this.updateConnectionStatus(app, data.connected);
-                }
-                this.configuredApps[app] = (app === 'sonarr') ? (data.total_configured > 0) : data.configured;
+                // Pass the whole data object for all apps
+                this.updateConnectionStatus(app, data); 
+
+                // Still update the configuredApps flag for potential other uses, but after updating status
+                this.configuredApps[app] = data.configured === true; // Ensure it's a boolean
             })
             .catch(error => {
                 console.error(`Error checking ${app} connection:`, error);
-                this.updateConnectionStatus(app, false); // Default to false on error
+                // Pass a default 'not configured' status object on error
+                this.updateConnectionStatus(app, { configured: false, connected: false }); 
             });
     },
     
     updateConnectionStatus: function(app, statusData) {
         const statusElement = this.elements[`${app}HomeStatus`];
         if (!statusElement) return;
-        
+
+        // Find the parent container for the whole app status box
+        const appBox = statusElement.closest('.app-stats-card'); // CORRECTED SELECTOR
+        if (!appBox) {
+            // If the card structure changes, this might fail. Log a warning.
+            console.warn(`[huntarrUI] Could not find parent '.app-stats-card' element for ${app}`);
+        }
+
+        let isConfigured = false;
+        let isConnected = false;
+
+        // Try to determine configured and connected status from statusData object
+        // Default to false if properties are missing
+        isConfigured = statusData?.configured === true;
+        isConnected = statusData?.connected === true;
+
+        // Special handling for Sonarr's multi-instance connected count
+        let sonarrConnectedCount = statusData?.connected_count ?? 0;
+        let sonarrTotalConfigured = statusData?.total_configured ?? 0;
         if (app === 'sonarr') {
-            // Handle Sonarr's specific status object
-            if (typeof statusData === 'object' && statusData !== null && 
-                typeof statusData.total_configured === 'number' && 
-                typeof statusData.connected_count === 'number') {
-                
-                const total = statusData.total_configured;
-                const connected = statusData.connected_count;
-                
-                if (total > 0) {
-                    statusElement.innerHTML = `<i class="fas fa-plug"></i> Connected ${connected}/${total}`;
-                    if (connected > 0) {
-                        statusElement.className = 'status-badge connected';
-                    } else {
-                        statusElement.className = 'status-badge not-connected';
-                    }
+            isConfigured = sonarrTotalConfigured > 0;
+            // For Sonarr, 'isConnected' means at least one instance is connected
+            isConnected = isConfigured && sonarrConnectedCount > 0; 
+        }
+
+        // --- Visibility Logic --- 
+        if (isConfigured) {
+            // Ensure the box is visible
+            if (appBox) appBox.style.display = ''; 
+        } else {
+            // Not configured - HIDE the box
+            if (appBox) appBox.style.display = 'none';
+            // Update badge even if hidden (optional, but good practice)
+            statusElement.className = 'status-badge not-configured';
+            statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Configured';
+            return; // No need to update badge further if not configured
+        }
+
+        // --- Badge Update Logic (only runs if configured) ---
+        if (app === 'sonarr') {
+            // Sonarr specific badge text (already checked isConfigured)
+            statusElement.innerHTML = `<i class="fas fa-plug"></i> Connected ${sonarrConnectedCount}/${sonarrTotalConfigured}`;
+            if (sonarrConnectedCount > 0) {
+                if (sonarrConnectedCount < sonarrTotalConfigured) {
+                    statusElement.className = 'status-badge partially-connected';
                 } else {
-                    // No instances configured
-                    statusElement.className = 'status-badge not-configured'; // Consider adding CSS for this state
-                    statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Configured';
+                    statusElement.className = 'status-badge connected';
                 }
             } else {
-                // Error or unexpected data format
-                statusElement.className = 'status-badge error';
-                statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+                statusElement.className = 'status-badge not-connected';
             }
         } else {
-            // Handle legacy boolean status for other apps
-            const connected = statusData; // Assuming boolean
-            if (connected) {
+            // Standard badge update for other configured apps
+            if (isConnected) {
                 statusElement.className = 'status-badge connected';
                 statusElement.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
             } else {
@@ -977,19 +1003,19 @@ const huntarrUI = {
             },
             body: JSON.stringify(requestBody)
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.showNotification(data.message, 'success');
-                    this.loadMediaStats(); // Refresh the stats display
-                } else {
-                    this.showNotification(data.message || 'Failed to reset statistics', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error resetting statistics:', error);
-                this.showNotification('Error resetting statistics', 'error');
-            });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.showNotification(data.message, 'success');
+                this.loadMediaStats(); // Refresh the stats display
+            } else {
+                this.showNotification(data.message || 'Failed to reset statistics', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error resetting statistics:', error);
+            this.showNotification('Error resetting statistics', 'error');
+        });
     },
     
     // Utility functions
@@ -1268,7 +1294,8 @@ const huntarrUI = {
             if (!response.ok) {
                 return response.json().then(errorData => {
                     throw new Error(errorData.message || this.getConnectionErrorMessage(response.status));
-                }).catch(err => {
+                }).catch(() => {
+                    // Fallback if response body is not JSON or empty
                     throw new Error(this.getConnectionErrorMessage(response.status));
                 });
             }
