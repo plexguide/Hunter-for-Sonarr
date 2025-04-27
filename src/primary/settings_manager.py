@@ -24,8 +24,8 @@ SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
 # Default configs location remains the same
 DEFAULT_CONFIGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'default_configs'))
 
-# List of known application types based on default config files
-KNOWN_APP_TYPES = [f.stem for f in pathlib.Path(DEFAULT_CONFIGS_DIR).glob("*.json")]
+# Update or add this as a class attribute or constant
+KNOWN_APP_TYPES = ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "general"]
 
 def get_settings_file_path(app_name: str) -> pathlib.Path:
     """Get the path to the settings file for a specific app."""
@@ -74,21 +74,23 @@ def _ensure_config_exists(app_name: str) -> None:
                 settings_logger.error(f"Error creating empty settings file for {app_name}: {e}")
 
 
-def load_settings(app_name: str) -> Dict[str, Any]:
-    """Load settings for a specific app."""
-    if app_name not in KNOWN_APP_TYPES:
-        settings_logger.error(f"Attempted to load settings for unknown app type: {app_name}")
-        return {}
+def load_settings(app_type):
+    """
+    Load settings for a specific app type
+    """
+    # Only log unexpected app types that are not 'general'
+    if app_type not in KNOWN_APP_TYPES and app_type != "general":
+        logger.warning(f"load_settings called with unexpected app_type: {app_type}")
         
-    _ensure_config_exists(app_name)
-    settings_file = get_settings_file_path(app_name)
+    _ensure_config_exists(app_type)
+    settings_file = get_settings_file_path(app_type)
     try:
         with open(settings_file, 'r') as f:
             # Load existing settings
             current_settings = json.load(f)
             
             # Load defaults to check for missing keys
-            default_settings = load_default_app_settings(app_name)
+            default_settings = load_default_app_settings(app_type)
             
             # Add missing keys from defaults without overwriting existing values
             updated = False
@@ -99,19 +101,19 @@ def load_settings(app_name: str) -> Dict[str, Any]:
             
             # If keys were added, save the updated file
             if updated:
-                settings_logger.info(f"Added missing default keys to {app_name}.json")
-                save_settings(app_name, current_settings) # Use save_settings to handle writing
+                settings_logger.info(f"Added missing default keys to {app_type}.json")
+                save_settings(app_type, current_settings) # Use save_settings to handle writing
                 
             return current_settings
             
     except json.JSONDecodeError:
         settings_logger.error(f"Error decoding JSON from {settings_file}. Restoring from default.")
         # Attempt to restore from default
-        default_settings = load_default_app_settings(app_name)
-        save_settings(app_name, default_settings) # Save the restored defaults
+        default_settings = load_default_app_settings(app_type)
+        save_settings(app_type, default_settings) # Save the restored defaults
         return default_settings
     except Exception as e:
-        settings_logger.error(f"Error loading settings for {app_name} from {settings_file}: {e}")
+        settings_logger.error(f"Error loading settings for {app_type} from {settings_file}: {e}")
         return {} # Return empty dict on other errors
 
 

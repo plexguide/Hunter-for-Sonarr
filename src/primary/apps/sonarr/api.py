@@ -234,11 +234,16 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         if not api_url:
             sonarr_logger.error("API URL is empty or not set")
             return False
+        
+        # Trim any whitespace that may have been accidentally included
+        api_url = api_url.strip()
+        api_key = api_key.strip() if api_key else api_key
             
         # Make sure api_url has a scheme
         if not (api_url.startswith('http://') or api_url.startswith('https://')):
-            sonarr_logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
-            return False
+            old_url = api_url
+            api_url = f"http://{api_url}"
+            sonarr_logger.warning(f"API URL missing http(s) scheme: {old_url}. Auto-corrected to: {api_url}")
             
         # Ensure URL doesn't end with a slash before adding the endpoint
         base_url = api_url.rstrip('/')
@@ -248,6 +253,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         sonarr_logger.info("Successfully connected to Sonarr.")
         return True
+        
     except requests.exceptions.RequestException as e:
         sonarr_logger.error(f"Error connecting to Sonarr: {e}")
         return False
