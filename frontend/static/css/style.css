@@ -954,9 +954,9 @@ input:checked + .toggle-slider:before {
 .sidebar {
     display: flex;
     flex-direction: column;
-    height: 100vh; /* Full height */
-    background-color: #2c3e50; /* Example background */
-    color: #ecf0f1; /* Example text color */
+    height: 100vh;
+    background-color: #2c3e50;
+    color: #ecf0f1;
 }
 
 .sidebar-content {
@@ -982,17 +982,6 @@ input:checked + .toggle-slider:before {
 }
 
 .sidebar-version {
-    padding: 15px;
-    text-align: center;
-    font-size: 0.85rem;
-    opacity: 0.7;
-}
-
-.version-icon {
-    margin-right: 5px;
-}
-
-.sidebar-version {
     padding: 20px;
     text-align: center;
 }
@@ -1001,7 +990,7 @@ input:checked + .toggle-slider:before {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(255, 255, 255, 0.05); /* Very light overlay */
+    background-color: rgba(255, 255, 255, 0.05);
     padding: 8px 14px;
     border-radius: 10px;
     font-size: 0.85rem;
