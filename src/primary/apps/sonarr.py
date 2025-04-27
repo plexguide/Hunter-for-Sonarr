@@ -170,20 +170,14 @@ def get_configured_instances():
             
             # Only include properly configured instances
             if is_enabled and api_url and api_key:
-                # Create a settings object for this instance by combining global settings with instance-specific ones
-                instance_settings = settings.copy()
-                
-                # Remove instances list to avoid confusion
-                if "instances" in instance_settings:
-                    del instance_settings["instances"]
-                
-                # Override with instance-specific connection settings
-                instance_settings["api_url"] = api_url
-                instance_settings["api_key"] = api_key
-                instance_settings["instance_name"] = instance.get("name", "Default")
-                
-                instances.append(instance_settings)
-                sonarr_logger.debug(f"Added instance '{instance_settings['instance_name']}' with URL: {api_url}")
+                # Return only essential instance details
+                instance_data = {
+                    "instance_name": instance.get("name", "Default"),
+                    "api_url": api_url,
+                    "api_key": api_key,
+                }
+                instances.append(instance_data) # Append the minimal dict
+                sonarr_logger.debug(f"Found enabled instance \'{instance_data['instance_name']}\' for processing.")
             elif not is_enabled:
                 sonarr_logger.debug(f"Skipping disabled instance: {instance.get('name', 'Unnamed')}")
             else:
@@ -200,13 +194,16 @@ def get_configured_instances():
             sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
         
         if api_url and api_key:
-            settings["instance_name"] = "Default"
-            settings["api_url"] = api_url
-            settings["api_key"] = api_key
-            instances.append(settings)
+            # Create a clean instance_data dict for the legacy instance
+            instance_data = {
+                "instance_name": "Default", # Hardcode name for legacy
+                "api_url": api_url,
+                "api_key": api_key,
+            }
+            instances.append(instance_data) # Append the clean dict
             sonarr_logger.debug(f"Added legacy instance with URL: {api_url}")
         else:
             sonarr_logger.warning("No API URL or key found in legacy configuration")
-    
+        
     sonarr_logger.info(f"Found {len(instances)} configured and enabled Sonarr instances")
     return instances

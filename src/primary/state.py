@@ -9,42 +9,39 @@ import datetime
 import time
 import json
 from typing import List, Dict, Any, Optional
-from src.primary.utils.logger import logger
 from src.primary import settings_manager
 
-# Create state directories based on app type
-def get_state_file_path(app_type: str, state_type: str) -> str:
+# Define the config directory - typically /config in Docker environment
+CONFIG_DIR = os.environ.get('CONFIG_DIR', '/config')
+
+# Get the logger at module level
+from src.primary.utils.logger import get_logger
+logger = get_logger("huntarr")
+
+def get_state_file_path(app_type, state_name):
     """
-    Get the path to a state file based on app type and state type.
+    Get the path to a state file for a specific app type and state name.
     
     Args:
-        app_type: The type of app (sonarr, radarr, etc.)
-        state_type: The type of state file (e.g., processed_missing, processed_upgrades)
-    
-    Returns:
-        The absolute path to the state file
-    """
-    if not app_type:
-        logger.error("get_state_file_path called without an app_type.")
-        return "/config/state/unknown/error.json" 
+        app_type: The application type (sonarr, radarr, etc.)
+        state_name: The name of the state file
         
-    if app_type == "sonarr":
-        base_path = "/config/state/sonarr"
-    elif app_type == "radarr":
-        base_path = "/config/state/radarr"
-    elif app_type == "lidarr":
-        base_path = "/config/state/lidarr"
-    elif app_type == "readarr":
-        base_path = "/config/state/readarr"
-    elif app_type == "whisparr":
-        base_path = "/config/state/whisparr"
-    else:
+    Returns:
+        The path to the state file
+    """
+    # Define known app types
+    known_app_types = ["sonarr", "radarr", "lidarr", "readarr", "whisparr"]
+    
+    # If app_type is not in known types, log a warning but don't fail
+    if app_type not in known_app_types and app_type != "general":
         logger.warning(f"get_state_file_path called with unexpected app_type: {app_type}")
-        base_path = f"/config/state/{app_type}"
     
-    os.makedirs(base_path, exist_ok=True)
+    # Create the state directory if it doesn't exist
+    state_dir = os.path.join(CONFIG_DIR, "state", app_type)
+    os.makedirs(state_dir, exist_ok=True)
     
-    return f"{base_path}/{state_type}.json"
+    # Return the path to the state file
+    return os.path.join(state_dir, f"{state_name}.json")
 
 def get_last_reset_time(app_type: str = None) -> datetime.datetime:
     """

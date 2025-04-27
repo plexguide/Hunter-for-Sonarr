@@ -156,20 +156,27 @@ def app_specific_loop(app_type: str) -> None:
         
         # Process each instance
         cycle_processed_anything = False
-        for instance_settings in instances_to_process:
+        for instance_details in instances_to_process:
             if stop_event.is_set():
                 break
                 
-            instance_name = instance_settings.get("instance_name", "Default")
+            instance_name = instance_details.get("instance_name", "Default") # Use the dict from get_configured_instances
             app_logger.info(f"Processing {app_type} instance: {instance_name}")
             
-            # Get instance-specific settings
-            api_url = instance_settings.get("api_url", "")
-            api_key = instance_settings.get("api_key", "")
-            api_timeout = instance_settings.get("api_timeout", 10)
-            min_download_queue_size = instance_settings.get("minimum_download_queue_size", -1)
-            hunt_missing_count = instance_settings.get(hunt_missing_setting, 0)
-            hunt_upgrade_count = instance_settings.get(hunt_upgrade_setting, 0)
+            # Get instance-specific settings from the instance_details dict
+            api_url = instance_details.get("api_url", "")
+            api_key = instance_details.get("api_key", "")
+            
+            # Get global/shared settings from app_settings loaded at the start of the loop
+            api_timeout = app_settings.get("api_timeout", 10) # Fetch from app_settings
+            min_download_queue_size = app_settings.get("minimum_download_queue_size", -1) # Fetch from app_settings
+            hunt_missing_count = app_settings.get(hunt_missing_setting, 0) # Fetch from app_settings
+            hunt_upgrade_count = app_settings.get(hunt_upgrade_setting, 0) # Fetch from app_settings
+            # Add any other necessary global settings here, fetched from app_settings
+            monitored_only = app_settings.get("monitored_only", True)
+            skip_future_episodes = app_settings.get("skip_future_episodes", True) # Example for Sonarr
+            skip_series_refresh = app_settings.get("skip_series_refresh", True) # Example for Sonarr
+            # ... add others as needed based on process_missing/process_upgrades requirements
 
             # --- Connection Check for this instance --- #
             api_connected = False
@@ -211,7 +218,7 @@ def app_specific_loop(app_type: str) -> None:
                         app_logger.info(f"Checking for {hunt_missing_count} missing items in {instance_name}...")
                         try:
                             # Pass the full instance_settings dictionary and the stop check function
-                            if process_missing(instance_settings, stop_event.is_set):
+                            if process_missing(instance_details, stop_event.is_set):
                                 instance_processed_anything = True
                                 cycle_processed_anything = True
                             else:
@@ -226,7 +233,7 @@ def app_specific_loop(app_type: str) -> None:
                         app_logger.info(f"Checking for {hunt_upgrade_count} quality upgrades in {instance_name}...")
                         try:
                             # Pass the full instance_settings dictionary and the stop check function
-                            if process_upgrades(instance_settings, stop_event.is_set):
+                            if process_upgrades(instance_details, stop_event.is_set):
                                 instance_processed_anything = True
                                 cycle_processed_anything = True
                             else:
