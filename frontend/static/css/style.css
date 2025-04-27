@@ -954,18 +954,20 @@ input:checked + .toggle-slider:before {
 .sidebar {
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     height: 100vh;
-    background-color: #2c3e50; /* Example */
 }
 
 .sidebar-content {
-    flex: 1;
+    flex-grow: 1;
     overflow-y: auto;
 }
 
 .sidebar-version {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     padding: 20px;
-    text-align: center;
     margin-top: auto;
     margin-bottom: 20px;
 }
@@ -975,14 +977,11 @@ input:checked + .toggle-slider:before {
     align-items: center;
     justify-content: center;
     background-color: rgba(255, 255, 255, 0.08);
-    padding: 10px 16px;
+    padding: 8px 14px;
     border-radius: 12px;
     font-size: 0.85rem;
     font-weight: 400;
     color: #d1d5db;
-    gap: 6px;
+    gap: 5px;
 }
 
-.version-icon {
-    font-size: 1rem;
-}
