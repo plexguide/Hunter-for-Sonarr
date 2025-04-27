@@ -50,17 +50,6 @@ static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..',
 # Create Flask app
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev_key_for_sessions')
-def get_version():
-    try:
-        with open('version.txt', 'r') as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        return "Unknown"
-
-@app.context_processor
-def inject_version():
-    return dict(version=get_version())
-
 
 # Register blueprints
 app.register_blueprint(common_bp)
