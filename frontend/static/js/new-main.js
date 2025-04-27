@@ -269,6 +269,33 @@ const huntarrUI = {
             if (this.elements.settingsNav) this.elements.settingsNav.classList.add('active');
             newTitle = 'Settings';
             this.currentSection = 'settings';
+            
+            // Ensure default settings tab is set if none is active
+            if (!this.currentSettingsTab) {
+                this.currentSettingsTab = 'sonarr'; // Default to sonarr tab
+                
+                // Set the sonarr tab as active
+                const sonarrTab = document.querySelector('.settings-tab[data-settings="sonarr"]');
+                if (sonarrTab) {
+                    this.elements.settingsTabs.forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    sonarrTab.classList.add('active');
+                    
+                    // Also set the sonarr panel as visible
+                    this.elements.appSettingsPanels.forEach(panel => {
+                        panel.classList.remove('active');
+                        panel.style.display = 'none';
+                    });
+                    
+                    const sonarrPanel = document.getElementById('sonarrSettings');
+                    if (sonarrPanel) {
+                        sonarrPanel.classList.add('active');
+                        sonarrPanel.style.display = 'block';
+                    }
+                }
+            }
+            
             this.loadAllSettings();
             // Disconnect logs if switching away from logs
             this.disconnectAllEventSources(); 
@@ -1183,6 +1210,13 @@ const huntarrUI = {
             return;
         }
         
+        // Check if URL is properly formatted
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            statusSpan.textContent = 'URL must start with http:// or https://';
+            statusSpan.className = 'connection-status error';
+            return;
+        }
+        
         // Clean up the URL by removing trailing slashes
         url = url.trim().replace(/\/+$/, '');
         
@@ -1200,9 +1234,9 @@ const huntarrUI = {
         .then(response => {
             if (!response.ok) {
                 return response.json().then(errorData => {
-                    throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+                    throw new Error(errorData.message || this.getConnectionErrorMessage(response.status));
                 }).catch(err => {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    throw new Error(this.getConnectionErrorMessage(response.status));
                 });
             }
             return response.json();
@@ -1224,9 +1258,50 @@ const huntarrUI = {
         })
         .catch(error => {
             console.error(`Error testing connection for ${appName} instance ${instanceId}:`, error);
-            statusSpan.textContent = error.message || 'Error';
+            
+            // Extract the most relevant part of the error message
+            let errorMessage = error.message || 'Unknown error';
+            if (errorMessage.includes('Name or service not known')) {
+                errorMessage = 'Unable to resolve hostname. Check the URL.';
+            } else if (errorMessage.includes('Connection refused')) {
+                errorMessage = 'Connection refused. Check that the service is running.';
+            } else if (errorMessage.includes('connect ETIMEDOUT') || errorMessage.includes('timeout')) {
+                errorMessage = 'Connection timed out. Check URL and port.';
+            } else if (errorMessage.includes('401') || errorMessage.includes('Authentication failed')) {
+                errorMessage = 'Invalid API key';
+            } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+                errorMessage = 'URL endpoint not found. Check the URL.';
+            } else if (errorMessage.startsWith('HTTP error!')) {
+                errorMessage = 'Connection failed. Check URL and port.';
+            }
+            
+            statusSpan.textContent = errorMessage;
             statusSpan.className = 'connection-status error';
         });
+    },
+    
+    // Helper function to translate HTTP error codes to user-friendly messages
+    getConnectionErrorMessage: function(status) {
+        switch(status) {
+            case 400:
+                return 'Invalid request. Check URL format.';
+            case 401:
+                return 'Invalid API key';
+            case 403:
+                return 'Access forbidden. Check permissions.';
+            case 404:
+                return 'Service not found at this URL. Check address.';
+            case 500:
+                return 'Server error. Check if the service is working properly.';
+            case 502:
+                return 'Bad gateway. Check network connectivity.';
+            case 503:
+                return 'Service unavailable. Check if the service is running.';
+            case 504:
+                return 'Gateway timeout. Check network connectivity.';
+            default:
+                return `Connection error. Check URL and port.`;
+        }
     },
 };
 
