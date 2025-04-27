@@ -80,7 +80,6 @@ const huntarrUI = {
         
         // Settings
         this.elements.saveSettingsButton = document.getElementById('saveSettingsButton'); // Corrected ID
-        this.elements.resetSettingsButton = document.getElementById('resetSettingsButton'); // Corrected ID
         
         // Status elements
         this.elements.sonarrHomeStatus = document.getElementById('sonarrHomeStatus');
@@ -136,10 +135,6 @@ const huntarrUI = {
         // Settings
         if (this.elements.saveSettingsButton) {
             this.elements.saveSettingsButton.addEventListener('click', this.saveSettings.bind(this));
-        }
-        
-        if (this.elements.resetSettingsButton) {
-            this.elements.resetSettingsButton.addEventListener('click', this.resetSettings.bind(this));
         }
         
         // Actions
@@ -758,24 +753,9 @@ const huntarrUI = {
         });
     },
 
-    resetSettings: function() {
-        const activeTab = document.querySelector('.settings-tab.active');
-        if (!activeTab) return;
-        const app = activeTab.dataset.app;
-
-        if (confirm(`Are you sure you want to reset ${this.capitalizeFirst(app)} settings to the last saved state?`)) {
-            // Reload settings for the current app from the stored original settings
-            this.populateSettingsForm(app, this.originalSettings[app] || {});
-            this.showNotification(`${this.capitalizeFirst(app)} settings reset to last saved state.`, 'info');
-            this.settingsChanged = false; // Reset flag after resetting form
-            this.updateSaveResetButtonState(false); // Disable buttons after reset
-        }
-    },
-
     // Add or modify this function to handle enabling/disabling save/reset
     updateSaveResetButtonState(enable) { // Changed signature
         const saveButton = this.elements.saveSettingsButton;
-        const resetButton = this.elements.resetSettingsButton;
 
         if (saveButton) {
             saveButton.disabled = !enable;
@@ -784,15 +764,6 @@ const huntarrUI = {
                 saveButton.classList.remove('disabled-button');
             } else {
                 saveButton.classList.add('disabled-button');
-            }
-        }
-        if (resetButton) {
-            // Reset button is typically enabled only when changes exist
-            resetButton.disabled = !enable;
-             if (enable) {
-                resetButton.classList.remove('disabled-button');
-            } else {
-                resetButton.classList.add('disabled-button');
             }
         }
     },
@@ -1100,7 +1071,6 @@ const huntarrUI = {
     // Add or modify this function to handle enabling/disabling save/reset
     updateSaveResetButtonState(enable) { // Changed signature
         const saveButton = this.elements.saveSettingsButton;
-        const resetButton = this.elements.resetSettingsButton;
 
         if (saveButton) {
             saveButton.disabled = !enable;
@@ -1109,15 +1079,6 @@ const huntarrUI = {
                 saveButton.classList.remove('disabled-button');
             } else {
                 saveButton.classList.add('disabled-button');
-            }
-        }
-        if (resetButton) {
-            // Reset button is typically enabled only when changes exist
-            resetButton.disabled = !enable;
-             if (enable) {
-                resetButton.classList.remove('disabled-button');
-            } else {
-                resetButton.classList.add('disabled-button');
             }
         }
     },
