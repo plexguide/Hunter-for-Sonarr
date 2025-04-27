@@ -168,11 +168,11 @@ def logs_stream():
                     log_files_to_follow = [(app_type, log_file)]
                 else:
                     web_logger.warning(f"No log file found for app type: {app_type}")
-                    yield f"data: No logs available for {app_type}\\n\\n"
+                    yield f"data: No logs available for {app_type}\n\n"
                     return
 
             # Send a connection confirmation message
-            yield f"data: Starting log stream for {app_type}...\\n\\n"
+            yield f"data: Starting log stream for {app_type}...\n\n"
             web_logger.debug(f"Sent connection confirmation for {app_type} (Client: {client_ip})")
 
             # Track file positions for each log
@@ -268,28 +268,29 @@ def logs_stream():
                                         if stripped_line:  # Only send non-empty lines
                                             # Prefix with app name for clarity on 'all' tab
                                             prefix = f"[{name.upper()}] " if app_type == 'all' else ""
-                                            yield f"data: {prefix}{stripped_line}\\n\\n"
+                                            # Fix: proper SSE format with single \n not escaped \n\n
+                                            yield f"data: {prefix}{stripped_line}\n\n"
                         except FileNotFoundError:
                              web_logger.warning(f"Log file {path} disappeared during read for {name}. Skipping.")
                              positions[name] = -1 # Mark as not found
                              continue
                         except Exception as read_err:
                              web_logger.error(f"Error reading log file {path} for {name}: {read_err}", exc_info=True)
-                             yield f"data: ERROR: Problem reading {name} log: {str(read_err)}\\n\\n"
+                             yield f"data: ERROR: Problem reading {name} log: {str(read_err)}\n\n"
                              # Don't reset position immediately, maybe temporary issue
                              # Consider adding a backoff mechanism if errors persist
 
                     except Exception as file_loop_err:
                         # Catch errors related to a specific file but continue the main loop
                         web_logger.error(f"Error processing file {name} ({path}) in log stream: {file_loop_err}", exc_info=True)
-                        yield f"data: ERROR: Unexpected issue processing {name} log.\\n\\n"
+                        yield f"data: ERROR: Unexpected issue processing {name} log.\n\n"
 
                 # Send a keep-alive comment every ~15 seconds (adjust interval if needed)
                 # but only if we haven't had any real content in this iteration
                 if not had_content:
                     # Interval: 15 seconds / 0.2s sleep = 75 checks
                     if keep_alive_counter >= 75:
-                        yield f": keepalive {time.time()}\\n\\n"
+                        yield f": keepalive {time.time()}\n\n"
                         web_logger.debug(f"Sent keepalive for {app_type} (Client: {client_ip})")
                         keep_alive_counter = 0
 
