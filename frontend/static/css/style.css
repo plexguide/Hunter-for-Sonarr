@@ -984,18 +984,22 @@ input:checked + .toggle-slider:before {
 .sidebar-version {
     padding: 20px;
     text-align: center;
+    margin-top: auto;
+    margin-bottom: 20px; /* Add breathing room at very bottom */
 }
 
 .version-box {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 8px 14px;
-    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.08); /* Slightly stronger background */
+    padding: 10px 16px;
+    border-radius: 12px;
     font-size: 0.85rem;
-    color: #bbb;
-    gap: 5px;
+    font-weight: 400; /* Normal font-weight, not bold */
+    color: #d1d5db; /* Slightly lighter gray for text */
+    gap: 6px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2); /* Optional: soft shadow */
 }
 
 .version-icon {
