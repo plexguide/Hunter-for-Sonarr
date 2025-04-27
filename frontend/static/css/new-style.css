@@ -897,8 +897,6 @@ input:checked + .slider:before {
 
 /* Multi-instance styles */
 .instances-container {
-    max-height: 500px;
-    overflow-y: auto;
     margin-bottom: 20px;
 }
 
