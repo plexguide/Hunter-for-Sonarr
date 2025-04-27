@@ -21,51 +21,32 @@ session = requests.Session()
 # Default API timeout in seconds - used as fallback only
 API_TIMEOUT = 30
 
-def check_connection(api_url: str, api_key: str, timeout: int = 30) -> bool:
-    """
-    Check if we can connect to the Readarr API.
-    
-    Args:
-        api_url: The base URL of the Readarr API
-        api_key: The API key for authentication
-        timeout: Timeout in seconds for the request
-        
-    Returns:
-        True if connection successful, False otherwise
-    """
-    if not api_url or not api_key:
-        logger.error("API URL or API key is missing. Cannot check connection.")
-        return False
-    
+def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
+    """Check the connection to Readarr API."""
     try:
-        # Clean up API URL
-        api_url = api_url.rstrip('/')
-        url = f"{api_url}/api/v1/system/status"
+        # Ensure api_url is properly formatted
+        if not api_url:
+            logger.error("API URL is empty or not set")
+            return False
+            
+        # Make sure api_url has a scheme
+        if not (api_url.startswith('http://') or api_url.startswith('https://')):
+            logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
+            return False
+            
+        # Ensure URL doesn't end with a slash before adding the endpoint
+        base_url = api_url.rstrip('/')
+        full_url = f"{base_url}/api/v1/system/status"
         
-        # Headers
-        headers = {
-            "X-Api-Key": api_key,
-            "Content-Type": "application/json"
-        }
-        
-        # Make the request
-        response = session.get(url, headers=headers, timeout=timeout)
-        response.raise_for_status()
-        
-        # Verify we got a valid JSON response
-        response.json()
-        
-        logger.info(f"Successfully connected to Readarr API at {api_url}")
+        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout)
+        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+        logger.info("Successfully connected to Readarr.")
         return True
-        
     except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to connect to Readarr API: {e}")
-        return False
-    except ValueError:
-        logger.error("Received invalid JSON response from Readarr API")
+        logger.error(f"Error connecting to Readarr: {e}")
         return False
     except Exception as e:
-        logger.error(f"Unexpected error checking Readarr connection: {e}")
+        logger.error(f"An unexpected error occurred during Readarr connection check: {e}")
         return False
 
 def get_download_queue_size(api_url: str = None, api_key: str = None, timeout: int = 30) -> int:
