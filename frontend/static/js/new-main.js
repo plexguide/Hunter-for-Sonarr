@@ -635,12 +635,14 @@ const huntarrUI = {
             if (typeof formFunction === 'function') {
                 formFunction(form, appSettings);
                 
-                // For Sonarr instances, set up the instance management
-                if (app === 'sonarr' && appSettings.instances && typeof SettingsForms.setupInstanceManagement === 'function') {
+                // For ANY app with instances, set up the instance management
+                // Check if instances exist and it's an array
+                if (appSettings && Array.isArray(appSettings.instances) && typeof SettingsForms.setupInstanceManagement === 'function') {
                     try {
-                        SettingsForms.setupInstanceManagement(form, 'sonarr', appSettings.instances.length);
+                        // Pass the actual app name and the number of instances found
+                        SettingsForms.setupInstanceManagement(form, app, appSettings.instances.length);
                     } catch (e) {
-                        console.error(`[huntarrUI] Error setting up instance management:`, e);
+                        console.error(`[huntarrUI] Error setting up instance management for ${app}:`, e);
                     }
                 }
                 
