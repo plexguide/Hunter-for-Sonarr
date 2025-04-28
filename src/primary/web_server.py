@@ -570,6 +570,14 @@ def api_stop_hunt():
 @app.route('/api/settings/apply-timezone', methods=['POST'])
 def apply_timezone_setting():
     """Apply timezone setting to the container."""
+    # This functionality has been disabled as per user request
+    return jsonify({
+        "success": False, 
+        "message": "Timezone settings have been disabled. This feature may be available in future updates."
+    })
+    
+    # Original implementation commented out
+    '''
     data = request.json
     timezone = data.get('timezone')
     web_logger = get_logger("web_server")
@@ -591,23 +599,7 @@ def apply_timezone_setting():
         return jsonify({"success": True, "message": f"Timezone set to {timezone}. Container restart may be required for full effect."})
     else:
         return jsonify({"success": False, "error": f"Failed to apply timezone {timezone}"}), 500
-
-
-def start_web_server():
-    """Start the web server in debug or production mode"""
-    web_logger = get_logger("web_server")
-    web_logger.info("--- start_web_server function called ---") # Added log
-    debug_mode = os.environ.get('DEBUG', 'false').lower() == 'true'
-    host = '0.0.0.0'  # Listen on all interfaces
-    port = int(os.environ.get('PORT', 9705))
-
-    # Ensure the log directory exists
-    os.makedirs(LOG_DIR, exist_ok=True)
-
-    web_logger.info(f"Attempting to start web server on {host}:{port} (Debug: {debug_mode})") # Modified log
-    # In production, use Werkzeug's simple server or a proper WSGI server
-    web_logger.info("--- Calling app.run() ---") # Added log
-    app.run(host=host, port=port, debug=debug_mode, use_reloader=False) # Keep this line if needed for direct execution testing, but it's now handled by root main.py
+    '''
 
 @app.route('/version.txt')
 def version_txt():
@@ -628,3 +620,19 @@ def version_txt():
         web_logger = get_logger("web_server")
         web_logger.error(f"Error serving version.txt: {e}")
         return "5.3.1", 200, {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache'}
+
+def start_web_server():
+    """Start the web server in debug or production mode"""
+    web_logger = get_logger("web_server")
+    web_logger.info("--- start_web_server function called ---") # Added log
+    debug_mode = os.environ.get('DEBUG', 'false').lower() == 'true'
+    host = '0.0.0.0'  # Listen on all interfaces
+    port = int(os.environ.get('PORT', 9705))
+
+    # Ensure the log directory exists
+    os.makedirs(LOG_DIR, exist_ok=True)
+
+    web_logger.info(f"Attempting to start web server on {host}:{port} (Debug: {debug_mode})") # Modified log
+    # In production, use Werkzeug's simple server or a proper WSGI server
+    web_logger.info("--- Calling app.run() ---") # Added log
+    app.run(host=host, port=port, debug=debug_mode, use_reloader=False) # Keep this line if needed for direct execution testing, but it's now handled by root main.py
