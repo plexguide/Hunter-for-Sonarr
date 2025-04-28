@@ -216,10 +216,6 @@ const SettingsForms = {
                     <div class="instance-header">
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
-                            <label class="toggle-switch instance-toggle">
-                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <span class="toggle-slider"></span>
-                            </label>
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
                         </div>
                     </div>
@@ -406,10 +402,6 @@ const SettingsForms = {
                     <div class="instance-header">
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
-                            <label class="toggle-switch instance-toggle">
-                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <span class="toggle-slider"></span>
-                            </label>
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
                         </div>
                     </div>
@@ -605,10 +597,6 @@ const SettingsForms = {
                     <div class="instance-header">
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
-                            <label class="toggle-switch instance-toggle">
-                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <span class="toggle-slider"></span>
-                            </label>
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
                         </div>
                     </div>
@@ -795,10 +783,6 @@ const SettingsForms = {
                     <div class="instance-header">
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
-                            <label class="toggle-switch instance-toggle">
-                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <span class="toggle-slider"></span>
-                            </label>
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
                         </div>
                     </div>

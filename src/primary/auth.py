@@ -103,8 +103,8 @@ def validate_password_strength(password: str) -> Optional[str]:
     Returns:
         An error message string if validation fails, None otherwise.
     """
-    if len(password) < 10:
-        return "Password must be at least 10 characters long."
+    if len(password) < 8:
+        return "Password must be at least 8 characters long."
     
     # If check passes
     return None
