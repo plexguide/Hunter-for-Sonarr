@@ -20,7 +20,7 @@
 | Radarr      | **✅ Ready**  |
 | Lidarr      | **✅ Ready**  |
 | Readarr     | **✅ Ready**  |
-| Whisparr    | **✅ Ready**  |
+| Whisparr    | **❌ Not Ready** |
 | Bazarr    | **❌ Not Ready** |
 
 
