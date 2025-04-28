@@ -877,10 +877,13 @@ const huntarrUI = {
 
     // Handle instance management events
     setupInstanceEventHandlers: function() {
+        console.log("DEBUG: setupInstanceEventHandlers called"); // Added logging
         const settingsPanels = document.querySelectorAll('.app-settings-panel');
         
         settingsPanels.forEach(panel => {
+            console.log(`DEBUG: Adding listeners to panel '${panel.id}'`); // Added logging
             panel.addEventListener('addInstance', (e) => {
+                console.log(`DEBUG: addInstance event listener fired for panel '${panel.id}'. Event detail:`, e.detail);
                 this.addAppInstance(e.detail.appName);
             });
             
@@ -896,6 +899,7 @@ const huntarrUI = {
     
     // Add a new instance to the app
     addAppInstance: function(appName) {
+        console.log(`DEBUG: addAppInstance called for app '${appName}'`);
         const container = document.getElementById(`${appName}Settings`);
         if (!container) return;
         
