@@ -137,7 +137,7 @@ Huntarr's live homepage will provide you statics about how many hunts have been 
 <table>
   <tr>
     <td colspan="2"> 
-      <img width="100%" alt="image" src="https://github.com/user-attachments/assets/e3c64ca3-02ae-40b2-ad27-7cae3f686e5c" />
+      <img width="100%" alt="image" src="https://github.com/user-attachments/assets/db725ad6-3009-4835-ab44-289dda80d385"
       <p align="center"><em>Homepage</em></p>
     </td>
   </tr>
