@@ -983,6 +983,36 @@ const SettingsForms = {
                 </div>
             </div>
         `;
+        
+        // Add confirmation dialog for local access bypass toggle
+        const localAccessBypassCheckbox = container.querySelector('#local_access_bypass');
+        if (localAccessBypassCheckbox) {
+            // Store original state
+            const originalState = localAccessBypassCheckbox.checked;
+            
+            localAccessBypassCheckbox.addEventListener('change', function(event) {
+                const newState = this.checked;
+                let message = '';
+                
+                if (newState) {
+                    message = 'Enabling local network authentication bypass will hide the username and logout button, and disable the user settings page. You will be logged out after saving this change. Continue?';
+                } else {
+                    message = 'Disabling local network authentication bypass will re-enable user authentication features. You will be logged out after saving this change. Continue?';
+                }
+                
+                if (!confirm(message)) {
+                    // User canceled, revert checkbox to original state
+                    this.checked = originalState;
+                    event.preventDefault();
+                    return false;
+                }
+                
+                // Preview the UI changes immediately, but they'll be reverted if user doesn't save
+                if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.updateUIForLocalAccessBypass === 'function') {
+                    huntarrUI.updateUIForLocalAccessBypass(newState);
+                }
+            });
+        }
     },
 
     // Update duration display - e.g., convert seconds to hours
