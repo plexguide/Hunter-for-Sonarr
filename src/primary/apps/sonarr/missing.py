@@ -6,18 +6,12 @@ Sonarr missing episodes processing module for Huntarr
 import time
 import random
 from typing import List, Dict, Any, Set, Callable
-# Correct import path
 from src.primary.utils.logger import get_logger
-# Correct the import names
-from src.primary.state import load_processed_ids, save_processed_ids
-from src.primary.apps.sonarr import api as sonarr_api # Import the updated api module
+from src.primary.apps.sonarr import api as sonarr_api
 from src.primary.stats_manager import increment_stat
 
 # Get logger for the Sonarr app
 sonarr_logger = get_logger("sonarr")
-
-# State file for processed missing episodes
-PROCESSED_MISSING_FILE = "processed_missing_sonarr.json"
 
 def process_missing_episodes(
     app_settings: Dict[str, Any],
@@ -37,8 +31,8 @@ def process_missing_episodes(
     processed_any = False
 
     # Extract necessary settings
-    api_url = app_settings.get("api_url")
-    api_key = app_settings.get("api_key")
+    api_url = app_settings.get("api_url", "").strip()
+    api_key = app_settings.get("api_key", "").strip()
     api_timeout = app_settings.get("api_timeout", 90)  # Increased default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_episodes = app_settings.get("skip_future_episodes", True)
@@ -48,19 +42,29 @@ def process_missing_episodes(
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
 
-    if not api_url or not api_key:
-        sonarr_logger.error("API URL or Key not configured in settings. Cannot process missing episodes.")
+    # Improved validation of API URL and key
+    if not api_url:
+        sonarr_logger.error("API URL is empty or not set")
         return False
+        
+    if not api_key:
+        sonarr_logger.error("API Key is not set")
+        return False
+        
+    # Ensure URL has proper format with auto-correction
+    if not (api_url.startswith('http://') or api_url.startswith('https://')):
+        old_url = api_url
+        api_url = f"http://{api_url}"
+        sonarr_logger.warning(f"API URL is missing http:// or https:// scheme: {old_url}")
+        sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
+        
+    sonarr_logger.debug(f"Using API URL: {api_url}")
 
     if hunt_missing_shows <= 0:
         sonarr_logger.info("'hunt_missing_shows' setting is 0 or less. Skipping missing episode processing.")
         return False
     
     sonarr_logger.info(f"Checking for {hunt_missing_shows} missing items...")
-
-    # Load already processed episode IDs for Sonarr
-    processed_episode_ids: Set[int] = set(load_processed_ids(PROCESSED_MISSING_FILE))
-    sonarr_logger.debug(f"Loaded {len(processed_episode_ids)} processed missing episode IDs for Sonarr.")
 
     # Use different methods based on random setting
     episodes_to_search = []
@@ -70,13 +74,6 @@ def process_missing_episodes(
         sonarr_logger.info(f"Using random selection for missing episodes")
         episodes_to_search = sonarr_api.get_missing_episodes_random_page(
             api_url, api_key, api_timeout, monitored_only, hunt_missing_shows)
-            
-        # Filter out already processed episodes
-        episodes_to_search = [ep for ep in episodes_to_search if ep['id'] not in processed_episode_ids]
-        
-        # If we didn't get enough episodes, we might need to try another approach
-        if len(episodes_to_search) < hunt_missing_shows and len(episodes_to_search) > 0:
-            sonarr_logger.debug(f"Got {len(episodes_to_search)} episodes from random page, fewer than requested {hunt_missing_shows}")
     else:
         # Use the sequential approach for non-random selection
         sonarr_logger.info(f"Using sequential selection for missing episodes (oldest first)")
@@ -87,25 +84,21 @@ def process_missing_episodes(
             sonarr_logger.info("No missing episodes found in Sonarr.")
             return False
             
-        # Filter out already processed episodes
-        episodes_to_process = [ep for ep in missing_episodes if ep['id'] not in processed_episode_ids]
-        sonarr_logger.info(f"Found {len(episodes_to_process)} new missing episodes to process.")
-        
         # Filter out future episodes if configured
         if skip_future_episodes:
             now_unix = time.time()
-            original_count = len(episodes_to_process)
+            original_count = len(missing_episodes)
             # Ensure airDateUtc exists and is not None before parsing
-            episodes_to_process = [
-                ep for ep in episodes_to_process
+            missing_episodes = [
+                ep for ep in missing_episodes
                 if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
             ]
-            skipped_count = original_count - len(episodes_to_process)
+            skipped_count = original_count - len(missing_episodes)
             if skipped_count > 0:
                 sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date.")
                 
         # Select the first N episodes
-        episodes_to_search = episodes_to_process[:hunt_missing_shows]
+        episodes_to_search = missing_episodes[:hunt_missing_shows]
 
     if stop_check(): 
         sonarr_logger.info("Stop requested during missing episode processing.")
@@ -159,7 +152,6 @@ def process_missing_episodes(
             series_to_refresh[series_id].append(episode['id'])
 
     # Process each series
-    processed_in_this_run = set()
     for series_id, episode_ids in series_to_refresh.items():
         if stop_check(): sonarr_logger.info("Stop requested before processing next series."); break
         series_title = series_titles.get(series_id, f"Series ID {series_id}")
@@ -195,7 +187,6 @@ def process_missing_episodes(
                 command_wait_delay, command_wait_attempts, "Episode Search", stop_check
             ):
                 # Mark episodes as processed if search command completed successfully
-                processed_in_this_run.update(episode_ids)
                 processed_any = True # Mark that we did something
                 sonarr_logger.info(f"Successfully processed and searched for {len(episode_ids)} episodes in series {series_id}.")
                 
@@ -206,17 +197,6 @@ def process_missing_episodes(
                 sonarr_logger.warning(f"Episode search command (ID: {search_command_id}) for series {series_id} did not complete successfully or timed out. Episodes will not be marked as processed yet.")
         else:
             sonarr_logger.error(f"Failed to trigger search command for episodes {episode_ids} in series {series_id}.")
-
-    # Update the set of processed episode IDs and save to state file
-    if processed_in_this_run:
-        updated_processed_ids = processed_episode_ids.union(processed_in_this_run)
-        # Use the correct function name
-        save_processed_ids(PROCESSED_MISSING_FILE, list(updated_processed_ids))
-        sonarr_logger.info(f"Saved {len(processed_in_this_run)} newly processed missing episode IDs for Sonarr. Total processed: {len(updated_processed_ids)}.")
-    elif processed_any: # Check if we attempted processing but didn't succeed in saving any new IDs
-        sonarr_logger.info("Attempted missing episode processing, but no new episodes were marked as successfully processed.")
-    # else: # No episodes selected or processed
-        # sonarr_logger.info("No new missing episodes were processed in this run.") # Already logged if nothing to process
 
     sonarr_logger.info("Finished missing episodes processing cycle for Sonarr.")
     return processed_any # Return whether any action was taken
@@ -232,6 +212,13 @@ def wait_for_command(
     stop_check: Callable[[], bool] # Pass stop check function
 ) -> bool:
     """Wait for a Sonarr command to complete, checking for stop requests."""
+    # Ensure URL has proper format
+    if not (api_url.startswith('http://') or api_url.startswith('https://')):
+        old_url = api_url
+        api_url = f"http://{api_url}"
+        sonarr_logger.warning(f"API URL is missing http:// or https:// scheme in wait_for_command: {old_url}")
+        sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
+    
     sonarr_logger.debug(f"Waiting for Sonarr command '{command_name}' (ID: {command_id}) to complete...")
     for attempt in range(attempts):
         if stop_check():

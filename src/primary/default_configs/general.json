@@ -1,0 +1,8 @@
+{
+  "debug_mode": false,
+  "log_refresh_interval_seconds": 30,
+  "ui_theme": "dark",
+  "check_for_updates": true,
+  "enable_notifications": false,
+  "notification_level": "info"
+}

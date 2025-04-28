@@ -40,8 +40,15 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
             sonarr_logger.error("No URL or API key provided")
             return None
         
-        # Construct the full URL
-        api_url = f"{api_url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
+        # Ensure api_url has a scheme
+        if not (api_url.startswith('http://') or api_url.startswith('https://')):
+            sonarr_logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
+            return None
+            
+        # Construct the full URL properly
+        full_url = f"{api_url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
+        
+        sonarr_logger.debug(f"Making {method} request to: {full_url}")
         
         # Set up headers
         headers = {
@@ -51,13 +58,13 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         
         try:
             if method.upper() == "GET":
-                response = session.get(api_url, headers=headers, timeout=api_timeout)
+                response = session.get(full_url, headers=headers, timeout=api_timeout)
             elif method.upper() == "POST":
-                response = session.post(api_url, headers=headers, json=data, timeout=api_timeout)
+                response = session.post(full_url, headers=headers, json=data, timeout=api_timeout)
             elif method.upper() == "PUT":
-                response = session.put(api_url, headers=headers, json=data, timeout=api_timeout)
+                response = session.put(full_url, headers=headers, json=data, timeout=api_timeout)
             elif method.upper() == "DELETE":
-                response = session.delete(api_url, headers=headers, timeout=api_timeout)
+                response = session.delete(full_url, headers=headers, timeout=api_timeout)
             else:
                 sonarr_logger.error(f"Unsupported HTTP method: {method}")
                 return None
@@ -97,6 +104,32 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         print(error_msg, file=sys.stderr)
         print(traceback.format_exc(), file=sys.stderr)
         return None
+
+def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
+    """Checks connection by fetching system status."""
+    if not api_url:
+        sonarr_logger.error("API URL is empty or not set")
+        return False
+    if not api_key:
+        sonarr_logger.error("API Key is empty or not set")
+        return False
+
+    try:
+        # Use a shorter timeout for a quick connection check
+        quick_timeout = min(api_timeout, 15) 
+        status = get_system_status(api_url, api_key, quick_timeout)
+        if status and isinstance(status, dict) and 'version' in status:
+             # Log success only if debug is enabled to avoid clutter
+             sonarr_logger.debug(f"Connection check successful for {api_url}. Version: {status.get('version')}")
+             return True
+        else:
+             # Log details if the status response was unexpected
+             sonarr_logger.warning(f"Connection check for {api_url} returned unexpected status: {str(status)[:200]}")
+             return False
+    except Exception as e:
+        # Error should have been logged by arr_request, just indicate failure
+        sonarr_logger.error(f"Connection check failed for {api_url}")
+        return False
 
 def get_system_status(api_url: str, api_key: str, api_timeout: int) -> Dict:
     """
@@ -220,20 +253,6 @@ def command_status(api_url: str, api_key: str, api_timeout: int, command_id: str
         return response
     return {}
 
-def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
-    """Check the connection to Sonarr API."""
-    try:
-        response = requests.get(f"{api_url}/api/v3/system/status", headers={"X-Api-Key": api_key}, timeout=api_timeout)
-        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
-        sonarr_logger.info("Successfully connected to Sonarr.")
-        return True
-    except requests.exceptions.RequestException as e:
-        sonarr_logger.error(f"Error connecting to Sonarr: {e}")
-        return False
-    except Exception as e:
-        sonarr_logger.error(f"An unexpected error occurred during Sonarr connection check: {e}")
-        return False
-
 def get_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool) -> List[Dict[str, Any]]:
     """Get missing episodes from Sonarr, handling pagination."""
     endpoint = "wanted/missing"
@@ -254,7 +273,9 @@ def get_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored
                 "pageSize": page_size,
                 "includeSeries": "true"
             }
-            url = f"{api_url}/api/v3/{endpoint}"
+            # Ensure proper URL construction with scheme
+            base_url = api_url.rstrip('/')
+            url = f"{base_url}/api/v3/{endpoint.lstrip('/')}"
             sonarr_logger.debug(f"Requesting missing episodes page {page} (attempt {retry_count+1}/{retries_per_page+1})")
             
             try:

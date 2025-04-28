@@ -5,13 +5,10 @@
 
 const huntarrUI = {
     // Current state
-    currentSection: 'home',
-    currentApp: 'sonarr',
-    currentSettingsTab: 'sonarr',
-    currentLogApp: 'sonarr', // Added currentLogApp to track the selected log tab
-    autoScroll: true,
-    darkMode: false,
     eventSources: {},
+    currentSection: 'home', // Default section
+    currentLogApp: 'all', // Default log app
+    autoScroll: true,
     configuredApps: {
         sonarr: false,
         radarr: false,
@@ -20,6 +17,7 @@ const huntarrUI = {
         whisparr: false // Added whisparr
     },
     originalSettings: {}, // Store the full original settings object
+    settingsChanged: false, // Flag to track unsaved settings changes
     
     // Logo URL
     logoUrl: '/static/logo/64.png',
@@ -48,6 +46,9 @@ const huntarrUI = {
         if (typeof window.applyLogoToAllElements === 'function') {
             window.applyLogoToAllElements();
         }
+        
+        // Initialize instance event handlers
+        this.setupInstanceEventHandlers();
     },
     
     // Cache DOM elements for better performance
@@ -79,7 +80,6 @@ const huntarrUI = {
         
         // Settings
         this.elements.saveSettingsButton = document.getElementById('saveSettingsButton'); // Corrected ID
-        this.elements.resetSettingsButton = document.getElementById('resetSettingsButton'); // Corrected ID
         
         // Status elements
         this.elements.sonarrHomeStatus = document.getElementById('sonarrHomeStatus');
@@ -137,10 +137,6 @@ const huntarrUI = {
             this.elements.saveSettingsButton.addEventListener('click', this.saveSettings.bind(this));
         }
         
-        if (this.elements.resetSettingsButton) {
-            this.elements.resetSettingsButton.addEventListener('click', this.resetSettings.bind(this));
-        }
-        
         // Actions
         if (this.elements.startHuntButton) {
             this.elements.startHuntButton.addEventListener('click', this.startHunt.bind(this));
@@ -170,7 +166,7 @@ const huntarrUI = {
                 if (event.target.closest('.app-settings-panel.active')) {
                     // Check if the target is an input, select, or textarea within the active panel
                     if (event.target.matches('input, select, textarea')) {
-                        this.handleSettingChange();
+                        this.markSettingsAsChanged(); // Use the new function
                     }
                 }
             });
@@ -178,11 +174,24 @@ const huntarrUI = {
                  if (event.target.closest('.app-settings-panel.active')) {
                     // Handle changes for checkboxes and selects that use 'change' event
                     if (event.target.matches('input[type="checkbox"], select')) {
-                         this.handleSettingChange();
+                         this.markSettingsAsChanged(); // Use the new function
                     }
                  }
             });
         }
+
+        // Add listener for unsaved changes prompt (External Navigation)
+        window.onbeforeunload = (event) => {
+            if (this.settingsChanged) {
+                // Standard way to trigger the browser's confirmation dialog
+                event.preventDefault(); 
+                // Chrome requires returnValue to be set
+                event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                return 'You have unsaved changes. Are you sure you want to leave?'; // For older browsers
+            }
+            // If no changes, return undefined to allow navigation without prompt
+            return undefined; 
+        };
 
         // Initial setup based on hash or default to home
         const initialHash = window.location.hash || '#home';
@@ -218,14 +227,36 @@ const huntarrUI = {
     // Navigation handling
     handleNavigation: function(e) {
         e.preventDefault();
-        const href = e.currentTarget.getAttribute('href');
-        
-        if (href.startsWith('#')) {
-            // Internal navigation
-            window.location.hash = href;
+        const targetElement = e.currentTarget; // Get the clicked nav item
+        const href = targetElement.getAttribute('href'); 
+
+        if (!href) return; // Exit if no href
+
+        let targetSection = null;
+        let isInternalLink = href.startsWith('#');
+
+        if (isInternalLink) {
+            targetSection = href.substring(1) || 'home'; // Get section from hash, default to 'home' if only '#' 
         } else {
-            // External navigation - preserve state
-            localStorage.setItem('huntarr-logo-url', this.logoUrl);
+             // Handle external links (like /user) or non-hash links if needed
+             // For now, assume non-hash links navigate away
+        }
+
+        // Check for unsaved changes ONLY if navigating INTERNALLY away from settings
+        if (isInternalLink && this.currentSection === 'settings' && targetSection !== 'settings' && this.settingsChanged) {
+            if (!confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
+                return; // Stop navigation if user cancels
+            }
+             // User confirmed, reset flag before navigating
+            this.settingsChanged = false;
+            this.updateSaveResetButtonState(false); 
+        }
+
+        // Proceed with navigation
+        if (isInternalLink) {
+            window.location.hash = href; // Change hash to trigger handleHashNavigation
+        } else {
+            // If it's an external link (like /user), just navigate normally
             window.location.href = href;
         }
     },
@@ -269,6 +300,33 @@ const huntarrUI = {
             if (this.elements.settingsNav) this.elements.settingsNav.classList.add('active');
             newTitle = 'Settings';
             this.currentSection = 'settings';
+            
+            // Ensure default settings tab is set if none is active
+            if (!this.currentSettingsTab) {
+                this.currentSettingsTab = 'sonarr'; // Default to sonarr tab
+                
+                // Set the sonarr tab as active
+                const sonarrTab = document.querySelector('.settings-tab[data-settings="sonarr"]');
+                if (sonarrTab) {
+                    this.elements.settingsTabs.forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    sonarrTab.classList.add('active');
+                    
+                    // Also set the sonarr panel as visible
+                    this.elements.appSettingsPanels.forEach(panel => {
+                        panel.classList.remove('active');
+                        panel.style.display = 'none';
+                    });
+                    
+                    const sonarrPanel = document.getElementById('sonarrSettings');
+                    if (sonarrPanel) {
+                        sonarrPanel.classList.add('active');
+                        sonarrPanel.style.display = 'block';
+                    }
+                }
+            }
+            
             this.loadAllSettings();
             // Disconnect logs if switching away from logs
             this.disconnectAllEventSources(); 
@@ -338,30 +396,48 @@ const huntarrUI = {
 
     // Settings tab switching
     handleSettingsTabChange: function(e) {
-        const tab = e.target.getAttribute('data-settings');
-        if (!tab) return;
-        
-        // Update active tab
-        this.elements.settingsTabs.forEach(t => {
-            t.classList.remove('active');
-        });
-        e.target.classList.add('active');
-        
-        // Switch to the selected settings panel
+        // Use currentTarget to ensure we get the button, not the inner element
+        const targetTab = e.currentTarget;
+        const app = targetTab.dataset.app; // Use dataset.app as added in SettingsForms
+
+        if (!app) {
+             console.error("Settings tab clicked, but no data-app attribute found.");
+             return; // Should not happen if HTML is correct
+        }
+        e.preventDefault(); // Prevent default if it was an anchor
+
+        // Check for unsaved changes before switching tabs
+        if (this.settingsChanged) {
+            if (!confirm('You have unsaved changes on the current tab. Switch tabs anyway? Changes will be lost.')) {
+                return; // Stop tab switch if user cancels
+            }
+             // User confirmed, reset flag before switching
+            this.settingsChanged = false;
+            this.updateSaveResetButtonState(false);
+        }
+
+        // Remove active class from all tabs and panels
+        this.elements.settingsTabs.forEach(tab => tab.classList.remove('active'));
         this.elements.appSettingsPanels.forEach(panel => {
             panel.classList.remove('active');
             panel.style.display = 'none'; // Explicitly hide
         });
-        
-        const panelElement = document.getElementById(`${tab}Settings`);
+
+        // Set the target tab as active
+        targetTab.classList.add('active');
+
+        // Show the corresponding settings panel
+        const panelElement = document.getElementById(`${app}Settings`);
         if (panelElement) {
             panelElement.classList.add('active');
             panelElement.style.display = 'block'; // Explicitly show
-            this.currentSettingsTab = tab;
+            this.currentSettingsTab = app; // Update current tab state
             // Ensure settings are populated for this tab using the stored originalSettings
-            this.populateSettingsForm(tab, this.originalSettings[tab] || {});
-            // Reset save button state when switching tabs
-            this.updateSaveResetButtonState(tab, false);
+            this.populateSettingsForm(app, this.originalSettings[app] || {});
+            // Reset save button state when switching tabs (already done above if confirmed)
+            this.updateSaveResetButtonState(false); // Ensure it's disabled on new tab
+        } else {
+             console.error(`Settings panel not found for app: ${app}`);
         }
     },
     
@@ -376,7 +452,7 @@ const huntarrUI = {
         this.elements.logConnectionStatus.className = '';
     },
     
-    connectEventSource: function(appType = 'all') { // Default to 'all', accept appType
+    connectEventSource: function(appType) {
         // Close any existing event source
         if (this.eventSources.logs) {
             this.eventSources.logs.close();
@@ -394,58 +470,109 @@ const huntarrUI = {
             eventSource.onmessage = (event) => {
                 if (!this.elements.logsContainer) return;
                 
-                const logEntry = document.createElement('div');
-                logEntry.className = 'log-entry';
-                
-                // Add appropriate class for log level
-                // Simplified check - adjust if log format changes
-                const lowerData = event.data.toLowerCase();
-                if (lowerData.includes('info')) {
-                    logEntry.classList.add('log-info');
-                } else if (lowerData.includes('warning')) {
-                    logEntry.classList.add('log-warning');
-                } else if (lowerData.includes('error')) {
-                    logEntry.classList.add('log-error');
-                } else if (lowerData.includes('debug')) {
-                    logEntry.classList.add('log-debug');
-                }
-                
-                logEntry.textContent = event.data;
-                this.elements.logsContainer.appendChild(logEntry);
-                
-                // Auto-scroll to bottom if enabled
-                if (this.autoScroll) {
-                    this.elements.logsContainer.scrollTop = this.elements.logsContainer.scrollHeight;
+                try {
+                    // Create log entry element
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    
+                    // The event.data should be used directly - server sends it as plain text
+                    logEntry.textContent = event.data;
+                    
+                    // Detect log level from content for styling
+                    if (event.data.includes('[ERROR]') || event.data.includes('Error:')) {
+                        logEntry.classList.add('log-error');
+                    } else if (event.data.includes('[WARNING]') || event.data.includes('Warning:')) {
+                        logEntry.classList.add('log-warning');
+                    } else if (event.data.includes('[DEBUG]')) {
+                        logEntry.classList.add('log-debug');
+                    } else {
+                        logEntry.classList.add('log-info');
+                    }
+                    
+                    // Add to logs container
+                    this.elements.logsContainer.appendChild(logEntry);
+                    
+                    // Auto-scroll to bottom if enabled
+                    if (this.autoScroll) {
+                        this.elements.logsContainer.scrollTop = this.elements.logsContainer.scrollHeight;
+                    }
+                } catch (error) {
+                    console.error('[huntarrUI] Error processing log message:', error);
                 }
             };
             
-            eventSource.onerror = () => {
-                this.elements.logConnectionStatus.textContent = 'Disconnected';
-                this.elements.logConnectionStatus.className = 'status-disconnected';
+            eventSource.onerror = (err) => {
+                console.error(`[huntarrUI] EventSource error for app ${this.currentLogApp}:`, err); // Use currentLogApp
+                if (this.elements.logConnectionStatus) {
+                    this.elements.logConnectionStatus.textContent = 'Error/Disconnected';
+                    this.elements.logConnectionStatus.className = 'status-disconnected';
+                }
                 
-                // Try to reconnect after a delay
-                setTimeout(() => {
-                    // Only reconnect if the logs section is still active
+                // Close the potentially broken source before reconnecting
+                if (this.eventSources.logs) {
+                    this.eventSources.logs.close();
+                    this.eventSources.logs = null; // Clear reference
+                    console.log(`[huntarrUI] Closed potentially broken log EventSource for ${this.currentLogApp}.`);
+                }
+
+                // Always attempt to reconnect after a delay
+                console.log(`[huntarrUI] Attempting to reconnect log stream for ${this.currentLogApp} in 5 seconds...`);
+                // Use a variable to store the timeout ID so it can be cleared if needed
+                if (this.logReconnectTimeout) {
+                    clearTimeout(this.logReconnectTimeout);
+                }
+                this.logReconnectTimeout = setTimeout(() => {
+                    // Check if we are *still* supposed to be connected to logs before reconnecting
                     if (this.currentSection === 'logs') {
-                        this.connectEventSource(this.currentLogApp); // Use current app type
+                         console.log(`[huntarrUI] Reconnecting log stream for ${this.currentLogApp}.`);
+                         this.connectEventSource(this.currentLogApp); 
+                    } else {
+                         console.log(`[huntarrUI] Log reconnect cancelled; user navigated away from logs section.`);
                     }
+                    this.logReconnectTimeout = null; // Clear the timeout ID after execution
                 }, 5000);
             };
             
             this.eventSources.logs = eventSource;
         } catch (error) {
             console.error('Error connecting to event source:', error);
-            this.elements.logConnectionStatus.textContent = 'Connection Error';
-            this.elements.logConnectionStatus.className = 'status-disconnected';
+            if (this.elements.logConnectionStatus) {
+                this.elements.logConnectionStatus.textContent = 'Connection Error';
+                this.elements.logConnectionStatus.className = 'status-disconnected';
+            }
         }
     },
     
     disconnectAllEventSources: function() {
-        Object.values(this.eventSources).forEach(source => {
-            if (source && source.readyState !== 2) {
-                source.close();
+        console.log('[huntarrUI] Disconnecting all event sources...');
+        // Clear any pending reconnect timeout
+        if (this.logReconnectTimeout) {
+            clearTimeout(this.logReconnectTimeout);
+            this.logReconnectTimeout = null;
+            console.log('[huntarrUI] Cleared pending log reconnect timeout.');
+        }
+        Object.keys(this.eventSources).forEach(key => {
+            const source = this.eventSources[key];
+            if (source && typeof source.close === 'function') {
+                 try {
+                     if (source.readyState !== EventSource.CLOSED) {
+                         source.close();
+                         console.log(`[huntarrUI] Closed event source for ${key}.`);
+                     } else {
+                         console.log(`[huntarrUI] Event source for ${key} was already closed.`);
+                     }
+                 } catch (e) {
+                     console.error(`[huntarrUI] Error closing event source for ${key}:`, e);
+                 }
             }
+            // Clear the reference
+            delete this.eventSources[key]; // Use delete
         });
+         // Reset status indicator if logs aren't the active section
+         if (this.currentSection !== 'logs' && this.elements.logConnectionStatus) {
+             this.elements.logConnectionStatus.textContent = 'Disconnected';
+             this.elements.logConnectionStatus.className = 'status-disconnected';
+         }
     },
     
     addLogMessage: function(logData) {
@@ -470,6 +597,10 @@ const huntarrUI = {
     
     // Settings handling
     loadAllSettings: function() {
+        // Ensure buttons are disabled and flag is reset when loading settings section
+        this.settingsChanged = false;
+        this.updateSaveResetButtonState(false);
+        
         console.log("[huntarrUI] Loading all settings...");
         fetch(`/api/settings`) // Fetch the entire settings object
             .then(response => {
@@ -494,81 +625,59 @@ const huntarrUI = {
     },
     
     populateSettingsForm: function(app, appSettings) {
-        const container = document.getElementById(`${app}Settings`);
-        if (!container) {
-            console.warn(`[huntarrUI] Container not found for populating settings: ${app}Settings`);
+        // Cache the form for this app
+        const form = document.getElementById(`${app}Settings`);
+        if (!form) return;
+        
+        // Check if SettingsForms is loaded to generate the form
+        if (typeof SettingsForms !== 'undefined') {
+            const formFunction = SettingsForms[`generate${app.charAt(0).toUpperCase()}${app.slice(1)}Form`];
+            if (typeof formFunction === 'function') {
+                formFunction(form, appSettings);
+                
+                // For ANY app with instances, set up the instance management
+                // Check if instances exist and it's an array
+                if (appSettings && Array.isArray(appSettings.instances) && typeof SettingsForms.setupInstanceManagement === 'function') {
+                    try {
+                        // Pass the actual app name and the number of instances found
+                        SettingsForms.setupInstanceManagement(form, app, appSettings.instances.length);
+                    } catch (e) {
+                        console.error(`[huntarrUI] Error setting up instance management for ${app}:`, e);
+                    }
+                }
+                
+                // Update duration displays for this app
+                if (typeof SettingsForms.updateDurationDisplay === 'function') {
+                    try {
+                        SettingsForms.updateDurationDisplay();
+                    } catch (e) {
+                        console.error(`[huntarrUI] Error updating duration display:`, e);
+                    }
+                }
+            } else {
+                console.error(`[huntarrUI] Form generator function not found for app: ${app}`);
+            }
+        } else {
+            console.error('[huntarrUI] SettingsForms is not defined');
             return;
         }
-        console.log(`[huntarrUI] Populating settings form for ${app}`, appSettings);
-
-        // Use SettingsForms to generate the form structure if not already present
-        // This assumes SettingsForms is available globally or imported
-        if (typeof SettingsForms !== 'undefined' && !container.querySelector('.settings-group')) {
-             const formGenerator = SettingsForms[`generate${this.capitalizeFirst(app)}Form`];
-             if (formGenerator) {
-                 console.log(`[huntarrUI] Generating form structure for ${app}`);
-                 formGenerator(container, appSettings); // Generate structure AND populate initial values
-             } else {
-                 console.warn(`[huntarrUI] Form generator not found for ${app}`);
-             }
-        } else {
-             // If form structure exists, just update values
-             console.log(`[huntarrUI] Updating existing form values for ${app}`);
-             const inputs = container.querySelectorAll('input, select, textarea');
-             inputs.forEach(input => {
-                 const key = input.id.replace(`${app}_`, ''); // Get the setting key from the ID
-
-                 if (appSettings.hasOwnProperty(key)) {
-                     const value = appSettings[key];
-                     if (input.type === 'checkbox') {
-                         input.checked = value === true;
-                     } else if (input.type === 'radio') {
-                         // Handle radio buttons if necessary (check by value)
-                         if (input.value === String(value)) {
-                             input.checked = true;
-                         }
-                     } else {
-                         input.value = value;
-                     }
-                 } else {
-                      // Optional: Clear or set default for fields not in settings?
-                      // console.warn(`[huntarrUI] Setting key "${key}" not found in settings for ${app}`);
-                 }
-             });
-        }
-
-        // Special handling for duration displays if needed (might be better in SettingsForms)
-        if (typeof SettingsForms !== 'undefined' && typeof SettingsForms.updateDurationDisplay === 'function') {
-            SettingsForms.updateDurationDisplay();
-        }
-
-        // Initialize app-specific JS handlers after form is populated/generated
-        if (app === 'sonarr' && typeof setupSonarrForm === 'function') {
-            setupSonarrForm();
-        } else if (app === 'radarr' && typeof setupRadarrForm === 'function') {
-            setupRadarrForm();
-        } else if (app === 'lidarr' && typeof setupLidarrForm === 'function') {
-            setupLidarrForm();
-        } else if (app === 'readarr' && typeof setupReadarrForm === 'function') {
-            setupReadarrForm();
-        } else if (app === 'whisparr' && typeof setupWhisparrForm === 'function') { // Added Whisparr
-            setupWhisparrForm();
-        }
-
-        // Ensure save/reset buttons are initially disabled after populating
-        this.updateSaveResetButtonState(app, false);
     },
-
+    
     // Called when any setting input changes in the active tab
-    handleSettingChange: function() {
-        console.log(`[huntarrUI] Setting change detected in tab: ${this.currentSettingsTab}`);
-        this.updateSaveResetButtonState(this.currentSettingsTab, true); // Enable save button
+    markSettingsAsChanged() {
+        if (!this.settingsChanged) {
+            console.log("[huntarrUI] Settings marked as changed.");
+            this.settingsChanged = true;
+            this.updateSaveResetButtonState(true); // Enable buttons
+        }
     },
 
     saveSettings: function() {
         const app = this.currentSettingsTab;
         console.log(`[huntarrUI] saveSettings called for app: ${app}`);
-        const settings = this.collectSettingsFromForm(app);
+        
+        // Use getFormSettings for all apps, as it handles different structures
+        let settings = this.getFormSettings(app);
 
         if (!settings) {
             console.error(`[huntarrUI] Failed to collect settings for app: ${app}`);
@@ -578,8 +687,7 @@ const huntarrUI = {
 
         console.log(`[huntarrUI] Collected settings for ${app}:`, settings);
 
-        // Add app_type to the payload if needed by backend (confirm backend logic)
-        // Assuming the backend merges based on the top-level key matching the app name
+        // Add app_type to the payload if needed by backend
         const payload = { [app]: settings };
 
         console.log(`[huntarrUI] Sending settings payload for ${app}:`, payload);
@@ -590,7 +698,7 @@ const huntarrUI = {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(payload) // Send payload structured as { appName: { settings... } }
+            body: JSON.stringify(payload)
         })
         .then(response => {
             if (!response.ok) {
@@ -604,34 +712,34 @@ const huntarrUI = {
             }
             return response.json();
         })
-        .then(savedConfig => { // Backend returns the full, updated config
+        .then(savedConfig => {
             console.log('[huntarrUI] Settings saved successfully. Full config received:', savedConfig);
             this.showNotification('Settings saved successfully', 'success');
 
             // Update original settings state with the full config returned from backend
-            // Ensure savedConfig is the full object { sonarr: {...}, radarr: {...}, ... }
             if (typeof savedConfig === 'object' && savedConfig !== null) {
-                 this.originalSettings = JSON.parse(JSON.stringify(savedConfig));
+                this.originalSettings = JSON.parse(JSON.stringify(savedConfig));
             } else {
                 console.error('[huntarrUI] Invalid config received from backend after save:', savedConfig);
-                // Attempt to reload all settings as a fallback
                 this.loadAllSettings();
-                return; // Avoid further processing with invalid data
+                return;
             }
 
-            // Re-populate the current form with the saved data for consistency
+            // Re-populate the form with the saved data
             const currentAppSettings = this.originalSettings[app] || {};
+            
+            // Preserve instances data if missing in the response but was in our sent data
+            if (app === 'sonarr' && !currentAppSettings.instances && settings.instances) {
+                currentAppSettings.instances = settings.instances;
+            }
+            
             this.populateSettingsForm(app, currentAppSettings);
 
-            // Update connection status for the saved app
+            // Update connection status and UI
             this.checkAppConnection(app);
-
-            // Update general UI elements like home page statuses
-            this.updateHomeConnectionStatus(); // Assuming this function exists and works
-
-            // Disable save/reset buttons as changes are now saved
-            this.updateSaveResetButtonState(app, false);
-
+            this.updateHomeConnectionStatus();
+            this.settingsChanged = false; // Reset flag after successful save
+            this.updateSaveResetButtonState(false); // Disable buttons after save
         })
         .catch(error => {
             console.error('Error saving settings:', error);
@@ -639,59 +747,335 @@ const huntarrUI = {
         });
     },
 
-    resetSettings: function() {
-        if (confirm('Are you sure you want to reset these settings to default values?')) {
-            const app = this.currentSettingsTab;
-            
-            // Use POST /api/settings/reset and send app name in body
-            fetch(`/api/settings/reset`, { 
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ app: app }) // Send app name in body
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.showNotification('Settings reset to defaults', 'success');
-                    // Reload settings for the current app
-                    this.loadSettings(app); 
-                } else {
-                    this.showNotification('Error resetting settings', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error resetting settings:', error);
-                this.showNotification('Error resetting settings', 'error');
-            });
+    // Add or modify this function to handle enabling/disabling save/reset
+    updateSaveResetButtonState(enable) { // Changed signature
+        const saveButton = this.elements.saveSettingsButton;
+
+        if (saveButton) {
+            saveButton.disabled = !enable;
+            // Optional: Add/remove class for styling
+            if (enable) {
+                saveButton.classList.remove('disabled-button');
+            } else {
+                saveButton.classList.add('disabled-button');
+            }
         }
     },
-    
-    collectSettingsFromForm: function(app) {
+
+    // Get settings from the form, updated to handle instances consistently
+    getFormSettings: function(app) {
         const settings = {};
-        
-        // Collect all input values for the current app
-        const container = document.getElementById(`${app}Settings`);
-        if (!container) return settings;
-        
-        // Get all inputs
-        const inputs = container.querySelectorAll('input, select');
-        inputs.forEach(input => {
-            const id = input.id;
-            const key = id.replace(`${app}_`, '');
-            
-            // Handle different input types
+        const form = document.getElementById(`${app}Settings`);
+        if (!form) {
+            console.error(`[huntarrUI] Form not found for app: ${app}`);
+            return null; // Return null if form doesn't exist
+        }
+
+        settings.instances = []; // Always initialize instances array
+
+        // Check if multi-instance UI elements exist (like Sonarr)
+        const instanceItems = form.querySelectorAll('.instance-item');
+        if (instanceItems.length > 0) {
+            console.log(`[huntarrUI] Found ${instanceItems.length} instance items for ${app}. Processing multi-instance mode.`);
+            // Multi-instance logic (current Sonarr logic)
+            instanceItems.forEach((item, index) => {
+                const instanceId = item.dataset.instanceId; // Assumes Sonarr uses data-instance-id
+                const nameInput = form.querySelector(`#${app}_instance_${instanceId}_name`);
+                const urlInput = form.querySelector(`#${app}_instance_${instanceId}_api_url`);
+                const keyInput = form.querySelector(`#${app}_instance_${instanceId}_api_key`);
+                const enabledInput = item.querySelector('.instance-enabled'); // Assumes Sonarr uses this class for enable toggle
+
+                if (urlInput && keyInput) { // Need URL and Key at least
+                    settings.instances.push({
+                        // Use nameInput value if available, otherwise generate a default
+                        name: nameInput && nameInput.value.trim() !== '' ? nameInput.value.trim() : `Instance ${index + 1}`,
+                        api_url: urlInput.value.trim(),
+                        api_key: keyInput.value.trim(),
+                        // Default to true if toggle doesn't exist or is checked
+                        enabled: enabledInput ? enabledInput.checked : true
+                    });
+                }
+            });
+        } else {
+            console.log(`[huntarrUI] No instance items found for ${app}. Processing single-instance mode.`);
+            // Single-instance logic (for Radarr, Lidarr, etc.)
+            // Look for the standard IDs used in their forms
+            const nameInput = form.querySelector(`#${app}_instance_name`); // Check for a specific name field
+            const urlInput = form.querySelector(`#${app}_api_url`);
+            const keyInput = form.querySelector(`#${app}_api_key`);
+            // Assuming single instances might have an enable toggle like #app_enabled
+            const enabledInput = form.querySelector(`#${app}_enabled`);
+
+            // Only add if URL and Key have values
+            if (urlInput && urlInput.value.trim() && keyInput && keyInput.value.trim()) {
+                 settings.instances.push({
+                     name: nameInput && nameInput.value.trim() !== '' ? nameInput.value.trim() : `${app} Instance 1`, // Default name
+                     api_url: urlInput.value.trim(),
+                     api_key: keyInput.value.trim(),
+                     // Default to true if toggle doesn't exist or is checked
+                     enabled: enabledInput ? enabledInput.checked : true
+                 });
+            }
+        }
+
+        console.log(`[huntarrUI] Processed instances for ${app}:`, settings.instances);
+
+        // Now collect any OTHER settings NOT part of the instance structure
+        const allInputs = form.querySelectorAll('input, select');
+        const handledInstanceFieldIds = new Set();
+
+        // Identify IDs used in instance collection to avoid double-adding them
+        if (instanceItems.length > 0) {
+            // Multi-instance: Iterate items again to get IDs
+            instanceItems.forEach((item) => {
+                const instanceId = item.dataset.instanceId;
+                if(instanceId) {
+                    handledInstanceFieldIds.add(`${app}_instance_${instanceId}_name`);
+                    handledInstanceFieldIds.add(`${app}_instance_${instanceId}_api_url`);
+                    handledInstanceFieldIds.add(`${app}_instance_${instanceId}_api_key`);
+                    const enabledToggle = item.querySelector('.instance-enabled');
+                    if (enabledToggle && enabledToggle.id) handledInstanceFieldIds.add(enabledToggle.id);
+                }
+            });
+        } else {
+            // Single-instance: Check for standard IDs
+             if (form.querySelector(`#${app}_instance_name`)) handledInstanceFieldIds.add(`${app}_instance_name`);
+             if (form.querySelector(`#${app}_api_url`)) handledInstanceFieldIds.add(`${app}_api_url`);
+             if (form.querySelector(`#${app}_api_key`)) handledInstanceFieldIds.add(`${app}_api_key`);
+             if (form.querySelector(`#${app}_enabled`)) handledInstanceFieldIds.add(`${app}_enabled`);
+        }
+
+        allInputs.forEach(input => {
+            // Skip buttons and fields already processed as part of an instance
+            if (input.type === 'button' || handledInstanceFieldIds.has(input.id)) {
+                return;
+            }
+
+            // Get the field key (remove app prefix)
+            let key = input.id;
+            if (key.startsWith(`${app}_`)) {
+                key = key.substring(app.length + 1);
+            }
+
+            // Skip empty keys or keys that are just numbers (unlikely but possible)
+            if (!key || /^\d+$/.test(key)) return;
+
+            // Store the value
             if (input.type === 'checkbox') {
                 settings[key] = input.checked;
             } else if (input.type === 'number') {
-                settings[key] = parseInt(input.value, 10);
+                // Handle potential empty string for numbers, store as null or default?
+                settings[key] = input.value === '' ? null : parseInt(input.value, 10);
             } else {
-                settings[key] = input.value;
+                settings[key] = input.value.trim();
             }
         });
-        
+
+        console.log(`[huntarrUI] Final collected settings for ${app}:`, settings);
         return settings;
+    },
+
+    // Handle instance management events
+    setupInstanceEventHandlers: function() {
+        const settingsPanels = document.querySelectorAll('.app-settings-panel');
+        
+        settingsPanels.forEach(panel => {
+            panel.addEventListener('addInstance', (e) => {
+                this.addAppInstance(e.detail.appName);
+            });
+            
+            panel.addEventListener('removeInstance', (e) => {
+                this.removeAppInstance(e.detail.appName, e.detail.instanceId);
+            });
+            
+            panel.addEventListener('testConnection', (e) => {
+                this.testInstanceConnection(e.detail.appName, e.detail.instanceId, e.detail.url, e.detail.apiKey);
+            });
+        });
+    },
+    
+    // Add a new instance to the app
+    addAppInstance: function(appName) {
+        const container = document.getElementById(`${appName}Settings`);
+        if (!container) return;
+        
+        // Get current settings
+        const currentSettings = this.getFormSettings(appName);
+        
+        // Add new instance
+        if (!currentSettings.instances) {
+            currentSettings.instances = [];
+        }
+        
+        // Limit to 9 instances
+        if (currentSettings.instances.length >= 9) {
+            this.showNotification('Maximum of 9 instances allowed', 'error');
+            return;
+        }
+        
+        // Add new instance with a default name
+        currentSettings.instances.push({
+            name: `Instance ${currentSettings.instances.length + 1}`,
+            api_url: '',
+            api_key: '',
+            enabled: true
+        });
+        
+        // Regenerate form with new instance
+        SettingsForms[`generate${appName.charAt(0).toUpperCase()}${appName.slice(1)}Form`](container, currentSettings);
+        
+        // Update controls like duration displays
+        SettingsForms.updateDurationDisplay();
+        
+        this.showNotification('New instance added', 'success');
+    },
+    
+    // Remove an instance
+    removeAppInstance: function(appName, instanceId) {
+        const container = document.getElementById(`${appName}Settings`);
+        if (!container) return;
+        
+        // Get current settings
+        const currentSettings = this.getFormSettings(appName);
+        
+        // Remove the instance
+        if (currentSettings.instances && instanceId >= 0 && instanceId < currentSettings.instances.length) {
+            // Keep at least one instance
+            if (currentSettings.instances.length > 1) {
+                const removedName = currentSettings.instances[instanceId].name;
+                currentSettings.instances.splice(instanceId, 1);
+                
+                // Regenerate form
+                SettingsForms[`generate${appName.charAt(0).toUpperCase()}${appName.slice(1)}Form`](container, currentSettings);
+                
+                // Update controls like duration displays
+                SettingsForms.updateDurationDisplay();
+                
+                this.showNotification(`Instance "${removedName}" removed`, 'info');
+            } else {
+                this.showNotification('Cannot remove the last instance', 'error');
+            }
+        }
+    },
+    
+    // Test connection for a specific instance
+    testInstanceConnection: function(appName, instanceId, url, apiKey) {
+        console.log(`Testing connection for ${appName} instance ${instanceId} with URL: ${url}`);
+        
+        // Make sure instanceId is treated as a number
+        instanceId = parseInt(instanceId, 10);
+        
+        // Find the status span where we'll display the result
+        const statusSpan = document.getElementById(`${appName}_instance_${instanceId}_status`);
+        if (!statusSpan) {
+            console.error(`Status span not found for ${appName} instance ${instanceId}`);
+            return;
+        }
+        
+        // Show testing status
+        statusSpan.textContent = 'Testing...';
+        statusSpan.className = 'connection-status testing';
+        
+        // Validate URL and API key
+        if (!url || !apiKey) {
+            statusSpan.textContent = 'Missing URL or API key';
+            statusSpan.className = 'connection-status error';
+            return;
+        }
+        
+        // Check if URL is properly formatted
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            statusSpan.textContent = 'URL must start with http:// or https://';
+            statusSpan.className = 'connection-status error';
+            return;
+        }
+        
+        // Clean up the URL by removing trailing slashes
+        url = url.trim().replace(/\/+$/, '');
+        
+        // Make the API request to test the connection
+        fetch(`/api/${appName}/test-connection`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                api_url: url,
+                api_key: apiKey
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || this.getConnectionErrorMessage(response.status));
+                }).catch(() => {
+                    // Fallback if response body is not JSON or empty
+                    throw new Error(this.getConnectionErrorMessage(response.status));
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(`Connection test response data for ${appName} instance ${instanceId}:`, data);
+            if (data.success) {
+                statusSpan.textContent = data.message || 'Connected';
+                statusSpan.className = 'connection-status success';
+                
+                // If a version was returned, display it
+                if (data.version) {
+                    statusSpan.textContent += ` (v${data.version})`;
+                }
+            } else {
+                statusSpan.textContent = data.message || 'Failed';
+                statusSpan.className = 'connection-status error';
+            }
+        })
+        .catch(error => {
+            console.error(`Error testing connection for ${appName} instance ${instanceId}:`, error);
+            
+            // Extract the most relevant part of the error message
+            let errorMessage = error.message || 'Unknown error';
+            if (errorMessage.includes('Name or service not known')) {
+                errorMessage = 'Unable to resolve hostname. Check the URL.';
+            } else if (errorMessage.includes('Connection refused')) {
+                errorMessage = 'Connection refused. Check that the service is running.';
+            } else if (errorMessage.includes('connect ETIMEDOUT') || errorMessage.includes('timeout')) {
+                errorMessage = 'Connection timed out. Check URL and port.';
+            } else if (errorMessage.includes('401') || errorMessage.includes('Authentication failed')) {
+                errorMessage = 'Invalid API key';
+            } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+                errorMessage = 'URL endpoint not found. Check the URL.';
+            } else if (errorMessage.startsWith('HTTP error!')) {
+                errorMessage = 'Connection failed. Check URL and port.';
+            }
+            
+            statusSpan.textContent = errorMessage;
+            statusSpan.className = 'connection-status error';
+        });
+    },
+    
+    // Helper function to translate HTTP error codes to user-friendly messages
+    getConnectionErrorMessage: function(status) {
+        switch(status) {
+            case 400:
+                return 'Invalid request. Check URL format.';
+            case 401:
+                return 'Invalid API key';
+            case 403:
+                return 'Access forbidden. Check permissions.';
+            case 404:
+                return 'Service not found at this URL. Check address.';
+            case 500:
+                return 'Server error. Check if the service is working properly.';
+            case 502:
+                return 'Bad gateway. Check network connectivity.';
+            case 503:
+                return 'Service unavailable. Check if the service is running.';
+            case 504:
+                return 'Gateway timeout. Check network connectivity.';
+            default:
+                return `Connection error. Check URL and port.`;
+        }
     },
     
     // App connections
@@ -707,25 +1091,76 @@ const huntarrUI = {
         fetch(`/api/status/${app}`)
             .then(response => response.json())
             .then(data => {
-                this.updateConnectionStatus(app, data.connected);
-                this.configuredApps[app] = data.configured;
+                // Pass the whole data object for all apps
+                this.updateConnectionStatus(app, data); 
+
+                // Still update the configuredApps flag for potential other uses, but after updating status
+                this.configuredApps[app] = data.configured === true; // Ensure it's a boolean
             })
             .catch(error => {
                 console.error(`Error checking ${app} connection:`, error);
-                this.updateConnectionStatus(app, false);
+                // Pass a default 'not configured' status object on error
+                this.updateConnectionStatus(app, { configured: false, connected: false }); 
             });
     },
     
-    updateConnectionStatus: function(app, connected) {
+    updateConnectionStatus: function(app, statusData) {
         const statusElement = this.elements[`${app}HomeStatus`];
         if (!statusElement) return;
+
+        // Find the parent container for the whole app status box
+        const appBox = statusElement.closest('.app-stats-card'); // CORRECTED SELECTOR
+        if (!appBox) {
+            // If the card structure changes, this might fail. Log a warning.
+            console.warn(`[huntarrUI] Could not find parent '.app-stats-card' element for ${app}`);
+        }
+
+        let isConfigured = false;
+        let isConnected = false;
+
+        // Try to determine configured and connected status from statusData object
+        // Default to false if properties are missing
+        isConfigured = statusData?.configured === true;
+        isConnected = statusData?.connected === true;
+
+        // Special handling for *arr apps' multi-instance connected count
+        let connectedCount = statusData?.connected_count ?? 0;
+        let totalConfigured = statusData?.total_configured ?? 0;
         
-        if (connected) {
-            statusElement.className = 'status-badge connected';
-            statusElement.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
+        // For all *arr apps, 'isConfigured' means at least one instance is configured
+        if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr'].includes(app)) {
+            isConfigured = totalConfigured > 0;
+            // For *arr apps, 'isConnected' means at least one instance is connected
+            isConnected = isConfigured && connectedCount > 0; 
+        }
+
+        // --- Visibility Logic --- 
+        if (isConfigured) {
+            // Ensure the box is visible
+            if (appBox) appBox.style.display = ''; 
         } else {
-            statusElement.className = 'status-badge not-connected';
-            statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Connected';
+            // Not configured - HIDE the box
+            if (appBox) appBox.style.display = 'none';
+            // Update badge even if hidden (optional, but good practice)
+            statusElement.className = 'status-badge not-configured';
+            statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Configured';
+            return; // No need to update badge further if not configured
+        }
+
+        // --- Badge Update Logic (only runs if configured) ---
+        if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr'].includes(app)) {
+            // *Arr specific badge text (already checked isConfigured)
+            statusElement.innerHTML = `<i class="fas fa-plug"></i> Connected ${connectedCount}/${totalConfigured}`;
+            statusElement.className = 'status-badge ' + (isConnected ? 'connected' : 'error');
+        } else {
+            // Standard badge update for other configured apps
+            if (isConnected) {
+                statusElement.className = 'status-badge connected';
+                statusElement.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
+            } else {
+                statusElement.className = 'status-badge not-connected';
+                statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Connected';
+            }
         }
     },
     
@@ -885,19 +1320,19 @@ const huntarrUI = {
             },
             body: JSON.stringify(requestBody)
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.showNotification(data.message, 'success');
-                    this.loadMediaStats(); // Refresh the stats display
-                } else {
-                    this.showNotification(data.message || 'Failed to reset statistics', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error resetting statistics:', error);
-                this.showNotification('Error resetting statistics', 'error');
-            });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.showNotification(data.message, 'success');
+                this.loadMediaStats(); // Refresh the stats display
+            } else {
+                this.showNotification(data.message || 'Failed to reset statistics', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error resetting statistics:', error);
+            this.showNotification('Error resetting statistics', 'error');
+        });
     },
     
     // Utility functions
@@ -938,25 +1373,18 @@ const huntarrUI = {
     },
 
     // Add or modify this function to handle enabling/disabling save/reset
-    updateSaveResetButtonState: function(app, hasChanges) {
-        // Find buttons relevant to the current app context if they exist
-        // This might need adjustment based on actual button IDs/classes
-        const saveButton = this.elements.saveSettingsButton; // Assuming a general save button
-        const resetButton = this.elements.resetSettingsButton; // Assuming a general reset button
+    updateSaveResetButtonState(enable) { // Changed signature
+        const saveButton = this.elements.saveSettingsButton;
 
         if (saveButton) {
-            saveButton.disabled = !hasChanges;
-            // Add/remove a class for styling disabled state if needed
-            if (hasChanges) {
-                saveButton.classList.remove('disabled-button'); // Example class
+            saveButton.disabled = !enable;
+            // Optional: Add/remove class for styling
+            if (enable) {
+                saveButton.classList.remove('disabled-button');
             } else {
-                saveButton.classList.add('disabled-button'); // Example class
+                saveButton.classList.add('disabled-button');
             }
         }
-        // Reset button logic (enable/disable based on changes or always enabled?)
-        // if (resetButton) {
-        //     resetButton.disabled = !hasChanges;
-        // }
     },
 
     // Add updateHomeConnectionStatus if it doesn't exist or needs adjustment

@@ -4,184 +4,110 @@ Quality Upgrade Processing for Radarr
 Handles searching for movies that need quality upgrades in Radarr
 """
 
-import random
 import time
-import datetime
-import os
-import json
-from typing import List, Callable, Dict, Optional, Any
-# Correct import path
+import random
+from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
-from src.primary import settings_manager
-from src.primary.state import load_processed_ids, save_processed_id, truncate_processed_list, get_state_file_path
-from src.primary.apps.radarr.api import get_cutoff_unmet_movies, refresh_movie, movie_search
-from src.primary.stats_manager import increment_stat  # Import the stats increment function
+from src.primary.apps.radarr import api as radarr_api
+from src.primary.stats_manager import increment_stat
 
-# Get app-specific logger
-logger = get_logger("radarr")
+# Get logger for the app
+radarr_logger = get_logger("radarr")
 
-def process_cutoff_upgrades(app_settings: Dict[str, Any], restart_cycle_flag: Callable[[], bool] = lambda: False) -> bool:
+def process_cutoff_upgrades(
+    app_settings: Dict[str, Any],
+    stop_check: Callable[[], bool] # Function to check if stop is requested
+) -> bool:
     """
-    Process movies that need quality upgrades (cutoff unmet).
+    Process quality cutoff upgrades for Radarr based on settings.
     
     Args:
-        app_settings: Dictionary containing settings for Radarr.
-        restart_cycle_flag: Function that returns whether to restart the cycle
-    
+        app_settings: Dictionary containing all settings for Radarr
+        stop_check: A function that returns True if the process should stop
+        
     Returns:
-        True if any processing was done, False otherwise
+        True if any movies were processed for upgrades, False otherwise.
     """
-    # Get settings from the passed dictionary
+    radarr_logger.info("Starting quality cutoff upgrades processing cycle for Radarr.")
+    processed_any = False
+    
+    # Extract necessary settings
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
-    api_timeout = app_settings.get("api_timeout", 90)
-    hunt_upgrade_movies = app_settings.get("hunt_upgrade_movies", 0)
-    random_upgrades = app_settings.get("random_upgrades", True)
-    skip_movie_refresh = app_settings.get("skip_movie_refresh", False)
+    api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
+    skip_movie_refresh = app_settings.get("skip_movie_refresh", False)
+    random_upgrades = app_settings.get("random_upgrades", False)
+    hunt_upgrade_movies = app_settings.get("hunt_upgrade_movies", 0)
+    command_wait_delay = app_settings.get("command_wait_delay", 5)
+    command_wait_attempts = app_settings.get("command_wait_attempts", 12)
     
-    # Get app-specific state file
-    PROCESSED_UPGRADE_FILE = get_state_file_path("radarr", "processed_upgrades")
+    # Get movies eligible for upgrade
+    radarr_logger.info("Retrieving movies eligible for cutoff upgrade...")
+    upgrade_eligible_data = radarr_api.get_movies_eligible_for_upgrade(api_url, api_key, api_timeout, monitored_only)
+    
+    if not upgrade_eligible_data:
+        radarr_logger.info("No movies found eligible for upgrade or error retrieving them.")
+        return False
+        
+    radarr_logger.info(f"Found {len(upgrade_eligible_data)} movies eligible for upgrade.")
 
-    logger.info("=== Checking for Quality Upgrades (Cutoff Unmet) ===")
-
-    # Skip if hunt_upgrade_movies is set to 0
-    if hunt_upgrade_movies <= 0:
-        logger.info("hunt_upgrade_movies is set to 0, skipping quality upgrades")
-        return False
-
-    # Check for restart signal
-    if restart_cycle_flag():
-        logger.info("🔄 Received restart signal before starting quality upgrades. Aborting...")
-        return False
-    
-    # Get movies needing quality upgrades
-    logger.info("Retrieving movies that need quality upgrades...")
-    upgrade_movies = get_cutoff_unmet_movies(api_url, api_key, api_timeout, monitored_only)
-    
-    if not upgrade_movies:
-        logger.info("No movies found that need quality upgrades.")
-        return False
-    
-    # Check for restart signal after retrieving movies
-    if restart_cycle_flag():
-        logger.info("🔄 Received restart signal after retrieving upgrade movies. Aborting...")
-        return False
-    
-    logger.info(f"Found {len(upgrade_movies)} movies that need quality upgrades.")
-    processed_upgrade_ids = load_processed_ids(PROCESSED_UPGRADE_FILE)
-    
-    # Filter out already processed movies
-    unprocessed_movies = [movie for movie in upgrade_movies if movie.get("id") not in processed_upgrade_ids]
+    # Select movies to process
+    unprocessed_movies = upgrade_eligible_data
     
     if not unprocessed_movies:
-        logger.info("All upgrade movies have already been processed. Skipping.")
+        radarr_logger.info("No upgradeable movies found to process (after potential filtering). Skipping.")
         return False
-    
-    logger.info(f"Found {len(unprocessed_movies)} upgrade movies that haven't been processed yet.")
-    
-    # Randomize if requested
+        
     if random_upgrades:
-        logger.info("Using random selection for quality upgrades (RANDOM_UPGRADES=true)")
-        random.shuffle(unprocessed_movies)
+        radarr_logger.info(f"Randomly selecting up to {hunt_upgrade_movies} movies for upgrade search.")
+        movies_to_process = random.sample(unprocessed_movies, min(hunt_upgrade_movies, len(unprocessed_movies)))
     else:
-        logger.info("Using sequential selection for quality upgrades (RANDOM_UPGRADES=false)")
-        # Sort by title for consistent ordering
-        unprocessed_movies.sort(key=lambda x: x.get("title", ""))
+        radarr_logger.info(f"Selecting the first {hunt_upgrade_movies} movies for upgrade search (order based on API return).")
+        movies_to_process = unprocessed_movies[:hunt_upgrade_movies]
+        
+    radarr_logger.info(f"Selected {len(movies_to_process)} movies to search for upgrades.")
+    processed_count = 0
+    processed_something = False
     
-    # Check for restart signal before processing movies
-    if restart_cycle_flag():
-        logger.info("🔄 Received restart signal before processing movies. Aborting...")
-        return False
-    
-    # Create a list of movies to process, limited by hunt_upgrade_movies
-    movies_to_process = unprocessed_movies[:min(len(unprocessed_movies), hunt_upgrade_movies)]
-    
-    # Log a summary of all movies that will be processed
-    if movies_to_process:
-        logger.info(f"Selected {len(movies_to_process)} movies for quality upgrades this cycle:")
-        for idx, movie in enumerate(movies_to_process):
-            title = movie.get("title", "Unknown Title")
-            year = movie.get("year", "Unknown Year")
-            movie_id = movie.get("id")
-            quality_name = "Unknown"
-            if "movieFile" in movie and movie["movieFile"]:
-                quality = movie["movieFile"].get("quality", {})
-                quality_name = quality.get("quality", {}).get("name", "Unknown")
-            logger.info(f" {idx+1}. \"{title}\" ({year}) - Current quality: {quality_name} (ID: {movie_id})")
-    
-    # Process up to hunt_upgrade_movies movies
-    movies_processed = 0
-    processing_done = False
     for movie in movies_to_process:
-        # Check for restart signal before each movie
-        if restart_cycle_flag():
-            logger.info("🔄 Received restart signal during movie processing. Aborting...")
+        if stop_check():
+            radarr_logger.info("Stop signal received, aborting Radarr upgrade cycle.")
             break
-        
-        # Check again for the current limit in case it was changed during processing
-        current_limit = app_settings.get("hunt_upgrade_movies", 0)
-        
-        if movies_processed >= current_limit:
-            logger.info(f"Reached hunt_upgrade_movies={current_limit} for this cycle.")
-            break
-        
+            
         movie_id = movie.get("id")
-        title = movie.get("title", "Unknown Title")
-        year = movie.get("year", "Unknown Year")
+        movie_title = movie.get("title")
+        movie_year = movie.get("year")
         
-        # Get quality information
-        quality_info = ""
-        if "movieFile" in movie and movie["movieFile"]:
-            quality = movie["movieFile"].get("quality", {})
-            quality_name = quality.get("quality", {}).get("name", "Unknown")
-            quality_info = f" (Current quality: {quality_name})"
+        radarr_logger.info(f"Processing upgrade for movie: \"{movie_title}\" ({movie_year}) (Movie ID: {movie_id})")
         
-        logger.info(f"Processing quality upgrade for: \"{title}\" ({year}){quality_info} (Movie ID: {movie_id})")
-        
-        # Refresh the movie information if skip_movie_refresh is false
+        # Refresh movie (optional)
         if not skip_movie_refresh:
-            logger.info(" - Refreshing movie information...")
-            refresh_res = refresh_movie(api_url, api_key, api_timeout, movie_id)
-            if not refresh_res:
-                logger.warning("WARNING: Refresh command failed. Skipping this movie.")
-                continue
-            logger.info(f"Refresh command completed successfully.")
-            
-            # Small delay after refresh to allow Radarr to process
-            time.sleep(2)
+            radarr_logger.info(f"  - Refreshing movie info...")
+            refresh_result = radarr_api.refresh_movie(api_url, api_key, movie_id, api_timeout)
+            time.sleep(5) # Basic wait
+            if not refresh_result:
+                 radarr_logger.warning(f"  - Failed to trigger movie refresh. Continuing search anyway.")
         else:
-            logger.info(" - Skipping movie refresh (skip_movie_refresh=true)")
+             radarr_logger.info(f"  - Skipping movie refresh (skip_movie_refresh=true)")
+             
+        # Search for movie upgrade
+        radarr_logger.info(f"  - Searching for upgrade for movie...")
+        search_command_id = radarr_api.search_movies(api_url, api_key, [movie_id], api_timeout) # Check API method name
         
-        # Check for restart signal before searching
-        if restart_cycle_flag():
-            logger.info(f"🔄 Received restart signal before searching for {title}. Aborting...")
+        if search_command_id:
+            radarr_logger.info(f"Triggered movie search command {search_command_id} for upgrade. Assuming success for now.")
+            increment_stat("radarr", "upgraded") # Assuming 'upgraded' stat exists
+            processed_count += 1
+            processed_something = True
+            radarr_logger.info(f"Processed {processed_count}/{len(movies_to_process)} movie upgrades this cycle.")
+        else:
+            radarr_logger.error(f"Failed to trigger search for movie {movie_title} ({movie_year}) upgrade.")
+
+        if processed_count >= hunt_upgrade_movies:
+            radarr_logger.info(f"Reached target of {hunt_upgrade_movies} movies processed for upgrade this cycle.")
             break
-        
-        # Search for the movie
-        logger.info(" - Searching for quality upgrade...")
-        search_res = movie_search(api_url, api_key, api_timeout, [movie_id])
-        if search_res:
-            logger.info(f"Search command completed successfully.")
-            # Mark as processed
-            save_processed_id(PROCESSED_UPGRADE_FILE, movie_id)
-            movies_processed += 1
-            processing_done = True
             
-            # Increment the upgraded statistics
-            increment_stat("radarr", "upgraded", 1)
-            logger.debug(f"Incremented radarr upgraded statistics by 1")
-            
-            # Log with the current limit, not the initial one
-            current_limit = app_settings.get("hunt_upgrade_movies", 0)
-            logger.info(f"Processed {movies_processed}/{current_limit} upgrade movies this cycle.")
-        else:
-            logger.warning(f"WARNING: Search command failed for movie ID {movie_id}.")
-            continue
+    radarr_logger.info(f"Completed processing {processed_count} movies for upgrade this cycle.")
     
-    # Log final status
-    current_limit = app_settings.get("hunt_upgrade_movies", 0)
-    logger.info(f"Completed processing {movies_processed} upgrade movies this cycle.")
-    truncate_processed_list(PROCESSED_UPGRADE_FILE)
-    
-    return processing_done
+    return processed_something

@@ -52,6 +52,12 @@ def find_writable_stats_dir():
 STATS_DIR = find_writable_stats_dir()
 STATS_FILE = os.path.join(STATS_DIR, "media_stats.json") if STATS_DIR else None
 
+# Log the stats file location once at module load time
+if STATS_FILE:
+    logger.info(f"===> Stats will be stored at: {STATS_FILE}")
+else:
+    logger.error("===> CRITICAL: No stats file location could be determined!")
+
 def ensure_stats_dir():
     """Ensure the statistics directory exists"""
     if not STATS_DIR:
@@ -127,6 +133,7 @@ def save_stats(stats: Dict[str, Dict[str, int]]) -> bool:
         logger.debug(f"Saving stats to: {STATS_FILE}")
         with open(STATS_FILE, 'w') as f:
             json.dump(stats, f, indent=2)
+        logger.info(f"===> Successfully wrote stats to file: {STATS_FILE}")
         logger.debug(f"Stats saved successfully: {stats}")
         return True
     except Exception as e:

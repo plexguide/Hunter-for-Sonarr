@@ -10,7 +10,8 @@ import requests
 from flask import Blueprint, jsonify, request
 from src.primary.utils.logger import get_logger
 from src.primary.apps.lidarr import api as lidarr_api
-from src.primary.state import reset_state_file
+from src.primary.state import reset_state_file, get_state_file_path
+from src.primary.settings_manager import load_settings
 import src.primary.config as config
 
 # Create a logger for this module
@@ -18,6 +19,71 @@ lidarr_logger = get_logger("lidarr")
 
 # Create Blueprint for Lidarr routes
 lidarr_bp = Blueprint('lidarr', __name__)
+
+# Make sure we're using the correct state files
+PROCESSED_MISSING_FILE = get_state_file_path("lidarr", "processed_missing") 
+PROCESSED_UPGRADES_FILE = get_state_file_path("lidarr", "processed_upgrades")
+
+# Function to check if Lidarr is configured
+def is_configured():
+    """Check if Lidarr API credentials are configured by checking if at least one instance is enabled"""
+    settings = load_settings("lidarr")
+    
+    if not settings:
+        lidarr_logger.debug("No settings found for Lidarr")
+        return False
+        
+    # Check if instances are configured
+    if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
+        for instance in settings["instances"]:
+            if instance.get("enabled", True) and instance.get("api_url") and instance.get("api_key"):
+                lidarr_logger.debug(f"Found configured Lidarr instance: {instance.get('name', 'Unnamed')}")
+                return True
+                
+        lidarr_logger.debug("No enabled Lidarr instances found with valid API URL and key")
+        return False
+    
+    # Fallback to legacy single-instance config
+    api_url = settings.get("api_url")
+    api_key = settings.get("api_key")
+    return bool(api_url and api_key)
+
+# Get all valid instances from settings
+def get_configured_instances():
+    """Get all configured and enabled Lidarr instances"""
+    settings = load_settings("lidarr")
+    instances = []
+    
+    if not settings:
+        lidarr_logger.debug("No settings found for Lidarr")
+        return instances
+        
+    # Check if instances are configured
+    if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
+        for instance in settings["instances"]:
+            if instance.get("enabled", True) and instance.get("api_url") and instance.get("api_key"):
+                # Create a settings object for this instance by combining global settings with instance-specific ones
+                instance_settings = settings.copy()
+                # Remove instances list to avoid confusion
+                if "instances" in instance_settings:
+                    del instance_settings["instances"]
+                
+                # Override with instance-specific connection settings
+                instance_settings["api_url"] = instance.get("api_url")
+                instance_settings["api_key"] = instance.get("api_key")
+                instance_settings["instance_name"] = instance.get("name", "Default")
+                
+                instances.append(instance_settings)
+    else:
+        # Fallback to legacy single-instance config
+        api_url = settings.get("api_url")
+        api_key = settings.get("api_key")
+        if api_url and api_key:
+            settings["instance_name"] = "Default"
+            instances.append(settings)
+    
+    lidarr_logger.info(f"Found {len(instances)} configured and enabled Lidarr instances")
+    return instances
 
 @lidarr_bp.route('/status', methods=['GET'])
 def status():

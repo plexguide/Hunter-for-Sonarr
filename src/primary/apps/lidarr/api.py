@@ -22,74 +22,78 @@ session = requests.Session()
 
 def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, params: Dict = None) -> Any:
     """
-    Make a request to the Lidarr API (v1).
+    Make a request to the Lidarr API.
     
     Args:
         api_url: The base URL of the Lidarr API
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
-        endpoint: The API endpoint to call (e.g., 'artist', 'command')
+        endpoint: The API endpoint to call
         method: HTTP method (GET, POST, PUT, DELETE)
-        data: Optional data payload for POST/PUT requests (sent as JSON body)
-        params: Optional dictionary of query parameters for GET requests
-    
+        data: Optional data to send with the request
+        params: Optional query parameters
+        
     Returns:
-        The parsed JSON response or True for success with no content, or None if the request failed
+        The JSON response from the API, or None if the request failed
     """
+    if not api_url or not api_key:
+        lidarr_logger.error("API URL or API key is missing. Check your settings.")
+        return None
+        
+    # Ensure api_url has a scheme
+    if not (api_url.startswith('http://') or api_url.startswith('https://')):
+        lidarr_logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
+        return None
+        
+    # Make sure URL is properly formed
+    full_url = f"{api_url.rstrip('/')}/api/v1/{endpoint.lstrip('/')}"
+        
+    # Set up headers
+    headers = {
+        "X-Api-Key": api_key,
+        "Content-Type": "application/json"
+    }
+        
+    lidarr_logger.debug(f"Lidarr API Request: {method} {full_url} Params: {params} Data: {data}")
+
     try:
-        if not api_url or not api_key:
-            lidarr_logger.error("No URL or API key provided for Lidarr request")
-            return None
-        
-        # Construct the full URL using API v1
-        full_url = f"{api_url.rstrip('/')}/api/v1/{endpoint.lstrip('/')}"
-        
-        # Set up headers
-        headers = {
-            "X-Api-Key": api_key,
-            "Content-Type": "application/json"
-        }
-        
-        lidarr_logger.debug(f"Lidarr API Request: {method} {full_url} Params: {params} Data: {data}")
-
-        try:
-            response = session.request(
-                method=method.upper(),
-                url=full_url,
-                headers=headers,
-                json=data if method.upper() in ["POST", "PUT"] else None,
-                params=params if method.upper() == "GET" else None,
-                timeout=api_timeout
-            )
+        response = session.request(
+            method=method.upper(),
+            url=full_url,
+            headers=headers,
+            json=data if method.upper() in ["POST", "PUT"] else None,
+            params=params if method.upper() == "GET" else None,
+            timeout=api_timeout
+        )
             
-            lidarr_logger.debug(f"Lidarr API Response Status: {response.status_code}")
-            # Log response body only in debug mode and if small enough
-            if lidarr_logger.level == logging.DEBUG and len(response.content) < 1000:
-                 lidarr_logger.debug(f"Lidarr API Response Body: {response.text}")
-            elif lidarr_logger.level == logging.DEBUG:
-                 lidarr_logger.debug(f"Lidarr API Response Body (truncated): {response.text[:500]}...")
+        lidarr_logger.debug(f"Lidarr API Response Status: {response.status_code}")
+        # Log response body only in debug mode and if small enough
+        if lidarr_logger.level == logging.DEBUG and len(response.content) < 1000:
+             lidarr_logger.debug(f"Lidarr API Response Body: {response.text}")
+        elif lidarr_logger.level == logging.DEBUG:
+             lidarr_logger.debug(f"Lidarr API Response Body (truncated): {response.text[:500]}...")
 
-            # Check for successful response
-            response.raise_for_status()
+        # Check for successful response
+        response.raise_for_status()
             
-            # Parse response if there is content
-            if response.content and response.headers.get('Content-Type', '').startswith('application/json'):
-                return response.json()
-            elif response.status_code in [200, 201, 202]: # Success codes that might not return JSON
-                return True 
-            else: # Should have been caught by raise_for_status, but as a fallback
-                lidarr_logger.warning(f"Request successful (status {response.status_code}) but no JSON content returned from {endpoint}")
-                return True # Indicate success even without content
+        # Parse response if there is content
+        if response.content and response.headers.get('Content-Type', '').startswith('application/json'):
+            return response.json()
+        elif response.status_code in [200, 201, 202]: # Success codes that might not return JSON
+            return True 
+        else: # Should have been caught by raise_for_status, but as a fallback
+            lidarr_logger.warning(f"Request successful (status {response.status_code}) but no JSON content returned from {endpoint}")
+            return True # Indicate success even without content
                 
-        except requests.exceptions.RequestException as e:
-            error_msg = f"Error during {method} request to Lidarr endpoint '{endpoint}': {str(e)}"
-            if e.response is not None:
-                 error_msg += f" | Status: {e.response.status_code} | Response: {e.response.text[:500]}"
-            lidarr_logger.error(error_msg)
-            return None
-        except json.JSONDecodeError:
-            lidarr_logger.error(f"Error decoding JSON response from Lidarr endpoint '{endpoint}'. Response: {response.text[:500]}")
-            return None
+    except requests.exceptions.RequestException as e:
+        error_msg = f"Error during {method} request to Lidarr endpoint '{endpoint}': {str(e)}"
+        if e.response is not None:
+             error_msg += f" | Status: {e.response.status_code} | Response: {e.response.text[:500]}"
+        lidarr_logger.error(error_msg)
+        return None
+    except json.JSONDecodeError:
+        lidarr_logger.error(f"Error decoding JSON response from Lidarr endpoint '{endpoint}'. Response: {response.text[:500]}")
+        return None
             
     except Exception as e:
         # Catch all exceptions and log them with traceback
@@ -108,12 +112,30 @@ def get_system_status(api_url: str, api_key: str, api_timeout: int) -> Optional[
 
 def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
     """Check the connection to Lidarr API."""
-    status = get_system_status(api_url, api_key, api_timeout)
-    if status is not None: # API request succeeded (even if status dict is empty)
+    try:
+        # Ensure api_url is properly formatted
+        if not api_url:
+            lidarr_logger.error("API URL is empty or not set")
+            return False
+            
+        # Make sure api_url has a scheme
+        if not (api_url.startswith('http://') or api_url.startswith('https://')):
+            lidarr_logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
+            return False
+            
+        # Ensure URL doesn't end with a slash before adding the endpoint
+        base_url = api_url.rstrip('/')
+        full_url = f"{base_url}/api/v1/system/status"
+        
+        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout)
+        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         lidarr_logger.info("Successfully connected to Lidarr.")
         return True
-    else:
-        lidarr_logger.error("Failed to connect to Lidarr (system/status check failed).")
+    except requests.exceptions.RequestException as e:
+        lidarr_logger.error(f"Error connecting to Lidarr: {e}")
+        return False
+    except Exception as e:
+        lidarr_logger.error(f"An unexpected error occurred during Lidarr connection check: {e}")
         return False
 
 def get_artists(api_url: str, api_key: str, api_timeout: int, artist_id: Optional[int] = None) -> Union[List, Dict, None]:

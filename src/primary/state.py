@@ -9,42 +9,39 @@ import datetime
 import time
 import json
 from typing import List, Dict, Any, Optional
-from src.primary.utils.logger import logger
 from src.primary import settings_manager
 
-# Create state directories based on app type
-def get_state_file_path(app_type: str, state_type: str) -> str:
+# Define the config directory - typically /config in Docker environment
+CONFIG_DIR = os.environ.get('CONFIG_DIR', '/config')
+
+# Get the logger at module level
+from src.primary.utils.logger import get_logger
+logger = get_logger("huntarr")
+
+def get_state_file_path(app_type, state_name):
     """
-    Get the path to a state file based on app type and state type.
+    Get the path to a state file for a specific app type and state name.
     
     Args:
-        app_type: The type of app (sonarr, radarr, etc.)
-        state_type: The type of state file (e.g., processed_missing, processed_upgrades)
-    
-    Returns:
-        The absolute path to the state file
-    """
-    if not app_type:
-        logger.error("get_state_file_path called without an app_type.")
-        return "/tmp/huntarr-state/unknown/error.json" 
+        app_type: The application type (sonarr, radarr, etc.)
+        state_name: The name of the state file
         
-    if app_type == "sonarr":
-        base_path = "/tmp/huntarr-state/sonarr"
-    elif app_type == "radarr":
-        base_path = "/tmp/huntarr-state/radarr"
-    elif app_type == "lidarr":
-        base_path = "/tmp/huntarr-state/lidarr"
-    elif app_type == "readarr":
-        base_path = "/tmp/huntarr-state/readarr"
-    elif app_type == "whisparr":
-        base_path = "/tmp/huntarr-state/whisparr"
-    else:
+    Returns:
+        The path to the state file
+    """
+    # Define known app types
+    known_app_types = ["sonarr", "radarr", "lidarr", "readarr", "whisparr"]
+    
+    # If app_type is not in known types, log a warning but don't fail
+    if app_type not in known_app_types and app_type != "general":
         logger.warning(f"get_state_file_path called with unexpected app_type: {app_type}")
-        base_path = f"/tmp/huntarr-state/{app_type}"
     
-    os.makedirs(base_path, exist_ok=True)
+    # Create the state directory if it doesn't exist
+    state_dir = os.path.join(CONFIG_DIR, "state", app_type)
+    os.makedirs(state_dir, exist_ok=True)
     
-    return f"{base_path}/{state_type}.json"
+    # Return the path to the state file
+    return os.path.join(state_dir, f"{state_name}.json")
 
 def get_last_reset_time(app_type: str = None) -> datetime.datetime:
     """
@@ -211,8 +208,16 @@ def load_processed_ids(filepath: str) -> List[int]:
     try:
         if os.path.exists(filepath):
             with open(filepath, "r") as f:
-                return json.load(f)
+                loaded_data = json.load(f)
+                if isinstance(loaded_data, list):
+                    return loaded_data
+                else:
+                    logger.error(f"Invalid data type loaded from {filepath}. Expected list, got {type(loaded_data)}. Returning empty list.")
+                    return []
         return []
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decoding JSON from {filepath}: {e}. Returning empty list.")
+        return [] # Ensure list is returned even on JSON error
     except Exception as e:
         logger.error(f"Error loading processed IDs from {filepath}: {e}")
         return []
@@ -244,6 +249,31 @@ def save_processed_id(filepath: str, item_id: int) -> None:
     if item_id not in processed_ids:
         processed_ids.append(item_id)
         save_processed_ids(filepath, processed_ids)
+
+def reset_state_file(app_type: str, state_type: str) -> bool:
+    """
+    Reset a specific state file for an app type.
+    
+    Args:
+        app_type: The type of app (sonarr, radarr, etc.)
+        state_type: The type of state file (processed_missing, processed_upgrades)
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    if not app_type:
+        logger.error("reset_state_file called without app_type.")
+        return False
+        
+    filepath = get_state_file_path(app_type, state_type)
+    
+    try:
+        save_processed_ids(filepath, [])
+        logger.info(f"Reset {state_type} state file for {app_type}")
+        return True
+    except Exception as e:
+        logger.error(f"Error resetting {state_type} state file for {app_type}: {e}")
+        return False
 
 def truncate_processed_list(filepath: str, max_items: int = 1000) -> None:
     """

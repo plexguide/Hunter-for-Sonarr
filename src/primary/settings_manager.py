@@ -10,6 +10,7 @@ import json
 import pathlib
 import logging
 import shutil
+import subprocess
 from typing import Dict, Any, Optional, List
 
 # Create a simple logger for settings_manager
@@ -23,8 +24,8 @@ SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
 # Default configs location remains the same
 DEFAULT_CONFIGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'default_configs'))
 
-# List of known application types based on default config files
-KNOWN_APP_TYPES = [f.stem for f in pathlib.Path(DEFAULT_CONFIGS_DIR).glob("*.json")]
+# Update or add this as a class attribute or constant
+KNOWN_APP_TYPES = ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "general"]
 
 def get_settings_file_path(app_name: str) -> pathlib.Path:
     """Get the path to the settings file for a specific app."""
@@ -73,21 +74,23 @@ def _ensure_config_exists(app_name: str) -> None:
                 settings_logger.error(f"Error creating empty settings file for {app_name}: {e}")
 
 
-def load_settings(app_name: str) -> Dict[str, Any]:
-    """Load settings for a specific app."""
-    if app_name not in KNOWN_APP_TYPES:
-        settings_logger.error(f"Attempted to load settings for unknown app type: {app_name}")
-        return {}
+def load_settings(app_type):
+    """
+    Load settings for a specific app type
+    """
+    # Only log unexpected app types that are not 'general'
+    if app_type not in KNOWN_APP_TYPES and app_type != "general":
+        logger.warning(f"load_settings called with unexpected app_type: {app_type}")
         
-    _ensure_config_exists(app_name)
-    settings_file = get_settings_file_path(app_name)
+    _ensure_config_exists(app_type)
+    settings_file = get_settings_file_path(app_type)
     try:
         with open(settings_file, 'r') as f:
             # Load existing settings
             current_settings = json.load(f)
             
             # Load defaults to check for missing keys
-            default_settings = load_default_app_settings(app_name)
+            default_settings = load_default_app_settings(app_type)
             
             # Add missing keys from defaults without overwriting existing values
             updated = False
@@ -98,19 +101,19 @@ def load_settings(app_name: str) -> Dict[str, Any]:
             
             # If keys were added, save the updated file
             if updated:
-                settings_logger.info(f"Added missing default keys to {app_name}.json")
-                save_settings(app_name, current_settings) # Use save_settings to handle writing
+                settings_logger.info(f"Added missing default keys to {app_type}.json")
+                save_settings(app_type, current_settings) # Use save_settings to handle writing
                 
             return current_settings
             
     except json.JSONDecodeError:
         settings_logger.error(f"Error decoding JSON from {settings_file}. Restoring from default.")
         # Attempt to restore from default
-        default_settings = load_default_app_settings(app_name)
-        save_settings(app_name, default_settings) # Save the restored defaults
+        default_settings = load_default_app_settings(app_type)
+        save_settings(app_type, default_settings) # Save the restored defaults
         return default_settings
     except Exception as e:
-        settings_logger.error(f"Error loading settings for {app_name} from {settings_file}: {e}")
+        settings_logger.error(f"Error loading settings for {app_type} from {settings_file}: {e}")
         return {} # Return empty dict on other errors
 
 
@@ -169,13 +172,57 @@ def get_configured_apps() -> List[str]:
     configured = []
     for app_name in KNOWN_APP_TYPES:
         settings = load_settings(app_name)
-        # Check if essential keys exist and have non-empty values
+        
+        # First check if there are valid instances configured (multi-instance mode)
+        if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
+            for instance in settings["instances"]:
+                if instance.get("enabled", True) and instance.get("api_url") and instance.get("api_key"):
+                    configured.append(app_name)
+                    break  # One valid instance is enough to consider the app configured
+            continue  # Skip the single-instance check if we already checked instances
+                
+        # Fallback to legacy single-instance config
         if settings.get("api_url") and settings.get("api_key"):
             configured.append(app_name)
+    
+    settings_logger.info(f"Configured apps: {configured}")
     return configured
 
-# Removed get_app_type() as it's no longer relevant in this manager
-# Removed get_all_default_settings() as load_settings handles defaults per app
+def apply_timezone(timezone: str) -> bool:
+    """Apply the specified timezone to the container.
+    
+    Args:
+        timezone: The timezone to set (e.g., 'UTC', 'America/New_York')
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Set TZ environment variable
+        os.environ['TZ'] = timezone
+        
+        # Create symlink for localtime (common approach in containers)
+        zoneinfo_path = f"/usr/share/zoneinfo/{timezone}"
+        if os.path.exists(zoneinfo_path):
+            # Remove existing symlink if it exists
+            if os.path.exists("/etc/localtime"):
+                os.remove("/etc/localtime")
+            
+            # Create new symlink
+            os.symlink(zoneinfo_path, "/etc/localtime")
+            
+            # Also update /etc/timezone file if it exists
+            with open("/etc/timezone", "w") as f:
+                f.write(f"{timezone}\n")
+                
+            settings_logger.info(f"Timezone set to {timezone}")
+            return True
+        else:
+            settings_logger.error(f"Timezone file not found: {zoneinfo_path}")
+            return False
+    except Exception as e:
+        settings_logger.error(f"Error setting timezone: {str(e)}")
+        return False
 
 # Example usage (for testing purposes, remove later)
 if __name__ == "__main__":

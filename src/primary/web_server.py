@@ -4,7 +4,6 @@ Web server for Huntarr
 Provides a web interface to view logs in real-time, manage settings, and includes authentication
 """
 
-import asyncio
 import os
 import datetime
 from threading import Lock
@@ -23,7 +22,7 @@ import io
 import logging
 import threading
 import importlib # Added import
-from flask import Flask, render_template, request, jsonify, Response, send_from_directory, redirect, url_for, session
+from flask import Flask, render_template, request, jsonify, Response, send_from_directory, redirect, url_for, session, stream_with_context # Added stream_with_context
 # from src.primary.config import API_URL # No longer needed directly
 # Use only settings_manager
 from src.primary import settings_manager
@@ -109,16 +108,18 @@ def logs_stream():
         web_logger.warning(f"Invalid app type '{app_type}' requested for logs. Defaulting to 'all'.")
         app_type = 'all'
 
-    # Use a client identifier to track connections
-    client_id = request.remote_addr
-    current_time = datetime.datetime.now().strftime("%H:%M:%S")
-    
-    web_logger.info(f"Starting log stream for app type: {app_type} (client: {client_id}, time: {current_time})")
-
     # Import needed modules
     import time
     from pathlib import Path
     import threading
+    import datetime # Added datetime import
+
+    # Use a client identifier to track connections
+    # Use request.remote_addr directly for client_id
+    client_id = request.remote_addr 
+    current_time_str = datetime.datetime.now().strftime("%H:%M:%S") # Renamed variable
+
+    web_logger.info(f"Starting log stream for app type: {app_type} (client: {client_id}, time: {current_time_str})")
 
     # Track active connections to limit resource usage
     if not hasattr(app, 'active_log_streams'):
@@ -128,29 +129,36 @@ def logs_stream():
     # Clean up stale connections (older than 60 seconds without activity)
     with app.log_stream_lock:
         current_time = time.time()
-        stale_clients = [c for c, t in app.active_log_streams.items() 
+        stale_clients = [c for c, t in app.active_log_streams.items()
                          if current_time - t > 60]
         for client in stale_clients:
-            app.active_log_streams.pop(client, None)
-            web_logger.debug(f"Removed stale log stream connection for client: {client}")
-        
-        # Update this client's timestamp
-        app.active_log_streams[client_id] = current_time
-        
+            # Check if client exists before popping, avoid KeyError
+            if client in app.active_log_streams:
+                app.active_log_streams.pop(client)
+                web_logger.debug(f"Removed stale log stream connection for client: {client}")
+
         # If too many connections, return an error for new ones
-        if len(app.active_log_streams) > 10:  # Limit to 10 concurrent connections
-            oldest_client = min(app.active_log_streams.items(), key=lambda x: x[1])[0]
-            if client_id != oldest_client and len(app.active_log_streams) > 3:
-                web_logger.warning(f"Too many log stream connections ({len(app.active_log_streams)}). Rejecting new connection from {client_id}")
-                return Response("data: Too many active connections. Please try again later.\n\n", 
-                               mimetype='text/event-stream')
+        # Increased limit slightly and check before adding the new client
+        MAX_LOG_CONNECTIONS = 10 # Define as constant
+        if len(app.active_log_streams) >= MAX_LOG_CONNECTIONS:
+            web_logger.warning(f"Too many log stream connections ({len(app.active_log_streams)}). Rejecting new connection from {client_id}")
+            # Send SSE formatted error message
+            return Response("event: error\ndata: Too many active connections. Please try again later.\n\n",
+                           mimetype='text/event-stream', status=429) # Use 429 status code
+
+        # Add/Update this client's timestamp *after* checking the limit
+        app.active_log_streams[client_id] = current_time
+        web_logger.debug(f"Active log streams: {len(app.active_log_streams)} clients. Added/Updated: {client_id}")
+
 
     def generate():
-        """Generate log events for the SSE stream."""
+        """Generate log events for the SSE stream.""" # Corrected docstring
+        client_ip = request.remote_addr # Get client IP for logging
+        web_logger.info(f"Log stream generator started for {app_type} (Client: {client_ip})")
         try:
             # Initialize last activity time
             last_activity = time.time()
-            
+
             # Determine which log files to follow
             if app_type == 'all':
                 log_files_to_follow = list(KNOWN_LOG_FILES.items())
@@ -165,107 +173,157 @@ def logs_stream():
 
             # Send a connection confirmation message
             yield f"data: Starting log stream for {app_type}...\n\n"
+            web_logger.debug(f"Sent connection confirmation for {app_type} (Client: {client_ip})")
 
             # Track file positions for each log
             positions = {}
             last_check = {}
-            
+
             # Keep-alive counter to send periodic keep-alive messages
             keep_alive_counter = 0
-            
+
             # Convert string paths to Path objects
-            log_files_to_follow = [(name, Path(path) if isinstance(path, str) else path) 
-                                  for name, path in log_files_to_follow]
+            log_files_to_follow = [(name, Path(path) if isinstance(path, str) else path)
+                                  for name, path in log_files_to_follow if path] # Ensure path is not None
 
             # Main log streaming loop
             while True:
                 had_content = False
                 current_time = time.time()
-                
+
                 # Update client activity timestamp periodically
                 if current_time - last_activity > 10:
                     with app.log_stream_lock:
-                        app.active_log_streams[client_id] = current_time
+                        # Check if client is still tracked before updating
+                        if client_id in app.active_log_streams:
+                             app.active_log_streams[client_id] = current_time
+                        else:
+                             # Client might have been removed due to timeout or disconnect
+                             web_logger.warning(f"Client {client_id} no longer in active streams during activity update. Stopping generator.")
+                             break # Exit the loop if client is gone
                     last_activity = current_time
-                
+
                 # Increment keep-alive counter
                 keep_alive_counter += 1
-                
+
                 # Check each log file
                 for name, path in log_files_to_follow:
                     try:
                         # Skip checking too frequently to reduce CPU usage
                         now = datetime.datetime.now()
-                        if name in last_check and (now - last_check[name]).total_seconds() < 0.5:  # Reduced polling frequency
-                            continue
-                        
-                        last_check[name] = now
-                        
-                        # Check if file exists
-                        if not path.exists():
+                        # Use a shorter interval (e.g., 0.2s) for potentially faster updates
+                        if name in last_check and (now - last_check[name]).total_seconds() < 0.2:
                             continue
 
+                        last_check[name] = now
+
+                        # Check if file exists
+                        if not path.exists():
+                            # Log only once if file doesn't exist
+                            if positions.get(name) != -1: # Use -1 to mark as 'not found'
+                                web_logger.warning(f"Log file {path} not found for {name}. Skipping.")
+                                positions[name] = -1 # Mark as not found
+                            continue
+                        elif positions.get(name) == -1:
+                             web_logger.info(f"Log file {path} found again for {name}. Resuming.")
+                             positions.pop(name, None) # Remove the 'not found' marker
+
                         # Get current size to detect truncation
-                        current_size = path.stat().st_size
-                        
+                        try:
+                            current_size = path.stat().st_size
+                        except FileNotFoundError:
+                             web_logger.warning(f"Log file {path} disappeared during stat check for {name}. Skipping.")
+                             positions[name] = -1 # Mark as not found
+                             continue
+
                         # Initialize position if needed or handle truncation
-                        if name not in positions or current_size < positions[name]:
-                            # For initial connection or truncated file, start from end minus 10KB 
-                            # but use a smaller value (5KB) to reduce initial load
-                            positions[name] = max(0, current_size - 5120)
-                                
+                        if name not in positions or current_size < positions.get(name, 0):
+                            start_pos = max(0, current_size - 5120) # Start near the end
+                            web_logger.debug(f"Initializing/Resetting position for {name} ({path}) to {start_pos} (size: {current_size})")
+                            positions[name] = start_pos
+
                         # Read new content - use a with block for proper resource cleanup
-                        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-                            f.seek(positions[name])
-                            # Read a limited number of lines at once to prevent memory issues
-                            new_lines = []
-                            for _ in range(100):  # Limit to 100 lines per check
-                                line = f.readline()
-                                if not line:
-                                    break
-                                new_lines.append(line)
-                            
-                            if new_lines:
-                                had_content = True
-                                positions[name] = f.tell()
-                                for line in new_lines:
-                                    if line.strip():  # Only send non-empty lines
-                                        yield f"data: {line.strip()}\n\n"
-                    except Exception as e:
-                        web_logger.error(f"Error reading log file {path}: {e}")
-                        yield f"data: ERROR: Problem reading {name} log: {str(e)}\n\n"
-                        # Reset position on error
-                        positions.pop(name, None)
-                
-                # Send a keep-alive comment every ~30 seconds to prevent timeout
-                # but only if we haven't had any real content
+                        try:
+                            with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                                f.seek(positions[name])
+                                # Read a limited number of lines at once
+                                new_lines = []
+                                lines_read = 0
+                                max_lines_per_check = 100 # Limit lines per check
+
+                                while lines_read < max_lines_per_check:
+                                    line = f.readline()
+                                    if not line:
+                                        break # End of file reached
+                                    new_lines.append(line)
+                                    lines_read += 1
+
+                                if new_lines:
+                                    had_content = True
+                                    new_position = f.tell()
+                                    web_logger.debug(f"Read {len(new_lines)} new lines from {name}. New position: {new_position}")
+                                    positions[name] = new_position
+                                    for line in new_lines:
+                                        stripped_line = line.strip()
+                                        if stripped_line:  # Only send non-empty lines
+                                            # Prefix with app name for clarity on 'all' tab
+                                            prefix = f"[{name.upper()}] " if app_type == 'all' else ""
+                                            # Fix: proper SSE format with single \n not escaped \n\n
+                                            yield f"data: {prefix}{stripped_line}\n\n"
+                        except FileNotFoundError:
+                             web_logger.warning(f"Log file {path} disappeared during read for {name}. Skipping.")
+                             positions[name] = -1 # Mark as not found
+                             continue
+                        except Exception as read_err:
+                             web_logger.error(f"Error reading log file {path} for {name}: {read_err}", exc_info=True)
+                             yield f"data: ERROR: Problem reading {name} log: {str(read_err)}\n\n"
+                             # Don't reset position immediately, maybe temporary issue
+                             # Consider adding a backoff mechanism if errors persist
+
+                    except Exception as file_loop_err:
+                        # Catch errors related to a specific file but continue the main loop
+                        web_logger.error(f"Error processing file {name} ({path}) in log stream: {file_loop_err}", exc_info=True)
+                        yield f"data: ERROR: Unexpected issue processing {name} log.\n\n"
+
+                # Send a keep-alive comment every ~15 seconds (adjust interval if needed)
+                # but only if we haven't had any real content in this iteration
                 if not had_content:
-                    if keep_alive_counter >= 60:  # ~30 seconds (60 * 0.5s sleep)
-                        yield f": keepalive {time.time()}\n\n"  # Send a comment (prefixed with :) that won't display
+                    # Interval: 15 seconds / 0.2s sleep = 75 checks
+                    if keep_alive_counter >= 75:
+                        yield f": keepalive {time.time()}\n\n"
+                        web_logger.debug(f"Sent keepalive for {app_type} (Client: {client_ip})")
                         keep_alive_counter = 0
-                    
-                    # Sleep between checks to prevent high CPU usage
-                    time.sleep(0.5)
+
+                    # Sleep longer when idle
+                    time.sleep(0.2)
                 else:
                     # Reset keep-alive counter when we've sent actual content
                     keep_alive_counter = 0
-                    # Shorter sleep when actively sending content
-                    time.sleep(0.1)
+                    # Shorter sleep when actively sending content to be responsive
+                    time.sleep(0.05) # Reduced sleep when active
+
         except GeneratorExit:
             # Clean up when client disconnects
-            with app.log_stream_lock:
-                app.active_log_streams.pop(client_id, None)
-            web_logger.info(f"Client {client_id} disconnected from log stream for {app_type}")
+            web_logger.info(f"Client {client_id} disconnected from log stream for {app_type}. Cleaning up.")
         except Exception as e:
-            web_logger.error(f"Error in log stream generator: {e}", exc_info=True)
-            yield f"data: ERROR: Log streaming failed: {str(e)}\n\n"
-            
-            # Clean up on error
+            web_logger.error(f"Unhandled error in log stream generator for {app_type} (Client: {client_ip}): {e}", exc_info=True)
+            try:
+                # Ensure error message is properly formatted for SSE
+                yield f"event: error\ndata: ERROR: Log streaming failed unexpectedly: {str(e)}\n\n"
+            except Exception as yield_err:
+                 web_logger.error(f"Error yielding final error message to client {client_id}: {yield_err}")
+        finally:
+            # Ensure cleanup happens regardless of how the generator exits
             with app.log_stream_lock:
-                app.active_log_streams.pop(client_id, None)
+                removed_client = app.active_log_streams.pop(client_id, None)
+                if removed_client:
+                     web_logger.info(f"Successfully removed client {client_id} from active log streams.")
+                else:
+                     web_logger.warning(f"Client {client_id} was already removed from active log streams before finally block.")
+            web_logger.info(f"Log stream generator finished for {app_type} (Client: {client_id})")
 
     # Return the SSE response with appropriate headers for better streaming
-    response = Response(generate(), mimetype='text/event-stream')
+    response = Response(stream_with_context(generate()), mimetype='text/event-stream') # Use stream_with_context
     response.headers['Cache-Control'] = 'no-cache'
     response.headers['X-Accel-Buffering'] = 'no'  # Disable nginx buffering if using nginx
     return response
@@ -303,6 +361,34 @@ def api_settings():
             return jsonify(all_settings) # Return the full config object
         else:
             return jsonify({"success": False, "error": f"Failed to save settings for {app_name}"}), 500
+
+@app.route('/api/settings/general', methods=['POST'])
+def save_general_settings():
+    general_logger = get_logger("web_server")
+    general_logger.info("Received request to save general settings.")
+    try:
+        data = request.get_json()
+        if not data or 'general' not in data:
+            general_logger.error("Invalid payload received for saving general settings.")
+            return jsonify({"success": False, "error": "Invalid payload"}), 400
+
+        general_settings_data = data['general']
+        general_logger.debug(f"Saving general settings data: {general_settings_data}")
+
+        # Save the entire general settings dictionary
+        success = settings_manager.save_settings('general', general_settings_data)
+
+        if success:
+            general_logger.info("General settings saved successfully.")
+            # Return the full updated config
+            full_config = settings_manager.load_settings()
+            return jsonify(full_config)
+        else:
+            general_logger.error("Failed to save general settings via settings_manager.")
+            return jsonify({"success": False, "error": "Failed to save settings"}), 500
+    except Exception as e:
+        general_logger.error(f"Error saving general settings: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/settings/theme', methods=['GET', 'POST'])
 def api_theme():
@@ -368,28 +454,111 @@ def api_configured_apps():
 def api_app_status(app_name):
     """Check connection status for a specific app."""
     web_logger = get_logger("web_server")
-    if app_name not in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
+    response_data = {"configured": False, "connected": False} # Default for non-Sonarr apps
+    status_code = 200
+    
+    # First validate the app name
+    if app_name not in settings_manager.KNOWN_APP_TYPES:
+        web_logger.warning(f"Status check requested for invalid app name: {app_name}")
         return jsonify({"configured": False, "connected": False, "error": "Invalid app name"}), 400
 
-    # api_details = settings_manager.get_api_details(app_name) # Function does not exist
-    api_url = settings_manager.get_api_url(app_name)
-    api_key = settings_manager.get_api_key(app_name)
-    is_configured = bool(api_url and api_key)
-    is_connected = False
-    api_timeout = settings_manager.get_setting(app_name, "api_timeout", 10) # Get api_timeout, default to 10
+    try:
+        if app_name in ['sonarr', 'radarr', 'lidarr', 'readarr']:
+            # --- Multi-Instance Status Check --- # 
+            connected_count = 0
+            total_configured = 0
+            try:
+                # Import app specific functions
+                module_name = f'src.primary.apps.{app_name}'
+                instances_module = importlib.import_module(module_name)
+                api_module = importlib.import_module(f'{module_name}.api')
+                
+                if hasattr(instances_module, 'get_configured_instances'):
+                    get_instances_func = getattr(instances_module, 'get_configured_instances')
+                    instances = get_instances_func()
+                    total_configured = len(instances)
+                    api_timeout = settings_manager.get_setting(app_name, "api_timeout", 10) # Get global timeout
+                    
+                    if total_configured > 0:
+                        web_logger.debug(f"Checking connection for {total_configured} {app_name.capitalize()} instances...")
+                        if hasattr(api_module, 'check_connection'):
+                            check_connection_func = getattr(api_module, 'check_connection')
+                            for instance in instances:
+                                inst_url = instance.get("api_url")
+                                inst_key = instance.get("api_key")
+                                inst_name = instance.get("instance_name", "Default")
+                                try:
+                                    # Use a short timeout per instance check
+                                    if check_connection_func(inst_url, inst_key, min(api_timeout, 5)):
+                                        web_logger.debug(f"{app_name.capitalize()} instance '{inst_name}' connected successfully.")
+                                        connected_count += 1
+                                    else:
+                                        web_logger.debug(f"{app_name.capitalize()} instance '{inst_name}' connection check failed.")
+                                except Exception as e:
+                                    web_logger.error(f"Error checking connection for {app_name.capitalize()} instance '{inst_name}': {str(e)}")
+                        else:
+                            web_logger.warning(f"check_connection function not found in {app_name} API module")
+                    else:
+                        web_logger.debug(f"No configured {app_name.capitalize()} instances found for status check.")
+                    
+                    # Prepare multi-instance response
+                    response_data = {"total_configured": total_configured, "connected_count": connected_count}
+                else:
+                    web_logger.warning(f"get_configured_instances function not found in {app_name} module")
+                    # Fall back to legacy status check
+                    api_url = settings_manager.get_setting(app_name, "api_url", "") 
+                    api_key = settings_manager.get_setting(app_name, "api_key", "")
+                    is_configured = bool(api_url and api_key)
+                    is_connected = False
+                    if is_configured and hasattr(api_module, 'check_connection'):
+                        check_connection_func = getattr(api_module, 'check_connection')
+                        is_connected = check_connection_func(api_url, api_key, min(api_timeout, 5))
+                    response_data = {"total_configured": 1 if is_configured else 0, "connected_count": 1 if is_connected else 0}
+                                
+            except ImportError as e:
+                web_logger.error(f"Failed to import {app_name} modules for status check: {e}")
+                response_data = {"total_configured": 0, "connected_count": 0, "error": "Import Error"}
+                status_code = 500
+            except Exception as e:
+                web_logger.error(f"Error during {app_name} multi-instance status check: {e}", exc_info=True)
+                response_data = {"total_configured": total_configured, "connected_count": connected_count, "error": "Check Error"}
+                status_code = 500
+                
+        else:
+            # --- Legacy/Single Instance Status Check (for other apps) --- #
+            api_url = settings_manager.get_setting(app_name, "api_url", "") 
+            api_key = settings_manager.get_setting(app_name, "api_key", "")
+            is_configured = bool(api_url and api_key)
+            is_connected = False # Default connection status
+            api_timeout = settings_manager.get_setting(app_name, "api_timeout", 10)
 
-    if is_configured:
-        try:
-            api_module = importlib.import_module(f'src.primary.apps.{app_name}.api')
-            check_connection = getattr(api_module, 'check_connection')
-            # Pass URL, Key, and Timeout explicitly
-            is_connected = check_connection(api_url, api_key, api_timeout) # Pass api_timeout
-        except (ImportError, AttributeError):
-            web_logger.error(f"Could not find check_connection function for {app_name}.")
-        except Exception as e:
-            web_logger.error(f"Error checking connection for {app_name}: {e}")
-
-    return jsonify({"configured": is_configured, "connected": is_connected})
+            if is_configured:
+                try:
+                    module_path = f'src.primary.apps.{app_name}.api'
+                    api_module = importlib.import_module(module_path)
+                    
+                    if hasattr(api_module, 'check_connection'):
+                        check_connection_func = getattr(api_module, 'check_connection')
+                        # Use a short timeout to prevent long waits
+                        is_connected = check_connection_func(api_url, api_key, min(api_timeout, 5))
+                    else:
+                        web_logger.warning(f"check_connection function not found in {module_path}")
+                except ImportError:
+                    web_logger.error(f"Could not import API module for {app_name}")
+                    is_connected = False # Ensure connection is false on import error
+                except Exception as e:
+                    web_logger.error(f"Error checking connection for {app_name}: {str(e)}")
+                    is_connected = False # Ensure connection is false on check error
+            
+            # Prepare legacy response format
+            response_data = {"configured": is_configured, "connected": is_connected}
+        
+        return jsonify(response_data), status_code
+    
+    except Exception as e:
+        web_logger.error(f"Unexpected error in status check for {app_name}: {str(e)}", exc_info=True)
+        # Return a valid response even on error to prevent UI issues
+        return jsonify({"configured": False, "connected": False, "error": "Internal error"}), 200
 
 # --- Add Hunt Control Endpoints --- #
 # These might need adjustment depending on how start/stop is managed now
@@ -415,6 +584,59 @@ def api_stop_hunt():
     # if pid: os.kill(pid, signal.SIGTERM)
     return jsonify({"success": True, "message": "Hunt control endpoint (stop) - functionality may change."})
 
+@app.route('/api/settings/apply-timezone', methods=['POST'])
+def apply_timezone_setting():
+    """Apply timezone setting to the container."""
+    # This functionality has been disabled as per user request
+    return jsonify({
+        "success": False, 
+        "message": "Timezone settings have been disabled. This feature may be available in future updates."
+    })
+    
+    # Original implementation commented out
+    '''
+    data = request.json
+    timezone = data.get('timezone')
+    web_logger = get_logger("web_server")
+    
+    if not timezone:
+        return jsonify({"success": False, "error": "No timezone specified"}), 400
+        
+    web_logger.info(f"Applying timezone setting: {timezone}")
+    
+    # Save the timezone to general settings
+    general_settings = settings_manager.load_settings("general")
+    general_settings["timezone"] = timezone
+    settings_manager.save_settings("general", general_settings)
+    
+    # Apply the timezone to the container
+    success = settings_manager.apply_timezone(timezone)
+    
+    if success:
+        return jsonify({"success": True, "message": f"Timezone set to {timezone}. Container restart may be required for full effect."})
+    else:
+        return jsonify({"success": False, "error": f"Failed to apply timezone {timezone}"}), 500
+    '''
+
+@app.route('/version.txt')
+def version_txt():
+    """Serve version.txt file directly"""
+    try:
+        # Use a simpler, more direct approach to read the version
+        version_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'version.txt')
+        if os.path.exists(version_path):
+            with open(version_path, 'r') as f:
+                version = f.read().strip()
+            return version, 200, {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache'}
+        else:
+            # If file doesn't exist, log warning and return default version
+            web_logger = get_logger("web_server")
+            web_logger.warning(f"version.txt not found at {version_path}, returning default version")
+            return "5.3.1", 200, {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache'}
+    except Exception as e:
+        web_logger = get_logger("web_server")
+        web_logger.error(f"Error serving version.txt: {e}")
+        return "5.3.1", 200, {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache'}
 
 def start_web_server():
     """Start the web server in debug or production mode"""
