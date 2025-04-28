@@ -164,13 +164,22 @@ def process_missing_albums(
                     lidarr_logger.warning("Shutdown requested during artist search trigger.")
                     break
 
-                artist_name = f"Artist ID {artist_id}" # Placeholder, could fetch name if needed
+                # Get artist name from the first album associated with this artist ID
+                artist_name = f"Artist ID {artist_id}" # Default if name not found
+                if artist_id in items_by_artist and items_by_artist[artist_id]:
+                    # Access nested structure safely
+                    first_album = items_by_artist[artist_id][0]
+                    artist_info = first_album.get('artist')
+                    if artist_info and isinstance(artist_info, dict):
+                         artist_name = artist_info.get('artistName', artist_name)
+
                 lidarr_logger.info(f"Triggering Artist Search for '{artist_name}' (ID: {artist_id}) on instance {instance_name}")
                 try:
                     # Use the correct API function name
                     command_id = lidarr_api.search_artist(api_url, api_key, artist_id, api_timeout)
                     if command_id:
-                        lidarr_logger.info(f"Artist search triggered for ID {artist_id} on {instance_name}. Command ID: {command_id}")
+                        # Log with the retrieved artist name
+                        lidarr_logger.info(f"Artist search triggered for '{artist_name}' (ID: {artist_id}) on {instance_name}. Command ID: {command_id}")
                         increment_stat("lidarr", "missing") # Increment per artist search triggered
                         processed_count += 1 # Count artists searched
                         processed_artists_or_albums.add(artist_id)
