@@ -11,6 +11,7 @@ import pathlib
 import logging
 import shutil
 import subprocess
+import time
 from typing import Dict, Any, Optional, List
 
 # Create a simple logger for settings_manager
@@ -26,6 +27,21 @@ DEFAULT_CONFIGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'd
 
 # Update or add this as a class attribute or constant
 KNOWN_APP_TYPES = ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "general"]
+
+# Add a settings cache with timestamps to avoid excessive disk reads
+settings_cache = {}  # Format: {app_name: {'timestamp': timestamp, 'data': settings_dict}}
+CACHE_TTL = 5  # Cache time-to-live in seconds
+
+def clear_cache(app_name=None):
+    """Clear the settings cache for a specific app or all apps."""
+    global settings_cache
+    if app_name:
+        if app_name in settings_cache:
+            settings_logger.debug(f"Clearing cache for {app_name}")
+            settings_cache.pop(app_name, None)
+    else:
+        settings_logger.debug("Clearing entire settings cache")
+        settings_cache = {}
 
 def get_settings_file_path(app_name: str) -> pathlib.Path:
     """Get the path to the settings file for a specific app."""
@@ -74,14 +90,35 @@ def _ensure_config_exists(app_name: str) -> None:
                 settings_logger.error(f"Error creating empty settings file for {app_name}: {e}")
 
 
-def load_settings(app_type):
+def load_settings(app_type, use_cache=True):
     """
     Load settings for a specific app type
+    
+    Args:
+        app_type: The app type to load settings for
+        use_cache: Whether to use the cached settings if available and recent
+        
+    Returns:
+        Dict containing the app settings
     """
+    global settings_cache
+    
     # Only log unexpected app types that are not 'general'
     if app_type not in KNOWN_APP_TYPES and app_type != "general":
-        logger.warning(f"load_settings called with unexpected app_type: {app_type}")
+        settings_logger.warning(f"load_settings called with unexpected app_type: {app_type}")
+    
+    # Check if we have a valid cache entry
+    if use_cache and app_type in settings_cache:
+        cache_entry = settings_cache[app_type]
+        cache_age = time.time() - cache_entry.get('timestamp', 0)
         
+        if cache_age < CACHE_TTL:
+            settings_logger.debug(f"Using cached settings for {app_type} (age: {cache_age:.1f}s)")
+            return cache_entry['data']
+        else:
+            settings_logger.debug(f"Cache expired for {app_type} (age: {cache_age:.1f}s)")
+    
+    # No valid cache entry, load from disk
     _ensure_config_exists(app_type)
     settings_file = get_settings_file_path(app_type)
     try:
@@ -103,6 +140,12 @@ def load_settings(app_type):
             if updated:
                 settings_logger.info(f"Added missing default keys to {app_type}.json")
                 save_settings(app_type, current_settings) # Use save_settings to handle writing
+            
+            # Update cache
+            settings_cache[app_type] = {
+                'timestamp': time.time(),
+                'data': current_settings
+            }
                 
             return current_settings
             
@@ -111,6 +154,13 @@ def load_settings(app_type):
         # Attempt to restore from default
         default_settings = load_default_app_settings(app_type)
         save_settings(app_type, default_settings) # Save the restored defaults
+        
+        # Update cache with defaults
+        settings_cache[app_type] = {
+            'timestamp': time.time(),
+            'data': default_settings
+        }
+        
         return default_settings
     except Exception as e:
         settings_logger.error(f"Error loading settings for {app_type} from {settings_file}: {e}")
@@ -128,16 +178,14 @@ def save_settings(app_name: str, settings_data: Dict[str, Any]) -> bool:
         # Ensure the directory exists (though it should from the top-level check)
         settings_file.parent.mkdir(parents=True, exist_ok=True)
         
-        # Load current settings to merge, preserving any keys not included in settings_data
-        # This might be needed if the frontend only sends partial updates, though current
-        # frontend seems to send the full section. Let's assume full updates for now.
-        # current_settings = load_settings(app_name) # Avoid recursion
-        # merged_settings = {**current_settings, **settings_data}
-
         # Write the provided settings data directly
         with open(settings_file, 'w') as f:
             json.dump(settings_data, f, indent=2)
         settings_logger.info(f"Settings saved successfully for {app_name} to {settings_file}")
+        
+        # Clear cache for this app to ensure fresh reads
+        clear_cache(app_name)
+        
         return True
     except Exception as e:
         settings_logger.error(f"Error saving settings for {app_name} to {settings_file}: {e}")

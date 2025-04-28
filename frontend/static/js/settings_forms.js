@@ -948,8 +948,38 @@ const SettingsForms = {
         container.innerHTML = `
             <div class="settings-group">
                 <h3>System Settings</h3>
-                <div class="setting-item placeholder-message">
-                    <p style="text-align: center; padding: 20px; color: #888; font-style: italic;">Tab Dedicated For Future System Settings (PlaceHolder)</p>
+                <div class="setting-item">
+                    <label for="debug_mode">Debug Mode:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
+                </div>
+                <div class="setting-item">
+                    <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
+                    <input type="number" id="log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
+                    <p class="setting-help">Interval in seconds to refresh log display</p>
+                </div>
+                <div class="setting-item">
+                    <label for="check_for_updates">Check for Updates:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="check_for_updates" ${settings.check_for_updates !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Automatically check for Huntarr updates</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Security</h3>
+                <div class="setting-item">
+                    <label for="local_access_bypass">Local Network Auth Bypass:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="local_access_bypass" ${settings.local_access_bypass === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip authentication for requests from local network (similar to Radarr's behavior)</p>
                 </div>
             </div>
         `;
