@@ -257,6 +257,7 @@ docker run -d --name huntarr \
 ## Troubleshooting
 
 - **API Connection Issues**: Verify your API key and URL in the Settings page (check for missing http:// or https://)
+- **Config URLs**: It is best practice to omit the trailing slash (/) at the end of the URL for each service.  i.e. For Sonarr, instead of http://10.10.10.1:8989/ use http://10.10.10.1:8989.  This is the most common cause of errors seen in the log each time a cycle runs.
 - **Authentication Problems**: If you forget your password, delete `/config/user/credentials.json` and restart
 - **Two-Factor Authentication**: If locked out of 2FA, remove credentials file to reset your account
 - **Web Interface Not Loading**: Confirm port 9705 is correctly mapped and not blocked by firewalls
