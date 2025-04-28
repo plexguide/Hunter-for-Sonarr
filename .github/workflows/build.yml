@@ -12,6 +12,9 @@ on:
 
 jobs:
   build-and-push:
+    permissions:
+      packages: write
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -54,6 +57,7 @@ jobs:
 
       - name: Build and Push Image
         uses: docker/build-push-action@v5
+        id: builder
         with:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -64,8 +68,3 @@ jobs:
             type=registry,ref=ghcr.io/${{ github.repository_owner }}/build_cache:latest
           cache-to: |
             type=registry,ref=ghcr.io/${{ github.repository_owner }}/build_cache:latest,mode=max
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.builder.outputs.OUTPUT_FILE }}
-          path: ${{ steps.builder.outputs.OUTPUT_FILE }}
