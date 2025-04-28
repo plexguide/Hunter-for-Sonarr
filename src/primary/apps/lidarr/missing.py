@@ -180,7 +180,7 @@ def process_missing_albums(
                     if command_id:
                         # Log with the retrieved artist name
                         lidarr_logger.info(f"Artist search triggered for '{artist_name}' (ID: {artist_id}) on {instance_name}. Command ID: {command_id}")
-                        increment_stat("lidarr", "missing") # Increment per artist search triggered
+                        increment_stat("lidarr", "hunted") # Changed from "missing" to "hunted"
                         processed_count += 1 # Count artists searched
                         processed_artists_or_albums.add(artist_id)
                         time.sleep(0.1) # Small delay between triggers
@@ -222,7 +222,7 @@ def process_missing_albums(
             if command_id:
                 # Also use descriptive list in debug log if needed
                 lidarr_logger.debug(f"Album search command triggered with ID: {command_id} for albums: [{details_string}]")
-                increment_stat("lidarr", "missing") # Increment once for the batch
+                increment_stat("lidarr", "hunted") # Changed from "missing" to "hunted"
                 processed_count += len(album_ids_to_search) # Count albums searched
                 processed_artists_or_albums.update(album_ids_to_search)
                 time.sleep(command_wait_delay) # Basic delay after the single command
