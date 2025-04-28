@@ -633,18 +633,7 @@ const huntarrUI = {
         if (typeof SettingsForms !== 'undefined') {
             const formFunction = SettingsForms[`generate${app.charAt(0).toUpperCase()}${app.slice(1)}Form`];
             if (typeof formFunction === 'function') {
-                formFunction(form, appSettings);
-                
-                // For ANY app with instances, set up the instance management
-                // Check if instances exist and it's an array
-                if (appSettings && Array.isArray(appSettings.instances) && typeof SettingsForms.setupInstanceManagement === 'function') {
-                    try {
-                        // Pass the actual app name and the number of instances found
-                        SettingsForms.setupInstanceManagement(form, app, appSettings.instances.length);
-                    } catch (e) {
-                        console.error(`[huntarrUI] Error setting up instance management for ${app}:`, e);
-                    }
-                }
+                formFunction(form, appSettings); // This function already calls setupInstanceManagement internally
                 
                 // Update duration displays for this app
                 if (typeof SettingsForms.updateDurationDisplay === 'function') {
@@ -877,10 +866,13 @@ const huntarrUI = {
 
     // Handle instance management events
     setupInstanceEventHandlers: function() {
+        console.log("DEBUG: setupInstanceEventHandlers called"); // Added logging
         const settingsPanels = document.querySelectorAll('.app-settings-panel');
         
         settingsPanels.forEach(panel => {
+            console.log(`DEBUG: Adding listeners to panel '${panel.id}'`); // Added logging
             panel.addEventListener('addInstance', (e) => {
+                console.log(`DEBUG: addInstance event listener fired for panel '${panel.id}'. Event detail:`, e.detail);
                 this.addAppInstance(e.detail.appName);
             });
             
@@ -896,6 +888,7 @@ const huntarrUI = {
     
     // Add a new instance to the app
     addAppInstance: function(appName) {
+        console.log(`DEBUG: addAppInstance called for app '${appName}'`);
         const container = document.getElementById(`${appName}Settings`);
         if (!container) return;
         
