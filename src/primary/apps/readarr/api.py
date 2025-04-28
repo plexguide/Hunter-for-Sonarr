@@ -194,6 +194,70 @@ def get_cutoff_unmet_books() -> List[Dict]:
     
     return books.get("records", [])
 
+def get_wanted_missing_books(api_url: str, api_key: str, api_timeout: int, monitored_only: bool = True) -> List[Dict]:
+    """
+    Get wanted/missing books from Readarr, handling pagination.
+
+    Args:
+        api_url: The base URL of the Readarr API.
+        api_key: The API key for authentication.
+        api_timeout: Timeout for the API request.
+        monitored_only: If True, only return monitored books (Readarr API default seems to handle this).
+
+    Returns:
+        A list of dictionaries, each representing a missing book, or an empty list on error.
+    """
+    all_missing_books = []
+    page = 1
+    page_size = 100 # Adjust as needed, check Readarr API limits
+    endpoint = "wanted/missing"
+
+    # Ensure api_url is properly formatted
+    if not (api_url.startswith('http://') or api_url.startswith('https://')):
+        logger.error(f"Invalid URL format: {api_url}")
+        return []
+    base_url = api_url.rstrip('/')
+    url = f"{base_url}/api/v1/{endpoint.lstrip('/')}"
+    headers = {"X-Api-Key": api_key}
+
+    while True:
+        params = {
+            'page': page,
+            'pageSize': page_size,
+            # Removed sorting parameters due to potential API issues
+            # 'sortKey': 'author.sortName',
+            # 'sortDirection': 'ascending',
+            # 'monitored': monitored_only # Note: Check if Readarr API supports this directly for wanted/missing
+        }
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=api_timeout)
+            response.raise_for_status()
+            data = response.json()
+
+            if not data or 'records' not in data or not data['records']:
+                break # No more data or unexpected format
+
+            all_missing_books.extend(data['records'])
+
+            total_records = data.get('totalRecords', 0)
+            if len(all_missing_books) >= total_records:
+                break # We have fetched all records
+
+            page += 1
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching missing books (page {page}) from {url}: {e}")
+            return [] # Return empty list on error
+        except json.JSONDecodeError:
+            logger.error(f"Error decoding JSON response from {url} (page {page}). Response: {response.text[:200]}")
+            return []
+        except Exception as e:
+            logger.error(f"Unexpected error fetching missing books (page {page}): {e}", exc_info=True)
+            return []
+
+    logger.info(f"Successfully fetched {len(all_missing_books)} missing books from Readarr.")
+    return all_missing_books
+
 def refresh_author(author_id: int) -> bool:
     """
     Refresh an author in Readarr.
@@ -237,3 +301,107 @@ def book_search(book_ids: List[int]) -> bool:
         logger.debug(f"Triggered search for book IDs: {book_ids}")
         return True
     return False
+
+def get_author_details(api_url: str, api_key: str, author_id: int, api_timeout: int = 120) -> Optional[Dict]:
+    """Fetches details for a specific author from the Readarr API."""
+    endpoint = f"{api_url}/api/v1/author/{author_id}"
+    headers = {'X-Api-Key': api_key}
+    try:
+        response = requests.get(endpoint, headers=headers, timeout=api_timeout)
+        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+        author_data = response.json()
+        logger.debug(f"Successfully fetched details for author ID {author_id}.")
+        return author_data
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching author details for ID {author_id} from {endpoint}: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"An unexpected error occurred fetching author details for ID {author_id}: {e}")
+        return None
+
+def search_books(api_url: str, api_key: str, book_ids: List[int], api_timeout: int = 120) -> Optional[Dict]:
+    """Triggers a search for specific book IDs in Readarr."""
+    endpoint = f"{api_url}/api/v1/command"
+    headers = {'X-Api-Key': api_key}
+    payload = {
+        'name': 'BookSearch',
+        'bookIds': book_ids
+    }
+    try:
+        response = requests.post(endpoint, headers=headers, json=payload, timeout=api_timeout)
+        response.raise_for_status()
+        command_data = response.json()
+        command_id = command_data.get('id')
+        logger.info(f"Successfully triggered BookSearch command for book IDs: {book_ids}. Command ID: {command_id}")
+        return command_data # Return the full command object which includes the ID
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error triggering BookSearch command for book IDs {book_ids} via {endpoint}: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"An unexpected error occurred triggering BookSearch for book IDs {book_ids}: {e}")
+        return None
+
+# Function to get wanted/missing books with pagination
+def get_wanted_missing_books(api_url: str, api_key: str, api_timeout: int = 120, monitored_only: bool = True) -> Optional[List[Dict]]:
+    """
+    Get wanted/missing books from Readarr, handling pagination.
+
+    Args:
+        api_url: The base URL of the Readarr API.
+        api_key: The API key for authentication.
+        api_timeout: Timeout for the API request.
+        monitored_only: If True, only return monitored books (Readarr API default seems to handle this).
+
+    Returns:
+        A list of dictionaries, each representing a missing book, or an empty list on error.
+    """
+    all_missing_books = []
+    page = 1
+    page_size = 100 # Adjust as needed, check Readarr API limits
+    endpoint = "wanted/missing"
+
+    # Ensure api_url is properly formatted
+    if not (api_url.startswith('http://') or api_url.startswith('https://')):
+        logger.error(f"Invalid URL format: {api_url}")
+        return []
+    base_url = api_url.rstrip('/')
+    url = f"{base_url}/api/v1/{endpoint.lstrip('/')}"
+    headers = {"X-Api-Key": api_key}
+
+    while True:
+        params = {
+            'page': page,
+            'pageSize': page_size,
+            # Removed sorting parameters due to potential API issues
+            # 'sortKey': 'author.sortName',
+            # 'sortDirection': 'ascending',
+            # 'monitored': monitored_only # Note: Check if Readarr API supports this directly for wanted/missing
+        }
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=api_timeout)
+            response.raise_for_status()
+            data = response.json()
+
+            if not data or 'records' not in data or not data['records']:
+                break # No more data or unexpected format
+
+            all_missing_books.extend(data['records'])
+
+            total_records = data.get('totalRecords', 0)
+            if len(all_missing_books) >= total_records:
+                break # We have fetched all records
+
+            page += 1
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching missing books (page {page}) from {url}: {e}")
+            return [] # Return empty list on error
+        except json.JSONDecodeError:
+            logger.error(f"Error decoding JSON response from {url} (page {page}). Response: {response.text[:200]}")
+            return []
+        except Exception as e:
+            logger.error(f"Unexpected error fetching missing books (page {page}): {e}", exc_info=True)
+            return []
+
+    logger.info(f"Successfully fetched {len(all_missing_books)} missing books from Readarr.")
+    return all_missing_books

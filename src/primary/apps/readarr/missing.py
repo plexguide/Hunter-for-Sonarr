@@ -45,10 +45,13 @@ def process_missing_books(
 
     # Get missing books
     readarr_logger.info("Retrieving wanted/missing books...")
-    missing_books_data = readarr_api.get_wanted_missing(api_url, api_key, api_timeout, monitored_only)
-    
-    if not missing_books_data:
-        readarr_logger.info("No missing books found or error retrieving them.")
+    readarr_logger.info("Retrieving wanted/missing books...")
+
+    # Call the correct function to get missing books
+    missing_books_data = readarr_api.get_wanted_missing_books(api_url, api_key, api_timeout, monitored_only)
+
+    if missing_books_data is None: # Check if None was returned due to an API error
+        readarr_logger.error(f"Failed to retrieve missing books data. Skipping processing.")
         return False
         
     readarr_logger.info(f"Found {len(missing_books_data)} missing books.")
@@ -75,6 +78,7 @@ def process_missing_books(
     readarr_logger.info(f"Selected {len(authors_to_process)} authors to search for missing books.")
     processed_count = 0
     processed_something = False
+    processed_authors = [] # Track author names processed
 
     for author_id in authors_to_process:
         if stop_check():
@@ -99,12 +103,25 @@ def process_missing_books(
         # Search for missing books associated with the author
         readarr_logger.info(f"  - Searching for missing books...")
         book_ids_for_author = [book['id'] for book in books_by_author[author_id]] # 'id' is bookId
+        
+        # Create detailed log with book titles
+        book_details = []
+        for book in books_by_author[author_id]:
+            book_title = book.get('title', f"Book ID {book['id']}")
+            book_details.append(f"'{book_title}' (ID: {book['id']})")
+        
+        # Construct detailed log message
+        details_string = ', '.join(book_details)
+        log_message = f"*** DETAILED LOG *** Triggering Book Search for {len(book_details)} books by author '{author_name}': [{details_string}]"
+        readarr_logger.info(log_message)
+        
         search_command_id = readarr_api.search_books(api_url, api_key, book_ids_for_author, api_timeout)
 
         if search_command_id:
             readarr_logger.info(f"Triggered book search command {search_command_id} for author {author_name}. Assuming success for now.")
             increment_stat("readarr", "hunted")
             processed_count += 1 # Count processed authors/groups
+            processed_authors.append(author_name) # Add to list of processed authors
             processed_something = True
             readarr_logger.info(f"Processed {processed_count}/{len(authors_to_process)} authors/groups for missing books this cycle.")
         else:
@@ -114,6 +131,10 @@ def process_missing_books(
             readarr_logger.info(f"Reached target of {hunt_missing_books} authors/groups processed for this cycle.")
             break
 
-    readarr_logger.info(f"Completed processing {processed_count} authors/groups for missing books this cycle.")
-    
+    if processed_authors:
+        authors_list = '", "'.join(processed_authors)
+        readarr_logger.info(f'Completed processing {processed_count} authors/groups for missing books this cycle: "{authors_list}"')
+    else:
+        readarr_logger.info(f"Completed processing {processed_count} authors/groups for missing books this cycle.")
+
     return processed_something
