@@ -197,22 +197,21 @@ def app_specific_loop(app_type: str) -> None:
             # Get instance-specific settings from the instance_details dict
             api_url = instance_details.get("api_url", "")
             api_key = instance_details.get("api_key", "")
+
+            # Get global/shared settings from instance_details loaded at the start of the loop
+            hunt_mode = instance_details.get("hunt_mode", "missing") # Use instance_details
+            min_queue_size = instance_details.get("minimum_download_queue_size", -1) # Use instance_details
             
-            # Get global/shared settings from app_settings loaded at the start of the loop
-            api_timeout = app_settings.get("api_timeout", 10) # Fetch from app_settings
-            min_download_queue_size = app_settings.get("minimum_download_queue_size", -1) # Fetch from app_settings
-            hunt_missing_count = app_settings.get(hunt_missing_setting, 0) # Fetch from app_settings
-            hunt_upgrade_count = app_settings.get(hunt_upgrade_setting, 0) # Fetch from app_settings
-            # Add any other necessary global settings here, fetched from app_settings
-            monitored_only = app_settings.get("monitored_only", True)
-            skip_future_episodes = app_settings.get("skip_future_episodes", True) # Example for Sonarr
-            skip_series_refresh = app_settings.get("skip_series_refresh", True) # Example for Sonarr
-            random_missing = app_settings.get("random_missing", False)
-            random_upgrades = app_settings.get("random_upgrades", False)
-            command_wait_delay = app_settings.get("command_wait_delay", 5)
-            command_wait_attempts = app_settings.get("command_wait_attempts", 12)
-            state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)
-            skip_cutoff_unmet = app_settings.get("skip_cutoff_unmet", True) # Example for Sonarr upgrade
+            # Extract details needed for get_queue_size and call it correctly
+            api_url_inst = instance_details.get("api_url")
+            api_key_inst = instance_details.get("api_key")
+            api_timeout_inst = instance_details.get("api_timeout", 10) # Use instance timeout or default
+            current_queue_size = get_queue_size(api_url_inst, api_key_inst, api_timeout_inst)
+
+            # Check hunt mode and queue size before processing
+            if current_queue_size != -1 and min_queue_size != -1 and current_queue_size > min_queue_size:
+                app_logger.info(f"Download queue size ({current_queue_size}) exceeds minimum ({min_queue_size}) for instance {instance_name}. Skipping processing.")
+                continue
 
             # --- Connection Check for this instance --- #
             api_connected = False
@@ -221,7 +220,7 @@ def app_specific_loop(app_type: str) -> None:
             while not api_connected and connection_attempts < max_connection_attempts and not stop_event.is_set():
                 try:
                     # Pass loaded URL, Key, and Timeout explicitly
-                    api_connected = check_connection(api_url, api_key, api_timeout)
+                    api_connected = check_connection(api_url, api_key, instance_details.get("api_timeout", 10))
                 except Exception as e:
                     app_logger.error(f"Error during connection check for {instance_name}: {e}", exc_info=True)
                     api_connected = False # Ensure it's false on exception
@@ -245,78 +244,62 @@ def app_specific_loop(app_type: str) -> None:
             # --- Processing Logic for this instance --- #
             instance_processed_anything = False
             try:
-                # Get download queue size
-                download_queue_size = get_queue_size(api_url, api_key, api_timeout)
+                processed_instance = False
+                if hunt_mode == "missing":
+                    # Use instance_details here
+                    hunt_amount = instance_details.get(hunt_missing_setting, 0)
+                    if hunt_amount > 0:
+                        app_logger.info(f"Checking for {hunt_amount} missing items in {instance_name}...")
+                        # Pass instance_details here
+                        processed_instance = process_missing(instance_details, stop_event.is_set)
+                    else:
+                        app_logger.info(f"'{hunt_missing_setting}' is 0 or less. Skipping missing processing for {instance_name}.")
+                elif hunt_mode == "upgrade":
+                    # Use instance_details here
+                    hunt_amount = instance_details.get(hunt_upgrade_setting, 0)
+                    if hunt_amount > 0:
+                        app_logger.info(f"Checking for {hunt_amount} upgrade items in {instance_name}...")
+                        # Pass instance_details here
+                        processed_instance = process_upgrades(instance_details, stop_event.is_set)
+                    else:
+                        app_logger.info(f"'{hunt_upgrade_setting}' is 0 or less. Skipping upgrade processing for {instance_name}.")
+                elif hunt_mode == "both":
+                    processed_missing = False
+                    processed_upgrade = False
+                    # Use instance_details here
+                    missing_hunt_amount = instance_details.get(hunt_missing_setting, 0)
+                    if missing_hunt_amount > 0:
+                        app_logger.info(f"Checking for {missing_hunt_amount} missing items in {instance_name}...")
+                        # Pass instance_details here
+                        processed_missing = process_missing(instance_details, stop_event.is_set)
+                    else:
+                        app_logger.info(f"'{hunt_missing_setting}' is 0 or less. Skipping missing processing for {instance_name}.")
+                    
+                    # Check stop event before proceeding to upgrades
+                    if not stop_event.is_set():
+                        # Use instance_details here
+                        upgrade_hunt_amount = instance_details.get(hunt_upgrade_setting, 0)
+                        if upgrade_hunt_amount > 0:
+                            app_logger.info(f"Checking for {upgrade_hunt_amount} upgrade items in {instance_name}...")
+                            # Pass instance_details here
+                            processed_upgrade = process_upgrades(instance_details, stop_event.is_set)
+                        else:
+                            app_logger.info(f"'{hunt_upgrade_setting}' is 0 or less. Skipping upgrade processing for {instance_name}.")
 
-                if min_download_queue_size < 0 or download_queue_size <= min_download_queue_size:
-                    # Process Missing
-                    if process_missing and hunt_missing_count > 0:
-                        app_logger.info(f"Checking for {hunt_missing_count} missing items in {instance_name}...")
-                        try:
-                            # Construct the settings dictionary expected by the processing functions
-                            merged_settings = {
-                                "api_url": api_url,
-                                "api_key": api_key,
-                                "api_timeout": api_timeout,
-                                "monitored_only": monitored_only,
-                                "skip_future_episodes": skip_future_episodes, # Specific to sonarr missing
-                                "skip_series_refresh": skip_series_refresh, # Specific to sonarr missing
-                                "random_missing": random_missing,
-                                "hunt_missing_shows": hunt_missing_count, # Pass the actual count
-                                "command_wait_delay": command_wait_delay,
-                                "command_wait_attempts": command_wait_attempts,
-                                "state_reset_interval_hours": state_reset_interval_hours
-                            }
-                            # Pass the merged settings dictionary and the stop check function
-                            if process_missing(merged_settings, stop_event.is_set):
-                                instance_processed_anything = True
-                                cycle_processed_anything = True
-                            else:
-                                app_logger.info(f"No missing items processed for instance {instance_name}.")
-                        except Exception as e:
-                            app_logger.error(f"Error processing missing items for instance {instance_name}: {e}", exc_info=True)
-
-                    if stop_event.is_set(): break # Check if stopped during processing
-
-                    # Process Upgrades
-                    if process_upgrades and hunt_upgrade_count > 0:
-                        app_logger.info(f"Checking for {hunt_upgrade_count} items needing upgrade in {instance_name}...")
-                        try:
-                            # Construct the settings dictionary expected by the processing functions
-                            merged_settings = {
-                                "api_url": api_url,
-                                "api_key": api_key,
-                                "api_timeout": api_timeout,
-                                "monitored_only": monitored_only,
-                                "random_upgrades": random_upgrades,
-                                "hunt_upgrade_items": hunt_upgrade_count, # Pass the actual count
-                                "command_wait_delay": command_wait_delay,
-                                "command_wait_attempts": command_wait_attempts,
-                                "state_reset_interval_hours": state_reset_interval_hours,
-                                "skip_cutoff_unmet": skip_cutoff_unmet # Specific to sonarr upgrade
-                                # Add other settings needed by process_upgrades if any
-                            }
-                            # Pass the merged settings dictionary and the stop check function
-                            if process_upgrades(merged_settings, stop_event.is_set):
-                                instance_processed_anything = True
-                                cycle_processed_anything = True
-                            else:
-                                app_logger.info(f"No quality upgrades processed for instance {instance_name}.")
-                        except Exception as e:
-                            app_logger.error(f"Error processing quality upgrades for instance {instance_name}: {e}", exc_info=True)
-
+                    processed_instance = processed_missing or processed_upgrade
+                
+                # Log instance completion
+                if processed_instance:
+                    app_logger.info(f"=== {app_type.upper()} instance {instance_name} finished. Processed items. ===")
                 else:
-                    app_logger.info(f"Download queue size ({download_queue_size}) exceeds minimum ({min_download_queue_size}) for instance {instance_name}. Skipping processing.")
+                    app_logger.info(f"=== {app_type.upper()} instance {instance_name} finished. No items processed. ===")
 
             except Exception as e:
                 app_logger.error(f"Error during processing logic for instance {instance_name}: {e}", exc_info=True)
                 # Continue to the next instance
 
-            # Log instance completion
-            if instance_processed_anything:
-                app_logger.info(f"=== {app_type.upper()} instance {instance_name} finished. Processed items. ===")
-            else:
-                app_logger.info(f"=== {app_type.upper()} instance {instance_name} finished. No items processed. ===")
+            # Update cycle_processed_anything
+            cycle_processed_anything = cycle_processed_anything or processed_instance
 
         # --- Cycle End & Sleep --- #
         calculate_reset_time(app_type) # Pass app_type here if needed by the function
