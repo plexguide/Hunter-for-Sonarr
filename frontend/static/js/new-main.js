@@ -633,18 +633,7 @@ const huntarrUI = {
         if (typeof SettingsForms !== 'undefined') {
             const formFunction = SettingsForms[`generate${app.charAt(0).toUpperCase()}${app.slice(1)}Form`];
             if (typeof formFunction === 'function') {
-                formFunction(form, appSettings);
-                
-                // For ANY app with instances, set up the instance management
-                // Check if instances exist and it's an array
-                if (appSettings && Array.isArray(appSettings.instances) && typeof SettingsForms.setupInstanceManagement === 'function') {
-                    try {
-                        // Pass the actual app name and the number of instances found
-                        SettingsForms.setupInstanceManagement(form, app, appSettings.instances.length);
-                    } catch (e) {
-                        console.error(`[huntarrUI] Error setting up instance management for ${app}:`, e);
-                    }
-                }
+                formFunction(form, appSettings); // This function already calls setupInstanceManagement internally
                 
                 // Update duration displays for this app
                 if (typeof SettingsForms.updateDurationDisplay === 'function') {
