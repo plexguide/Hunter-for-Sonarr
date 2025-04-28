@@ -8,15 +8,11 @@ import time
 import random
 from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
-from src.primary.state import load_processed_ids, save_processed_ids, get_state_file_path, truncate_processed_list
 from src.primary.apps.whisparr import api as whisparr_api
 from src.primary.stats_manager import increment_stat
 
 # Get logger for the app
 whisparr_logger = get_logger("whisparr")
-
-# State file for processed missing scenes
-PROCESSED_MISSING_FILE = get_state_file_path("whisparr", "processed_missing")
 
 def process_missing_scenes(
     app_settings: Dict[str, Any],
@@ -97,32 +93,21 @@ def process_missing_scenes(
         whisparr_logger.info("No missing scenes left to process after filtering future releases.")
         return False
         
-    processed_missing_ids: Set[int] = load_processed_ids(PROCESSED_MISSING_FILE)
     scenes_processed = 0
     processing_done = False
-    
-    # Filter out already processed scenes
-    unprocessed_scenes = [scene for scene in missing_scenes if scene.get("id") not in processed_missing_ids]
-    
-    if not unprocessed_scenes:
-        whisparr_logger.info("All available missing scenes have already been processed. Skipping.")
-        return False
-    
-    whisparr_logger.info(f"Found {len(unprocessed_scenes)} missing scenes that haven't been processed yet.")
     
     # Select scenes to search based on configuration
     if random_missing:
         whisparr_logger.info(f"Randomly selecting up to {hunt_missing_scenes} missing scenes.")
-        scenes_to_search = random.sample(unprocessed_scenes, min(len(unprocessed_scenes), hunt_missing_scenes))
+        scenes_to_search = random.sample(missing_scenes, min(len(missing_scenes), hunt_missing_scenes))
     else:
         whisparr_logger.info(f"Selecting the first {hunt_missing_scenes} missing scenes (sorted by title).")
         # Sort by title for consistent ordering if not random
-        unprocessed_scenes.sort(key=lambda x: x.get("title", ""))
-        scenes_to_search = unprocessed_scenes[:hunt_missing_scenes]
+        missing_scenes.sort(key=lambda x: x.get("title", ""))
+        scenes_to_search = missing_scenes[:hunt_missing_scenes]
     
     whisparr_logger.info(f"Selected {len(scenes_to_search)} missing scenes to search.")
 
-    processed_in_this_run = set()
     # Process selected scenes
     for scene in scenes_to_search:
         # Check for stop signal before each scene
@@ -165,8 +150,6 @@ def process_missing_scenes(
         search_command_id = whisparr_api.scene_search(api_url, api_key, api_timeout, [scene_id])
         if search_command_id:
             whisparr_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
-            save_processed_ids(PROCESSED_MISSING_FILE, scene_id)
-            processed_in_this_run.add(scene_id)
             scenes_processed += 1
             processing_done = True
             
@@ -183,11 +166,9 @@ def process_missing_scenes(
             continue
     
     # Log final status
-    if processed_in_this_run:
-        whisparr_logger.info(f"Completed processing {len(processed_in_this_run)} missing scenes for this cycle.")
+    if scenes_processed > 0:
+        whisparr_logger.info(f"Completed processing {scenes_processed} missing scenes for this cycle.")
     else:
         whisparr_logger.info("No new missing scenes were processed in this run.")
         
-    truncate_processed_list(PROCESSED_MISSING_FILE)
-    
     return processing_done
