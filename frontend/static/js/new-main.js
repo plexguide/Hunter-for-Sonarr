@@ -627,10 +627,7 @@ const huntarrUI = {
     populateSettingsForm: function(app, appSettings) {
         // Cache the form for this app
         const form = document.getElementById(`${app}Settings`);
-        if (!form) {
-            console.error(`[huntarrUI] Could not find settings form for app: ${app}`);
-            return;
-        }
+        if (!form) return;
         
         // Check if SettingsForms is loaded to generate the form
         if (typeof SettingsForms !== 'undefined') {
@@ -763,6 +760,322 @@ const huntarrUI = {
         }
     },
 
+    // Get settings from the form, updated to handle instances consistently
+    getFormSettings: function(app) {
+        const settings = {};
+        const form = document.getElementById(`${app}Settings`);
+        if (!form) {
+            console.error(`[huntarrUI] Form not found for app: ${app}`);
+            return null; // Return null if form doesn't exist
+        }
+
+        settings.instances = []; // Always initialize instances array
+
+        // Check if multi-instance UI elements exist (like Sonarr)
+        const instanceItems = form.querySelectorAll('.instance-item');
+        if (instanceItems.length > 0) {
+            console.log(`[huntarrUI] Found ${instanceItems.length} instance items for ${app}. Processing multi-instance mode.`);
+            // Multi-instance logic (current Sonarr logic)
+            instanceItems.forEach((item, index) => {
+                const instanceId = item.dataset.instanceId; // Assumes Sonarr uses data-instance-id
+                const nameInput = form.querySelector(`#${app}_instance_${instanceId}_name`);
+                const urlInput = form.querySelector(`#${app}_instance_${instanceId}_api_url`);
+                const keyInput = form.querySelector(`#${app}_instance_${instanceId}_api_key`);
+                const enabledInput = item.querySelector('.instance-enabled'); // Assumes Sonarr uses this class for enable toggle
+
+                if (urlInput && keyInput) { // Need URL and Key at least
+                    settings.instances.push({
+                        // Use nameInput value if available, otherwise generate a default
+                        name: nameInput && nameInput.value.trim() !== '' ? nameInput.value.trim() : `Instance ${index + 1}`,
+                        api_url: urlInput.value.trim(),
+                        api_key: keyInput.value.trim(),
+                        // Default to true if toggle doesn't exist or is checked
+                        enabled: enabledInput ? enabledInput.checked : true
+                    });
+                }
+            });
+        } else {
+            console.log(`[huntarrUI] No instance items found for ${app}. Processing single-instance mode.`);
+            // Single-instance logic (for Radarr, Lidarr, etc.)
+            // Look for the standard IDs used in their forms
+            const nameInput = form.querySelector(`#${app}_instance_name`); // Check for a specific name field
+            const urlInput = form.querySelector(`#${app}_api_url`);
+            const keyInput = form.querySelector(`#${app}_api_key`);
+            // Assuming single instances might have an enable toggle like #app_enabled
+            const enabledInput = form.querySelector(`#${app}_enabled`);
+
+            // Only add if URL and Key have values
+            if (urlInput && urlInput.value.trim() && keyInput && keyInput.value.trim()) {
+                 settings.instances.push({
+                     name: nameInput && nameInput.value.trim() !== '' ? nameInput.value.trim() : `${app} Instance 1`, // Default name
+                     api_url: urlInput.value.trim(),
+                     api_key: keyInput.value.trim(),
+                     // Default to true if toggle doesn't exist or is checked
+                     enabled: enabledInput ? enabledInput.checked : true
+                 });
+            }
+        }
+
+        console.log(`[huntarrUI] Processed instances for ${app}:`, settings.instances);
+
+        // Now collect any OTHER settings NOT part of the instance structure
+        const allInputs = form.querySelectorAll('input, select');
+        const handledInstanceFieldIds = new Set();
+
+        // Identify IDs used in instance collection to avoid double-adding them
+        if (instanceItems.length > 0) {
+            // Multi-instance: Iterate items again to get IDs
+            instanceItems.forEach((item) => {
+                const instanceId = item.dataset.instanceId;
+                if(instanceId) {
+                    handledInstanceFieldIds.add(`${app}_instance_${instanceId}_name`);
+                    handledInstanceFieldIds.add(`${app}_instance_${instanceId}_api_url`);
+                    handledInstanceFieldIds.add(`${app}_instance_${instanceId}_api_key`);
+                    const enabledToggle = item.querySelector('.instance-enabled');
+                    if (enabledToggle && enabledToggle.id) handledInstanceFieldIds.add(enabledToggle.id);
+                }
+            });
+        } else {
+            // Single-instance: Check for standard IDs
+             if (form.querySelector(`#${app}_instance_name`)) handledInstanceFieldIds.add(`${app}_instance_name`);
+             if (form.querySelector(`#${app}_api_url`)) handledInstanceFieldIds.add(`${app}_api_url`);
+             if (form.querySelector(`#${app}_api_key`)) handledInstanceFieldIds.add(`${app}_api_key`);
+             if (form.querySelector(`#${app}_enabled`)) handledInstanceFieldIds.add(`${app}_enabled`);
+        }
+
+        allInputs.forEach(input => {
+            // Skip buttons and fields already processed as part of an instance
+            if (input.type === 'button' || handledInstanceFieldIds.has(input.id)) {
+                return;
+            }
+
+            // Get the field key (remove app prefix)
+            let key = input.id;
+            if (key.startsWith(`${app}_`)) {
+                key = key.substring(app.length + 1);
+            }
+
+            // Skip empty keys or keys that are just numbers (unlikely but possible)
+            if (!key || /^\d+$/.test(key)) return;
+
+            // Store the value
+            if (input.type === 'checkbox') {
+                settings[key] = input.checked;
+            } else if (input.type === 'number') {
+                // Handle potential empty string for numbers, store as null or default?
+                settings[key] = input.value === '' ? null : parseInt(input.value, 10);
+            } else {
+                settings[key] = input.value.trim();
+            }
+        });
+
+        console.log(`[huntarrUI] Final collected settings for ${app}:`, settings);
+        return settings;
+    },
+
+    // Handle instance management events
+    setupInstanceEventHandlers: function() {
+        const settingsPanels = document.querySelectorAll('.app-settings-panel');
+        
+        settingsPanels.forEach(panel => {
+            panel.addEventListener('addInstance', (e) => {
+                this.addAppInstance(e.detail.appName);
+            });
+            
+            panel.addEventListener('removeInstance', (e) => {
+                this.removeAppInstance(e.detail.appName, e.detail.instanceId);
+            });
+            
+            panel.addEventListener('testConnection', (e) => {
+                this.testInstanceConnection(e.detail.appName, e.detail.instanceId, e.detail.url, e.detail.apiKey);
+            });
+        });
+    },
+    
+    // Add a new instance to the app
+    addAppInstance: function(appName) {
+        const container = document.getElementById(`${appName}Settings`);
+        if (!container) return;
+        
+        // Get current settings
+        const currentSettings = this.getFormSettings(appName);
+        
+        // Add new instance
+        if (!currentSettings.instances) {
+            currentSettings.instances = [];
+        }
+        
+        // Limit to 9 instances
+        if (currentSettings.instances.length >= 9) {
+            this.showNotification('Maximum of 9 instances allowed', 'error');
+            return;
+        }
+        
+        // Add new instance with a default name
+        currentSettings.instances.push({
+            name: `Instance ${currentSettings.instances.length + 1}`,
+            api_url: '',
+            api_key: '',
+            enabled: true
+        });
+        
+        // Regenerate form with new instance
+        SettingsForms[`generate${appName.charAt(0).toUpperCase()}${appName.slice(1)}Form`](container, currentSettings);
+        
+        // Update controls like duration displays
+        SettingsForms.updateDurationDisplay();
+        
+        this.showNotification('New instance added', 'success');
+    },
+    
+    // Remove an instance
+    removeAppInstance: function(appName, instanceId) {
+        const container = document.getElementById(`${appName}Settings`);
+        if (!container) return;
+        
+        // Get current settings
+        const currentSettings = this.getFormSettings(appName);
+        
+        // Remove the instance
+        if (currentSettings.instances && instanceId >= 0 && instanceId < currentSettings.instances.length) {
+            // Keep at least one instance
+            if (currentSettings.instances.length > 1) {
+                const removedName = currentSettings.instances[instanceId].name;
+                currentSettings.instances.splice(instanceId, 1);
+                
+                // Regenerate form
+                SettingsForms[`generate${appName.charAt(0).toUpperCase()}${appName.slice(1)}Form`](container, currentSettings);
+                
+                // Update controls like duration displays
+                SettingsForms.updateDurationDisplay();
+                
+                this.showNotification(`Instance "${removedName}" removed`, 'info');
+            } else {
+                this.showNotification('Cannot remove the last instance', 'error');
+            }
+        }
+    },
+    
+    // Test connection for a specific instance
+    testInstanceConnection: function(appName, instanceId, url, apiKey) {
+        console.log(`Testing connection for ${appName} instance ${instanceId} with URL: ${url}`);
+        
+        // Make sure instanceId is treated as a number
+        instanceId = parseInt(instanceId, 10);
+        
+        // Find the status span where we'll display the result
+        const statusSpan = document.getElementById(`${appName}_instance_${instanceId}_status`);
+        if (!statusSpan) {
+            console.error(`Status span not found for ${appName} instance ${instanceId}`);
+            return;
+        }
+        
+        // Show testing status
+        statusSpan.textContent = 'Testing...';
+        statusSpan.className = 'connection-status testing';
+        
+        // Validate URL and API key
+        if (!url || !apiKey) {
+            statusSpan.textContent = 'Missing URL or API key';
+            statusSpan.className = 'connection-status error';
+            return;
+        }
+        
+        // Check if URL is properly formatted
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            statusSpan.textContent = 'URL must start with http:// or https://';
+            statusSpan.className = 'connection-status error';
+            return;
+        }
+        
+        // Clean up the URL by removing trailing slashes
+        url = url.trim().replace(/\/+$/, '');
+        
+        // Make the API request to test the connection
+        fetch(`/api/${appName}/test-connection`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                api_url: url,
+                api_key: apiKey
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || this.getConnectionErrorMessage(response.status));
+                }).catch(() => {
+                    // Fallback if response body is not JSON or empty
+                    throw new Error(this.getConnectionErrorMessage(response.status));
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(`Connection test response data for ${appName} instance ${instanceId}:`, data);
+            if (data.success) {
+                statusSpan.textContent = data.message || 'Connected';
+                statusSpan.className = 'connection-status success';
+                
+                // If a version was returned, display it
+                if (data.version) {
+                    statusSpan.textContent += ` (v${data.version})`;
+                }
+            } else {
+                statusSpan.textContent = data.message || 'Failed';
+                statusSpan.className = 'connection-status error';
+            }
+        })
+        .catch(error => {
+            console.error(`Error testing connection for ${appName} instance ${instanceId}:`, error);
+            
+            // Extract the most relevant part of the error message
+            let errorMessage = error.message || 'Unknown error';
+            if (errorMessage.includes('Name or service not known')) {
+                errorMessage = 'Unable to resolve hostname. Check the URL.';
+            } else if (errorMessage.includes('Connection refused')) {
+                errorMessage = 'Connection refused. Check that the service is running.';
+            } else if (errorMessage.includes('connect ETIMEDOUT') || errorMessage.includes('timeout')) {
+                errorMessage = 'Connection timed out. Check URL and port.';
+            } else if (errorMessage.includes('401') || errorMessage.includes('Authentication failed')) {
+                errorMessage = 'Invalid API key';
+            } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+                errorMessage = 'URL endpoint not found. Check the URL.';
+            } else if (errorMessage.startsWith('HTTP error!')) {
+                errorMessage = 'Connection failed. Check URL and port.';
+            }
+            
+            statusSpan.textContent = errorMessage;
+            statusSpan.className = 'connection-status error';
+        });
+    },
+    
+    // Helper function to translate HTTP error codes to user-friendly messages
+    getConnectionErrorMessage: function(status) {
+        switch(status) {
+            case 400:
+                return 'Invalid request. Check URL format.';
+            case 401:
+                return 'Invalid API key';
+            case 403:
+                return 'Access forbidden. Check permissions.';
+            case 404:
+                return 'Service not found at this URL. Check address.';
+            case 500:
+                return 'Server error. Check if the service is working properly.';
+            case 502:
+                return 'Bad gateway. Check network connectivity.';
+            case 503:
+                return 'Service unavailable. Check if the service is running.';
+            case 504:
+                return 'Gateway timeout. Check network connectivity.';
+            default:
+                return `Connection error. Check URL and port.`;
+        }
+    },
+    
     // App connections
     checkAppConnections: function() {
         this.checkAppConnection('sonarr');
@@ -1084,285 +1397,6 @@ const huntarrUI = {
         // This function should ideally call checkAppConnection for all relevant apps
         // or use the stored configuredApps status if checkAppConnection updates it.
         this.checkAppConnections(); // Re-check all connections after a save might be simplest
-    },
-    
-    // Get settings from the form, updated to handle instances
-    getFormSettings: function(app) {
-        const settings = {};
-        const form = document.getElementById(`${app}Settings`);
-        if (!form) return settings;
-        
-        // Special handling for instances (currently only for Sonarr)
-        if (app === 'sonarr' && form.querySelectorAll('.instance-item').length > 0) {
-            // Get instances settings
-            settings.instances = [];
-            const instanceItems = form.querySelectorAll('.instance-item');
-            
-            instanceItems.forEach((item, index) => {
-                const instanceId = item.dataset.instanceId;
-                const nameInput = document.getElementById(`${app}_instance_${instanceId}_name`);
-                const urlInput = document.getElementById(`${app}_instance_${instanceId}_api_url`);
-                const keyInput = document.getElementById(`${app}_instance_${instanceId}_api_key`);
-                const enabledInput = item.querySelector('.instance-enabled');
-                
-                if (urlInput && keyInput) {
-                    settings.instances.push({
-                        name: nameInput ? nameInput.value : `Instance ${index + 1}`,
-                        api_url: urlInput.value,
-                        api_key: keyInput.value,
-                        enabled: enabledInput ? enabledInput.checked : true
-                    });
-                }
-            });
-            
-            // Continue with the rest of the form fields
-            const inputs = form.querySelectorAll('input:not([id^="' + app + '_instance_"]), select');
-            inputs.forEach(input => {
-                // Skip buttons and instance-related elements
-                if (input.type === 'button' || input.classList.contains('instance-enabled')) {
-                    return;
-                }
-                
-                // Get the field name without app prefix and type suffix
-                let key = input.id;
-                if (key.startsWith(`${app}_`)) {
-                    key = key.substring(app.length + 1);
-                }
-                
-                if (input.type === 'checkbox') {
-                    settings[key] = input.checked;
-                } else if (input.type === 'number') {
-                    settings[key] = parseInt(input.value, 10);
-                } else {
-                    settings[key] = input.value;
-                }
-            });
-        } else {
-            // Standard settings form handling (unchanged)
-            const inputs = form.querySelectorAll('input, select');
-            inputs.forEach(input => {
-                if (input.type === 'button') return;
-                
-                // Get the field name without app prefix and type suffix
-                let key = input.id;
-                if (key.startsWith(`${app}_`)) {
-                    key = key.substring(app.length + 1);
-                }
-                
-                if (input.type === 'checkbox') {
-                    settings[key] = input.checked;
-                } else if (input.type === 'number') {
-                    settings[key] = parseInt(input.value, 10);
-                } else {
-                    settings[key] = input.value;
-                }
-            });
-        }
-        
-        return settings;
-    },
-    
-    // Handle instance management events
-    setupInstanceEventHandlers: function() {
-        const settingsPanels = document.querySelectorAll('.app-settings-panel');
-        
-        settingsPanels.forEach(panel => {
-            panel.addEventListener('addInstance', (e) => {
-                this.addAppInstance(e.detail.appName);
-            });
-            
-            panel.addEventListener('removeInstance', (e) => {
-                this.removeAppInstance(e.detail.appName, e.detail.instanceId);
-            });
-            
-            panel.addEventListener('testConnection', (e) => {
-                this.testInstanceConnection(e.detail.appName, e.detail.instanceId, e.detail.url, e.detail.apiKey);
-            });
-        });
-    },
-    
-    // Add a new instance to the app
-    addAppInstance: function(appName) {
-        const container = document.getElementById(`${appName}Settings`);
-        if (!container) return;
-        
-        // Get current settings
-        const currentSettings = this.getFormSettings(appName);
-        
-        // Add new instance
-        if (!currentSettings.instances) {
-            currentSettings.instances = [];
-        }
-        
-        // Limit to 9 instances
-        if (currentSettings.instances.length >= 9) {
-            this.showNotification('Maximum of 9 instances allowed', 'error');
-            return;
-        }
-        
-        // Add new instance with a default name
-        currentSettings.instances.push({
-            name: `Instance ${currentSettings.instances.length + 1}`,
-            api_url: '',
-            api_key: '',
-            enabled: true
-        });
-        
-        // Regenerate form with new instance
-        SettingsForms[`generate${appName.charAt(0).toUpperCase()}${appName.slice(1)}Form`](container, currentSettings);
-        
-        // Update controls like duration displays
-        SettingsForms.updateDurationDisplay();
-        
-        this.showNotification('New instance added', 'success');
-    },
-    
-    // Remove an instance
-    removeAppInstance: function(appName, instanceId) {
-        const container = document.getElementById(`${appName}Settings`);
-        if (!container) return;
-        
-        // Get current settings
-        const currentSettings = this.getFormSettings(appName);
-        
-        // Remove the instance
-        if (currentSettings.instances && instanceId >= 0 && instanceId < currentSettings.instances.length) {
-            // Keep at least one instance
-            if (currentSettings.instances.length > 1) {
-                const removedName = currentSettings.instances[instanceId].name;
-                currentSettings.instances.splice(instanceId, 1);
-                
-                // Regenerate form
-                SettingsForms[`generate${appName.charAt(0).toUpperCase()}${appName.slice(1)}Form`](container, currentSettings);
-                
-                // Update controls like duration displays
-                SettingsForms.updateDurationDisplay();
-                
-                this.showNotification(`Instance "${removedName}" removed`, 'info');
-            } else {
-                this.showNotification('Cannot remove the last instance', 'error');
-            }
-        }
-    },
-    
-    // Test connection for a specific instance
-    testInstanceConnection: function(appName, instanceId, url, apiKey) {
-        console.log(`Testing connection for ${appName} instance ${instanceId} with URL: ${url}`);
-        
-        // Make sure instanceId is treated as a number
-        instanceId = parseInt(instanceId, 10);
-        
-        // Find the status span where we'll display the result
-        const statusSpan = document.getElementById(`${appName}_instance_${instanceId}_status`);
-        if (!statusSpan) {
-            console.error(`Status span not found for ${appName} instance ${instanceId}`);
-            return;
-        }
-        
-        // Show testing status
-        statusSpan.textContent = 'Testing...';
-        statusSpan.className = 'connection-status testing';
-        
-        // Validate URL and API key
-        if (!url || !apiKey) {
-            statusSpan.textContent = 'Missing URL or API key';
-            statusSpan.className = 'connection-status error';
-            return;
-        }
-        
-        // Check if URL is properly formatted
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            statusSpan.textContent = 'URL must start with http:// or https://';
-            statusSpan.className = 'connection-status error';
-            return;
-        }
-        
-        // Clean up the URL by removing trailing slashes
-        url = url.trim().replace(/\/+$/, '');
-        
-        // Make the API request to test the connection
-        fetch(`/api/${appName}/test-connection`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                api_url: url,
-                api_key: apiKey
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(errorData => {
-                    throw new Error(errorData.message || this.getConnectionErrorMessage(response.status));
-                }).catch(() => {
-                    // Fallback if response body is not JSON or empty
-                    throw new Error(this.getConnectionErrorMessage(response.status));
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log(`Connection test response data for ${appName} instance ${instanceId}:`, data);
-            if (data.success) {
-                statusSpan.textContent = data.message || 'Connected';
-                statusSpan.className = 'connection-status success';
-                
-                // If a version was returned, display it
-                if (data.version) {
-                    statusSpan.textContent += ` (v${data.version})`;
-                }
-            } else {
-                statusSpan.textContent = data.message || 'Failed';
-                statusSpan.className = 'connection-status error';
-            }
-        })
-        .catch(error => {
-            console.error(`Error testing connection for ${appName} instance ${instanceId}:`, error);
-            
-            // Extract the most relevant part of the error message
-            let errorMessage = error.message || 'Unknown error';
-            if (errorMessage.includes('Name or service not known')) {
-                errorMessage = 'Unable to resolve hostname. Check the URL.';
-            } else if (errorMessage.includes('Connection refused')) {
-                errorMessage = 'Connection refused. Check that the service is running.';
-            } else if (errorMessage.includes('connect ETIMEDOUT') || errorMessage.includes('timeout')) {
-                errorMessage = 'Connection timed out. Check URL and port.';
-            } else if (errorMessage.includes('401') || errorMessage.includes('Authentication failed')) {
-                errorMessage = 'Invalid API key';
-            } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
-                errorMessage = 'URL endpoint not found. Check the URL.';
-            } else if (errorMessage.startsWith('HTTP error!')) {
-                errorMessage = 'Connection failed. Check URL and port.';
-            }
-            
-            statusSpan.textContent = errorMessage;
-            statusSpan.className = 'connection-status error';
-        });
-    },
-    
-    // Helper function to translate HTTP error codes to user-friendly messages
-    getConnectionErrorMessage: function(status) {
-        switch(status) {
-            case 400:
-                return 'Invalid request. Check URL format.';
-            case 401:
-                return 'Invalid API key';
-            case 403:
-                return 'Access forbidden. Check permissions.';
-            case 404:
-                return 'Service not found at this URL. Check address.';
-            case 500:
-                return 'Server error. Check if the service is working properly.';
-            case 502:
-                return 'Bad gateway. Check network connectivity.';
-            case 503:
-                return 'Service unavailable. Check if the service is running.';
-            case 504:
-                return 'Gateway timeout. Check network connectivity.';
-            default:
-                return `Connection error. Check URL and port.`;
-        }
     },
 };
 
