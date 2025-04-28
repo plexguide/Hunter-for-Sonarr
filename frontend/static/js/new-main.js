@@ -41,6 +41,8 @@ const huntarrUI = {
         this.loadUsername();
         this.checkAppConnections();
         this.loadMediaStats(); // Load media statistics
+        this.loadCurrentVersion(); // Load current version
+        this.loadLatestVersion(); // Load latest version from GitHub
         
         // Ensure logo is applied
         if (typeof window.applyLogoToAllElements === 'function') {
@@ -1365,6 +1367,62 @@ const huntarrUI = {
         return string.charAt(0).toUpperCase() + string.slice(1);
     },
 
+    // Load current version from version.txt
+    loadCurrentVersion: function() {
+        fetch('/version.txt')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load version.txt');
+                }
+                return response.text();
+            })
+            .then(version => {
+                const versionElement = document.getElementById('version-value');
+                if (versionElement) {
+                    versionElement.textContent = version.trim();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading current version:', error);
+                const versionElement = document.getElementById('version-value');
+                if (versionElement) {
+                    versionElement.textContent = 'Error';
+                }
+            });
+    },
+
+    // Load latest version from GitHub releases
+    loadLatestVersion: function() {
+        fetch('https://api.github.com/repos/plexguide/Huntarr.io/releases/latest')
+            .then(response => {
+                if (!response.ok) {
+                    // Handle rate limiting or other errors
+                    if (response.status === 403) {
+                        console.warn('GitHub API rate limit likely exceeded.');
+                        throw new Error('Rate limited');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const latestVersionElement = document.getElementById('latest-version-value');
+                if (latestVersionElement && data && data.tag_name) {
+                    // Remove potential 'v' prefix for consistency if needed, or keep it
+                    latestVersionElement.textContent = data.tag_name; 
+                } else if (latestVersionElement) {
+                     latestVersionElement.textContent = 'N/A';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading latest version from GitHub:', error);
+                const latestVersionElement = document.getElementById('latest-version-value');
+                if (latestVersionElement) {
+                    latestVersionElement.textContent = error.message === 'Rate limited' ? 'Rate Limited' : 'Error';
+                }
+            });
+    },
+
     // Add or modify this function to handle enabling/disabling save/reset
     updateSaveResetButtonState(enable) { // Changed signature
         const saveButton = this.elements.saveSettingsButton;
@@ -1393,34 +1451,8 @@ const huntarrUI = {
 document.addEventListener('DOMContentLoaded', () => {
     huntarrUI.init();
     
-    // Add event listeners for media statistics buttons
-    const refreshStatsButton = document.getElementById('refresh-stats');
-    if (refreshStatsButton) {
-        refreshStatsButton.addEventListener('click', () => {
-            huntarrUI.loadMediaStats();
-        });
-    }
-    
-    const resetStatsButton = document.getElementById('reset-stats');
-    if (resetStatsButton) {
-        resetStatsButton.addEventListener('click', () => {
-            huntarrUI.resetMediaStats();
-        });
-    }
-    
-    // Restore logo from session storage if available
-    const cachedLogoSrc = sessionStorage.getItem('huntarr-logo-src');
-    if (cachedLogoSrc) {
-        const logoImg = document.querySelector('.sidebar .logo');
-        if (logoImg) {
-            logoImg.src = cachedLogoSrc;
-        }
-    }
-    
-    // Also apply logo on page load
-    if (typeof window.applyLogoToAllElements === 'function') {
-        window.applyLogoToAllElements();
-    }
+    // Remove the version loading from scripts.html as it's now in new-main.js
+    // ... existing event listeners ...
 });
 
 // Expose huntarrUI to the global scope for access by app modules
