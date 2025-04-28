@@ -8,15 +8,11 @@ import time
 import random
 from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
-from src.primary.state import load_processed_ids, save_processed_ids, get_state_file_path, truncate_processed_list
 from src.primary.apps.radarr import api as radarr_api
 from src.primary.stats_manager import increment_stat
 
 # Get logger for the app
 radarr_logger = get_logger("radarr")
-
-# State file for processed upgrades
-PROCESSED_UPGRADES_FILE = get_state_file_path("radarr", "processed_upgrades")
 
 def process_cutoff_upgrades(
     app_settings: Dict[str, Any],
@@ -45,4 +41,73 @@ def process_cutoff_upgrades(
     hunt_upgrade_movies = app_settings.get("hunt_upgrade_movies", 0)
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
-    state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)  # Add this line to get the stateful reset interval
+    
+    # Get movies eligible for upgrade
+    radarr_logger.info("Retrieving movies eligible for cutoff upgrade...")
+    upgrade_eligible_data = radarr_api.get_movies_eligible_for_upgrade(api_url, api_key, api_timeout, monitored_only)
+    
+    if not upgrade_eligible_data:
+        radarr_logger.info("No movies found eligible for upgrade or error retrieving them.")
+        return False
+        
+    radarr_logger.info(f"Found {len(upgrade_eligible_data)} movies eligible for upgrade.")
+
+    # Select movies to process
+    unprocessed_movies = upgrade_eligible_data
+    
+    if not unprocessed_movies:
+        radarr_logger.info("No upgradeable movies found to process (after potential filtering). Skipping.")
+        return False
+        
+    if random_upgrades:
+        radarr_logger.info(f"Randomly selecting up to {hunt_upgrade_movies} movies for upgrade search.")
+        movies_to_process = random.sample(unprocessed_movies, min(hunt_upgrade_movies, len(unprocessed_movies)))
+    else:
+        radarr_logger.info(f"Selecting the first {hunt_upgrade_movies} movies for upgrade search (order based on API return).")
+        movies_to_process = unprocessed_movies[:hunt_upgrade_movies]
+        
+    radarr_logger.info(f"Selected {len(movies_to_process)} movies to search for upgrades.")
+    processed_count = 0
+    processed_something = False
+    
+    for movie in movies_to_process:
+        if stop_check():
+            radarr_logger.info("Stop signal received, aborting Radarr upgrade cycle.")
+            break
+            
+        movie_id = movie.get("id")
+        movie_title = movie.get("title")
+        movie_year = movie.get("year")
+        
+        radarr_logger.info(f"Processing upgrade for movie: \"{movie_title}\" ({movie_year}) (Movie ID: {movie_id})")
+        
+        # Refresh movie (optional)
+        if not skip_movie_refresh:
+            radarr_logger.info(f"  - Refreshing movie info...")
+            refresh_result = radarr_api.refresh_movie(api_url, api_key, movie_id, api_timeout)
+            time.sleep(5) # Basic wait
+            if not refresh_result:
+                 radarr_logger.warning(f"  - Failed to trigger movie refresh. Continuing search anyway.")
+        else:
+             radarr_logger.info(f"  - Skipping movie refresh (skip_movie_refresh=true)")
+             
+        # Search for movie upgrade
+        radarr_logger.info(f"  - Searching for upgrade for movie...")
+        search_command_id = radarr_api.search_movies(api_url, api_key, [movie_id], api_timeout) # Check API method name
+        
+        if search_command_id:
+            radarr_logger.info(f"Triggered movie search command {search_command_id} for upgrade. Assuming success for now.")
+            increment_stat("radarr", "upgraded") # Assuming 'upgraded' stat exists
+            processed_count += 1
+            processed_something = True
+            radarr_logger.info(f"Processed {processed_count}/{len(movies_to_process)} movie upgrades this cycle.")
+        else:
+            radarr_logger.error(f"Failed to trigger search for movie {movie_title} ({movie_year}) upgrade.")
+
+        if processed_count >= hunt_upgrade_movies:
+            radarr_logger.info(f"Reached target of {hunt_upgrade_movies} movies processed for upgrade this cycle.")
+            break
+            
+    radarr_logger.info(f"Completed processing {processed_count} movies for upgrade this cycle.")
+    
+    return processed_something

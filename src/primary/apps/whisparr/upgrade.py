@@ -8,15 +8,11 @@ import time
 import random
 from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
-from src.primary.state import load_processed_ids, save_processed_ids, get_state_file_path, truncate_processed_list
 from src.primary.apps.whisparr import api as whisparr_api
 from src.primary.stats_manager import increment_stat
 
 # Get logger for the app
 whisparr_logger = get_logger("whisparr")
-
-# State file for processed cutoff upgrades
-PROCESSED_UPGRADES_FILE = get_state_file_path("whisparr", "processed_upgrades")
 
 def process_cutoff_upgrades(
     app_settings: Dict[str, Any],
@@ -45,4 +41,6 @@ def process_cutoff_upgrades(
     hunt_upgrade_scenes = app_settings.get("hunt_upgrade_scenes", 0)
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
-    state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)  # Add this line to get the stateful reset interval
+    state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)  
+
+    return processed_any
