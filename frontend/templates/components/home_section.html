@@ -44,7 +44,10 @@
 
         <!-- Updated statistics card with new layout -->
         <div class="card stats-card">
-            <h3>Live Hunt Statistics</h3>
+            <div class="card-header">
+                <h3>Live Hunts Executed</h3>
+                <button id="reset-stats" class="action-button danger"><i class="fas fa-trash"></i> Reset</button>
+            </div>
             <div class="media-stats-container">
                 <div class="app-stats-grid">
                     <!-- Sonarr Card -->
@@ -59,11 +62,11 @@
                         <div class="stats-numbers">
                             <div class="stat-box">
                                 <span class="stat-number" id="sonarr-hunted">6</span>
-                                <span class="stat-label">Missing</span>
+                                <span class="stat-label">Missing Hunts</span>
                             </div>
                             <div class="stat-box">
                                 <span class="stat-number" id="sonarr-upgraded">6</span>
-                                <span class="stat-label">Upgrades</span>
+                                <span class="stat-label">Upgrade Hunts</span>
                             </div>
                         </div>
                     </div>
@@ -80,11 +83,11 @@
                         <div class="stats-numbers">
                             <div class="stat-box">
                                 <span class="stat-number" id="radarr-hunted">0</span>
-                                <span class="stat-label">Missing</span>
+                                <span class="stat-label">Missing Hunts</span>
                             </div>
                             <div class="stat-box">
                                 <span class="stat-number" id="radarr-upgraded">0</span>
-                                <span class="stat-label">Upgrades</span>
+                                <span class="stat-label">Upgrade Hunts</span>
                             </div>
                         </div>
                     </div>
@@ -101,11 +104,11 @@
                         <div class="stats-numbers">
                             <div class="stat-box">
                                 <span class="stat-number" id="lidarr-hunted">0</span>
-                                <span class="stat-label">Missing</span>
+                                <span class="stat-label">Missing Hunts</span>
                             </div>
                             <div class="stat-box">
                                 <span class="stat-number" id="lidarr-upgraded">0</span>
-                                <span class="stat-label">Upgrades</span>
+                                <span class="stat-label">Upgrade Hunts</span>
                             </div>
                         </div>
                     </div>
@@ -122,11 +125,11 @@
                         <div class="stats-numbers">
                             <div class="stat-box">
                                 <span class="stat-number" id="readarr-hunted">0</span>
-                                <span class="stat-label">Missing</span>
+                                <span class="stat-label">Missing Hunts</span>
                             </div>
                             <div class="stat-box">
                                 <span class="stat-number" id="readarr-upgraded">0</span>
-                                <span class="stat-label">Upgrades</span>
+                                <span class="stat-label">Upgrade Hunts</span>
                             </div>
                         </div>
                     </div>
@@ -143,18 +146,14 @@
                         <div class="stats-numbers">
                             <div class="stat-box">
                                 <span class="stat-number" id="whisparr-hunted">0</span>
-                                <span class="stat-label">Missing</span>
+                                <span class="stat-label">Missing Hunts</span>
                             </div>
                             <div class="stat-box">
                                 <span class="stat-number" id="whisparr-upgraded">0</span>
-                                <span class="stat-label">Upgrades</span>
+                                <span class="stat-label">Upgrade Hunts</span>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="stats-actions">
-                    <button id="refresh-stats" class="action-button"><i class="fas fa-sync-alt"></i> Refresh</button>
-                    <button id="reset-stats" class="action-button danger"><i class="fas fa-trash"></i> Reset</button>
                 </div>
             </div>
         </div>
@@ -407,8 +406,13 @@
         color: white;
     }
     
+    .status-badge.partially-connected {
+        background-color: #ffc107; /* Yellow for partial connection */
+        color: #333; /* Darker text for yellow background */
+    }
+    
     .status-badge.not-connected {
-        background-color: #f44336;
+        background-color: #f44336; /* Red for no connection */
         color: white;
     }
     
@@ -417,33 +421,28 @@
         color: #333;
     }
     
-    /* Stats action buttons */
-    .stats-actions {
+    /* Header for cards */
+    .card-header {
         display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 10px;
-    }
-    
-    .action-button {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        background-color: var(--bg-tertiary);
-        color: var(--text-primary);
-        cursor: pointer;
-        font-weight: 500;
-        display: flex;
+        justify-content: space-between;
         align-items: center;
-        gap: 5px;
-        transition: all 0.2s ease;
+        margin-bottom: 15px; /* Add some space below the header */
     }
-    
-    .action-button:hover {
-        background-color: var(--accent-color);
-        color: white;
+
+    .card h3 {
+        margin-top: 0;
+        margin-bottom: 0; /* Remove bottom margin as spacing is handled by .card-header */
     }
-    
+
+    /* Ensure button in header doesn't inherit odd margins and adjust padding */
+    .card-header .action-button {
+        margin: 0;
+        padding: 6px 12px; /* Slightly smaller padding */
+        font-size: 0.9em; /* Slightly smaller font */
+        flex-grow: 0; /* Prevent button from stretching */
+    }
+
+    /* Re-add danger button style */
     .action-button.danger {
         background-color: rgba(244, 67, 54, 0.1);
         color: #f44336;
@@ -453,7 +452,7 @@
         background-color: #f44336;
         color: white;
     }
-    
+
     /* Responsive adjustments */
     @media (max-width: 768px) {
         .important-links {
