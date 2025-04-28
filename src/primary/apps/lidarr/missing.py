@@ -193,10 +193,35 @@ def process_missing_albums(
                 lidarr_logger.warning("Shutdown requested before album search trigger.")
                 return False
 
-            lidarr_logger.info(f"Triggering Album Search for {len(album_ids_to_search)} albums (album mode) on instance {instance_name}: {album_ids_to_search}")
-            command_id = lidarr_api.trigger_album_search(api_url, api_key, album_ids_to_search, api_timeout)
+            # Prepare descriptive list for logging
+            album_details_log = []
+            # Create a dict for quick lookup based on album ID
+            missing_items_dict = {item['id']: item for item in missing_items if 'id' in item}
+            for album_id in album_ids_to_search:
+                album_info = missing_items_dict.get(album_id)
+                if album_info:
+                    # Safely get title and artist name, provide defaults
+                    title = album_info.get('title', f'Album ID {album_id}')
+                    artist_name = album_info.get('artist', {}).get('artistName', 'Unknown Artist')
+                    album_details_log.append(f"'{artist_name} - {title}' (ID: {album_id})")
+                else:
+                    # Fallback if album ID wasn't found in the fetched missing items (should be rare)
+                    album_details_log.append(f'Album ID {album_id} (Details not found)')
+
+            # Construct the detailed log message string
+            details_string = ', '.join(album_details_log)
+            log_message = f"*** DETAILED LOG *** Triggering Album Search for {len(album_ids_to_search)} albums (album mode) on instance {instance_name}: [{details_string}]"
+
+            # Add a debug log to show the details being constructed
+            lidarr_logger.debug(f"Constructed album details for logging: [{details_string}]")
+            # Ensure the INFO log uses the constructed message
+            lidarr_logger.info(log_message)
+
+            # Use the correct API function name
+            command_id = lidarr_api.search_albums(api_url, api_key, api_timeout, album_ids_to_search)
             if command_id:
-                lidarr_logger.debug(f"Album search command triggered with ID: {command_id} for albums: {album_ids_to_search}")
+                # Also use descriptive list in debug log if needed
+                lidarr_logger.debug(f"Album search command triggered with ID: {command_id} for albums: [{details_string}]")
                 increment_stat("lidarr", "missing") # Increment once for the batch
                 processed_count += len(album_ids_to_search) # Count albums searched
                 processed_artists_or_albums.update(album_ids_to_search)
