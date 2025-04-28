@@ -49,21 +49,28 @@ def app_specific_loop(app_type: str) -> None:
     process_upgrades = None
     get_queue_size = None
     check_connection = None
-    get_configured_instances = None  # For multiple instances support
+    get_instances_func = None # Default: No multi-instance function found
     hunt_missing_setting = ""
     hunt_upgrade_setting = ""
 
     try:
+        # Import the main app module first to check for get_configured_instances
+        app_module = importlib.import_module(f'src.primary.apps.{app_type}')
+        app_logger.debug(f"Attributes found in {app_module.__name__}: {dir(app_module)}")
         api_module = importlib.import_module(f'src.primary.apps.{app_type}.api')
+        missing_module = importlib.import_module(f'src.primary.apps.{app_type}.missing')
+        upgrade_module = importlib.import_module(f'src.primary.apps.{app_type}.upgrade')
+
+        # Try to get the multi-instance function from the main app module
+        try:
+            get_instances_func = getattr(app_module, 'get_configured_instances')
+            app_logger.debug(f"Found 'get_configured_instances' in {app_module.__name__}")
+        except AttributeError:
+            app_logger.debug(f"'get_configured_instances' not found in {app_module.__name__}. Assuming single instance mode.")
+            get_instances_func = None # Explicitly set to None if not found
+
         check_connection = getattr(api_module, 'check_connection')
         get_queue_size = getattr(api_module, 'get_download_queue_size', lambda: 0) # Default if not found
-
-        # Import app-specific main module for multi-instance support
-        try:
-            app_main_module = importlib.import_module(f'src.primary.apps.{app_type}')
-            get_configured_instances = getattr(app_main_module, 'get_configured_instances', None)
-        except (ImportError, AttributeError):
-            app_logger.debug(f"No get_configured_instances found for {app_type}, will use single instance mode")
 
         if app_type == "sonarr":
             missing_module = importlib.import_module('src.primary.apps.sonarr.missing')
@@ -82,8 +89,8 @@ def app_specific_loop(app_type: str) -> None:
         elif app_type == "lidarr":
             missing_module = importlib.import_module('src.primary.apps.lidarr.missing')
             upgrade_module = importlib.import_module('src.primary.apps.lidarr.upgrade')
-            # Use process_missing_content as the function name might change based on mode
-            process_missing = getattr(missing_module, 'process_missing_content') 
+            # Use process_missing_albums as the function name
+            process_missing = getattr(missing_module, 'process_missing_albums') 
             process_upgrades = getattr(upgrade_module, 'process_cutoff_upgrades')
             hunt_missing_setting = "hunt_missing_items"
             # Use hunt_upgrade_items
@@ -136,10 +143,11 @@ def app_specific_loop(app_type: str) -> None:
         # Check if we need to use multi-instance mode
         instances_to_process = []
         
-        if get_configured_instances:
+        # Use the dynamically loaded function (if found)
+        if get_instances_func:
             # Multi-instance mode supported
             try:
-                instances_to_process = get_configured_instances()
+                instances_to_process = get_instances_func() # Call the dynamically loaded function
                 if instances_to_process:
                     app_logger.info(f"Found {len(instances_to_process)} configured {app_type} instances to process")
                 else:
@@ -148,16 +156,30 @@ def app_specific_loop(app_type: str) -> None:
                     stop_event.wait(sleep_duration)
                     continue
             except Exception as e:
-                app_logger.error(f"Error getting configured instances: {e}", exc_info=True)
+                app_logger.error(f"Error calling get_configured_instances function: {e}", exc_info=True)
                 stop_event.wait(60)
                 continue
         else:
-            # get_configured_instances function doesn't exist for this app type
-            app_logger.error(f"Multi-instance support function 'get_configured_instances' not found for {app_type}. Cannot process.")
-            stop_event.wait(sleep_duration)
-            continue
+            # get_instances_func is None (either not defined in app module or import failed earlier)
+            # Fallback to single instance mode using base settings if available
+            api_url = app_settings.get("api_url")
+            api_key = app_settings.get("api_key")
+            instance_name = app_settings.get("name", f"{app_type.capitalize()} Default") # Use 'name' or default
             
-        # If after all checks, instances_to_process is still empty (shouldn't happen if logic above is correct, but good safety check)
+            if api_url and api_key:
+                app_logger.info(f"Processing {app_type} as single instance: {instance_name}")
+                # Create a list with a single dict matching the multi-instance structure
+                instances_to_process = [{
+                    "instance_name": instance_name, 
+                    "api_url": api_url, 
+                    "api_key": api_key
+                }]
+            else:
+                app_logger.warning(f"No 'get_configured_instances' function found and no valid single instance config (URL/Key) for {app_type}. Skipping cycle.")
+                stop_event.wait(sleep_duration)
+                continue
+            
+        # If after all checks, instances_to_process is still empty
         if not instances_to_process:
             app_logger.warning(f"No valid {app_type} instances to process this cycle (unexpected state). Skipping.")
             stop_event.wait(sleep_duration)

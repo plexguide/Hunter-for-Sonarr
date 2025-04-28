@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 import datetime, os, requests
-from primary import keys_manager
+from src.primary import keys_manager
 from src.primary.utils.logger import get_logger
 from src.primary.state import get_state_file_path
 from src.primary.settings_manager import load_settings
