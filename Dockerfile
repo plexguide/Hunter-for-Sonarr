@@ -27,11 +27,18 @@ RUN mkdir -p /config/settings /config/stateful /config/user /config/logs
 RUN adduser -u 1000 --disabled-password --gecos "" python && \
     chown -R python:python /config
 
-# Set environment variables
-ENV PYTHONPATH=/app
-# ENV APP_TYPE=sonarr # APP_TYPE is likely managed via config now, remove if not needed
+# non-root user
+USER python
 
-# Expose port
+ENV DEBUG=false
+
+COPY --from=builder /app/.venv ./.venv
+COPY src/ /app/src/
+COPY frontend/ /app/frontend/
+COPY main.py routes.py version.txt /app/
+
+ENV PYTHONPATH=/app
+
 EXPOSE 9705
 
 ENTRYPOINT ["/app/.venv/bin/python3", "./main.py"]
