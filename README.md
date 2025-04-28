@@ -171,7 +171,7 @@ The web interface allows you to configure all of Huntarr's settings:
 <table>
   <tr>
     <td colspan="2"> 
-      <img width="930" alt="image" src="https://github.com/user-attachments/assets/b94d6306-a478-40ab-9aab-cb2f5b02a1fd" />
+      <img width="930" alt="image" src="https://github.com/user-attachments/assets/06003622-0af3-4398-a46d-0fa4fb1f455b"
       <p align="center"><em>Settings UI</em></p>
     </td>
   </tr>
