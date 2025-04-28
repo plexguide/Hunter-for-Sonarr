@@ -362,6 +362,34 @@ def api_settings():
         else:
             return jsonify({"success": False, "error": f"Failed to save settings for {app_name}"}), 500
 
+@app.route('/api/settings/general', methods=['POST'])
+def save_general_settings():
+    general_logger = get_logger("web_server")
+    general_logger.info("Received request to save general settings.")
+    try:
+        data = request.get_json()
+        if not data or 'general' not in data:
+            general_logger.error("Invalid payload received for saving general settings.")
+            return jsonify({"success": False, "error": "Invalid payload"}), 400
+
+        general_settings_data = data['general']
+        general_logger.debug(f"Saving general settings data: {general_settings_data}")
+
+        # Save the entire general settings dictionary
+        success = settings_manager.save_settings('general', general_settings_data)
+
+        if success:
+            general_logger.info("General settings saved successfully.")
+            # Return the full updated config
+            full_config = settings_manager.load_settings()
+            return jsonify(full_config)
+        else:
+            general_logger.error("Failed to save general settings via settings_manager.")
+            return jsonify({"success": False, "error": "Failed to save settings"}), 500
+    except Exception as e:
+        general_logger.error(f"Error saving general settings: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route('/api/settings/theme', methods=['GET', 'POST'])
 def api_theme():
     # Theme settings are handled separately, potentially in /config/ui.json
