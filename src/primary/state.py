@@ -208,8 +208,16 @@ def load_processed_ids(filepath: str) -> List[int]:
     try:
         if os.path.exists(filepath):
             with open(filepath, "r") as f:
-                return json.load(f)
+                loaded_data = json.load(f)
+                if isinstance(loaded_data, list):
+                    return loaded_data
+                else:
+                    logger.error(f"Invalid data type loaded from {filepath}. Expected list, got {type(loaded_data)}. Returning empty list.")
+                    return []
         return []
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decoding JSON from {filepath}: {e}. Returning empty list.")
+        return [] # Ensure list is returned even on JSON error
     except Exception as e:
         logger.error(f"Error loading processed IDs from {filepath}: {e}")
         return []
