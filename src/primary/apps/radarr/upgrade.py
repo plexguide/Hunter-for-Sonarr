@@ -44,7 +44,7 @@ def process_cutoff_upgrades(
     
     # Get movies eligible for upgrade
     radarr_logger.info("Retrieving movies eligible for cutoff upgrade...")
-    upgrade_eligible_data = radarr_api.get_movies_eligible_for_upgrade(api_url, api_key, api_timeout, monitored_only)
+    upgrade_eligible_data = radarr_api.get_cutoff_unmet_movies(api_url, api_key, api_timeout, monitored_only)
     
     if not upgrade_eligible_data:
         radarr_logger.info("No movies found eligible for upgrade or error retrieving them.")
@@ -91,12 +91,13 @@ def process_cutoff_upgrades(
         else:
              radarr_logger.info(f"  - Skipping movie refresh (skip_movie_refresh=true)")
              
-        # Search for movie upgrade
-        radarr_logger.info(f"  - Searching for upgrade for movie...")
-        search_command_id = radarr_api.search_movies(api_url, api_key, [movie_id], api_timeout) # Check API method name
+        # Perform the movie search
+        radarr_logger.info("  - Searching for upgrade for movie...")
+        # Corrected function name
+        search_command_id = radarr_api.movie_search(api_url, api_key, api_timeout, [movie_id])
         
         if search_command_id:
-            radarr_logger.info(f"Triggered movie search command {search_command_id} for upgrade. Assuming success for now.")
+            radarr_logger.info(f"  - Search command triggered (ID: {search_command_id}). Waiting for completion...")
             increment_stat("radarr", "upgraded") # Assuming 'upgraded' stat exists
             processed_count += 1
             processed_something = True
