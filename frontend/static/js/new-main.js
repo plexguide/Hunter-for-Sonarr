@@ -247,7 +247,7 @@ const huntarrUI = {
             if (!confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
                 return; // Stop navigation if user cancels
             }
-            // User confirmed, reset flag before navigating
+             // User confirmed, reset flag before navigating
             this.settingsChanged = false;
             this.updateSaveResetButtonState(false); 
         }
@@ -677,13 +677,8 @@ const huntarrUI = {
         const app = this.currentSettingsTab;
         console.log(`[huntarrUI] saveSettings called for app: ${app}`);
         
-        // For apps with instances, use the special getFormSettings method
-        let settings;
-        if (app === 'sonarr') {
-            settings = this.getFormSettings('sonarr');
-        } else {
-            settings = this.collectSettingsFromForm(app);
-        }
+        // Use getFormSettings for all apps, as it handles different structures
+        let settings = this.getFormSettings(app);
 
         if (!settings) {
             console.error(`[huntarrUI] Failed to collect settings for app: ${app}`);
