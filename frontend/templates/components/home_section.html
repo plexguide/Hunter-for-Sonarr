@@ -35,10 +35,6 @@
                     <i class="fas fa-book"></i>
                     Documentation Wiki
                 </a>
-                <a href="https://store.elfhosted.com/elf/huntarr" target="_blank" class="link-button sponsor-button">
-                    <i class="fas fa-rocket"></i>
-                    Get ElfHosted!
-                </a>
             </div>
         </div>
 
@@ -168,15 +164,9 @@
                     </div>
                 </div>
                 <div class="thanks-item">
-                    <i class="fas fa-lightbulb thanks-icon"></i>
+                    <i class="fas fa-tools thanks-icon"></i>
                     <div class="thanks-text">
-                        Thank you to <a href="https://ninjacentral.co.za" target="_blank">ninjacentral.co.za</a> for the original inspired insight on API indexer issues which also inspired the program.
-                    </div>
-                </div>
-                <div class="thanks-item">
-                    <i class="fas fa-server thanks-icon"></i>
-                    <div class="thanks-text">
-                        Thank you to <a href="https://store.elfhosted.com/elf/huntarr" target="_blank">Get ElfHosted!</a> for providing easy deployment of all ARR applications!
+                        Thank you to <a href="https://ninjacentral.co.za" target="_blank">ninjacentral.co.za</a> for original API indexer insights and <a href="https://store.elfhosted.com/elf/huntarr" target="_blank">Get ElfHosted!</a> for easy deployment.
                     </div>
                 </div>
                 <div class="thanks-item">
@@ -480,54 +470,41 @@
     }
     
     /* Enhanced Special Thanks styling */
-    .thanks-card h3 {
-        margin-bottom: 20px;
+    .card.thanks-card h3 {
+        margin-bottom: 15px; /* Space below title */
+    }
+
+    .thanks-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
+        gap: 15px; /* Spacing between items */
+    }
+
+    .thanks-item {
         display: flex;
         align-items: center;
         gap: 10px;
+        background-color: var(--bg-tertiary); /* Slightly different background */
+        padding: 15px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
     }
-    
-    .thanks-container {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .thanks-item {
-        display: flex;
-        gap: 15px;
-        align-items: flex-start;
-        padding: 10px;
-        background-color: var(--bg-tertiary);
-        border-radius: 8px;
-        transition: all 0.2s ease;
-    }
-    
-    .thanks-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
+
     .thanks-icon {
-        font-size: 1.5rem;
+        font-size: 1.5em;
         color: var(--accent-color);
-        flex-shrink: 0;
-        margin-top: 3px;
+        width: 30px; /* Fixed width for alignment */
+        text-align: center;
     }
-    
+
     .thanks-text {
-        flex-grow: 1;
+        font-size: 0.95em;
+        color: var(--text-secondary);
         line-height: 1.5;
     }
-    
+
     .thanks-text a {
         color: var(--accent-color);
-        font-weight: 500;
         text-decoration: none;
-        transition: all 0.2s ease;
-    }
-    
-    .thanks-text a:hover {
-        text-decoration: underline;
     }
 </style>
