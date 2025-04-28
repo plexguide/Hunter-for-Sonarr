@@ -463,50 +463,67 @@ def api_app_status(app_name):
         return jsonify({"configured": False, "connected": False, "error": "Invalid app name"}), 400
 
     try:
-        if app_name == 'sonarr':
-            # --- Sonarr Multi-Instance Status Check --- # 
+        if app_name in ['sonarr', 'radarr', 'lidarr', 'readarr']:
+            # --- Multi-Instance Status Check --- # 
             connected_count = 0
             total_configured = 0
             try:
-                # Import Sonarr specific functions
-                from src.primary.apps.sonarr import get_configured_instances
-                from src.primary.apps.sonarr.api import check_connection
+                # Import app specific functions
+                module_name = f'src.primary.apps.{app_name}'
+                instances_module = importlib.import_module(module_name)
+                api_module = importlib.import_module(f'{module_name}.api')
                 
-                instances = get_configured_instances()
-                total_configured = len(instances)
-                api_timeout = settings_manager.get_setting(app_name, "api_timeout", 10) # Get global timeout
-                
-                if total_configured > 0:
-                    web_logger.debug(f"Checking connection for {total_configured} Sonarr instances...")
-                    for instance in instances:
-                        inst_url = instance.get("api_url")
-                        inst_key = instance.get("api_key")
-                        inst_name = instance.get("instance_name", "Default")
-                        try:
-                            # Use a short timeout per instance check
-                            if check_connection(inst_url, inst_key, min(api_timeout, 5)):
-                                web_logger.debug(f"Sonarr instance '{inst_name}' connected successfully.")
-                                connected_count += 1
-                                # Removed break - check all instances
-                            else:
-                                web_logger.debug(f"Sonarr instance '{inst_name}' connection check failed.")
-                        except Exception as e:
-                            web_logger.error(f"Error checking connection for Sonarr instance '{inst_name}': {str(e)}")
+                if hasattr(instances_module, 'get_configured_instances'):
+                    get_instances_func = getattr(instances_module, 'get_configured_instances')
+                    instances = get_instances_func()
+                    total_configured = len(instances)
+                    api_timeout = settings_manager.get_setting(app_name, "api_timeout", 10) # Get global timeout
+                    
+                    if total_configured > 0:
+                        web_logger.debug(f"Checking connection for {total_configured} {app_name.capitalize()} instances...")
+                        if hasattr(api_module, 'check_connection'):
+                            check_connection_func = getattr(api_module, 'check_connection')
+                            for instance in instances:
+                                inst_url = instance.get("api_url")
+                                inst_key = instance.get("api_key")
+                                inst_name = instance.get("instance_name", "Default")
+                                try:
+                                    # Use a short timeout per instance check
+                                    if check_connection_func(inst_url, inst_key, min(api_timeout, 5)):
+                                        web_logger.debug(f"{app_name.capitalize()} instance '{inst_name}' connected successfully.")
+                                        connected_count += 1
+                                    else:
+                                        web_logger.debug(f"{app_name.capitalize()} instance '{inst_name}' connection check failed.")
+                                except Exception as e:
+                                    web_logger.error(f"Error checking connection for {app_name.capitalize()} instance '{inst_name}': {str(e)}")
+                        else:
+                            web_logger.warning(f"check_connection function not found in {app_name} API module")
+                    else:
+                        web_logger.debug(f"No configured {app_name.capitalize()} instances found for status check.")
+                    
+                    # Prepare multi-instance response
+                    response_data = {"total_configured": total_configured, "connected_count": connected_count}
                 else:
-                     web_logger.debug("No configured Sonarr instances found for status check.")
-                
-                # Prepare Sonarr specific response
-                response_data = {"total_configured": total_configured, "connected_count": connected_count}
-                            
+                    web_logger.warning(f"get_configured_instances function not found in {app_name} module")
+                    # Fall back to legacy status check
+                    api_url = settings_manager.get_setting(app_name, "api_url", "") 
+                    api_key = settings_manager.get_setting(app_name, "api_key", "")
+                    is_configured = bool(api_url and api_key)
+                    is_connected = False
+                    if is_configured and hasattr(api_module, 'check_connection'):
+                        check_connection_func = getattr(api_module, 'check_connection')
+                        is_connected = check_connection_func(api_url, api_key, min(api_timeout, 5))
+                    response_data = {"total_configured": 1 if is_configured else 0, "connected_count": 1 if is_connected else 0}
+                                
             except ImportError as e:
-                 web_logger.error(f"Failed to import Sonarr modules for status check: {e}")
-                 response_data = {"total_configured": 0, "connected_count": 0, "error": "Import Error"}
-                 status_code = 500
+                web_logger.error(f"Failed to import {app_name} modules for status check: {e}")
+                response_data = {"total_configured": 0, "connected_count": 0, "error": "Import Error"}
+                status_code = 500
             except Exception as e:
-                 web_logger.error(f"Error during Sonarr multi-instance status check: {e}", exc_info=True)
-                 response_data = {"total_configured": total_configured, "connected_count": connected_count, "error": "Check Error"}
-                 status_code = 500
-                 
+                web_logger.error(f"Error during {app_name} multi-instance status check: {e}", exc_info=True)
+                response_data = {"total_configured": total_configured, "connected_count": connected_count, "error": "Check Error"}
+                status_code = 500
+                
         else:
             # --- Legacy/Single Instance Status Check (for other apps) --- #
             api_url = settings_manager.get_setting(app_name, "api_url", "") 
