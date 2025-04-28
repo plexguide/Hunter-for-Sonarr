@@ -894,3 +894,117 @@ input:checked + .slider:before {
 .notification.info {
     background-color: var(--info-color);
 }
+
+/* Multi-instance styles */
+.instances-container {
+    margin-bottom: 20px;
+}
+
+.instance-item {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    background-color: var(--card-bg);
+}
+
+.instance-header {
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--card-header-bg);
+    border-radius: 8px 8px 0 0;
+}
+
+.instance-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.instance-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.instance-toggle {
+    margin-right: 5px;
+}
+
+.instance-content {
+    padding: 15px;
+}
+
+.add-instance-container {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.add-instance-btn {
+    padding: 8px 16px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.add-instance-btn:hover {
+    background-color: var(--accent-color-dark);
+}
+
+.add-instance-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.remove-instance-btn {
+    padding: 5px 10px;
+    background-color: var(--delete-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.remove-instance-btn:hover {
+    background-color: var(--delete-color-dark);
+}
+
+.test-connection-btn {
+    padding: 6px 12px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.test-connection-btn:hover {
+    background-color: var(--accent-color-dark);
+}
+
+.connection-status {
+    margin-left: 10px;
+    font-size: 14px;
+}
+
+.connection-status.success {
+    color: var(--success-color);
+}
+
+.connection-status.error {
+    color: var(--error-color);
+}
+
+.connection-status.testing {
+    color: var(--accent-color);
+}

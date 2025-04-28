@@ -343,23 +343,28 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
 
 def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
     """Check the connection to Whisparr API."""
-    if not api_url or not api_key:
-        whisparr_logger.error("Whisparr API URL or API Key not provided for connection check.")
-        return False
     try:
-        # Whisparr uses /api/v3/system/status like Radarr
-        status_url = f"{api_url.rstrip('/')}/api/v3/system/status"
-        headers = {"X-Api-Key": api_key}
-        response = session.get(status_url, headers=headers, timeout=api_timeout)
+        # Ensure api_url is properly formatted
+        if not api_url:
+            logger.error("API URL is empty or not set")
+            return False
+            
+        # Make sure api_url has a scheme
+        if not (api_url.startswith('http://') or api_url.startswith('https://')):
+            logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
+            return False
+            
+        # Ensure URL doesn't end with a slash before adding the endpoint
+        base_url = api_url.rstrip('/')
+        full_url = f"{base_url}/api/v3/system/status"
+        
+        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout)
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
-        whisparr_logger.info("Successfully connected to Whisparr.")
+        logger.info("Successfully connected to Whisparr.")
         return True
     except requests.exceptions.RequestException as e:
-        whisparr_logger.error(f"Error connecting to Whisparr: {e}")
-        # Log specific error for 401 Unauthorized
-        if e.response is not None and e.response.status_code == 401:
-            whisparr_logger.error("Connection failed: 401 Unauthorized. Check your Whisparr API Key.")
+        logger.error(f"Error connecting to Whisparr: {e}")
         return False
     except Exception as e:
-        whisparr_logger.error(f"An unexpected error occurred during Whisparr connection check: {e}")
+        logger.error(f"An unexpected error occurred during Whisparr connection check: {e}")
         return False

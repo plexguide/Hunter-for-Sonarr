@@ -20,7 +20,7 @@
 | Radarr      | **✅ Ready**  |
 | Lidarr      | **✅ Ready**  |
 | Readarr     | **✅ Ready**  |
-| Whisparr    | **✅ Ready**  |
+| Whisparr    | **❌ Not Ready** |
 | Bazarr    | **❌ Not Ready** |
 
 
@@ -137,7 +137,7 @@ Huntarr's live homepage will provide you statics about how many hunts have been 
 <table>
   <tr>
     <td colspan="2"> 
-      <img width="100%" alt="image" src="https://github.com/user-attachments/assets/e3c64ca3-02ae-40b2-ad27-7cae3f686e5c" />
+      <img width="100%" alt="image" src="https://github.com/user-attachments/assets/db725ad6-3009-4835-ab44-289dda80d385"
       <p align="center"><em>Homepage</em></p>
     </td>
   </tr>
@@ -171,7 +171,7 @@ The web interface allows you to configure all of Huntarr's settings:
 <table>
   <tr>
     <td colspan="2"> 
-      <img width="930" alt="image" src="https://github.com/user-attachments/assets/b94d6306-a478-40ab-9aab-cb2f5b02a1fd" />
+      <img width="930" alt="image" src="https://github.com/user-attachments/assets/06003622-0af3-4398-a46d-0fa4fb1f455b"
       <p align="center"><em>Settings UI</em></p>
     </td>
   </tr>
@@ -257,6 +257,7 @@ docker run -d --name huntarr \
 ## Troubleshooting
 
 - **API Connection Issues**: Verify your API key and URL in the Settings page (check for missing http:// or https://)
+- **Config URLs**: It is best practice to omit the trailing slash (/) at the end of the URL for each service.  i.e. For Sonarr, instead of http://10.10.10.1:8989/ use http://10.10.10.1:8989.  This is the most common cause of errors seen in the log each time a cycle runs.
 - **Authentication Problems**: If you forget your password, delete `/config/user/credentials.json` and restart
 - **Two-Factor Authentication**: If locked out of 2FA, remove credentials file to reset your account
 - **Web Interface Not Loading**: Confirm port 9705 is correctly mapped and not blocked by firewalls
