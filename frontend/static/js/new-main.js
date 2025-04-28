@@ -1123,13 +1123,15 @@ const huntarrUI = {
         isConfigured = statusData?.configured === true;
         isConnected = statusData?.connected === true;
 
-        // Special handling for Sonarr's multi-instance connected count
-        let sonarrConnectedCount = statusData?.connected_count ?? 0;
-        let sonarrTotalConfigured = statusData?.total_configured ?? 0;
-        if (app === 'sonarr') {
-            isConfigured = sonarrTotalConfigured > 0;
-            // For Sonarr, 'isConnected' means at least one instance is connected
-            isConnected = isConfigured && sonarrConnectedCount > 0; 
+        // Special handling for *arr apps' multi-instance connected count
+        let connectedCount = statusData?.connected_count ?? 0;
+        let totalConfigured = statusData?.total_configured ?? 0;
+        
+        // For all *arr apps, 'isConfigured' means at least one instance is configured
+        if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr'].includes(app)) {
+            isConfigured = totalConfigured > 0;
+            // For *arr apps, 'isConnected' means at least one instance is connected
+            isConnected = isConfigured && connectedCount > 0; 
         }
 
         // --- Visibility Logic --- 
@@ -1146,18 +1148,10 @@ const huntarrUI = {
         }
 
         // --- Badge Update Logic (only runs if configured) ---
-        if (app === 'sonarr') {
-            // Sonarr specific badge text (already checked isConfigured)
-            statusElement.innerHTML = `<i class="fas fa-plug"></i> Connected ${sonarrConnectedCount}/${sonarrTotalConfigured}`;
-            if (sonarrConnectedCount > 0) {
-                if (sonarrConnectedCount < sonarrTotalConfigured) {
-                    statusElement.className = 'status-badge partially-connected';
-                } else {
-                    statusElement.className = 'status-badge connected';
-                }
-            } else {
-                statusElement.className = 'status-badge not-connected';
-            }
+        if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr'].includes(app)) {
+            // *Arr specific badge text (already checked isConfigured)
+            statusElement.innerHTML = `<i class="fas fa-plug"></i> Connected ${connectedCount}/${totalConfigured}`;
+            statusElement.className = 'status-badge ' + (isConnected ? 'connected' : 'error');
         } else {
             // Standard badge update for other configured apps
             if (isConnected) {
