@@ -23,7 +23,9 @@ RUN poetry config virtualenvs.in-project true && \
 FROM base AS runtime
 
 RUN mkdir -p /config/settings /config/stateful /config/user /config/logs
-RUN chmod -R 755 /config
+
+RUN adduser -u 1000 --disabled-password --gecos "" python && \
+    chown -R python:python /config
 
 # Set environment variables
 ENV PYTHONPATH=/app
