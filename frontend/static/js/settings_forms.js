@@ -784,7 +784,7 @@ const SettingsForms = {
         // Create a container for instances with a scrollable area for many instances
         let instancesHtml = `
             <div class="settings-group">
-                <h3>Whisparr Instances</h3>
+                <h3>Whisparr Instances <span style="color: red; font-weight: bold;">(NOT READY)</span></h3>
                 <div class="instances-container">
         `;
         
@@ -964,26 +964,8 @@ const SettingsForms = {
         container.innerHTML = `
             <div class="settings-group">
                 <h3>System Settings</h3>
-                <div class="setting-item">
-                    <label for="general_timezone">Timezone:</label>
-                    <select id="general_timezone">
-                        <option value="UTC" ${settings.timezone === 'UTC' ? 'selected' : ''}>UTC</option>
-                        <option value="America/New_York" ${settings.timezone === 'America/New_York' ? 'selected' : ''}>America/New_York (ET)</option>
-                        <option value="America/Chicago" ${settings.timezone === 'America/Chicago' ? 'selected' : ''}>America/Chicago (CT)</option>
-                        <option value="America/Denver" ${settings.timezone === 'America/Denver' ? 'selected' : ''}>America/Denver (MT)</option>
-                        <option value="America/Los_Angeles" ${settings.timezone === 'America/Los_Angeles' ? 'selected' : ''}>America/Los_Angeles (PT)</option>
-                        <option value="America/Anchorage" ${settings.timezone === 'America/Anchorage' ? 'selected' : ''}>America/Anchorage (AK)</option>
-                        <option value="America/Honolulu" ${settings.timezone === 'America/Honolulu' ? 'selected' : ''}>America/Honolulu (HI)</option>
-                        <option value="Europe/London" ${settings.timezone === 'Europe/London' ? 'selected' : ''}>Europe/London (GMT)</option>
-                        <option value="Europe/Paris" ${settings.timezone === 'Europe/Paris' ? 'selected' : ''}>Europe/Paris (CET)</option>
-                        <option value="Europe/Berlin" ${settings.timezone === 'Europe/Berlin' ? 'selected' : ''}>Europe/Berlin</option>
-                        <option value="Europe/Moscow" ${settings.timezone === 'Europe/Moscow' ? 'selected' : ''}>Europe/Moscow</option>
-                        <option value="Asia/Tokyo" ${settings.timezone === 'Asia/Tokyo' ? 'selected' : ''}>Asia/Tokyo</option>
-                        <option value="Asia/Shanghai" ${settings.timezone === 'Asia/Shanghai' ? 'selected' : ''}>Asia/Shanghai</option>
-                        <option value="Australia/Sydney" ${settings.timezone === 'Australia/Sydney' ? 'selected' : ''}>Australia/Sydney</option>
-                        <option value="Pacific/Auckland" ${settings.timezone === 'Pacific/Auckland' ? 'selected' : ''}>Pacific/Auckland</option>
-                    </select>
-                    <p class="setting-help">Container timezone. This will affect timestamps in logs and requires a container restart.</p>
+                <div class="setting-item placeholder-message">
+                    <p style="text-align: center; padding: 20px; color: #888; font-style: italic;">Tab Dedicated For Future System Settings (PlaceHolder)</p>
                 </div>
             </div>
         `;
