@@ -64,33 +64,14 @@ def process_cutoff_upgrades(
         sonarr_logger.info("'hunt_upgrade_items' setting is 0 or less. Skipping upgrade processing.")
         return False
         
-    sonarr_logger.info(f"Checking for {hunt_upgrade_items} quality upgrades in {hunt_missing_mode} mode...")
+    sonarr_logger.info(f"Checking for {hunt_upgrade_items} quality upgrades...")
 
-    # Handle different modes
-    if hunt_missing_mode == "episodes":
-        sonarr_logger.info("Episode-based quality upgrade mode selected")
-        return process_upgrade_episodes_mode(
-            api_url, api_key, api_timeout, monitored_only, 
-            skip_series_refresh, random_upgrades, hunt_upgrade_items, 
-            command_wait_delay, command_wait_attempts, stop_check
-        )
-    elif hunt_missing_mode == "seasons":
-        sonarr_logger.info("Season-based quality upgrade mode selected")
-        return process_upgrade_seasons_mode(
-            api_url, api_key, api_timeout, monitored_only, 
-            skip_series_refresh, random_upgrades, hunt_upgrade_items, 
-            command_wait_delay, command_wait_attempts, stop_check
-        )
-    elif hunt_missing_mode == "shows":
-        sonarr_logger.info("Show-based quality upgrade mode selected")
-        return process_upgrade_shows_mode(
-            api_url, api_key, api_timeout, monitored_only, 
-            skip_series_refresh, random_upgrades, hunt_upgrade_items, 
-            command_wait_delay, command_wait_attempts, stop_check
-        )
-    else:
-        sonarr_logger.error(f"Invalid hunt_missing_mode: {hunt_missing_mode}. Valid options are 'episodes', 'seasons', or 'shows'.")
-        return False
+    # Always use episode mode for upgrades, regardless of the hunt_missing_mode setting
+    return process_upgrade_episodes_mode(
+        api_url, api_key, api_timeout, monitored_only, 
+        skip_series_refresh, random_upgrades, hunt_upgrade_items, 
+        command_wait_delay, command_wait_attempts, stop_check
+    )
 
 def process_upgrade_episodes_mode(
     api_url: str,
