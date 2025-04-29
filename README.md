@@ -8,11 +8,7 @@
 
 <h2 align="center">Want to Help? Click the Star in the Upper-Right Corner! ⭐</h2> 
 
-<table>
-  <tr>
-    <td colspan="2"><img src="https://github.com/user-attachments/assets/1ea6ca9c-0909-4b6a-b573-f778b65af8b2" width="100%"/></td>
-  </tr>
-</table>
+<img src="https://github.com/user-attachments/assets/1ea6ca9c-0909-4b6a-b573-f778b65af8b2" width="100%"/>
  
 | Application | Status        |
 | :---------- | :------------ |
@@ -78,81 +74,46 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 ### 🔄 Continuous Automation Cycle
 
-<table>
-  <tr>
-    <td width="10%" align="center"><h3>1️⃣</h3></td>
-    <td width="90%">
-      <h3>Connect & Analyze</h3>
-      <p>Huntarr connects to your Sonarr/Radarr/Lidarr/Readarr instance and analyzes your media library to identify both missing content and potential quality upgrades.</p>
-    </td>
-  </tr>
-  <tr>
-    <td align="center"><h3>2️⃣</h3></td>
-    <td>
-      <h3>Hunt Missing Content</h3>
-      <ul>
-        <li>📊 <strong>Smart Selection:</strong> Choose between random or sequential processing</li>
-        <li>🔍 <strong>Efficient Refreshing:</strong> Optionally skip metadata refresh to reduce disk I/O</li>
-        <li>🔮 <strong>Future-Aware:</strong> Automatically skip content with future release dates</li>
-        <li>🎯 <strong>Precise Control:</strong> Set exactly how many items to process per cycle</li>
-      </ul>
-    </td>
-  </tr>
-  <tr>
-    <td align="center"><h3>3️⃣</h3></td>
-    <td>
-      <h3>Hunt Quality Upgrades</h3>
-      <ul>
-        <li>⬆️ <strong>Quality Improvement:</strong> Find content below your quality cutoff settings</li>
-        <li>📦 <strong>Batch Processing:</strong> Configure exactly how many upgrades to process at once</li>
-        <li>📚 <strong>Large Library Support:</strong> Smart pagination handles even massive libraries</li>
-        <li>🔀 <strong>Flexible Modes:</strong> Choose between random or sequential processing</li>
-      </ul>
-    </td>
-  </tr>
-  <tr>
-    <td align="center"><h3>4️⃣</h3></td>
-    <td>
-      <h3>State Management</h3>
-      <ul>
-        <li>📝 <strong>History Tracking:</strong> Remembers which items have been processed</li>
-        <li>💾 <strong>Persistent Storage:</strong> State data is saved in the <code>/config</code> directory</li>
-        <li>⏱️ <strong>Automatic Reset:</strong> State is cleared after your configured time period (default: 7 days)</li>
-      </ul>
-    </td>
-  </tr>
-  <tr>
-    <td align="center"><h3>5️⃣</h3></td>
-    <td>
-      <h3>Repeat & Rest</h3>
-      <p>Huntarr waits for your configured interval (adjustable in settings) before starting the next cycle. This ensures your indexers aren't overloaded while maintaining continuous improvement of your library.</p>
-    </td>
-  </tr>
-</table>
+#### 1️⃣ Connect & Analyze
+Huntarr connects to your Sonarr/Radarr/Lidarr/Readarr instance and analyzes your media library to identify both missing content and potential quality upgrades.
+
+#### 2️⃣ Hunt Missing Content
+- 📊 **Smart Selection:** Choose between random or sequential processing
+- 🔍 **Efficient Refreshing:** Optionally skip metadata refresh to reduce disk I/O
+- 🔮 **Future-Aware:** Automatically skip content with future release dates
+- 🎯 **Precise Control:** Set exactly how many items to process per cycle
+
+#### 3️⃣ Hunt Quality Upgrades
+- ⬆️ **Quality Improvement:** Find content below your quality cutoff settings
+- 📦 **Batch Processing:** Configure exactly how many upgrades to process at once
+- 📚 **Large Library Support:** Smart pagination handles even massive libraries
+- 🔀 **Flexible Modes:** Choose between random or sequential processing
+
+#### 4️⃣ State Management
+- 📝 **History Tracking:** Remembers which items have been processed
+- 💾 **Persistent Storage:** State data is saved in the `/config` directory
+- ⏱️ **Automatic Reset:** State is cleared after your configured time period (default: 7 days)
+
+#### 5️⃣ Repeat & Rest
+Huntarr waits for your configured interval (adjustable in settings) before starting the next cycle. This ensures your indexers aren't overloaded while maintaining continuous improvement of your library.
 
 ## Web Interface
 
 Huntarr's live homepage will provide you statics about how many hunts have been pursed regarding missing media and upgrade searches! Note: Numbers reflected are but all required for testing... damn you Whisparr!
 
-<table>
-  <tr>
-    <td colspan="2"> 
-      <img width="100%" alt="image" src="https://github.com/user-attachments/assets/db725ad6-3009-4835-ab44-289dda80d385"
-      <p align="center"><em>Homepage</em></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img width="100%" alt="image" src="https://github.com/user-attachments/assets/db725ad6-3009-4835-ab44-289dda80d385" />
+  <br>
+  <em>Homepage</em>
+</p>
 
 Huntarr includes a real-time log viewer and settings management web interface that allows you to monitor and configure its operation directly from your browser.
 
-<table>
-  <tr>
-    <td colspan="2"> 
-      <img width="100%" alt="image" src="https://github.com/user-attachments/assets/438e2013-2a54-4cf2-8418-63b0c6124730" />
-      <p align="center"><em>Logger UI</em></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img width="100%" alt="image" src="https://github.com/user-attachments/assets/438e2013-2a54-4cf2-8418-63b0c6124730" />
+  <br>
+  <em>Logger UI</em>
+</p>
 
 ### How to Access
 
@@ -168,14 +129,11 @@ The URL will be displayed in the logs when Huntarr starts, using the same hostna
 
 The web interface allows you to configure all of Huntarr's settings:
 
-<table>
-  <tr>
-    <td colspan="2"> 
-      <img width="930" alt="image" src="https://github.com/user-attachments/assets/06003622-0af3-4398-a46d-0fa4fb1f455b"
-      <p align="center"><em>Settings UI</em></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img width="930" alt="image" src="https://github.com/user-attachments/assets/06003622-0af3-4398-a46d-0fa4fb1f455b" />
+  <br>
+  <em>Settings UI</em>
+</p>
 
 ### Volume Mapping
 
@@ -199,7 +157,7 @@ docker run -d --name huntarr \
   -p 9705:9705 \
   -v /your-path/huntarr:/config \
   -e TZ=America/New_York \
-  huntarr/huntarr:latest
+  ghcr.io/plexguide/huntarr:latest
 ```
 
 To check on the status of the program, you can use the web interface at http://YOUR_SERVER_IP:9705 or check the logs with:
@@ -214,7 +172,7 @@ For those who prefer Docker Compose, add this to your `docker-compose.yml` file:
 ```yaml
 services:
   huntarr:
-    image: huntarr/huntarr:latest
+    image: ghcr.io/plexguide/huntarr:latest
     container_name: huntarr
     restart: always
     ports:
@@ -241,7 +199,7 @@ docker run -d --name huntarr \
   -p 9705:9705 \
   -v /mnt/user/appdata/huntarr:/config \
   -e TZ=America/New_York \
-  huntarr/huntarr:latest
+  ghcr.io/plexguide/huntarr:latest
 ```
 ## Tips
 
