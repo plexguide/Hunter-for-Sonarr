@@ -598,23 +598,80 @@ input:checked + .slider:before {
 
 .log-entry {
     margin-bottom: 5px;
-    padding: 2px 0;
+    padding: 2px 5px; /* Add some horizontal padding */
+    display: flex; /* Use flexbox for alignment */
+    align-items: baseline; /* Align items based on text baseline */
+    gap: 8px; /* Space between elements */
 }
 
-.log-info {
-    color: var(--info-color);
+.log-timestamp {
+    color: var(--text-muted); /* Muted color for timestamp */
+    font-size: 0.85em;
+    white-space: nowrap; /* Prevent timestamp from wrapping */
 }
 
-.log-warning {
-    color: var(--warning-color);
+.log-app {
+    color: var(--accent-color); /* Use accent color for app name */
+    font-weight: bold;
+    font-size: 0.9em;
+    white-space: nowrap;
 }
 
-.log-error {
-    color: var(--error-color);
+.log-level {
+    font-weight: bold;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    white-space: nowrap;
 }
 
-.log-debug {
-    color: var(--debug-color);
+.log-level-info {
+    background-color: var(--info-bg, #d1ecf1); /* Use CSS variables with fallbacks */
+    color: var(--info-color, #0c5460);
+}
+
+.log-level-warning {
+    background-color: var(--warning-bg, #fff3cd);
+    color: var(--warning-color, #856404);
+}
+
+.log-level-error {
+    background-color: var(--error-bg, #f8d7da);
+    color: var(--error-color, #721c24);
+}
+
+.log-level-debug {
+    background-color: var(--debug-bg, #e2e3e5);
+    color: var(--debug-color, #383d41);
+}
+
+/* Apply level colors directly to the entry for fallback */
+.log-info .log-message {
+    color: var(--info-color, #0c5460);
+}
+
+.log-warning .log-message {
+    color: var(--warning-color, #856404);
+}
+
+.log-error .log-message {
+    color: var(--error-color, #721c24);
+}
+
+.log-debug .log-message {
+    color: var(--debug-color, #383d41);
+}
+
+.log-logger {
+    color: var(--text-muted); /* Muted color for logger name */
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.log-message {
+    flex-grow: 1; /* Allow message to take remaining space */
+    word-break: break-word; /* Break long words */
 }
 
 .status-connected {

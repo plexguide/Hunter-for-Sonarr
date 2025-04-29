@@ -112,13 +112,15 @@ def process_missing_books(
         
         # Construct detailed log message
         details_string = ', '.join(book_details)
-        log_message = f"*** DETAILED LOG *** Triggering Book Search for {len(book_details)} books by author '{author_name}': [{details_string}]"
-        readarr_logger.info(log_message)
+        log_message = f"Triggering Book Search for {len(book_details)} books by author '{author_name}': [{details_string}]"
+        readarr_logger.debug(log_message) # Changed level from INFO to DEBUG
         
-        search_command_id = readarr_api.search_books(api_url, api_key, book_ids_for_author, api_timeout)
+        search_command_result = readarr_api.search_books(api_url, api_key, book_ids_for_author, api_timeout)
 
-        if search_command_id:
-            readarr_logger.info(f"Triggered book search command {search_command_id} for author {author_name}. Assuming success for now.")
+        if search_command_result:
+            # Extract command ID if the result is a dictionary, otherwise use the result directly
+            command_id = search_command_result.get('id') if isinstance(search_command_result, dict) else search_command_result
+            readarr_logger.info(f"Triggered book search command {command_id} for author {author_name}. Assuming success for now.") # Log only command ID
             increment_stat("readarr", "hunted")
             processed_count += 1 # Count processed authors/groups
             processed_authors.append(author_name) # Add to list of processed authors

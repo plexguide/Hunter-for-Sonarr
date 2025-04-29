@@ -6,6 +6,7 @@ Handles searching for books that need quality upgrades in Readarr
 
 import time
 import random
+import datetime # Import the datetime module
 from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.readarr import api as readarr_api
@@ -44,10 +45,14 @@ def process_cutoff_upgrades(
     
     # Get books eligible for upgrade
     readarr_logger.info("Retrieving books eligible for quality upgrade...")
-    upgrade_eligible_data = readarr_api.get_cutoff_unmet_books
+    # Pass API credentials explicitly
+    upgrade_eligible_data = readarr_api.get_cutoff_unmet_books(api_url=api_url, api_key=api_key, api_timeout=api_timeout)
     
-    if not upgrade_eligible_data:
-        readarr_logger.info("No books found eligible for upgrade or error retrieving them.")
+    if upgrade_eligible_data is None: # Check if the API call failed (assuming it returns None on error)
+        readarr_logger.error("Error retrieving books eligible for upgrade from Readarr API.")
+        return False
+    elif not upgrade_eligible_data: # Check if the list is empty
+        readarr_logger.info("No books found eligible for upgrade.")
         return False
         
     readarr_logger.info(f"Found {len(upgrade_eligible_data)} books eligible for quality upgrade.")
@@ -107,9 +112,12 @@ def process_cutoff_upgrades(
         readarr_logger.info(f"Processing upgrade for book: \"{book_title}\" (Book ID: {book_id})")
 
         # Refresh author (optional, check if needed for upgrades)
+        # Ensure refresh_author also uses explicit credentials if it uses arr_request internally
+        # Currently, refresh_author uses arr_request without passing credentials, let's fix that too.
         if not skip_author_refresh and author_id:
             readarr_logger.info(f"  - Refreshing author info (ID: {author_id})...")
-            refresh_result = readarr_api.refresh_author(api_url, api_key, author_id, api_timeout)
+            # Assuming refresh_author needs explicit credentials now
+            refresh_result = readarr_api.refresh_author(author_id, api_url=api_url, api_key=api_key, api_timeout=api_timeout) 
             time.sleep(5) # Basic wait
             if not refresh_result:
                  readarr_logger.warning(f"  - Failed to trigger author refresh for {author_id}. Continuing search anyway.")
@@ -117,11 +125,13 @@ def process_cutoff_upgrades(
              readarr_logger.info(f"  - Skipping author refresh (skip_author_refresh=true)")
 
         # Search for book upgrade
+        # Ensure search_books uses explicit credentials (it already does)
         readarr_logger.info(f"  - Searching for upgrade for book...")
-        search_command_id = readarr_api.search_books(api_url, api_key, [book_id], api_timeout)
+        search_command_data = readarr_api.search_books(api_url, api_key, [book_id], api_timeout) # Pass credentials
 
-        if search_command_id:
-            readarr_logger.info(f"Triggered book search command {search_command_id} for upgrade. Assuming success for now.")
+        if search_command_data:
+            command_id = search_command_data.get('id') # Extract command ID
+            readarr_logger.info(f"Triggered book search command {command_id} for upgrade.")
             increment_stat("readarr", "upgraded") # Assuming 'upgraded' stat exists
             processed_count += 1
             processed_something = True
