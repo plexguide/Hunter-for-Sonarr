@@ -312,26 +312,26 @@ let huntarrUI = {
             
             // Ensure default settings tab is set if none is active
             if (!this.currentSettingsTab) {
-                this.currentSettingsTab = 'sonarr'; // Default to sonarr tab
+                this.currentSettingsTab = 'general'; // Default to general tab
                 
-                // Set the sonarr tab as active
-                const sonarrTab = document.querySelector('.settings-tab[data-settings="sonarr"]');
-                if (sonarrTab) {
+                // Set the general tab as active
+                const generalTab = document.querySelector('.settings-tab[data-app="general"]');
+                if (generalTab) {
                     this.elements.settingsTabs.forEach(t => {
                         t.classList.remove('active');
                     });
-                    sonarrTab.classList.add('active');
+                    generalTab.classList.add('active');
                     
-                    // Also set the sonarr panel as visible
+                    // Also set the general panel as visible
                     this.elements.appSettingsPanels.forEach(panel => {
                         panel.classList.remove('active');
                         panel.style.display = 'none';
                     });
                     
-                    const sonarrPanel = document.getElementById('sonarrSettings');
-                    if (sonarrPanel) {
-                        sonarrPanel.classList.add('active');
-                        sonarrPanel.style.display = 'block';
+                    const generalPanel = document.getElementById('generalSettings');
+                    if (generalPanel) {
+                        generalPanel.classList.add('active');
+                        generalPanel.style.display = 'block';
                     }
                 }
             }
