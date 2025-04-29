@@ -157,7 +157,7 @@ docker run -d --name huntarr \
   -p 9705:9705 \
   -v /your-path/huntarr:/config \
   -e TZ=America/New_York \
-  ghcr.io/plexguide/huntarr:latest
+  huntarr/huntarr:latest
 ```
 
 To check on the status of the program, you can use the web interface at http://YOUR_SERVER_IP:9705 or check the logs with:
@@ -172,7 +172,7 @@ For those who prefer Docker Compose, add this to your `docker-compose.yml` file:
 ```yaml
 services:
   huntarr:
-    image: ghcr.io/plexguide/huntarr:latest
+    image: huntarr/huntarr:latest
     container_name: huntarr
     restart: always
     ports:
@@ -199,7 +199,7 @@ docker run -d --name huntarr \
   -p 9705:9705 \
   -v /mnt/user/appdata/huntarr:/config \
   -e TZ=America/New_York \
-  ghcr.io/plexguide/huntarr:latest
+  huntarr/huntarr:latest
 ```
 ## Tips
 
