@@ -668,6 +668,11 @@ const huntarrUI = {
         const app = this.currentSettingsTab;
         console.log(`[huntarrUI] saveSettings called for app: ${app}`);
         
+        // Clear the unsaved changes flag BEFORE sending the request
+        // This prevents the "unsaved changes" dialog from appearing
+        this.settingsChanged = false;
+        this.updateSaveResetButtonState(false);
+        
         // Use getFormSettings for all apps, as it handles different structures
         let settings = this.getFormSettings(app);
 
@@ -748,17 +753,13 @@ const huntarrUI = {
             // Update connection status and UI
             this.checkAppConnection(app);
             this.updateHomeConnectionStatus();
-            this.settingsChanged = false; // Reset flag after successful save
-            this.updateSaveResetButtonState(false); // Disable buttons after save
-            
-            // Update UI for local access bypass if we're on the general tab
-            if (app === 'general' && typeof settings.local_access_bypass !== 'undefined') {
-                this.updateUIForLocalAccessBypass(settings.local_access_bypass);
-            }
         })
         .catch(error => {
             console.error('Error saving settings:', error);
             this.showNotification(`Error saving settings: ${error.message}`, 'error');
+            // If there was an error, mark settings as changed again
+            this.settingsChanged = true;
+            this.updateSaveResetButtonState(true);
         });
     },
 
