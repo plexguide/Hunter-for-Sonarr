@@ -77,8 +77,8 @@ def app_specific_loop(app_type: str) -> None:
             upgrade_module = importlib.import_module('src.primary.apps.sonarr.upgrade')
             process_missing = getattr(missing_module, 'process_missing_episodes')
             process_upgrades = getattr(upgrade_module, 'process_cutoff_upgrades')
-            hunt_missing_setting = "hunt_missing_shows"
-            hunt_upgrade_setting = "hunt_upgrade_episodes"
+            hunt_missing_setting = "hunt_missing_items"
+            hunt_upgrade_setting = "hunt_upgrade_items"
         elif app_type == "radarr":
             missing_module = importlib.import_module('src.primary.apps.radarr.missing')
             upgrade_module = importlib.import_module('src.primary.apps.radarr.upgrade')

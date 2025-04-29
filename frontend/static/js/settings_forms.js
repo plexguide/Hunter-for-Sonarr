@@ -83,13 +83,22 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="hunt_missing_shows">Missing Shows to Search:</label>
-                    <input type="number" id="hunt_missing_shows" min="0" value="${settings.hunt_missing_shows || 1}">
-                    <p class="setting-help">Number of missing shows to search per cycle (0 to disable)</p>
+                    <label for="hunt_missing_mode">Missing Search Mode:</label>
+                    <select id="hunt_missing_mode">
+                        <option value="episodes" ${settings.hunt_missing_mode === 'episodes' ? 'selected' : ''}>Episodes</option>
+                        <option value="seasons" ${settings.hunt_missing_mode === 'seasons' ? 'selected' : ''}>Seasons</option>
+                        <option value="shows" ${settings.hunt_missing_mode === 'shows' ? 'selected' : ''}>Shows</option>
+                    </select>
+                    <p class="setting-help">How to group and search for missing items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="hunt_upgrade_episodes">Episodes to Upgrade:</label>
-                    <input type="number" id="hunt_upgrade_episodes" min="0" value="${settings.hunt_upgrade_episodes || 0}">
+                    <label for="hunt_missing_items">Missing Items to Search:</label>
+                    <input type="number" id="hunt_missing_items" min="0" value="${settings.hunt_missing_items || settings.hunt_missing_shows || 1}">
+                    <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="hunt_upgrade_items">Episodes to Upgrade:</label>
+                    <input type="number" id="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items || settings.hunt_upgrade_episodes || 0}">
                     <p class="setting-help">Number of episodes to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">

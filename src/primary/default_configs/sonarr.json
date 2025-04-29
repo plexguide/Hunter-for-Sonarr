@@ -7,8 +7,9 @@
       "enabled": true
     }
   ],
-  "hunt_missing_shows": 5,
-  "hunt_upgrade_episodes": 0,
+  "hunt_missing_items": 5,
+  "hunt_upgrade_items": 0,
+  "hunt_missing_mode": "episodes",
   "sleep_duration": 900,
   "state_reset_interval_hours": 168,
   "monitored_only": true,
