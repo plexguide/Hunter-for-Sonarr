@@ -151,14 +151,6 @@ const SettingsForms = {
                     <p class="setting-help">Select random items for quality upgrades</p>
                 </div>
                 <div class="setting-item">
-                    <label for="debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
-                </div>
-                <div class="setting-item">
                     <label for="api_timeout">API Timeout:</label>
                     <input type="number" id="api_timeout" min="10" max="300" value="${settings.api_timeout || 60}">
                     <p class="setting-help">Timeout for API requests in seconds</p>
@@ -330,14 +322,6 @@ const SettingsForms = {
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Select random items for quality upgrades</p>
-                </div>
-                <div class="setting-item">
-                    <label for="radarr_debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="radarr_debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
                 </div>
                 <div class="setting-item">
                     <label for="radarr_api_timeout">API Timeout:</label>
@@ -522,14 +506,6 @@ const SettingsForms = {
                     <p class="setting-help">Select random items for quality upgrades</p>
                 </div>
                 <div class="setting-item">
-                    <label for="lidarr_debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="lidarr_debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
-                </div>
-                <div class="setting-item">
                     <label for="lidarr_api_timeout">API Timeout:</label>
                     <input type="number" id="lidarr_api_timeout" min="10" max="300" value="${settings.api_timeout || 60}">
                     <p class="setting-help">Timeout for API requests in seconds</p>
@@ -701,14 +677,6 @@ const SettingsForms = {
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Select random items for quality upgrades</p>
-                </div>
-                <div class="setting-item">
-                    <label for="readarr_debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="readarr_debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
                 </div>
                 <div class="setting-item">
                     <label for="readarr_api_timeout">API Timeout:</label>
@@ -884,14 +852,6 @@ const SettingsForms = {
                     <p class="setting-help">Select random items for quality upgrades</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="whisparr_debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
-                </div>
-                <div class="setting-item">
                     <label for="whisparr_api_timeout">API Timeout:</label>
                     <input type="number" id="whisparr_api_timeout" min="10" max="300" value="${settings.api_timeout || 120}">
                     <p class="setting-help">Timeout for API requests in seconds</p>
@@ -924,25 +884,25 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>System Settings</h3>
                 <div class="setting-item">
-                    <label for="debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
-                </div>
-                <div class="setting-item">
-                    <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display (applies to all apps)</p>
-                </div>
-                <div class="setting-item">
                     <label for="check_for_updates">Check for Updates:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="check_for_updates" ${settings.check_for_updates !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Automatically check for Huntarr updates</p>
+                </div>
+                <div class="setting-item">
+                    <label for="debug_mode">Debug Mode:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Enable verbose logging for troubleshooting (applies to all apps)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
+                    <input type="number" id="log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
+                    <p class="setting-help">Interval in seconds to refresh log display (applies to all apps)</p>
                 </div>
             </div>
             
@@ -954,7 +914,7 @@ const SettingsForms = {
                         <input type="checkbox" id="local_access_bypass" ${settings.local_access_bypass === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
-                    <p class="setting-help">Skip authentication for requests from local network (similar to Radarr's behavior)</p>
+                    <p class="setting-help">Allow access without login when connecting from local network IP addresses (e.g., 192.168.x.x, 10.x.x.x)</p>
                 </div>
             </div>
         `;
