@@ -101,7 +101,7 @@ def process_cutoff_upgrades(
 
         lidarr_logger.info(f"Triggering Album Search for {len(album_ids_to_search)} albums for upgrade on instance {instance_name}: {album_ids_to_search}")
         # Pass necessary details extracted above to the API function
-        command_id = lidarr_api.trigger_album_search(
+        command_id = lidarr_api.search_albums(
             api_url,
             api_key,
             album_ids_to_search,
