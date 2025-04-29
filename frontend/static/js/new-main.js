@@ -3,7 +3,7 @@
  * Main JavaScript file for handling UI interactions and API communication
  */
 
-const huntarrUI = {
+let huntarrUI = {
     // Current state
     eventSources: {},
     currentSection: 'home', // Default section
@@ -482,11 +482,11 @@ const huntarrUI = {
                     logEntry.textContent = event.data;
                     
                     // Detect log level from content for styling
-                    if (event.data.includes('[ERROR]') || event.data.includes('Error:')) {
+                    if (event.data.includes('ERROR') || event.data.includes('Error:')) {
                         logEntry.classList.add('log-error');
-                    } else if (event.data.includes('[WARNING]') || event.data.includes('Warning:')) {
+                    } else if (event.data.includes('WARNING') || event.data.includes('Warning:')) {
                         logEntry.classList.add('log-warning');
-                    } else if (event.data.includes('[DEBUG]')) {
+                    } else if (event.data.includes('DEBUG')) {
                         logEntry.classList.add('log-debug');
                     } else {
                         logEntry.classList.add('log-info');
