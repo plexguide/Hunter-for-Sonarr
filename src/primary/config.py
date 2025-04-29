@@ -24,8 +24,8 @@ def determine_hunt_mode(app_name: str) -> str:
     hunt_upgrade = 0
 
     if app_name == "sonarr":
-        hunt_missing = settings_manager.get_setting(app_name, "hunt_missing_shows", 0)
-        hunt_upgrade = settings_manager.get_setting(app_name, "hunt_upgrade_episodes", 0)
+        hunt_missing = settings_manager.get_setting(app_name, "hunt_missing_items", 0)
+        hunt_upgrade = settings_manager.get_setting(app_name, "hunt_upgrade_items", 0)
     elif app_name == "radarr":
         hunt_missing = settings_manager.get_setting(app_name, "hunt_missing_movies", 0)
         hunt_upgrade = settings_manager.get_setting(app_name, "hunt_upgrade_movies", 0)
@@ -126,8 +126,8 @@ def log_configuration(app_name: str):
 
     # App-specific settings logging
     if app_name == "sonarr":
-        log.info(f"Hunt Missing Shows: {settings.get('hunt_missing_shows', 0)}")
-        log.info(f"Hunt Upgrade Episodes: {settings.get('hunt_upgrade_episodes', 0)}")
+        log.info(f"Hunt Missing Items: {settings.get('hunt_missing_items', 0)}")
+        log.info(f"Hunt Upgrade Items: {settings.get('hunt_upgrade_items', 0)}")
         log.info(f"Skip Future Episodes: {settings.get('skip_future_episodes', True)}")
         log.info(f"Skip Series Refresh: {settings.get('skip_series_refresh', False)}")
     elif app_name == "radarr":
