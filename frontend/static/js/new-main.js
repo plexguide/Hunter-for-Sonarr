@@ -1010,8 +1010,15 @@ const huntarrUI = {
             return;
         }
         
-        // Clean up the URL by removing trailing slashes
-        url = url.trim().replace(/\/+$/, '');
+        // Check for trailing slashes in URL
+        if (url.endsWith('/') || url.endsWith('\\')) {
+            statusSpan.textContent = 'Remove trailing slash from URL (/ or \\)';
+            statusSpan.className = 'connection-status error';
+            return;
+        }
+        
+        // Clean up the URL by removing trailing slashes (redundant but kept for safety)
+        url = url.trim().replace(/[/\\]+$/, '');
         
         // Make the API request to test the connection
         fetch(`/api/${appName}/test-connection`, {
