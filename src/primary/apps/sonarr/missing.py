@@ -14,62 +14,33 @@ from src.primary.stats_manager import increment_stat
 sonarr_logger = get_logger("sonarr")
 
 def process_missing_episodes(
-    app_settings: Dict[str, Any],
-    stop_check: Callable[[], bool] # Function to check if stop is requested
+    api_url: str,
+    api_key: str,
+    api_timeout: int = 60,
+    monitored_only: bool = True,
+    skip_future_episodes: bool = True,
+    skip_series_refresh: bool = False,
+    random_missing: bool = False,
+    hunt_missing_items: int = 5,
+    hunt_missing_mode: str = "episodes",
+    command_wait_delay: int = 5,
+    command_wait_attempts: int = 10,
+    stop_check: Callable[[], bool] = lambda: False
 ) -> bool:
     """
-    Process missing episodes in Sonarr based on provided settings.
-
-    Args:
-        app_settings: Dictionary containing all settings for Sonarr.
-        stop_check: A function that returns True if the process should stop.
-
-    Returns:
-        True if any episodes were processed, False otherwise.
+    Process missing episodes in Sonarr and trigger searches
+    Added support for multiple missing modes (episodes, seasons, shows)
     """
-    sonarr_logger.info("Starting missing episodes processing cycle for Sonarr.")
-    processed_any = False
-
-    # Extract necessary settings
-    api_url = app_settings.get("api_url", "").strip()
-    api_key = app_settings.get("api_key", "").strip()
-    api_timeout = app_settings.get("api_timeout", 90)  # Increased default timeout
-    monitored_only = app_settings.get("monitored_only", True)
-    skip_future_episodes = app_settings.get("skip_future_episodes", True)
-    skip_series_refresh = app_settings.get("skip_series_refresh", False)
-    random_missing = app_settings.get("random_missing", False)
-    hunt_missing_items = app_settings.get("hunt_missing_items", 0)
-    hunt_missing_mode = app_settings.get("hunt_missing_mode", "episodes")
-    command_wait_delay = app_settings.get("command_wait_delay", 5)
-    command_wait_attempts = app_settings.get("command_wait_attempts", 12)
-
-    # Improved validation of API URL and key
-    if not api_url:
-        sonarr_logger.error("API URL is empty or not set")
-        return False
-        
-    if not api_key:
-        sonarr_logger.error("API Key is not set")
-        return False
-        
-    # Ensure URL has proper format with auto-correction
-    if not (api_url.startswith('http://') or api_url.startswith('https://')):
-        old_url = api_url
-        api_url = f"http://{api_url}"
-        sonarr_logger.warning(f"API URL is missing http:// or https:// scheme: {old_url}")
-        sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
-        
-    sonarr_logger.debug(f"Using API URL: {api_url}")
-
     if hunt_missing_items <= 0:
-        sonarr_logger.info("'hunt_missing_items' setting is 0 or less. Skipping missing episode processing.")
+        sonarr_logger.info("'hunt_missing_items' setting is 0 or less. Skipping missing processing.")
         return False
-    
-    sonarr_logger.info(f"Checking for {hunt_missing_items} missing items in {hunt_missing_mode} mode...")
+        
+    sonarr_logger.info(f"Checking for {hunt_missing_items} missing episodes in {hunt_missing_mode} mode...")
 
-    # First, let's handle the different modes for missing items
+    # Handle different modes
     if hunt_missing_mode == "episodes":
-        # This is the original implementation
+        # Handle episode-based missing items
+        sonarr_logger.info("Episode-based missing mode selected")
         return process_missing_episodes_mode(
             api_url, api_key, api_timeout, monitored_only, 
             skip_future_episodes, skip_series_refresh, random_missing,
@@ -77,15 +48,24 @@ def process_missing_episodes(
             stop_check
         )
     elif hunt_missing_mode == "seasons":
-        # Handle season-based missing items
+        # Handle season-based missing items (individual episodes grouped by season)
+        sonarr_logger.info("Season [Solo] mode selected - grouping episodes by season")
         return process_missing_seasons_mode(
             api_url, api_key, api_timeout, monitored_only, 
-            skip_future_episodes, skip_series_refresh, random_missing,
-            hunt_missing_items, command_wait_delay, command_wait_attempts,
-            stop_check
+            skip_series_refresh, random_missing, hunt_missing_items,
+            command_wait_delay, command_wait_attempts, stop_check
+        )
+    elif hunt_missing_mode == "seasons_packs":
+        # Handle season pack searches (using SeasonSearch command)
+        sonarr_logger.info("Season [Packs] mode selected - searching for complete season packs")
+        return process_missing_seasons_packs_mode(
+            api_url, api_key, api_timeout, monitored_only, 
+            skip_series_refresh, random_missing, hunt_missing_items,
+            command_wait_delay, command_wait_attempts, stop_check
         )
     elif hunt_missing_mode == "shows":
         # Handle show-based missing items
+        sonarr_logger.info("Show-based missing mode selected")
         return process_missing_shows_mode(
             api_url, api_key, api_timeout, monitored_only, 
             skip_future_episodes, skip_series_refresh, random_missing,
@@ -93,7 +73,7 @@ def process_missing_episodes(
             stop_check
         )
     else:
-        sonarr_logger.error(f"Invalid hunt_missing_mode: {hunt_missing_mode}. Valid options are 'episodes', 'seasons', or 'shows'.")
+        sonarr_logger.error(f"Invalid hunt_missing_mode: {hunt_missing_mode}. Valid options are 'episodes', 'seasons', 'seasons_packs', or 'shows'.")
         return False
 
 def process_missing_episodes_mode(
@@ -252,7 +232,6 @@ def process_missing_seasons_mode(
     api_key: str,
     api_timeout: int,
     monitored_only: bool,
-    skip_future_episodes: bool,
     skip_series_refresh: bool,
     random_missing: bool,
     hunt_missing_items: int,
@@ -260,130 +239,190 @@ def process_missing_seasons_mode(
     command_wait_attempts: int,
     stop_check: Callable[[], bool]
 ) -> bool:
-    """Process missing episodes in season mode - groups episodes by season."""
+    """
+    Process missing seasons using season pack search
+    This mode uses the SeasonSearch command to search for entire season packs instead of individual episodes
+    """
     processed_any = False
     
-    # Get all missing episodes
-    missing_episodes = sonarr_api.get_missing_episodes(api_url, api_key, api_timeout, monitored_only)
-    sonarr_logger.info(f"Received {len(missing_episodes)} missing episodes from Sonarr API (before filtering).")
-    
-    if not missing_episodes:
-        sonarr_logger.info("No missing episodes found in Sonarr.")
+    series = sonarr_api.get_series(api_url, api_key, api_timeout)
+    if not series:
+        sonarr_logger.error("Failed to retrieve series list for processing missing seasons")
         return False
-        
-    # Filter out future episodes if configured
-    if skip_future_episodes:
-        now_unix = time.time()
-        original_count = len(missing_episodes)
-        # Ensure airDateUtc exists and is not None before parsing
-        missing_episodes = [
-            ep for ep in missing_episodes
-            if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
-        ]
-        skipped_count = original_count - len(missing_episodes)
-        if skipped_count > 0:
-            sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date.")
-    
-    if stop_check(): 
-        sonarr_logger.info("Stop requested during missing episode processing.")
-        return processed_any
     
     # Group episodes by series and season
-    series_season_episodes: Dict[int, Dict[int, List[Dict]]] = {}
-    for episode in missing_episodes:
-        series_id = episode.get('seriesId')
-        season_number = episode.get('seasonNumber')
-        
-        if series_id is not None and season_number is not None:
-            if series_id not in series_season_episodes:
-                series_season_episodes[series_id] = {}
+    missing_seasons = {}
+    for show in series:
+        if monitored_only and not show.get('monitored', False):
+            continue
             
-            if season_number not in series_season_episodes[series_id]:
-                series_season_episodes[series_id][season_number] = []
+        series_id = show.get('id')
+        if not series_id:
+            continue
+            
+        # Get all missing episodes for this series
+        series_missing = sonarr_api.get_missing_episodes(api_url, api_key, api_timeout, monitored_only=monitored_only, series_id=series_id)
+        
+        # Group by season number
+        for episode in series_missing:
+            if monitored_only and not episode.get('monitored', False):
+                continue
                 
-            series_season_episodes[series_id][season_number].append(episode)
+            season_number = episode.get('seasonNumber')
+            series_title = show.get('title', 'Unknown Series')
+            
+            key = f"{series_id}:{season_number}"
+            if key not in missing_seasons:
+                missing_seasons[key] = {
+                    'series_id': series_id,
+                    'season_number': season_number,
+                    'series_title': series_title,
+                    'episode_count': 0
+                }
+            missing_seasons[key]['episode_count'] += 1
     
-    # Create a list of (series_id, season_number) tuples for selection
-    available_seasons = []
-    for series_id, seasons in series_season_episodes.items():
-        for season_number, episodes in seasons.items():
-            # Get series title from the first episode for this season
-            series_title = episodes[0].get('series', {}).get('title', f"Series ID {series_id}")
-            available_seasons.append((series_id, season_number, len(episodes), series_title))
+    # Convert to list and sort by episode count (most missing episodes first)
+    seasons_list = list(missing_seasons.values())
+    seasons_list.sort(key=lambda x: x['episode_count'], reverse=True)
     
-    if not available_seasons:
-        sonarr_logger.info("No valid seasons with missing episodes found.")
-        return False
-    
-    # Select seasons to process - either randomly or sequentially
-    seasons_to_process = []
+    # Apply randomization if requested
     if random_missing:
-        # Randomly shuffle the available seasons
-        random.shuffle(available_seasons)
-        seasons_to_process = available_seasons[:hunt_missing_items]
-    else:
-        # Sort by series ID and season number for consistent ordering
-        available_seasons.sort()
-        seasons_to_process = available_seasons[:hunt_missing_items]
+        random.shuffle(seasons_list)
     
-    sonarr_logger.info(f"Selected {len(seasons_to_process)} seasons with missing episodes to process")
-    
-    # Log selected seasons
-    for idx, (series_id, season_number, episode_count, series_title) in enumerate(seasons_to_process):
-        sonarr_logger.info(f" {idx+1}. {series_title} - Season {season_number} - {episode_count} missing episodes")
-    
-    # Process each selected season
-    for series_id, season_number, _, series_title in seasons_to_process:
-        if stop_check(): 
-            sonarr_logger.info("Stop requested before processing next season.")
+    # Process up to hunt_missing_items seasons
+    processed_count = 0
+    for season in seasons_list:
+        if processed_count >= hunt_missing_items:
             break
             
-        episodes = series_season_episodes[series_id][season_number]
-        episode_ids = [episode["id"] for episode in episodes]
+        if stop_check():
+            sonarr_logger.info("Stop signal received, halting processing.")
+            break
+            
+        series_id = season['series_id']
+        season_number = season['season_number']
+        series_title = season['series_title']
+        episode_count = season['episode_count']
         
-        sonarr_logger.info(f"Processing {series_title} - Season {season_number} with {len(episode_ids)} missing episodes")
+        sonarr_logger.info(f"Searching for season pack: {series_title} - Season {season_number} (contains {episode_count} missing episodes)")
+        
+        # Trigger an API call to search for the entire season
+        command_id = sonarr_api.search_season(api_url, api_key, api_timeout, series_id, season_number)
+        
+        if command_id:
+            processed_any = True
+            processed_count += 1
+            
+            # Wait for command to complete if configured
+            if command_wait_delay > 0 and command_wait_attempts > 0:
+                wait_for_command(
+                    api_url, api_key, api_timeout, command_id, 
+                    command_wait_delay, command_wait_attempts, "Season Search", stop_check
+                )
+    
+    sonarr_logger.info(f"Processed {processed_count} missing season packs for Sonarr.")
+    return processed_any
+
+def process_missing_seasons_packs_mode(
+    api_url: str,
+    api_key: str,
+    api_timeout: int,
+    monitored_only: bool,
+    skip_series_refresh: bool,
+    random_missing: bool,
+    hunt_missing_items: int,
+    command_wait_delay: int,
+    command_wait_attempts: int,
+    stop_check: Callable[[], bool]
+) -> bool:
+    """
+    Process missing seasons using the SeasonSearch command
+    This mode is optimized for torrent users who rely on season packs
+    Uses a direct episode lookup approach which is much more efficient
+    """
+    processed_any = False
+    
+    sonarr_logger.info("Running Season [Packs] mode with optimized performance for large libraries")
+    
+    # Use our new optimized function to get series with missing episodes
+    series_with_missing = sonarr_api.get_series_with_missing_episodes(
+        api_url, api_key, api_timeout, 
+        monitored_only=monitored_only, 
+        limit=50  # Examine at most 50 series for performance
+    )
+    
+    if not series_with_missing:
+        sonarr_logger.info("No series with missing episodes found")
+        return False
+    
+    # Convert to a flat list of seasons with missing episodes
+    missing_seasons = []
+    for series in series_with_missing:
+        series_id = series['series_id']
+        series_title = series['series_title']
+        
+        for season in series['seasons']:
+            missing_seasons.append({
+                'series_id': series_id,
+                'season_number': season['season_number'],
+                'series_title': series_title,
+                'episode_count': season['episode_count']
+            })
+    
+    # Sort by episode count (most missing episodes first)
+    missing_seasons.sort(key=lambda x: x['episode_count'], reverse=True)
+    
+    # Apply randomization if requested
+    if random_missing:
+        random.shuffle(missing_seasons)
+    
+    sonarr_logger.info(f"Found {len(missing_seasons)} seasons with missing episodes across {len(series_with_missing)} series")
+    
+    # Process up to hunt_missing_items seasons
+    processed_count = 0
+    for season in missing_seasons[:hunt_missing_items]:
+        if processed_count >= hunt_missing_items:
+            break
+            
+        if stop_check():
+            sonarr_logger.info("Stop signal received, halting processing.")
+            break
+            
+        series_id = season['series_id']
+        season_number = season['season_number']
+        series_title = season['series_title']
+        episode_count = season['episode_count']
         
         # Refresh series metadata if not skipped
         if not skip_series_refresh:
-            sonarr_logger.debug(f"Attempting to refresh series ID: {series_id}")
+            sonarr_logger.debug(f"Refreshing metadata for {series_title} before season pack search")
             refresh_command_id = sonarr_api.refresh_series(api_url, api_key, api_timeout, series_id)
             if refresh_command_id:
-                # Wait for refresh command to complete
-                if not wait_for_command(
+                wait_for_command(
                     api_url, api_key, api_timeout, refresh_command_id,
                     command_wait_delay, command_wait_attempts, "Series Refresh", stop_check
-                ):
-                    sonarr_logger.warning(f"Series refresh command for {series_title} did not complete successfully or timed out.")
-            else:
-                sonarr_logger.warning(f"Failed to trigger refresh command for series {series_title}")
-                
-        if stop_check(): 
-            sonarr_logger.info("Stop requested after series refresh attempt.")
-            break
-            
-        # Trigger search for the selected episodes in this season
-        sonarr_logger.debug(f"Attempting to search for {len(episode_ids)} episodes in {series_title} Season {season_number}")
-        search_command_id = sonarr_api.search_episode(api_url, api_key, api_timeout, episode_ids)
+                )
         
-        if search_command_id:
-            # Wait for search command to complete
-            if wait_for_command(
-                api_url, api_key, api_timeout, search_command_id,
-                command_wait_delay, command_wait_attempts, "Episode Search", stop_check
-            ):
-                # Mark as processed if search command completed successfully
-                processed_any = True
-                sonarr_logger.info(f"Successfully processed {len(episode_ids)} missing episodes in {series_title} Season {season_number}")
-                
-                # Increment the hunted statistics
-                increment_stat("sonarr", "hunted", len(episode_ids))
-                sonarr_logger.debug(f"Incremented sonarr hunted statistics by {len(episode_ids)}")
-            else:
-                sonarr_logger.warning(f"Episode search command for {series_title} Season {season_number} did not complete successfully")
-        else:
-            sonarr_logger.error(f"Failed to trigger search command for {series_title} Season {season_number}")
+        sonarr_logger.info(f"Searching for season pack: {series_title} - Season {season_number} (contains {episode_count} missing episodes)")
+        
+        # Trigger an API call to search for the entire season
+        command_id = sonarr_api.search_season(api_url, api_key, api_timeout, series_id, season_number)
+        
+        if command_id:
+            processed_any = True
+            processed_count += 1
+            
+            # Wait for command to complete if configured
+            if command_wait_delay > 0 and command_wait_attempts > 0:
+                if wait_for_command(
+                    api_url, api_key, api_timeout, command_id, 
+                    command_wait_delay, command_wait_attempts, "Season Pack Search", stop_check
+                ):
+                    # Increment stats by the number of episodes in the season
+                    increment_stat("sonarr", "hunted", episode_count)
+                    sonarr_logger.debug(f"Incremented sonarr hunted statistics by {episode_count} (full season)")
     
-    sonarr_logger.info("Finished missing episodes processing cycle (season mode) for Sonarr.")
+    sonarr_logger.info(f"Processed {processed_count} missing season packs for Sonarr.")
     return processed_any
 
 def process_missing_shows_mode(
@@ -525,51 +564,56 @@ def wait_for_command(
     api_key: str,
     api_timeout: int,
     command_id: int,
-    delay: int,
-    attempts: int,
-    command_name: str,
-    stop_check: Callable[[], bool] # Pass stop check function
+    wait_delay: int,
+    max_attempts: int,
+    command_name: str = "Command",
+    stop_check: Callable[[], bool] = lambda: False
 ) -> bool:
-    """Wait for a Sonarr command to complete, checking for stop requests."""
-    # Ensure URL has proper format
-    if not (api_url.startswith('http://') or api_url.startswith('https://')):
-        old_url = api_url
-        api_url = f"http://{api_url}"
-        sonarr_logger.warning(f"API URL is missing http:// or https:// scheme in wait_for_command: {old_url}")
-        sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
+    """
+    Wait for a Sonarr command to complete or timeout.
     
-    sonarr_logger.debug(f"Waiting for Sonarr command '{command_name}' (ID: {command_id}) to complete...")
-    for attempt in range(attempts):
+    Args:
+        api_url: The Sonarr API URL
+        api_key: The Sonarr API key
+        api_timeout: API request timeout
+        command_id: The ID of the command to monitor
+        wait_delay: Seconds to wait between status checks
+        max_attempts: Maximum number of status check attempts
+        command_name: Name of the command (for logging)
+        stop_check: Optional function to check if operation should be aborted
+        
+    Returns:
+        True if command completed successfully, False otherwise
+    """
+    if wait_delay <= 0 or max_attempts <= 0:
+        sonarr_logger.debug(f"Not waiting for command to complete (wait_delay={wait_delay}, max_attempts={max_attempts})")
+        return True  # Return as if successful since we're not checking
+    
+    sonarr_logger.debug(f"Waiting for {command_name} to complete (command ID: {command_id}). Checking every {wait_delay}s for up to {max_attempts} attempts")
+    
+    # Wait for command completion
+    for attempt in range(1, max_attempts + 1):
         if stop_check():
-            sonarr_logger.info(f"Stop requested while waiting for command '{command_name}' (ID: {command_id}).")
-            return False # Indicate command did not complete successfully due to stop
-
-        status_data = sonarr_api.get_command_status(api_url, api_key, api_timeout, command_id)
-        if status_data:
-            status = status_data.get('status')
-            if status == 'completed':
-                sonarr_logger.info(f"Sonarr command '{command_name}' (ID: {command_id}) completed successfully.")
-                return True
-            elif status in ['failed', 'aborted']:
-                # Try to get a more specific error message if available
-                body = status_data.get('body', {})
-                error_message = body.get('message') # Check for 'message' first
-                if not error_message:
-                    error_message = body.get('exception', f"Command {status}") # Fallback to exception
-                sonarr_logger.error(f"Sonarr command '{command_name}' (ID: {command_id}) {status}. Error: {error_message}")
-                return False
-            else: # queued, started, running
-                sonarr_logger.debug(f"Sonarr command '{command_name}' (ID: {command_id}) status: {status}. Waiting {delay}s... (Attempt {attempt + 1}/{attempts})")
-        else:
-            sonarr_logger.warning(f"Could not get status for Sonarr command '{command_name}' (ID: {command_id}). Retrying... (Attempt {attempt + 1}/{attempts})")
-
-        # Wait for the delay, but check stop_check frequently (e.g., every second)
-        wait_start_time = time.monotonic()
-        while time.monotonic() < wait_start_time + delay:
-            if stop_check():
-                sonarr_logger.info(f"Stop requested while waiting between checks for command '{command_name}' (ID: {command_id}).")
-                return False
-            time.sleep(min(1, delay - (time.monotonic() - wait_start_time))) # Sleep 1s or remaining time
-
-    sonarr_logger.error(f"Sonarr command '{command_name}' (ID: {command_id}) timed out after {attempts} attempts.")
+            sonarr_logger.info(f"Stopping wait for {command_name} due to stop request")
+            return False
+            
+        # Adding a short initial delay before first check
+        time.sleep(wait_delay)
+        
+        command_status = sonarr_api.get_command_status(api_url, api_key, api_timeout, command_id)
+        if not command_status:
+            sonarr_logger.warning(f"Failed to get status for {command_name} (ID: {command_id}), attempt {attempt}")
+            continue
+            
+        status = command_status.get('status')
+        if status == 'completed':
+            sonarr_logger.debug(f"Sonarr {command_name} (ID: {command_id}) completed successfully")
+            return True
+        elif status in ['failed', 'aborted']:
+            sonarr_logger.warning(f"Sonarr {command_name} (ID: {command_id}) {status}")
+            return False
+        
+        sonarr_logger.debug(f"Sonarr {command_name} (ID: {command_id}) status: {status}, attempt {attempt}/{max_attempts}")
+    
+    sonarr_logger.error(f"Sonarr command '{command_name}' (ID: {command_id}) timed out after {max_attempts} attempts.")
     return False

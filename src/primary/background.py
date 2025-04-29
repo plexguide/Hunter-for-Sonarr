@@ -253,8 +253,38 @@ def app_specific_loop(app_type: str) -> None:
             # --- Process Missing --- #
             if hunt_missing_enabled and process_missing:
                 try:
-                    # Pass the combined settings dict and the stop check function
-                    processed_missing = process_missing(app_settings=combined_settings, stop_check=stop_check_func)
+                    # Extract settings for direct function calls
+                    api_url = combined_settings.get("api_url", "").strip()
+                    api_key = combined_settings.get("api_key", "").strip()
+                    api_timeout = combined_settings.get("api_timeout", 90)
+                    monitored_only = combined_settings.get("monitored_only", True)
+                    skip_future_episodes = combined_settings.get("skip_future_episodes", True)
+                    skip_series_refresh = combined_settings.get("skip_series_refresh", False)
+                    random_missing = combined_settings.get("random_missing", False)
+                    hunt_missing_items = combined_settings.get("hunt_missing_items", 0)
+                    hunt_missing_mode = combined_settings.get("hunt_missing_mode", "episodes")
+                    command_wait_delay = combined_settings.get("command_wait_delay", 5)
+                    command_wait_attempts = combined_settings.get("command_wait_attempts", 12)
+                    
+                    if app_type == "sonarr":
+                        processed_missing = process_missing(
+                            api_url=api_url,
+                            api_key=api_key,
+                            api_timeout=api_timeout,
+                            monitored_only=monitored_only,
+                            skip_future_episodes=skip_future_episodes,
+                            skip_series_refresh=skip_series_refresh,
+                            random_missing=random_missing,
+                            hunt_missing_items=hunt_missing_items,
+                            hunt_missing_mode=hunt_missing_mode,
+                            command_wait_delay=command_wait_delay,
+                            command_wait_attempts=command_wait_attempts,
+                            stop_check=stop_check_func
+                        )
+                    else:
+                        # For other apps that still use the old signature
+                        processed_missing = process_missing(app_settings=combined_settings, stop_check=stop_check_func)
+                        
                     if processed_missing:
                         cycle_processed_anything = True
                 except Exception as e:
@@ -263,11 +293,36 @@ def app_specific_loop(app_type: str) -> None:
             # --- Process Upgrades --- #
             if hunt_upgrade_enabled and process_upgrades:
                 try:
-                    # Pass the combined settings dict and the stop check function
-                    # Assuming process_upgrades follows the same new signature
-                    processed_upgrades = process_upgrades(app_settings=combined_settings, stop_check=stop_check_func)
+                    # Extract settings for direct function calls (only for Sonarr)
+                    if app_type == "sonarr":
+                        api_url = combined_settings.get("api_url", "").strip()
+                        api_key = combined_settings.get("api_key", "").strip()
+                        api_timeout = combined_settings.get("api_timeout", 90)
+                        monitored_only = combined_settings.get("monitored_only", True)
+                        skip_series_refresh = combined_settings.get("skip_series_refresh", False)
+                        random_upgrades = combined_settings.get("random_upgrades", False)
+                        hunt_upgrade_items = combined_settings.get("hunt_upgrade_items", 0)
+                        command_wait_delay = combined_settings.get("command_wait_delay", 5)
+                        command_wait_attempts = combined_settings.get("command_wait_attempts", 12)
+                        
+                        processed_upgrades = process_upgrades(
+                            api_url=api_url,
+                            api_key=api_key,
+                            api_timeout=api_timeout,
+                            monitored_only=monitored_only,
+                            skip_series_refresh=skip_series_refresh,
+                            random_upgrades=random_upgrades,
+                            hunt_upgrade_items=hunt_upgrade_items,
+                            command_wait_delay=command_wait_delay,
+                            command_wait_attempts=command_wait_attempts,
+                            stop_check=stop_check_func
+                        )
+                    else:
+                        # For other apps that still use the old signature
+                        processed_upgrades = process_upgrades(app_settings=combined_settings, stop_check=stop_check_func)
+                    
                     if processed_upgrades:
-                         cycle_processed_anything = True
+                        cycle_processed_anything = True
                 except Exception as e:
                     app_logger.error(f"Error during upgrade processing for {instance_name}: {e}", exc_info=True)
 

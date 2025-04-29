@@ -14,52 +14,21 @@ from src.primary.stats_manager import increment_stat
 sonarr_logger = get_logger("sonarr")
 
 def process_cutoff_upgrades(
-    app_settings: Dict[str, Any],
-    stop_check: Callable[[], bool] # Function to check if stop is requested
+    api_url: str,
+    api_key: str,
+    api_timeout: int = 60,
+    monitored_only: bool = True,
+    skip_series_refresh: bool = False,
+    random_upgrades: bool = False,
+    hunt_upgrade_items: int = 5,
+    command_wait_delay: int = 5,
+    command_wait_attempts: int = 10,
+    stop_check: Callable[[], bool] = lambda: False
 ) -> bool:
     """
-    Process quality cutoff upgrades for Sonarr based on settings.
-
-    Args:
-        app_settings: Dictionary containing all settings for Sonarr.
-        stop_check: A function that returns True if the process should stop.
-
-    Returns:
-        True if any episodes were processed, False otherwise.
+    Process quality cutoff upgrades for Sonarr.
+    This function only uses the episode mode for upgrades regardless of hunt_missing_mode.
     """
-    sonarr_logger.info("Starting quality cutoff upgrades processing cycle for Sonarr.")
-    processed_any = False
-
-    # Extract necessary settings
-    api_url = app_settings.get("api_url", "").strip()
-    api_key = app_settings.get("api_key", "").strip()
-    api_timeout = app_settings.get("api_timeout", 90)
-    monitored_only = app_settings.get("monitored_only", True)
-    skip_series_refresh = app_settings.get("skip_series_refresh", False)
-    random_upgrades = app_settings.get("random_upgrades", False)
-    hunt_upgrade_items = app_settings.get("hunt_upgrade_items", 0)
-    hunt_missing_mode = app_settings.get("hunt_missing_mode", "episodes")
-    command_wait_delay = app_settings.get("command_wait_delay", 5)
-    command_wait_attempts = app_settings.get("command_wait_attempts", 12)
-
-    # Improved validation of API URL and key
-    if not api_url:
-        sonarr_logger.error("API URL is empty or not set")
-        return False
-        
-    if not api_key:
-        sonarr_logger.error("API Key is not set")
-        return False
-        
-    # Ensure URL has proper format with auto-correction
-    if not (api_url.startswith('http://') or api_url.startswith('https://')):
-        old_url = api_url
-        api_url = f"http://{api_url}"
-        sonarr_logger.warning(f"API URL is missing http:// or https:// scheme: {old_url}")
-        sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
-        
-    sonarr_logger.debug(f"Using API URL: {api_url}")
-
     if hunt_upgrade_items <= 0:
         sonarr_logger.info("'hunt_upgrade_items' setting is 0 or less. Skipping upgrade processing.")
         return False
@@ -513,55 +482,56 @@ def wait_for_command(
     api_key: str,
     api_timeout: int,
     command_id: int,
-    delay: int,
-    attempts: int,
-    command_name: str,
-    stop_check: Callable[[], bool] # Pass stop check function
+    wait_delay: int,
+    max_attempts: int,
+    command_name: str = "Command",
+    stop_check: Callable[[], bool] = lambda: False
 ) -> bool:
     """
-    Wait for a Sonarr command to complete, checking for stop requests.
+    Wait for a Sonarr command to complete or timeout.
     
     Args:
-        api_url: The base URL of the Sonarr API
-        api_key: The API key for authentication
-        api_timeout: Timeout for the API request
-        command_id: The ID of the command to wait for
-        delay: Delay in seconds between status checks
-        attempts: Maximum number of status check attempts
-        command_name: Name of the command for logging
-        stop_check: Function to check if stop is requested
+        api_url: The Sonarr API URL
+        api_key: The Sonarr API key
+        api_timeout: API request timeout
+        command_id: The ID of the command to monitor
+        wait_delay: Seconds to wait between status checks
+        max_attempts: Maximum number of status check attempts
+        command_name: Name of the command (for logging)
+        stop_check: Optional function to check if operation should be aborted
         
     Returns:
         True if command completed successfully, False otherwise
     """
-    for attempt in range(attempts):
+    if wait_delay <= 0 or max_attempts <= 0:
+        sonarr_logger.debug(f"Not waiting for command to complete (wait_delay={wait_delay}, max_attempts={max_attempts})")
+        return True  # Return as if successful since we're not checking
+    
+    sonarr_logger.debug(f"Waiting for {command_name} to complete (command ID: {command_id}). Checking every {wait_delay}s for up to {max_attempts} attempts")
+    
+    # Wait for command completion
+    for attempt in range(1, max_attempts + 1):
         if stop_check():
-            sonarr_logger.info(f"Stop requested while waiting for command '{command_name}' (ID: {command_id}).")
+            sonarr_logger.info(f"Stopping wait for {command_name} due to stop request")
             return False
             
-        # Wait for the specified delay
-        time.sleep(delay)
+        # Adding a short initial delay before first check
+        time.sleep(wait_delay)
         
-        # Check the command status
         command_status = sonarr_api.get_command_status(api_url, api_key, api_timeout, command_id)
-        
         if not command_status:
-            sonarr_logger.warning(f"Failed to get status for command '{command_name}' (ID: {command_id})")
+            sonarr_logger.warning(f"Failed to get status for {command_name} (ID: {command_id}), attempt {attempt}")
             continue
             
-        status = command_status.get('status', '').lower()
-        
-        # If the command has completed, return the success result
+        status = command_status.get('status')
         if status == 'completed':
-            sonarr_logger.debug(f"Command '{command_name}' (ID: {command_id}) completed successfully")
+            sonarr_logger.debug(f"Sonarr {command_name} (ID: {command_id}) completed successfully")
             return True
-            
-        elif status == 'failed':
-            message = command_status.get('message', 'No error message provided')
-            sonarr_logger.error(f"Command '{command_name}' (ID: {command_id}) failed: {message}")
+        elif status in ['failed', 'aborted']:
+            sonarr_logger.warning(f"Sonarr {command_name} (ID: {command_id}) {status}")
             return False
-            
-        sonarr_logger.debug(f"Command '{command_name}' (ID: {command_id}) status: {status} (attempt {attempt+1}/{attempts})")
-
-    sonarr_logger.error(f"Sonarr command '{command_name}' (ID: {command_id}) timed out after {attempts} attempts.")
+        
+        sonarr_logger.debug(f"Sonarr {command_name} (ID: {command_id}) status: {status}, attempt {attempt}/{max_attempts}")
+    
+    sonarr_logger.error(f"Sonarr command '{command_name}' (ID: {command_id}) timed out after {max_attempts} attempts.")
     return False
