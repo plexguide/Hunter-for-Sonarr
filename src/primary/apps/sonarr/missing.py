@@ -348,7 +348,8 @@ def process_missing_seasons_packs_mode(
     series_with_missing = sonarr_api.get_series_with_missing_episodes(
         api_url, api_key, api_timeout, 
         monitored_only=monitored_only, 
-        limit=50  # Examine at most 50 series for performance
+        limit=50,  # Examine at most 50 series for performance
+        random_mode=random_missing
     )
     
     if not series_with_missing:
@@ -372,9 +373,7 @@ def process_missing_seasons_packs_mode(
     # Sort by episode count (most missing episodes first)
     missing_seasons.sort(key=lambda x: x['episode_count'], reverse=True)
     
-    # Apply randomization if requested
-    if random_missing:
-        random.shuffle(missing_seasons)
+    # No need to shuffle again, as we already shuffled at the series selection level if random mode is on
     
     sonarr_logger.info(f"Found {len(missing_seasons)} seasons with missing episodes across {len(series_with_missing)} series")
     

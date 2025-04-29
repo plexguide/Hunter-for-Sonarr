@@ -884,7 +884,7 @@ def search_season(api_url: str, api_key: str, api_timeout: int, series_id: int, 
         sonarr_logger.error(f"An unexpected error occurred while triggering Sonarr season search: {e}")
         return None
 
-def get_series_with_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool = True, limit: int = 50) -> List[Dict[str, Any]]:
+def get_series_with_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool = True, limit: int = 50, random_mode: bool = False) -> List[Dict[str, Any]]:
     """
     Get a list of series that have missing episodes, along with missing episode counts per season.
     This is much more efficient than fetching all missing episodes for large libraries.
@@ -895,6 +895,7 @@ def get_series_with_missing_episodes(api_url: str, api_key: str, api_timeout: in
         api_timeout: Timeout for the API request
         monitored_only: Whether to only include monitored series
         limit: Maximum number of series to return
+        random_mode: Whether to randomly select series
         
     Returns:
         A list of series with missing episodes and counts per season
@@ -913,6 +914,14 @@ def get_series_with_missing_episodes(api_url: str, api_key: str, api_timeout: in
         sonarr_logger.info(f"Filtered from {len(all_series)} total series to {len(filtered_series)} monitored series")
     else:
         filtered_series = all_series
+        
+    # Apply random selection if requested
+    if random_mode:
+        import random
+        sonarr_logger.info(f"Using RANDOM selection mode for missing episodes")
+        random.shuffle(filtered_series)
+    else:
+        sonarr_logger.info(f"Using SEQUENTIAL selection mode for missing episodes")
         
     # Step 3: For each series, check if it has missing episodes using series/id/episodes endpoint
     # This is much more efficient than using the wanted/missing endpoint
@@ -978,6 +987,7 @@ def get_series_with_missing_episodes(api_url: str, api_key: str, api_timeout: in
         except Exception as e:
             sonarr_logger.error(f"Error checking missing episodes for series {series_title} (ID: {series_id}): {str(e)}")
             continue
-            
-    sonarr_logger.info(f"Examined {examined_count} series and found {len(series_with_missing)} with missing episodes")
+    
+    selection_mode = "RANDOM" if random_mode else "SEQUENTIAL"        
+    sonarr_logger.info(f"Examined {examined_count} series ({selection_mode} mode) and found {len(series_with_missing)} with missing episodes")
     return series_with_missing
