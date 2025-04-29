@@ -16,7 +16,7 @@ def get_configured_instances():
     """Get all configured and enabled Readarr instances"""
     settings = load_settings("readarr")
     instances = []
-    readarr_logger.info(f"Loaded Readarr settings for instance check: {settings}") 
+    # readarr_logger.info(f"Loaded Readarr settings for instance check: {settings}") # Removed verbose log
 
     if not settings:
         readarr_logger.debug("No settings found for Readarr")
@@ -24,7 +24,7 @@ def get_configured_instances():
 
     # Check if instances are configured
     if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
-        readarr_logger.info(f"Found 'instances' list with {len(settings['instances'])} items. Processing...")
+        # readarr_logger.info(f"Found 'instances' list with {len(settings['instances'])} items. Processing...") # Removed verbose log
         for idx, instance in enumerate(settings["instances"]):
             readarr_logger.debug(f"Checking instance #{idx}: {instance}")
             # Enhanced validation
@@ -47,15 +47,15 @@ def get_configured_instances():
                     "api_url": api_url,
                     "api_key": api_key,
                 }
-                instances.append(instance_data) 
-                readarr_logger.info(f"Added valid instance: {instance_data}") 
+                instances.append(instance_data)
+                # readarr_logger.info(f"Added valid instance: {instance_data}") # Removed verbose log
             elif not is_enabled:
                 readarr_logger.debug(f"Skipping disabled instance: {instance.get('name', 'Unnamed')}")
             else:
                 # Log specifically why it's skipped (missing URL/Key but enabled)
                 readarr_logger.warning(f"Skipping instance '{instance.get('name', 'Unnamed')}' due to missing API URL or key (URL: '{api_url}', Key Set: {bool(api_key)}) ")
     else:
-        readarr_logger.info("No 'instances' list found or list is empty. Checking legacy config.")
+        # readarr_logger.info("No 'instances' list found or list is empty. Checking legacy config.") # Removed verbose log
         # Fallback to legacy single-instance config
         api_url = settings.get("api_url", "").strip()
         api_key = settings.get("api_key", "").strip()
@@ -69,16 +69,16 @@ def get_configured_instances():
         if api_url and api_key:
             # Create a clean instance_data dict for the legacy instance
             instance_data = {
-                "instance_name": "Default", 
+                "instance_name": "Default",
                 "api_url": api_url,
                 "api_key": api_key,
             }
-            instances.append(instance_data) 
-            readarr_logger.info(f"Added valid legacy instance: {instance_data}") 
+            instances.append(instance_data)
+            # readarr_logger.info(f"Added valid legacy instance: {instance_data}") # Removed verbose log
         else:
             readarr_logger.warning("No API URL or key found in legacy configuration")
 
-    readarr_logger.info(f"Returning {len(instances)} configured instances: {instances}") 
+    readarr_logger.info(f"Found {len(instances)} configured and enabled Readarr instances") # Changed log message
     return instances
 
 __all__ = ["process_missing_books", "process_cutoff_upgrades", "get_configured_instances"]
