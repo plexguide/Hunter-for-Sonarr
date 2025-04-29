@@ -480,24 +480,39 @@ let huntarrUI = {
                 if (!this.elements.logsContainer) return;
                 
                 try {
-                    // Create log entry element
+                    const logString = event.data;
+                    // Regex to parse log lines: Optional [APP], Timestamp, Logger, Level, Message
+                    // Example: [SONARR] 2024-01-01 12:00:00 - huntarr.sonarr - INFO - Message content
+                    // Example: 2024-01-01 12:00:00 - huntarr - DEBUG - System message
+                    const logRegex = /^(?:\\[(\\w+)\\]\\s)?([\\d\\-]+\\s[\\d:]+)\\s-\\s([\\w\\.]+)\\s-\\s(\\w+)\\s-\\s(.*)$/;
+                    const match = logString.match(logRegex);
+
                     const logEntry = document.createElement('div');
                     logEntry.className = 'log-entry';
-                    
-                    // The event.data should be used directly - server sends it as plain text
-                    logEntry.textContent = event.data;
-                    
-                    // Detect log level from content for styling
-                    if (event.data.includes('ERROR') || event.data.includes('Error:')) {
-                        logEntry.classList.add('log-error');
-                    } else if (event.data.includes('WARNING') || event.data.includes('Warning:')) {
-                        logEntry.classList.add('log-warning');
-                    } else if (event.data.includes('DEBUG')) {
-                        logEntry.classList.add('log-debug');
+
+                    if (match) {
+                        const [, appName, timestamp, loggerName, level, message] = match;
+                        
+                        // Use backticks for template literal
+                        logEntry.innerHTML = ` 
+                            <span class="log-timestamp" title="${timestamp}">${timestamp.split(' ')[1]}</span> 
+                            ${appName ? `<span class="log-app" title="Source: ${appName}">[${appName}]</span>` : ''}
+                            <span class="log-level log-level-${level.toLowerCase()}" title="Level: ${level}">${level}</span>
+                            <span class="log-logger" title="Logger: ${loggerName}">(${loggerName.replace('huntarr.', '')})</span>
+                            <span class="log-message">${message}</span>
+                        `; // End template literal with backtick
+                        logEntry.classList.add(`log-${level.toLowerCase()}`);
+
                     } else {
-                        logEntry.classList.add('log-info');
+                        // Fallback for lines that don't match the expected format
+                        logEntry.innerHTML = `<span class="log-message">${logString}</span>`;
+                        // Basic level detection for fallback
+                        if (logString.includes('ERROR')) logEntry.classList.add('log-error');
+                        else if (logString.includes('WARN') || logString.includes('WARNING')) logEntry.classList.add('log-warning'); // Added WARN check
+                        else if (logString.includes('DEBUG')) logEntry.classList.add('log-debug');
+                        else logEntry.classList.add('log-info');
                     }
-                    
+
                     // Add to logs container
                     this.elements.logsContainer.appendChild(logEntry);
                     
@@ -506,7 +521,7 @@ let huntarrUI = {
                         this.elements.logsContainer.scrollTop = this.elements.logsContainer.scrollHeight;
                     }
                 } catch (error) {
-                    console.error('[huntarrUI] Error processing log message:', error);
+                    console.error('[huntarrUI] Error processing log message:', error, 'Data:', event.data);
                 }
             };
             
@@ -514,55 +529,42 @@ let huntarrUI = {
                 console.error(`[huntarrUI] EventSource error for app ${this.currentLogApp}:`, err);
                 if (this.elements.logConnectionStatus) {
                     this.elements.logConnectionStatus.textContent = 'Error/Disconnected';
-                    this.elements.logConnectionStatus.className = 'status-disconnected';
+                    this.elements.logConnectionStatus.className = 'status-error'; // Use a specific error class
                 }
-                
-                // Close the potentially broken source before reconnecting
+                // Close the potentially broken connection
                 if (this.eventSources.logs) {
                     this.eventSources.logs.close();
-                    this.eventSources.logs = null; // Clear reference
                     console.log(`[huntarrUI] Closed potentially broken log EventSource for ${this.currentLogApp}.`);
                 }
-
-                // Always attempt to reconnect after a delay
-                console.log(`[huntarrUI] Attempting to reconnect log stream for ${this.currentLogApp} in 5 seconds...`);
-                // Use a variable to store the timeout ID so it can be cleared if needed
-                if (this.logReconnectTimeout) {
-                    clearTimeout(this.logReconnectTimeout);
+                // Attempt to reconnect after a delay, but only if still on the logs page
+                if (this.currentSection === 'logs') {
+                    console.log(`[huntarrUI] Attempting to reconnect log stream for ${this.currentLogApp} in 5 seconds...`);
+                    setTimeout(() => {
+                        // Double-check if still on logs page before reconnecting
+                        if (this.currentSection === 'logs') {
+                             console.log(`[huntarrUI] Reconnecting log stream for ${this.currentLogApp}.`);
+                             this.connectToLogs(); // Re-initiate connection
+                        } else {
+                             console.log(`[huntarrUI] Log reconnect cancelled; user navigated away from logs section.`);
+                        }
+                    }, 5000); // 5-second delay
                 }
-                this.logReconnectTimeout = setTimeout(() => {
-                    // Check if we are *still* supposed to be connected to logs before reconnecting
-                    if (this.currentSection === 'logs') {
-                         console.log(`[huntarrUI] Reconnecting log stream for ${this.currentLogApp}.`);
-                         this.connectEventSource(this.currentLogApp); 
-                    } else {
-                         console.log(`[huntarrUI] Log reconnect cancelled; user navigated away from logs section.`);
-                    }
-                    this.logReconnectTimeout = null; // Clear the timeout ID after execution
-                }, 5000);
-            };
+            }; // Added missing semicolon
             
-            this.eventSources.logs = eventSource;
-        } catch (error) {
-            console.error('Error connecting to event source:', error);
+            this.eventSources.logs = eventSource; // Store the reference
+        } catch (e) {
+            console.error(`[huntarrUI] Failed to create EventSource for app ${appType}:`, e);
             if (this.elements.logConnectionStatus) {
-                this.elements.logConnectionStatus.textContent = 'Connection Error';
-                this.elements.logConnectionStatus.className = 'status-disconnected';
+                this.elements.logConnectionStatus.textContent = 'Failed to connect';
+                this.elements.logConnectionStatus.className = 'status-error';
             }
         }
     },
     
     disconnectAllEventSources: function() {
-        console.log('[huntarrUI] Disconnecting all event sources...');
-        // Clear any pending reconnect timeout
-        if (this.logReconnectTimeout) {
-            clearTimeout(this.logReconnectTimeout);
-            this.logReconnectTimeout = null;
-            console.log('[huntarrUI] Cleared pending log reconnect timeout.');
-        }
         Object.keys(this.eventSources).forEach(key => {
             const source = this.eventSources[key];
-            if (source && typeof source.close === 'function') {
+            if (source) {
                  try {
                      if (source.readyState !== EventSource.CLOSED) {
                          source.close();
@@ -582,20 +584,6 @@ let huntarrUI = {
              this.elements.logConnectionStatus.textContent = 'Disconnected';
              this.elements.logConnectionStatus.className = 'status-disconnected';
          }
-    },
-    
-    addLogMessage: function(logData) {
-        if (!this.elements.logsContainer) return;
-        
-        const logEntry = document.createElement('div');
-        logEntry.className = `log-entry log-${logData.level.toLowerCase()}`;
-        logEntry.textContent = logData.message;
-        
-        this.elements.logsContainer.appendChild(logEntry);
-        
-        if (this.autoScroll) {
-            this.elements.logsContainer.scrollTop = this.elements.logsContainer.scrollHeight;
-        }
     },
     
     clearLogs: function() {
