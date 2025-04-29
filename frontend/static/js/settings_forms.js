@@ -178,11 +178,6 @@ const SettingsForms = {
                     <input type="number" id="minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
                     <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
                 </div>
-                <div class="setting-item">
-                    <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display</p>
-                </div>
             </div>
         `;
 
@@ -363,11 +358,6 @@ const SettingsForms = {
                     <label for="radarr_minimum_download_queue_size">Min Download Queue Size:</label>
                     <input type="number" id="radarr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
                     <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="radarr_log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="radarr_log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display</p>
                 </div>
             </div>
         `;
@@ -559,11 +549,6 @@ const SettingsForms = {
                     <input type="number" id="lidarr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
                     <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
                 </div>
-                <div class="setting-item">
-                    <label for="lidarr_log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="lidarr_log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display</p>
-                </div>
             </div>
         `;
 
@@ -744,11 +729,6 @@ const SettingsForms = {
                     <label for="readarr_minimum_download_queue_size">Min Download Queue Size:</label>
                     <input type="number" id="readarr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
                     <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="readarr_log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="readarr_log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display</p>
                 </div>
             </div>
         `;
@@ -931,11 +911,6 @@ const SettingsForms = {
                     <input type="number" id="whisparr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
                     <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
                 </div>
-                <div class="setting-item">
-                    <label for="whisparr_log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="whisparr_log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display</p>
-                </div>
             </div>
         `;
 
@@ -959,7 +934,7 @@ const SettingsForms = {
                 <div class="setting-item">
                     <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
                     <input type="number" id="log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display</p>
+                    <p class="setting-help">Interval in seconds to refresh log display (applies to all apps)</p>
                 </div>
                 <div class="setting-item">
                     <label for="check_for_updates">Check for Updates:</label>

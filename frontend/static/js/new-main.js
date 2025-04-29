@@ -505,7 +505,7 @@ const huntarrUI = {
             };
             
             eventSource.onerror = (err) => {
-                console.error(`[huntarrUI] EventSource error for app ${this.currentLogApp}:`, err); // Use currentLogApp
+                console.error(`[huntarrUI] EventSource error for app ${this.currentLogApp}:`, err);
                 if (this.elements.logConnectionStatus) {
                     this.elements.logConnectionStatus.textContent = 'Error/Disconnected';
                     this.elements.logConnectionStatus.className = 'status-disconnected';
