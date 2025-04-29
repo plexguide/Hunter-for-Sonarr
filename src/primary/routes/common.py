@@ -19,6 +19,7 @@ from ..auth import (
     user_exists, create_user, generate_2fa_secret, verify_2fa_code, is_2fa_enabled # Add missing auth imports
 )
 from ..utils.logger import logger # Ensure logger is imported
+from .. import settings_manager # Import settings_manager
 
 common_bp = Blueprint('common', __name__)
 
@@ -356,6 +357,22 @@ def set_theme():
     except Exception as e:
         logger.error(f"Error setting theme preference: {e}", exc_info=True)
         return jsonify({"success": False, "error": "Failed to set theme preference"}), 500
+
+# --- Local Access Bypass Status API Route --- #
+
+@common_bp.route('/api/get_local_access_bypass_status', methods=['GET'])
+def get_local_access_bypass_status_route():
+    """API endpoint to get the status of the local network authentication bypass setting."""
+    try:
+        # Get the setting from the 'general' section, default to False if not found
+        bypass_enabled = settings_manager.get_setting('general', 'local_access_bypass', False)
+        logger.debug(f"Retrieved local_access_bypass status: {bypass_enabled}")
+        # Return status in the format expected by the frontend
+        return jsonify({"isEnabled": bypass_enabled})
+    except Exception as e:
+        logger.error(f"Error retrieving local_access_bypass status: {e}", exc_info=True)
+        # Return a generic error to the client
+        return jsonify({"error": "Failed to retrieve bypass status"}), 500
 
 # --- Stats Management API Routes --- #
 @common_bp.route('/api/stats', methods=['GET'])

@@ -258,6 +258,88 @@ def authenticate_request():
     if request.path.startswith(("/static/", "/login", "/api/login", "/setup", "/api/setup")) or request.path == "/favicon.ico":
         return None
     
+    # Check if the request is from a local network and bypass authentication if enabled
+    # Get configuration setting for local network bypass
+    local_access_bypass = False
+    try:
+        # Force reload settings from disk to ensure we have the latest
+        from src.primary.settings_manager import load_settings
+        from src.primary import settings_manager
+        
+        # Ensure we're getting fresh settings by clearing any cache
+        if hasattr(settings_manager, 'settings_cache'):
+            settings_manager.settings_cache = {}
+            
+        settings = load_settings("general")  # Specify 'general' as the app_type
+        general_settings = settings
+        local_access_bypass = general_settings.get("local_access_bypass", False)
+        logger.info(f"Local access bypass setting: {local_access_bypass}")
+        
+        # Debug print all general settings
+        logger.debug(f"All general settings: {general_settings}")
+    except Exception as e:
+        logger.error(f"Error loading local access bypass setting: {e}", exc_info=True)
+    
+    remote_addr = request.remote_addr
+    logger.info(f"Request IP address: {remote_addr}")
+    
+    if local_access_bypass:
+        # Common local network IP ranges
+        local_networks = [
+            '127.0.0.1',      # localhost
+            '::1',            # localhost IPv6
+            '10.',            # 10.0.0.0/8
+            '172.16.',        # 172.16.0.0/12
+            '172.17.',
+            '172.18.',
+            '172.19.',
+            '172.20.',
+            '172.21.',
+            '172.22.',
+            '172.23.',
+            '172.24.',
+            '172.25.',
+            '172.26.',
+            '172.27.',
+            '172.28.',
+            '172.29.',
+            '172.30.',
+            '172.31.',
+            '192.168.'        # 192.168.0.0/16
+        ]
+        is_local = False
+        
+        # Check if request is coming through a proxy
+        forwarded_for = request.headers.get('X-Forwarded-For')
+        if forwarded_for:
+            logger.debug(f"X-Forwarded-For header detected: {forwarded_for}")
+            # Take the first IP in the chain which is typically the client's real IP
+            possible_client_ip = forwarded_for.split(',')[0].strip()
+            logger.debug(f"Checking if forwarded IP {possible_client_ip} is local")
+            
+            # Check if this forwarded IP is a local network IP
+            for network in local_networks:
+                if possible_client_ip == network or (network.endswith('.') and possible_client_ip.startswith(network)):
+                    is_local = True
+                    logger.info(f"Forwarded IP {possible_client_ip} is a local network IP (matches {network})")
+                    break
+        
+        # Check if direct remote_addr is a local network IP if not already determined
+        if not is_local:
+            for network in local_networks:
+                if remote_addr == network or (network.endswith('.') and remote_addr.startswith(network)):
+                    is_local = True
+                    logger.info(f"Direct IP {remote_addr} is a local network IP (matches {network})")
+                    break
+                    
+        if is_local:
+            logger.info(f"Local network access from {remote_addr} - Authentication bypassed!")
+            return None
+        else:
+            logger.warning(f"Access from {remote_addr} is not recognized as local network - Authentication required")
+    else:
+        logger.info("Local access bypass is DISABLED - Authentication required")
+    
     # Check for valid session
     session_id = session.get(SESSION_COOKIE_NAME)
     if session_id and verify_session(session_id):

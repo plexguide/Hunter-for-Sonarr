@@ -39,6 +39,7 @@ const huntarrUI = {
         this.cacheElements();
         this.setupEventListeners();
         this.loadUsername();
+        this.checkLocalAccessBypassStatus(); // Add this line
         this.checkAppConnections();
         this.loadMediaStats(); // Load media statistics
         this.loadCurrentVersion(); // Load current version
@@ -504,7 +505,7 @@ const huntarrUI = {
             };
             
             eventSource.onerror = (err) => {
-                console.error(`[huntarrUI] EventSource error for app ${this.currentLogApp}:`, err); // Use currentLogApp
+                console.error(`[huntarrUI] EventSource error for app ${this.currentLogApp}:`, err);
                 if (this.elements.logConnectionStatus) {
                     this.elements.logConnectionStatus.textContent = 'Error/Disconnected';
                     this.elements.logConnectionStatus.className = 'status-disconnected';
@@ -667,6 +668,11 @@ const huntarrUI = {
         const app = this.currentSettingsTab;
         console.log(`[huntarrUI] saveSettings called for app: ${app}`);
         
+        // Clear the unsaved changes flag BEFORE sending the request
+        // This prevents the "unsaved changes" dialog from appearing
+        this.settingsChanged = false;
+        this.updateSaveResetButtonState(false);
+        
         // Use getFormSettings for all apps, as it handles different structures
         let settings = this.getFormSettings(app);
 
@@ -677,6 +683,14 @@ const huntarrUI = {
         }
 
         console.log(`[huntarrUI] Collected settings for ${app}:`, settings);
+        
+        // Check if this is general settings and if local_access_bypass is being changed
+        const isLocalAccessBypassChanged = app === 'general' && 
+            this.originalSettings && 
+            this.originalSettings.general && 
+            this.originalSettings.general.local_access_bypass !== settings.local_access_bypass;
+            
+        console.log(`[huntarrUI] Local access bypass changed: ${isLocalAccessBypassChanged}`);
 
         // Add app_type to the payload if needed by backend
         const payload = { [app]: settings };
@@ -705,6 +719,16 @@ const huntarrUI = {
         })
         .then(savedConfig => {
             console.log('[huntarrUI] Settings saved successfully. Full config received:', savedConfig);
+            
+            // If local access bypass setting was changed, reload the page
+            if (isLocalAccessBypassChanged) {
+                this.showNotification('Settings saved successfully. Reloading page to apply authentication changes...', 'success');
+                setTimeout(() => {
+                    window.location.href = '/'; // Redirect to home page after a brief delay
+                }, 1500);
+                return;
+            }
+            
             this.showNotification('Settings saved successfully', 'success');
 
             // Update original settings state with the full config returned from backend
@@ -729,12 +753,13 @@ const huntarrUI = {
             // Update connection status and UI
             this.checkAppConnection(app);
             this.updateHomeConnectionStatus();
-            this.settingsChanged = false; // Reset flag after successful save
-            this.updateSaveResetButtonState(false); // Disable buttons after save
         })
         .catch(error => {
             console.error('Error saving settings:', error);
             this.showNotification(`Error saving settings: ${error.message}`, 'error');
+            // If there was an error, mark settings as changed again
+            this.settingsChanged = true;
+            this.updateSaveResetButtonState(true);
         });
     },
 
@@ -1203,10 +1228,99 @@ const huntarrUI = {
                 if (data.username) {
                     usernameElement.textContent = data.username;
                 }
+                
+                // Check if local access bypass is enabled and update UI visibility
+                this.checkLocalAccessBypassStatus();
             })
             .catch(error => {
                 console.error('Error loading username:', error);
+                
+                // Still check local access bypass status even if username loading failed
+                this.checkLocalAccessBypassStatus();
             });
+    },
+    
+    // Check if local access bypass is enabled and update UI accordingly
+    checkLocalAccessBypassStatus: function() {
+        console.log("Checking local access bypass status...");
+        fetch('/api/get_local_access_bypass_status') // Corrected URL
+            .then(response => {
+                if (!response.ok) {
+                    // Log error if response is not OK (e.g., 404, 500)
+                    console.error(`Error fetching bypass status: ${response.status} ${response.statusText}`);
+                    // Attempt to read response body for more details, if available
+                    response.text().then(text => console.error('Response body:', text));
+                    // Throw an error to trigger the catch block with a clearer message
+                    throw new Error(`HTTP error ${response.status}`); 
+                }
+                return response.json(); // Only parse JSON if response is OK
+            })
+            .then(data => {
+                if (data && typeof data.isEnabled === 'boolean') {
+                    console.log("Local access bypass status received:", data.isEnabled);
+                    this.updateUIForLocalAccessBypass(data.isEnabled);
+                } else {
+                    // Handle cases where response is JSON but not the expected format
+                    console.error('Invalid data format received for bypass status:', data);
+                    this.updateUIForLocalAccessBypass(false); // Default to disabled/showing elements
+                }
+            })
+            .catch(error => {
+                 // Catch network errors and the error thrown from !response.ok
+                console.error('Error checking local access bypass status:', error);
+                // Default to showing elements if we can't determine status
+                this.updateUIForLocalAccessBypass(false);
+            });
+    },
+    
+    // Update UI elements visibility based on local access bypass status
+    updateUIForLocalAccessBypass: function(isEnabled) {
+        console.log("Updating UI for local access bypass:", isEnabled);
+        
+        // Get the user info container in topbar (username and logout button)
+        const userInfoContainer = document.getElementById('userInfoContainer');
+        
+        // Get the user nav item in sidebar
+        const userNav = document.getElementById('userNav');
+        
+        // Set display style explicitly based on local access bypass setting
+        if (isEnabled === true) {
+            console.log("Local access bypass is ENABLED - hiding user elements");
+            
+            // Hide user info in topbar
+            if (userInfoContainer) {
+                userInfoContainer.style.display = 'none';
+                console.log("  • Hidden userInfoContainer");
+            } else {
+                console.warn("  ⚠ userInfoContainer not found");
+            }
+            
+            // Hide user nav in sidebar
+            if (userNav) {
+                userNav.style.display = 'none';
+                console.log("  • Hidden userNav");
+            } else {
+                console.warn("  ⚠ userNav not found");
+            }
+        } else {
+            console.log("Local access bypass is DISABLED - showing user elements");
+            
+            // Show user info in topbar
+            if (userInfoContainer) {
+                userInfoContainer.style.display = '';
+                console.log("  • Showing userInfoContainer");
+            } else {
+                console.warn("  ⚠ userInfoContainer not found");
+            }
+            
+            // Show user nav in sidebar
+            if (userNav) {
+                userNav.style.display = '';
+                console.log("  • Showing userNav");
+            } else {
+                console.warn("  ⚠ userNav not found");
+            }
+        }
     },
     
     logout: function(e) { // Added logout function
