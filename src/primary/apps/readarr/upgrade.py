@@ -44,7 +44,7 @@ def process_cutoff_upgrades(
     
     # Get books eligible for upgrade
     readarr_logger.info("Retrieving books eligible for quality upgrade...")
-    upgrade_eligible_data = readarr_api.get_quality_profile_upgrades(api_url, api_key, api_timeout, monitored_only)
+    upgrade_eligible_data = readarr_api.get_cutoff_unmet_books
     
     if not upgrade_eligible_data:
         readarr_logger.info("No books found eligible for upgrade or error retrieving them.")
