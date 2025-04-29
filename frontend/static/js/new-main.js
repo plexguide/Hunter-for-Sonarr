@@ -3,7 +3,7 @@
  * Main JavaScript file for handling UI interactions and API communication
  */
 
-const huntarrUI = {
+let huntarrUI = {
     // Current state
     eventSources: {},
     currentSection: 'home', // Default section
@@ -32,7 +32,13 @@ const huntarrUI = {
         if (prefersDarkMode) {
             document.body.classList.add('dark-theme');
         }
-        
+
+        const resetButton = document.getElementById('reset-stats');
+        if (resetButton) {
+            resetButton.addEventListener('click', () => {
+                this.resetMediaStats();
+            });
+        }
         // Ensure logo is visible immediately
         this.logoUrl = localStorage.getItem('huntarr-logo-url') || this.logoUrl;
         
@@ -306,26 +312,26 @@ const huntarrUI = {
             
             // Ensure default settings tab is set if none is active
             if (!this.currentSettingsTab) {
-                this.currentSettingsTab = 'sonarr'; // Default to sonarr tab
+                this.currentSettingsTab = 'general'; // Default to general tab
                 
-                // Set the sonarr tab as active
-                const sonarrTab = document.querySelector('.settings-tab[data-settings="sonarr"]');
-                if (sonarrTab) {
+                // Set the general tab as active
+                const generalTab = document.querySelector('.settings-tab[data-app="general"]');
+                if (generalTab) {
                     this.elements.settingsTabs.forEach(t => {
                         t.classList.remove('active');
                     });
-                    sonarrTab.classList.add('active');
+                    generalTab.classList.add('active');
                     
-                    // Also set the sonarr panel as visible
+                    // Also set the general panel as visible
                     this.elements.appSettingsPanels.forEach(panel => {
                         panel.classList.remove('active');
                         panel.style.display = 'none';
                     });
                     
-                    const sonarrPanel = document.getElementById('sonarrSettings');
-                    if (sonarrPanel) {
-                        sonarrPanel.classList.add('active');
-                        sonarrPanel.style.display = 'block';
+                    const generalPanel = document.getElementById('generalSettings');
+                    if (generalPanel) {
+                        generalPanel.classList.add('active');
+                        generalPanel.style.display = 'block';
                     }
                 }
             }
@@ -482,11 +488,11 @@ const huntarrUI = {
                     logEntry.textContent = event.data;
                     
                     // Detect log level from content for styling
-                    if (event.data.includes('[ERROR]') || event.data.includes('Error:')) {
+                    if (event.data.includes('ERROR') || event.data.includes('Error:')) {
                         logEntry.classList.add('log-error');
-                    } else if (event.data.includes('[WARNING]') || event.data.includes('Warning:')) {
+                    } else if (event.data.includes('WARNING') || event.data.includes('Warning:')) {
                         logEntry.classList.add('log-warning');
-                    } else if (event.data.includes('[DEBUG]')) {
+                    } else if (event.data.includes('DEBUG')) {
                         logEntry.classList.add('log-debug');
                     } else {
                         logEntry.classList.add('log-info');
