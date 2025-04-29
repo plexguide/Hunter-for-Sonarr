@@ -32,7 +32,13 @@ let huntarrUI = {
         if (prefersDarkMode) {
             document.body.classList.add('dark-theme');
         }
-        
+
+        const resetButton = document.getElementById('reset-stats');
+        if (resetButton) {
+            resetButton.addEventListener('click', () => {
+                this.resetMediaStats();
+            });
+        }
         // Ensure logo is visible immediately
         this.logoUrl = localStorage.getItem('huntarr-logo-url') || this.logoUrl;
         
