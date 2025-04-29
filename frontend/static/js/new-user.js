@@ -270,9 +270,9 @@
     
     // Helper function for validation
     function validatePassword(password) {
-        // Only check for minimum length of 10 characters
-        if (password.length < 10) {
-            return 'Password must be at least 10 characters long.';
+        // Only check for minimum length of 8 characters
+        if (password.length < 8) {
+            return 'Password must be at least 8 characters long.';
         }
         return null; // Password is valid
     }

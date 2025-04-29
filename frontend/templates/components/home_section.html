@@ -10,8 +10,11 @@
                     <i class="fas fa-star star-icon"></i> 
                     <a href="https://github.com/plexguide/huntarr" target="_blank">Star us on GitHub</a>
                     &nbsp;&nbsp;|&nbsp;&nbsp;
-                    <i class="fas fa-code-branch version-icon"></i> 
-                    <span id="version-number">Version <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank"><span id="version-value">5.3</span></a></span>
+                    <i class="fas fa-code-branch version-icon"></i>
+                    <span id="version-number">Version <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank"><span id="version-value">...</span></a></span> <!-- Updated placeholder -->
+                    &nbsp;&nbsp;|&nbsp;&nbsp; <!-- Added separator -->
+                    <i class="fas fa-cloud-download-alt version-icon"></i> <!-- Added icon for latest version -->
+                    <span id="latest-version-number">Latest: <a href="https://github.com/plexguide/Huntarr.io/releases/latest" target="_blank"><span id="latest-version-value">Loading...</span></a></span> <!-- Added latest version display -->
                 </p>
             </div>
         </div>
@@ -34,6 +37,10 @@
                 <a href="https://github.com/plexguide/Huntarr/wiki" target="_blank" class="link-button">
                     <i class="fas fa-book"></i>
                     Documentation Wiki
+                </a>
+                <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank" class="link-button">
+                    <i class="fas fa-history"></i>
+                    ChangeLog
                 </a>
             </div>
         </div>
@@ -466,6 +473,11 @@
     }
     
     #version-value {
+        font-weight: 600;
+    }
+    
+    /* Added style for latest version number */
+    #latest-version-value {
         font-weight: 600;
     }
     

@@ -219,8 +219,15 @@
                 <h2>Setup Complete</h2>
                 <p>Your Huntarr account has been created successfully!</p>
                 <div style="text-align: center; margin-top: 20px;">
-                    <p><i class="fas fa-check-circle" style="color: var(--save-button-bg);"></i> You can now proceed to the main interface.</p>
-                    <p><i class="fas fa-cog"></i> Remember to test your API connections for each application.</p>
+                    <div style="background-color: #2c2c2c; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                        <p><i class="fas fa-shield-alt" style="color: #4a90e2; font-size: 24px;"></i></p>
+                        <p style="font-weight: bold; margin-top: 10px;">Local Authentication Bypass Available</p>
+                        <p style="margin-top: 5px;">To enable authentication bypass for local network access:</p>
+                        <p style="color: #aaa; font-size: 0.9em; margin-top: 5px;">
+                            Go to <strong>Settings</strong> → <strong>General</strong> and toggle on <strong>Local Network Auth Bypass</strong>
+                        </p>
+                    </div>
+                    <p><i class="fas fa-check-circle" style="color: #4CAF50;"></i> You can now proceed to the main interface.</p>
                 </div>
                 <div class="buttons-container">
                     <button type="button" id="finishSetupButton" class="login-button" style="width: 100%;">
@@ -304,9 +311,9 @@
 
             // Password validation function
             function validatePassword(password) {
-                // Only check for minimum length of 10 characters
-                if (password.length < 10) {
-                    return 'Password must be at least 10 characters long.';
+                // Only check for minimum length of 8 characters
+                if (password.length < 8) {
+                    return 'Password must be at least 8 characters long.';
                 }
                 return null; // Password is valid
             }

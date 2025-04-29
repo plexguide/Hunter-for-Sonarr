@@ -1,28 +1,2 @@
 <!-- Existing scripts -->
 <script src="/static/js/new-main.js"></script>
-
-<!-- Version loader script -->
-<script>
-    // Function to load the version from version.txt
-    function loadVersion() {
-        fetch('/version.txt')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load version');
-                }
-                return response.text();
-            })
-            .then(version => {
-                const versionElement = document.getElementById('version-value');
-                if (versionElement) {
-                    versionElement.textContent = version.trim();
-                }
-            })
-            .catch(error => {
-                console.error('Error loading version:', error);
-            });
-    }
-
-    // Call the function when the document is ready
-    document.addEventListener('DOMContentLoaded', loadVersion);
-</script>

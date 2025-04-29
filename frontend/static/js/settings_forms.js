@@ -151,14 +151,6 @@ const SettingsForms = {
                     <p class="setting-help">Select random items for quality upgrades</p>
                 </div>
                 <div class="setting-item">
-                    <label for="debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
-                </div>
-                <div class="setting-item">
                     <label for="api_timeout">API Timeout:</label>
                     <input type="number" id="api_timeout" min="10" max="300" value="${settings.api_timeout || 60}">
                     <p class="setting-help">Timeout for API requests in seconds</p>
@@ -177,11 +169,6 @@ const SettingsForms = {
                     <label for="minimum_download_queue_size">Min Download Queue Size:</label>
                     <input type="number" id="minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
                     <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display</p>
                 </div>
             </div>
         `;
@@ -216,10 +203,6 @@ const SettingsForms = {
                     <div class="instance-header">
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
-                            <label class="toggle-switch instance-toggle">
-                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <span class="toggle-slider"></span>
-                            </label>
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
                         </div>
                     </div>
@@ -341,14 +324,6 @@ const SettingsForms = {
                     <p class="setting-help">Select random items for quality upgrades</p>
                 </div>
                 <div class="setting-item">
-                    <label for="radarr_debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="radarr_debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
-                </div>
-                <div class="setting-item">
                     <label for="radarr_api_timeout">API Timeout:</label>
                     <input type="number" id="radarr_api_timeout" min="10" max="300" value="${settings.api_timeout || 60}">
                     <p class="setting-help">Timeout for API requests in seconds</p>
@@ -367,11 +342,6 @@ const SettingsForms = {
                     <label for="radarr_minimum_download_queue_size">Min Download Queue Size:</label>
                     <input type="number" id="radarr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
                     <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="radarr_log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="radarr_log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display</p>
                 </div>
             </div>
         `;
@@ -406,10 +376,6 @@ const SettingsForms = {
                     <div class="instance-header">
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
-                            <label class="toggle-switch instance-toggle">
-                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <span class="toggle-slider"></span>
-                            </label>
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
                         </div>
                     </div>
@@ -540,14 +506,6 @@ const SettingsForms = {
                     <p class="setting-help">Select random items for quality upgrades</p>
                 </div>
                 <div class="setting-item">
-                    <label for="lidarr_debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="lidarr_debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
-                </div>
-                <div class="setting-item">
                     <label for="lidarr_api_timeout">API Timeout:</label>
                     <input type="number" id="lidarr_api_timeout" min="10" max="300" value="${settings.api_timeout || 60}">
                     <p class="setting-help">Timeout for API requests in seconds</p>
@@ -566,11 +524,6 @@ const SettingsForms = {
                     <label for="lidarr_minimum_download_queue_size">Min Download Queue Size:</label>
                     <input type="number" id="lidarr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
                     <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="lidarr_log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="lidarr_log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display</p>
                 </div>
             </div>
         `;
@@ -605,10 +558,6 @@ const SettingsForms = {
                     <div class="instance-header">
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
-                            <label class="toggle-switch instance-toggle">
-                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <span class="toggle-slider"></span>
-                            </label>
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
                         </div>
                     </div>
@@ -730,14 +679,6 @@ const SettingsForms = {
                     <p class="setting-help">Select random items for quality upgrades</p>
                 </div>
                 <div class="setting-item">
-                    <label for="readarr_debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="readarr_debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
-                </div>
-                <div class="setting-item">
                     <label for="readarr_api_timeout">API Timeout:</label>
                     <input type="number" id="readarr_api_timeout" min="10" max="300" value="${settings.api_timeout || 60}">
                     <p class="setting-help">Timeout for API requests in seconds</p>
@@ -756,11 +697,6 @@ const SettingsForms = {
                     <label for="readarr_minimum_download_queue_size">Min Download Queue Size:</label>
                     <input type="number" id="readarr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
                     <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="readarr_log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="readarr_log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display</p>
                 </div>
             </div>
         `;
@@ -795,10 +731,6 @@ const SettingsForms = {
                     <div class="instance-header">
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
-                            <label class="toggle-switch instance-toggle">
-                                <input type="checkbox" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <span class="toggle-slider"></span>
-                            </label>
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
                         </div>
                     </div>
@@ -920,14 +852,6 @@ const SettingsForms = {
                     <p class="setting-help">Select random items for quality upgrades</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_debug_mode">Debug Mode:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="whisparr_debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Enable verbose logging for troubleshooting</p>
-                </div>
-                <div class="setting-item">
                     <label for="whisparr_api_timeout">API Timeout:</label>
                     <input type="number" id="whisparr_api_timeout" min="10" max="300" value="${settings.api_timeout || 120}">
                     <p class="setting-help">Timeout for API requests in seconds</p>
@@ -947,11 +871,6 @@ const SettingsForms = {
                     <input type="number" id="whisparr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
                     <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
                 </div>
-                <div class="setting-item">
-                    <label for="whisparr_log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="whisparr_log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display</p>
-                </div>
             </div>
         `;
 
@@ -964,11 +883,61 @@ const SettingsForms = {
         container.innerHTML = `
             <div class="settings-group">
                 <h3>System Settings</h3>
-                <div class="setting-item placeholder-message">
-                    <p style="text-align: center; padding: 20px; color: #888; font-style: italic;">Tab Dedicated For Future System Settings (PlaceHolder)</p>
+                <div class="setting-item">
+                    <label for="check_for_updates">Check for Updates:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="check_for_updates" ${settings.check_for_updates !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Automatically check for Huntarr updates</p>
+                </div>
+                <div class="setting-item">
+                    <label for="debug_mode">Debug Mode:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Enable verbose logging for troubleshooting (applies to all apps)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
+                    <input type="number" id="log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
+                    <p class="setting-help">Interval in seconds to refresh log display (applies to all apps)</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Security</h3>
+                <div class="setting-item">
+                    <label for="local_access_bypass">Local Network Auth Bypass:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="local_access_bypass" ${settings.local_access_bypass === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Allow access without login when connecting from local network IP addresses (e.g., 192.168.x.x, 10.x.x.x)</p>
                 </div>
             </div>
         `;
+        
+        // Add confirmation dialog for local access bypass toggle
+        const localAccessBypassCheckbox = container.querySelector('#local_access_bypass');
+        if (localAccessBypassCheckbox) {
+            // Store original state
+            const originalState = localAccessBypassCheckbox.checked;
+            
+            localAccessBypassCheckbox.addEventListener('change', function(event) {
+                const newState = this.checked;
+                
+                // Preview the UI changes immediately, but they'll be reverted if user doesn't save
+                if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.updateUIForLocalAccessBypass === 'function') {
+                    huntarrUI.updateUIForLocalAccessBypass(newState);
+                }
+                // Also ensure the main app knows settings have changed if the preview runs
+                if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.markSettingsAsChanged === 'function') {
+                     huntarrUI.markSettingsAsChanged();
+                }
+            });
+        }
     },
 
     // Update duration display - e.g., convert seconds to hours

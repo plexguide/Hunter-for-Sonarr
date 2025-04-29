@@ -39,8 +39,11 @@ const huntarrUI = {
         this.cacheElements();
         this.setupEventListeners();
         this.loadUsername();
+        this.checkLocalAccessBypassStatus(); // Add this line
         this.checkAppConnections();
         this.loadMediaStats(); // Load media statistics
+        this.loadCurrentVersion(); // Load current version
+        this.loadLatestVersion(); // Load latest version from GitHub
         
         // Ensure logo is applied
         if (typeof window.applyLogoToAllElements === 'function') {
@@ -502,7 +505,7 @@ const huntarrUI = {
             };
             
             eventSource.onerror = (err) => {
-                console.error(`[huntarrUI] EventSource error for app ${this.currentLogApp}:`, err); // Use currentLogApp
+                console.error(`[huntarrUI] EventSource error for app ${this.currentLogApp}:`, err);
                 if (this.elements.logConnectionStatus) {
                     this.elements.logConnectionStatus.textContent = 'Error/Disconnected';
                     this.elements.logConnectionStatus.className = 'status-disconnected';
@@ -633,18 +636,7 @@ const huntarrUI = {
         if (typeof SettingsForms !== 'undefined') {
             const formFunction = SettingsForms[`generate${app.charAt(0).toUpperCase()}${app.slice(1)}Form`];
             if (typeof formFunction === 'function') {
-                formFunction(form, appSettings);
-                
-                // For ANY app with instances, set up the instance management
-                // Check if instances exist and it's an array
-                if (appSettings && Array.isArray(appSettings.instances) && typeof SettingsForms.setupInstanceManagement === 'function') {
-                    try {
-                        // Pass the actual app name and the number of instances found
-                        SettingsForms.setupInstanceManagement(form, app, appSettings.instances.length);
-                    } catch (e) {
-                        console.error(`[huntarrUI] Error setting up instance management for ${app}:`, e);
-                    }
-                }
+                formFunction(form, appSettings); // This function already calls setupInstanceManagement internally
                 
                 // Update duration displays for this app
                 if (typeof SettingsForms.updateDurationDisplay === 'function') {
@@ -676,6 +668,11 @@ const huntarrUI = {
         const app = this.currentSettingsTab;
         console.log(`[huntarrUI] saveSettings called for app: ${app}`);
         
+        // Clear the unsaved changes flag BEFORE sending the request
+        // This prevents the "unsaved changes" dialog from appearing
+        this.settingsChanged = false;
+        this.updateSaveResetButtonState(false);
+        
         // Use getFormSettings for all apps, as it handles different structures
         let settings = this.getFormSettings(app);
 
@@ -686,6 +683,14 @@ const huntarrUI = {
         }
 
         console.log(`[huntarrUI] Collected settings for ${app}:`, settings);
+        
+        // Check if this is general settings and if local_access_bypass is being changed
+        const isLocalAccessBypassChanged = app === 'general' && 
+            this.originalSettings && 
+            this.originalSettings.general && 
+            this.originalSettings.general.local_access_bypass !== settings.local_access_bypass;
+            
+        console.log(`[huntarrUI] Local access bypass changed: ${isLocalAccessBypassChanged}`);
 
         // Add app_type to the payload if needed by backend
         const payload = { [app]: settings };
@@ -714,6 +719,16 @@ const huntarrUI = {
         })
         .then(savedConfig => {
             console.log('[huntarrUI] Settings saved successfully. Full config received:', savedConfig);
+            
+            // If local access bypass setting was changed, reload the page
+            if (isLocalAccessBypassChanged) {
+                this.showNotification('Settings saved successfully. Reloading page to apply authentication changes...', 'success');
+                setTimeout(() => {
+                    window.location.href = '/'; // Redirect to home page after a brief delay
+                }, 1500);
+                return;
+            }
+            
             this.showNotification('Settings saved successfully', 'success');
 
             // Update original settings state with the full config returned from backend
@@ -738,12 +753,13 @@ const huntarrUI = {
             // Update connection status and UI
             this.checkAppConnection(app);
             this.updateHomeConnectionStatus();
-            this.settingsChanged = false; // Reset flag after successful save
-            this.updateSaveResetButtonState(false); // Disable buttons after save
         })
         .catch(error => {
             console.error('Error saving settings:', error);
             this.showNotification(`Error saving settings: ${error.message}`, 'error');
+            // If there was an error, mark settings as changed again
+            this.settingsChanged = true;
+            this.updateSaveResetButtonState(true);
         });
     },
 
@@ -877,10 +893,13 @@ const huntarrUI = {
 
     // Handle instance management events
     setupInstanceEventHandlers: function() {
+        console.log("DEBUG: setupInstanceEventHandlers called"); // Added logging
         const settingsPanels = document.querySelectorAll('.app-settings-panel');
         
         settingsPanels.forEach(panel => {
+            console.log(`DEBUG: Adding listeners to panel '${panel.id}'`); // Added logging
             panel.addEventListener('addInstance', (e) => {
+                console.log(`DEBUG: addInstance event listener fired for panel '${panel.id}'. Event detail:`, e.detail);
                 this.addAppInstance(e.detail.appName);
             });
             
@@ -896,6 +915,7 @@ const huntarrUI = {
     
     // Add a new instance to the app
     addAppInstance: function(appName) {
+        console.log(`DEBUG: addAppInstance called for app '${appName}'`);
         const container = document.getElementById(`${appName}Settings`);
         if (!container) return;
         
@@ -1208,10 +1228,99 @@ const huntarrUI = {
                 if (data.username) {
                     usernameElement.textContent = data.username;
                 }
+                
+                // Check if local access bypass is enabled and update UI visibility
+                this.checkLocalAccessBypassStatus();
             })
             .catch(error => {
                 console.error('Error loading username:', error);
+                
+                // Still check local access bypass status even if username loading failed
+                this.checkLocalAccessBypassStatus();
             });
+    },
+    
+    // Check if local access bypass is enabled and update UI accordingly
+    checkLocalAccessBypassStatus: function() {
+        console.log("Checking local access bypass status...");
+        fetch('/api/get_local_access_bypass_status') // Corrected URL
+            .then(response => {
+                if (!response.ok) {
+                    // Log error if response is not OK (e.g., 404, 500)
+                    console.error(`Error fetching bypass status: ${response.status} ${response.statusText}`);
+                    // Attempt to read response body for more details, if available
+                    response.text().then(text => console.error('Response body:', text));
+                    // Throw an error to trigger the catch block with a clearer message
+                    throw new Error(`HTTP error ${response.status}`); 
+                }
+                return response.json(); // Only parse JSON if response is OK
+            })
+            .then(data => {
+                if (data && typeof data.isEnabled === 'boolean') {
+                    console.log("Local access bypass status received:", data.isEnabled);
+                    this.updateUIForLocalAccessBypass(data.isEnabled);
+                } else {
+                    // Handle cases where response is JSON but not the expected format
+                    console.error('Invalid data format received for bypass status:', data);
+                    this.updateUIForLocalAccessBypass(false); // Default to disabled/showing elements
+                }
+            })
+            .catch(error => {
+                 // Catch network errors and the error thrown from !response.ok
+                console.error('Error checking local access bypass status:', error);
+                // Default to showing elements if we can't determine status
+                this.updateUIForLocalAccessBypass(false);
+            });
+    },
+    
+    // Update UI elements visibility based on local access bypass status
+    updateUIForLocalAccessBypass: function(isEnabled) {
+        console.log("Updating UI for local access bypass:", isEnabled);
+        
+        // Get the user info container in topbar (username and logout button)
+        const userInfoContainer = document.getElementById('userInfoContainer');
+        
+        // Get the user nav item in sidebar
+        const userNav = document.getElementById('userNav');
+        
+        // Set display style explicitly based on local access bypass setting
+        if (isEnabled === true) {
+            console.log("Local access bypass is ENABLED - hiding user elements");
+            
+            // Hide user info in topbar
+            if (userInfoContainer) {
+                userInfoContainer.style.display = 'none';
+                console.log("  • Hidden userInfoContainer");
+            } else {
+                console.warn("  ⚠ userInfoContainer not found");
+            }
+            
+            // Hide user nav in sidebar
+            if (userNav) {
+                userNav.style.display = 'none';
+                console.log("  • Hidden userNav");
+            } else {
+                console.warn("  ⚠ userNav not found");
+            }
+        } else {
+            console.log("Local access bypass is DISABLED - showing user elements");
+            
+            // Show user info in topbar
+            if (userInfoContainer) {
+                userInfoContainer.style.display = '';
+                console.log("  • Showing userInfoContainer");
+            } else {
+                console.warn("  ⚠ userInfoContainer not found");
+            }
+            
+            // Show user nav in sidebar
+            if (userNav) {
+                userNav.style.display = '';
+                console.log("  • Showing userNav");
+            } else {
+                console.warn("  ⚠ userNav not found");
+            }
+        }
     },
     
     logout: function(e) { // Added logout function
@@ -1372,6 +1481,62 @@ const huntarrUI = {
         return string.charAt(0).toUpperCase() + string.slice(1);
     },
 
+    // Load current version from version.txt
+    loadCurrentVersion: function() {
+        fetch('/version.txt')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load version.txt');
+                }
+                return response.text();
+            })
+            .then(version => {
+                const versionElement = document.getElementById('version-value');
+                if (versionElement) {
+                    versionElement.textContent = version.trim();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading current version:', error);
+                const versionElement = document.getElementById('version-value');
+                if (versionElement) {
+                    versionElement.textContent = 'Error';
+                }
+            });
+    },
+
+    // Load latest version from GitHub releases
+    loadLatestVersion: function() {
+        fetch('https://api.github.com/repos/plexguide/Huntarr.io/releases/latest')
+            .then(response => {
+                if (!response.ok) {
+                    // Handle rate limiting or other errors
+                    if (response.status === 403) {
+                        console.warn('GitHub API rate limit likely exceeded.');
+                        throw new Error('Rate limited');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const latestVersionElement = document.getElementById('latest-version-value');
+                if (latestVersionElement && data && data.tag_name) {
+                    // Remove potential 'v' prefix for consistency if needed, or keep it
+                    latestVersionElement.textContent = data.tag_name; 
+                } else if (latestVersionElement) {
+                     latestVersionElement.textContent = 'N/A';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading latest version from GitHub:', error);
+                const latestVersionElement = document.getElementById('latest-version-value');
+                if (latestVersionElement) {
+                    latestVersionElement.textContent = error.message === 'Rate limited' ? 'Rate Limited' : 'Error';
+                }
+            });
+    },
+
     // Add or modify this function to handle enabling/disabling save/reset
     updateSaveResetButtonState(enable) { // Changed signature
         const saveButton = this.elements.saveSettingsButton;
@@ -1400,34 +1565,8 @@ const huntarrUI = {
 document.addEventListener('DOMContentLoaded', () => {
     huntarrUI.init();
     
-    // Add event listeners for media statistics buttons
-    const refreshStatsButton = document.getElementById('refresh-stats');
-    if (refreshStatsButton) {
-        refreshStatsButton.addEventListener('click', () => {
-            huntarrUI.loadMediaStats();
-        });
-    }
-    
-    const resetStatsButton = document.getElementById('reset-stats');
-    if (resetStatsButton) {
-        resetStatsButton.addEventListener('click', () => {
-            huntarrUI.resetMediaStats();
-        });
-    }
-    
-    // Restore logo from session storage if available
-    const cachedLogoSrc = sessionStorage.getItem('huntarr-logo-src');
-    if (cachedLogoSrc) {
-        const logoImg = document.querySelector('.sidebar .logo');
-        if (logoImg) {
-            logoImg.src = cachedLogoSrc;
-        }
-    }
-    
-    // Also apply logo on page load
-    if (typeof window.applyLogoToAllElements === 'function') {
-        window.applyLogoToAllElements();
-    }
+    // Remove the version loading from scripts.html as it's now in new-main.js
+    // ... existing event listeners ...
 });
 
 // Expose huntarrUI to the global scope for access by app modules
