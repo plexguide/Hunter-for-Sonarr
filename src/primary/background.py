@@ -70,7 +70,7 @@ def app_specific_loop(app_type: str) -> None:
             get_instances_func = None # Explicitly set to None if not found
 
         check_connection = getattr(api_module, 'check_connection')
-        get_queue_size = getattr(api_module, 'get_download_queue_size', lambda: 0) # Default if not found
+        get_queue_size = getattr(api_module, 'get_download_queue_size', lambda api_url, api_key, api_timeout: 0) # Default if not found
 
         if app_type == "sonarr":
             missing_module = importlib.import_module('src.primary.apps.sonarr.missing')
@@ -232,7 +232,7 @@ def app_specific_loop(app_type: str) -> None:
             if min_queue_size >= 0:
                 try:
                     # Use instance details for queue check
-                    current_queue_size = get_queue_size(api_url, api_key)
+                    current_queue_size = get_queue_size(api_url, api_key, api_timeout)
                     if current_queue_size >= min_queue_size:
                         app_logger.info(f"Download queue size ({current_queue_size}) meets or exceeds minimum ({min_queue_size}) for {instance_name}. Skipping cycle for this instance.")
                         continue # Skip processing for this instance
