@@ -65,7 +65,7 @@ def process_missing_items(
         return False
     
     # Get missing items
-    whisparr_logger.info(f"Retrieving items with missing files using API v{api_version}...")
+    whisparr_logger.info(f"Retrieving items with missing files...")
     missing_items = whisparr_api.get_items_with_missing(api_url, api_key, api_timeout, monitored_only, api_version) 
     
     if missing_items is None: # API call failed

@@ -219,11 +219,29 @@ def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int, api
     try:
         whisparr_logger.debug(f"Refreshing item with ID {item_id}")
         
-        # Always use the same payload format since we're always using v3 API
-        payload = {
-            "name": "RefreshEpisode",
-            "episodeIds": [item_id]
-        }
+        # Some Whisparr versions have issues with RefreshEpisode, try a safer approach
+        # Use series refresh instead if we can get the series ID from the episode
+        # First, attempt to get the episode details
+        episode_endpoint = f"episode/{item_id}"
+        episode_data = arr_request(api_url, api_key, api_timeout, episode_endpoint, api_version=api_version)
+        
+        if episode_data and "seriesId" in episode_data:
+            # We have the series ID, use series refresh which is more reliable
+            series_id = episode_data["seriesId"]
+            whisparr_logger.debug(f"Retrieved series ID {series_id} for episode {item_id}, using series refresh")
+            
+            # RefreshSeries is generally more reliable
+            payload = {
+                "name": "RefreshSeries",
+                "seriesId": series_id
+            }
+        else:
+            # Fall back to episode refresh if we can't get the series ID
+            whisparr_logger.debug(f"Could not retrieve series ID for episode {item_id}, using episode refresh")
+            payload = {
+                "name": "RefreshEpisode",
+                "episodeIds": [item_id]
+            }
         
         response = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=payload, api_version=api_version)
         

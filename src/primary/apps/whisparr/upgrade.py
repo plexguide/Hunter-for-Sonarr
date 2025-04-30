@@ -64,7 +64,7 @@ def process_cutoff_upgrades(
         return False
 
     # Get items eligible for upgrade
-    whisparr_logger.info(f"Retrieving items eligible for cutoff upgrade using API v{api_version}...")
+    whisparr_logger.info(f"Retrieving items eligible for cutoff upgrade...")
     upgrade_eligible_data = whisparr_api.get_cutoff_unmet_items(api_url, api_key, api_timeout, monitored_only, api_version)
     
     if not upgrade_eligible_data:
