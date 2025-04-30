@@ -106,284 +106,256 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int, api_ve
     Returns:
         The number of items in the download queue, or -1 if the request failed
     """
-    if not api_url or not api_key:
-        whisparr_logger.error("Whisparr API URL or API Key not provided for queue size check.")
+    response = arr_request(api_url, api_key, api_timeout, "queue", api_version=api_version)
+    
+    if response is None:
         return -1
+    
+    # V2 and V3 both use records in queue response, but sometimes the structure is different
+    if isinstance(response, dict) and "records" in response:
+        return len(response["records"])
+    elif isinstance(response, list):
+        return len(response)
+    else:
+        return -1
+
+def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, api_version: str = "v3") -> List[Dict[str, Any]]:
+    """
+    Get a list of items with missing files (not downloaded/available).
+
+    Args:
+        api_url: The base URL of the Whisparr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        monitored_only: If True, only return monitored items.
+        api_version: API version to use ("v2" or "v3")
+
+    Returns:
+        A list of item objects with missing files, or None if the request failed.
+    """
     try:
-        # Use the arr_request function to maintain API version compatibility
-        endpoint = "queue?page=1&pageSize=1000"  # Fetch a large page size
-        queue_data = arr_request(api_url, api_key, api_timeout, endpoint, api_version=api_version)
-        if queue_data is None:
-            return -1
+        whisparr_logger.debug(f"Retrieving missing items with API version {api_version}")
         
-        queue_size = queue_data.get('totalRecords', 0)
-        whisparr_logger.debug(f"Whisparr download queue size: {queue_size}")
-        return queue_size
-    except Exception as e:
-        whisparr_logger.error(f"An unexpected error occurred while getting Whisparr queue size: {e}")
-        return -1
-
-def get_scenes_with_missing(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, api_version: str = "v3") -> Optional[List[Dict]]:
-    """
-    Get a list of scenes with missing files (not downloaded/available).
-
-    Args:
-        api_url: The base URL of the Whisparr API
-        api_key: The API key for authentication
-        api_timeout: Timeout for the API request
-        monitored_only: If True, only return monitored scenes.
-        api_version: API version to use ("v2" or "v3")
-
-    Returns:
-        A list of scene objects with missing files, or None if the request failed.
-    """
-    whisparr_logger.info(f"Getting scenes with missing files (API version: {api_version})")
-    
-    # First, get all series
-    series = arr_request(api_url, api_key, api_timeout, "series", api_version=api_version)
-    if series is None:
-        whisparr_logger.error("Failed to retrieve series from Whisparr API.")
-        return None
-    
-    if monitored_only:
-        # Filter for monitored series only if requested
-        series = [s for s in series if s.get("monitored", False)]
-    
-    # Now get episodes for each series
-    all_episodes = []
-    for show in series:
-        series_id = show.get("id")
-        if not series_id:
-            continue
-            
-        # Get episodes for this series
-        episodes = arr_request(api_url, api_key, api_timeout, f"episode?seriesId={series_id}", api_version=api_version)
-        if episodes is None:
-            whisparr_logger.error(f"Failed to retrieve episodes for series ID {series_id}.")
-            continue
-            
-        # Add series information to each episode for better context
-        for episode in episodes:
-            episode["series"] = {
-                "id": show.get("id"),
-                "title": show.get("title", "Unknown"),
-                "monitored": show.get("monitored", False)
-            }
-            
-        all_episodes.extend(episodes)
-    
-    # Filter for missing episodes
-    missing_scenes = []
-    for scene in all_episodes:
-        is_monitored = scene.get("monitored", False)
-        has_file = scene.get("hasFile", False)
-        # Apply monitored_only filter if requested
-        if not has_file and (not monitored_only or is_monitored):
-            missing_scenes.append(scene)
-    
-    whisparr_logger.debug(f"Found {len(missing_scenes)} missing scenes (monitored_only={monitored_only}).")
-    return missing_scenes
-
-def get_cutoff_unmet_scenes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, api_version: str = "v3") -> Optional[List[Dict]]:
-    """
-    Get a list of scenes that don't meet their quality profile cutoff.
-
-    Args:
-        api_url: The base URL of the Whisparr API
-        api_key: The API key for authentication
-        api_timeout: Timeout for the API request
-        monitored_only: If True, only return monitored scenes.
-        api_version: API version to use ("v2" or "v3")
-
-    Returns:
-        A list of scene objects that need quality upgrades, or None if the request failed.
-    """
-    whisparr_logger.debug(f"Fetching cutoff unmet scenes (API version: {api_version})")
-    
-    # Need quality profile information to determine cutoff unmet status.
-    # Fetch quality profiles first.
-    profiles = arr_request(api_url, api_key, api_timeout, "qualityprofile", api_version=api_version)
-    if profiles is None:
-        whisparr_logger.error("Failed to retrieve quality profiles from Whisparr API.")
-        return None
-        
-    # Create a mapping of profile ID to cutoff information
-    profile_cutoffs = {}
-    for profile in profiles:
-        profile_id = profile.get("id")
-        if profile_id is not None:
-            if api_version == "v2":
-                # In v2, the cutoff is a simple quality ID
-                cutoff = profile.get("cutoff")
-                profile_cutoffs[profile_id] = cutoff
-            else:  # v3
-                # In v3, the cutoff is more complex with items
-                cutoff = profile.get("cutoff")
-                profile_cutoffs[profile_id] = cutoff
-    
-    # Get all series
-    series = arr_request(api_url, api_key, api_timeout, "series", api_version=api_version)
-    if series is None:
-        whisparr_logger.error("Failed to retrieve series from Whisparr API.")
-        return None
-    
-    # Create a mapping of series ID to quality profile ID
-    series_profiles = {}
-    for show in series:
-        series_id = show.get("id")
-        profile_id = show.get("qualityProfileId")
-        if series_id and profile_id:
-            series_profiles[series_id] = profile_id
-    
-    # Get episodes with files
-    all_episodes_with_files = []
-    
-    for show in series:
-        series_id = show.get("id")
-        if not series_id:
-            continue
-            
-        # Skip unmonitored series if monitored_only is True
-        if monitored_only and not show.get("monitored", False):
-            continue
-            
-        # Get episodes for this series
-        episodes = arr_request(api_url, api_key, api_timeout, f"episode?seriesId={series_id}", api_version=api_version)
-        if episodes is None:
-            whisparr_logger.error(f"Failed to retrieve episodes for series ID {series_id}.")
-            continue
-            
-        # Add series information to each episode
-        for episode in episodes:
-            episode["series"] = {
-                "id": show.get("id"),
-                "title": show.get("title", "Unknown"),
-                "monitored": show.get("monitored", False),
-                "qualityProfileId": show.get("qualityProfileId")
-            }
-            
-        # Filter for episodes with files
-        episodes_with_files = [e for e in episodes if e.get("hasFile", False)]
-        all_episodes_with_files.extend(episodes_with_files)
-    
-    # Find episodes that need quality upgrades
-    cutoff_unmet_scenes = []
-    
-    for scene in all_episodes_with_files:
-        # Skip if not monitored and monitored_only is True
-        is_monitored = scene.get("monitored", False)
-        if monitored_only and not is_monitored:
-            continue
-            
-        series_id = scene.get("series", {}).get("id")
-        if not series_id:
-            continue
-            
-        # Get quality profile ID for this series
-        profile_id = series_profiles.get(series_id)
-        if not profile_id:
-            continue
-            
-        # Check if scene meets cutoff quality
-        quality_cutoff = profile_cutoffs.get(profile_id)
-        if quality_cutoff is None:
-            continue
-            
+        # Endpoint differs by API version
         if api_version == "v2":
-            # v2 API has a simpler quality model
-            scene_quality_id = scene.get("episodeFile", {}).get("quality", {}).get("quality", {}).get("id")
-            if scene_quality_id and scene_quality_id < quality_cutoff:
-                cutoff_unmet_scenes.append(scene)
-        else:  # v3
-            # v3 API has a more complex quality model with items
-            scene_quality = scene.get("episodeFile", {}).get("quality")
-            
-            # Logic for v3 quality check - handling the Eros quality model
-            # This is specific to Whisparr v3 (Eros) API which uses a different quality model
-            # Typically need to check against cutoff and quality items
-            
-            # Simplified implementation - this should be customized based on exact API response structure
-            if scene_quality:
-                quality_meets_cutoff = False
-                # Add your v3-specific logic here to determine if quality meets cutoff
-                if not quality_meets_cutoff:
-                    cutoff_unmet_scenes.append(scene)
-    
-    whisparr_logger.debug(f"Found {len(cutoff_unmet_scenes)} scenes that need quality upgrades.")
-    return cutoff_unmet_scenes
+            endpoint = "wanted/missing?pageSize=1000&sortKey=airDateUtc&sortDir=desc"
+        else:  # v3/Eros
+            endpoint = "wanted/missing?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
+        
+        response = arr_request(api_url, api_key, api_timeout, endpoint, api_version=api_version)
+        
+        if response is None:
+            return None
+        
+        # Extract the episodes/items
+        items = []
+        if isinstance(response, dict) and "records" in response:
+            items = response["records"]
+        
+        # Filter monitored if needed
+        if monitored_only:
+            items = [item for item in items if item.get("monitored", False)]
+        
+        whisparr_logger.debug(f"Found {len(items)} missing items")
+        return items
+        
+    except Exception as e:
+        whisparr_logger.error(f"Error retrieving missing items: {str(e)}")
+        return None
 
-def refresh_scene(api_url: str, api_key: str, api_timeout: int, scene_id: int, api_version: str = "v3") -> Optional[int]:
+def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, api_version: str = "v3") -> List[Dict[str, Any]]:
     """
-    Refresh a scene in Whisparr.
+    Get a list of items that don't meet their quality profile cutoff.
+
+    Args:
+        api_url: The base URL of the Whisparr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        monitored_only: If True, only return monitored items.
+        api_version: API version to use ("v2" or "v3")
+
+    Returns:
+        A list of item objects that need quality upgrades, or None if the request failed.
+    """
+    try:
+        whisparr_logger.debug(f"Retrieving cutoff unmet items with API version {api_version}")
+        
+        # Endpoint differs by API version
+        if api_version == "v2":
+            endpoint = "wanted/cutoff?pageSize=1000&sortKey=airDateUtc&sortDir=desc"
+        else:  # v3/Eros
+            endpoint = "wanted/cutoff?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
+        
+        response = arr_request(api_url, api_key, api_timeout, endpoint, api_version=api_version)
+        
+        if response is None:
+            return None
+        
+        # Extract the episodes/items
+        items = []
+        if isinstance(response, dict) and "records" in response:
+            items = response["records"]
+        
+        whisparr_logger.debug(f"Found {len(items)} cutoff unmet items")
+        
+        # For v2, we need to filter out items where qualityCutoffNotMet is False
+        # For v3, we can just use the API's filtering which already returns appropriate results
+        if api_version == "v2":
+            # Get quality profiles
+            profiles_response = arr_request(api_url, api_key, api_timeout, "profile", api_version=api_version)
+            if not profiles_response:
+                whisparr_logger.error("Failed to retrieve quality profiles")
+                return None
+            
+            # Create a lookup for profile qualities
+            profiles_lookup = {}
+            for profile in profiles_response:
+                profile_id = profile.get("id")
+                if profile_id is not None:
+                    cutoff = profile.get("cutoff")
+                    qualities = profile.get("items", [])
+                    allowed_qualities = []
+                    for quality in qualities:
+                        if quality.get("allowed", False):
+                            if "quality" in quality:
+                                allowed_qualities.append(quality["quality"])
+                            else:
+                                allowed_qualities.extend([q for q in quality.get("qualities", [])])
+                    
+                    profiles_lookup[profile_id] = {
+                        "cutoff": cutoff,
+                        "qualities": allowed_qualities
+                    }
+            
+            # Filter items that need quality upgrade
+            filtered_items = []
+            for item in items:
+                if monitored_only and not item.get("monitored", False):
+                    continue
+                
+                # Get the item's quality and profile
+                quality_info = item.get("episodeFile", {}).get("quality", {}) if "episodeFile" in item else None
+                if not quality_info:
+                    continue
+                
+                quality_id = quality_info.get("quality", {}).get("id") if "quality" in quality_info else None
+                profile_id = item.get("series", {}).get("profileId") if "series" in item else None
+                
+                if quality_id is None or profile_id is None:
+                    continue
+                
+                # Check if item meets cutoff
+                profile = profiles_lookup.get(profile_id)
+                if not profile:
+                    continue
+                
+                # Check if current quality is below cutoff
+                if profile["cutoff"] is not None:
+                    cutoff_met = False
+                    for quality in profile["qualities"]:
+                        if quality.get("id") == quality_id:
+                            cutoff_met = True
+                            break
+                        if quality.get("id") == profile["cutoff"]:
+                            break
+                    
+                    if not cutoff_met:
+                        filtered_items.append(item)
+            
+            items = filtered_items
+            whisparr_logger.debug(f"Found {len(items)} items that don't meet cutoff quality after filtering")
+        else:  # For v3, just filter monitored if needed
+            if monitored_only:
+                items = [item for item in items if item.get("monitored", False)]
+            whisparr_logger.debug(f"Found {len(items)} cutoff unmet items after filtering monitored")
+        
+        return items
+        
+    except Exception as e:
+        whisparr_logger.error(f"Error retrieving cutoff unmet items: {str(e)}")
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        tb_lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+        whisparr_logger.debug("".join(tb_lines))
+        return None
+
+def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int, api_version: str = "v3") -> int:
+    """
+    Refresh an item in Whisparr.
     
     Args:
         api_url: The base URL of the Whisparr API
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
-        scene_id: The ID of the scene to refresh
+        item_id: The ID of the item to refresh
         api_version: API version to use ("v2" or "v3")
         
     Returns:
         The command ID if the refresh was triggered successfully, None otherwise
     """
-    if not scene_id:
-        whisparr_logger.error("No scene ID provided for refresh.")
-        return None
-        
     try:
-        # API endpoint is the same for v2 and v3, just with different base paths
-        data = {
-            "name": "RefreshEpisode",
-            "episodeIds": [scene_id]
-        }
+        whisparr_logger.debug(f"Refreshing item with ID {item_id}")
         
-        result = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=data, api_version=api_version)
-        if result and "id" in result:
-            command_id = result["id"]
-            whisparr_logger.info(f"Successfully triggered refresh for scene ID {scene_id}, command ID: {command_id}")
+        # Different payload for different API versions
+        if api_version == "v2":
+            payload = {
+                "name": "RefreshEpisode",
+                "episodeIds": [item_id]
+            }
+        else:  # v3/Eros
+            payload = {
+                "name": "RefreshEpisode",
+                "episodeIds": [item_id]
+            }
+        
+        response = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=payload, api_version=api_version)
+        
+        if response and "id" in response:
+            command_id = response["id"]
+            whisparr_logger.debug(f"Refresh command triggered with ID {command_id}")
             return command_id
         else:
-            whisparr_logger.error(f"Failed to trigger refresh for scene ID {scene_id}. Response: {result}")
+            whisparr_logger.error("Failed to trigger refresh command")
             return None
+            
     except Exception as e:
-        whisparr_logger.error(f"Error refreshing scene ID {scene_id}: {e}")
+        whisparr_logger.error(f"Error refreshing item: {str(e)}")
         return None
 
-def scene_search(api_url: str, api_key: str, api_timeout: int, scene_ids: List[int], api_version: str = "v3") -> Optional[int]:
+def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int], api_version: str = "v3") -> int:
     """
-    Trigger a search for one or more scenes.
+    Trigger a search for one or more items.
     
     Args:
         api_url: The base URL of the Whisparr API
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
-        scene_ids: A list of scene IDs to search for
+        item_ids: A list of item IDs to search for
         api_version: API version to use ("v2" or "v3")
         
     Returns:
         The command ID if the search command was triggered successfully, None otherwise
     """
-    if not scene_ids:
-        whisparr_logger.error("No scene IDs provided for search.")
-        return None
-        
     try:
-        # API endpoint is the same for v2 and v3, just with different base paths
-        data = {
+        whisparr_logger.debug(f"Searching for items with IDs: {item_ids}")
+        
+        # Both API versions use the same command structure
+        payload = {
             "name": "EpisodeSearch",
-            "episodeIds": scene_ids
+            "episodeIds": item_ids
         }
         
-        result = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=data, api_version=api_version)
-        if result and "id" in result:
-            command_id = result["id"]
-            whisparr_logger.info(f"Successfully triggered search for scene IDs {scene_ids}, command ID: {command_id}")
+        response = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=payload, api_version=api_version)
+        
+        if response and "id" in response:
+            command_id = response["id"]
+            whisparr_logger.debug(f"Search command triggered with ID {command_id}")
             return command_id
         else:
-            whisparr_logger.error(f"Failed to trigger search for scene IDs {scene_ids}. Response: {result}")
+            whisparr_logger.error("Failed to trigger search command")
             return None
+            
     except Exception as e:
-        whisparr_logger.error(f"Error searching for scene IDs {scene_ids}: {e}")
+        whisparr_logger.error(f"Error searching for items: {str(e)}")
         return None
 
 def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id: int, api_version: str = "v3") -> Optional[Dict]:

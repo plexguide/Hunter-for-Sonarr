@@ -1,6 +1,6 @@
 """
 Whisparr app module for Huntarr
-Contains functionality for missing scenes and quality upgrades in Whisparr
+Contains functionality for missing items and quality upgrades in Whisparr
 
 Supports both v2 (legacy) and v3 (Eros) API versions.
 v2 - Original Whisparr API
@@ -8,13 +8,16 @@ v3 - Eros version of the Whisparr API
 """
 
 # Module exports
-from src.primary.apps.whisparr.missing import process_missing_scenes
+from src.primary.apps.whisparr.missing import process_missing_items
 from src.primary.apps.whisparr.upgrade import process_cutoff_upgrades
 from src.primary.settings_manager import load_settings
 from src.primary.utils.logger import get_logger
 
 # Define logger for this module
 whisparr_logger = get_logger("whisparr")
+
+# For backward compatibility
+process_missing_scenes = process_missing_items
 
 def get_configured_instances():
     """Get all configured and enabled Whisparr instances"""
@@ -91,4 +94,4 @@ def get_configured_instances():
     whisparr_logger.info(f"Returning {len(instances)} configured instances: {instances}") 
     return instances
 
-__all__ = ["process_missing_scenes", "process_cutoff_upgrades", "get_configured_instances"]
+__all__ = ["process_missing_items", "process_missing_scenes", "process_cutoff_upgrades", "get_configured_instances"]
