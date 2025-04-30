@@ -268,28 +268,17 @@ def logs_stream():
                                     if not line:
                                         break
                                     
-                                    # For all tabs, include all lines from the app's log
-                                    # For specific app tabs, also filter system log
-                                    include_line = True
-                                    
                                     # Only filter when reading system log for specific app tab
                                     if app_type != 'all' and app_type != 'system' and name == 'system':
+                                        # Include system log entries that mention this app name
+                                        # or contain patterns specific to the app
                                         app_pattern = f"huntarr.{app_type}"
-                                        
-                                        if app_type == 'swaparr':
-                                            # Special patterns for Swaparr
-                                            swaparr_patterns = [
-                                                "Added strike",
-                                                "Max strikes reached",
-                                                "removing download",
-                                                "Would have removed",
-                                                "stalled downloads"
-                                            ]
-                                            include_line = (app_pattern in line or 
-                                                          any(pattern in line for pattern in swaparr_patterns))
-                                        else:
-                                            # For other apps, just check app name
-                                            include_line = app_pattern in line
+                                        include_line = (
+                                            app_type.lower() in line.lower() or 
+                                            app_pattern in line
+                                        )
+                                    else:
+                                        include_line = True
                                     
                                     if include_line:
                                         new_lines.append(line)
