@@ -905,7 +905,7 @@ const SettingsForms = {
         // Create the HTML for the Swaparr settings form
         container.innerHTML = `
             <div class="settings-group">
-                <h3>About Swaparr</h3>
+                <h3>Swaparr (Beta)</h3>
                 <div class="setting-item">
                     <p>Swaparr addresses the issue of stalled downloads and rewrote to support Huntarr. Visit Swaparr's <a href="https://github.com/ThijmenGThN/swaparr" target="_blank">GitHub</a> for more information and support the developer!</p>
                 </div>
@@ -980,7 +980,7 @@ const SettingsForms = {
                 
                 // Add stats for each app if available
                 if (data.statistics && Object.keys(data.statistics).length > 0) {
-                    statusHTML += '<h4>Statistics by App</h4><ul>';
+                    statusHTML += '<ul>';
                     
                     for (const [app, stats] of Object.entries(data.statistics)) {
                         statusHTML += `<li><strong>${app.toUpperCase()}</strong>: `;
@@ -1026,7 +1026,7 @@ const SettingsForms = {
                                     .then(data => {
                                         let statusHTML = '';
                                         if (data.statistics && Object.keys(data.statistics).length > 0) {
-                                            statusHTML += '<h4>Statistics by App</h4><ul>';
+                                            statusHTML += '<ul>';
                                             for (const [app, stats] of Object.entries(data.statistics)) {
                                                 statusHTML += `<li><strong>${app.toUpperCase()}</strong>: `;
                                                 if (stats.error) {
