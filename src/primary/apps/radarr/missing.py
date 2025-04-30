@@ -11,6 +11,7 @@ from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.radarr import api as radarr_api
 from src.primary.stats_manager import increment_stat
+from src.primary.stateful_manager import is_processed, add_processed_id
 
 # Get logger for the app
 radarr_logger = get_logger("radarr")
@@ -43,6 +44,7 @@ def process_missing_movies(
     hunt_missing_movies = app_settings.get("hunt_missing_movies", 0)
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
+    instance_name = app_settings.get("name", "Default")
 
     if not api_url or not api_key:
         radarr_logger.error("API URL or Key not configured in settings. Cannot process missing movies.")
@@ -96,14 +98,29 @@ def process_missing_movies(
     movies_processed = 0
     processing_done = False
     
+    # Filter out already processed movies using stateful management
+    unprocessed_movies = []
+    for movie in missing_movies:
+        movie_id = str(movie.get("id"))
+        if not is_processed("radarr", instance_name, movie_id):
+            unprocessed_movies.append(movie)
+        else:
+            radarr_logger.debug(f"Skipping already processed movie ID: {movie_id}")
+    
+    radarr_logger.info(f"Found {len(unprocessed_movies)} unprocessed missing movies out of {len(missing_movies)} total.")
+    
+    if not unprocessed_movies:
+        radarr_logger.info("No unprocessed missing movies found. All available movies have been processed.")
+        return False
+    
     # Select movies to search based on configuration
     if random_missing:
         radarr_logger.info(f"Randomly selecting up to {hunt_missing_movies} missing movies.")
-        movies_to_search = random.sample(missing_movies, min(len(missing_movies), hunt_missing_movies))
+        movies_to_search = random.sample(unprocessed_movies, min(len(unprocessed_movies), hunt_missing_movies))
     else:
         radarr_logger.info(f"Selecting the first {hunt_missing_movies} missing movies (sorted by title).")
-        missing_movies.sort(key=lambda x: x.get("title", ""))
-        movies_to_search = missing_movies[:hunt_missing_movies]
+        unprocessed_movies.sort(key=lambda x: x.get("title", ""))
+        movies_to_search = unprocessed_movies[:hunt_missing_movies]
     
     radarr_logger.info(f"Selected {len(movies_to_search)} missing movies to search.")
 
@@ -151,6 +168,11 @@ def process_missing_movies(
             radarr_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
             increment_stat("radarr", "hunted", 1)
             radarr_logger.debug(f"Incremented radarr hunted statistics by 1")
+            
+            # Add movie ID to processed list
+            add_processed_id("radarr", instance_name, str(movie_id))
+            radarr_logger.debug(f"Added movie ID {movie_id} to processed list for {instance_name}")
+            
             movies_processed += 1
             processing_done = True
             

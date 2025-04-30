@@ -5,5 +5,6 @@
   "check_for_updates": true,
   "enable_notifications": false,
   "notification_level": "info",
-  "local_access_bypass": false
+  "local_access_bypass": false,
+  "stateful_management_hours": 168
 }

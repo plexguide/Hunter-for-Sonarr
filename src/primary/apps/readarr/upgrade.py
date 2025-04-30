@@ -11,6 +11,7 @@ from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.readarr import api as readarr_api
 from src.primary.stats_manager import increment_stat
+from src.primary.stateful_manager import is_processed, add_processed_id
 
 # Get logger for the app
 readarr_logger = get_logger("readarr")
@@ -35,6 +36,7 @@ def process_cutoff_upgrades(
     # Extract necessary settings
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
+    instance_name = app_settings.get("instance_name", "Readarr Default")
     api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_author_refresh = app_settings.get("skip_author_refresh", False)
@@ -85,16 +87,31 @@ def process_cutoff_upgrades(
     if not upgrade_eligible_data:
         readarr_logger.info("No upgradeable books found to process (after potential filtering). Skipping.")
         return False
+        
+    # Filter out already processed books using stateful management
+    unprocessed_books = []
+    for book in upgrade_eligible_data:
+        book_id = str(book.get("id"))
+        if not is_processed("readarr", instance_name, book_id):
+            unprocessed_books.append(book)
+        else:
+            readarr_logger.debug(f"Skipping already processed book ID: {book_id}")
+    
+    readarr_logger.info(f"Found {len(unprocessed_books)} unprocessed books out of {len(upgrade_eligible_data)} total books eligible for upgrade.")
+    
+    if not unprocessed_books:
+        readarr_logger.info(f"No unprocessed books found for {instance_name}. All available books have been processed.")
+        return False
 
     # Select books to process
     if random_upgrades:
         readarr_logger.info(f"Randomly selecting up to {hunt_upgrade_books} books for upgrade search.")
-        books_to_process = random.sample(upgrade_eligible_data, min(hunt_upgrade_books, len(upgrade_eligible_data)))
+        books_to_process = random.sample(unprocessed_books, min(hunt_upgrade_books, len(unprocessed_books)))
     else:
         readarr_logger.info(f"Selecting the first {hunt_upgrade_books} books for upgrade search (order based on API return).")
         # Add sorting if needed, e.g., by title or author
         # upgrade_eligible_data.sort(key=lambda x: x.get('title', ''))
-        books_to_process = upgrade_eligible_data[:hunt_upgrade_books]
+        books_to_process = unprocessed_books[:hunt_upgrade_books]
 
     readarr_logger.info(f"Selected {len(books_to_process)} books to search for upgrades.")
     processed_count = 0
@@ -133,6 +150,11 @@ def process_cutoff_upgrades(
             command_id = search_command_data.get('id') # Extract command ID
             readarr_logger.info(f"Triggered book search command {command_id} for upgrade.")
             increment_stat("readarr", "upgraded") # Assuming 'upgraded' stat exists
+            
+            # Add book ID to processed list
+            add_processed_id("readarr", instance_name, str(book_id))
+            readarr_logger.debug(f"Added book ID {book_id} to processed list for {instance_name}")
+            
             processed_count += 1
             processed_something = True
             readarr_logger.info(f"Processed {processed_count}/{len(books_to_process)} book upgrades this cycle.")

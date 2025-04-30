@@ -11,6 +11,7 @@ from typing import Dict, Any, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.lidarr import api as lidarr_api
 from src.primary.stats_manager import increment_stat
+from src.primary.stateful_manager import is_processed, add_processed_id
 
 # Get the logger for the Lidarr module
 lidarr_logger = get_logger(__name__) # Use __name__ for correct logger hierarchy
@@ -138,23 +139,33 @@ def process_missing_albums(
         else: # Album mode
             target_entities = [item['id'] for item in missing_items] # Use the potentially filtered missing_items list
 
+        # Filter out already processed entities using stateful management
+        unprocessed_entities = []
+        for entity_id in target_entities:
+            if not is_processed("lidarr", instance_name, str(entity_id)):
+                unprocessed_entities.append(entity_id)
+            else:
+                lidarr_logger.debug(f"Skipping already processed {search_entity_type} ID: {entity_id}")
+        
+        lidarr_logger.info(f"Found {len(unprocessed_entities)} unprocessed {search_entity_type}s out of {len(target_entities)} total.")
+        
+        if not unprocessed_entities:
+            lidarr_logger.info(f"No unprocessed {search_entity_type}s found for {instance_name}. All available {search_entity_type}s have been processed.")
+            return False
+            
         # Select entities to search
-        if not target_entities:
+        if not unprocessed_entities:
             lidarr_logger.info(f"No {search_entity_type}s found to process after grouping/filtering.")
             return False
 
         if random_missing:
-            entities_to_search_ids = random.sample(target_entities, min(len(target_entities), total_items_to_process))
+            entities_to_search_ids = random.sample(unprocessed_entities, min(len(unprocessed_entities), total_items_to_process))
             lidarr_logger.debug(f"Randomly selected {len(entities_to_search_ids)} {search_entity_type}s to search.")
         else:
             # Sort by ID for consistent selection if not random (optional, API order might suffice)
             # target_entities.sort() # Example: sort IDs numerically
-            entities_to_search_ids = target_entities[:total_items_to_process]
+            entities_to_search_ids = unprocessed_entities[:total_items_to_process]
             lidarr_logger.debug(f"Selected first {len(entities_to_search_ids)} {search_entity_type}s to search.")
-
-        if not entities_to_search_ids:
-            lidarr_logger.info(f"No {search_entity_type}s selected for search after applying limit/randomization.")
-            return False
 
         # --- Trigger Search (Artist or Album) ---
         if hunt_missing_mode == "artist":
@@ -183,6 +194,11 @@ def process_missing_albums(
                         increment_stat("lidarr", "hunted") # Changed from "missing" to "hunted"
                         processed_count += 1 # Count artists searched
                         processed_artists_or_albums.add(artist_id)
+                        
+                        # Add to processed list
+                        add_processed_id("lidarr", instance_name, str(artist_id))
+                        lidarr_logger.debug(f"Added artist ID {artist_id} to processed list for {instance_name}")
+                        
                         time.sleep(0.1) # Small delay between triggers
                 except Exception as e:
                     lidarr_logger.warning(f"Failed to trigger artist search for ID {artist_id} on {instance_name}: {e}")
@@ -225,6 +241,12 @@ def process_missing_albums(
                 increment_stat("lidarr", "hunted") # Changed from "missing" to "hunted"
                 processed_count += len(album_ids_to_search) # Count albums searched
                 processed_artists_or_albums.update(album_ids_to_search)
+                
+                # Add album IDs to processed list
+                for album_id in album_ids_to_search:
+                    add_processed_id("lidarr", instance_name, str(album_id))
+                    lidarr_logger.debug(f"Added album ID {album_id} to processed list for {instance_name}")
+                    
                 time.sleep(command_wait_delay) # Basic delay after the single command
             else:
                 lidarr_logger.warning(f"Failed to trigger album search for IDs {album_ids_to_search} on {instance_name}.")

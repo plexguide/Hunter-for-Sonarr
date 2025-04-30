@@ -1083,6 +1083,32 @@ const SettingsForms = {
             </div>
             
             <div class="settings-group">
+                <h3>Stateful Management</h3>
+                <div id="stateful-section" class="setting-info-block">
+                    <div id="stateful-notification" class="notification error" style="display: none;">
+                        Failed to load stateful management info. Check logs for details.
+                    </div>
+                    <div class="info-row">
+                        <span>Initial State Created:</span>
+                        <span id="stateful_initial_state">Loading...</span>
+                    </div>
+                    <div class="info-row">
+                        <span>State Reset Date:</span>
+                        <span id="stateful_expires_date">Loading...</span>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label for="stateful_management_hours">State Reset Interval (Hours):</label>
+                    <input type="number" id="stateful_management_hours" min="1" value="${settings.stateful_management_hours || 168}">
+                    <p class="setting-help">Hours before resetting processed media state (<span id="stateful_management_days">${((settings.stateful_management_hours || 168) / 24).toFixed(1)} days</span>)</p>
+                </div>
+                <div class="setting-item">
+                    <button id="reset_stateful_btn" class="danger-button">Reset Stateful Management</button>
+                    <p class="setting-help">Reset stateful management and clear all processed media IDs</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
                 <h3>Security</h3>
                 <div class="setting-item">
                     <label for="local_access_bypass">Local Network Auth Bypass:</label>
@@ -1094,6 +1120,53 @@ const SettingsForms = {
                 </div>
             </div>
         `;
+        
+        // Add listener for stateful management hours input
+        const statefulHoursInput = container.querySelector('#stateful_management_hours');
+        const statefulDaysSpan = container.querySelector('#stateful_management_days');
+        
+        if (statefulHoursInput && statefulDaysSpan) {
+            statefulHoursInput.addEventListener('input', function() {
+                const hours = parseInt(this.value) || 168;
+                const days = (hours / 24).toFixed(1);
+                statefulDaysSpan.textContent = `${days} days`;
+            });
+        }
+        
+        // Add listener for reset stateful button
+        const resetStatefulBtn = container.querySelector('#reset_stateful_btn');
+        if (resetStatefulBtn) {
+            resetStatefulBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to reset stateful management? This will clear all processed media IDs.')) {
+                    // Dispatch event for main.js to handle the reset
+                    const event = new CustomEvent('resetStateful', {});
+                    container.dispatchEvent(event);
+                }
+            });
+        }
+        
+        // Load stateful management info
+        fetch('/api/stateful/info')
+            .then(response => response.json())
+            .then(data => {
+                const createdDateEl = document.getElementById('stateful_initial_state');
+                const expiresDateEl = document.getElementById('stateful_expires_date');
+                
+                if (createdDateEl && data.created_date) {
+                    createdDateEl.textContent = data.created_date;
+                }
+                
+                if (expiresDateEl && data.expires_date) {
+                    expiresDateEl.textContent = data.expires_date;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading stateful management info:', error);
+                const notificationEl = document.getElementById('stateful-notification');
+                if (notificationEl) {
+                    notificationEl.style.display = 'block';
+                }
+            });
         
         // Add confirmation dialog for local access bypass toggle
         const localAccessBypassCheckbox = container.querySelector('#local_access_bypass');

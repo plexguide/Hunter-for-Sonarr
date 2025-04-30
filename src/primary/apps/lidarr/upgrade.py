@@ -10,6 +10,7 @@ from typing import Dict, Any, Optional, Callable, List # Added List
 from src.primary.utils.logger import get_logger
 from src.primary.apps.lidarr import api as lidarr_api
 from src.primary.stats_manager import increment_stat
+from src.primary.stateful_manager import is_processed, add_processed_id
 
 # Get logger for the app
 lidarr_logger = get_logger(__name__) # Use __name__ for correct logger hierarchy
@@ -79,14 +80,29 @@ def process_cutoff_upgrades(
 
         lidarr_logger.info(f"Found {len(cutoff_unmet_albums)} cutoff unmet albums for {instance_name}.")
 
+        # Filter out already processed albums using stateful management
+        unprocessed_albums = []
+        for album in cutoff_unmet_albums:
+            album_id = str(album.get("id"))
+            if not is_processed("lidarr", instance_name, album_id):
+                unprocessed_albums.append(album)
+            else:
+                lidarr_logger.debug(f"Skipping already processed album ID: {album_id}")
+        
+        lidarr_logger.info(f"Found {len(unprocessed_albums)} unprocessed cutoff unmet albums out of {len(cutoff_unmet_albums)} total.")
+        
+        if not unprocessed_albums:
+            lidarr_logger.info(f"No unprocessed cutoff unmet albums found for {instance_name}. All available albums have been processed.")
+            return False
+
         # Select albums to search
         albums_to_search: List[Dict[str, Any]] = [] # Ensure type hint
         if random_upgrades:
-            albums_to_search = random.sample(cutoff_unmet_albums, min(len(cutoff_unmet_albums), total_items_to_process))
-            lidarr_logger.debug(f"Randomly selected {len(albums_to_search)} albums out of {len(cutoff_unmet_albums)} to search for upgrades.")
+            albums_to_search = random.sample(unprocessed_albums, min(len(unprocessed_albums), total_items_to_process))
+            lidarr_logger.debug(f"Randomly selected {len(albums_to_search)} albums out of {len(unprocessed_albums)} to search for upgrades.")
         else:
-            albums_to_search = cutoff_unmet_albums[:total_items_to_process]
-            lidarr_logger.debug(f"Selected the first {len(albums_to_search)} albums out of {len(cutoff_unmet_albums)} to search for upgrades.")
+            albums_to_search = unprocessed_albums[:total_items_to_process]
+            lidarr_logger.debug(f"Selected the first {len(albums_to_search)} albums out of {len(unprocessed_albums)} to search for upgrades.")
 
         album_ids_to_search = [album['id'] for album in albums_to_search]
 
@@ -110,6 +126,12 @@ def process_cutoff_upgrades(
         if command_id:
             lidarr_logger.debug(f"Upgrade album search command triggered with ID: {command_id} for albums: {album_ids_to_search}")
             increment_stat("lidarr", "upgraded") # Use appropriate stat key
+            
+            # Add album IDs to processed list
+            for album_id in album_ids_to_search:
+                add_processed_id("lidarr", instance_name, str(album_id))
+                lidarr_logger.debug(f"Added album ID {album_id} to processed list for {instance_name}")
+                
             time.sleep(command_wait_delay) # Basic delay
             processed_count += len(album_ids_to_search)
             processed_any = True # Mark that we processed something

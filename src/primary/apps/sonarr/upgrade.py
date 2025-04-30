@@ -9,6 +9,7 @@ from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.sonarr import api as sonarr_api
 from src.primary.stats_manager import increment_stat
+from src.primary.stateful_manager import is_processed, add_processed_id
 
 # Get logger for the app
 sonarr_logger = get_logger("sonarr")
@@ -16,6 +17,7 @@ sonarr_logger = get_logger("sonarr")
 def process_cutoff_upgrades(
     api_url: str,
     api_key: str,
+    instance_name: str = "Default",
     api_timeout: int = 60,
     monitored_only: bool = True,
     skip_series_refresh: bool = False,
@@ -37,7 +39,7 @@ def process_cutoff_upgrades(
 
     # Always use episode mode for upgrades, regardless of the hunt_missing_mode setting
     return process_upgrade_episodes_mode(
-        api_url, api_key, api_timeout, monitored_only, 
+        api_url, api_key, instance_name, api_timeout, monitored_only, 
         skip_series_refresh, random_upgrades, hunt_upgrade_items, 
         command_wait_delay, command_wait_attempts, stop_check
     )
@@ -45,6 +47,7 @@ def process_cutoff_upgrades(
 def process_upgrade_episodes_mode(
     api_url: str,
     api_key: str,
+    instance_name: str,
     api_timeout: int,
     monitored_only: bool,
     skip_series_refresh: bool,
@@ -91,9 +94,24 @@ def process_upgrade_episodes_mode(
             skipped_count = original_count - len(cutoff_unmet_episodes)
             if skipped_count > 0:
                 sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date for upgrades.")
+        
+        # Filter out already processed episodes using stateful management
+        unprocessed_episodes = []
+        for episode in cutoff_unmet_episodes:
+            episode_id = str(episode.get("id"))
+            if not is_processed("sonarr", instance_name, episode_id):
+                unprocessed_episodes.append(episode)
+            else:
+                sonarr_logger.debug(f"Skipping already processed episode ID for upgrade: {episode_id}")
+        
+        sonarr_logger.info(f"Found {len(unprocessed_episodes)} unprocessed cutoff unmet episodes out of {len(cutoff_unmet_episodes)} total.")
+        
+        if not unprocessed_episodes:
+            sonarr_logger.info("No unprocessed cutoff unmet episodes found. All available episodes have been processed.")
+            return False
                 
         # Select the first N episodes
-        episodes_to_search = cutoff_unmet_episodes[:hunt_upgrade_items]
+        episodes_to_search = unprocessed_episodes[:hunt_upgrade_items]
 
     if stop_check(): 
         sonarr_logger.info("Stop requested during upgrade processing.")
@@ -110,6 +128,19 @@ def process_upgrade_episodes_mode(
         skipped_count = original_count - len(episodes_to_search)
         if skipped_count > 0:
             sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date for upgrades.")
+    
+    # Filter out already processed episodes for random selection approach
+    if random_upgrades:
+        unprocessed_episodes = []
+        for episode in episodes_to_search:
+            episode_id = str(episode.get("id"))
+            if not is_processed("sonarr", instance_name, episode_id):
+                unprocessed_episodes.append(episode)
+            else:
+                sonarr_logger.debug(f"Skipping already processed episode ID for upgrade: {episode_id}")
+        
+        sonarr_logger.info(f"Found {len(unprocessed_episodes)} unprocessed cutoff unmet episodes out of {len(episodes_to_search)} total.")
+        episodes_to_search = unprocessed_episodes
 
     if not episodes_to_search:
         sonarr_logger.info("No cutoff unmet episodes left to process for upgrades after filtering.")
@@ -198,6 +229,11 @@ def process_upgrade_episodes_mode(
                 # Increment the upgraded statistics
                 increment_stat("sonarr", "upgraded", len(episode_ids))
                 sonarr_logger.debug(f"Incremented sonarr upgraded statistics by {len(episode_ids)}")
+                
+                # Mark episodes as processed using stateful management
+                for episode_id in episode_ids:
+                    add_processed_id("sonarr", instance_name, str(episode_id))
+                    sonarr_logger.debug(f"Marked episode ID {episode_id} as processed for upgrades")
             else:
                 sonarr_logger.warning(f"Episode upgrade search command (ID: {search_command_id}) for series {series_id} did not complete successfully or timed out. Episodes will not be marked as processed yet.")
         else:
@@ -209,6 +245,7 @@ def process_upgrade_episodes_mode(
 def process_upgrade_seasons_mode(
     api_url: str,
     api_key: str,
+    instance_name: str,
     api_timeout: int,
     monitored_only: bool,
     skip_series_refresh: bool,
@@ -336,6 +373,11 @@ def process_upgrade_seasons_mode(
                 # Increment the upgraded statistics
                 increment_stat("sonarr", "upgraded", len(episode_ids))
                 sonarr_logger.debug(f"Incremented sonarr upgraded statistics by {len(episode_ids)}")
+                
+                # Mark episodes as processed using stateful management
+                for episode_id in episode_ids:
+                    add_processed_id("sonarr", instance_name, str(episode_id))
+                    sonarr_logger.debug(f"Marked episode ID {episode_id} as processed for upgrades")
             else:
                 sonarr_logger.warning(f"Episode upgrade search command for {series_title} Season {season_number} did not complete successfully")
         else:
@@ -347,6 +389,7 @@ def process_upgrade_seasons_mode(
 def process_upgrade_shows_mode(
     api_url: str,
     api_key: str,
+    instance_name: str,
     api_timeout: int,
     monitored_only: bool,
     skip_series_refresh: bool,
@@ -469,6 +512,11 @@ def process_upgrade_shows_mode(
                 # Increment the upgraded statistics
                 increment_stat("sonarr", "upgraded", len(episode_ids))
                 sonarr_logger.debug(f"Incremented sonarr upgraded statistics by {len(episode_ids)}")
+                
+                # Mark episodes as processed using stateful management
+                for episode_id in episode_ids:
+                    add_processed_id("sonarr", instance_name, str(episode_id))
+                    sonarr_logger.debug(f"Marked episode ID {episode_id} as processed for upgrades")
             else:
                 sonarr_logger.warning(f"Episode upgrade search command for {series_title} did not complete successfully")
         else:

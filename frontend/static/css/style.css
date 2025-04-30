@@ -700,6 +700,40 @@ input:checked + .toggle-slider:before {
     transform: translateX(20px); /* Changed to match login page toggle (20px) */
 }
 
+/* Settings Stateful Management */
+.setting-info-block {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+.setting-info-block .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.setting-info-block .info-row:last-child {
+    border-bottom: none;
+}
+
+.danger-button {
+    background-color: var(--button-danger-bg);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.danger-button:hover {
+    background-color: var(--button-danger-hover);
+}
+
 /* Responsive Adjustments */
 @media (max-width: 992px) {
     .sidebar {

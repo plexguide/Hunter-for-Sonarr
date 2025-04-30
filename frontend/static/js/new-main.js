@@ -112,57 +112,96 @@ let huntarrUI = {
     setupEventListeners: function() {
         // Navigation
         this.elements.navItems.forEach(item => {
-            item.addEventListener('click', this.handleNavigation.bind(this));
+            item.addEventListener('click', (e) => this.handleNavigation(e));
         });
         
-        // App tabs
-        this.elements.appTabs.forEach(tab => {
-            tab.addEventListener('click', this.handleAppTabChange.bind(this));
-        });
-        
-        // Settings tabs
-        this.elements.settingsTabs.forEach(tab => {
-            tab.addEventListener('click', this.handleSettingsTabChange.bind(this));
-        });
-        
-        // Log tabs (New)
-        this.elements.logTabs.forEach(tab => {
-            tab.addEventListener('click', this.handleLogTabChange.bind(this));
-        });
-        
-        // Logs
+        // Log auto-scroll setting
         if (this.elements.autoScrollCheckbox) {
             this.elements.autoScrollCheckbox.addEventListener('change', (e) => {
                 this.autoScroll = e.target.checked;
             });
         }
         
+        // Clear logs button
         if (this.elements.clearLogsButton) {
-            this.elements.clearLogsButton.addEventListener('click', this.clearLogs.bind(this));
+            this.elements.clearLogsButton.addEventListener('click', () => this.clearLogs());
         }
         
-        // Settings
+        // App tabs in logs section
+        this.elements.appTabs.forEach(tab => {
+            tab.addEventListener('click', (e) => this.handleAppTabChange(e));
+        });
+        
+        // Log tabs in logs section
+        this.elements.logTabs.forEach(tab => {
+            tab.addEventListener('click', (e) => this.handleLogTabChange(e));
+        });
+        
+        // Settings tabs
+        this.elements.settingsTabs.forEach(tab => {
+            tab.addEventListener('click', (e) => this.handleSettingsTabChange(e));
+        });
+        
+        // Save settings button
         if (this.elements.saveSettingsButton) {
-            this.elements.saveSettingsButton.addEventListener('click', this.saveSettings.bind(this));
+            this.elements.saveSettingsButton.addEventListener('click', () => this.saveSettings());
         }
         
-        // Actions
+        // Start hunt button
         if (this.elements.startHuntButton) {
-            this.elements.startHuntButton.addEventListener('click', this.startHunt.bind(this));
+            this.elements.startHuntButton.addEventListener('click', () => this.startHunt());
         }
         
+        // Stop hunt button
         if (this.elements.stopHuntButton) {
-            this.elements.stopHuntButton.addEventListener('click', this.stopHunt.bind(this));
+            this.elements.stopHuntButton.addEventListener('click', () => this.stopHunt());
         }
         
-        // Theme
-        // if (this.elements.themeToggle) { // Removed theme toggle
-        //     this.elements.themeToggle.addEventListener('change', this.handleThemeToggle.bind(this));
-        // }
+        // Logout button
+        if (this.elements.logoutLink) {
+            this.elements.logoutLink.addEventListener('click', (e) => this.logout(e));
+        }
         
-        // Logout
-        if (this.elements.logoutLink) { // Added listener for logout
-            this.elements.logoutLink.addEventListener('click', this.logout.bind(this));
+        // Dark mode toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (darkModeToggle) {
+            const prefersDarkMode = localStorage.getItem('huntarr-dark-mode') === 'true';
+            darkModeToggle.checked = prefersDarkMode;
+            
+            darkModeToggle.addEventListener('change', function() {
+                const isDarkMode = this.checked;
+                document.body.classList.toggle('dark-theme', isDarkMode);
+                localStorage.setItem('huntarr-dark-mode', isDarkMode);
+            });
+        }
+        
+        // Settings inputs change tracking
+        document.querySelectorAll('#settingsSection input, #settingsSection select').forEach(element => {
+            element.addEventListener('change', () => this.markSettingsAsChanged());
+        });
+        
+        // Monitor for window beforeunload to warn about unsaved settings
+        window.addEventListener('beforeunload', (e) => {
+            if (this.settingsChanged) {
+                // Standard way to show a confirmation dialog when navigating away
+                e.preventDefault();
+                e.returnValue = ''; // Chrome requires returnValue to be set
+                return ''; // Legacy browsers
+            }
+        });
+        
+        // Stateful management reset button
+        const resetStatefulBtn = document.getElementById('reset_stateful_btn');
+        if (resetStatefulBtn) {
+            resetStatefulBtn.addEventListener('click', () => this.resetStatefulManagement());
+        }
+        
+        // Stateful management hours input
+        const statefulHoursInput = document.getElementById('stateful_management_hours');
+        if (statefulHoursInput) {
+            statefulHoursInput.addEventListener('change', () => {
+                this.updateStatefulExpirationOnUI();
+            });
         }
         
         // Handle window hash change
@@ -649,30 +688,40 @@ let huntarrUI = {
     
     // Settings handling
     loadAllSettings: function() {
-        // Ensure buttons are disabled and flag is reset when loading settings section
-        this.settingsChanged = false;
+        // Disable save button until changes are made
         this.updateSaveResetButtonState(false);
+        this.settingsChanged = false;
         
-        console.log("[huntarrUI] Loading all settings...");
-        fetch(`/api/settings`) // Fetch the entire settings object
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+        // Get all settings to populate forms
+        fetch('/api/settings')
+            .then(response => response.json())
             .then(data => {
-                console.log("[huntarrUI] All settings loaded:", data);
-                this.originalSettings = JSON.parse(JSON.stringify(data)); // Store deep copy
-
-                // Populate the currently active settings form
-                this.populateSettingsForm(this.currentSettingsTab, this.originalSettings[this.currentSettingsTab] || {});
-                // Optionally pre-populate others if needed, but might be redundant if done on tab switch
+                console.log('Loaded settings:', data);
+                
+                // Store original settings for comparison
+                this.originalSettings = data;
+                
+                // Populate each app's settings form
+                if (data.sonarr) this.populateSettingsForm('sonarr', data.sonarr);
+                if (data.radarr) this.populateSettingsForm('radarr', data.radarr);
+                if (data.lidarr) this.populateSettingsForm('lidarr', data.lidarr);
+                if (data.readarr) this.populateSettingsForm('readarr', data.readarr);
+                if (data.whisparr) this.populateSettingsForm('whisparr', data.whisparr);
+                if (data.swaparr) this.populateSettingsForm('swaparr', data.swaparr);
+                if (data.general) this.populateSettingsForm('general', data.general);
+                
+                // Update duration displays (like sleep durations)
+                if (typeof SettingsForms !== 'undefined' && 
+                    typeof SettingsForms.updateDurationDisplay === 'function') {
+                    SettingsForms.updateDurationDisplay();
+                }
+                
+                // Load stateful management info
+                this.loadStatefulInfo();
             })
             .catch(error => {
-                console.error(`Error loading all settings:`, error);
-                this.showNotification(`Error loading settings: ${error.message}`, 'error');
-                this.originalSettings = {}; // Reset on error
+                console.error('Error loading settings:', error);
+                this.showNotification('Error loading settings. Please try again.', 'error');
             });
     },
     
@@ -1098,7 +1147,7 @@ let huntarrUI = {
         // Check for trailing slashes in URL
         if (url.endsWith('/') || url.endsWith('\\')) {
             statusSpan.textContent = 'Remove trailing slash from URL (/ or \\)';
-            statusSpan.className = 'connection-status error';
+            statusSpan.className = 'status-error';
             return;
         }
         
@@ -1650,6 +1699,163 @@ let huntarrUI = {
         // This function should ideally call checkAppConnection for all relevant apps
         // or use the stored configuredApps status if checkAppConnection updates it.
         this.checkAppConnections(); // Re-check all connections after a save might be simplest
+    },
+    
+    // Load stateful management info
+    loadStatefulInfo: function() {
+        const statefulSection = document.getElementById('stateful-section');
+        if (!statefulSection) return;
+        
+        // Show loading state
+        const initialStateEl = document.getElementById('stateful_initial_state');
+        const expiresDateEl = document.getElementById('stateful_expires_date');
+        
+        if (initialStateEl) initialStateEl.textContent = 'Loading...';
+        if (expiresDateEl) expiresDateEl.textContent = 'Loading...';
+        
+        console.log('Fetching stateful management info...');
+        
+        fetch('/api/stateful/info', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            },
+            cache: 'no-cache'
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Stateful info data:', data);
+            
+            if (initialStateEl) {
+                initialStateEl.textContent = data.created_date || 'Not available';
+            }
+            
+            if (expiresDateEl) {
+                expiresDateEl.textContent = data.expires_date || 'Not available';
+            }
+            
+            // Update the notification area
+            document.getElementById('stateful-notification').style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error loading stateful info:', error);
+            
+            if (initialStateEl) initialStateEl.textContent = 'Error loading data';
+            if (expiresDateEl) expiresDateEl.textContent = 'Error loading data';
+            
+            // Show error notification
+            const notification = document.getElementById('stateful-notification');
+            if (notification) {
+                notification.textContent = 'Failed to load stateful management info. Check logs for details.';
+                notification.style.display = 'block';
+                notification.className = 'notification error';
+            }
+        });
+    },
+    
+    // Reset stateful management - clear all processed IDs
+    resetStatefulManagement: function() {
+        // Show a loading indicator or disable the button
+        const resetBtn = document.getElementById('reset_stateful_btn');
+        if (resetBtn) {
+            resetBtn.disabled = true;
+            resetBtn.textContent = 'Resetting...';
+        }
+        
+        fetch('/api/stateful/reset', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            cache: 'no-cache' // Add cache control to prevent caching
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                this.showNotification('Stateful management reset successfully', 'success');
+                // Wait a moment before reloading the info to ensure it's refreshed
+                setTimeout(() => {
+                    this.loadStatefulInfo(); // Reload stateful info to update the UI
+                }, 500);
+            } else {
+                throw new Error(data.message || 'Unknown error resetting stateful management');
+            }
+        })
+        .catch(error => {
+            console.error('Error resetting stateful management:', error);
+            this.showNotification(`Failed to reset stateful management: ${error.message}`, 'error');
+        })
+        .finally(() => {
+            // Restore the button state
+            if (resetBtn) {
+                resetBtn.disabled = false;
+                resetBtn.textContent = 'Reset Stateful Management';
+            }
+        });
+    },
+    
+    // Update stateful management expiration based on hours input
+    updateStatefulExpirationOnUI: function() {
+        const hoursInput = document.getElementById('stateful_management_hours');
+        if (!hoursInput) return;
+        
+        const hours = parseInt(hoursInput.value) || 168;
+        
+        // Show updating indicator
+        const expiresDateEl = document.getElementById('stateful_expires_date');
+        if (expiresDateEl) {
+            expiresDateEl.textContent = 'Updating...';
+        }
+        
+        fetch('/api/stateful/update-expiration', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ hours: hours }),
+            cache: 'no-cache'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                this.showNotification(`Updated expiration to ${hours} hours`, 'success');
+                // Reload the stateful info after a short delay
+                setTimeout(() => {
+                    this.loadStatefulInfo();
+                }, 500);
+            } else {
+                throw new Error(data.message || 'Unknown error updating expiration');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating stateful expiration:', error);
+            this.showNotification(`Failed to update expiration: ${error.message}`, 'error');
+            // Reset the UI
+            if (expiresDateEl) {
+                expiresDateEl.textContent = 'Error updating';
+            }
+        });
     },
 };
 
