@@ -1,6 +1,10 @@
 """
 Whisparr app module for Huntarr
 Contains functionality for missing scenes and quality upgrades in Whisparr
+
+Supports both v2 (legacy) and v3 (Eros) API versions.
+v2 - Original Whisparr API
+v3 - Eros version of the Whisparr API
 """
 
 # Module exports
@@ -21,6 +25,10 @@ def get_configured_instances():
     if not settings:
         whisparr_logger.debug("No settings found for Whisparr")
         return instances
+
+    # Get the API version to use (v2 or v3/Eros)
+    api_version = settings.get("whisparr_version", "v3")
+    whisparr_logger.info(f"Using Whisparr API version: {api_version}")
 
     # Check if instances are configured
     if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
@@ -46,6 +54,7 @@ def get_configured_instances():
                     "instance_name": instance.get("name", "Default"),
                     "api_url": api_url,
                     "api_key": api_key,
+                    "api_version": api_version  # Add the API version to the instance data
                 }
                 instances.append(instance_data) 
                 whisparr_logger.info(f"Added valid instance: {instance_data}") 
@@ -72,6 +81,7 @@ def get_configured_instances():
                 "instance_name": "Default", 
                 "api_url": api_url,
                 "api_key": api_key,
+                "api_version": api_version  # Add the API version to the instance data
             }
             instances.append(instance_data) 
             whisparr_logger.info(f"Added valid legacy instance: {instance_data}") 

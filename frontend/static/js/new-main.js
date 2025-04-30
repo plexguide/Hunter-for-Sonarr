@@ -856,6 +856,14 @@ let huntarrUI = {
         }
 
         allInputs.forEach(input => {
+            // Handle special case for Whisparr version
+            if (input.id === 'whisparr_version') {
+                if (app === 'whisparr') {
+                    settings['whisparr_version'] = input.value.trim();
+                    return; // Skip further processing for this field
+                }
+            }
+
             // Skip buttons and fields already processed as part of an instance
             if (input.type === 'button' || handledInstanceFieldIds.has(input.id)) {
                 return;
@@ -863,10 +871,11 @@ let huntarrUI = {
 
             // Get the field key (remove app prefix)
             let key = input.id;
+            
             if (key.startsWith(`${app}_`)) {
                 key = key.substring(app.length + 1);
             }
-
+            
             // Skip empty keys or keys that are just numbers (unlikely but possible)
             if (!key || /^\d+$/.test(key)) return;
 
