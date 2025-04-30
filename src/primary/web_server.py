@@ -36,7 +36,7 @@ from src.primary.auth import (
 from src.primary.routes.common import common_bp
 
 # Import blueprints for each app from the centralized blueprints module
-from src.primary.apps.blueprints import sonarr_bp, radarr_bp, lidarr_bp, readarr_bp, whisparr_bp
+from src.primary.apps.blueprints import sonarr_bp, radarr_bp, lidarr_bp, readarr_bp, whisparr_bp, swaparr_bp
 
 # Disable Flask default logging
 log = logging.getLogger('werkzeug')
@@ -57,6 +57,7 @@ app.register_blueprint(radarr_bp, url_prefix='/api/radarr')
 app.register_blueprint(lidarr_bp, url_prefix='/api/lidarr')
 app.register_blueprint(readarr_bp, url_prefix='/api/readarr')
 app.register_blueprint(whisparr_bp, url_prefix='/api/whisparr')
+app.register_blueprint(swaparr_bp, url_prefix='/api/swaparr')
 
 # Register the authentication check to run before requests
 app.before_request(authenticate_request)

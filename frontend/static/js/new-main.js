@@ -777,14 +777,41 @@ let huntarrUI = {
         const settings = {};
         const form = document.getElementById(`${app}Settings`);
         if (!form) {
-            console.error(`[huntarrUI] Form not found for app: ${app}`);
-            return null; // Return null if form doesn't exist
+            console.error(`[huntarrUI] Settings form for ${app} not found.`);
+            return null;
         }
 
-        settings.instances = []; // Always initialize instances array
+        // Special handling for Swaparr which has a different structure
+        if (app === 'swaparr') {
+            // Get all inputs directly without filtering for instance fields
+            const inputs = form.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                // Extract the field name without the app prefix
+                let key = input.id;
+                if (key.startsWith(`${app}_`)) {
+                    key = key.substring(app.length + 1);
+                }
+                
+                // Store the value based on input type
+                if (input.type === 'checkbox') {
+                    settings[key] = input.checked;
+                } else if (input.type === 'number') {
+                    settings[key] = input.value === '' ? null : parseInt(input.value, 10);
+                } else {
+                    settings[key] = input.value.trim();
+                }
+            });
+            
+            console.log(`[huntarrUI] Collected Swaparr settings:`, settings);
+            return settings;
+        }
 
-        // Check if multi-instance UI elements exist (like Sonarr)
+        // Handle apps that use instances (Sonarr, Radarr, etc.)
+        // Get all instance items in the form
         const instanceItems = form.querySelectorAll('.instance-item');
+        settings.instances = [];
+        
+        // Check if multi-instance UI elements exist (like Sonarr)
         if (instanceItems.length > 0) {
             console.log(`[huntarrUI] Found ${instanceItems.length} instance items for ${app}. Processing multi-instance mode.`);
             // Multi-instance logic (current Sonarr logic)
