@@ -905,10 +905,9 @@ const SettingsForms = {
         // Create the HTML for the Swaparr settings form
         container.innerHTML = `
             <div class="settings-group">
-                <h3>Swapper Information</h3>
+                <h3>Swaparr Information</h3>
                 <div class="setting-item">
-                    <p>Swaparr quietly operates in the background, offering full customization options and clear visibility through console logs. Its primary function is to address the issue of stalled downloads in *ARR instances. Visit Swapper @ <a href="https://github.com/ThijmenGThN/swaparr" target="_blank">https://github.com/ThijmenGThN/swaparr</a> for more information and STAR the developer's project.</p>
-                    <p>NOTE: Swaparr has been completely rewritten for Huntarr, but keeping the name to support the original developer.</p>
+                    <p>Swaparr addresses the issue of stalled downloads and rewrote to support Huntarr. Visit Swaparr's <a href="https://github.com/ThijmenGThN/swaparr" target="_blank">GitHub</a> for more information and support the developer!</p>
                 </div>
             </div>
 
@@ -951,7 +950,7 @@ const SettingsForms = {
                         <input type="checkbox" id="swaparr_dry_run" ${settings.dry_run === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
-                    <p class="setting-help">Log actions but don't actually remove downloads</p>
+                    <p class="setting-help">Log actions but don't actually remove downloads. Useful for testing the first time!</p>
                 </div>
             </div>
             
@@ -959,7 +958,7 @@ const SettingsForms = {
                 <h3>Swaparr Status</h3>
                 <div id="swaparr_status_container">
                     <div class="button-container" style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
-                        <button type="button" id="reset_swaparr_strikes" class="action-button danger">
+                        <button type="button" id="reset_swaparr_strikes" class="action-button-small">
                             <i class="fas fa-trash"></i> Reset
                         </button>
                     </div>
@@ -979,23 +978,7 @@ const SettingsForms = {
             .then(data => {
                 let statusHTML = '';
                 
-                // Add stats for each app if available
-                if (data.statistics && Object.keys(data.statistics).length > 0) {
-                    statusHTML += '<h4>Statistics by App</h4><ul>';
-                    
-                    for (const [app, stats] of Object.entries(data.statistics)) {
-                        statusHTML += `<li><strong>${app.toUpperCase()}</strong>: `;
-                        if (stats.error) {
-                            statusHTML += `Error: ${stats.error}</li>`;
-                        } else {
-                            statusHTML += `${stats.currently_striked} currently striked, ${stats.removed} removed (${stats.total_tracked} total tracked)</li>`;
-                        }
-                    }
-                    
-                    statusHTML += '</ul>';
-                } else {
-                    statusHTML += '<p>No statistics available yet.</p>';
-                }
+                // No statistics display as requested
                 
                 statusContainer.innerHTML = statusHTML;
             })
@@ -1022,26 +1005,7 @@ const SettingsForms = {
                             statusContainer.innerHTML = `<p>Success: ${data.message}</p>`;
                             // Reload status after a short delay
                             setTimeout(() => {
-                                fetch('/api/swaparr/status')
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        let statusHTML = '';
-                                        if (data.statistics && Object.keys(data.statistics).length > 0) {
-                                            statusHTML += '<h4>Statistics by App</h4><ul>';
-                                            for (const [app, stats] of Object.entries(data.statistics)) {
-                                                statusHTML += `<li><strong>${app.toUpperCase()}</strong>: `;
-                                                if (stats.error) {
-                                                    statusHTML += `Error: ${stats.error}</li>`;
-                                                } else {
-                                                    statusHTML += `${stats.currently_striked} currently striked, ${stats.removed} removed (${stats.total_tracked} total tracked)</li>`;
-                                                }
-                                            }
-                                            statusHTML += '</ul>';
-                                        } else {
-                                            statusHTML += '<p>No statistics available yet.</p>';
-                                        }
-                                        statusContainer.innerHTML = statusHTML;
-                                    });
+                                statusContainer.innerHTML = ''; // No statistics display as requested
                             }, 1000);
                         } else {
                             statusContainer.innerHTML = `<p>Error: ${data.message}</p>`;
