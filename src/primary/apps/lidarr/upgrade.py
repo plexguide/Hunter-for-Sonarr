@@ -104,8 +104,8 @@ def process_cutoff_upgrades(
         command_id = lidarr_api.search_albums(
             api_url,
             api_key,
-            album_ids_to_search,
-            api_timeout=api_timeout
+            api_timeout,
+            album_ids_to_search
         )
         if command_id:
             lidarr_logger.debug(f"Upgrade album search command triggered with ID: {command_id} for albums: {album_ids_to_search}")
