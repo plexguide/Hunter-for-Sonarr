@@ -245,41 +245,34 @@ def process_missing_seasons_mode(
     """
     processed_any = False
     
-    series = sonarr_api.get_series(api_url, api_key, api_timeout)
-    if not series:
-        sonarr_logger.error("Failed to retrieve series list for processing missing seasons")
+    # Get all missing episodes in one call instead of per-series
+    missing_episodes = sonarr_api.get_missing_episodes(api_url, api_key, api_timeout, monitored_only)
+    if not missing_episodes:
+        sonarr_logger.info("No missing episodes found")
         return False
     
     # Group episodes by series and season
     missing_seasons = {}
-    for show in series:
-        if monitored_only and not show.get('monitored', False):
+    for episode in missing_episodes:
+        if monitored_only and not episode.get('monitored', False):
             continue
             
-        series_id = show.get('id')
+        series_id = episode.get('seriesId')
         if not series_id:
             continue
             
-        # Get all missing episodes for this series
-        series_missing = sonarr_api.get_missing_episodes(api_url, api_key, api_timeout, monitored_only=monitored_only, series_id=series_id)
+        season_number = episode.get('seasonNumber')
+        series_title = episode.get('series', {}).get('title', 'Unknown Series')
         
-        # Group by season number
-        for episode in series_missing:
-            if monitored_only and not episode.get('monitored', False):
-                continue
-                
-            season_number = episode.get('seasonNumber')
-            series_title = show.get('title', 'Unknown Series')
-            
-            key = f"{series_id}:{season_number}"
-            if key not in missing_seasons:
-                missing_seasons[key] = {
-                    'series_id': series_id,
-                    'season_number': season_number,
-                    'series_title': series_title,
-                    'episode_count': 0
-                }
-            missing_seasons[key]['episode_count'] += 1
+        key = f"{series_id}:{season_number}"
+        if key not in missing_seasons:
+            missing_seasons[key] = {
+                'series_id': series_id,
+                'season_number': season_number,
+                'series_title': series_title,
+                'episode_count': 0
+            }
+        missing_seasons[key]['episode_count'] += 1
     
     # Convert to list and sort by episode count (most missing episodes first)
     seasons_list = list(missing_seasons.values())
@@ -288,6 +281,8 @@ def process_missing_seasons_mode(
     # Apply randomization if requested
     if random_missing:
         random.shuffle(seasons_list)
+    
+    sonarr_logger.info(f"Found {len(seasons_list)} seasons with missing episodes")
     
     # Process up to hunt_missing_items seasons
     processed_count = 0
@@ -315,10 +310,13 @@ def process_missing_seasons_mode(
             
             # Wait for command to complete if configured
             if command_wait_delay > 0 and command_wait_attempts > 0:
-                wait_for_command(
+                if wait_for_command(
                     api_url, api_key, api_timeout, command_id, 
                     command_wait_delay, command_wait_attempts, "Season Search", stop_check
-                )
+                ):
+                    # Increment stats by the number of episodes in the season
+                    increment_stat("sonarr", "hunted", episode_count)
+                    sonarr_logger.debug(f"Incremented sonarr hunted statistics by {episode_count} (full season)")
     
     sonarr_logger.info(f"Processed {processed_count} missing season packs for Sonarr.")
     return processed_any
