@@ -950,60 +950,53 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Swaparr Status</h3>
                 <div id="swaparr_status_container">
-                    <div class="button-container" style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <button type="button" id="check_swaparr_status" class="action-button">Check Status</button>
-                        <button type="button" id="reset_swaparr_strikes" class="action-button">Reset All Strikes</button>
+                    <div class="button-container" style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+                        <button type="button" id="reset_swaparr_strikes" class="action-button-small">Reset All Strikes</button>
                     </div>
                     <div id="swaparr_status" class="status-display">
-                        <p>Click "Check Status" to view the current status of Swaparr</p>
+                        <p>Loading Swaparr status...</p>
                     </div>
                 </div>
             </div>
         `;
 
-        // Add event listeners for the Swaparr-specific buttons
-        const checkStatusBtn = container.querySelector('#check_swaparr_status');
+        // Load Swaparr status automatically
         const resetStrikesBtn = container.querySelector('#reset_swaparr_strikes');
         const statusContainer = container.querySelector('#swaparr_status');
-
-        if (checkStatusBtn) {
-            checkStatusBtn.addEventListener('click', function() {
-                statusContainer.innerHTML = '<p>Loading status...</p>';
+        
+        fetch('/api/swaparr/status')
+            .then(response => response.json())
+            .then(data => {
+                let statusHTML = '<h4>Swaparr Status</h4>';
                 
-                fetch('/api/swaparr/status')
-                    .then(response => response.json())
-                    .then(data => {
-                        let statusHTML = '<h4>Swaparr Status</h4>';
-                        
-                        // Add general status
-                        statusHTML += `<p>Swaparr is currently <strong>${data.enabled ? 'ENABLED' : 'DISABLED'}</strong></p>`;
-                        
-                        // Add stats for each app if available
-                        if (data.statistics && Object.keys(data.statistics).length > 0) {
-                            statusHTML += '<h4>Statistics by App</h4><ul>';
-                            
-                            for (const [app, stats] of Object.entries(data.statistics)) {
-                                statusHTML += `<li><strong>${app.toUpperCase()}</strong>: `;
-                                if (stats.error) {
-                                    statusHTML += `Error: ${stats.error}</li>`;
-                                } else {
-                                    statusHTML += `${stats.currently_striked} currently striked, ${stats.removed} removed (${stats.total_tracked} total tracked)</li>`;
-                                }
-                            }
-                            
-                            statusHTML += '</ul>';
+                // Add general status
+                statusHTML += `<p>Swaparr is currently <strong>${data.enabled ? 'ENABLED' : 'DISABLED'}</strong></p>`;
+                
+                // Add stats for each app if available
+                if (data.statistics && Object.keys(data.statistics).length > 0) {
+                    statusHTML += '<h4>Statistics by App</h4><ul>';
+                    
+                    for (const [app, stats] of Object.entries(data.statistics)) {
+                        statusHTML += `<li><strong>${app.toUpperCase()}</strong>: `;
+                        if (stats.error) {
+                            statusHTML += `Error: ${stats.error}</li>`;
                         } else {
-                            statusHTML += '<p>No statistics available yet.</p>';
+                            statusHTML += `${stats.currently_striked} currently striked, ${stats.removed} removed (${stats.total_tracked} total tracked)</li>`;
                         }
-                        
-                        statusContainer.innerHTML = statusHTML;
-                    })
-                    .catch(error => {
-                        statusContainer.innerHTML = `<p>Error fetching status: ${error.message}</p>`;
-                    });
+                    }
+                    
+                    statusHTML += '</ul>';
+                } else {
+                    statusHTML += '<p>No statistics available yet.</p>';
+                }
+                
+                statusContainer.innerHTML = statusHTML;
+            })
+            .catch(error => {
+                statusContainer.innerHTML = `<p>Error fetching status: ${error.message}</p>`;
             });
-        }
-
+            
+        // Add event listener for the Reset Strikes button
         if (resetStrikesBtn) {
             resetStrikesBtn.addEventListener('click', function() {
                 if (confirm('Are you sure you want to reset all Swaparr strikes? This will clear the strike history for all apps.')) {
@@ -1020,6 +1013,30 @@ const SettingsForms = {
                     .then(data => {
                         if (data.success) {
                             statusContainer.innerHTML = `<p>Success: ${data.message}</p>`;
+                            // Reload status after a short delay
+                            setTimeout(() => {
+                                fetch('/api/swaparr/status')
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        let statusHTML = '<h4>Swaparr Status</h4>';
+                                        statusHTML += `<p>Swaparr is currently <strong>${data.enabled ? 'ENABLED' : 'DISABLED'}</strong></p>`;
+                                        if (data.statistics && Object.keys(data.statistics).length > 0) {
+                                            statusHTML += '<h4>Statistics by App</h4><ul>';
+                                            for (const [app, stats] of Object.entries(data.statistics)) {
+                                                statusHTML += `<li><strong>${app.toUpperCase()}</strong>: `;
+                                                if (stats.error) {
+                                                    statusHTML += `Error: ${stats.error}</li>`;
+                                                } else {
+                                                    statusHTML += `${stats.currently_striked} currently striked, ${stats.removed} removed (${stats.total_tracked} total tracked)</li>`;
+                                                }
+                                            }
+                                            statusHTML += '</ul>';
+                                        } else {
+                                            statusHTML += '<p>No statistics available yet.</p>';
+                                        }
+                                        statusContainer.innerHTML = statusHTML;
+                                    });
+                            }, 1000);
                         } else {
                             statusContainer.innerHTML = `<p>Error: ${data.message}</p>`;
                         }
