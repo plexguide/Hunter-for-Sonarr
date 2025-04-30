@@ -799,7 +799,7 @@ const SettingsForms = {
                         <option value="v3" ${settings.whisparr_version === 'v3' || !settings.whisparr_version ? 'selected' : ''}>v3 (Eros)</option>
                         <option value="v2" ${settings.whisparr_version === 'v2' ? 'selected' : ''}>v2 (Legacy)</option>
                     </select>
-                    <p class="setting-help">Select the API version of your Whisparr installation. Default is v3 (Eros).</p>
+                    <p class="setting-help">Select the API version of your Whisparr installation. Default is v3 (Eros). NOTE: Only v2 works for now!</p>
                 </div>
             </div>
             
