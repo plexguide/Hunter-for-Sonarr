@@ -164,14 +164,34 @@ def logs_stream():
             # Determine which log files to follow
             if app_type == 'all':
                 log_files_to_follow = list(KNOWN_LOG_FILES.items())
-            else:
-                log_file = KNOWN_LOG_FILES.get(app_type)
+            elif app_type == 'system':
+                # For system logs, only follow the main log file
+                log_file = KNOWN_LOG_FILES.get('system')
                 if log_file:
-                    log_files_to_follow = [(app_type, log_file)]
+                    log_files_to_follow = [('system', log_file)]
                 else:
-                    web_logger.warning(f"No log file found for app type: {app_type}")
+                    web_logger.warning(f"No log file found for system logs")
+                    yield f"data: No logs available for system\n\n"
+                    return
+            else:
+                # For app-specific logs, follow both the app's log file and the system log
+                # as some app-related messages might be in the system log
+                log_files = []
+                app_log_file = KNOWN_LOG_FILES.get(app_type)
+                if app_log_file:
+                    log_files.append((app_type, app_log_file))
+                
+                # Also include system log for app-specific messages
+                system_log_file = KNOWN_LOG_FILES.get('system')
+                if system_log_file:
+                    log_files.append(('system', system_log_file))
+                
+                if not log_files:
+                    web_logger.warning(f"No log files found for app type: {app_type}")
                     yield f"data: No logs available for {app_type}\n\n"
                     return
+                
+                log_files_to_follow = log_files
 
             # Send a connection confirmation message
             yield f"data: Starting log stream for {app_type}...\n\n"
@@ -257,6 +277,29 @@ def logs_stream():
                                     line = f.readline()
                                     if not line:
                                         break # End of file reached
+                                    
+                                    # For app-specific tabs, filter the logs
+                                    if app_type != 'all' and app_type != 'system' and name == 'system':
+                                        # Only include system logs that mention the specific app
+                                        # Look for huntarr.app_type in the log line
+                                        app_pattern = f"huntarr.{app_type}"
+                                        # Also look for specific Swaparr-related logs
+                                        swaparr_patterns = [
+                                            "Added strike",
+                                            "Max strikes reached",
+                                            "removing download",
+                                            "Would have removed",
+                                            "processing stalled downloads"
+                                        ]
+                                        
+                                        # For Swaparr, check for both patterns
+                                        if app_type == 'swaparr':
+                                            if not (app_pattern in line or any(pattern in line for pattern in swaparr_patterns)):
+                                                continue
+                                        # For other apps, just check for the app pattern
+                                        elif app_pattern not in line:
+                                            continue
+                                    
                                     new_lines.append(line)
                                     lines_read += 1
 
