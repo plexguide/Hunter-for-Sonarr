@@ -487,34 +487,89 @@ let huntarrUI = {
                     const logRegex = /^(?:\\[(\\w+)\\]\\s)?([\\d\\-]+\\s[\\d:]+)\\s-\\s([\\w\\.]+)\\s-\\s(\\w+)\\s-\\s(.*)$/;
                     const match = logString.match(logRegex);
 
+                    // First determine the app type for this log message
+                    let logAppType = 'system'; // Default to system
+                    
+                    if (match && match[1]) {
+                        // If we have a match with app tag like [SONARR], use that
+                        logAppType = match[1].toLowerCase();
+                    } else if (match && match[3]) {
+                        // Otherwise try to determine from the logger name (e.g., huntarr.sonarr)
+                        const loggerParts = match[3].split('.');
+                        if (loggerParts.length > 1) {
+                            const possibleApp = loggerParts[1].toLowerCase();
+                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'swaparr'].includes(possibleApp)) {
+                                logAppType = possibleApp;
+                            }
+                        }
+                    }
+                    
+                    // Special case for system logs that may contain app-specific patterns
+                    if (logAppType === 'system') {
+                        // App-specific patterns that may appear in system logs
+                        const patterns = {
+                            'sonarr': ['episode', 'series', 'tv show', 'sonarr'],
+                            'radarr': ['movie', 'film', 'radarr'],
+                            'lidarr': ['album', 'artist', 'track', 'music', 'lidarr'],
+                            'readarr': ['book', 'author', 'readarr'],
+                            'whisparr': ['scene', 'adult', 'whisparr'],
+                            'swaparr': ['added strike', 'max strikes reached', 'would have removed', 'strikes, removing download', 'processing stalled downloads', 'swaparr']
+                        };
+                        
+                        // Check each app's patterns
+                        for (const [app, appPatterns] of Object.entries(patterns)) {
+                            if (appPatterns.some(pattern => logString.toLowerCase().includes(pattern))) {
+                                logAppType = app;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Determine if this log should be displayed based on the selected app tab
+                    const shouldDisplay = 
+                        this.currentLogApp === 'all' || 
+                        this.currentLogApp === logAppType;
+
+                    if (!shouldDisplay) return;
+
                     const logEntry = document.createElement('div');
                     logEntry.className = 'log-entry';
 
                     if (match) {
                         const [, appName, timestamp, loggerName, level, message] = match;
                         
-                        // Use backticks for template literal
                         logEntry.innerHTML = ` 
                             <span class="log-timestamp" title="${timestamp}">${timestamp.split(' ')[1]}</span> 
                             ${appName ? `<span class="log-app" title="Source: ${appName}">[${appName}]</span>` : ''}
                             <span class="log-level log-level-${level.toLowerCase()}" title="Level: ${level}">${level}</span>
                             <span class="log-logger" title="Logger: ${loggerName}">(${loggerName.replace('huntarr.', '')})</span>
                             <span class="log-message">${message}</span>
-                        `; // End template literal with backtick
+                        `;
                         logEntry.classList.add(`log-${level.toLowerCase()}`);
-
                     } else {
                         // Fallback for lines that don't match the expected format
                         logEntry.innerHTML = `<span class="log-message">${logString}</span>`;
+                        
                         // Basic level detection for fallback
                         if (logString.includes('ERROR')) logEntry.classList.add('log-error');
-                        else if (logString.includes('WARN') || logString.includes('WARNING')) logEntry.classList.add('log-warning'); // Added WARN check
+                        else if (logString.includes('WARN') || logString.includes('WARNING')) logEntry.classList.add('log-warning');
                         else if (logString.includes('DEBUG')) logEntry.classList.add('log-debug');
                         else logEntry.classList.add('log-info');
                     }
-
+                    
                     // Add to logs container
                     this.elements.logsContainer.appendChild(logEntry);
+                    
+                    // Special event dispatching for Swaparr logs
+                    if (logAppType === 'swaparr' && this.currentLogApp === 'swaparr') {
+                        // Dispatch a custom event for swaparr.js to process
+                        const swaparrEvent = new CustomEvent('swaparrLogReceived', {
+                            detail: {
+                                logData: match && match[5] ? match[5] : logString
+                            }
+                        });
+                        document.dispatchEvent(swaparrEvent);
+                    }
                     
                     // Auto-scroll to bottom if enabled
                     if (this.autoScroll) {
@@ -777,14 +832,41 @@ let huntarrUI = {
         const settings = {};
         const form = document.getElementById(`${app}Settings`);
         if (!form) {
-            console.error(`[huntarrUI] Form not found for app: ${app}`);
-            return null; // Return null if form doesn't exist
+            console.error(`[huntarrUI] Settings form for ${app} not found.`);
+            return null;
         }
 
-        settings.instances = []; // Always initialize instances array
+        // Special handling for Swaparr which has a different structure
+        if (app === 'swaparr') {
+            // Get all inputs directly without filtering for instance fields
+            const inputs = form.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                // Extract the field name without the app prefix
+                let key = input.id;
+                if (key.startsWith(`${app}_`)) {
+                    key = key.substring(app.length + 1);
+                }
+                
+                // Store the value based on input type
+                if (input.type === 'checkbox') {
+                    settings[key] = input.checked;
+                } else if (input.type === 'number') {
+                    settings[key] = input.value === '' ? null : parseInt(input.value, 10);
+                } else {
+                    settings[key] = input.value.trim();
+                }
+            });
+            
+            console.log(`[huntarrUI] Collected Swaparr settings:`, settings);
+            return settings;
+        }
 
-        // Check if multi-instance UI elements exist (like Sonarr)
+        // Handle apps that use instances (Sonarr, Radarr, etc.)
+        // Get all instance items in the form
         const instanceItems = form.querySelectorAll('.instance-item');
+        settings.instances = [];
+        
+        // Check if multi-instance UI elements exist (like Sonarr)
         if (instanceItems.length > 0) {
             console.log(`[huntarrUI] Found ${instanceItems.length} instance items for ${app}. Processing multi-instance mode.`);
             // Multi-instance logic (current Sonarr logic)

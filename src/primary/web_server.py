@@ -36,7 +36,7 @@ from src.primary.auth import (
 from src.primary.routes.common import common_bp
 
 # Import blueprints for each app from the centralized blueprints module
-from src.primary.apps.blueprints import sonarr_bp, radarr_bp, lidarr_bp, readarr_bp, whisparr_bp
+from src.primary.apps.blueprints import sonarr_bp, radarr_bp, lidarr_bp, readarr_bp, whisparr_bp, swaparr_bp
 
 # Disable Flask default logging
 log = logging.getLogger('werkzeug')
@@ -57,6 +57,7 @@ app.register_blueprint(radarr_bp, url_prefix='/api/radarr')
 app.register_blueprint(lidarr_bp, url_prefix='/api/lidarr')
 app.register_blueprint(readarr_bp, url_prefix='/api/readarr')
 app.register_blueprint(whisparr_bp, url_prefix='/api/whisparr')
+app.register_blueprint(swaparr_bp, url_prefix='/api/swaparr')
 
 # Register the authentication check to run before requests
 app.before_request(authenticate_request)
@@ -73,6 +74,7 @@ KNOWN_LOG_FILES = {
     "lidarr": APP_LOG_FILES.get("lidarr"),
     "readarr": APP_LOG_FILES.get("readarr"),
     "whisparr": APP_LOG_FILES.get("whisparr"),
+    "swaparr": APP_LOG_FILES.get("swaparr"),  # Added Swaparr to known log files
     "system": MAIN_LOG_FILE, # Map 'system' to the main huntarr log
 }
 # Filter out None values if an app log file doesn't exist
@@ -152,155 +154,167 @@ def logs_stream():
 
 
     def generate():
-        """Generate log events for the SSE stream.""" # Corrected docstring
-        client_ip = request.remote_addr # Get client IP for logging
+        """Generate log events for the SSE stream."""
+        client_ip = request.remote_addr
         web_logger.info(f"Log stream generator started for {app_type} (Client: {client_ip})")
         try:
             # Initialize last activity time
             last_activity = time.time()
 
             # Determine which log files to follow
+            log_files_to_follow = []
             if app_type == 'all':
+                # Follow all log files for 'all' type
                 log_files_to_follow = list(KNOWN_LOG_FILES.items())
+                web_logger.debug(f"Following all log files for 'all' type")
+            elif app_type == 'system':
+                # For system, only follow main log
+                system_log = KNOWN_LOG_FILES.get('system')
+                if system_log:
+                    log_files_to_follow = [('system', system_log)]
+                    web_logger.debug(f"Following system log: {system_log}")
             else:
-                log_file = KNOWN_LOG_FILES.get(app_type)
-                if log_file:
-                    log_files_to_follow = [(app_type, log_file)]
-                else:
-                    web_logger.warning(f"No log file found for app type: {app_type}")
-                    yield f"data: No logs available for {app_type}\n\n"
-                    return
+                # For specific app, follow that app's log
+                app_log = KNOWN_LOG_FILES.get(app_type)
+                if app_log:
+                    log_files_to_follow = [(app_type, app_log)]
+                    web_logger.debug(f"Following {app_type} log: {app_log}")
+                
+                # Also include system log for related messages
+                system_log = KNOWN_LOG_FILES.get('system')
+                if system_log:
+                    log_files_to_follow.append(('system', system_log))
+                    web_logger.debug(f"Also following system log for {app_type} messages")
 
-            # Send a connection confirmation message
+            if not log_files_to_follow:
+                web_logger.warning(f"No log files found for app type: {app_type}")
+                yield f"data: No logs available for {app_type}\n\n"
+                return
+
+            # Send confirmation
             yield f"data: Starting log stream for {app_type}...\n\n"
-            web_logger.debug(f"Sent connection confirmation for {app_type} (Client: {client_ip})")
+            web_logger.debug(f"Sent confirmation for {app_type} (Client: {client_ip})")
 
-            # Track file positions for each log
+            # Track file positions
             positions = {}
             last_check = {}
-
-            # Keep-alive counter to send periodic keep-alive messages
             keep_alive_counter = 0
 
-            # Convert string paths to Path objects
+            # Convert to Path objects
             log_files_to_follow = [(name, Path(path) if isinstance(path, str) else path)
-                                  for name, path in log_files_to_follow if path] # Ensure path is not None
+                               for name, path in log_files_to_follow if path]
 
-            # Main log streaming loop
+            # Main streaming loop
             while True:
                 had_content = False
                 current_time = time.time()
 
-                # Update client activity timestamp periodically
+                # Update client activity
                 if current_time - last_activity > 10:
                     with app.log_stream_lock:
-                        # Check if client is still tracked before updating
                         if client_id in app.active_log_streams:
-                             app.active_log_streams[client_id] = current_time
+                            app.active_log_streams[client_id] = current_time
                         else:
-                             # Client might have been removed due to timeout or disconnect
-                             web_logger.warning(f"Client {client_id} no longer in active streams during activity update. Stopping generator.")
-                             break # Exit the loop if client is gone
+                            web_logger.warning(f"Client {client_id} gone. Stopping generator.")
+                            break
                     last_activity = current_time
 
-                # Increment keep-alive counter
                 keep_alive_counter += 1
 
-                # Check each log file
+                # Check each file
                 for name, path in log_files_to_follow:
                     try:
-                        # Skip checking too frequently to reduce CPU usage
+                        # Limit check frequency
                         now = datetime.datetime.now()
-                        # Use a shorter interval (e.g., 0.2s) for potentially faster updates
                         if name in last_check and (now - last_check[name]).total_seconds() < 0.2:
                             continue
-
+                        
                         last_check[name] = now
 
-                        # Check if file exists
+                        # Check file exists
                         if not path.exists():
-                            # Log only once if file doesn't exist
-                            if positions.get(name) != -1: # Use -1 to mark as 'not found'
-                                web_logger.warning(f"Log file {path} not found for {name}. Skipping.")
-                                positions[name] = -1 # Mark as not found
+                            if positions.get(name) != -1:
+                                web_logger.warning(f"Log file {path} not found. Skipping.")
+                                positions[name] = -1
                             continue
                         elif positions.get(name) == -1:
-                             web_logger.info(f"Log file {path} found again for {name}. Resuming.")
-                             positions.pop(name, None) # Remove the 'not found' marker
+                            web_logger.info(f"Log file {path} found again. Resuming.")
+                            positions.pop(name, None)
 
-                        # Get current size to detect truncation
+                        # Get size
                         try:
                             current_size = path.stat().st_size
                         except FileNotFoundError:
-                             web_logger.warning(f"Log file {path} disappeared during stat check for {name}. Skipping.")
-                             positions[name] = -1 # Mark as not found
-                             continue
+                            web_logger.warning(f"Log file {path} disappeared. Skipping.")
+                            positions[name] = -1
+                            continue
 
-                        # Initialize position if needed or handle truncation
+                        # Init position or handle truncation
                         if name not in positions or current_size < positions.get(name, 0):
-                            start_pos = max(0, current_size - 5120) # Start near the end
-                            web_logger.debug(f"Initializing/Resetting position for {name} ({path}) to {start_pos} (size: {current_size})")
+                            start_pos = max(0, current_size - 5120)
+                            web_logger.debug(f"Init position for {name}: {start_pos}")
                             positions[name] = start_pos
 
-                        # Read new content - use a with block for proper resource cleanup
+                        # Read content
                         try:
                             with open(path, 'r', encoding='utf-8', errors='ignore') as f:
                                 f.seek(positions[name])
-                                # Read a limited number of lines at once
                                 new_lines = []
                                 lines_read = 0
-                                max_lines_per_check = 100 # Limit lines per check
+                                max_lines = 100
 
-                                while lines_read < max_lines_per_check:
+                                while lines_read < max_lines:
                                     line = f.readline()
                                     if not line:
-                                        break # End of file reached
-                                    new_lines.append(line)
+                                        break
+                                    
+                                    # Only filter when reading system log for specific app tab
+                                    if app_type != 'all' and app_type != 'system' and name == 'system':
+                                        # Include system log entries that mention this app name
+                                        # or contain patterns specific to the app
+                                        app_pattern = f"huntarr.{app_type}"
+                                        include_line = (
+                                            app_type.lower() in line.lower() or 
+                                            app_pattern in line
+                                        )
+                                    else:
+                                        include_line = True
+                                    
+                                    if include_line:
+                                        new_lines.append(line)
+                                    
                                     lines_read += 1
 
+                                # Process collected lines
                                 if new_lines:
                                     had_content = True
-                                    new_position = f.tell()
-                                    web_logger.debug(f"Read {len(new_lines)} new lines from {name}. New position: {new_position}")
-                                    positions[name] = new_position
+                                    positions[name] = f.tell()
                                     for line in new_lines:
-                                        stripped_line = line.strip()
-                                        if stripped_line:  # Only send non-empty lines
-                                            # Prefix with app name for clarity on 'all' tab
+                                        stripped = line.strip()
+                                        if stripped:
                                             prefix = f"[{name.upper()}] " if app_type == 'all' else ""
-                                            # Fix: proper SSE format with single \n not escaped \n\n
-                                            yield f"data: {prefix}{stripped_line}\n\n"
+                                            yield f"data: {prefix}{stripped}\n\n"
+                        
                         except FileNotFoundError:
-                             web_logger.warning(f"Log file {path} disappeared during read for {name}. Skipping.")
-                             positions[name] = -1 # Mark as not found
-                             continue
-                        except Exception as read_err:
-                             web_logger.error(f"Error reading log file {path} for {name}: {read_err}", exc_info=True)
-                             yield f"data: ERROR: Problem reading {name} log: {str(read_err)}\n\n"
-                             # Don't reset position immediately, maybe temporary issue
-                             # Consider adding a backoff mechanism if errors persist
+                            web_logger.warning(f"Log file {path} disappeared during read.")
+                            positions[name] = -1
+                        except Exception as e:
+                            web_logger.error(f"Error reading {path}: {e}")
+                            yield f"data: ERROR: Problem reading log: {str(e)}\n\n"
+                    
+                    except Exception as e:
+                        web_logger.error(f"Error processing {name}: {e}")
+                        yield f"data: ERROR: Unexpected issue with log.\n\n"
 
-                    except Exception as file_loop_err:
-                        # Catch errors related to a specific file but continue the main loop
-                        web_logger.error(f"Error processing file {name} ({path}) in log stream: {file_loop_err}", exc_info=True)
-                        yield f"data: ERROR: Unexpected issue processing {name} log.\n\n"
-
-                # Send a keep-alive comment every ~15 seconds (adjust interval if needed)
-                # but only if we haven't had any real content in this iteration
+                # Keep-alive or sleep
                 if not had_content:
-                    # Interval: 15 seconds / 0.2s sleep = 75 checks
                     if keep_alive_counter >= 75:
                         yield f": keepalive {time.time()}\n\n"
-                        web_logger.debug(f"Sent keepalive for {app_type} (Client: {client_ip})")
                         keep_alive_counter = 0
-
-                    # Sleep longer when idle
                     time.sleep(0.2)
                 else:
-                    # Reset keep-alive counter when we've sent actual content
                     keep_alive_counter = 0
-                    # Shorter sleep when actively sending content to be responsive
-                    time.sleep(0.05) # Reduced sleep when active
+                    time.sleep(0.05)
 
         except GeneratorExit:
             # Clean up when client disconnects

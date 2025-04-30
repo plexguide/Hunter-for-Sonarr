@@ -900,6 +900,160 @@ const SettingsForms = {
         SettingsForms.setupInstanceManagement(container, 'whisparr', settings.instances.length);
     },
     
+    // Generate Swaparr settings form
+    generateSwaparrForm: function(container, settings = {}) {
+        // Create the HTML for the Swaparr settings form
+        container.innerHTML = `
+            <div class="settings-group">
+                <h3>Swaparr (Beta)</h3>
+                <div class="setting-item">
+                    <p>Swaparr addresses the issue of stalled downloads and rewrote to support Huntarr. Visit Swaparr's <a href="https://github.com/ThijmenGThN/swaparr" target="_blank">GitHub</a> for more information and support the developer!</p>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <h3>Swaparr Settings</h3>
+                <div class="setting-item">
+                    <label for="swaparr_enabled">Enable Swaparr:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="swaparr_enabled" ${settings.enabled ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Enable automatic handling of stalled downloads</p>
+                </div>
+                <div class="setting-item">
+                    <label for="swaparr_max_strikes">Maximum Strikes:</label>
+                    <input type="number" id="swaparr_max_strikes" min="1" max="10" value="${settings.max_strikes || 3}">
+                    <p class="setting-help">Number of strikes before removing a stalled download</p>
+                </div>
+                <div class="setting-item">
+                    <label for="swaparr_max_download_time">Max Download Time:</label>
+                    <input type="text" id="swaparr_max_download_time" value="${settings.max_download_time || '2h'}">
+                    <p class="setting-help">Maximum time a download can be stalled (e.g., 30m, 2h, 1d)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="swaparr_ignore_above_size">Ignore Above Size:</label>
+                    <input type="text" id="swaparr_ignore_above_size" value="${settings.ignore_above_size || '25GB'}">
+                    <p class="setting-help">Ignore files larger than this size (e.g., 1GB, 25GB, 1TB)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="swaparr_remove_from_client">Remove From Client:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="swaparr_remove_from_client" ${settings.remove_from_client !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Remove the download from the torrent/usenet client when removed</p>
+                </div>
+                <div class="setting-item">
+                    <label for="swaparr_dry_run">Dry Run Mode:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="swaparr_dry_run" ${settings.dry_run === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Log actions but don't actually remove downloads. Useful for testing the first time!</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Swaparr Status</h3>
+                <div id="swaparr_status_container">
+                    <div class="button-container" style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+                        <button type="button" id="reset_swaparr_strikes" style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; cursor: pointer;">
+                            <i class="fas fa-trash"></i> Reset
+                        </button>
+                    </div>
+                    <div id="swaparr_status" class="status-display">
+                        <p>Loading Swaparr status...</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Load Swaparr status automatically
+        const resetStrikesBtn = container.querySelector('#reset_swaparr_strikes');
+        const statusContainer = container.querySelector('#swaparr_status');
+        
+        fetch('/api/swaparr/status')
+            .then(response => response.json())
+            .then(data => {
+                let statusHTML = '';
+                
+                // Add stats for each app if available
+                if (data.statistics && Object.keys(data.statistics).length > 0) {
+                    statusHTML += '<ul>';
+                    
+                    for (const [app, stats] of Object.entries(data.statistics)) {
+                        statusHTML += `<li><strong>${app.toUpperCase()}</strong>: `;
+                        if (stats.error) {
+                            statusHTML += `Error: ${stats.error}</li>`;
+                        } else {
+                            statusHTML += `${stats.currently_striked} currently striked, ${stats.removed} removed (${stats.total_tracked} total tracked)</li>`;
+                        }
+                    }
+                    
+                    statusHTML += '</ul>';
+                } else {
+                    statusHTML += '<p>No statistics available yet.</p>';
+                }
+                
+                statusContainer.innerHTML = statusHTML;
+            })
+            .catch(error => {
+                statusContainer.innerHTML = `<p>Error fetching status: ${error.message}</p>`;
+            });
+            
+        // Add event listener for the Reset Strikes button
+        if (resetStrikesBtn) {
+            resetStrikesBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to reset all Swaparr strikes? This will clear the strike history for all apps.')) {
+                    statusContainer.innerHTML = '<p>Resetting strikes...</p>';
+                    
+                    fetch('/api/swaparr/reset', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            statusContainer.innerHTML = `<p>Success: ${data.message}</p>`;
+                            // Reload status after a short delay
+                            setTimeout(() => {
+                                fetch('/api/swaparr/status')
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        let statusHTML = '';
+                                        if (data.statistics && Object.keys(data.statistics).length > 0) {
+                                            statusHTML += '<ul>';
+                                            for (const [app, stats] of Object.entries(data.statistics)) {
+                                                statusHTML += `<li><strong>${app.toUpperCase()}</strong>: `;
+                                                if (stats.error) {
+                                                    statusHTML += `Error: ${stats.error}</li>`;
+                                                } else {
+                                                    statusHTML += `${stats.currently_striked} currently striked, ${stats.removed} removed (${stats.total_tracked} total tracked)</li>`;
+                                                }
+                                            }
+                                            statusHTML += '</ul>';
+                                        } else {
+                                            statusHTML += '<p>No statistics available yet.</p>';
+                                        }
+                                        statusContainer.innerHTML = statusHTML;
+                                    });
+                            }, 1000);
+                        } else {
+                            statusContainer.innerHTML = `<p>Error: ${data.message}</p>`;
+                        }
+                    })
+                    .catch(error => {
+                        statusContainer.innerHTML = `<p>Error resetting strikes: ${error.message}</p>`;
+                    });
+                }
+            });
+        }
+    },
+    
     // Generate General settings form
     generateGeneralForm: function(container, settings = {}) {
         container.innerHTML = `
