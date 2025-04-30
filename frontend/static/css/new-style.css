@@ -1065,3 +1065,101 @@ input:checked + .slider:before {
 .connection-status.testing {
     color: var(--accent-color);
 }
+
+/* Swaparr specific styles */
+.swaparr-panel {
+    margin-bottom: 15px;
+    border-radius: 8px;
+    background-color: var(--bg-secondary);
+    border-left: 4px solid var(--accent-color);
+}
+
+.swaparr-config {
+    padding: 12px;
+}
+
+.swaparr-config h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--accent-color);
+}
+
+.swaparr-config-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.swaparr-config-content span {
+    background-color: var(--bg-tertiary);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.swaparr-table {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 15px;
+}
+
+.swaparr-table table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.swaparr-table th {
+    background-color: var(--bg-tertiary);
+    padding: 10px;
+    text-align: left;
+    color: var(--text-secondary);
+}
+
+.swaparr-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--bg-tertiary);
+}
+
+.swaparr-status-striked {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.swaparr-status-pending {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.swaparr-status-ignored {
+    background-color: rgba(108, 117, 125, 0.1);
+}
+
+.swaparr-status-normal {
+    background-color: rgba(25, 135, 84, 0.1);
+}
+
+.swaparr-status-removed {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* When in dark mode */
+.dark-theme .swaparr-status-striked {
+    background-color: rgba(255, 193, 7, 0.2);
+}
+
+.dark-theme .swaparr-status-pending {
+    background-color: rgba(13, 110, 253, 0.2);
+}
+
+.dark-theme .swaparr-status-ignored {
+    background-color: rgba(108, 117, 125, 0.2);
+}
+
+.dark-theme .swaparr-status-normal {
+    background-color: rgba(25, 135, 84, 0.2);
+}
+
+.dark-theme .swaparr-status-removed {
+    background-color: rgba(220, 53, 69, 0.2);
+}

@@ -487,34 +487,105 @@ let huntarrUI = {
                     const logRegex = /^(?:\\[(\\w+)\\]\\s)?([\\d\\-]+\\s[\\d:]+)\\s-\\s([\\w\\.]+)\\s-\\s(\\w+)\\s-\\s(.*)$/;
                     const match = logString.match(logRegex);
 
+                    // First determine the app type for this log message
+                    let logAppType = 'system'; // Default to system
+                    
+                    if (match && match[1]) {
+                        // If we have a match with app tag like [SONARR], use that
+                        logAppType = match[1].toLowerCase();
+                    } else if (match && match[3]) {
+                        // Otherwise try to determine from the logger name (e.g., huntarr.sonarr)
+                        const loggerParts = match[3].split('.');
+                        if (loggerParts.length > 1) {
+                            const possibleApp = loggerParts[1].toLowerCase();
+                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'swaparr'].includes(possibleApp)) {
+                                logAppType = possibleApp;
+                            }
+                        }
+                    }
+                    
+                    // Special case for Swaparr-related system logs (added strikes, etc.)
+                    if (logAppType === 'system' && 
+                        (logString.includes('Added strike') || 
+                         logString.includes('Max strikes reached') || 
+                         logString.includes('Would have removed') ||
+                         logString.includes('strikes, removing download') ||
+                         logString.includes('processing stalled downloads'))) {
+                        logAppType = 'swaparr';
+                    }
+
+                    // Determine if this log should be displayed based on the selected app tab
+                    const shouldDisplay = 
+                        this.currentLogApp === 'all' || 
+                        this.currentLogApp === logAppType;
+
+                    if (!shouldDisplay) return;
+
                     const logEntry = document.createElement('div');
                     logEntry.className = 'log-entry';
 
-                    if (match) {
-                        const [, appName, timestamp, loggerName, level, message] = match;
+                    // Special handling for Swaparr logs to enable table view
+                    if (logAppType === 'swaparr' && this.currentLogApp === 'swaparr') {
+                        if (match) {
+                            const [, appName, timestamp, loggerName, level, message] = match;
+                            
+                            logEntry.innerHTML = ` 
+                                <span class="log-timestamp" title="${timestamp}">${timestamp.split(' ')[1]}</span> 
+                                ${appName ? `<span class="log-app" title="Source: ${appName}">[${appName}]</span>` : ''}
+                                <span class="log-level log-level-${level.toLowerCase()}" title="Level: ${level}">${level}</span>
+                                <span class="log-logger" title="Logger: ${loggerName}">(${loggerName.replace('huntarr.', '')})</span>
+                                <span class="log-message">${message}</span>
+                            `;
+                            logEntry.classList.add(`log-${level.toLowerCase()}`);
+                        } else {
+                            // Fallback for lines that don't match the expected format
+                            logEntry.innerHTML = `<span class="log-message">${logString}</span>`;
+                            
+                            // Basic level detection for fallback
+                            if (logString.includes('ERROR')) logEntry.classList.add('log-error');
+                            else if (logString.includes('WARN') || logString.includes('WARNING')) logEntry.classList.add('log-warning');
+                            else if (logString.includes('DEBUG')) logEntry.classList.add('log-debug');
+                            else logEntry.classList.add('log-info');
+                        }
                         
-                        // Use backticks for template literal
-                        logEntry.innerHTML = ` 
-                            <span class="log-timestamp" title="${timestamp}">${timestamp.split(' ')[1]}</span> 
-                            ${appName ? `<span class="log-app" title="Source: ${appName}">[${appName}]</span>` : ''}
-                            <span class="log-level log-level-${level.toLowerCase()}" title="Level: ${level}">${level}</span>
-                            <span class="log-logger" title="Logger: ${loggerName}">(${loggerName.replace('huntarr.', '')})</span>
-                            <span class="log-message">${message}</span>
-                        `; // End template literal with backtick
-                        logEntry.classList.add(`log-${level.toLowerCase()}`);
-
-                    } else {
-                        // Fallback for lines that don't match the expected format
-                        logEntry.innerHTML = `<span class="log-message">${logString}</span>`;
-                        // Basic level detection for fallback
-                        if (logString.includes('ERROR')) logEntry.classList.add('log-error');
-                        else if (logString.includes('WARN') || logString.includes('WARNING')) logEntry.classList.add('log-warning'); // Added WARN check
-                        else if (logString.includes('DEBUG')) logEntry.classList.add('log-debug');
-                        else logEntry.classList.add('log-info');
+                        // Add to logs container
+                        this.elements.logsContainer.appendChild(logEntry);
+                        
+                        // Dispatch a custom event for swaparr.js to process
+                        const swaparrEvent = new CustomEvent('swaparrLogReceived', {
+                            detail: {
+                                logData: match && match[5] ? match[5] : logString
+                            }
+                        });
+                        document.dispatchEvent(swaparrEvent);
+                    } 
+                    // Standard log handling for other apps or all logs
+                    else {
+                        if (match) {
+                            const [, appName, timestamp, loggerName, level, message] = match;
+                            
+                            logEntry.innerHTML = ` 
+                                <span class="log-timestamp" title="${timestamp}">${timestamp.split(' ')[1]}</span> 
+                                ${appName ? `<span class="log-app" title="Source: ${appName}">[${appName}]</span>` : ''}
+                                <span class="log-level log-level-${level.toLowerCase()}" title="Level: ${level}">${level}</span>
+                                <span class="log-logger" title="Logger: ${loggerName}">(${loggerName.replace('huntarr.', '')})</span>
+                                <span class="log-message">${message}</span>
+                            `;
+                            logEntry.classList.add(`log-${level.toLowerCase()}`);
+                        } else {
+                            // Fallback for lines that don't match the expected format
+                            logEntry.innerHTML = `<span class="log-message">${logString}</span>`;
+                            
+                            // Basic level detection for fallback
+                            if (logString.includes('ERROR')) logEntry.classList.add('log-error');
+                            else if (logString.includes('WARN') || logString.includes('WARNING')) logEntry.classList.add('log-warning');
+                            else if (logString.includes('DEBUG')) logEntry.classList.add('log-debug');
+                            else logEntry.classList.add('log-info');
+                        }
+                        
+                        // Add to logs container
+                        this.elements.logsContainer.appendChild(logEntry);
                     }
-
-                    // Add to logs container
-                    this.elements.logsContainer.appendChild(logEntry);
                     
                     // Auto-scroll to bottom if enabled
                     if (this.autoScroll) {

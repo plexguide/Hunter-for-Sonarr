@@ -74,6 +74,7 @@ KNOWN_LOG_FILES = {
     "lidarr": APP_LOG_FILES.get("lidarr"),
     "readarr": APP_LOG_FILES.get("readarr"),
     "whisparr": APP_LOG_FILES.get("whisparr"),
+    "swaparr": APP_LOG_FILES.get("swaparr"),  # Added Swaparr to known log files
     "system": MAIN_LOG_FILE, # Map 'system' to the main huntarr log
 }
 # Filter out None values if an app log file doesn't exist
