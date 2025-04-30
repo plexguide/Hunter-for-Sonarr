@@ -905,6 +905,14 @@ const SettingsForms = {
         // Create the HTML for the Swaparr settings form
         container.innerHTML = `
             <div class="settings-group">
+                <h3>Swapper Information</h3>
+                <div class="setting-item">
+                    <p>Swaparr quietly operates in the background, offering full customization options and clear visibility through console logs. Its primary function is to address the issue of stalled downloads in *ARR instances. Visit Swapper @ <a href="https://github.com/ThijmenGThN/swaparr" target="_blank">https://github.com/ThijmenGThN/swaparr</a> for more information and STAR the developer's project.</p>
+                    <p>NOTE: Swaparr has been completely rewritten for Huntarr, but keeping the name to support the original developer.</p>
+                </div>
+            </div>
+
+            <div class="settings-group">
                 <h3>Swaparr Settings</h3>
                 <div class="setting-item">
                     <label for="swaparr_enabled">Enable Swaparr:</label>
@@ -951,7 +959,9 @@ const SettingsForms = {
                 <h3>Swaparr Status</h3>
                 <div id="swaparr_status_container">
                     <div class="button-container" style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
-                        <button type="button" id="reset_swaparr_strikes" class="action-button-small">Reset All Strikes</button>
+                        <button type="button" id="reset_swaparr_strikes" class="action-button danger">
+                            <i class="fas fa-trash"></i> Reset
+                        </button>
                     </div>
                     <div id="swaparr_status" class="status-display">
                         <p>Loading Swaparr status...</p>
@@ -967,10 +977,7 @@ const SettingsForms = {
         fetch('/api/swaparr/status')
             .then(response => response.json())
             .then(data => {
-                let statusHTML = '<h4>Swaparr Status</h4>';
-                
-                // Add general status
-                statusHTML += `<p>Swaparr is currently <strong>${data.enabled ? 'ENABLED' : 'DISABLED'}</strong></p>`;
+                let statusHTML = '';
                 
                 // Add stats for each app if available
                 if (data.statistics && Object.keys(data.statistics).length > 0) {
@@ -1018,8 +1025,7 @@ const SettingsForms = {
                                 fetch('/api/swaparr/status')
                                     .then(response => response.json())
                                     .then(data => {
-                                        let statusHTML = '<h4>Swaparr Status</h4>';
-                                        statusHTML += `<p>Swaparr is currently <strong>${data.enabled ? 'ENABLED' : 'DISABLED'}</strong></p>`;
+                                        let statusHTML = '';
                                         if (data.statistics && Object.keys(data.statistics).length > 0) {
                                             statusHTML += '<h4>Statistics by App</h4><ul>';
                                             for (const [app, stats] of Object.entries(data.statistics)) {
