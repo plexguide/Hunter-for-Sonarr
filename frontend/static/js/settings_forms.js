@@ -905,7 +905,7 @@ const SettingsForms = {
         // Create the HTML for the Swaparr settings form
         container.innerHTML = `
             <div class="settings-group">
-                <h3>Swaparr Information</h3>
+                <h3>About Swaparr</h3>
                 <div class="setting-item">
                     <p>Swaparr addresses the issue of stalled downloads and rewrote to support Huntarr. Visit Swaparr's <a href="https://github.com/ThijmenGThN/swaparr" target="_blank">GitHub</a> for more information and support the developer!</p>
                 </div>
@@ -958,7 +958,7 @@ const SettingsForms = {
                 <h3>Swaparr Status</h3>
                 <div id="swaparr_status_container">
                     <div class="button-container" style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
-                        <button type="button" id="reset_swaparr_strikes" class="action-button-small">
+                        <button type="button" id="reset_swaparr_strikes" style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; cursor: pointer;">
                             <i class="fas fa-trash"></i> Reset
                         </button>
                     </div>
@@ -978,7 +978,23 @@ const SettingsForms = {
             .then(data => {
                 let statusHTML = '';
                 
-                // No statistics display as requested
+                // Add stats for each app if available
+                if (data.statistics && Object.keys(data.statistics).length > 0) {
+                    statusHTML += '<h4>Statistics by App</h4><ul>';
+                    
+                    for (const [app, stats] of Object.entries(data.statistics)) {
+                        statusHTML += `<li><strong>${app.toUpperCase()}</strong>: `;
+                        if (stats.error) {
+                            statusHTML += `Error: ${stats.error}</li>`;
+                        } else {
+                            statusHTML += `${stats.currently_striked} currently striked, ${stats.removed} removed (${stats.total_tracked} total tracked)</li>`;
+                        }
+                    }
+                    
+                    statusHTML += '</ul>';
+                } else {
+                    statusHTML += '<p>No statistics available yet.</p>';
+                }
                 
                 statusContainer.innerHTML = statusHTML;
             })
@@ -1005,7 +1021,26 @@ const SettingsForms = {
                             statusContainer.innerHTML = `<p>Success: ${data.message}</p>`;
                             // Reload status after a short delay
                             setTimeout(() => {
-                                statusContainer.innerHTML = ''; // No statistics display as requested
+                                fetch('/api/swaparr/status')
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        let statusHTML = '';
+                                        if (data.statistics && Object.keys(data.statistics).length > 0) {
+                                            statusHTML += '<h4>Statistics by App</h4><ul>';
+                                            for (const [app, stats] of Object.entries(data.statistics)) {
+                                                statusHTML += `<li><strong>${app.toUpperCase()}</strong>: `;
+                                                if (stats.error) {
+                                                    statusHTML += `Error: ${stats.error}</li>`;
+                                                } else {
+                                                    statusHTML += `${stats.currently_striked} currently striked, ${stats.removed} removed (${stats.total_tracked} total tracked)</li>`;
+                                                }
+                                            }
+                                            statusHTML += '</ul>';
+                                        } else {
+                                            statusHTML += '<p>No statistics available yet.</p>';
+                                        }
+                                        statusContainer.innerHTML = statusHTML;
+                                    });
                             }, 1000);
                         } else {
                             statusContainer.innerHTML = `<p>Error: ${data.message}</p>`;
