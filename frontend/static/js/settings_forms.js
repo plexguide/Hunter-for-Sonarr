@@ -905,9 +905,9 @@ const SettingsForms = {
         // Create the HTML for the Swaparr settings form
         container.innerHTML = `
             <div class="settings-group">
-                <h3>Swaparr (Beta)</h3>
+                <h3>Swaparr (Beta) - Only For Torrent Users</h3>
                 <div class="setting-item">
-                    <p>Swaparr addresses the issue of stalled downloads and rewrote to support Huntarr. Visit Swaparr's <a href="https://github.com/ThijmenGThN/swaparr" target="_blank">GitHub</a> for more information and support the developer!</p>
+                    <p>Swaparr addresses the issue of stalled downloads and I rewrote it to support Huntarr. Visit Swaparr's <a href="https://github.com/ThijmenGThN/swaparr" target="_blank">GitHub</a> for more information and support the developer!</p>
                 </div>
             </div>
 
