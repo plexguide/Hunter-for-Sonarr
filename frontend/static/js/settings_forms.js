@@ -730,7 +730,7 @@ const SettingsForms = {
         // Create a container for instances with a scrollable area for many instances
         let instancesHtml = `
             <div class="settings-group">
-                <h3>Whisparr Instances <span style="color: red; font-weight: bold;">(NOT READY)</span></h3>
+                <h3>Whisparr Instances</h3>
                 <div class="instances-container">
         `;
         
@@ -792,16 +792,28 @@ const SettingsForms = {
             ${instancesHtml}
             
             <div class="settings-group">
+                <h3>API Version</h3>
+                <div class="setting-item">
+                    <label for="whisparr_version">Whisparr Version:</label>
+                    <select id="whisparr_version">
+                        <option value="v3" ${settings.whisparr_version === 'v3' || !settings.whisparr_version ? 'selected' : ''}>v3 (Eros)</option>
+                        <option value="v2" ${settings.whisparr_version === 'v2' ? 'selected' : ''}>v2 (Legacy)</option>
+                    </select>
+                    <p class="setting-help">Select the API version of your Whisparr installation. Default is v3 (Eros).</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="hunt_missing_scenes">Missing Scenes to Search:</label>
-                    <input type="number" id="hunt_missing_scenes" min="0" value="${settings.hunt_missing_scenes || 1}">
-                    <p class="setting-help">Number of missing scenes to search per cycle (0 to disable)</p>
+                    <label for="hunt_missing_items">Missing Items to Search:</label>
+                    <input type="number" id="hunt_missing_items" min="0" value="${settings.hunt_missing_items || settings.hunt_missing_scenes || 1}">
+                    <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="hunt_upgrade_scenes">Scenes to Upgrade:</label>
-                    <input type="number" id="hunt_upgrade_scenes" min="0" value="${settings.hunt_upgrade_scenes || 0}">
-                    <p class="setting-help">Number of scenes to search for quality upgrades per cycle (0 to disable)</p>
+                    <label for="hunt_upgrade_items">Items to Upgrade:</label>
+                    <input type="number" id="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items || settings.hunt_upgrade_scenes || 0}">
+                    <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
                     <label for="whisparr_sleep_duration">Search Interval:</label>

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """
-Missing Scenes Processing for Whisparr
-Handles searching for missing scenes in Whisparr
+Missing Items Processing for Whisparr
+Handles searching for missing items in Whisparr
+
+Supports both v2 (legacy) and v3 (Eros) API versions
 """
 
 import time
 import random
+import datetime
 from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.whisparr import api as whisparr_api
@@ -14,21 +17,21 @@ from src.primary.stats_manager import increment_stat
 # Get logger for the app
 whisparr_logger = get_logger("whisparr")
 
-def process_missing_scenes(
+def process_missing_items(
     app_settings: Dict[str, Any],
     stop_check: Callable[[], bool] # Function to check if stop is requested
 ) -> bool:
     """
-    Process missing scenes in Whisparr based on provided settings.
+    Process missing items in Whisparr based on provided settings.
     
     Args:
         app_settings: Dictionary containing all settings for Whisparr
         stop_check: A function that returns True if the process should stop
     
     Returns:
-        True if any scenes were processed, False otherwise.
+        True if any items were processed, False otherwise.
     """
-    whisparr_logger.info("Starting missing scenes processing cycle for Whisparr.")
+    whisparr_logger.info("Starting missing items processing cycle for Whisparr.")
     processed_any = False
     
     # Extract necessary settings
@@ -37,120 +40,127 @@ def process_missing_scenes(
     api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
-    skip_scene_refresh = app_settings.get("skip_scene_refresh", False)
+    skip_item_refresh = app_settings.get("skip_item_refresh", False)
     random_missing = app_settings.get("random_missing", False)
-    hunt_missing_scenes = app_settings.get("hunt_missing_scenes", 0)
+    
+    # Use the new hunt_missing_items parameter name, falling back to hunt_missing_scenes for backwards compatibility
+    hunt_missing_items = app_settings.get("hunt_missing_items", app_settings.get("hunt_missing_scenes", 0))
+    
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
-    state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)  # Add this line to get the stateful reset interval
+    state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)
+    
+    # Get the API version to use (v2 or v3)
+    api_version = app_settings.get("whisparr_version", "v3")
+    whisparr_logger.info(f"Using Whisparr API version: {api_version}")
 
-    # Skip if hunt_missing_scenes is set to 0
-    if hunt_missing_scenes <= 0:
-        whisparr_logger.info("'hunt_missing_scenes' setting is 0 or less. Skipping missing scene processing.")
+    # Skip if hunt_missing_items is set to 0
+    if hunt_missing_items <= 0:
+        whisparr_logger.info("'hunt_missing_items' setting is 0 or less. Skipping missing item processing.")
         return False
 
     # Check for stop signal
     if stop_check():
-        whisparr_logger.info("Stop requested before starting missing scenes. Aborting...")
+        whisparr_logger.info("Stop requested before starting missing items. Aborting...")
         return False
     
-    # Get missing scenes
-    whisparr_logger.info("Retrieving scenes with missing files...")
-    missing_scenes = whisparr_api.get_scenes_with_missing(api_url, api_key, api_timeout, monitored_only) 
+    # Get missing items
+    whisparr_logger.info(f"Retrieving items with missing files...")
+    missing_items = whisparr_api.get_items_with_missing(api_url, api_key, api_timeout, monitored_only, api_version) 
     
-    if missing_scenes is None: # API call failed
-        whisparr_logger.error("Failed to retrieve missing scenes from Whisparr API.")
+    if missing_items is None: # API call failed
+        whisparr_logger.error("Failed to retrieve missing items from Whisparr API.")
         return False
         
-    if not missing_scenes:
-        whisparr_logger.info("No missing scenes found.")
+    if not missing_items:
+        whisparr_logger.info("No missing items found.")
         return False
     
-    # Check for stop signal after retrieving scenes
+    # Check for stop signal after retrieving items
     if stop_check():
-        whisparr_logger.info("Stop requested after retrieving missing scenes. Aborting...")
+        whisparr_logger.info("Stop requested after retrieving missing items. Aborting...")
         return False
     
-    whisparr_logger.info(f"Found {len(missing_scenes)} scenes with missing files.")
+    whisparr_logger.info(f"Found {len(missing_items)} items with missing files.")
     
     # Filter out future releases if configured
     if skip_future_releases:
         now = datetime.datetime.now(datetime.timezone.utc)
-        original_count = len(missing_scenes)
-        # Whisparr scene object has 'airDateUtc' for release dates
-        missing_scenes = [
-            scene for scene in missing_scenes
-            if not scene.get('airDateUtc') or (
-                scene.get('airDateUtc') and 
-                datetime.datetime.fromisoformat(scene['airDateUtc'].replace('Z', '+00:00')) < now
+        original_count = len(missing_items)
+        # Whisparr item object has 'airDateUtc' for release dates
+        missing_items = [
+            item for item in missing_items
+            if not item.get('airDateUtc') or (
+                item.get('airDateUtc') and 
+                datetime.datetime.fromisoformat(item['airDateUtc'].replace('Z', '+00:00')) < now
             )
         ]
-        skipped_count = original_count - len(missing_scenes)
+        skipped_count = original_count - len(missing_items)
         if skipped_count > 0:
-            whisparr_logger.info(f"Skipped {skipped_count} future scene releases based on air date.")
+            whisparr_logger.info(f"Skipped {skipped_count} future item releases based on air date.")
 
-    if not missing_scenes:
-        whisparr_logger.info("No missing scenes left to process after filtering future releases.")
+    if not missing_items:
+        whisparr_logger.info("No missing items left to process after filtering future releases.")
         return False
         
-    scenes_processed = 0
+    items_processed = 0
     processing_done = False
     
-    # Select scenes to search based on configuration
+    # Select items to search based on configuration
     if random_missing:
-        whisparr_logger.info(f"Randomly selecting up to {hunt_missing_scenes} missing scenes.")
-        scenes_to_search = random.sample(missing_scenes, min(len(missing_scenes), hunt_missing_scenes))
+        whisparr_logger.info(f"Randomly selecting up to {hunt_missing_items} missing items.")
+        items_to_search = random.sample(missing_items, min(len(missing_items), hunt_missing_items))
     else:
-        whisparr_logger.info(f"Selecting the first {hunt_missing_scenes} missing scenes (sorted by title).")
+        whisparr_logger.info(f"Selecting the first {hunt_missing_items} missing items (sorted by title).")
         # Sort by title for consistent ordering if not random
-        missing_scenes.sort(key=lambda x: x.get("title", ""))
-        scenes_to_search = missing_scenes[:hunt_missing_scenes]
+        missing_items.sort(key=lambda x: x.get("title", ""))
+        items_to_search = missing_items[:hunt_missing_items]
     
-    whisparr_logger.info(f"Selected {len(scenes_to_search)} missing scenes to search.")
+    whisparr_logger.info(f"Selected {len(items_to_search)} missing items to search.")
 
-    # Process selected scenes
-    for scene in scenes_to_search:
-        # Check for stop signal before each scene
+    # Process selected items
+    for item in items_to_search:
+        # Check for stop signal before each item
         if stop_check():
-            whisparr_logger.info("Stop requested during scene processing. Aborting...")
+            whisparr_logger.info("Stop requested during item processing. Aborting...")
             break
         
         # Re-check limit in case it changed
-        current_limit = app_settings.get("hunt_missing_scenes", 1)
-        if scenes_processed >= current_limit:
-             whisparr_logger.info(f"Reached HUNT_MISSING_SCENES limit ({current_limit}) for this cycle.")
+        current_limit = app_settings.get("hunt_missing_items", app_settings.get("hunt_missing_scenes", 1))
+        if items_processed >= current_limit:
+             whisparr_logger.info(f"Reached HUNT_MISSING_ITEMS limit ({current_limit}) for this cycle.")
              break
 
-        scene_id = scene.get("id")
-        title = scene.get("title", "Unknown Title")
-        season_episode = f"S{scene.get('seasonNumber', 0):02d}E{scene.get('episodeNumber', 0):02d}"
+        item_id = item.get("id")
+        title = item.get("title", "Unknown Title")
+        season_episode = f"S{item.get('seasonNumber', 0):02d}E{item.get('episodeNumber', 0):02d}"
         
-        whisparr_logger.info(f"Processing missing scene: \"{title}\" - {season_episode} (Scene ID: {scene_id})")
+        whisparr_logger.info(f"Processing missing item: \"{title}\" - {season_episode} (Item ID: {item_id})")
         
-        # Refresh the scene information if not skipped
+        # Refresh the item information if not skipped
         refresh_command_id = None
-        if not skip_scene_refresh:
-            whisparr_logger.info(" - Refreshing scene information...")
-            refresh_command_id = whisparr_api.refresh_scene(api_url, api_key, api_timeout, scene_id)
+        if not skip_item_refresh:
+            whisparr_logger.info(" - Refreshing item information...")
+            refresh_command_id = whisparr_api.refresh_item(api_url, api_key, api_timeout, item_id, api_version)
             if refresh_command_id:
                 whisparr_logger.info(f"Triggered refresh command {refresh_command_id}. Waiting a few seconds...")
                 time.sleep(5) # Basic wait
             else:
-                whisparr_logger.warning(f"Failed to trigger refresh command for scene ID: {scene_id}. Proceeding without refresh.")
+                whisparr_logger.warning(f"Failed to trigger refresh command for item ID: {item_id}. Proceeding without refresh.")
         else:
-            whisparr_logger.info(" - Skipping scene refresh (skip_scene_refresh=true)")
+            whisparr_logger.info(" - Skipping item refresh (skip_item_refresh=true)")
         
         # Check for stop signal before searching
         if stop_check():
             whisparr_logger.info(f"Stop requested before searching for {title}. Aborting...")
             break
         
-        # Search for the scene
-        whisparr_logger.info(" - Searching for missing scene...")
-        search_command_id = whisparr_api.scene_search(api_url, api_key, api_timeout, [scene_id])
+        # Search for the item
+        whisparr_logger.info(" - Searching for missing item...")
+        search_command_id = whisparr_api.item_search(api_url, api_key, api_timeout, [item_id], api_version)
         if search_command_id:
             whisparr_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
-            scenes_processed += 1
+            items_processed += 1
             processing_done = True
             
             # Increment the hunted statistics for Whisparr
@@ -158,17 +168,31 @@ def process_missing_scenes(
             whisparr_logger.debug(f"Incremented whisparr hunted statistics by 1")
 
             # Log progress
-            current_limit = app_settings.get("hunt_missing_scenes", 1)
-            whisparr_logger.info(f"Processed {scenes_processed}/{current_limit} missing scenes this cycle.")
+            current_limit = app_settings.get("hunt_missing_items", app_settings.get("hunt_missing_scenes", 1))
+            whisparr_logger.info(f"Processed {items_processed}/{current_limit} missing items this cycle.")
         else:
-            whisparr_logger.warning(f"Failed to trigger search command for scene ID {scene_id}.")
+            whisparr_logger.warning(f"Failed to trigger search command for item ID {item_id}.")
             # Do not mark as processed if search couldn't be triggered
             continue
     
     # Log final status
-    if scenes_processed > 0:
-        whisparr_logger.info(f"Completed processing {scenes_processed} missing scenes for this cycle.")
+    if items_processed > 0:
+        whisparr_logger.info(f"Completed processing {items_processed} missing items for this cycle.")
     else:
-        whisparr_logger.info("No new missing scenes were processed in this run.")
+        whisparr_logger.info("No new missing items were processed in this run.")
         
     return processing_done
+
+# For backward compatibility with the background processing system
+def process_missing_scenes(app_settings, stop_check):
+    """
+    Backwards compatibility function that calls process_missing_items.
+    
+    Args:
+        app_settings: Dictionary containing all settings for Whisparr
+        stop_check: A function that returns True if the process should stop
+    
+    Returns:
+        Result from process_missing_items
+    """
+    return process_missing_items(app_settings, stop_check)

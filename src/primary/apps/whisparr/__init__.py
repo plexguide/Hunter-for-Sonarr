@@ -1,16 +1,23 @@
 """
 Whisparr app module for Huntarr
-Contains functionality for missing scenes and quality upgrades in Whisparr
+Contains functionality for missing items and quality upgrades in Whisparr
+
+Supports both v2 (legacy) and v3 (Eros) API versions.
+v2 - Original Whisparr API
+v3 - Eros version of the Whisparr API
 """
 
 # Module exports
-from src.primary.apps.whisparr.missing import process_missing_scenes
+from src.primary.apps.whisparr.missing import process_missing_items
 from src.primary.apps.whisparr.upgrade import process_cutoff_upgrades
 from src.primary.settings_manager import load_settings
 from src.primary.utils.logger import get_logger
 
 # Define logger for this module
 whisparr_logger = get_logger("whisparr")
+
+# For backward compatibility
+process_missing_scenes = process_missing_items
 
 def get_configured_instances():
     """Get all configured and enabled Whisparr instances"""
@@ -21,6 +28,10 @@ def get_configured_instances():
     if not settings:
         whisparr_logger.debug("No settings found for Whisparr")
         return instances
+
+    # Get the API version to use (v2 or v3/Eros)
+    api_version = settings.get("whisparr_version", "v3")
+    whisparr_logger.info(f"Using Whisparr API version: {api_version}")
 
     # Check if instances are configured
     if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
@@ -46,6 +57,7 @@ def get_configured_instances():
                     "instance_name": instance.get("name", "Default"),
                     "api_url": api_url,
                     "api_key": api_key,
+                    "api_version": api_version  # Add the API version to the instance data
                 }
                 instances.append(instance_data) 
                 whisparr_logger.info(f"Added valid instance: {instance_data}") 
@@ -72,6 +84,7 @@ def get_configured_instances():
                 "instance_name": "Default", 
                 "api_url": api_url,
                 "api_key": api_key,
+                "api_version": api_version  # Add the API version to the instance data
             }
             instances.append(instance_data) 
             whisparr_logger.info(f"Added valid legacy instance: {instance_data}") 
@@ -81,4 +94,4 @@ def get_configured_instances():
     whisparr_logger.info(f"Returning {len(instances)} configured instances: {instances}") 
     return instances
 
-__all__ = ["process_missing_scenes", "process_cutoff_upgrades", "get_configured_instances"]
+__all__ = ["process_missing_items", "process_missing_scenes", "process_cutoff_upgrades", "get_configured_instances"]

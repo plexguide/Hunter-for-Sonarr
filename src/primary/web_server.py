@@ -461,9 +461,9 @@ def api_app_status(app_name):
     if app_name not in settings_manager.KNOWN_APP_TYPES:
         web_logger.warning(f"Status check requested for invalid app name: {app_name}")
         return jsonify({"configured": False, "connected": False, "error": "Invalid app name"}), 400
-
+    
     try:
-        if app_name in ['sonarr', 'radarr', 'lidarr', 'readarr']:
+        if app_name in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr']:
             # --- Multi-Instance Status Check --- # 
             connected_count = 0
             total_configured = 0

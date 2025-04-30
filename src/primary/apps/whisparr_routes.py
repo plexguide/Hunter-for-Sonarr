@@ -26,7 +26,7 @@ def test_connection():
         
     whisparr_logger.info(f"Testing connection to Whisparr API at {api_url}")
     
-    # For Whisparr, use api/v3
+    # Always use v3 API endpoint for Whisparr
     url = f"{api_url}/api/v3/system/status"
     headers = {
         "X-Api-Key": api_key,
@@ -90,38 +90,43 @@ def get_versions():
 
 @whisparr_bp.route('/logs', methods=['GET'])
 def get_logs():
-    """Get recent log entries for Whisparr from the whisparr log file"""
+    """Get the log file for Whisparr"""
     try:
-        log_file = APP_LOG_FILES.get('whisparr')
+        # Get the log file path
+        log_file = APP_LOG_FILES.get("whisparr")
+        
         if not log_file or not os.path.exists(log_file):
-            return jsonify({"success": False, "message": "Whisparr log file not found"}), 404
+            return jsonify({"success": False, "message": "Log file not found"}), 404
             
+        # Read the log file (last 200 lines)
         with open(log_file, 'r') as f:
-            log_content = f.readlines()
-        
-        # Return the most recent 100 log entries
-        recent_logs = log_content[-100:] if len(log_content) > 100 else log_content
-        
-        return jsonify({"success": True, "logs": recent_logs})
+            lines = f.readlines()
+            log_content = ''.join(lines[-200:])
+            
+        return jsonify({"success": True, "logs": log_content})
     except Exception as e:
-        whisparr_logger.error(f"Error reading log file: {str(e)}")
-        return jsonify({"success": False, "message": f"Error reading log file: {str(e)}"}), 500
+        error_message = f"Error fetching Whisparr logs: {str(e)}"
+        whisparr_logger.error(error_message)
+        traceback.print_exc()
+        return jsonify({"success": False, "message": error_message}), 500
 
 @whisparr_bp.route('/clear-processed', methods=['POST'])
 def clear_processed():
     """Clear the processed missing and upgrade files for Whisparr"""
     try:
-        data = request.json
-        if data.get('missing'):
-            reset_state_file("whisparr", "processed_missing")
-            whisparr_logger.info("Reset Whisparr missing state")
+        # Reset missing items state file
+        whisparr_logger.info("Clearing processed missing items state")
+        reset_state_file("whisparr", "processed_missing")
         
-        if data.get('upgrades'):
-            reset_state_file("whisparr", "processed_upgrades")
-            whisparr_logger.info("Reset Whisparr upgrades state")
+        # Reset upgrade state file
+        whisparr_logger.info("Clearing processed quality upgrade state")
+        reset_state_file("whisparr", "processed_upgrades")
         
-        return jsonify({"success": True, "message": "Processed files cleared successfully"})
+        return jsonify({
+            "success": True,
+            "message": "Successfully cleared Whisparr processed state"
+        })
     except Exception as e:
-        error_msg = f"Error clearing processed files: {str(e)}"
-        whisparr_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 500
+        error_message = f"Error clearing Whisparr processed state: {str(e)}"
+        whisparr_logger.error(error_message)
+        return jsonify({"success": False, "message": error_message}), 500
