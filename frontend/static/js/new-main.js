@@ -1735,12 +1735,26 @@ let huntarrUI = {
         .then(data => {
             console.log('Stateful info data:', data);
             
+            // Format dates nicely
+            let formattedCreatedDate = 'Not available';
+            let formattedExpiresDate = 'Not available';
+            
+            if (data.created_date) {
+                const createdDate = new Date(data.created_date.replace(' ', 'T'));
+                formattedCreatedDate = this.formatDateNicely(createdDate);
+            }
+            
+            if (data.expires_date) {
+                const expiresDate = new Date(data.expires_date.replace(' ', 'T'));
+                formattedExpiresDate = this.formatDateNicely(expiresDate);
+            }
+            
             if (initialStateEl) {
-                initialStateEl.textContent = data.created_date || 'Not available';
+                initialStateEl.textContent = formattedCreatedDate;
             }
             
             if (expiresDateEl) {
-                expiresDateEl.textContent = data.expires_date || 'Not available';
+                expiresDateEl.textContent = formattedExpiresDate;
             }
             
             // Update the notification area
@@ -1760,6 +1774,40 @@ let huntarrUI = {
                 notification.className = 'notification error';
             }
         });
+    },
+    
+    // Format date nicely with time, day, and relative time indication
+    formatDateNicely: function(date) {
+        if (!(date instanceof Date) || isNaN(date)) {
+            return 'Invalid date';
+        }
+        
+        const options = { 
+            weekday: 'short',
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+        
+        const formattedDate = date.toLocaleDateString(undefined, options);
+        
+        // Add relative time indicator (e.g., "in 6 days" or "7 days ago")
+        const now = new Date();
+        const diffTime = date.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        let relativeTime = '';
+        if (diffDays > 0) {
+            relativeTime = ` (in ${diffDays} day${diffDays !== 1 ? 's' : ''})`;
+        } else if (diffDays < 0) {
+            relativeTime = ` (${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''} ago)`;
+        } else {
+            relativeTime = ' (today)';
+        }
+        
+        return `${formattedDate}${relativeTime}`;
     },
     
     // Reset stateful management - clear all processed IDs

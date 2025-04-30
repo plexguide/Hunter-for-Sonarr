@@ -1083,28 +1083,30 @@ const SettingsForms = {
             </div>
             
             <div class="settings-group">
-                <h3>Stateful Management</h3>
+                <div class="section-header">
+                    <h3>Stateful Management</h3>
+                    <button id="reset_stateful_btn" class="action-button danger"><i class="fas fa-trash"></i> Reset</button>
+                </div>
                 <div id="stateful-section" class="setting-info-block">
                     <div id="stateful-notification" class="notification error" style="display: none;">
                         Failed to load stateful management info. Check logs for details.
                     </div>
-                    <div class="info-row">
-                        <span>Initial State Created:</span>
-                        <span id="stateful_initial_state">Loading...</span>
-                    </div>
-                    <div class="info-row">
-                        <span>State Reset Date:</span>
-                        <span id="stateful_expires_date">Loading...</span>
+                    <div class="info-container">
+                        <div class="date-info-block">
+                            <div class="date-label">Initial State Created:</div>
+                            <div id="stateful_initial_state" class="date-value">Loading...</div>
+                        </div>
+                        <div class="date-info-block">
+                            <div class="date-label">State Reset Date:</div>
+                            <div id="stateful_expires_date" class="date-value">Loading...</div>
+                        </div>
                     </div>
                 </div>
                 <div class="setting-item">
                     <label for="stateful_management_hours">State Reset Interval (Hours):</label>
                     <input type="number" id="stateful_management_hours" min="1" value="${settings.stateful_management_hours || 168}">
                     <p class="setting-help">Hours before resetting processed media state (<span id="stateful_management_days">${((settings.stateful_management_hours || 168) / 24).toFixed(1)} days</span>)</p>
-                </div>
-                <div class="setting-item">
-                    <button id="reset_stateful_btn" class="danger-button">Reset Stateful Management</button>
-                    <p class="setting-help">Reset stateful management and clear all processed media IDs</p>
+                    <p class="setting-help reset-help">Reset clears all processed media IDs to allow reprocessing</p>
                 </div>
             </div>
             
