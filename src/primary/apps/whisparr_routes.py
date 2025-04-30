@@ -26,7 +26,7 @@ def test_connection():
         
     whisparr_logger.info(f"Testing connection to Whisparr API at {api_url}")
     
-    # For Whisparr, use api/v3
+    # Always use v3 API endpoint for Whisparr
     url = f"{api_url}/api/v3/system/status"
     headers = {
         "X-Api-Key": api_key,

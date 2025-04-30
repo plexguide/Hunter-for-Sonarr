@@ -41,9 +41,10 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         whisparr_logger.error("API URL or API key is missing. Check your settings.")
         return None
     
-    # Determine the API version
-    api_base = f"api/{api_version}"
-    whisparr_logger.debug(f"Using Whisparr API version: {api_version}")
+    # IMPORTANT: Whisparr 2.x uses v3 API endpoints even though it's labeled as v2 in our settings
+    # Always use v3 for API path
+    api_base = f"api/v3"
+    whisparr_logger.debug(f"Using Whisparr API base path: {api_base}")
     
     # Full URL - ensure no double slashes
     url = f"{api_url.rstrip('/')}/{api_base}/{endpoint.lstrip('/')}"
@@ -66,31 +67,29 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         else:
             whisparr_logger.error(f"Unsupported HTTP method: {method}")
             return None
-        
-        # Check for errors
-        response.raise_for_status()
-        
-        # Parse JSON response
-        if response.text:
-            return response.json()
-        return {}
-        
+            
+        # Check if the request was successful
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            whisparr_logger.error(f"Error during {method} request to {endpoint}: {e}, Status Code: {response.status_code}")
+            return None
+            
+        # Try to parse JSON response
+        try:
+            if response.text:
+                return response.json()
+            else:
+                return {}
+        except json.JSONDecodeError:
+            whisparr_logger.error(f"Invalid JSON response from API: {response.text[:200]}")
+            return None
+            
     except requests.exceptions.RequestException as e:
-        # Add detailed error logging
-        error_details = str(e)
-        if hasattr(e, 'response') and e.response is not None:
-            error_details += f", Status Code: {e.response.status_code}"
-            if e.response.content:
-                error_details += f", Content: {e.response.content[:200]}"
-        whisparr_logger.error(f"Error during {method} request to {endpoint}: {error_details}")
+        whisparr_logger.error(f"Request failed: {e}")
         return None
     except Exception as e:
-        # Catch all exceptions and log them with traceback
-        error_msg = f"CRITICAL ERROR in Whisparr arr_request: {str(e)}"
-        whisparr_logger.error(error_msg)
-        whisparr_logger.error(f"Full traceback: {traceback.format_exc()}")
-        print(error_msg, file=sys.stderr)
-        print(traceback.format_exc(), file=sys.stderr)
+        whisparr_logger.error(f"Unexpected error during API request: {e}")
         return None
 
 def get_download_queue_size(api_url: str, api_key: str, api_timeout: int, api_version: str = "v3") -> int:
@@ -134,13 +133,10 @@ def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitor
         A list of item objects with missing files, or None if the request failed.
     """
     try:
-        whisparr_logger.debug(f"Retrieving missing items with API version {api_version}")
+        whisparr_logger.debug(f"Retrieving missing items...")
         
-        # Endpoint differs by API version
-        if api_version == "v2":
-            endpoint = "wanted/missing?pageSize=1000&sortKey=airDateUtc&sortDir=desc"
-        else:  # v3/Eros
-            endpoint = "wanted/missing?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
+        # Endpoint parameters - always use v3 format since we're using v3 API
+        endpoint = "wanted/missing?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
         
         response = arr_request(api_url, api_key, api_timeout, endpoint, api_version=api_version)
         
@@ -178,13 +174,10 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
         A list of item objects that need quality upgrades, or None if the request failed.
     """
     try:
-        whisparr_logger.debug(f"Retrieving cutoff unmet items with API version {api_version}")
+        whisparr_logger.debug(f"Retrieving cutoff unmet items...")
         
-        # Endpoint differs by API version
-        if api_version == "v2":
-            endpoint = "wanted/cutoff?pageSize=1000&sortKey=airDateUtc&sortDir=desc"
-        else:  # v3/Eros
-            endpoint = "wanted/cutoff?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
+        # Endpoint - always use v3 format
+        endpoint = "wanted/cutoff?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
         
         response = arr_request(api_url, api_key, api_timeout, endpoint, api_version=api_version)
         
@@ -198,84 +191,15 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
         
         whisparr_logger.debug(f"Found {len(items)} cutoff unmet items")
         
-        # For v2, we need to filter out items where qualityCutoffNotMet is False
-        # For v3, we can just use the API's filtering which already returns appropriate results
-        if api_version == "v2":
-            # Get quality profiles
-            profiles_response = arr_request(api_url, api_key, api_timeout, "profile", api_version=api_version)
-            if not profiles_response:
-                whisparr_logger.error("Failed to retrieve quality profiles")
-                return None
-            
-            # Create a lookup for profile qualities
-            profiles_lookup = {}
-            for profile in profiles_response:
-                profile_id = profile.get("id")
-                if profile_id is not None:
-                    cutoff = profile.get("cutoff")
-                    qualities = profile.get("items", [])
-                    allowed_qualities = []
-                    for quality in qualities:
-                        if quality.get("allowed", False):
-                            if "quality" in quality:
-                                allowed_qualities.append(quality["quality"])
-                            else:
-                                allowed_qualities.extend([q for q in quality.get("qualities", [])])
-                    
-                    profiles_lookup[profile_id] = {
-                        "cutoff": cutoff,
-                        "qualities": allowed_qualities
-                    }
-            
-            # Filter items that need quality upgrade
-            filtered_items = []
-            for item in items:
-                if monitored_only and not item.get("monitored", False):
-                    continue
-                
-                # Get the item's quality and profile
-                quality_info = item.get("episodeFile", {}).get("quality", {}) if "episodeFile" in item else None
-                if not quality_info:
-                    continue
-                
-                quality_id = quality_info.get("quality", {}).get("id") if "quality" in quality_info else None
-                profile_id = item.get("series", {}).get("profileId") if "series" in item else None
-                
-                if quality_id is None or profile_id is None:
-                    continue
-                
-                # Check if item meets cutoff
-                profile = profiles_lookup.get(profile_id)
-                if not profile:
-                    continue
-                
-                # Check if current quality is below cutoff
-                if profile["cutoff"] is not None:
-                    cutoff_met = False
-                    for quality in profile["qualities"]:
-                        if quality.get("id") == quality_id:
-                            cutoff_met = True
-                            break
-                        if quality.get("id") == profile["cutoff"]:
-                            break
-                    
-                    if not cutoff_met:
-                        filtered_items.append(item)
-            
-            items = filtered_items
-            whisparr_logger.debug(f"Found {len(items)} items that don't meet cutoff quality after filtering")
-        else:  # For v3, just filter monitored if needed
-            if monitored_only:
-                items = [item for item in items if item.get("monitored", False)]
+        # Just filter monitored if needed - we're always using v3 API now
+        if monitored_only:
+            items = [item for item in items if item.get("monitored", False)]
             whisparr_logger.debug(f"Found {len(items)} cutoff unmet items after filtering monitored")
         
         return items
         
     except Exception as e:
         whisparr_logger.error(f"Error retrieving cutoff unmet items: {str(e)}")
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        tb_lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-        whisparr_logger.debug("".join(tb_lines))
         return None
 
 def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int, api_version: str = "v3") -> int:
@@ -295,17 +219,11 @@ def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int, api
     try:
         whisparr_logger.debug(f"Refreshing item with ID {item_id}")
         
-        # Different payload for different API versions
-        if api_version == "v2":
-            payload = {
-                "name": "RefreshEpisode",
-                "episodeIds": [item_id]
-            }
-        else:  # v3/Eros
-            payload = {
-                "name": "RefreshEpisode",
-                "episodeIds": [item_id]
-            }
+        # Always use the same payload format since we're always using v3 API
+        payload = {
+            "name": "RefreshEpisode",
+            "episodeIds": [item_id]
+        }
         
         response = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=payload, api_version=api_version)
         
@@ -338,7 +256,7 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
     try:
         whisparr_logger.debug(f"Searching for items with IDs: {item_ids}")
         
-        # Both API versions use the same command structure
+        # Always use the same payload format since we're always using v3 API
         payload = {
             "name": "EpisodeSearch",
             "episodeIds": item_ids
@@ -403,24 +321,19 @@ def check_connection(api_url: str, api_key: str, api_timeout: int, api_version: 
     Returns:
         True if the connection is successful, False otherwise
     """
-    whisparr_logger.info(f"Checking connection to Whisparr (API version: {api_version})...")
-    
-    if not api_url or not api_key:
-        whisparr_logger.error("API URL or API key is not provided")
-        return False
-        
     try:
-        # Use system/status endpoint which is available in both v2 and v3
-        result = arr_request(api_url, api_key, api_timeout, "system/status", api_version=api_version)
+        # System status is a good endpoint for verifying API connectivity
+        response = arr_request(api_url, api_key, api_timeout, "system/status", api_version=api_version)
         
-        if result:
-            version = result.get("version", "Unknown")
-            app_name = result.get("appName", "Whisparr")
-            whisparr_logger.info(f"Successfully connected to {app_name} {version} using API v{api_version}")
+        if response is not None:
+            # Get the version information if available
+            version = response.get("version", "unknown")
+            whisparr_logger.info(f"Successfully connected to Whisparr {version} using API v3")
             return True
         else:
-            whisparr_logger.error(f"Failed to connect to Whisparr API v{api_version}")
+            whisparr_logger.error("Failed to connect to Whisparr API")
             return False
+            
     except Exception as e:
-        whisparr_logger.error(f"Error checking connection to Whisparr: {e}")
+        whisparr_logger.error(f"Error checking connection to Whisparr API: {str(e)}")
         return False
