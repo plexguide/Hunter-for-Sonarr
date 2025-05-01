@@ -125,12 +125,16 @@ def update_lock_expiration(hours: int = None) -> None:
 
 def reset_stateful_management() -> bool:
     """
-    Reset the stateful management system by:
-    1. Creating a new lock file with current timestamp and calculated expiration
-    2. Deleting all stored processed IDs
-    
+    Reset the stateful management system.
+
+    This involves:
+    1. Creating a new lock file with the current timestamp and a calculated expiration time
+       based on the 'stateful_management_hours' setting.
+    2. Deleting all stored processed ID files (*.json) within each app-specific
+       subdirectory under the STATEFUL_DIR.
+
     Returns:
-        bool: True if reset was successful, False otherwise
+        bool: True if the reset was successful, False otherwise.
     """
     try:
         # Get the expiration hours setting BEFORE writing the lock file
