@@ -1083,9 +1083,9 @@ const SettingsForms = {
             </div>
             
             <div class="settings-group">
-                <div class="section-header">
+                <div class="stateful-header-row">
                     <h3>Stateful Management</h3>
-                    <button id="reset_stateful_btn" class="action-button danger"><i class="fas fa-trash"></i> Reset</button>
+                    <button id="reset_stateful_btn"><i class="fas fa-trash"></i> Reset</button>
                 </div>
                 <div id="stateful-section" class="setting-info-block">
                     <div id="stateful-notification" class="notification error" style="display: none;">

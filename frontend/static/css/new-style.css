@@ -739,6 +739,7 @@ input:checked + .slider:before {
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
+    position: relative;
 }
 
 .settings-group h3 {
@@ -778,6 +779,48 @@ input:checked + .slider:before {
     margin-left: 215px;
     font-size: 13px;
     color: var(--text-muted);
+}
+
+/* Stateful management header row with reset button */
+.stateful-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color); /* Use variable */
+    width: 100%;
+}
+
+.stateful-header-row h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Reset button styling */
+#reset_stateful_btn {
+    background-color: var(--button-danger-bg); /* Use variable */
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s ease;
+}
+
+#reset_stateful_btn:hover {
+    background-color: var(--button-danger-hover); /* Use variable */
+}
+
+#reset_stateful_btn i {
+    font-size: 13px;
 }
 
 /* Responsive Adjustments */

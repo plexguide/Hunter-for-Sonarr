@@ -450,21 +450,23 @@ input:checked + .slider:before {
 /* Danger action button */
 .action-button.danger {
     background-color: #e74c3c;
-    color: white;
+    color: #fff;
     border: none;
-    padding: 6px 12px;
     border-radius: 4px;
+    padding: 6px 12px;
     font-size: 13px;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 5px;
     transition: background-color 0.2s ease, transform 0.1s ease;
+    width: fit-content;
+    max-width: max-content;
+    white-space: nowrap;
 }
 
 .action-button.danger:hover {
     background-color: #c0392b;
-    transform: translateY(-1px);
 }
 
 .action-button.danger:active {
@@ -731,6 +733,26 @@ input:checked + .toggle-slider:before {
 }
 
 /* Stateful Management Styling */
+.stateful-header-wrapper {
+    position: relative;
+    width: 100%;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #2d3748; /* Darker border matching the screenshot */
+}
+
+.stateful-header-wrapper h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    padding-bottom: 15px;
+}
+
+.header-line {
+    display: none;
+}
+
 .stateful-header {
     display: flex;
     justify-content: space-between;
@@ -837,6 +859,41 @@ input:checked + .toggle-slider:before {
 
 .danger-button:hover {
     background-color: var(--button-danger-hover);
+}
+
+/* Custom reset button that matches the screenshot exactly */
+.danger-reset-button {
+    background-color: #e74c3c; /* Solid red to match the image */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: background-color 0.2s ease;
+    width: fit-content;
+    white-space: nowrap;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.danger-reset-button:hover {
+    background-color: #c0392b;
+}
+
+.danger-reset-button i {
+    font-size: 13px;
+}
+
+/* Make sure settings-group has the right positioning for absolute elements */
+.settings-group {
+    position: relative;
 }
 
 /* Responsive Adjustments */
@@ -1177,4 +1234,46 @@ input:checked + .toggle-slider:before {
 
 .top-right-button i {
     margin-right: 3px;
+}
+
+/* Stateful management header row with reset button */
+.stateful-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #2d3748; /* Dark border line matching the screenshot */
+    width: 100%;
+}
+
+.stateful-header-row h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Reset button styling exactly matching the screenshot */
+#reset_stateful_btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s ease;
+}
+
+#reset_stateful_btn:hover {
+    background-color: #c0392b;
+}
+
+#reset_stateful_btn i {
+    font-size: 13px;
 }
