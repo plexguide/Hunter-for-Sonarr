@@ -1136,26 +1136,41 @@ const SettingsForms = {
         }
         
         // Load stateful management info
+        const createdDateEl = document.getElementById('stateful_initial_state');
+        const expiresDateEl = document.getElementById('stateful_expires_date');
+
+        // Set initial state to Loading...
+        if (createdDateEl) createdDateEl.textContent = 'Loading...';
+        if (expiresDateEl) expiresDateEl.textContent = 'Loading...';
+
         fetch('/api/stateful/info')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+             })
             .then(data => {
-                const createdDateEl = document.getElementById('stateful_initial_state');
-                const expiresDateEl = document.getElementById('stateful_expires_date');
-                
                 if (createdDateEl && data.created_date) {
                     createdDateEl.textContent = data.created_date;
+                } else if (createdDateEl) {
+                    createdDateEl.textContent = 'N/A'; // Handle missing data
                 }
                 
                 if (expiresDateEl && data.expires_date) {
                     expiresDateEl.textContent = data.expires_date;
+                } else if (expiresDateEl) {
+                    expiresDateEl.textContent = 'N/A'; // Handle missing data
                 }
             })
             .catch(error => {
                 console.error('Error loading stateful management info:', error);
-                const notificationEl = document.getElementById('stateful-notification');
-                if (notificationEl) {
-                    notificationEl.style.display = 'block';
-                }
+                if (createdDateEl) createdDateEl.textContent = 'Error loading';
+                if (expiresDateEl) expiresDateEl.textContent = 'Error loading';
+                // const notificationEl = document.getElementById('stateful-notification');
+                // if (notificationEl) {
+                //     notificationEl.style.display = 'block';
+                // }
             });
         
         // Add listener for reset stateful button

@@ -851,6 +851,11 @@ let huntarrUI = {
             // Update connection status and UI
             this.checkAppConnection(app);
             this.updateHomeConnectionStatus();
+            
+            // If general settings were saved, refresh the stateful info display
+            if (app === 'general') {
+                this.loadStatefulInfo();
+            }
         })
         .catch(error => {
             console.error('Error saving settings:', error);
