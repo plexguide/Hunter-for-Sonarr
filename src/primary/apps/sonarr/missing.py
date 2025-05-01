@@ -318,7 +318,7 @@ def process_missing_seasons_mode(
             if not is_processed("sonarr", instance_name, season_id):
                 seasons_with_missing.append(season)
             else:
-                sonarr_logger.debug(f"Skipping already processed season ID: {season_id}")
+                sonarr_logger.debug(f"Skipping already processed season ID: {season_id} for {series_title} Season {season['seasonNumber']}")
     
     sonarr_logger.info(f"Found {len(seasons_with_missing)} unprocessed seasons with missing episodes.")
     
@@ -343,11 +343,12 @@ def process_missing_seasons_mode(
     sonarr_logger.info(f"Selected {len(seasons_to_process)} seasons to process.")
     # Add detailed logging for selected seasons
     if seasons_to_process:
-        sonarr_logger.info("Selected seasons for processing in this cycle:")
-        for sel_season in seasons_to_process:
+        sonarr_logger.info("Seasons selected for processing in this cycle:")
+        for idx, sel_season in enumerate(seasons_to_process):
             series_title = sel_season.get('seriesTitle', 'Unknown Series')
             season_num = sel_season.get('seasonNumber', 'Unknown')
-            sonarr_logger.info(f"  - {series_title} - Season {season_num}")
+            episode_count = len(sel_season.get('episodes', []))
+            sonarr_logger.info(f"  {idx+1}. {series_title} - Season {season_num} ({episode_count} missing episodes) (Series ID: {sel_season.get('seriesId')})")
     
     # Process each selected season
     for season in seasons_to_process:
@@ -483,6 +484,18 @@ def process_missing_seasons_packs_mode(
     
     # Process up to hunt_missing_items seasons
     processed_count = 0
+    
+    # Add detailed logging for selected seasons
+    if unprocessed_seasons and hunt_missing_items > 0:
+        seasons_to_process = unprocessed_seasons[:hunt_missing_items]
+        if random_missing:
+            sonarr_logger.info(f"Randomly selected {min(len(unprocessed_seasons), hunt_missing_items)} seasons with missing episodes:")
+        else:
+            sonarr_logger.info(f"Selected {min(len(unprocessed_seasons), hunt_missing_items)} seasons with most missing episodes:")
+        
+        for idx, season in enumerate(seasons_to_process):
+            sonarr_logger.info(f"  {idx+1}. {season['series_title']} - Season {season['season_number']} ({season['episode_count']} missing episodes) (Series ID: {season['series_id']})")
+    
     for season in unprocessed_seasons:
         if processed_count >= hunt_missing_items:
             break
@@ -586,6 +599,15 @@ def process_missing_shows_mode(
         # Default sort by title
         unprocessed_series.sort(key=lambda x: x.get('title', 'Unknown'))
         shows_to_process = unprocessed_series[:hunt_missing_items]
+    
+    # Add detailed logging for selected shows
+    if shows_to_process:
+        sonarr_logger.info("Shows selected for processing in this cycle:")
+        for idx, show in enumerate(shows_to_process):
+            show_id = show.get('id')
+            show_title = show.get('title', 'Unknown Show')
+            episode_count = len(show.get('missingEpisodes', []))
+            sonarr_logger.info(f"  {idx+1}. {show_title} ({episode_count} missing episodes) (Show ID: {show_id})")
     
     # Process each show
     for show in shows_to_process:
