@@ -24,7 +24,7 @@ def test_connection():
         return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
     
     # Log the test attempt
-    whisparr_logger.info(f"Testing connection to Whisparr API at {api_url}")
+    whisparr_logger.info(f"Testing connection to Whisparr Eros API at {api_url}")
     
     # First check if URL is properly formatted
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
@@ -32,7 +32,7 @@ def test_connection():
         whisparr_logger.error(error_msg)
         return jsonify({"success": False, "message": error_msg}), 400
         
-    # For Whisparr, use api/v3
+    # For Whisparr Eros, use api/v3
     api_base = "api/v3"
     test_url = f"{api_url.rstrip('/')}/{api_base}/system/status"
     headers = {'X-Api-Key': api_key}
@@ -42,7 +42,7 @@ def test_connection():
         response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
         
         # Log HTTP status code for diagnostic purposes
-        whisparr_logger.debug(f"Whisparr API status code: {response.status_code}")
+        whisparr_logger.debug(f"Whisparr Eros API status code: {response.status_code}")
         
         # Check HTTP status code
         response.raise_for_status()
@@ -51,19 +51,23 @@ def test_connection():
         try:
             response_data = response.json()
             
-            # We no longer save keys here since we use instances
-            # keys_manager.save_api_keys("whisparr", api_url, api_key)
+            # Validate that this is actually Eros API v3
+            if 'version' in response_data and not response_data['version'].startswith('3'):
+                error_msg = f"Incompatible Whisparr version detected: {response_data.get('version')}. Huntarr requires Eros API v3."
+                whisparr_logger.error(error_msg)
+                return jsonify({"success": False, "message": error_msg, "is_eros": False}), 400
             
-            whisparr_logger.info(f"Successfully connected to Whisparr API version: {response_data.get('version', 'unknown')}")
+            whisparr_logger.info(f"Successfully connected to Whisparr Eros API version: {response_data.get('version', 'unknown')}")
 
             # Return success with some useful information
             return jsonify({
                 "success": True,
-                "message": "Successfully connected to Whisparr API",
-                "version": response_data.get('version', 'unknown')
+                "message": "Successfully connected to Whisparr Eros API",
+                "version": response_data.get('version', 'unknown'),
+                "is_eros": True
             })
         except ValueError:
-            error_msg = "Invalid JSON response from Whisparr API"
+            error_msg = "Invalid JSON response from Whisparr Eros API"
             whisparr_logger.error(f"{error_msg}. Response content: {response.text[:200]}")
             return jsonify({"success": False, "message": error_msg}), 500
 

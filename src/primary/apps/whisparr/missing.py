@@ -51,9 +51,8 @@ def process_missing_items(
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
     state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)
     
-    # Get the API version to use (v2 or v3)
-    api_version = app_settings.get("whisparr_version", "v3")
-    whisparr_logger.info(f"Using Whisparr API version: {api_version}")
+    # Log that we're using Eros API v3
+    whisparr_logger.info(f"Using Whisparr Eros API v3 for instance: {instance_name}")
 
     # Skip if hunt_missing_items is set to 0
     if hunt_missing_items <= 0:
@@ -67,7 +66,7 @@ def process_missing_items(
     
     # Get missing items
     whisparr_logger.info(f"Retrieving items with missing files...")
-    missing_items = whisparr_api.get_items_with_missing(api_url, api_key, api_timeout, monitored_only, api_version) 
+    missing_items = whisparr_api.get_items_with_missing(api_url, api_key, api_timeout, monitored_only) 
     
     if missing_items is None: # API call failed
         whisparr_logger.error("Failed to retrieve missing items from Whisparr API.")
@@ -151,7 +150,7 @@ def process_missing_items(
         refresh_command_id = None
         if not skip_item_refresh:
             whisparr_logger.info(" - Refreshing item information...")
-            refresh_command_id = whisparr_api.refresh_item(api_url, api_key, api_timeout, item_id, api_version)
+            refresh_command_id = whisparr_api.refresh_item(api_url, api_key, api_timeout, item_id)
             if refresh_command_id:
                 whisparr_logger.info(f"Triggered refresh command {refresh_command_id}. Waiting a few seconds...")
                 time.sleep(5) # Basic wait
@@ -167,7 +166,7 @@ def process_missing_items(
         
         # Search for the item
         whisparr_logger.info(" - Searching for missing item...")
-        search_command_id = whisparr_api.item_search(api_url, api_key, api_timeout, [item_id], api_version)
+        search_command_id = whisparr_api.item_search(api_url, api_key, api_timeout, [item_id])
         if search_command_id:
             whisparr_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
             
