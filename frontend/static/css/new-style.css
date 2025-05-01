@@ -796,15 +796,15 @@ input:checked + .slider:before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 12px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--border-color); /* Use variable */
+    padding-bottom: 10px; /* Reduced padding */
+    margin-bottom: 15px; /* Spacing below header */
+    /* border-bottom: 1px solid var(--border-color); Removed border */
     width: 100%;
 }
 
 .stateful-header-row h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: 1.1rem; /* Match other group headers */
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -847,24 +847,24 @@ input:checked + .slider:before {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive columns */
     gap: 15px;
-    margin-bottom: 15px; /* Space before the interval setting */
+    /* margin-bottom: 15px; Removed margin, handled by parent */
 }
 
 #generalSettings .date-info-block {
     background-color: var(--bg-secondary);
-    padding: 10px 12px;
+    padding: 12px 15px; /* Adjusted padding */
     border-radius: 4px;
     border-left: 3px solid var(--accent-color);
 }
 
 #generalSettings .date-label {
-    font-size: 0.9em;
+    font-size: 0.85em; /* Slightly smaller */
     color: var(--text-secondary);
-    margin-bottom: 4px;
+    margin-bottom: 5px; /* Increased spacing */
 }
 
 #generalSettings .date-value {
-    font-size: 1em; /* Slightly larger */
+    font-size: 0.95em; /* Adjusted size */
     font-weight: 500;
     color: var(--text-primary);
     font-family: inherit; /* Use standard font */
