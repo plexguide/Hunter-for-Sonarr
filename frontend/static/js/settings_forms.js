@@ -87,7 +87,6 @@ const SettingsForms = {
                     <select id="hunt_missing_mode">
                         <option value="episodes" ${settings.hunt_missing_mode === 'episodes' ? 'selected' : ''}>Episodes</option>
                         <option value="seasons_packs" ${settings.hunt_missing_mode === 'seasons_packs' ? 'selected' : ''}>Season [Packs]</option>
-                        <option value="seasons" ${settings.hunt_missing_mode === 'seasons' ? 'selected' : ''}>Season [Solo]</option>
                         <option value="shows" ${settings.hunt_missing_mode === 'shows' ? 'selected' : ''}>Shows</option>
                     </select>
                     <p class="setting-help">How to group and search for missing items (Season Packs recommended for torrent users)</p>

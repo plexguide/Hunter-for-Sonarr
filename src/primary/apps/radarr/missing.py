@@ -154,7 +154,7 @@ def process_missing_movies(
         if search_success:
             radarr_logger.info(f"Successfully triggered search for movie '{movie_title}'")
             add_processed_id("radarr", instance_name, str(movie_id))
-            increment_stat("radarr", "searches_triggered")
+            increment_stat("radarr", "hunted")
             movies_processed += 1
             processed_any = True
         else:
