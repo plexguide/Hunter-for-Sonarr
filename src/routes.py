@@ -1,12 +1,37 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, jsonify
 import os
 import json
+
+# Import the necessary function
+from src.primary.stateful_manager import reset_stateful_management, get_stateful_management_info
 
 # Configure Flask to use templates and static files from the frontend folder
 template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'templates'))
 static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'static'))
 
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+
+# API Routes
+
+@app.route('/api/stateful/reset', methods=['POST'])
+def api_reset_stateful():
+    """API endpoint to reset the stateful management system."""
+    success = reset_stateful_management()
+    if success:
+        return jsonify({"success": True, "message": "Stateful management reset successfully."}), 200
+    else:
+        return jsonify({"success": False, "message": "Failed to reset stateful management."}), 500
+
+@app.route('/api/stateful/info', methods=['GET'])
+def api_get_stateful_info():
+    """API endpoint to get stateful management info."""
+    try:
+        info = get_stateful_management_info()
+        return jsonify(info), 200
+    except Exception as e:
+        # Log the exception details if possible
+        app.logger.error(f"Error getting stateful info: {e}")
+        return jsonify({"error": "Failed to retrieve stateful information."}), 500
 
 def get_ui_preference():
     """Determine which UI to use based on config and user preference"""
@@ -47,6 +72,11 @@ def user_page():
         return redirect('/user/new')
     else:
         return render_template('user.html')
+
+@app.route('/user/new')
+def user_page_new():
+    """Serve the new user settings page"""
+    return render_template('user-new.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

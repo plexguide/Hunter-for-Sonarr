@@ -1135,18 +1135,6 @@ const SettingsForms = {
             });
         }
         
-        // Add listener for reset stateful button
-        const resetStatefulBtn = container.querySelector('#reset_stateful_btn');
-        if (resetStatefulBtn) {
-            resetStatefulBtn.addEventListener('click', function() {
-                if (confirm('Are you sure you want to reset stateful management? This will clear all processed media IDs.')) {
-                    // Dispatch event for main.js to handle the reset
-                    const event = new CustomEvent('resetStateful', {});
-                    container.dispatchEvent(event);
-                }
-            });
-        }
-        
         // Load stateful management info
         fetch('/api/stateful/info')
             .then(response => response.json())
@@ -1170,6 +1158,20 @@ const SettingsForms = {
                 }
             });
         
+        // Add listener for reset stateful button
+        const resetStatefulBtn = container.querySelector('#reset_stateful_btn');
+        if (resetStatefulBtn && typeof huntarrUI !== 'undefined' && typeof huntarrUI.resetStatefulManagement === 'function') {
+            resetStatefulBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to reset stateful management? This will clear all processed media IDs.')) {
+                    huntarrUI.resetStatefulManagement();
+                }
+            });
+        } else if (!resetStatefulBtn) {
+            console.warn('Could not find #reset_stateful_btn to attach listener.');
+        } else {
+             console.warn('huntarrUI or huntarrUI.resetStatefulManagement is not available.');
+        }
+
         // Add confirmation dialog for local access bypass toggle
         const localAccessBypassCheckbox = container.querySelector('#local_access_bypass');
         if (localAccessBypassCheckbox) {
