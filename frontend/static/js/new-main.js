@@ -8,6 +8,7 @@ let huntarrUI = {
     eventSources: {},
     currentSection: 'home', // Default section
     currentLogApp: 'all', // Default log app
+    currentHistoryApp: 'all', // Default history app
     autoScroll: true,
     configuredApps: {
         sonarr: false,
@@ -83,6 +84,13 @@ let huntarrUI = {
         this.elements.currentLogApp = document.getElementById('current-log-app'); // New: dropdown current selection text
         this.elements.logDropdownBtn = document.querySelector('.log-dropdown-btn'); // New: dropdown toggle button
         this.elements.logDropdownContent = document.querySelector('.log-dropdown-content'); // New: dropdown content
+        
+        // History dropdown elements
+        this.elements.historyOptions = document.querySelectorAll('.history-option'); // History dropdown options
+        this.elements.currentHistoryApp = document.getElementById('current-history-app'); // Current history app text
+        this.elements.historyDropdownBtn = document.querySelector('.history-dropdown-btn'); // History dropdown button
+        this.elements.historyDropdownContent = document.querySelector('.history-dropdown-content'); // History dropdown content
+        this.elements.historyPlaceholderText = document.getElementById('history-placeholder-text'); // Placeholder text for history
         
         // Settings dropdown elements
         this.elements.settingsOptions = document.querySelectorAll('.settings-option'); // New: settings dropdown options
@@ -162,6 +170,26 @@ let huntarrUI = {
                 }
             });
         }
+        
+        // History dropdown toggle
+        if (this.elements.historyDropdownBtn) {
+            this.elements.historyDropdownBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.elements.historyDropdownContent.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.history-dropdown') && this.elements.historyDropdownContent.classList.contains('show')) {
+                    this.elements.historyDropdownContent.classList.remove('show');
+                }
+            });
+        }
+        
+        // History options
+        this.elements.historyOptions.forEach(option => {
+            option.addEventListener('click', (e) => this.handleHistoryOptionChange(e));
+        });
         
         // Settings dropdown toggle
         if (this.elements.settingsDropdownBtn) {
@@ -503,7 +531,51 @@ let huntarrUI = {
         this.clearLogs(); // Clear existing logs before switching
         this.connectToLogs(); // Reconnect to the new log source
     },
-
+    
+    // History option dropdown handling
+    handleHistoryOptionChange: function(e) {
+        e.preventDefault(); // Prevent default anchor behavior
+        
+        const app = e.target.getAttribute('data-app');
+        if (!app || app === this.currentHistoryApp) return; // Do nothing if same tab clicked
+        
+        // Update active option
+        this.elements.historyOptions.forEach(option => {
+            option.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        // Update the current history app text with proper capitalization
+        let displayName = app.charAt(0).toUpperCase() + app.slice(1);
+        this.elements.currentHistoryApp.textContent = displayName;
+        
+        // Close the dropdown
+        this.elements.historyDropdownContent.classList.remove('show');
+        
+        // Switch to the selected app history
+        this.currentHistoryApp = app;
+        // this.clearHistory(); // Clear existing history before switching
+        // this.connectToHistory(); // Reconnect to the new history source
+        
+        // Update the placeholder text based on the selected app
+        this.updateHistoryPlaceholder(app);
+    },
+    
+    // Update the history placeholder text based on the selected app
+    updateHistoryPlaceholder: function(app) {
+        if (!this.elements.historyPlaceholderText) return;
+        
+        let message = "";
+        if (app === 'all') {
+            message = "The History feature will be available in a future update. Stay tuned for enhancements that will allow you to view your media processing history.";
+        } else {
+            let displayName = this.capitalizeFirst(app);
+            message = `The ${displayName} History feature is under development and will be available in a future update. You'll be able to track your ${displayName} media processing history here.`;
+        }
+        
+        this.elements.historyPlaceholderText.textContent = message;
+    },
+    
     // Settings option handling
     handleSettingsOptionChange: function(e) {
         e.preventDefault(); // Prevent default anchor behavior

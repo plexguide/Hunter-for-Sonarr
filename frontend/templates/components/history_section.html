@@ -1,5 +1,22 @@
 <section id="historySection" class="content-section">
     <div class="section-header">
+        <!-- History App Dropdown -->
+        <div class="history-dropdown-container">
+            <div class="history-dropdown">
+                <button class="history-dropdown-btn">
+                    <span id="current-history-app">All</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="history-dropdown-content">
+                    <a href="#" class="history-option active" data-app="all">All</a>
+                    <a href="#" class="history-option" data-app="sonarr">Sonarr</a>
+                    <a href="#" class="history-option" data-app="radarr">Radarr</a>
+                    <a href="#" class="history-option" data-app="lidarr">Lidarr</a>
+                    <a href="#" class="history-option" data-app="readarr">Readarr</a>
+                    <a href="#" class="history-option" data-app="whisparr">Whisparr</a>
+                </div>
+            </div>
+        </div>
         <h2>History</h2>
     </div>
     
@@ -7,7 +24,7 @@
         <div class="message-container">
             <i class="fas fa-clock fa-3x"></i>
             <h3>Coming Soon</h3>
-            <p>The History feature will be available in a future update. Stay tuned for enhancements that will allow you to view your media processing history.</p>
+            <p id="history-placeholder-text">The History feature will be available in a future update. Stay tuned for enhancements that will allow you to view your media processing history.</p>
         </div>
     </div>
 </section>
