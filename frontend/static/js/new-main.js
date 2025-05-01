@@ -1703,62 +1703,51 @@ let huntarrUI = {
     
     // Load stateful management info
     loadStatefulInfo: function() {
-        const statefulSection = document.getElementById('stateful-section');
-        if (!statefulSection) return;
-        
-        // Show loading state
         const initialStateEl = document.getElementById('stateful_initial_state');
         const expiresDateEl = document.getElementById('stateful_expires_date');
+        const intervalInput = document.getElementById('stateful_management_hours');
+        const intervalDaysSpan = document.getElementById('stateful_management_days');
         
-        if (initialStateEl) initialStateEl.textContent = 'Loading...';
-        if (expiresDateEl) expiresDateEl.textContent = 'Loading...';
-        
-        console.log('Fetching stateful management info...');
-        
-        fetch('/api/stateful/info', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            },
-            cache: 'no-cache'
-        })
+        fetch('/api/stateful/info', { cache: 'no-cache' }) // Add no-cache header
         .then(response => {
-            console.log('Response status:', response.status);
             if (!response.ok) {
-                throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+                throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('Stateful info data:', data);
-            
-            // Format dates nicely
-            let formattedCreatedDate = 'Not available';
-            let formattedExpiresDate = 'Not available';
-            
-            if (data.created_date) {
-                const createdDate = new Date(data.created_date.replace(' ', 'T'));
-                formattedCreatedDate = this.formatDateNicely(createdDate);
+            if (data.success) {
+                if (initialStateEl && data.created_at_ts) {
+                    const createdDate = new Date(data.created_at_ts * 1000);
+                    initialStateEl.textContent = this.formatDateNicely(createdDate);
+                } else if (initialStateEl) {
+                    initialStateEl.textContent = 'N/A';
+                }
+                
+                if (expiresDateEl && data.expires_at_ts) {
+                    const expiresDate = new Date(data.expires_at_ts * 1000);
+                    expiresDateEl.textContent = this.formatDateNicely(expiresDate);
+                } else if (expiresDateEl) {
+                    expiresDateEl.textContent = 'N/A';
+                }
+                
+                // Update interval input and days display
+                if (intervalInput && data.interval_hours) {
+                    intervalInput.value = data.interval_hours;
+                    if (intervalDaysSpan) {
+                        const days = (data.interval_hours / 24).toFixed(1);
+                        intervalDaysSpan.textContent = `${days} days`;
+                    }
+                }
+                
+                // Hide error notification if it was visible
+                const notification = document.getElementById('stateful-notification');
+                if (notification) {
+                    notification.style.display = 'none';
+                }
+            } else {
+                throw new Error(data.message || 'Failed to load stateful info');
             }
-            
-            if (data.expires_date) {
-                const expiresDate = new Date(data.expires_date.replace(' ', 'T'));
-                formattedExpiresDate = this.formatDateNicely(expiresDate);
-            }
-            
-            if (initialStateEl) {
-                initialStateEl.textContent = formattedCreatedDate;
-            }
-            
-            if (expiresDateEl) {
-                expiresDateEl.textContent = formattedExpiresDate;
-            }
-            
-            // Update the notification area
-            document.getElementById('stateful-notification').style.display = 'none';
         })
         .catch(error => {
             console.error('Error loading stateful info:', error);
@@ -1771,7 +1760,7 @@ let huntarrUI = {
             if (notification) {
                 notification.textContent = 'Failed to load stateful management info. Check logs for details.';
                 notification.style.display = 'block';
-                notification.className = 'notification error';
+                notification.className = 'notification error'; // Ensure class is set
             }
         });
     },

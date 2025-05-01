@@ -20,49 +20,25 @@ stateful_logger = get_logger("stateful")
 stateful_api = Blueprint('stateful_api', __name__)
 
 @stateful_api.route('/info', methods=['GET'])
-def get_stateful_info():
-    """Get information about the stateful management system."""
+def get_info():
+    """Get stateful management information."""
     try:
         info = get_stateful_management_info()
-        stateful_logger.debug(f"Stateful info: {info}")
-        
-        # Ensure we're returning a valid JSON structure with required data
-        if 'created_date' not in info or 'expires_date' not in info:
-            stateful_logger.warning("Missing date information in stateful info")
-            # Add default values if they don't exist
-            if 'created_at' in info:
-                try:
-                    from datetime import datetime
-                    created_date = datetime.fromtimestamp(info['created_at']).strftime("%Y-%m-%d %H:%M:%S")
-                    info['created_date'] = created_date
-                except Exception as e:
-                    stateful_logger.error(f"Error formatting created_date: {e}")
-                    info['created_date'] = "Invalid timestamp"
-            else:
-                info['created_date'] = "Unknown"
-            
-            if 'expires_at' in info:
-                try:
-                    from datetime import datetime
-                    expires_date = datetime.fromtimestamp(info['expires_at']).strftime("%Y-%m-%d %H:%M:%S")
-                    info['expires_date'] = expires_date
-                except Exception as e:
-                    stateful_logger.error(f"Error formatting expires_date: {e}")
-                    info['expires_date'] = "Invalid timestamp"
-            else:
-                info['expires_date'] = "Unknown"
-        
         # Add CORS headers to allow access from frontend
-        response = Response(json.dumps(info))
+        response_data = {
+            "success": True,
+            "created_at_ts": info.get("created_at_ts"),
+            "expires_at_ts": info.get("expires_at_ts"),
+            "interval_hours": info.get("interval_hours")
+        }
+        response = Response(json.dumps(response_data))
         response.headers['Content-Type'] = 'application/json'
         response.headers['Access-Control-Allow-Origin'] = '*'
-        stateful_logger.debug("Returning stateful info with proper headers")
         return response
-        
     except Exception as e:
-        stateful_logger.error(f"Error getting stateful info: {e}", exc_info=True)
+        stateful_logger.error(f"Error getting stateful info: {e}")
         # Return error response with proper headers
-        error_data = {"error": str(e), "created_date": "Error", "expires_date": "Error"}
+        error_data = {"success": False, "message": f"Error getting stateful info: {str(e)}"}
         response = Response(json.dumps(error_data), status=500)
         response.headers['Content-Type'] = 'application/json'
         response.headers['Access-Control-Allow-Origin'] = '*'

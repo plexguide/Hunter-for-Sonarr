@@ -126,19 +126,29 @@ def update_lock_expiration(hours: int = None) -> None:
 def reset_stateful_management() -> bool:
     """
     Reset the stateful management system by:
-    1. Creating a new lock file with current timestamp
+    1. Creating a new lock file with current timestamp and calculated expiration
     2. Deleting all stored processed IDs
     
     Returns:
         bool: True if reset was successful, False otherwise
     """
     try:
-        # Create new lock file
+        # Get the expiration hours setting BEFORE writing the lock file
+        try:
+            from src.primary.settings_manager import get_setting
+            hours = get_setting("general", "stateful_management_hours", DEFAULT_HOURS)
+        except Exception as e:
+            stateful_logger.error(f"Error getting stateful hours setting during reset, using default: {e}")
+            hours = DEFAULT_HOURS
+            
+        # Create new lock file with calculated expiration
         current_time = int(time.time())
+        expires_at = current_time + (hours * 3600)
+        
         with open(LOCK_FILE, 'w') as f:
             json.dump({
                 "created_at": current_time,
-                "expires_at": None  # Will be updated later
+                "expires_at": expires_at # Write the calculated expiration time directly
             }, f, indent=2)
         
         # Delete all stored IDs
@@ -152,9 +162,8 @@ def reset_stateful_management() -> bool:
                     except Exception as e:
                         stateful_logger.error(f"Error deleting {json_file}: {e}")
         
-        # Update expiration
-        update_lock_expiration()
-        stateful_logger.info("Successfully reset stateful management")
+        # No need to call update_lock_expiration() again as we wrote it directly
+        stateful_logger.info(f"Successfully reset stateful management. New expiration: {datetime.datetime.fromtimestamp(expires_at)}")
         return True
     except Exception as e:
         stateful_logger.error(f"Error resetting stateful management: {e}")
@@ -278,80 +287,24 @@ def is_processed(app_type: str, instance_name: str, media_id: str) -> bool:
     return media_id in processed_ids
 
 def get_stateful_management_info() -> Dict[str, Any]:
-    """
-    Get information about the current stateful management status.
+    """Get information about the stateful management system."""
+    lock_info = get_lock_info()
+    created_at_ts = lock_info.get("created_at")
+    expires_at_ts = lock_info.get("expires_at")
     
-    Returns:
-        Dict[str, Any]: Information about stateful management
-    """
-    from src.primary.settings_manager import get_setting
-    
+    # Get the interval setting
     try:
-        lock_info = get_lock_info()
-        created_at = lock_info.get("created_at", int(time.time()))
-        hours = get_setting("general", "stateful_management_hours", DEFAULT_HOURS)
-        
-        # Calculate expiration if not set
-        expires_at = lock_info.get("expires_at")
-        if expires_at is None:
-            expires_at = created_at + (hours * 3600)
-            # Update lock file with expiration
-            with open(LOCK_FILE, 'w') as f:
-                lock_info["expires_at"] = expires_at
-                json.dump(lock_info, f, indent=2)
-        
-        # Get processed counts per app
-        app_counts = {}
-        for app_type in APP_TYPES:
-            app_dir = STATEFUL_DIR / app_type
-            app_counts[app_type] = {}
-            
-            if app_dir.exists():
-                for json_file in app_dir.glob("*.json"):
-                    instance_name = json_file.stem
-                    try:
-                        with open(json_file, 'r') as f:
-                            data = json.load(f)
-                            app_counts[app_type][instance_name] = len(data.get("processed_ids", []))
-                    except Exception as e:
-                        stateful_logger.error(f"Error reading processed IDs for {instance_name}: {e}")
-                        app_counts[app_type][instance_name] = 0
-        
-        # Format dates
-        try:
-            created_date = datetime.datetime.fromtimestamp(created_at).strftime("%Y-%m-%d %H:%M:%S")
-            expires_date = datetime.datetime.fromtimestamp(expires_at).strftime("%Y-%m-%d %H:%M:%S")
-        except Exception as e:
-            stateful_logger.error(f"Error formatting dates: {e}")
-            created_date = "Invalid date"
-            expires_date = "Invalid date"
-        
-        result = {
-            "created_at": created_at,
-            "created_date": created_date,
-            "expires_at": expires_at,
-            "expires_date": expires_date,
-            "hours": hours,
-            "days": round(hours / 24, 1),
-            "app_counts": app_counts
-        }
-        
-        stateful_logger.debug(f"Returning stateful info: {result}")
-        return result
+        from src.primary.settings_manager import get_setting
+        hours_interval = get_setting("general", "stateful_management_hours", DEFAULT_HOURS)
     except Exception as e:
-        stateful_logger.error(f"Error in get_stateful_management_info: {e}", exc_info=True)
-        # Return a fallback response that won't break the UI
-        current_time = int(time.time())
-        return {
-            "error": str(e),
-            "created_at": current_time,
-            "created_date": "Error loading data",
-            "expires_at": current_time + (DEFAULT_HOURS * 3600),
-            "expires_date": "Error loading data",
-            "hours": DEFAULT_HOURS,
-            "days": round(DEFAULT_HOURS / 24, 1),
-            "app_counts": {}
-        }
+        stateful_logger.error(f"Error getting stateful hours setting, using default: {e}")
+        hours_interval = DEFAULT_HOURS
+
+    return {
+        "created_at_ts": created_at_ts,
+        "expires_at_ts": expires_at_ts,
+        "interval_hours": hours_interval
+    }
 
 def initialize_stateful_system():
     """Perform a complete initialization of the stateful management system."""
