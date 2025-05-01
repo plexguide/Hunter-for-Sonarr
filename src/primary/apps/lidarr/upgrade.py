@@ -104,6 +104,21 @@ def process_cutoff_upgrades(
              lidarr_logger.info("No album IDs selected for upgrade search. Skipping trigger.")
              return False
 
+        # Prepare detailed album information for logging
+        album_details_log = []
+        for i, album in enumerate(albums_to_search):
+            # Extract useful information for logging
+            album_title = album.get('title', f'Album ID {album["id"]}')
+            artist_name = album.get('artist', {}).get('artistName', 'Unknown Artist')
+            quality = album.get('quality', {}).get('quality', {}).get('name', 'Unknown Quality')
+            album_details_log.append(f"{i+1}. {artist_name} - {album_title} (ID: {album['id']}, Current Quality: {quality})")
+
+        # Log each album on a separate line for better readability
+        if album_details_log:
+            lidarr_logger.info(f"Albums selected for quality upgrade in this cycle:")
+            for album_detail in album_details_log:
+                lidarr_logger.info(f" {album_detail}")
+
         # Check stop event before triggering search
         if stop_check and stop_check(): # Use the passed stop_check function
             lidarr_logger.warning("Shutdown requested, stopping upgrade album search.")
