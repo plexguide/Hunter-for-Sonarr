@@ -447,6 +447,37 @@ input:checked + .slider:before {
     transform: translateY(-1px);
 }
 
+/* Danger action button */
+.action-button.danger {
+    background-color: #e74c3c;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    width: fit-content;
+    max-width: max-content;
+    white-space: nowrap;
+}
+
+.action-button.danger:hover {
+    background-color: #c0392b;
+}
+
+.action-button.danger:active {
+    transform: translateY(0);
+}
+
+.action-button.danger i {
+    font-size: 12px;
+    margin-right: 1px;
+}
+
 /* Logs Section */
 .section-header {
     margin-bottom: 20px;
@@ -612,6 +643,7 @@ input:checked + .slider:before {
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
+    position: relative;
 }
 
 .settings-group h3 {
@@ -698,6 +730,170 @@ input:checked + .toggle-slider {
 
 input:checked + .toggle-slider:before {
     transform: translateX(20px); /* Changed to match login page toggle (20px) */
+}
+
+/* Stateful Management Styling */
+.stateful-header-wrapper {
+    position: relative;
+    width: 100%;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #2d3748; /* Darker border matching the screenshot */
+}
+
+.stateful-header-wrapper h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    padding-bottom: 15px;
+}
+
+.header-line {
+    display: none;
+}
+
+.stateful-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stateful-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.stateful-reset-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    background-color: var(--button-danger-bg);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.stateful-reset-btn:hover {
+    background-color: var(--button-danger-hover);
+}
+
+.info-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    background-color: var(--bg-tertiary);
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+.date-info-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    border-left: 4px solid var(--accent-color);
+}
+
+.date-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.date-value {
+    font-family: monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-color);
+    padding: 4px 8px;
+    background-color: rgba(52, 152, 219, 0.1);
+    border-radius: 4px;
+}
+
+.reset-help {
+    margin-top: 8px;
+    font-style: italic;
+    color: var(--error-color);
+    font-size: 12px;
+}
+
+/* Settings Stateful Management */
+.setting-info-block {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+.setting-info-block .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.setting-info-block .info-row:last-child {
+    border-bottom: none;
+}
+
+.danger-button {
+    background-color: var(--button-danger-bg);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.danger-button:hover {
+    background-color: var(--button-danger-hover);
+}
+
+/* Custom reset button that matches the screenshot exactly */
+.danger-reset-button {
+    background-color: #e74c3c; /* Solid red to match the image */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: background-color 0.2s ease;
+    width: fit-content;
+    white-space: nowrap;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.danger-reset-button:hover {
+    background-color: #c0392b;
+}
+
+.danger-reset-button i {
+    font-size: 13px;
+}
+
+/* Make sure settings-group has the right positioning for absolute elements */
+.settings-group {
+    position: relative;
 }
 
 /* Responsive Adjustments */
@@ -967,4 +1163,117 @@ input:checked + .toggle-slider:before {
         max-width: 90%;
         margin: 0 15px;
     }
+}
+
+/* Section header with action button */
+.section-header-with-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    position: relative;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.section-header-with-action h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.section-header-with-action .icon-button {
+    padding: 7px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    background-color: var(--button-danger-bg);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto; /* Push to the right edge */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.section-header-with-action .icon-button i {
+    font-size: 14px;
+}
+
+.section-header-with-action .icon-button:hover {
+    background-color: var(--button-danger-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.section-header-with-action .icon-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Fix for trash icon positioning */
+.fa-trash-alt {
+    display: inline-block;
+    margin-right: 2px;
+}
+
+/* Reset button in top right corner */
+.top-right-button {
+    position: absolute !important;
+    top: 0;
+    right: 0;
+    margin: 0 !important;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    border-radius: 3px !important;
+}
+
+.top-right-button i {
+    margin-right: 3px;
+}
+
+/* Stateful management header row with reset button */
+.stateful-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #2d3748; /* Dark border line matching the screenshot */
+    width: 100%;
+}
+
+.stateful-header-row h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Reset button styling exactly matching the screenshot */
+#reset_stateful_btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s ease;
+}
+
+#reset_stateful_btn:hover {
+    background-color: #c0392b;
+}
+
+#reset_stateful_btn i {
+    font-size: 13px;
 }

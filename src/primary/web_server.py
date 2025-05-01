@@ -9,6 +9,7 @@ import datetime
 from threading import Lock
 from primary.utils.logger import LOG_DIR, APP_LOG_FILES, MAIN_LOG_FILE # Import log constants
 from primary import settings_manager # Import settings_manager
+from src.primary.stateful_manager import update_lock_expiration # Import stateful update function
 
 # import socket # No longer used
 import json
@@ -26,7 +27,7 @@ from flask import Flask, render_template, request, jsonify, Response, send_from_
 # from src.primary.config import API_URL # No longer needed directly
 # Use only settings_manager
 from src.primary import settings_manager
-from src.primary.utils.logger import setup_logger, get_logger, LOG_DIR # Import get_logger and LOG_DIR
+from src.primary.utils.logger import setup_main_logger, get_logger, LOG_DIR # Import get_logger and LOG_DIR
 from src.primary.auth import (
     authenticate_request, user_exists, create_user, verify_user, create_session,
     logout, SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret,
@@ -37,6 +38,9 @@ from src.primary.routes.common import common_bp
 
 # Import blueprints for each app from the centralized blueprints module
 from src.primary.apps.blueprints import sonarr_bp, radarr_bp, lidarr_bp, readarr_bp, whisparr_bp, swaparr_bp
+
+# Import stateful blueprint
+from src.primary.stateful_routes import stateful_api
 
 # Disable Flask default logging
 log = logging.getLogger('werkzeug')
@@ -58,6 +62,7 @@ app.register_blueprint(lidarr_bp, url_prefix='/api/lidarr')
 app.register_blueprint(readarr_bp, url_prefix='/api/readarr')
 app.register_blueprint(whisparr_bp, url_prefix='/api/whisparr')
 app.register_blueprint(swaparr_bp, url_prefix='/api/swaparr')
+app.register_blueprint(stateful_api, url_prefix='/api/stateful')
 
 # Register the authentication check to run before requests
 app.before_request(authenticate_request)
@@ -270,13 +275,8 @@ def logs_stream():
                                     
                                     # Only filter when reading system log for specific app tab
                                     if app_type != 'all' and app_type != 'system' and name == 'system':
-                                        # Include system log entries that mention this app name
-                                        # or contain patterns specific to the app
-                                        app_pattern = f"huntarr.{app_type}"
-                                        include_line = (
-                                            app_type.lower() in line.lower() or 
-                                            app_pattern in line
-                                        )
+                                        # MODIFIED: Don't include system logs in app tabs at all
+                                        include_line = False
                                     else:
                                         include_line = True
                                     
@@ -370,6 +370,21 @@ def api_settings():
         success = settings_manager.save_settings(app_name, settings_data) # Corrected function name
 
         if success:
+            # ---> ADDED: Update stateful expiration if general settings were saved <---
+            if app_name == 'general':
+                try:
+                    new_hours = int(settings_data.get('stateful_management_hours'))
+                    if new_hours > 0:
+                        web_logger.info(f"General settings saved, updating stateful expiration to {new_hours} hours.")
+                        update_lock_expiration(hours=new_hours)
+                    else:
+                        web_logger.warning("Invalid stateful_management_hours value received, not updating expiration.")
+                except (ValueError, TypeError) as e:
+                    web_logger.error(f"Could not update stateful expiration after saving general settings: {e}")
+                except Exception as e:
+                     web_logger.error(f"Unexpected error updating stateful expiration: {e}")
+            # ---> END ADDED SECTION <---
+
             # Return the full updated configuration
             all_settings = settings_manager.get_all_settings() # Corrected: Use get_all_settings
             return jsonify(all_settings) # Return the full config object
@@ -393,6 +408,20 @@ def save_general_settings():
         success = settings_manager.save_settings('general', general_settings_data)
 
         if success:
+            # ---> ADDED: Update stateful expiration if general settings were saved <---
+            try:
+                new_hours = int(general_settings_data.get('stateful_management_hours'))
+                if new_hours > 0:
+                    general_logger.info(f"General settings saved, updating stateful expiration to {new_hours} hours.")
+                    update_lock_expiration(hours=new_hours)
+                else:
+                    general_logger.warning("Invalid stateful_management_hours value received, not updating expiration.")
+            except (ValueError, TypeError) as e:
+                general_logger.error(f"Could not update stateful expiration after saving general settings: {e}")
+            except Exception as e:
+                 general_logger.error(f"Unexpected error updating stateful expiration: {e}")
+            # ---> END ADDED SECTION <---
+
             general_logger.info("General settings saved successfully.")
             # Return the full updated config
             full_config = settings_manager.load_settings()

@@ -87,7 +87,6 @@ const SettingsForms = {
                     <select id="hunt_missing_mode">
                         <option value="episodes" ${settings.hunt_missing_mode === 'episodes' ? 'selected' : ''}>Episodes</option>
                         <option value="seasons_packs" ${settings.hunt_missing_mode === 'seasons_packs' ? 'selected' : ''}>Season [Packs]</option>
-                        <option value="seasons" ${settings.hunt_missing_mode === 'seasons' ? 'selected' : ''}>Season [Solo]</option>
                         <option value="shows" ${settings.hunt_missing_mode === 'shows' ? 'selected' : ''}>Shows</option>
                     </select>
                     <p class="setting-help">How to group and search for missing items (Season Packs recommended for torrent users)</p>
@@ -144,22 +143,6 @@ const SettingsForms = {
             
             <div class="settings-group">
                 <h3>Advanced Settings</h3>
-                <div class="setting-item">
-                    <label for="random_missing">Random Missing:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="random_missing" ${settings.random_missing !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Select random missing items instead of sequential order</p>
-                </div>
-                <div class="setting-item">
-                    <label for="random_upgrades">Random Upgrades:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="random_upgrades" ${settings.random_upgrades !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Select random items for quality upgrades</p>
-                </div>
                 <div class="setting-item">
                     <label for="api_timeout">API Timeout:</label>
                     <input type="number" id="api_timeout" min="10" max="300" value="${settings.api_timeout || 60}">
@@ -1077,8 +1060,36 @@ const SettingsForms = {
                 </div>
                 <div class="setting-item">
                     <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
+                    <input type="number" id="log_refresh_interval_seconds" class="short-number-input" min="1" value="${settings.log_refresh_interval_seconds || 30}">
                     <p class="setting-help">Interval in seconds to refresh log display (applies to all apps)</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <div class="stateful-header-row">
+                    <h3>Stateful Management</h3>
+                    <button id="reset_stateful_btn"><i class="fas fa-trash"></i> Reset</button>
+                </div>
+                <div id="stateful-section" class="setting-info-block">
+                    <div id="stateful-notification" class="notification error" style="display: none;">
+                        Failed to load stateful management info. Check logs for details.
+                    </div>
+                    <div class="info-container">
+                        <div class="date-info-block">
+                            <div class="date-label">Initial State Created:</div>
+                            <div id="stateful_initial_state" class="date-value">Loading...</div>
+                        </div>
+                        <div class="date-info-block">
+                            <div class="date-label">State Reset Date:</div>
+                            <div id="stateful_expires_date" class="date-value">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label for="stateful_management_hours">State Reset Interval (Hours):</label>
+                    <input type="number" id="stateful_management_hours" min="1" value="${settings.stateful_management_hours || 168}">
+                    <p class="setting-help">Hours before resetting processed media state (<span id="stateful_management_days">${((settings.stateful_management_hours || 168) / 24).toFixed(1)} days</span>)</p>
+                    <p class="setting-help reset-help">Reset clears all processed media IDs to allow reprocessing</p>
                 </div>
             </div>
             
@@ -1095,6 +1106,70 @@ const SettingsForms = {
             </div>
         `;
         
+        // Add listener for stateful management hours input
+        const statefulHoursInput = container.querySelector('#stateful_management_hours');
+        const statefulDaysSpan = container.querySelector('#stateful_management_days');
+        
+        if (statefulHoursInput && statefulDaysSpan) {
+            statefulHoursInput.addEventListener('input', function() {
+                const hours = parseInt(this.value) || 168;
+                const days = (hours / 24).toFixed(1);
+                statefulDaysSpan.textContent = `${days} days`;
+            });
+        }
+        
+        // Load stateful management info
+        const createdDateEl = document.getElementById('stateful_initial_state');
+        const expiresDateEl = document.getElementById('stateful_expires_date');
+
+        // Set initial state to Loading...
+        if (createdDateEl) createdDateEl.textContent = 'Loading...';
+        if (expiresDateEl) expiresDateEl.textContent = 'Loading...';
+
+        fetch('/api/stateful/info')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+             })
+            .then(data => {
+                if (createdDateEl && data.created_date) {
+                    createdDateEl.textContent = data.created_date;
+                } else if (createdDateEl) {
+                    createdDateEl.textContent = 'N/A'; // Handle missing data
+                }
+                
+                if (expiresDateEl && data.expires_date) {
+                    expiresDateEl.textContent = data.expires_date;
+                } else if (expiresDateEl) {
+                    expiresDateEl.textContent = 'N/A'; // Handle missing data
+                }
+            })
+            .catch(error => {
+                console.error('Error loading stateful management info:', error);
+                if (createdDateEl) createdDateEl.textContent = 'Error loading';
+                if (expiresDateEl) expiresDateEl.textContent = 'Error loading';
+                // const notificationEl = document.getElementById('stateful-notification');
+                // if (notificationEl) {
+                //     notificationEl.style.display = 'block';
+                // }
+            });
+        
+        // Add listener for reset stateful button
+        const resetStatefulBtn = container.querySelector('#reset_stateful_btn');
+        if (resetStatefulBtn && typeof huntarrUI !== 'undefined' && typeof huntarrUI.resetStatefulManagement === 'function') {
+            resetStatefulBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to reset stateful management? This will clear all processed media IDs.')) {
+                    huntarrUI.resetStatefulManagement();
+                }
+            });
+        } else if (!resetStatefulBtn) {
+            console.warn('Could not find #reset_stateful_btn to attach listener.');
+        } else {
+             console.warn('huntarrUI or huntarrUI.resetStatefulManagement is not available.');
+        }
+
         // Add confirmation dialog for local access bypass toggle
         const localAccessBypassCheckbox = container.querySelector('#local_access_bypass');
         if (localAccessBypassCheckbox) {

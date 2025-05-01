@@ -11,6 +11,10 @@ from typing import Dict, Any, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.lidarr import api as lidarr_api
 from src.primary.stats_manager import increment_stat
+from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.state import get_state_file_path
+import json
+import os
 
 # Get the logger for the Lidarr module
 lidarr_logger = get_logger(__name__) # Use __name__ for correct logger hierarchy
@@ -41,7 +45,6 @@ def process_missing_albums(
     hunt_missing_mode = app_settings.get("hunt_missing_mode", "artist") # 'artist' or 'album'
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
-    random_missing = app_settings.get("random_missing", True)
     api_timeout = app_settings.get("api_timeout", 120) # Use general timeout
     command_wait_delay = app_settings.get("command_wait_delay", 1)
     command_wait_attempts = app_settings.get("command_wait_attempts", 600)
@@ -129,37 +132,106 @@ def process_missing_albums(
             items_by_artist = {}
             for item in missing_items: # Use the potentially filtered missing_items list
                 artist_id = item.get('artistId')
+                lidarr_logger.debug(f"Missing album item: {item.get('title')} by artistId: {artist_id}")
                 if artist_id:
                     if artist_id not in items_by_artist:
                         items_by_artist[artist_id] = []
                     items_by_artist[artist_id].append(item)
             target_entities = list(items_by_artist.keys()) # List of artist IDs
-            lidarr_logger.debug(f"Grouped missing albums into {len(target_entities)} artists.")
+            lidarr_logger.info(f"Grouped missing albums into {len(target_entities)} artists.")
+            lidarr_logger.debug(f"Artist IDs with missing albums: {target_entities}")
         else: # Album mode
             target_entities = [item['id'] for item in missing_items] # Use the potentially filtered missing_items list
 
+        # OVERRIDE NORMAL LOGIC - ALWAYS SELECT A DIFFERENT ARTIST EACH CYCLE
+        if hunt_missing_mode == "artist" and target_entities:
+            # Track which artist we select through a state file
+            state_file_path = get_state_file_path("lidarr", "last_artist_rotation")
+            last_selected_artists = []
+            
+            # Attempt to read last rotation state
+            try:
+                if os.path.exists(state_file_path):
+                    with open(state_file_path, 'r') as f:
+                        rotation_data = json.load(f)
+                        last_selected_artists = rotation_data.get("artists", [])
+                        lidarr_logger.debug(f"Loaded artist rotation history: {last_selected_artists}")
+            except Exception as e:
+                lidarr_logger.error(f"Error reading artist rotation file: {e}")
+                # Continue with empty history if file can't be read
+            
+            # Filter out previously selected artists that still exist in target_entities
+            remaining_artists = [a for a in target_entities if a not in last_selected_artists]
+            
+            # If we've cycled through all artists or have issues, reset the history
+            if not remaining_artists:
+                lidarr_logger.info("All artists have been selected in previous cycles, starting fresh rotation")
+                # Keep the last selected artist in history to avoid immediate repetition
+                last_artist = last_selected_artists[-1] if last_selected_artists else None
+                last_selected_artists = [last_artist] if last_artist and last_artist in target_entities else []
+                remaining_artists = [a for a in target_entities if a not in last_selected_artists]
+            
+            if remaining_artists:
+                # Select a random artist from remaining ones
+                selected_artist = random.choice(remaining_artists)
+                lidarr_logger.info(f"Selected artist ID {selected_artist} for this cycle (from {len(remaining_artists)} remaining artists)")
+                
+                # Update history with this selection
+                last_selected_artists.append(selected_artist)
+                
+                # Keep history to a reasonable size (based on total artists)
+                max_history = min(len(target_entities), 10)  # Don't track more than 10 artists
+                if len(last_selected_artists) > max_history:
+                    last_selected_artists = last_selected_artists[-max_history:]
+                
+                # Save updated history
+                try:
+                    os.makedirs(os.path.dirname(state_file_path), exist_ok=True)
+                    with open(state_file_path, 'w') as f:
+                        json.dump({"artists": last_selected_artists}, f)
+                    lidarr_logger.debug(f"Saved artist rotation history: {last_selected_artists}")
+                except Exception as e:
+                    lidarr_logger.error(f"Error saving artist rotation file: {e}")
+                
+                # Override the normal selection logic
+                unprocessed_entities = [selected_artist]
+            else:
+                lidarr_logger.warning("No artists available to select")
+        else:
+            # Filter out already processed entities using stateful management
+            unprocessed_entities = []
+            for entity_id in target_entities:
+                if not is_processed("lidarr", instance_name, str(entity_id)):
+                    unprocessed_entities.append(entity_id)
+                else:
+                    lidarr_logger.debug(f"Skipping already processed {search_entity_type} ID: {entity_id}")
+            
+            lidarr_logger.info(f"Found {len(unprocessed_entities)} unprocessed {search_entity_type}s out of {len(target_entities)} total.")
+        
+        if not unprocessed_entities:
+            lidarr_logger.info(f"No unprocessed {search_entity_type}s found for {instance_name}. All available {search_entity_type}s have been processed.")
+            return False
+            
         # Select entities to search
-        if not target_entities:
+        if not unprocessed_entities:
             lidarr_logger.info(f"No {search_entity_type}s found to process after grouping/filtering.")
             return False
 
-        if random_missing:
-            entities_to_search_ids = random.sample(target_entities, min(len(target_entities), total_items_to_process))
-            lidarr_logger.debug(f"Randomly selected {len(entities_to_search_ids)} {search_entity_type}s to search.")
-        else:
-            # Sort by ID for consistent selection if not random (optional, API order might suffice)
-            # target_entities.sort() # Example: sort IDs numerically
-            entities_to_search_ids = target_entities[:total_items_to_process]
-            lidarr_logger.debug(f"Selected first {len(entities_to_search_ids)} {search_entity_type}s to search.")
-
-        if not entities_to_search_ids:
-            lidarr_logger.info(f"No {search_entity_type}s selected for search after applying limit/randomization.")
-            return False
+        entities_to_search_ids = random.sample(unprocessed_entities, min(len(unprocessed_entities), total_items_to_process))
+        lidarr_logger.info(f"Randomly selected {len(entities_to_search_ids)} {search_entity_type}s to search.")
+        lidarr_logger.debug(f"Unprocessed entities: {unprocessed_entities}")
+        lidarr_logger.debug(f"Entities to search: {entities_to_search_ids}")
 
         # --- Trigger Search (Artist or Album) ---
         if hunt_missing_mode == "artist":
+            lidarr_logger.info(f"Artist-based missing mode selected")
+            lidarr_logger.info(f"Found {len(entities_to_search_ids)} unprocessed artists to search.")
+            
+            # Prepare a list for artist details log
+            artist_details_log = []
+            
             lidarr_logger.info(f"Triggering Artist Search for {len(entities_to_search_ids)} artists on {instance_name}...")
-            for artist_id in entities_to_search_ids:
+            for i, artist_id in enumerate(entities_to_search_ids):
                 if stop_check(): # Use the new stop_check function
                     lidarr_logger.warning("Shutdown requested during artist search trigger.")
                     break
@@ -172,6 +244,9 @@ def process_missing_albums(
                     artist_info = first_album.get('artist')
                     if artist_info and isinstance(artist_info, dict):
                          artist_name = artist_info.get('artistName', artist_name)
+                
+                # Add to detailed log list
+                artist_details_log.append(f"{i+1}. {artist_name} (ID: {artist_id})")
 
                 lidarr_logger.info(f"Triggering Artist Search for '{artist_name}' (ID: {artist_id}) on instance {instance_name}")
                 try:
@@ -183,6 +258,11 @@ def process_missing_albums(
                         increment_stat("lidarr", "hunted") # Changed from "missing" to "hunted"
                         processed_count += 1 # Count artists searched
                         processed_artists_or_albums.add(artist_id)
+                        
+                        # Add to processed list
+                        add_processed_id("lidarr", instance_name, str(artist_id))
+                        lidarr_logger.debug(f"Added artist ID {artist_id} to processed list for {instance_name}")
+                        
                         time.sleep(0.1) # Small delay between triggers
                 except Exception as e:
                     lidarr_logger.warning(f"Failed to trigger artist search for ID {artist_id} on {instance_name}: {e}")
@@ -203,28 +283,30 @@ def process_missing_albums(
                     # Safely get title and artist name, provide defaults
                     title = album_info.get('title', f'Album ID {album_id}')
                     artist_name = album_info.get('artist', {}).get('artistName', 'Unknown Artist')
-                    album_details_log.append(f"'{artist_name} - {title}' (ID: {album_id})")
+                    album_details_log.append(f"{len(album_details_log) + 1}. {artist_name} - {title} (ID: {album_id})")
                 else:
                     # Fallback if album ID wasn't found in the fetched missing items (should be rare)
-                    album_details_log.append(f'Album ID {album_id} (Details not found)')
+                    album_details_log.append(f"{len(album_details_log) + 1}. Album ID {album_id} (Details not found)")
 
-            # Construct the detailed log message string
-            details_string = ', '.join(album_details_log)
-            log_message = f"*** DETAILED LOG *** Triggering Album Search for {len(album_ids_to_search)} albums (album mode) on instance {instance_name}: [{details_string}]"
-
-            # Add a debug log to show the details being constructed
-            lidarr_logger.debug(f"Constructed album details for logging: [{details_string}]")
-            # Ensure the INFO log uses the constructed message
-            lidarr_logger.info(log_message)
+            # Log each album on a new line for better readability
+            lidarr_logger.info(f"Albums selected for processing in this cycle:")
+            for album_detail in album_details_log:
+                lidarr_logger.info(f" {album_detail}")
 
             # Use the correct API function name
             command_id = lidarr_api.search_albums(api_url, api_key, api_timeout, album_ids_to_search)
             if command_id:
                 # Also use descriptive list in debug log if needed
-                lidarr_logger.debug(f"Album search command triggered with ID: {command_id} for albums: [{details_string}]")
+                lidarr_logger.debug(f"Album search command triggered with ID: {command_id} for albums: [{', '.join(album_details_log)}]")
                 increment_stat("lidarr", "hunted") # Changed from "missing" to "hunted"
                 processed_count += len(album_ids_to_search) # Count albums searched
                 processed_artists_or_albums.update(album_ids_to_search)
+                
+                # Add album IDs to processed list
+                for album_id in album_ids_to_search:
+                    add_processed_id("lidarr", instance_name, str(album_id))
+                    lidarr_logger.debug(f"Added album ID {album_id} to processed list for {instance_name}")
+                    
                 time.sleep(command_wait_delay) # Basic delay after the single command
             else:
                 lidarr_logger.warning(f"Failed to trigger album search for IDs {album_ids_to_search} on {instance_name}.")

@@ -13,20 +13,19 @@
 <style>
     .banner-footer {
         text-align: center;
-        padding: 15px 20px;
+        padding: 12px 20px; /* Adjusted padding */
         margin-top: 15px;
         margin-bottom: 10px;
         background-color: var(--bg-secondary);
         border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Softened shadow */
         border: 1px solid var(--border-color);
-        position: relative;
-        z-index: 10;
+        /* Removed position: relative and z-index: 10 */
     }
     
     .banner-footer p {
         margin: 0;
-        font-size: 1.1em;
+        font-size: 1em; /* Adjusted font size */
         color: var(--text-primary);
         font-weight: 500;
     }
@@ -43,12 +42,12 @@
         color: var(--accent-hover);
     }
     
-    /* Add the icon styles from top banner */
+    /* Use theme variables for icon colors */
     .banner-footer .donation-icon {
-        color: #ff6b6b;
+        color: var(--error-color, #ff6b6b); /* Use error color variable */
     }
 
     .banner-footer .star-icon {
-        color: #ffd700;
+        color: var(--warning-color, #ffd700); /* Use warning color variable */
     }
 </style>

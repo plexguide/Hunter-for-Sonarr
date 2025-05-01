@@ -10,6 +10,7 @@ from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.readarr import api as readarr_api
 from src.primary.stats_manager import increment_stat
+from src.primary.stateful_manager import is_processed, add_processed_id
 
 # Get logger for the app
 readarr_logger = get_logger("readarr")
@@ -34,11 +35,11 @@ def process_missing_books(
     # Extract necessary settings
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
+    instance_name = app_settings.get("instance_name", "Readarr Default")
     api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_author_refresh = app_settings.get("skip_author_refresh", False)
-    random_missing = app_settings.get("random_missing", False)
     hunt_missing_books = app_settings.get("hunt_missing_books", 0)
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
@@ -67,13 +68,23 @@ def process_missing_books(
 
     author_ids = list(books_by_author.keys())
 
-    # Select authors/books to process
-    if random_missing:
-        readarr_logger.info(f"Randomly selecting up to {hunt_missing_books} authors with missing books.")
-        authors_to_process = random.sample(author_ids, min(hunt_missing_books, len(author_ids)))
-    else:
-        readarr_logger.info(f"Selecting the first {hunt_missing_books} authors with missing books (order based on API return).")
-        authors_to_process = author_ids[:hunt_missing_books]
+    # Filter out already processed authors using stateful management
+    unprocessed_authors = []
+    for author_id in author_ids:
+        if not is_processed("readarr", instance_name, str(author_id)):
+            unprocessed_authors.append(author_id)
+        else:
+            readarr_logger.debug(f"Skipping already processed author ID: {author_id}")
+
+    readarr_logger.info(f"Found {len(unprocessed_authors)} unprocessed authors out of {len(author_ids)} total authors with missing books.")
+    
+    if not unprocessed_authors:
+        readarr_logger.info(f"No unprocessed authors found for {instance_name}. All available authors have been processed.")
+        return False
+
+    # Always randomly select authors/books to process
+    readarr_logger.info(f"Randomly selecting up to {hunt_missing_books} authors with missing books.")
+    authors_to_process = random.sample(unprocessed_authors, min(hunt_missing_books, len(unprocessed_authors)))
 
     readarr_logger.info(f"Selected {len(authors_to_process)} authors to search for missing books.")
     processed_count = 0
@@ -122,6 +133,11 @@ def process_missing_books(
             command_id = search_command_result.get('id') if isinstance(search_command_result, dict) else search_command_result
             readarr_logger.info(f"Triggered book search command {command_id} for author {author_name}. Assuming success for now.") # Log only command ID
             increment_stat("readarr", "hunted")
+            
+            # Add author ID to processed list
+            add_processed_id("readarr", instance_name, str(author_id))
+            readarr_logger.debug(f"Added author ID {author_id} to processed list for {instance_name}")
+            
             processed_count += 1 # Count processed authors/groups
             processed_authors.append(author_name) # Add to list of processed authors
             processed_something = True

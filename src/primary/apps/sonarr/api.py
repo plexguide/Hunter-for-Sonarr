@@ -884,7 +884,7 @@ def search_season(api_url: str, api_key: str, api_timeout: int, series_id: int, 
         sonarr_logger.error(f"An unexpected error occurred while triggering Sonarr season search: {e}")
         return None
 
-def get_series_with_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool = True, limit: int = 50, random_mode: bool = False) -> List[Dict[str, Any]]:
+def get_series_with_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool = True, limit: int = 50, random_mode: bool = True) -> List[Dict[str, Any]]:
     """
     Get a list of series that have missing episodes, along with missing episode counts per season.
     This is much more efficient than fetching all missing episodes for large libraries.
