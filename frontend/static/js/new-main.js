@@ -66,6 +66,7 @@ let huntarrUI = {
         this.elements.navItems = document.querySelectorAll('.nav-item');
         this.elements.homeNav = document.getElementById('homeNav');
         this.elements.logsNav = document.getElementById('logsNav');
+        this.elements.historyNav = document.getElementById('historyNav');
         this.elements.settingsNav = document.getElementById('settingsNav');
         this.elements.userNav = document.getElementById('userNav');
         
@@ -73,6 +74,7 @@ let huntarrUI = {
         this.elements.sections = document.querySelectorAll('.content-section');
         this.elements.homeSection = document.getElementById('homeSection');
         this.elements.logsSection = document.getElementById('logsSection');
+        this.elements.historySection = document.getElementById('historySection');
         this.elements.settingsSection = document.getElementById('settingsSection');
         
         // App tabs & Settings Tabs
@@ -382,6 +384,13 @@ let huntarrUI = {
             newTitle = 'Logs';
             this.currentSection = 'logs';
             this.connectToLogs();
+        } else if (section === 'history' && this.elements.historySection) {
+            this.elements.historySection.classList.add('active');
+            if (this.elements.historyNav) this.elements.historyNav.classList.add('active');
+            newTitle = 'History';
+            this.currentSection = 'history';
+            // Disconnect logs if switching away from logs
+            this.disconnectAllEventSources(); 
         } else if (section === 'settings' && this.elements.settingsSection) {
             this.elements.settingsSection.classList.add('active');
             if (this.elements.settingsNav) this.elements.settingsNav.classList.add('active');
