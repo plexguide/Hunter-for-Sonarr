@@ -9,6 +9,7 @@ import datetime
 from threading import Lock
 from primary.utils.logger import LOG_DIR, APP_LOG_FILES, MAIN_LOG_FILE # Import log constants
 from primary import settings_manager # Import settings_manager
+from src.primary.stateful_manager import update_lock_expiration # Import stateful update function
 
 # import socket # No longer used
 import json
@@ -374,6 +375,21 @@ def api_settings():
         success = settings_manager.save_settings(app_name, settings_data) # Corrected function name
 
         if success:
+            # ---> ADDED: Update stateful expiration if general settings were saved <---
+            if app_name == 'general':
+                try:
+                    new_hours = int(settings_data.get('stateful_management_hours'))
+                    if new_hours > 0:
+                        web_logger.info(f"General settings saved, updating stateful expiration to {new_hours} hours.")
+                        update_lock_expiration(hours=new_hours)
+                    else:
+                        web_logger.warning("Invalid stateful_management_hours value received, not updating expiration.")
+                except (ValueError, TypeError) as e:
+                    web_logger.error(f"Could not update stateful expiration after saving general settings: {e}")
+                except Exception as e:
+                     web_logger.error(f"Unexpected error updating stateful expiration: {e}")
+            # ---> END ADDED SECTION <---
+
             # Return the full updated configuration
             all_settings = settings_manager.get_all_settings() # Corrected: Use get_all_settings
             return jsonify(all_settings) # Return the full config object
@@ -397,6 +413,20 @@ def save_general_settings():
         success = settings_manager.save_settings('general', general_settings_data)
 
         if success:
+            # ---> ADDED: Update stateful expiration if general settings were saved <---
+            try:
+                new_hours = int(general_settings_data.get('stateful_management_hours'))
+                if new_hours > 0:
+                    general_logger.info(f"General settings saved, updating stateful expiration to {new_hours} hours.")
+                    update_lock_expiration(hours=new_hours)
+                else:
+                    general_logger.warning("Invalid stateful_management_hours value received, not updating expiration.")
+            except (ValueError, TypeError) as e:
+                general_logger.error(f"Could not update stateful expiration after saving general settings: {e}")
+            except Exception as e:
+                 general_logger.error(f"Unexpected error updating stateful expiration: {e}")
+            # ---> END ADDED SECTION <---
+
             general_logger.info("General settings saved successfully.")
             # Return the full updated config
             full_config = settings_manager.load_settings()
