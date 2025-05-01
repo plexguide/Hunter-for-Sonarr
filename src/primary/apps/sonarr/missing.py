@@ -341,6 +341,13 @@ def process_missing_seasons_mode(
         seasons_to_process = seasons_with_missing[:hunt_missing_items]
     
     sonarr_logger.info(f"Selected {len(seasons_to_process)} seasons to process.")
+    # Add detailed logging for selected seasons
+    if seasons_to_process:
+        sonarr_logger.info("Selected seasons for processing in this cycle:")
+        for sel_season in seasons_to_process:
+            series_title = sel_season.get('seriesTitle', 'Unknown Series')
+            season_num = sel_season.get('seasonNumber', 'Unknown')
+            sonarr_logger.info(f"  - {series_title} - Season {season_num}")
     
     # Process each selected season
     for season in seasons_to_process:
