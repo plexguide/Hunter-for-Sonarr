@@ -773,6 +773,16 @@ input:checked + .slider:before {
     color: var(--text-primary);
 }
 
+/* Make number inputs shorter where appropriate */
+.short-number-input {
+    width: 100px !important; /* Use !important to override wider default if needed */
+}
+
+/* Make number inputs for intervals shorter */
+.short-number-input {
+    width: 80px !important; /* Use !important to override potential broader input styles */
+}
+
 .setting-help {
     width: 100%;
     margin-top: 5px;
@@ -863,16 +873,8 @@ input:checked + .slider:before {
 }
 
 /* Style the State Reset Interval item specifically */
-#generalSettings .setting-item label[for="stateful_management_hours"] {
-    /* Keep default label styling */
-}
-
 #generalSettings .setting-item input#stateful_management_hours {
     width: 100px; /* Make input smaller */
-}
-
-#generalSettings .setting-item .setting-help {
-    /* Keep default help text styling */
 }
 
 #generalSettings .setting-item .reset-help {
@@ -927,6 +929,12 @@ input:checked + .slider:before {
     .setting-item input[type="password"] {
         width: 100%;
         max-width: 300px;
+    }
+
+    /* Specific width for short number inputs */
+    .setting-item input.short-number-input {
+        width: 80px; /* Adjust width as needed */
+        max-width: 80px;
     }
 }
 

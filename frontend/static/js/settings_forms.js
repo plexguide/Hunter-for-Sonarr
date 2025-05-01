@@ -1077,7 +1077,7 @@ const SettingsForms = {
                 </div>
                 <div class="setting-item">
                     <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="log_refresh_interval_seconds" min="1" value="${settings.log_refresh_interval_seconds || 30}">
+                    <input type="number" id="log_refresh_interval_seconds" class="short-number-input" min="1" value="${settings.log_refresh_interval_seconds || 30}">
                     <p class="setting-help">Interval in seconds to refresh log display (applies to all apps)</p>
                 </div>
             </div>
