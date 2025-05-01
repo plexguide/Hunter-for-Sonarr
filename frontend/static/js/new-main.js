@@ -375,7 +375,12 @@ let huntarrUI = {
                 }
             }
             
+            // Load stateful info immediately, don't wait for loadAllSettings to complete
+            this.loadStatefulInfo();
+            
+            // Load all settings after stateful info has started loading
             this.loadAllSettings();
+            
             // Disconnect logs if switching away from logs
             this.disconnectAllEventSources(); 
         } else if (section === 'sponsors' && sponsorsSection) { // ADDED sponsors case
