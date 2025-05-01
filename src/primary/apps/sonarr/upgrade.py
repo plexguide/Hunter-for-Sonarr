@@ -36,6 +36,11 @@ def process_cutoff_upgrades(
         return False
         
     sonarr_logger.info(f"Checking for {hunt_upgrade_items} quality upgrades...")
+    
+    if random_upgrades:
+        sonarr_logger.info("Using RANDOM selection mode for quality upgrades")
+    else:
+        sonarr_logger.info("Using SEQUENTIAL selection mode for quality upgrades (oldest first)")
 
     # Always use episode mode for upgrades, regardless of the hunt_missing_mode setting
     return process_upgrade_episodes_mode(
