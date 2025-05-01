@@ -275,13 +275,8 @@ def logs_stream():
                                     
                                     # Only filter when reading system log for specific app tab
                                     if app_type != 'all' and app_type != 'system' and name == 'system':
-                                        # Include system log entries that mention this app name
-                                        # or contain patterns specific to the app
-                                        app_pattern = f"huntarr.{app_type}"
-                                        include_line = (
-                                            app_type.lower() in line.lower() or 
-                                            app_pattern in line
-                                        )
+                                        # MODIFIED: Don't include system logs in app tabs at all
+                                        include_line = False
                                     else:
                                         include_line = True
                                     
