@@ -12,6 +12,7 @@ from src.primary.utils.logger import get_logger
 from src.primary.apps.radarr import api as radarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.utils.history_utils import log_processed_media
 
 # Get logger for the app
 radarr_logger = get_logger("radarr")
@@ -154,6 +155,13 @@ def process_missing_movies(
         if search_success:
             radarr_logger.info(f"Successfully triggered search for movie '{movie_title}'")
             add_processed_id("radarr", instance_name, str(movie_id))
+            
+            # Log to history system
+            year = movie.get("year", "Unknown Year")
+            media_name = f"{movie_title} ({year})"
+            log_processed_media("radarr", media_name, movie_id, instance_name)
+            radarr_logger.debug(f"Logged history entry for movie: {media_name}")
+            
             increment_stat("radarr", "hunted")
             movies_processed += 1
             processed_any = True

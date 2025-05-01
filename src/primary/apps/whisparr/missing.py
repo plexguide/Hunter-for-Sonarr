@@ -14,6 +14,7 @@ from src.primary.utils.logger import get_logger
 from src.primary.apps.whisparr import api as whisparr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.utils.history_utils import log_processed_media
 
 # Get logger for the app
 whisparr_logger = get_logger("whisparr")
@@ -173,6 +174,11 @@ def process_missing_items(
             # Add item ID to processed list
             add_processed_id("whisparr", instance_name, str(item_id))
             whisparr_logger.debug(f"Added item ID {item_id} to processed list for {instance_name}")
+            
+            # Log to history system
+            media_name = f"{title} - {season_episode}"
+            log_processed_media("whisparr", media_name, item_id, instance_name)
+            whisparr_logger.debug(f"Logged history entry for item: {media_name}")
             
             items_processed += 1
             processing_done = True

@@ -42,6 +42,9 @@ from src.primary.apps.blueprints import sonarr_bp, radarr_bp, lidarr_bp, readarr
 # Import stateful blueprint
 from src.primary.stateful_routes import stateful_api
 
+# Import history blueprint
+from src.primary.routes.history_routes import history_blueprint
+
 # Disable Flask default logging
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -63,6 +66,7 @@ app.register_blueprint(readarr_bp, url_prefix='/api/readarr')
 app.register_blueprint(whisparr_bp, url_prefix='/api/whisparr')
 app.register_blueprint(swaparr_bp, url_prefix='/api/swaparr')
 app.register_blueprint(stateful_api, url_prefix='/api/stateful')
+app.register_blueprint(history_blueprint, url_prefix='/api/history')
 
 # Register the authentication check to run before requests
 app.before_request(authenticate_request)

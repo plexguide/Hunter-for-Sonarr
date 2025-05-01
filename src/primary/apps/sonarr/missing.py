@@ -10,6 +10,7 @@ from src.primary.utils.logger import get_logger
 from src.primary.apps.sonarr import api as sonarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.utils.history_utils import log_processed_media
 
 # Get logger for the Sonarr app
 sonarr_logger = get_logger("sonarr")
@@ -194,6 +195,24 @@ def process_missing_episodes_mode(
                 # Add episode IDs to stateful manager
                 for episode_id in episode_ids:
                     add_processed_id("sonarr", instance_name, episode_id)
+                    
+                    # Log to history system
+                    # Find the corresponding episode data for this ID
+                    for episode in episodes_to_search:
+                        if episode.get('id') == episode_id:
+                            series_title = episode.get('series', {}).get('title', 'Unknown Series')
+                            episode_title = episode.get('title', 'Unknown Episode')
+                            season_number = episode.get('seasonNumber', 'Unknown Season')
+                            episode_number = episode.get('episodeNumber', 'Unknown Episode')
+                            
+                            try:
+                                season_episode = f"S{season_number:02d}E{episode_number:02d}"
+                            except (ValueError, TypeError):
+                                season_episode = f"S{season_number}E{episode_number}"
+                                
+                            media_name = f"{series_title} - {season_episode} - {episode_title}"
+                            log_processed_media("sonarr", media_name, episode_id, instance_name)
+                            break
                 
                 # Increment the hunted statistics
                 increment_stat("sonarr", "hunted", len(episode_ids))

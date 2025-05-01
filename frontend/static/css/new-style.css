@@ -1506,3 +1506,183 @@ input:checked + .slider:before {
     color: var(--text-secondary);
     line-height: 1.5;
 }
+
+/* History Table Styles */
+.history-container {
+    position: relative;
+    height: calc(100% - 120px); /* Adjust based on header and pagination height */
+    overflow: auto;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: 14px;
+}
+
+.history-table thead {
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-tertiary);
+    z-index: 1;
+}
+
+.history-table th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.history-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.history-table tbody tr:nth-child(even) {
+    background-color: var(--bg-tertiary);
+}
+
+.history-table tbody tr:hover {
+    background-color: rgba(var(--accent-color-rgb), 0.1);
+}
+
+/* History Controls */
+.history-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 15px;
+}
+
+.history-search {
+    display: flex;
+    align-items: center;
+    margin-right: auto; /* Push to left side */
+}
+
+.history-search input {
+    padding: 8px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px 0 0 4px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    width: 200px;
+}
+
+.history-search button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.history-search button:hover {
+    background-color: var(--accent-hover);
+}
+
+.history-page-size {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.history-page-size select {
+    padding: 7px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+/* Pagination Controls */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px 0;
+    gap: 15px;
+}
+
+.pagination-button {
+    padding: 8px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pagination-button:hover {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+
+#historyPageInfo {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* Empty state and loading */
+.empty-state-message, .loading-indicator {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 20px;
+}
+
+.empty-state-message i, .loading-indicator i {
+    margin-bottom: 15px;
+    color: var(--accent-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .history-table {
+        font-size: 13px;
+    }
+    
+    .history-table th, .history-table td {
+        padding: 8px 10px;
+    }
+    
+    .history-search input {
+        width: 150px;
+    }
+}
+
+@media (max-width: 768px) {
+    .history-controls {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .history-search {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .history-search input {
+        width: calc(100% - 40px);
+    }
+}

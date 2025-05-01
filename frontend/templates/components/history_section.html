@@ -17,14 +17,68 @@
                 </div>
             </div>
         </div>
-        <h2>History</h2>
+        
+        <!-- Search and Controls -->
+        <div class="history-controls">
+            <div class="history-search">
+                <input type="text" id="historySearchInput" placeholder="Search...">
+                <button id="historySearchButton">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            
+            <div class="history-page-size">
+                <label for="historyPageSize">Show:</label>
+                <select id="historyPageSize">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="30">30</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="250">250</option>
+                    <option value="1000">1000</option>
+                </select>
+            </div>
+            
+            <button id="clearHistoryButton" class="clear-button">
+                <i class="fas fa-trash-alt"></i> Clear
+            </button>
+        </div>
     </div>
     
-    <div class="placeholder-message">
-        <div class="message-container">
-            <i class="fas fa-clock fa-3x"></i>
-            <h3>Coming Soon</h3>
-            <p id="history-placeholder-text">The History feature will be available in a future update. Stay tuned for enhancements that will allow you to view your media processing history.</p>
+    <div class="history-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Date and Time</th>
+                    <th>Processed Information</th>
+                    <th>ID Number</th>
+                    <th>Name of Instance</th>
+                    <th>How Long Ago</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody">
+                <!-- History items will be loaded here -->
+            </tbody>
+        </table>
+        
+        <!-- Empty state message -->
+        <div id="historyEmptyState" class="empty-state-message">
+            <i class="fas fa-history fa-3x"></i>
+            <p>No history found. Items will appear here when media is processed.</p>
         </div>
+        
+        <!-- Loading indicator -->
+        <div id="historyLoading" class="loading-indicator">
+            <i class="fas fa-spinner fa-spin fa-3x"></i>
+            <p>Loading history...</p>
+        </div>
+    </div>
+    
+    <!-- Pagination controls -->
+    <div class="pagination-controls">
+        <button id="historyPrevPage" class="pagination-button"><i class="fas fa-chevron-left"></i> Previous</button>
+        <span id="historyPageInfo">Page <span id="historyCurrentPage">1</span> of <span id="historyTotalPages">1</span></span>
+        <button id="historyNextPage" class="pagination-button">Next <i class="fas fa-chevron-right"></i></button>
     </div>
 </section>
