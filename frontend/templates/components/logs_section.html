@@ -1,15 +1,23 @@
 <section id="logsSection" class="content-section">
     <div class="section-header">
-        <!-- Add Log Tabs -->
-        <div class="log-tabs">
-            <button class="log-tab active" data-app="all">All</button>
-            <button class="log-tab" data-app="sonarr">Sonarr</button>
-            <button class="log-tab" data-app="radarr">Radarr</button>
-            <button class="log-tab" data-app="lidarr">Lidarr</button>
-            <button class="log-tab" data-app="readarr">Readarr</button>
-            <button class="log-tab" data-app="whisparr">Whisparr</button>
-            <button class="log-tab" data-app="swaparr">Swaparr</button>
-            <button class="log-tab" data-app="system">System</button>
+        <!-- Replace Log Tabs with Dropdown -->
+        <div class="log-dropdown-container">
+            <div class="log-dropdown">
+                <button class="log-dropdown-btn">
+                    <span id="current-log-app">All</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="log-dropdown-content">
+                    <a href="#" class="log-option active" data-app="all">All</a>
+                    <a href="#" class="log-option" data-app="sonarr">Sonarr</a>
+                    <a href="#" class="log-option" data-app="radarr">Radarr</a>
+                    <a href="#" class="log-option" data-app="lidarr">Lidarr</a>
+                    <a href="#" class="log-option" data-app="readarr">Readarr</a>
+                    <a href="#" class="log-option" data-app="whisparr">Whisparr</a>
+                    <a href="#" class="log-option" data-app="swaparr">Swaparr</a>
+                    <a href="#" class="log-option" data-app="system">System</a>
+                </div>
+            </div>
         </div>
         <div class="log-controls">
             <div class="connection-status">

@@ -77,7 +77,10 @@ let huntarrUI = {
         
         // App tabs & Settings Tabs
         this.elements.appTabs = document.querySelectorAll('.app-tab'); // For logs section
-        this.elements.logTabs = document.querySelectorAll('.log-tab'); // Added log tabs
+        this.elements.logOptions = document.querySelectorAll('.log-option'); // New: replaced logTabs with logOptions
+        this.elements.currentLogApp = document.getElementById('current-log-app'); // New: dropdown current selection text
+        this.elements.logDropdownBtn = document.querySelector('.log-dropdown-btn'); // New: dropdown toggle button
+        this.elements.logDropdownContent = document.querySelector('.log-dropdown-content'); // New: dropdown content
         this.elements.settingsTabs = document.querySelectorAll('.settings-tab');
         this.elements.appSettingsPanels = document.querySelectorAll('.app-settings-panel');
         
@@ -132,10 +135,25 @@ let huntarrUI = {
             tab.addEventListener('click', (e) => this.handleAppTabChange(e));
         });
         
-        // Log tabs in logs section
-        this.elements.logTabs.forEach(tab => {
-            tab.addEventListener('click', (e) => this.handleLogTabChange(e));
+        // Log options dropdown
+        this.elements.logOptions.forEach(option => {
+            option.addEventListener('click', (e) => this.handleLogOptionChange(e));
         });
+        
+        // Log dropdown toggle
+        if (this.elements.logDropdownBtn) {
+            this.elements.logDropdownBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.elements.logDropdownContent.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.log-dropdown') && this.elements.logDropdownContent.classList.contains('show')) {
+                    this.elements.logDropdownContent.classList.remove('show');
+                }
+            });
+        }
         
         // Settings tabs
         this.elements.settingsTabs.forEach(tab => {
@@ -430,16 +448,25 @@ let huntarrUI = {
         this.connectToLogs();
     },
     
-    // Log tab switching (New)
-    handleLogTabChange: function(e) {
+    // Log option dropdown handling
+    handleLogOptionChange: function(e) {
+        e.preventDefault(); // Prevent default anchor behavior
+        
         const app = e.target.getAttribute('data-app');
         if (!app || app === this.currentLogApp) return; // Do nothing if same tab clicked
         
-        // Update active tab
-        this.elements.logTabs.forEach(tab => {
-            tab.classList.remove('active');
+        // Update active option
+        this.elements.logOptions.forEach(option => {
+            option.classList.remove('active');
         });
         e.target.classList.add('active');
+        
+        // Update the current log app text with proper capitalization
+        let displayName = app.charAt(0).toUpperCase() + app.slice(1);
+        this.elements.currentLogApp.textContent = displayName;
+        
+        // Close the dropdown
+        this.elements.logDropdownContent.classList.remove('show');
         
         // Switch to the selected app logs
         this.currentLogApp = app;

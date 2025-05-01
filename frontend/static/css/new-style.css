@@ -1272,3 +1272,73 @@ input:checked + .slider:before {
 .dark-theme .swaparr-status-removed {
     background-color: rgba(220, 53, 69, 0.2);
 }
+
+/* Log Dropdown Styles */
+.log-dropdown-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.log-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.log-dropdown-btn {
+    padding: 10px 20px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-weight: 500;
+    transition: all 0.3s;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 140px;
+    justify-content: space-between;
+}
+
+.log-dropdown-btn:hover {
+    background-color: var(--accent-hover);
+}
+
+.log-dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: var(--bg-secondary);
+    min-width: 180px;
+    z-index: 10;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-top: 8px;
+    border: 1px solid var(--border-color);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.log-dropdown-content.show {
+    display: block;
+}
+
+.log-option {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.log-option:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.log-option.active {
+    color: var(--accent-color);
+    font-weight: 600;
+    background-color: rgba(var(--accent-color-rgb), 0.1);
+}
