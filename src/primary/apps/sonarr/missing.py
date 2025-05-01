@@ -284,7 +284,7 @@ def process_missing_seasons_mode(
     # Get series with missing episodes
     sonarr_logger.info("Retrieving series with missing episodes...")
     series_with_missing = sonarr_api.get_series_with_missing_episodes(
-        api_url, api_key, api_timeout, monitored_only)
+        api_url, api_key, api_timeout, monitored_only, random_mode=random_missing)
     
     if not series_with_missing:
         sonarr_logger.info("No series with missing episodes found.")
