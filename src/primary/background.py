@@ -18,8 +18,8 @@ from typing import Dict, List, Optional
 __version__ = "1.0.0" # Consider updating this based on changes
 
 # Set up logging first
-from src.primary.utils.logger import setup_logger, get_logger # Import get_logger
-logger = setup_logger()
+from src.primary.utils.logger import setup_main_logger, get_logger # Import get_logger
+logger = setup_main_logger()
 
 # Import necessary modules
 from src.primary import config, settings_manager

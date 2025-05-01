@@ -27,7 +27,7 @@ from flask import Flask, render_template, request, jsonify, Response, send_from_
 # from src.primary.config import API_URL # No longer needed directly
 # Use only settings_manager
 from src.primary import settings_manager
-from src.primary.utils.logger import setup_logger, get_logger, LOG_DIR # Import get_logger and LOG_DIR
+from src.primary.utils.logger import setup_main_logger, get_logger, LOG_DIR # Import get_logger and LOG_DIR
 from src.primary.auth import (
     authenticate_request, user_exists, create_user, verify_user, create_session,
     logout, SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret,
