@@ -3,7 +3,7 @@
 Whisparr-specific API functions
 Handles all communication with the Whisparr API
 
-Supports both v2 (legacy) and v3 (Eros) API versions
+Exclusively uses the Eros API v3
 """
 
 import requests
@@ -21,9 +21,9 @@ whisparr_logger = get_logger("whisparr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, api_version: str = "v3") -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
     """
-    Make a request to the Whisparr API.
+    Make a request to the Whisparr Eros API.
     
     Args:
         api_url: The base URL of the Whisparr API
@@ -32,7 +32,6 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         endpoint: The API endpoint to call
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data to send with the request
-        api_version: API version to use ("v2" or "v3")
         
     Returns:
         The JSON response from the API, or None if the request failed
@@ -41,10 +40,9 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         whisparr_logger.error("API URL or API key is missing. Check your settings.")
         return None
     
-    # IMPORTANT: Whisparr 2.x uses v3 API endpoints even though it's labeled as v2 in our settings
-    # Always use v3 for API path
-    api_base = f"api/v3"
-    whisparr_logger.debug(f"Using Whisparr API base path: {api_base}")
+    # Always use v3 for Eros API
+    api_base = "api/v3"
+    whisparr_logger.debug(f"Using Whisparr Eros API: {api_base}")
     
     # Full URL - ensure no double slashes
     url = f"{api_url.rstrip('/')}/{api_base}/{endpoint.lstrip('/')}"
@@ -92,7 +90,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         whisparr_logger.error(f"Unexpected error during API request: {e}")
         return None
 
-def get_download_queue_size(api_url: str, api_key: str, api_timeout: int, api_version: str = "v3") -> int:
+def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int:
     """
     Get the current size of the download queue.
 
@@ -100,12 +98,11 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int, api_ve
         api_url: The base URL of the Whisparr API
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
-        api_version: API version to use ("v2" or "v3")
 
     Returns:
         The number of items in the download queue, or -1 if the request failed
     """
-    response = arr_request(api_url, api_key, api_timeout, "queue", api_version=api_version)
+    response = arr_request(api_url, api_key, api_timeout, "queue")
     
     if response is None:
         return -1
@@ -118,7 +115,7 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int, api_ve
     else:
         return -1
 
-def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, api_version: str = "v3") -> List[Dict[str, Any]]:
+def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitored_only: bool) -> List[Dict[str, Any]]:
     """
     Get a list of items with missing files (not downloaded/available).
 
@@ -127,7 +124,6 @@ def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitor
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
         monitored_only: If True, only return monitored items.
-        api_version: API version to use ("v2" or "v3")
 
     Returns:
         A list of item objects with missing files, or None if the request failed.
@@ -138,7 +134,7 @@ def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitor
         # Endpoint parameters - always use v3 format since we're using v3 API
         endpoint = "wanted/missing?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
         
-        response = arr_request(api_url, api_key, api_timeout, endpoint, api_version=api_version)
+        response = arr_request(api_url, api_key, api_timeout, endpoint)
         
         if response is None:
             return None
@@ -159,7 +155,7 @@ def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitor
         whisparr_logger.error(f"Error retrieving missing items: {str(e)}")
         return None
 
-def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, api_version: str = "v3") -> List[Dict[str, Any]]:
+def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitored_only: bool) -> List[Dict[str, Any]]:
     """
     Get a list of items that don't meet their quality profile cutoff.
 
@@ -168,7 +164,6 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
         monitored_only: If True, only return monitored items.
-        api_version: API version to use ("v2" or "v3")
 
     Returns:
         A list of item objects that need quality upgrades, or None if the request failed.
@@ -179,7 +174,7 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
         # Endpoint - always use v3 format
         endpoint = "wanted/cutoff?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
         
-        response = arr_request(api_url, api_key, api_timeout, endpoint, api_version=api_version)
+        response = arr_request(api_url, api_key, api_timeout, endpoint)
         
         if response is None:
             return None
@@ -202,7 +197,7 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
         whisparr_logger.error(f"Error retrieving cutoff unmet items: {str(e)}")
         return None
 
-def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int, api_version: str = "v3") -> int:
+def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int) -> int:
     """
     Refresh an item in Whisparr.
     
@@ -211,7 +206,6 @@ def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int, api
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
         item_id: The ID of the item to refresh
-        api_version: API version to use ("v2" or "v3")
         
     Returns:
         The command ID if the refresh was triggered successfully, None otherwise
@@ -223,7 +217,7 @@ def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int, api
         # Use series refresh instead if we can get the series ID from the episode
         # First, attempt to get the episode details
         episode_endpoint = f"episode/{item_id}"
-        episode_data = arr_request(api_url, api_key, api_timeout, episode_endpoint, api_version=api_version)
+        episode_data = arr_request(api_url, api_key, api_timeout, episode_endpoint)
         
         if episode_data and "seriesId" in episode_data:
             # We have the series ID, use series refresh which is more reliable
@@ -243,7 +237,7 @@ def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int, api
                 "episodeIds": [item_id]
             }
         
-        response = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=payload, api_version=api_version)
+        response = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=payload)
         
         if response and "id" in response:
             command_id = response["id"]
@@ -257,7 +251,7 @@ def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int, api
         whisparr_logger.error(f"Error refreshing item: {str(e)}")
         return None
 
-def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int], api_version: str = "v3") -> int:
+def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int]) -> int:
     """
     Trigger a search for one or more items.
     
@@ -266,7 +260,6 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
         item_ids: A list of item IDs to search for
-        api_version: API version to use ("v2" or "v3")
         
     Returns:
         The command ID if the search command was triggered successfully, None otherwise
@@ -280,7 +273,7 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
             "episodeIds": item_ids
         }
         
-        response = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=payload, api_version=api_version)
+        response = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=payload)
         
         if response and "id" in response:
             command_id = response["id"]
@@ -294,7 +287,7 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
         whisparr_logger.error(f"Error searching for items: {str(e)}")
         return None
 
-def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id: int, api_version: str = "v3") -> Optional[Dict]:
+def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id: int) -> Optional[Dict]:
     """
     Get the status of a specific command.
 
@@ -303,7 +296,6 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
         command_id: The ID of the command to check
-        api_version: API version to use ("v2" or "v3")
 
     Returns:
         A dictionary containing the command status, or None if the request failed.
@@ -314,7 +306,7 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
         
     try:
         endpoint = f"command/{command_id}"
-        result = arr_request(api_url, api_key, api_timeout, endpoint, api_version=api_version)
+        result = arr_request(api_url, api_key, api_timeout, endpoint)
         
         if result:
             whisparr_logger.debug(f"Command {command_id} status: {result.get('status', 'unknown')}")
@@ -326,7 +318,7 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
         whisparr_logger.error(f"Error getting command status for ID {command_id}: {e}")
         return None
 
-def check_connection(api_url: str, api_key: str, api_timeout: int, api_version: str = "v3") -> bool:
+def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
     """
     Check the connection to Whisparr API.
     
@@ -334,14 +326,13 @@ def check_connection(api_url: str, api_key: str, api_timeout: int, api_version: 
         api_url: The base URL of the Whisparr API
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
-        api_version: API version to use ("v2" or "v3")
         
     Returns:
         True if the connection is successful, False otherwise
     """
     try:
         # System status is a good endpoint for verifying API connectivity
-        response = arr_request(api_url, api_key, api_timeout, "system/status", api_version=api_version)
+        response = arr_request(api_url, api_key, api_timeout, "system/status")
         
         if response is not None:
             # Get the version information if available

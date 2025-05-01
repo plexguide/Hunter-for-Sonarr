@@ -11,6 +11,7 @@ from src.primary.utils.logger import get_logger
 from src.primary.apps.readarr import api as readarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.utils.history_utils import log_processed_media
 
 # Get logger for the app
 readarr_logger = get_logger("readarr")
@@ -137,6 +138,10 @@ def process_missing_books(
             # Add author ID to processed list
             add_processed_id("readarr", instance_name, str(author_id))
             readarr_logger.debug(f"Added author ID {author_id} to processed list for {instance_name}")
+            
+            # Log to history system
+            log_processed_media("readarr", author_name, author_id, instance_name)
+            readarr_logger.debug(f"Logged history entry for author: {author_name}")
             
             processed_count += 1 # Count processed authors/groups
             processed_authors.append(author_name) # Add to list of processed authors

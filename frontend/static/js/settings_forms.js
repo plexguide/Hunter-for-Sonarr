@@ -713,7 +713,7 @@ const SettingsForms = {
         // Create a container for instances with a scrollable area for many instances
         let instancesHtml = `
             <div class="settings-group">
-                <h3>Whisparr Instances</h3>
+                <h3>Whisparr Instances (Eros API v3 Only)</h3>
                 <div class="instances-container">
         `;
         
@@ -773,18 +773,6 @@ const SettingsForms = {
         // Continue with the rest of the settings form
         container.innerHTML = `
             ${instancesHtml}
-            
-            <div class="settings-group">
-                <h3>API Version</h3>
-                <div class="setting-item">
-                    <label for="whisparr_version">Whisparr Version:</label>
-                    <select id="whisparr_version">
-                        <option value="v3" ${settings.whisparr_version === 'v3' || !settings.whisparr_version ? 'selected' : ''}>v3 (Eros)</option>
-                        <option value="v2" ${settings.whisparr_version === 'v2' ? 'selected' : ''}>v2 (Legacy)</option>
-                    </select>
-                    <p class="setting-help">Select the API version of your Whisparr installation. Default is v3 (Eros). NOTE: Only v2 works for now!</p>
-                </div>
-            </div>
             
             <div class="settings-group">
                 <h3>Search Settings</h3>
@@ -1034,9 +1022,33 @@ const SettingsForms = {
                     });
                 }
             });
+        } else if (!resetStrikesBtn) {
+            console.warn('Could not find #reset_swaparr_strikes to attach listener.');
+        } else {
+             console.warn('huntarrUI or huntarrUI.resetStatefulManagement is not available.');
+        }
+
+        // Add confirmation dialog for local access bypass toggle
+        const localAccessBypassCheckbox = container.querySelector('#local_access_bypass');
+        if (localAccessBypassCheckbox) {
+            // Store original state
+            const originalState = localAccessBypassCheckbox.checked;
+            
+            localAccessBypassCheckbox.addEventListener('change', function(event) {
+                const newState = this.checked;
+                
+                // Preview the UI changes immediately, but they'll be reverted if user doesn't save
+                if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.updateUIForLocalAccessBypass === 'function') {
+                    huntarrUI.updateUIForLocalAccessBypass(newState);
+                }
+                // Also ensure the main app knows settings have changed if the preview runs
+                if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.markSettingsAsChanged === 'function') {
+                     huntarrUI.markSettingsAsChanged();
+                }
+            });
         }
     },
-    
+
     // Generate General settings form
     generateGeneralForm: function(container, settings = {}) {
         container.innerHTML = `
@@ -1169,28 +1181,8 @@ const SettingsForms = {
         } else {
              console.warn('huntarrUI or huntarrUI.resetStatefulManagement is not available.');
         }
-
-        // Add confirmation dialog for local access bypass toggle
-        const localAccessBypassCheckbox = container.querySelector('#local_access_bypass');
-        if (localAccessBypassCheckbox) {
-            // Store original state
-            const originalState = localAccessBypassCheckbox.checked;
-            
-            localAccessBypassCheckbox.addEventListener('change', function(event) {
-                const newState = this.checked;
-                
-                // Preview the UI changes immediately, but they'll be reverted if user doesn't save
-                if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.updateUIForLocalAccessBypass === 'function') {
-                    huntarrUI.updateUIForLocalAccessBypass(newState);
-                }
-                // Also ensure the main app knows settings have changed if the preview runs
-                if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.markSettingsAsChanged === 'function') {
-                     huntarrUI.markSettingsAsChanged();
-                }
-            });
-        }
     },
-
+    
     // Update duration display - e.g., convert seconds to hours
     updateDurationDisplay: function() {
         // Function to update a specific sleep duration display

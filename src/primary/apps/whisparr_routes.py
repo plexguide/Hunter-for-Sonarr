@@ -24,9 +24,9 @@ def test_connection():
     if not api_url or not api_key:
         return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
         
-    whisparr_logger.info(f"Testing connection to Whisparr API at {api_url}")
+    whisparr_logger.info(f"Testing connection to Whisparr Eros API at {api_url}")
     
-    # Always use v3 API endpoint for Whisparr
+    # Use v3 API endpoint for Whisparr Eros
     url = f"{api_url}/api/v3/system/status"
     headers = {
         "X-Api-Key": api_key,
@@ -40,12 +40,20 @@ def test_connection():
         try:
             response_data = response.json()
             version = response_data.get('version', 'unknown')
-            whisparr_logger.info(f"Successfully connected to Whisparr API version: {version}")
+            
+            # Validate that this is actually Eros API v3
+            if not version.startswith('3'):
+                error_msg = f"Whisparr version {version} detected. Huntarr requires Eros API v3."
+                whisparr_logger.error(error_msg)
+                return jsonify({"success": False, "message": error_msg, "is_eros": False}), 400
+                
+            whisparr_logger.info(f"Successfully connected to Whisparr Eros API version: {version}")
             
             return jsonify({
                 "success": True,
-                "message": "Successfully connected to Whisparr API",
-                "version": version
+                "message": "Successfully connected to Whisparr Eros API",
+                "version": version,
+                "is_eros": True
             })
         except ValueError:
             error_msg = "Invalid JSON response from Whisparr API"
@@ -65,13 +73,13 @@ def is_configured():
 
 @whisparr_bp.route('/get-versions', methods=['GET'])
 def get_versions():
-    """Get the version information from the Whisparr API"""
+    """Get the version information from the Whisparr Eros API"""
     api_keys = keys_manager.load_api_keys("whisparr")
     api_url = api_keys.get("api_url")
     api_key = api_keys.get("api_key")
 
     if not api_url or not api_key:
-        return jsonify({"success": False, "message": "Whisparr API is not configured"}), 400
+        return jsonify({"success": False, "message": "Whisparr Eros API is not configured"}), 400
 
     headers = {'X-Api-Key': api_key}
     version_url = f"{api_url.rstrip('/')}/api/v3/system/status"
@@ -83,9 +91,21 @@ def get_versions():
         version_data = response.json()
         version = version_data.get("version", "Unknown")
         
-        return jsonify({"success": True, "version": version})
+        # Validate that it's Eros API v3
+        if not version.startswith('3'):
+            return jsonify({
+                "success": False, 
+                "message": f"Incompatible Whisparr version detected: {version}. Huntarr requires Eros API v3.",
+                "is_eros": False
+            }), 400
+        
+        return jsonify({
+            "success": True, 
+            "version": version,
+            "is_eros": True
+        })
     except requests.exceptions.RequestException as e:
-        error_message = f"Error fetching Whisparr version: {str(e)}"
+        error_message = f"Error fetching Whisparr Eros version: {str(e)}"
         return jsonify({"success": False, "message": error_message}), 500
 
 @whisparr_bp.route('/logs', methods=['GET'])

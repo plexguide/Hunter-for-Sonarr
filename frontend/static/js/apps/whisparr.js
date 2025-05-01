@@ -56,47 +56,72 @@ function setupWhisparrForm() {
             whisparrStatusIndicator.textContent = 'Testing...';
         }
         
-        fetch('/api/whisparr/test-connection', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                api_url: apiUrl,
-                api_key: apiKey
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (whisparrStatusIndicator) {
-                if (data.success) {
-                    whisparrStatusIndicator.className = 'connection-status success';
-                    whisparrStatusIndicator.textContent = 'Connected';
-                    if (typeof huntarrUI !== 'undefined' && huntarrUI.showNotification) {
-                         huntarrUI.showNotification('Successfully connected to Whisparr', 'success');
+        // First check API version to ensure it's v3 (Eros)
+        checkWhisparrApiVersion(apiUrl, apiKey)
+            .then(isErosApi => {
+                if (!isErosApi) {
+                    // Show error if not using Eros API
+                    if (whisparrStatusIndicator) {
+                        whisparrStatusIndicator.className = 'connection-status failure';
+                        whisparrStatusIndicator.textContent = 'Legacy API Detected';
                     }
-                    getWhisparrVersion(); // Fetch version after successful connection
-                } else {
-                    whisparrStatusIndicator.className = 'connection-status failure';
-                    whisparrStatusIndicator.textContent = 'Failed';
-                     if (typeof huntarrUI !== 'undefined' && huntarrUI.showNotification) {
-                        huntarrUI.showNotification('Connection to Whisparr failed: ' + data.message, 'error');
+                    
+                    if (typeof huntarrUI !== 'undefined' && huntarrUI.showNotification) {
+                        huntarrUI.showNotification('Incompatible Whisparr version detected. Please upgrade to Whisparr Eros (v3) to use this integration.', 'error');
+                    }
+                    
+                    testWhisparrButton.disabled = false;
+                    return Promise.reject('Legacy API detected');
+                }
+                
+                // If using Eros API, proceed with connection test
+                return fetch('/api/whisparr/test-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        api_url: apiUrl,
+                        api_key: apiKey
+                    })
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (whisparrStatusIndicator) {
+                    if (data.success) {
+                        whisparrStatusIndicator.className = 'connection-status success';
+                        whisparrStatusIndicator.textContent = 'Connected';
+                        if (typeof huntarrUI !== 'undefined' && huntarrUI.showNotification) {
+                             huntarrUI.showNotification('Successfully connected to Whisparr Eros', 'success');
+                        }
+                        getWhisparrVersion(); // Fetch version after successful connection
+                    } else {
+                        whisparrStatusIndicator.className = 'connection-status failure';
+                        whisparrStatusIndicator.textContent = 'Failed';
+                         if (typeof huntarrUI !== 'undefined' && huntarrUI.showNotification) {
+                            huntarrUI.showNotification('Connection to Whisparr failed: ' + data.message, 'error');
+                        }
                     }
                 }
-            }
-        })
-        .catch(error => {
-             if (whisparrStatusIndicator) {
-                whisparrStatusIndicator.className = 'connection-status failure';
-                whisparrStatusIndicator.textContent = 'Error';
-            }
-             if (typeof huntarrUI !== 'undefined' && huntarrUI.showNotification) {
-                huntarrUI.showNotification('Error testing Whisparr connection: ' + error, 'error');
-            }
-        })
-        .finally(() => {
-            testWhisparrButton.disabled = false;
-        });
+            })
+            .catch(error => {
+                // Skip additional error notification if it's the legacy API error we already handled
+                if (error !== 'Legacy API detected') {
+                    if (whisparrStatusIndicator) {
+                        whisparrStatusIndicator.className = 'connection-status failure';
+                        whisparrStatusIndicator.textContent = 'Error';
+                    }
+                    if (typeof huntarrUI !== 'undefined' && huntarrUI.showNotification) {
+                        huntarrUI.showNotification('Error testing Whisparr connection: ' + error, 'error');
+                    }
+                }
+            })
+            .finally(() => {
+                if (testWhisparrButton.disabled) {
+                    testWhisparrButton.disabled = false;
+                }
+            });
     });
 
     // Get Whisparr version if connection details are present and version display exists
@@ -132,4 +157,39 @@ function escapeHtml(unsafe) {
          .replace(/>/g, "&gt;")
          .replace(/"/g, "&quot;")
          .replace(/'/g, "&#039;");
+}
+
+// Function to check Whisparr API version
+function checkWhisparrApiVersion(apiUrl, apiKey) {
+    // Use the Eros API endpoint to check version
+    return fetch(`${apiUrl}/api/v3/system/status`, {
+        method: 'GET',
+        headers: {
+            'X-Api-Key': apiKey,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        // Check if response is OK
+        if (!response.ok) {
+            // If we get a 404, it might be a non-Eros API
+            if (response.status === 404) {
+                return false;
+            }
+            // For other status codes, throw to trigger the catch
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Check if the response contains version info that starts with 3 (Eros)
+        if (data && data.version && data.version.startsWith('3')) {
+            return true;
+        }
+        return false;
+    })
+    .catch(() => {
+        // Any error means the API is not compatible
+        return false;
+    });
 }

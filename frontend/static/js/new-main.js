@@ -8,6 +8,7 @@ let huntarrUI = {
     eventSources: {},
     currentSection: 'home', // Default section
     currentLogApp: 'all', // Default log app
+    currentHistoryApp: 'all', // Default history app
     autoScroll: true,
     configuredApps: {
         sonarr: false,
@@ -66,6 +67,7 @@ let huntarrUI = {
         this.elements.navItems = document.querySelectorAll('.nav-item');
         this.elements.homeNav = document.getElementById('homeNav');
         this.elements.logsNav = document.getElementById('logsNav');
+        this.elements.historyNav = document.getElementById('historyNav');
         this.elements.settingsNav = document.getElementById('settingsNav');
         this.elements.userNav = document.getElementById('userNav');
         
@@ -73,12 +75,29 @@ let huntarrUI = {
         this.elements.sections = document.querySelectorAll('.content-section');
         this.elements.homeSection = document.getElementById('homeSection');
         this.elements.logsSection = document.getElementById('logsSection');
+        this.elements.historySection = document.getElementById('historySection');
         this.elements.settingsSection = document.getElementById('settingsSection');
         
         // App tabs & Settings Tabs
         this.elements.appTabs = document.querySelectorAll('.app-tab'); // For logs section
-        this.elements.logTabs = document.querySelectorAll('.log-tab'); // Added log tabs
-        this.elements.settingsTabs = document.querySelectorAll('.settings-tab');
+        this.elements.logOptions = document.querySelectorAll('.log-option'); // New: replaced logTabs with logOptions
+        this.elements.currentLogApp = document.getElementById('current-log-app'); // New: dropdown current selection text
+        this.elements.logDropdownBtn = document.querySelector('.log-dropdown-btn'); // New: dropdown toggle button
+        this.elements.logDropdownContent = document.querySelector('.log-dropdown-content'); // New: dropdown content
+        
+        // History dropdown elements
+        this.elements.historyOptions = document.querySelectorAll('.history-option'); // History dropdown options
+        this.elements.currentHistoryApp = document.getElementById('current-history-app'); // Current history app text
+        this.elements.historyDropdownBtn = document.querySelector('.history-dropdown-btn'); // History dropdown button
+        this.elements.historyDropdownContent = document.querySelector('.history-dropdown-content'); // History dropdown content
+        this.elements.historyPlaceholderText = document.getElementById('history-placeholder-text'); // Placeholder text for history
+        
+        // Settings dropdown elements
+        this.elements.settingsOptions = document.querySelectorAll('.settings-option'); // New: settings dropdown options
+        this.elements.currentSettingsApp = document.getElementById('current-settings-app'); // New: current settings app text
+        this.elements.settingsDropdownBtn = document.querySelector('.settings-dropdown-btn'); // New: settings dropdown button
+        this.elements.settingsDropdownContent = document.querySelector('.settings-dropdown-content'); // New: dropdown content
+        
         this.elements.appSettingsPanels = document.querySelectorAll('.app-settings-panel');
         
         // Logs
@@ -132,14 +151,64 @@ let huntarrUI = {
             tab.addEventListener('click', (e) => this.handleAppTabChange(e));
         });
         
-        // Log tabs in logs section
-        this.elements.logTabs.forEach(tab => {
-            tab.addEventListener('click', (e) => this.handleLogTabChange(e));
+        // Log options dropdown
+        this.elements.logOptions.forEach(option => {
+            option.addEventListener('click', (e) => this.handleLogOptionChange(e));
         });
         
-        // Settings tabs
-        this.elements.settingsTabs.forEach(tab => {
-            tab.addEventListener('click', (e) => this.handleSettingsTabChange(e));
+        // Log dropdown toggle
+        if (this.elements.logDropdownBtn) {
+            this.elements.logDropdownBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.elements.logDropdownContent.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.log-dropdown') && this.elements.logDropdownContent.classList.contains('show')) {
+                    this.elements.logDropdownContent.classList.remove('show');
+                }
+            });
+        }
+        
+        // History dropdown toggle
+        if (this.elements.historyDropdownBtn) {
+            this.elements.historyDropdownBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.elements.historyDropdownContent.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.history-dropdown') && this.elements.historyDropdownContent.classList.contains('show')) {
+                    this.elements.historyDropdownContent.classList.remove('show');
+                }
+            });
+        }
+        
+        // History options
+        this.elements.historyOptions.forEach(option => {
+            option.addEventListener('click', (e) => this.handleHistoryOptionChange(e));
+        });
+        
+        // Settings dropdown toggle
+        if (this.elements.settingsDropdownBtn) {
+            this.elements.settingsDropdownBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.elements.settingsDropdownContent.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.settings-dropdown') && this.elements.settingsDropdownContent.classList.contains('show')) {
+                    this.elements.settingsDropdownContent.classList.remove('show');
+                }
+            });
+        }
+        
+        // Settings options
+        this.elements.settingsOptions.forEach(option => {
+            option.addEventListener('click', (e) => this.handleSettingsOptionChange(e));
         });
         
         // Save settings button
@@ -343,6 +412,13 @@ let huntarrUI = {
             newTitle = 'Logs';
             this.currentSection = 'logs';
             this.connectToLogs();
+        } else if (section === 'history' && this.elements.historySection) {
+            this.elements.historySection.classList.add('active');
+            if (this.elements.historyNav) this.elements.historyNav.classList.add('active');
+            newTitle = 'History';
+            this.currentSection = 'history';
+            // Disconnect logs if switching away from logs
+            this.disconnectAllEventSources(); 
         } else if (section === 'settings' && this.elements.settingsSection) {
             this.elements.settingsSection.classList.add('active');
             if (this.elements.settingsNav) this.elements.settingsNav.classList.add('active');
@@ -375,7 +451,12 @@ let huntarrUI = {
                 }
             }
             
+            // Load stateful info immediately, don't wait for loadAllSettings to complete
+            this.loadStatefulInfo();
+            
+            // Load all settings after stateful info has started loading
             this.loadAllSettings();
+            
             // Disconnect logs if switching away from logs
             this.disconnectAllEventSources(); 
         } else if (section === 'sponsors' && sponsorsSection) { // ADDED sponsors case
@@ -425,67 +506,107 @@ let huntarrUI = {
         this.connectToLogs();
     },
     
-    // Log tab switching (New)
-    handleLogTabChange: function(e) {
+    // Log option dropdown handling
+    handleLogOptionChange: function(e) {
+        e.preventDefault(); // Prevent default anchor behavior
+        
         const app = e.target.getAttribute('data-app');
         if (!app || app === this.currentLogApp) return; // Do nothing if same tab clicked
         
-        // Update active tab
-        this.elements.logTabs.forEach(tab => {
-            tab.classList.remove('active');
+        // Update active option
+        this.elements.logOptions.forEach(option => {
+            option.classList.remove('active');
         });
         e.target.classList.add('active');
+        
+        // Update the current log app text with proper capitalization
+        let displayName = app.charAt(0).toUpperCase() + app.slice(1);
+        this.elements.currentLogApp.textContent = displayName;
+        
+        // Close the dropdown
+        this.elements.logDropdownContent.classList.remove('show');
         
         // Switch to the selected app logs
         this.currentLogApp = app;
         this.clearLogs(); // Clear existing logs before switching
         this.connectToLogs(); // Reconnect to the new log source
     },
-
-    // Settings tab switching
-    handleSettingsTabChange: function(e) {
-        // Use currentTarget to ensure we get the button, not the inner element
-        const targetTab = e.currentTarget;
-        const app = targetTab.dataset.app; // Use dataset.app as added in SettingsForms
-
-        if (!app) {
-             console.error("Settings tab clicked, but no data-app attribute found.");
-             return; // Should not happen if HTML is correct
+    
+    // History option dropdown handling
+    handleHistoryOptionChange: function(e) {
+        e.preventDefault(); // Prevent default anchor behavior
+        
+        const app = e.target.getAttribute('data-app');
+        if (!app || app === this.currentHistoryApp) return; // Do nothing if same tab clicked
+        
+        // Update active option
+        this.elements.historyOptions.forEach(option => {
+            option.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        // Update the current history app text with proper capitalization
+        let displayName = app.charAt(0).toUpperCase() + app.slice(1);
+        this.elements.currentHistoryApp.textContent = displayName;
+        
+        // Close the dropdown
+        this.elements.historyDropdownContent.classList.remove('show');
+        
+        // Switch to the selected app history
+        this.currentHistoryApp = app;
+        // this.clearHistory(); // Clear existing history before switching
+        // this.connectToHistory(); // Reconnect to the new history source
+        
+        // Update the placeholder text based on the selected app
+        this.updateHistoryPlaceholder(app);
+    },
+    
+    // Update the history placeholder text based on the selected app
+    updateHistoryPlaceholder: function(app) {
+        if (!this.elements.historyPlaceholderText) return;
+        
+        let message = "";
+        if (app === 'all') {
+            message = "The History feature will be available in a future update. Stay tuned for enhancements that will allow you to view your media processing history.";
+        } else {
+            let displayName = this.capitalizeFirst(app);
+            message = `The ${displayName} History feature is under development and will be available in a future update. You'll be able to track your ${displayName} media processing history here.`;
         }
-        e.preventDefault(); // Prevent default if it was an anchor
-
-        // Check for unsaved changes before switching tabs
-        if (this.settingsChanged) {
-            if (!confirm('You have unsaved changes on the current tab. Switch tabs anyway? Changes will be lost.')) {
-                return; // Stop tab switch if user cancels
-            }
-             // User confirmed, reset flag before switching
-            this.settingsChanged = false;
-            this.updateSaveResetButtonState(false);
-        }
-
-        // Remove active class from all tabs and panels
-        this.elements.settingsTabs.forEach(tab => tab.classList.remove('active'));
+        
+        this.elements.historyPlaceholderText.textContent = message;
+    },
+    
+    // Settings option handling
+    handleSettingsOptionChange: function(e) {
+        e.preventDefault(); // Prevent default anchor behavior
+        
+        const app = e.target.getAttribute('data-app');
+        if (!app || app === this.currentSettingsApp) return; // Do nothing if same tab clicked
+        
+        // Update active option
+        this.elements.settingsOptions.forEach(option => {
+            option.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        // Update the current settings app text with proper capitalization
+        let displayName = app.charAt(0).toUpperCase() + app.slice(1);
+        this.elements.currentSettingsApp.textContent = displayName;
+        
+        // Close the dropdown
+        this.elements.settingsDropdownContent.classList.remove('show');
+        
+        // Hide all settings panels
         this.elements.appSettingsPanels.forEach(panel => {
             panel.classList.remove('active');
-            panel.style.display = 'none'; // Explicitly hide
+            panel.style.display = 'none';
         });
-
-        // Set the target tab as active
-        targetTab.classList.add('active');
-
-        // Show the corresponding settings panel
-        const panelElement = document.getElementById(`${app}Settings`);
-        if (panelElement) {
-            panelElement.classList.add('active');
-            panelElement.style.display = 'block'; // Explicitly show
-            this.currentSettingsTab = app; // Update current tab state
-            // Ensure settings are populated for this tab using the stored originalSettings
-            this.populateSettingsForm(app, this.originalSettings[app] || {});
-            // Reset save button state when switching tabs (already done above if confirmed)
-            this.updateSaveResetButtonState(false); // Ensure it's disabled on new tab
-        } else {
-             console.error(`Settings panel not found for app: ${app}`);
+        
+        // Show the selected app's settings panel
+        const selectedPanel = document.getElementById(app + 'Settings');
+        if (selectedPanel) {
+            selectedPanel.classList.add('active');
+            selectedPanel.style.display = 'block';
         }
     },
     
@@ -716,7 +837,7 @@ let huntarrUI = {
                     SettingsForms.updateDurationDisplay();
                 }
                 
-                // Load stateful management info
+                // Load stateful info immediately, don't wait for loadAllSettings to complete
                 this.loadStatefulInfo();
             })
             .catch(error => {
