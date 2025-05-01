@@ -14,8 +14,6 @@
   "monitored_only": true,
   "skip_future_releases": true,
   "skip_movie_refresh": true,
-  "random_missing": true,
-  "random_upgrades": true,
   "debug_mode": false,
   "api_timeout": 120,
   "command_wait_delay": 1,

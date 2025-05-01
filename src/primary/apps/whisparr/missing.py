@@ -43,7 +43,6 @@ def process_missing_items(
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_item_refresh = app_settings.get("skip_item_refresh", False)
-    random_missing = app_settings.get("random_missing", False)
     
     # Use the new hunt_missing_items parameter name, falling back to hunt_missing_scenes for backwards compatibility
     hunt_missing_items = app_settings.get("hunt_missing_items", app_settings.get("hunt_missing_scenes", 0))
@@ -124,14 +123,8 @@ def process_missing_items(
     processing_done = False
     
     # Select items to search based on configuration
-    if random_missing:
-        whisparr_logger.info(f"Randomly selecting up to {hunt_missing_items} missing items.")
-        items_to_search = random.sample(unprocessed_items, min(len(unprocessed_items), hunt_missing_items))
-    else:
-        whisparr_logger.info(f"Selecting the first {hunt_missing_items} missing items (sorted by title).")
-        # Sort by title for consistent ordering if not random
-        unprocessed_items.sort(key=lambda x: x.get("title", ""))
-        items_to_search = unprocessed_items[:hunt_missing_items]
+    whisparr_logger.info(f"Randomly selecting up to {hunt_missing_items} missing items.")
+    items_to_search = random.sample(unprocessed_items, min(len(unprocessed_items), hunt_missing_items))
     
     whisparr_logger.info(f"Selected {len(items_to_search)} missing items to search.")
 

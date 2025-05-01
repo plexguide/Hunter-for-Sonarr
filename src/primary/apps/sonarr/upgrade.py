@@ -21,7 +21,6 @@ def process_cutoff_upgrades(
     api_timeout: int = 60,
     monitored_only: bool = True,
     skip_series_refresh: bool = False,
-    random_upgrades: bool = False,
     hunt_upgrade_items: int = 5,
     command_wait_delay: int = 5,
     command_wait_attempts: int = 10,
@@ -37,15 +36,12 @@ def process_cutoff_upgrades(
         
     sonarr_logger.info(f"Checking for {hunt_upgrade_items} quality upgrades...")
     
-    if random_upgrades:
-        sonarr_logger.info("Using RANDOM selection mode for quality upgrades")
-    else:
-        sonarr_logger.info("Using SEQUENTIAL selection mode for quality upgrades (oldest first)")
+    sonarr_logger.info("Using RANDOM selection mode for quality upgrades")
 
     # Always use episode mode for upgrades, regardless of the hunt_missing_mode setting
     return process_upgrade_episodes_mode(
         api_url, api_key, instance_name, api_timeout, monitored_only, 
-        skip_series_refresh, random_upgrades, hunt_upgrade_items, 
+        skip_series_refresh, hunt_upgrade_items, 
         command_wait_delay, command_wait_attempts, stop_check
     )
 
@@ -56,7 +52,6 @@ def process_upgrade_episodes_mode(
     api_timeout: int,
     monitored_only: bool,
     skip_series_refresh: bool,
-    random_upgrades: bool,
     hunt_upgrade_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -65,65 +60,21 @@ def process_upgrade_episodes_mode(
     """Process upgrades in episode mode (original implementation)."""
     processed_any = False
     
-    # Use different methods based on random setting and library size
-    episodes_to_search = []
+    # Always use the efficient random page selection method
+    sonarr_logger.debug(f"Using random selection for cutoff unmet episodes")
+    episodes_to_search = sonarr_api.get_cutoff_unmet_episodes_random_page(
+        api_url, api_key, api_timeout, monitored_only, hunt_upgrade_items)
+        
+    # If we didn't get enough episodes, we might need to try another page
+    if len(episodes_to_search) < hunt_upgrade_items and len(episodes_to_search) > 0:
+        sonarr_logger.debug(f"Got {len(episodes_to_search)} episodes from random page, fewer than requested {hunt_upgrade_items}")
     
-    if random_upgrades:
-        # Use the efficient random page selection method
-        sonarr_logger.debug(f"Using random selection for cutoff unmet episodes")
-        episodes_to_search = sonarr_api.get_cutoff_unmet_episodes_random_page(
-            api_url, api_key, api_timeout, monitored_only, hunt_upgrade_items)
-            
-        # If we didn't get enough episodes, we might need to try another page
-        if len(episodes_to_search) < hunt_upgrade_items and len(episodes_to_search) > 0:
-            sonarr_logger.debug(f"Got {len(episodes_to_search)} episodes from random page, fewer than requested {hunt_upgrade_items}")
-    else:
-        # Use the sequential approach for non-random selection
-        sonarr_logger.debug(f"Using sequential selection for cutoff unmet episodes (oldest first)")
-        cutoff_unmet_episodes = sonarr_api.get_cutoff_unmet_episodes(
-            api_url, api_key, api_timeout, monitored_only)
-            
-        if not cutoff_unmet_episodes:
-            sonarr_logger.info("No cutoff unmet episodes found in Sonarr.")
-            return False
-            
-        # Filter out future episodes if configured
-        if skip_series_refresh:
-            now_unix = time.time()
-            original_count = len(cutoff_unmet_episodes)
-            # Ensure airDateUtc exists and is not None before parsing
-            cutoff_unmet_episodes = [
-                ep for ep in cutoff_unmet_episodes
-                if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
-            ]
-            skipped_count = original_count - len(cutoff_unmet_episodes)
-            if skipped_count > 0:
-                sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date for upgrades.")
-        
-        # Filter out already processed episodes using stateful management
-        unprocessed_episodes = []
-        for episode in cutoff_unmet_episodes:
-            episode_id = str(episode.get("id"))
-            if not is_processed("sonarr", instance_name, episode_id):
-                unprocessed_episodes.append(episode)
-            else:
-                sonarr_logger.debug(f"Skipping already processed episode ID for upgrade: {episode_id}")
-        
-        sonarr_logger.info(f"Found {len(unprocessed_episodes)} unprocessed cutoff unmet episodes out of {len(cutoff_unmet_episodes)} total.")
-        
-        if not unprocessed_episodes:
-            sonarr_logger.info("No unprocessed cutoff unmet episodes found. All available episodes have been processed.")
-            return False
-                
-        # Select the first N episodes
-        episodes_to_search = unprocessed_episodes[:hunt_upgrade_items]
-
     if stop_check(): 
         sonarr_logger.info("Stop requested during upgrade processing.")
         return processed_any
         
     # Filter out future episodes for random selection approach
-    if random_upgrades and skip_series_refresh:
+    if skip_series_refresh:
         now_unix = time.time()
         original_count = len(episodes_to_search)
         episodes_to_search = [
@@ -135,17 +86,16 @@ def process_upgrade_episodes_mode(
             sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date for upgrades.")
     
     # Filter out already processed episodes for random selection approach
-    if random_upgrades:
-        unprocessed_episodes = []
-        for episode in episodes_to_search:
-            episode_id = str(episode.get("id"))
-            if not is_processed("sonarr", instance_name, episode_id):
-                unprocessed_episodes.append(episode)
-            else:
-                sonarr_logger.debug(f"Skipping already processed episode ID for upgrade: {episode_id}")
+    unprocessed_episodes = []
+    for episode in episodes_to_search:
+        episode_id = str(episode.get("id"))
+        if not is_processed("sonarr", instance_name, episode_id):
+            unprocessed_episodes.append(episode)
+        else:
+            sonarr_logger.debug(f"Skipping already processed episode ID for upgrade: {episode_id}")
         
-        sonarr_logger.info(f"Found {len(unprocessed_episodes)} unprocessed cutoff unmet episodes out of {len(episodes_to_search)} total.")
-        episodes_to_search = unprocessed_episodes
+    sonarr_logger.info(f"Found {len(unprocessed_episodes)} unprocessed cutoff unmet episodes out of {len(episodes_to_search)} total.")
+    episodes_to_search = unprocessed_episodes
 
     if not episodes_to_search:
         sonarr_logger.info("No cutoff unmet episodes left to process for upgrades after filtering.")
@@ -254,7 +204,6 @@ def process_upgrade_seasons_mode(
     api_timeout: int,
     monitored_only: bool,
     skip_series_refresh: bool,
-    random_upgrades: bool,
     hunt_upgrade_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -315,16 +264,9 @@ def process_upgrade_seasons_mode(
         sonarr_logger.info("No valid seasons with cutoff unmet episodes found.")
         return False
     
-    # Select seasons to process - either randomly or sequentially
-    seasons_to_process = []
-    if random_upgrades:
-        # Randomly shuffle the available seasons
-        random.shuffle(available_seasons)
-        seasons_to_process = available_seasons[:hunt_upgrade_items]
-    else:
-        # Sort by number of unmet episodes (descending) for most impactful processing
-        available_seasons.sort(key=lambda x: x[2], reverse=True)
-        seasons_to_process = available_seasons[:hunt_upgrade_items]
+    # Select seasons to process - always randomly
+    random.shuffle(available_seasons)
+    seasons_to_process = available_seasons[:hunt_upgrade_items]
     
     sonarr_logger.info(f"Selected {len(seasons_to_process)} seasons with cutoff unmet episodes to process")
     
@@ -398,7 +340,6 @@ def process_upgrade_shows_mode(
     api_timeout: int,
     monitored_only: bool,
     skip_series_refresh: bool,
-    random_upgrades: bool,
     hunt_upgrade_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -454,16 +395,9 @@ def process_upgrade_shows_mode(
         sonarr_logger.info("No series with cutoff unmet episodes found.")
         return False
     
-    # Select series to process - either randomly or sequentially
-    series_to_process = []
-    if random_upgrades:
-        # Randomly shuffle the available series
-        random.shuffle(available_series)
-        series_to_process = available_series[:hunt_upgrade_items]
-    else:
-        # Sort by unmet episode count (descending) for most impactful processing
-        available_series.sort(key=lambda x: x[1], reverse=True)
-        series_to_process = available_series[:hunt_upgrade_items]
+    # Select series to process - always randomly
+    random.shuffle(available_series)
+    series_to_process = available_series[:hunt_upgrade_items]
     
     sonarr_logger.info(f"Selected {len(series_to_process)} series with cutoff unmet episodes to process")
     

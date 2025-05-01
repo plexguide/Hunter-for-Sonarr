@@ -40,7 +40,6 @@ def process_cutoff_upgrades(
     api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_author_refresh = app_settings.get("skip_author_refresh", False)
-    random_upgrades = app_settings.get("random_upgrades", False)
     hunt_upgrade_books = app_settings.get("hunt_upgrade_books", 0)
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
@@ -103,15 +102,9 @@ def process_cutoff_upgrades(
         readarr_logger.info(f"No unprocessed books found for {instance_name}. All available books have been processed.")
         return False
 
-    # Select books to process
-    if random_upgrades:
-        readarr_logger.info(f"Randomly selecting up to {hunt_upgrade_books} books for upgrade search.")
-        books_to_process = random.sample(unprocessed_books, min(hunt_upgrade_books, len(unprocessed_books)))
-    else:
-        readarr_logger.info(f"Selecting the first {hunt_upgrade_books} books for upgrade search (order based on API return).")
-        # Add sorting if needed, e.g., by title or author
-        # upgrade_eligible_data.sort(key=lambda x: x.get('title', ''))
-        books_to_process = unprocessed_books[:hunt_upgrade_books]
+    # Always randomly select books to process
+    readarr_logger.info(f"Randomly selecting up to {hunt_upgrade_books} books for upgrade search.")
+    books_to_process = random.sample(unprocessed_books, min(hunt_upgrade_books, len(unprocessed_books)))
 
     readarr_logger.info(f"Selected {len(books_to_process)} books to search for upgrades.")
     processed_count = 0

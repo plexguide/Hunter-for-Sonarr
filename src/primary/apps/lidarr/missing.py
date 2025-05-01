@@ -42,7 +42,6 @@ def process_missing_albums(
     hunt_missing_mode = app_settings.get("hunt_missing_mode", "artist") # 'artist' or 'album'
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
-    random_missing = app_settings.get("random_missing", True)
     api_timeout = app_settings.get("api_timeout", 120) # Use general timeout
     command_wait_delay = app_settings.get("command_wait_delay", 1)
     command_wait_attempts = app_settings.get("command_wait_attempts", 600)
@@ -158,14 +157,8 @@ def process_missing_albums(
             lidarr_logger.info(f"No {search_entity_type}s found to process after grouping/filtering.")
             return False
 
-        if random_missing:
-            entities_to_search_ids = random.sample(unprocessed_entities, min(len(unprocessed_entities), total_items_to_process))
-            lidarr_logger.debug(f"Randomly selected {len(entities_to_search_ids)} {search_entity_type}s to search.")
-        else:
-            # Sort by ID for consistent selection if not random (optional, API order might suffice)
-            # target_entities.sort() # Example: sort IDs numerically
-            entities_to_search_ids = unprocessed_entities[:total_items_to_process]
-            lidarr_logger.debug(f"Selected first {len(entities_to_search_ids)} {search_entity_type}s to search.")
+        entities_to_search_ids = random.sample(unprocessed_entities, min(len(unprocessed_entities), total_items_to_process))
+        lidarr_logger.debug(f"Randomly selected {len(entities_to_search_ids)} {search_entity_type}s to search.")
 
         # --- Trigger Search (Artist or Album) ---
         if hunt_missing_mode == "artist":

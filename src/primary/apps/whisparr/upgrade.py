@@ -42,7 +42,6 @@ def process_cutoff_upgrades(
     api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_item_refresh = app_settings.get("skip_item_refresh", False)
-    random_upgrades = app_settings.get("random_upgrades", False)
     
     # Use the new hunt_upgrade_items parameter name, falling back to hunt_upgrade_scenes for backwards compatibility
     hunt_upgrade_items = app_settings.get("hunt_upgrade_items", app_settings.get("hunt_upgrade_scenes", 0))
@@ -98,15 +97,9 @@ def process_cutoff_upgrades(
     items_processed = 0
     processing_done = False
     
-    # Select items to upgrade based on configuration
-    if random_upgrades:
-        whisparr_logger.info(f"Randomly selecting up to {hunt_upgrade_items} items for quality upgrade.")
-        items_to_upgrade = random.sample(unprocessed_items, min(len(unprocessed_items), hunt_upgrade_items))
-    else:
-        whisparr_logger.info(f"Selecting the first {hunt_upgrade_items} items for quality upgrade (sorted by title).")
-        # Sort by title for consistent ordering if not random
-        unprocessed_items.sort(key=lambda x: x.get("title", ""))
-        items_to_upgrade = unprocessed_items[:hunt_upgrade_items]
+    # Always use random selection for upgrades
+    whisparr_logger.info(f"Randomly selecting up to {hunt_upgrade_items} items for quality upgrade.")
+    items_to_upgrade = random.sample(unprocessed_items, min(len(unprocessed_items), hunt_upgrade_items))
     
     whisparr_logger.info(f"Selected {len(items_to_upgrade)} items for quality upgrade.")
     

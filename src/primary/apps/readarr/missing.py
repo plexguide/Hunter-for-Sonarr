@@ -40,7 +40,6 @@ def process_missing_books(
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_author_refresh = app_settings.get("skip_author_refresh", False)
-    random_missing = app_settings.get("random_missing", False)
     hunt_missing_books = app_settings.get("hunt_missing_books", 0)
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
@@ -83,13 +82,9 @@ def process_missing_books(
         readarr_logger.info(f"No unprocessed authors found for {instance_name}. All available authors have been processed.")
         return False
 
-    # Select authors/books to process
-    if random_missing:
-        readarr_logger.info(f"Randomly selecting up to {hunt_missing_books} authors with missing books.")
-        authors_to_process = random.sample(unprocessed_authors, min(hunt_missing_books, len(unprocessed_authors)))
-    else:
-        readarr_logger.info(f"Selecting the first {hunt_missing_books} authors with missing books (order based on API return).")
-        authors_to_process = unprocessed_authors[:hunt_missing_books]
+    # Always randomly select authors/books to process
+    readarr_logger.info(f"Randomly selecting up to {hunt_missing_books} authors with missing books.")
+    authors_to_process = random.sample(unprocessed_authors, min(hunt_missing_books, len(unprocessed_authors)))
 
     readarr_logger.info(f"Selected {len(authors_to_process)} authors to search for missing books.")
     processed_count = 0

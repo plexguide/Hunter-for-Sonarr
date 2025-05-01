@@ -40,7 +40,6 @@ def process_missing_movies(
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_movie_refresh = app_settings.get("skip_movie_refresh", False)
-    random_missing = app_settings.get("random_missing", False)
     hunt_missing_movies = app_settings.get("hunt_missing_movies", 0)
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
@@ -113,79 +112,53 @@ def process_missing_movies(
         radarr_logger.info("No unprocessed missing movies found. All available movies have been processed.")
         return False
     
-    # Select movies to search based on configuration
-    if random_missing:
-        radarr_logger.info(f"Randomly selecting up to {hunt_missing_movies} missing movies.")
-        movies_to_search = random.sample(unprocessed_movies, min(len(unprocessed_movies), hunt_missing_movies))
+    # Always use random selection for missing movies
+    radarr_logger.info(f"Using random selection for missing movies")
+    if len(unprocessed_movies) > hunt_missing_movies:
+        movies_to_process = random.sample(unprocessed_movies, hunt_missing_movies)
     else:
-        radarr_logger.info(f"Selecting the first {hunt_missing_movies} missing movies (sorted by title).")
-        unprocessed_movies.sort(key=lambda x: x.get("title", ""))
-        movies_to_search = unprocessed_movies[:hunt_missing_movies]
+        movies_to_process = unprocessed_movies
     
-    radarr_logger.info(f"Selected {len(movies_to_search)} missing movies to search.")
-
-    # Process selected movies
-    for movie in movies_to_search:
-        # Check for stop signal before each movie
+    radarr_logger.info(f"Selected {len(movies_to_process)} movies to process.")
+    
+    # Add detailed logging for selected movies
+    if movies_to_process:
+        radarr_logger.info(f"Movies selected for processing in this cycle:")
+        for idx, movie in enumerate(movies_to_process):
+            movie_id = movie.get("id")
+            movie_title = movie.get("title", "Unknown Title")
+            year = movie.get("year", "Unknown Year")
+            radarr_logger.info(f"  {idx+1}. {movie_title} ({year}) - ID: {movie_id}")
+    
+    # Process each movie
+    for movie in movies_to_process:
         if stop_check():
-            radarr_logger.info("Stop requested during movie processing. Aborting...")
+            radarr_logger.info("Stop requested during processing. Aborting...")
             break
-        
-        # Re-check limit in case it changed
-        current_limit = app_settings.get("hunt_missing_movies", 1)
-        if movies_processed >= current_limit:
-             radarr_logger.info(f"Reached HUNT_MISSING_MOVIES limit ({current_limit}) for this cycle.")
-             break
-
+            
         movie_id = movie.get("id")
-        title = movie.get("title", "Unknown Title")
-        year = movie.get("year", "Unknown Year")
+        movie_title = movie.get("title", "Unknown Title")
         
-        radarr_logger.info(f"Processing missing movie: \"{title}\" ({year}) (Movie ID: {movie_id})")
-        
-        # Refresh the movie information if not skipped
-        refresh_command_id = None
+        # Optional: Refresh the movie before searching
         if not skip_movie_refresh:
-            radarr_logger.info(" - Refreshing movie information...")
-            refresh_command_id = radarr_api.refresh_movie(api_url, api_key, api_timeout, movie_id)
-            if refresh_command_id:
-                 radarr_logger.info(f"Triggered refresh command {refresh_command_id}. Waiting a few seconds...")
-                 time.sleep(5) # Basic wait
-            else:
-                radarr_logger.warning(f"Failed to trigger refresh command for movie ID: {movie_id}. Proceeding without refresh.")
-        else:
-            radarr_logger.info(" - Skipping movie refresh (skip_movie_refresh=true)")
-        
-        # Check for stop signal before searching
-        if stop_check():
-            radarr_logger.info(f"Stop requested before searching for {title}. Aborting...")
-            break
+            radarr_logger.info(f"Refreshing movie metadata for '{movie_title}' (ID: {movie_id})...")
+            refresh_success = radarr_api.refresh_movie(api_url, api_key, api_timeout, movie_id, command_wait_delay, command_wait_attempts)
+            
+            if not refresh_success:
+                radarr_logger.warning(f"Failed to refresh movie metadata for '{movie_title}'. Continuing anyway...")
         
         # Search for the movie
-        radarr_logger.info(" - Searching for missing movie...")
-        search_command_id = radarr_api.movie_search(api_url, api_key, api_timeout, [movie_id])
-        if search_command_id:
-            radarr_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
-            increment_stat("radarr", "hunted", 1)
-            radarr_logger.debug(f"Incremented radarr hunted statistics by 1")
-            
-            # Add movie ID to processed list
-            add_processed_id("radarr", instance_name, str(movie_id))
-            radarr_logger.debug(f"Added movie ID {movie_id} to processed list for {instance_name}")
-            
-            movies_processed += 1
-            processing_done = True
-            
-            # Log progress
-            current_limit = app_settings.get("hunt_missing_movies", 1)
-            radarr_logger.info(f"Processed {movies_processed}/{current_limit} missing movies this cycle.")
-        else:
-            radarr_logger.warning(f"Failed to trigger search command for movie ID {movie_id}.")
-    
-    # Log final status
-    if processing_done:
-        radarr_logger.info(f"Completed processing {movies_processed} missing movies for this cycle.")
-    else:
-        radarr_logger.info("No new missing movies were processed in this run.")
+        radarr_logger.info(f"Searching for movie '{movie_title}' (ID: {movie_id})...")
+        search_success = radarr_api.movie_search(api_url, api_key, api_timeout, [movie_id])
         
-    return processing_done
+        if search_success:
+            radarr_logger.info(f"Successfully triggered search for movie '{movie_title}'")
+            add_processed_id("radarr", instance_name, str(movie_id))
+            increment_stat("radarr", "searches_triggered")
+            movies_processed += 1
+            processed_any = True
+        else:
+            radarr_logger.warning(f"Failed to trigger search for movie '{movie_title}'")
+    
+    radarr_logger.info(f"Finished processing missing movies. Processed {movies_processed} of {len(movies_to_process)} selected movies.")
+    return processed_any

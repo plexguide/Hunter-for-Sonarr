@@ -41,7 +41,6 @@ def process_cutoff_upgrades(
     # General Lidarr settings (also from app_settings)
     hunt_upgrade_items = app_settings.get("hunt_upgrade_items", 0)
     monitored_only = app_settings.get("monitored_only", True)
-    random_upgrades = app_settings.get("random_upgrades", True)
     api_timeout = app_settings.get("api_timeout", 120)
     command_wait_delay = app_settings.get("command_wait_delay", 1)
     command_wait_attempts = app_settings.get("command_wait_attempts", 600)
@@ -95,14 +94,9 @@ def process_cutoff_upgrades(
             lidarr_logger.info(f"No unprocessed cutoff unmet albums found for {instance_name}. All available albums have been processed.")
             return False
 
-        # Select albums to search
-        albums_to_search: List[Dict[str, Any]] = [] # Ensure type hint
-        if random_upgrades:
-            albums_to_search = random.sample(unprocessed_albums, min(len(unprocessed_albums), total_items_to_process))
-            lidarr_logger.debug(f"Randomly selected {len(albums_to_search)} albums out of {len(unprocessed_albums)} to search for upgrades.")
-        else:
-            albums_to_search = unprocessed_albums[:total_items_to_process]
-            lidarr_logger.debug(f"Selected the first {len(albums_to_search)} albums out of {len(unprocessed_albums)} to search for upgrades.")
+        # Always select albums randomly
+        albums_to_search = random.sample(unprocessed_albums, min(len(unprocessed_albums), total_items_to_process))
+        lidarr_logger.info(f"Randomly selected {len(albums_to_search)} albums for upgrade search.")
 
         album_ids_to_search = [album['id'] for album in albums_to_search]
 

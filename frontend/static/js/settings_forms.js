@@ -145,22 +145,6 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Advanced Settings</h3>
                 <div class="setting-item">
-                    <label for="random_missing">Random Missing:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="random_missing" ${settings.random_missing !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Select random missing items instead of sequential order</p>
-                </div>
-                <div class="setting-item">
-                    <label for="random_upgrades">Random Upgrades:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="random_upgrades" ${settings.random_upgrades !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Select random items for quality upgrades</p>
-                </div>
-                <div class="setting-item">
                     <label for="api_timeout">API Timeout:</label>
                     <input type="number" id="api_timeout" min="10" max="300" value="${settings.api_timeout || 60}">
                     <p class="setting-help">Timeout for API requests in seconds</p>
