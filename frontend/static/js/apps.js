@@ -151,14 +151,50 @@ const appsModule = {
     
     // Add change event listeners to form elements
     addFormChangeListeners: function(form) {
-        const inputs = form.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            input.addEventListener('change', () => this.markAppsAsChanged());
-            // For text inputs, also listen for input event
-            if (input.type === 'text' || input.type === 'password' || input.type === 'number' || input.tagName.toLowerCase() === 'textarea') {
-                input.addEventListener('input', () => this.markAppsAsChanged());
-            }
+        const elementsToWatch = form.querySelectorAll('input, select, textarea');
+        elementsToWatch.forEach(element => {
+            element.addEventListener('change', () => {
+                console.log('Form element changed, marking settings as changed');
+                this.markAppsAsChanged();
+            });
         });
+        
+        // Add mutation observer to detect when instances are added or removed
+        const instancesContainer = form.querySelector('.instances-container');
+        if (instancesContainer) {
+            console.log('Setting up mutation observer for instances container');
+            
+            // Create a mutation observer to watch for changes to the instances container
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    // If nodes were added or removed, mark settings as changed
+                    if (mutation.type === 'childList' && 
+                        (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
+                        console.log('Instances container changed:', 
+                            mutation.addedNodes.length > 0 ? 'Added nodes' : 'Removed nodes');
+                        this.markAppsAsChanged();
+                        
+                        // If nodes were added, also add change listeners to them
+                        if (mutation.addedNodes.length > 0) {
+                            mutation.addedNodes.forEach(node => {
+                                if (node.querySelectorAll) {
+                                    const newInputs = node.querySelectorAll('input, select, textarea');
+                                    newInputs.forEach(input => {
+                                        input.addEventListener('change', () => {
+                                            console.log('New input changed, marking settings as changed');
+                                            this.markAppsAsChanged();
+                                        });
+                                    });
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+            
+            // Start observing
+            observer.observe(instancesContainer, { childList: true, subtree: true });
+        }
     },
     
     // Show specific app panel and hide others
@@ -267,6 +303,8 @@ const appsModule = {
         }
         
         console.log(`[Apps] Sending settings for ${this.currentApp}:`, appSettings);
+        console.log(`[Apps] Number of instances found for ${this.currentApp}:`, appSettings.instances?.length || 0);
+        console.log(`[Apps] Instances detail:`, JSON.stringify(appSettings.instances, null, 2));
         
         // Send settings update request to the correct app-specific endpoint
         fetch(`/api/settings/${this.currentApp}`, {

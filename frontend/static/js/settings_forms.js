@@ -1038,23 +1038,67 @@ const SettingsForms = {
             return null;
         }
         
+        console.log(`[getFormSettings] Collecting settings for ${appType} form`, form);
+        
         // Handle instances differently
         const instances = [];
         // Find instance containers with both old and new class names
         const instanceContainers = form.querySelectorAll('.instance-item, .instance-panel');
         
-        console.log(`Found ${instanceContainers.length} instance containers for ${appType}`);
+        console.log(`[getFormSettings] Found ${instanceContainers.length} instance containers for ${appType}`);
         
+        // For debugging - dump all instance container info
+        instanceContainers.forEach((instance, i) => {
+            console.log(`[getFormSettings] Instance container ${i}:`, {
+                className: instance.className,
+                dataId: instance.dataset.instanceId,
+                innerHTML: instance.innerHTML.substring(0, 100) + '...' // Just show the first bit
+            });
+        });
+        
+        // Collect instance data with improved error handling
         instanceContainers.forEach((instance, index) => {
+            const nameInput = instance.querySelector('input[name="name"]');
+            const urlInput = instance.querySelector('input[name="api_url"]');
+            const keyInput = instance.querySelector('input[name="api_key"]');
+            const enabledInput = instance.querySelector('input[name="enabled"]');
+            
+            const name = nameInput ? nameInput.value : null;
+            const url = urlInput ? urlInput.value : null;
+            const key = keyInput ? keyInput.value : null;
+            const enabled = enabledInput ? enabledInput.checked : true; // Default to enabled if checkbox not found
+            
+            console.log(`[getFormSettings] Instance ${index} inputs:`, {
+                name: nameInput ? nameInput.value : 'null',
+                url: urlInput ? urlInput.value : 'null',
+                key: keyInput ? keyInput.value.substring(0, 3) + '...' : 'null',
+                enabled: enabledInput ? enabledInput.checked : 'null (default: true)'
+            });
+            
+            if (!name || !url || !key) {
+                console.warn(`[getFormSettings] Instance ${index} is missing required fields`);
+            }
+            
             const instanceObj = {
-                name: instance.querySelector('input[name="name"]')?.value || `Instance ${index + 1}`,
-                api_url: instance.querySelector('input[name="api_url"]')?.value || '',
-                api_key: instance.querySelector('input[name="api_key"]')?.value || '',
-                enabled: instance.querySelector('input[name="enabled"]')?.checked || false
+                name: name || `Instance ${index + 1}`,
+                api_url: url || '',
+                api_key: key || '',
+                enabled: enabled
             };
-            console.log(`Instance ${index}: ${instanceObj.name}, enabled: ${instanceObj.enabled}`);
+            
             instances.push(instanceObj);
         });
+        
+        // Ensure we always have at least one instance
+        if (instances.length === 0) {
+            console.warn('[getFormSettings] No instances found, adding a default empty instance');
+            instances.push({
+                name: 'Default',
+                api_url: '',
+                api_key: '',
+                enabled: true
+            });
+        }
         
         settings.instances = instances;
         
