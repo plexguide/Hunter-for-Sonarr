@@ -272,6 +272,37 @@ def apply_timezone(timezone: str) -> bool:
         settings_logger.error(f"Error setting timezone: {str(e)}")
         return False
 
+# Add a list of known advanced settings for clarity and documentation
+ADVANCED_SETTINGS = [
+    "api_timeout", 
+    "command_wait_delay", 
+    "command_wait_attempts", 
+    "minimum_download_queue_size",
+    "log_refresh_interval_seconds"
+]
+
+def get_advanced_setting(setting_name, default_value=None):
+    """
+    Get an advanced setting from general settings.
+    
+    Advanced settings are now centralized in general settings and no longer stored
+    in individual app settings files. This function provides a consistent way to
+    access these settings from anywhere in the codebase.
+    
+    Args:
+        setting_name: The name of the advanced setting to retrieve
+        default_value: The default value to return if the setting is not found
+        
+    Returns:
+        The value of the setting or the default value if not found
+    """
+    if setting_name not in ADVANCED_SETTINGS:
+        settings_logger.warning(f"Requested unknown advanced setting: {setting_name}")
+    
+    # Get from general settings
+    general_settings = load_settings('general', use_cache=True)
+    return general_settings.get(setting_name, default_value)
+
 # Example usage (for testing purposes, remove later)
 if __name__ == "__main__":
     settings_logger.info(f"Known app types: {KNOWN_APP_TYPES}")

@@ -11,6 +11,7 @@ from src.primary.apps.sonarr import api as sonarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
+from src.primary.settings_manager import load_settings, get_advanced_setting
 
 # Get logger for the Sonarr app
 sonarr_logger = get_logger("sonarr")
@@ -19,14 +20,14 @@ def process_missing_episodes(
     api_url: str,
     api_key: str,
     instance_name: str = "Default",
-    api_timeout: int = 60,
+    api_timeout: int = get_advanced_setting("api_timeout", 90),
     monitored_only: bool = True,
     skip_future_episodes: bool = True,
     skip_series_refresh: bool = False,
     hunt_missing_items: int = 5,
     hunt_missing_mode: str = "episodes",
-    command_wait_delay: int = 5,
-    command_wait_attempts: int = 10,
+    command_wait_delay: int = get_advanced_setting("command_wait_delay", 5),
+    command_wait_attempts: int = get_advanced_setting("command_wait_attempts", 12),
     stop_check: Callable[[], bool] = lambda: False
 ) -> bool:
     """

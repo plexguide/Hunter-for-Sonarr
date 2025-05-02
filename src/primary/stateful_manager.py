@@ -32,6 +32,9 @@ APP_TYPES = ["sonarr", "radarr", "lidarr", "readarr", "whisparr"]
 for app_type in APP_TYPES:
     (STATEFUL_DIR / app_type).mkdir(exist_ok=True)
 
+# Add import for get_advanced_setting
+from src.primary.settings_manager import get_advanced_setting
+
 def initialize_lock_file() -> None:
     """Initialize the lock file with the current timestamp if it doesn't exist."""
     # Ensure directory exists - we don't need to log this again
@@ -44,21 +47,16 @@ def initialize_lock_file() -> None:
         try:
             current_time = int(time.time())
             # Get the expiration hours setting
-            try:
-                from src.primary.settings_manager import get_setting
-                hours = get_setting("general", "stateful_management_hours", DEFAULT_HOURS)
-            except Exception as e:
-                stateful_logger.error(f"Error getting stateful hours setting, using default: {e}")
-                hours = DEFAULT_HOURS
-                
-            expires_at = current_time + (hours * 3600)
+            expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
+            
+            expires_at = current_time + (expiration_hours * 3600)
             
             with open(LOCK_FILE, 'w') as f:
                 json.dump({
                     "created_at": current_time,
                     "expires_at": expires_at
                 }, f, indent=2)
-            stateful_logger.info(f"Initialized lock file at {LOCK_FILE} with expiration in {hours} hours")
+            stateful_logger.info(f"Initialized lock file at {LOCK_FILE} with expiration in {expiration_hours} hours")
         except Exception as e:
             stateful_logger.error(f"Error initializing lock file: {e}")
             
@@ -78,9 +76,8 @@ def get_lock_info() -> Dict[str, Any]:
             
         if "expires_at" not in lock_info or lock_info["expires_at"] is None:
             # Recalculate expiration if missing
-            from src.primary.settings_manager import get_setting
-            hours = get_setting("general", "stateful_management_hours", DEFAULT_HOURS)
-            lock_info["expires_at"] = lock_info["created_at"] + (hours * 3600)
+            expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
+            lock_info["expires_at"] = lock_info["created_at"] + (expiration_hours * 3600)
             
             # Save the updated info
             with open(LOCK_FILE, 'w') as f:
@@ -91,13 +88,8 @@ def get_lock_info() -> Dict[str, Any]:
         stateful_logger.error(f"Error reading lock file: {e}")
         # Return default values if there's an error
         current_time = int(time.time())
-        try:
-            from src.primary.settings_manager import get_setting
-            hours = get_setting("general", "stateful_management_hours", DEFAULT_HOURS)
-        except:
-            hours = DEFAULT_HOURS
-            
-        expires_at = current_time + (hours * 3600)
+        expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
+        expires_at = current_time + (expiration_hours * 3600)
         
         return {
             "created_at": current_time,
@@ -107,12 +99,11 @@ def get_lock_info() -> Dict[str, Any]:
 def update_lock_expiration(hours: int = None) -> None:
     """Update the lock expiration based on the hours setting."""
     if hours is None:
-        from src.primary.settings_manager import get_setting
-        hours = get_setting("general", "stateful_management_hours", DEFAULT_HOURS)
+        expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
     
     lock_info = get_lock_info()
     created_at = lock_info.get("created_at", int(time.time()))
-    expires_at = created_at + (hours * 3600)
+    expires_at = created_at + (expiration_hours * 3600)
     
     lock_info["expires_at"] = expires_at
     
@@ -138,16 +129,11 @@ def reset_stateful_management() -> bool:
     """
     try:
         # Get the expiration hours setting BEFORE writing the lock file
-        try:
-            from src.primary.settings_manager import get_setting
-            hours = get_setting("general", "stateful_management_hours", DEFAULT_HOURS)
-        except Exception as e:
-            stateful_logger.error(f"Error getting stateful hours setting during reset, using default: {e}")
-            hours = DEFAULT_HOURS
-            
+        expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
+        
         # Create new lock file with calculated expiration
         current_time = int(time.time())
-        expires_at = current_time + (hours * 3600)
+        expires_at = current_time + (expiration_hours * 3600)
         
         with open(LOCK_FILE, 'w') as f:
             json.dump({
@@ -318,17 +304,12 @@ def get_stateful_management_info() -> Dict[str, Any]:
     expires_at_ts = lock_info.get("expires_at")
     
     # Get the interval setting
-    try:
-        from src.primary.settings_manager import get_setting
-        hours_interval = get_setting("general", "stateful_management_hours", DEFAULT_HOURS)
-    except Exception as e:
-        stateful_logger.error(f"Error getting stateful hours setting, using default: {e}")
-        hours_interval = DEFAULT_HOURS
+    expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
 
     return {
         "created_at_ts": created_at_ts,
         "expires_at_ts": expires_at_ts,
-        "interval_hours": hours_interval
+        "interval_hours": expiration_hours
     }
 
 def initialize_stateful_system():
@@ -348,10 +329,9 @@ def initialize_stateful_system():
     try:
         initialize_lock_file()
         # Update expiration time
-        from src.primary.settings_manager import get_setting
-        hours = get_setting("general", "stateful_management_hours", DEFAULT_HOURS)
-        update_lock_expiration(hours)
-        stateful_logger.info(f"Stateful lock file initialized with {hours} hour expiration")
+        expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
+        update_lock_expiration(expiration_hours)
+        stateful_logger.info(f"Stateful lock file initialized with {expiration_hours} hour expiration")
     except Exception as e:
         stateful_logger.error(f"Failed to initialize lock file: {e}")
     

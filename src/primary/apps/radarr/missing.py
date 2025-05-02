@@ -13,6 +13,7 @@ from src.primary.apps.radarr import api as radarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
+from src.primary.settings_manager import load_settings, get_advanced_setting
 
 # Get logger for the app
 radarr_logger = get_logger("radarr")
@@ -37,13 +38,13 @@ def process_missing_movies(
     # Extract necessary settings
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
-    api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
+    api_timeout = get_advanced_setting("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_movie_refresh = app_settings.get("skip_movie_refresh", False)
     hunt_missing_movies = app_settings.get("hunt_missing_movies", 0)
-    command_wait_delay = app_settings.get("command_wait_delay", 5)
-    command_wait_attempts = app_settings.get("command_wait_attempts", 12)
+    command_wait_delay = get_advanced_setting("command_wait_delay", 5)
+    command_wait_attempts = get_advanced_setting("command_wait_attempts", 12)
     instance_name = app_settings.get("name", "Default")
 
     if not api_url or not api_key:
