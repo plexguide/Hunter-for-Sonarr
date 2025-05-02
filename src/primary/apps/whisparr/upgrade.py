@@ -154,6 +154,12 @@ def process_cutoff_upgrades(
             add_processed_id("whisparr", instance_name, str(item_id))
             whisparr_logger.debug(f"Added item ID {item_id} to processed list for {instance_name}")
             
+            # Log to history so the upgrade appears in the history UI
+            series_title = item.get("series", {}).get("title", "Unknown Series")
+            media_name = f"{series_title} - {season_episode} - {title}"
+            log_processed_media("whisparr", media_name, item_id, instance_name, "upgrade")
+            whisparr_logger.debug(f"Logged quality upgrade to history for item ID {item_id}")
+            
             items_processed += 1
             processing_done = True
             

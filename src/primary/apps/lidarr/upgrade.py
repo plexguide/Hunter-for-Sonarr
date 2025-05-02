@@ -6,11 +6,12 @@ Handles albums that do not meet the configured quality cutoff.
 
 import time
 import random
-from typing import Dict, Any, Optional, Callable, List # Added List
+from typing import Dict, Any, Optional, Callable, List, Union # Added List and Union
 from src.primary.utils.logger import get_logger
 from src.primary.apps.lidarr import api as lidarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.utils.history_utils import log_processed_media
 
 # Get logger for the app
 lidarr_logger = get_logger(__name__) # Use __name__ for correct logger hierarchy
@@ -140,6 +141,16 @@ def process_cutoff_upgrades(
             for album_id in album_ids_to_search:
                 add_processed_id("lidarr", instance_name, str(album_id))
                 lidarr_logger.debug(f"Added album ID {album_id} to processed list for {instance_name}")
+                
+                # Find the album info for this ID to log to history
+                for album in albums_to_search:
+                    if album['id'] == album_id:
+                        album_title = album.get('title', f'Album ID {album_id}')
+                        artist_name = album.get('artist', {}).get('artistName', 'Unknown Artist')
+                        media_name = f"{artist_name} - {album_title}"
+                        log_processed_media("lidarr", media_name, album_id, instance_name, "upgrade")
+                        lidarr_logger.debug(f"Logged quality upgrade to history for album ID {album_id}")
+                        break
                 
             time.sleep(command_wait_delay) # Basic delay
             processed_count += len(album_ids_to_search)

@@ -7,11 +7,12 @@ Handles searching for books that need quality upgrades in Readarr
 import time
 import random
 import datetime # Import the datetime module
-from typing import List, Dict, Any, Set, Callable
+from typing import List, Dict, Any, Set, Callable, Union, Optional
 from src.primary.utils.logger import get_logger
 from src.primary.apps.readarr import api as readarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.utils.history_utils import log_processed_media
 
 # Get logger for the app
 readarr_logger = get_logger("readarr")
@@ -118,6 +119,7 @@ def process_cutoff_upgrades(
         book_id = book.get("id")
         author_id = book.get("authorId") # Needed for refresh?
         book_title = book.get("title")
+        author_name = book.get("authorName")
         
         readarr_logger.info(f"Processing upgrade for book: \"{book_title}\" (Book ID: {book_id})")
 
@@ -147,6 +149,12 @@ def process_cutoff_upgrades(
             # Add book ID to processed list
             add_processed_id("readarr", instance_name, str(book_id))
             readarr_logger.debug(f"Added book ID {book_id} to processed list for {instance_name}")
+            
+            # Log to history so the upgrade appears in the history UI
+            author_name = author_name or "Unknown Author"
+            media_name = f"{author_name} - {book_title}"
+            log_processed_media("readarr", media_name, book_id, instance_name, "upgrade")
+            readarr_logger.debug(f"Logged quality upgrade to history for book ID {book_id}")
             
             processed_count += 1
             processed_something = True
