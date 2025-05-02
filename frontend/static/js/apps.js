@@ -124,7 +124,8 @@ const appsModule = {
                 if (typeof SettingsForms !== 'undefined') {
                     const formFunction = SettingsForms[`generate${app.charAt(0).toUpperCase()}${app.slice(1)}Form`];
                     if (typeof formFunction === 'function') {
-                        formFunction(formElement, appSettings);
+                        // Use .call() to set the 'this' context correctly
+                        formFunction.call(SettingsForms, formElement, appSettings);
                         
                         // Update duration displays for this app
                         if (typeof SettingsForms.updateDurationDisplay === 'function') {

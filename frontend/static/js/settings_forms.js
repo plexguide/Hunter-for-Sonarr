@@ -10,43 +10,51 @@ const SettingsForms = {
         if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
             settings.instances = [{
                 name: "Default",
-                api_url: settings.api_url || "",
-                api_key: settings.api_key || "",
+                api_url: settings.api_url || "", // Legacy support
+                api_key: settings.api_key || "", // Legacy support
                 enabled: true
             }];
         }
-        
-        // Create content for Sonarr settings
-        let html = `
+
+        // Create a container for instances
+        let instancesHtml = `
             <div class="settings-group">
                 <h3>Sonarr Instances</h3>
                 <div class="instances-container">
         `;
-        
-        // Generate instance panels for each instance
+
+        // Generate form elements for each instance
         settings.instances.forEach((instance, index) => {
-            html += `
-                <div class="instance-panel" data-instance-id="${index}">
+            instancesHtml += `
+                <div class="instance-item" data-instance-id="${index}">
                     <div class="instance-header">
-                        <h4>Instance ${index + 1}: ${instance.name}</h4>
-                        ${index > 0 ? '<button type="button" class="remove-instance-btn"><i class="fas fa-times"></i></button>' : ''}
+                        <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
+                        <div class="instance-actions">
+                            ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
+                        </div>
                     </div>
-                    <div class="instance-fields">
-                        <div class="form-field">
+                    <div class="instance-content">
+                        <div class="setting-item">
                             <label for="sonarr-name-${index}">Name:</label>
                             <input type="text" id="sonarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Sonarr instance">
+                            <p class="setting-help">Friendly name for this Sonarr instance</p>
                         </div>
-                        <div class="form-field">
+                        <div class="setting-item">
                             <label for="sonarr-url-${index}">URL:</label>
                             <input type="text" id="sonarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Sonarr (e.g., http://localhost:8989)">
+                            <p class="setting-help">Base URL for Sonarr (e.g., http://localhost:8989)</p>
                         </div>
-                        <div class="form-field">
+                        <div class="setting-item">
                             <label for="sonarr-key-${index}">API Key:</label>
                             <input type="text" id="sonarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Sonarr">
+                            <p class="setting-help">API key for Sonarr</p>
                         </div>
-                        <div class="form-field">
+                        <div class="setting-item">
                             <label for="sonarr-enabled-${index}">Enabled:</label>
-                            <input type="checkbox" id="sonarr-enabled-${index}" name="enabled" ${instance.enabled ? 'checked' : ''}>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="sonarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                         <button type="button" class="test-connection-btn" data-instance="${index}">
                             <i class="fas fa-plug"></i> Test Connection
@@ -55,15 +63,19 @@ const SettingsForms = {
                 </div>
             `;
         });
-        
-        // Add button to add new instances
-        html += `
+
+        instancesHtml += `
+                </div> <!-- instances-container -->
+                <div class="button-container" style="text-align: center; margin-top: 15px;">
+                    <button type="button" class="add-instance-btn add-sonarr-instance-btn">
+                        <i class="fas fa-plus"></i> Add Sonarr Instance (${settings.instances.length}/9)
+                    </button>
                 </div>
-                <button type="button" class="add-instance-btn add-sonarr-instance-btn">
-                    <i class="fas fa-plus"></i> Add Sonarr Instance
-                </button>
-            </div>
-            
+            </div> <!-- settings-group -->
+        `;
+
+        // Search Settings
+        let searchSettingsHtml = `
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
@@ -77,22 +89,62 @@ const SettingsForms = {
                 </div>
                 <div class="setting-item">
                     <label for="sonarr-missing-items-to-search">Missing Items to Search:</label>
-                    <input type="number" id="sonarr-missing-items-to-search" name="missing_items_to_search" min="0" value="${settings.missing_items_to_search || 1}">
+                    <input type="number" id="sonarr-missing-items-to-search" name="missing_items_to_search" min="0" value="${settings.missing_items_to_search !== undefined ? settings.missing_items_to_search : 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
                     <label for="sonarr-upgrade-episodes">Episodes to Upgrade:</label>
-                    <input type="number" id="sonarr-upgrade-episodes" name="upgrade_episodes" min="0" value="${settings.upgrade_episodes || 0}">
+                    <input type="number" id="sonarr-upgrade-episodes" name="upgrade_episodes" min="0" value="${settings.upgrade_episodes !== undefined ? settings.upgrade_episodes : 0}">
                     <p class="setting-help">Number of episodes to upgrade per cycle (0 to disable)</p>
+                </div>
+                 <div class="setting-item">
+                    <label for="sonarr_monitored_only">Monitored Only:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="sonarr_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Only search for monitored items</p>
                 </div>
             </div>
         `;
         
+        // Advanced Settings
+        let advancedSettingsHtml = `
+            <div class="settings-group">
+                <h3>Advanced Settings</h3>
+                 <div class="setting-item">
+                    <label for="sonarr_api_timeout">API Timeout:</label>
+                    <input type="number" id="sonarr_api_timeout" name="api_timeout" min="10" max="300" value="${settings.api_timeout || 120}">
+                    <p class="setting-help">Timeout for API requests in seconds</p>
+                </div>
+                <div class="setting-item">
+                    <label for="sonarr_command_wait_delay">Command Wait Delay:</label>
+                    <input type="number" id="sonarr_command_wait_delay" name="command_wait_delay" min="1" value="${settings.command_wait_delay || 1}">
+                    <p class="setting-help">Delay between checking command status in seconds</p>
+                </div>
+                <div class="setting-item">
+                    <label for="sonarr_command_wait_attempts">Command Wait Attempts:</label>
+                    <input type="number" id="sonarr_command_wait_attempts" name="command_wait_attempts" min="1" value="${settings.command_wait_attempts || 600}">
+                    <p class="setting-help">Maximum number of status check attempts</p>
+                </div>
+                <div class="setting-item">
+                    <label for="sonarr_minimum_download_queue_size">Min Download Queue Size:</label>
+                    <input type="number" id="sonarr_minimum_download_queue_size" name="minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size !== undefined ? settings.minimum_download_queue_size : -1}">
+                    <p class="setting-help">Minimum download queue size before Huntarr stops adding items (-1 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="sonarr_log_refresh_interval_seconds">Log Refresh Interval:</label>
+                    <input type="number" id="sonarr_log_refresh_interval_seconds" name="log_refresh_interval_seconds" min="5" value="${settings.log_refresh_interval_seconds || 30}">
+                    <p class="setting-help">How often Huntarr refreshes logs from this app (seconds)</p>
+                </div>
+            </div>
+        `;
+
         // Set the content
-        container.innerHTML = html;
-        
+        container.innerHTML = instancesHtml + searchSettingsHtml + advancedSettingsHtml;
+
         // Setup instance management (add/remove/test)
-        this.setupInstanceManagement(container, 'sonarr', settings.instances.length);
+        SettingsForms.setupInstanceManagement(container, 'sonarr', settings.instances.length);
     },
     
     // Generate Radarr settings form
@@ -1199,8 +1251,8 @@ const SettingsForms = {
                 
                 console.log('Test connection button clicked');
                 
-                // Get the instance panel containing this button
-                const instancePanel = button.closest('.instance-panel');
+                // Get the instance panel containing this button - look for both old and new class names
+                const instancePanel = button.closest('.instance-item') || button.closest('.instance-panel');
                 if (!instancePanel) {
                     console.error('Could not find instance panel for test button', button);
                     alert('Error: Could not find instance panel');
@@ -1274,6 +1326,7 @@ const SettingsForms = {
                             successMessage += ` (version ${data.version})`;
                         }
                         
+                        // Alert the user of success
                         alert(successMessage);
                         
                         // Reset button after delay
@@ -1314,42 +1367,74 @@ const SettingsForms = {
         // Add a button to add new instances (limit to 9 total)
         const addBtn = container.querySelector(`.add-${appType}-instance-btn`);
         if (addBtn) {
+            // Function to update the button text with current instance count
+            const updateAddButtonText = () => {
+                const instancesContainer = container.querySelector('.instances-container');
+                if (!instancesContainer) return;
+                const currentCount = instancesContainer.querySelectorAll('.instance-item').length;
+                addBtn.innerHTML = `<i class="fas fa-plus"></i> Add ${appType.charAt(0).toUpperCase() + appType.slice(1)} Instance (${currentCount}/9)`;
+                
+                // Disable button if we've reached the maximum
+                if (currentCount >= 9) {
+                    addBtn.disabled = true;
+                    addBtn.title = "Maximum number of instances reached";
+                } else {
+                    addBtn.disabled = false;
+                    addBtn.title = "";
+                }
+            };
+            
+            // Initialize button text
+            updateAddButtonText();
+            
             addBtn.addEventListener('click', function() {
                 const instancesContainer = container.querySelector('.instances-container');
                 if (!instancesContainer) return;
                 
                 // Count current instances
-                const currentCount = instancesContainer.querySelectorAll('.instance-panel').length;
+                const currentCount = instancesContainer.querySelectorAll('.instance-item').length;
+                
+                // Don't add more if we have 9 already
+                if (currentCount >= 9) {
+                    alert("Maximum of 9 instances allowed");
+                    return;
+                }
                 
                 // Create new instance div
                 const newInstanceDiv = document.createElement('div');
-                newInstanceDiv.className = 'instance-panel';
+                newInstanceDiv.className = 'instance-item'; // Use instance-item
                 newInstanceDiv.dataset.instanceId = currentCount;
                 
-                // Set content for the new instance
+                // Set content for the new instance using the updated structure
                 newInstanceDiv.innerHTML = `
                     <div class="instance-header">
                         <h4>Instance ${currentCount + 1}: New Instance</h4>
-                        <button type="button" class="remove-instance-btn">
-                            <i class="fas fa-times"></i>
-                        </button>
+                        <div class="instance-actions">
+                             <button type="button" class="remove-instance-btn">Remove</button>
+                        </div>
                     </div>
-                    <div class="instance-fields">
-                        <div class="form-field">
+                    <div class="instance-content">
+                        <div class="setting-item">
                             <label for="${appType}-name-${currentCount}">Name:</label>
                             <input type="text" id="${appType}-name-${currentCount}" name="name" value="New Instance" placeholder="Friendly name for this instance">
+                            <p class="setting-help">Friendly name for this ${appType} instance</p>
                         </div>
-                        <div class="form-field">
+                        <div class="setting-item">
                             <label for="${appType}-url-${currentCount}">URL:</label>
                             <input type="text" id="${appType}-url-${currentCount}" name="api_url" value="" placeholder="Base URL (e.g., http://localhost:8989)">
+                             <p class="setting-help">Base URL for ${appType} (e.g., http://localhost:8989)</p>
                         </div>
-                        <div class="form-field">
+                        <div class="setting-item">
                             <label for="${appType}-key-${currentCount}">API Key:</label>
                             <input type="text" id="${appType}-key-${currentCount}" name="api_key" value="" placeholder="API key">
+                             <p class="setting-help">API key for ${appType}</p>
                         </div>
-                        <div class="form-field">
+                        <div class="setting-item">
                             <label for="${appType}-enabled-${currentCount}">Enabled:</label>
-                            <input type="checkbox" id="${appType}-enabled-${currentCount}" name="enabled" checked>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="${appType}-enabled-${currentCount}" name="enabled" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                         <button type="button" class="test-connection-btn" data-instance="${currentCount}">
                             <i class="fas fa-plug"></i> Test Connection
@@ -1360,11 +1445,17 @@ const SettingsForms = {
                 // Add the new instance to the container
                 instancesContainer.appendChild(newInstanceDiv);
                 
+                // Update the button text with new count
+                updateAddButtonText();
+                
                 // Add event listener for the remove button
                 const removeBtn = newInstanceDiv.querySelector('.remove-instance-btn');
                 if (removeBtn) {
                     removeBtn.addEventListener('click', function() {
                         instancesContainer.removeChild(newInstanceDiv);
+                        
+                        // Update the add button text after removing
+                        updateAddButtonText();
                         
                         // Trigger change event to update save button state
                         const changeEvent = new Event('change');
@@ -1376,9 +1467,15 @@ const SettingsForms = {
                 const testBtn = newInstanceDiv.querySelector('.test-connection-btn');
                 if (testBtn) {
                     testBtn.addEventListener('click', function() {
-                        // Get the URL and API key inputs
-                        const urlInput = newInstanceDiv.querySelector('input[name="api_url"]');
-                        const keyInput = newInstanceDiv.querySelector('input[name="api_key"]');
+                        // Get the URL and API key inputs from the parent instance item
+                        const instanceContainer = testBtn.closest('.instance-item') || testBtn.closest('.instance-panel');
+                        if (!instanceContainer) {
+                            alert('Error: Could not find instance container');
+                            return;
+                        }
+                        
+                        const urlInput = instanceContainer.querySelector('input[name="api_url"]');
+                        const keyInput = instanceContainer.querySelector('input[name="api_key"]');
                         
                         if (!urlInput || !keyInput) {
                             alert('Error: Could not find URL or API key inputs');
@@ -1415,9 +1512,14 @@ const SettingsForms = {
         const removeButtons = container.querySelectorAll('.remove-instance-btn');
         removeButtons.forEach(btn => {
             btn.addEventListener('click', function() {
-                const instancePanel = btn.closest('.instance-panel');
+                const instancePanel = btn.closest('.instance-item') || btn.closest('.instance-panel');
                 if (instancePanel && instancePanel.parentNode) {
                     instancePanel.parentNode.removeChild(instancePanel);
+                    
+                    // Update the button text with new count if updateAddButtonText exists
+                    if (typeof updateAddButtonText === 'function') {
+                        updateAddButtonText();
+                    }
                     
                     // Trigger change event to update save button state
                     const changeEvent = new Event('change');
