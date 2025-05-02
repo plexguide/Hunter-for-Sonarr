@@ -4,7 +4,7 @@
  */
 
 const SettingsForms = {
-    // Generate Sonarr settings form - Updated to use direct app settings without nesting
+    // Generate Sonarr settings form
     generateSonarrForm: function(container, settings = {}) {
         // Make sure the instances array exists
         if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
@@ -16,158 +16,83 @@ const SettingsForms = {
             }];
         }
         
-        // Create a container for instances
-        let instancesHtml = `
+        // Create content for Sonarr settings
+        let html = `
             <div class="settings-group">
                 <h3>Sonarr Instances</h3>
                 <div class="instances-container">
         `;
         
-        // Generate form elements for each instance
+        // Generate instance panels for each instance
         settings.instances.forEach((instance, index) => {
-            instancesHtml += `
-                <div class="instance-item" data-instance-id="${index}">
+            html += `
+                <div class="instance-panel" data-instance-id="${index}">
                     <div class="instance-header">
-                        <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
-                        <div class="instance-actions">
-                            ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
-                        </div>
+                        <h4>Instance ${index + 1}: ${instance.name}</h4>
+                        ${index > 0 ? '<button type="button" class="remove-instance-btn"><i class="fas fa-times"></i></button>' : ''}
                     </div>
-                    <div class="instance-content">
-                        <div class="setting-item">
-                            <label for="sonarr_instance_${index}_name">Name:</label>
-                            <input type="text" id="sonarr_instance_${index}_name" value="${instance.name || ''}">
-                            <p class="setting-help">Friendly name for this Sonarr instance</p>
+                    <div class="instance-fields">
+                        <div class="form-field">
+                            <label for="sonarr-name-${index}">Name:</label>
+                            <input type="text" id="sonarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Sonarr instance">
                         </div>
-                        <div class="setting-item">
-                            <label for="sonarr_instance_${index}_api_url">URL:</label>
-                            <input type="text" id="sonarr_instance_${index}_api_url" value="${instance.api_url || ''}">
-                            <p class="setting-help">Base URL for Sonarr (e.g., http://localhost:8989)</p>
+                        <div class="form-field">
+                            <label for="sonarr-url-${index}">URL:</label>
+                            <input type="text" id="sonarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Sonarr (e.g., http://localhost:8989)">
                         </div>
-                        <div class="setting-item">
-                            <label for="sonarr_instance_${index}_api_key">API Key:</label>
-                            <input type="text" id="sonarr_instance_${index}_api_key" value="${instance.api_key || ''}">
-                            <p class="setting-help">API key for Sonarr</p>
+                        <div class="form-field">
+                            <label for="sonarr-key-${index}">API Key:</label>
+                            <input type="text" id="sonarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Sonarr">
                         </div>
-                        <div class="setting-item">
-                            <label for="sonarr_instance_${index}_enabled">Enabled:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="sonarr_instance_${index}_enabled" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <span class="toggle-slider"></span>
-                            </label>
+                        <div class="form-field">
+                            <label for="sonarr-enabled-${index}">Enabled:</label>
+                            <input type="checkbox" id="sonarr-enabled-${index}" name="enabled" ${instance.enabled ? 'checked' : ''}>
                         </div>
-                        <div class="setting-item">
-                            <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
-                            <span class="connection-status" id="sonarr_instance_${index}_status"></span>
-                        </div>
+                        <button type="button" class="test-connection-btn" data-instance="${index}">
+                            <i class="fas fa-plug"></i> Test Connection
+                        </button>
                     </div>
                 </div>
             `;
         });
         
-        // Add a button to add new instances (limit to 9 total)
-        instancesHtml += `
-                    <div class="add-instance-container">
-                        <button type="button" id="add-sonarr-instance" class="add-instance-btn" ${settings.instances.length >= 9 ? 'disabled' : ''}> 
-                            Add Sonarr Instance (${settings.instances.length}/9)
-                        </button>
-                    </div>
+        // Add button to add new instances
+        html += `
                 </div>
+                <button type="button" class="add-instance-btn add-sonarr-instance-btn">
+                    <i class="fas fa-plus"></i> Add Sonarr Instance
+                </button>
             </div>
-        `; // Close settings-group
-        
-        // Original structure: Combine HTML sequentially
-        container.innerHTML = `
-            ${instancesHtml}
             
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="hunt_missing_mode">Missing Search Mode:</label>
-                    <select id="hunt_missing_mode">
-                        <option value="episodes" ${settings.hunt_missing_mode === 'episodes' ? 'selected' : ''}>Episodes</option>
-                        <option value="seasons_packs" ${settings.hunt_missing_mode === 'seasons_packs' ? 'selected' : ''}>Season [Packs]</option>
-                        <option value="shows" ${settings.hunt_missing_mode === 'shows' ? 'selected' : ''}>Shows</option>
+                    <label for="sonarr-missing-search-mode">Missing Search Mode:</label>
+                    <select id="sonarr-missing-search-mode" name="missing_search_mode">
+                        <option value="episodes" ${settings.missing_search_mode === 'episodes' ? 'selected' : ''}>Episodes</option>
+                        <option value="seasons" ${settings.missing_search_mode === 'seasons' ? 'selected' : ''}>Seasons</option>
+                        <option value="shows" ${settings.missing_search_mode === 'shows' ? 'selected' : ''}>Shows</option>
                     </select>
                     <p class="setting-help">How to group and search for missing items (Season Packs recommended for torrent users)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="hunt_missing_items">Missing Items to Search:</label>
-                    <input type="number" id="hunt_missing_items" min="0" value="${settings.hunt_missing_items || settings.hunt_missing_shows || 1}">
+                    <label for="sonarr-missing-items-to-search">Missing Items to Search:</label>
+                    <input type="number" id="sonarr-missing-items-to-search" name="missing_items_to_search" min="0" value="${settings.missing_items_to_search || 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="hunt_upgrade_items">Episodes to Upgrade:</label>
-                    <input type="number" id="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items || settings.hunt_upgrade_episodes || 0}">
-                    <p class="setting-help">Number of episodes to search for quality upgrades per cycle (0 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="sleep_duration">Search Interval:</label>
-                    <input type="number" id="sleep_duration" min="60" value="${settings.sleep_duration || 900}">
-                    <p class="setting-help">Time between searches in seconds (<span id="sleep_duration_hours"></span>)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="state_reset_interval_hours">Reset Interval:</label>
-                    <input type="number" id="state_reset_interval_hours" min="1" value="${settings.state_reset_interval_hours || 168}">
-                    <p class="setting-help">Hours between state resets (default: 168 = 7 days)</p>
-                </div>
-            </div>
-            
-            <div class="settings-group">
-                <h3>Additional Options</h3>
-                <div class="setting-item">
-                    <label for="monitored_only">Monitored Only:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Only search for monitored items</p>
-                </div>
-                <div class="setting-item">
-                    <label for="skip_future_episodes">Skip Future Releases:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="skip_future_episodes" ${settings.skip_future_episodes !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Skip searching for episodes with future air dates</p>
-                </div>
-                <div class="setting-item">
-                    <label for="skip_series_refresh">Skip Series Refresh:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="skip_series_refresh" ${settings.skip_series_refresh === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Skip refreshing series metadata before searching</p>
-                </div>
-            </div>
-            
-            <div class="settings-group">
-                <h3>Advanced Settings</h3>
-                <div class="setting-item">
-                    <label for="api_timeout">API Timeout:</label>
-                    <input type="number" id="api_timeout" min="10" max="300" value="${settings.api_timeout || 60}">
-                    <p class="setting-help">Timeout for API requests in seconds</p>
-                </div>
-                <div class="setting-item">
-                    <label for="command_wait_delay">Command Wait Delay:</label>
-                    <input type="number" id="command_wait_delay" min="1" value="${settings.command_wait_delay || 1}">
-                    <p class="setting-help">Delay between checking command status in seconds</p>
-                </div>
-                <div class="setting-item">
-                    <label for="command_wait_attempts">Command Wait Attempts:</label>
-                    <input type="number" id="command_wait_attempts" min="1" value="${settings.command_wait_attempts || 600}">
-                    <p class="setting-help">Maximum number of status check attempts</p>
-                </div>
-                <div class="setting-item">
-                    <label for="minimum_download_queue_size">Min Download Queue Size:</label>
-                    <input type="number" id="minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
-                    <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
+                    <label for="sonarr-upgrade-episodes">Episodes to Upgrade:</label>
+                    <input type="number" id="sonarr-upgrade-episodes" name="upgrade_episodes" min="0" value="${settings.upgrade_episodes || 0}">
+                    <p class="setting-help">Number of episodes to upgrade per cycle (0 to disable)</p>
                 </div>
             </div>
         `;
-
-        // Add event listeners for the instance management
-        SettingsForms.setupInstanceManagement(container, 'sonarr', settings.instances.length);
+        
+        // Set the content
+        container.innerHTML = html;
+        
+        // Setup instance management (add/remove/test)
+        this.setupInstanceManagement(container, 'sonarr', settings.instances.length);
     },
     
     // Generate Radarr settings form
@@ -1034,7 +959,7 @@ const SettingsForms = {
             // Store original state
             const originalState = localAccessBypassCheckbox.checked;
             
-            localAccessBypassCheckbox.addEventListener('change', function(event) {
+            localAccessBypassCheckbox.addEventListener('change', function() {
                 const newState = this.checked;
                 
                 // Preview the UI changes immediately, but they'll be reverted if user doesn't save
@@ -1049,6 +974,50 @@ const SettingsForms = {
         }
     },
 
+    // Get settings from form
+    getFormSettings: function(form) {
+        const settings = {};
+        
+        // Determine the app type
+        const appType = form.getAttribute('data-app-type');
+        if (!appType) {
+            console.error('Form is missing data-app-type attribute');
+            return null;
+        }
+        
+        // Handle instances differently
+        const instances = [];
+        const instanceContainers = form.querySelectorAll('.instance-panel');
+        
+        instanceContainers.forEach((instance, index) => {
+            const instanceObj = {
+                name: instance.querySelector('input[name="name"]')?.value || `Instance ${index + 1}`,
+                api_url: instance.querySelector('input[name="api_url"]')?.value || '',
+                api_key: instance.querySelector('input[name="api_key"]')?.value || '',
+                enabled: instance.querySelector('input[name="enabled"]')?.checked || false
+            };
+            instances.push(instanceObj);
+        });
+        
+        settings.instances = instances;
+        
+        // Add additional settings based on app type
+        if (appType === 'sonarr' || appType === 'lidarr' || appType === 'readarr' || appType === 'whisparr') {
+            // Get missing search settings
+            const searchModeSelector = form.querySelector('select[name="missing_search_mode"]');
+            if (searchModeSelector) {
+                settings.missing_search_mode = searchModeSelector.value;
+            }
+            
+            const missingItemsInput = form.querySelector('input[name="missing_items_to_search"]');
+            if (missingItemsInput) {
+                settings.missing_items_to_search = parseInt(missingItemsInput.value) || 0;
+            }
+        }
+        
+        return settings;
+    },
+    
     // Generate General settings form
     generateGeneralForm: function(container, settings = {}) {
         container.innerHTML = `
@@ -1212,64 +1181,334 @@ const SettingsForms = {
     },
     
     // Setup instance management - test connection buttons and add/remove instance buttons
-    setupInstanceManagement: function(container, appName, instanceCount) {
-        console.log(`Setting up instance management for ${appName} with ${instanceCount} instances`);
+    setupInstanceManagement: function(container, appType, initialCount) {
+        console.log(`Setting up instance management for ${appType} with ${initialCount} instances`);
+        
+        // Make sure container has the app type set
+        const form = container.closest('.settings-form');
+        if (form && !form.hasAttribute('data-app-type')) {
+            form.setAttribute('data-app-type', appType);
+        }
         
         // Add listeners for test connection buttons
         const testButtons = container.querySelectorAll('.test-connection-btn');
         testButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const instanceId = button.getAttribute('data-instance-id');
-                const urlInput = document.getElementById(`${appName}_instance_${instanceId}_api_url`);
-                const keyInput = document.getElementById(`${appName}_instance_${instanceId}_api_key`);
+            button.addEventListener('click', (e) => {
+                // Prevent any default form submission
+                e.preventDefault();
                 
-                if (urlInput && keyInput) {
-                    // Dispatch event for main.js to handle the API call
-                    const event = new CustomEvent('testConnection', {
-                        detail: {
-                            appName: appName,
-                            instanceId: instanceId,
-                            url: urlInput.value,
-                            apiKey: keyInput.value
-                        }
-                    });
-                    container.dispatchEvent(event);
+                console.log('Test connection button clicked');
+                
+                // Get the instance panel containing this button
+                const instancePanel = button.closest('.instance-panel');
+                if (!instancePanel) {
+                    console.error('Could not find instance panel for test button', button);
+                    alert('Error: Could not find instance panel');
+                    return;
                 }
+                
+                // Get the URL and API key inputs directly within this instance panel
+                const urlInput = instancePanel.querySelector('input[name="api_url"]');
+                const keyInput = instancePanel.querySelector('input[name="api_key"]');
+                
+                console.log('Found inputs:', urlInput, keyInput);
+                
+                if (!urlInput || !keyInput) {
+                    console.error('Could not find URL or API key inputs in panel', instancePanel);
+                    alert('Error: Could not find URL or API key inputs');
+                    return;
+                }
+                
+                const url = urlInput.value.trim();
+                const apiKey = keyInput.value.trim();
+                
+                console.log(`Testing connection for ${appType} - URL: ${url}, API Key: ${apiKey.substring(0, 3)}...`);
+                
+                if (!url) {
+                    alert('Please enter a valid URL');
+                    urlInput.focus();
+                    return;
+                }
+                
+                if (!apiKey) {
+                    alert('Please enter a valid API key');
+                    keyInput.focus();
+                    return;
+                }
+                
+                // Show testing status
+                const originalButtonHTML = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+                button.disabled = true;
+                
+                // Make the API request
+                fetch(`/api/${appType}/test-connection`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        api_url: url,
+                        api_key: apiKey
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(`Test connection response:`, data);
+                    
+                    // Reset button
+                    button.disabled = false;
+                    
+                    if (data.success) {
+                        // Success
+                        button.innerHTML = '<i class="fas fa-check"></i> Connected!';
+                        button.classList.add('test-success');
+                        
+                        let successMessage = `Successfully connected to ${appType.charAt(0).toUpperCase() + appType.slice(1)}`;
+                        if (data.version) {
+                            successMessage += ` (version ${data.version})`;
+                        }
+                        
+                        alert(successMessage);
+                        
+                        // Reset button after delay
+                        setTimeout(() => {
+                            button.innerHTML = originalButtonHTML;
+                            button.classList.remove('test-success');
+                        }, 3000);
+                    } else {
+                        // Failure
+                        button.innerHTML = '<i class="fas fa-times"></i> Failed';
+                        button.classList.add('test-failed');
+                        
+                        alert(`Connection failed: ${data.message || 'Unknown error'}`);
+                        
+                        setTimeout(() => {
+                            button.innerHTML = originalButtonHTML;
+                            button.classList.remove('test-failed');
+                        }, 3000);
+                    }
+                })
+                .catch(error => {
+                    console.error(`Test connection error:`, error);
+                    
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-times"></i> Error';
+                    button.classList.add('test-failed');
+                    
+                    alert(`Connection test failed: ${error.message}`);
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalButtonHTML;
+                        button.classList.remove('test-failed');
+                    }, 3000);
+                });
             });
         });
         
-        // Add listener for adding new instance
-        const addButton = container.querySelector(`#add-${appName}-instance`);
-        if (addButton) {
-            addButton.addEventListener('click', () => {
-                // Dispatch event for main.js to handle adding an instance
-                const event = new CustomEvent('addInstance', {
-                    detail: {
-                        appName: appName
-                    }
-                });
-                container.dispatchEvent(event);
+        // Add a button to add new instances (limit to 9 total)
+        const addBtn = container.querySelector(`.add-${appType}-instance-btn`);
+        if (addBtn) {
+            addBtn.addEventListener('click', function() {
+                const instancesContainer = container.querySelector('.instances-container');
+                if (!instancesContainer) return;
+                
+                // Count current instances
+                const currentCount = instancesContainer.querySelectorAll('.instance-panel').length;
+                
+                // Create new instance div
+                const newInstanceDiv = document.createElement('div');
+                newInstanceDiv.className = 'instance-panel';
+                newInstanceDiv.dataset.instanceId = currentCount;
+                
+                // Set content for the new instance
+                newInstanceDiv.innerHTML = `
+                    <div class="instance-header">
+                        <h4>Instance ${currentCount + 1}: New Instance</h4>
+                        <button type="button" class="remove-instance-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="instance-fields">
+                        <div class="form-field">
+                            <label for="${appType}-name-${currentCount}">Name:</label>
+                            <input type="text" id="${appType}-name-${currentCount}" name="name" value="New Instance" placeholder="Friendly name for this instance">
+                        </div>
+                        <div class="form-field">
+                            <label for="${appType}-url-${currentCount}">URL:</label>
+                            <input type="text" id="${appType}-url-${currentCount}" name="api_url" value="" placeholder="Base URL (e.g., http://localhost:8989)">
+                        </div>
+                        <div class="form-field">
+                            <label for="${appType}-key-${currentCount}">API Key:</label>
+                            <input type="text" id="${appType}-key-${currentCount}" name="api_key" value="" placeholder="API key">
+                        </div>
+                        <div class="form-field">
+                            <label for="${appType}-enabled-${currentCount}">Enabled:</label>
+                            <input type="checkbox" id="${appType}-enabled-${currentCount}" name="enabled" checked>
+                        </div>
+                        <button type="button" class="test-connection-btn" data-instance="${currentCount}">
+                            <i class="fas fa-plug"></i> Test Connection
+                        </button>
+                    </div>
+                `;
+                
+                // Add the new instance to the container
+                instancesContainer.appendChild(newInstanceDiv);
+                
+                // Add event listener for the remove button
+                const removeBtn = newInstanceDiv.querySelector('.remove-instance-btn');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', function() {
+                        instancesContainer.removeChild(newInstanceDiv);
+                        
+                        // Trigger change event to update save button state
+                        const changeEvent = new Event('change');
+                        container.dispatchEvent(changeEvent);
+                    });
+                }
+                
+                // Add event listener for test connection button
+                const testBtn = newInstanceDiv.querySelector('.test-connection-btn');
+                if (testBtn) {
+                    testBtn.addEventListener('click', function() {
+                        // Get the URL and API key inputs
+                        const urlInput = newInstanceDiv.querySelector('input[name="api_url"]');
+                        const keyInput = newInstanceDiv.querySelector('input[name="api_key"]');
+                        
+                        if (!urlInput || !keyInput) {
+                            alert('Error: Could not find URL or API key inputs');
+                            return;
+                        }
+                        
+                        const url = urlInput.value.trim();
+                        const apiKey = keyInput.value.trim();
+                        
+                        if (!url) {
+                            alert('Please enter a valid URL');
+                            urlInput.focus();
+                            return;
+                        }
+                        
+                        if (!apiKey) {
+                            alert('Please enter a valid API key');
+                            keyInput.focus();
+                            return;
+                        }
+                        
+                        // Call the test connection function
+                        SettingsForms.testConnection(appType, url, apiKey, testBtn);
+                    });
+                }
+                
+                // Trigger change event to update save button state
+                const changeEvent = new Event('change');
+                container.dispatchEvent(changeEvent);
             });
         }
         
-        // Add listeners for removing instances
+        // Set up remove buttons for existing instances
         const removeButtons = container.querySelectorAll('.remove-instance-btn');
-        removeButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const instanceItem = button.closest('.instance-item');
-                if (instanceItem) {
-                    const instanceId = instanceItem.getAttribute('data-instance-id');
+        removeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const instancePanel = btn.closest('.instance-panel');
+                if (instancePanel && instancePanel.parentNode) {
+                    instancePanel.parentNode.removeChild(instancePanel);
                     
-                    // Dispatch event for main.js to handle removing the instance
-                    const event = new CustomEvent('removeInstance', {
-                        detail: {
-                            appName: appName,
-                            instanceId: instanceId
-                        }
-                    });
-                    container.dispatchEvent(event);
+                    // Trigger change event to update save button state
+                    const changeEvent = new Event('change');
+                    container.dispatchEvent(changeEvent);
                 }
             });
         });
-    }
+    },
+    
+    // Test connection to an *arr API
+    testConnection: function(app, url, apiKey, buttonElement) {
+        // Show testing indicator on button
+        const originalButtonText = buttonElement.innerHTML;
+        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+        buttonElement.disabled = true;
+        
+        console.log(`Testing connection to ${app} at ${url} with API key: ${apiKey.substring(0, 5)}...`);
+        
+        // Make the API request to the test-connection endpoint
+        fetch(`/api/${app}/test-connection`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                api_url: url,
+                api_key: apiKey
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(`Test connection response:`, data);
+            
+            // Reset button
+            buttonElement.disabled = false;
+            
+            if (data.success) {
+                // Success - change button to show success briefly
+                buttonElement.innerHTML = '<i class="fas fa-check"></i> Connected!';
+                buttonElement.classList.add('test-success');
+                
+                // Show version info if available
+                let successMessage = `Successfully connected to ${app.charAt(0).toUpperCase() + app.slice(1)}`;
+                if (data.version) {
+                    successMessage += ` (version ${data.version})`;
+                }
+                
+                // Alert the user of success
+                alert(successMessage);
+                
+                // Reset the button after a delay
+                setTimeout(() => {
+                    buttonElement.innerHTML = originalButtonText;
+                    buttonElement.classList.remove('test-success');
+                }, 3000);
+            } else {
+                // Failure with error message from server
+                buttonElement.innerHTML = '<i class="fas fa-times"></i> Failed';
+                buttonElement.classList.add('test-failed');
+                
+                // Alert the user with the error message
+                alert(`Connection failed: ${data.message || 'Unknown error'}`);
+                
+                // Reset the button after a delay
+                setTimeout(() => {
+                    buttonElement.innerHTML = originalButtonText;
+                    buttonElement.classList.remove('test-failed');
+                }, 3000);
+            }
+        })
+        .catch(error => {
+            console.error(`Test connection error:`, error);
+            
+            // Reset button showing error
+            buttonElement.disabled = false;
+            buttonElement.innerHTML = '<i class="fas fa-times"></i> Error';
+            buttonElement.classList.add('test-failed');
+            
+            // Alert the user with the error
+            alert(`Connection test failed: ${error.message}`);
+            
+            // Reset the button after a delay
+            setTimeout(() => {
+                buttonElement.innerHTML = originalButtonText;
+                buttonElement.classList.remove('test-failed');
+            }, 3000);
+        });
+    },
 };

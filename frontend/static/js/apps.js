@@ -80,95 +80,72 @@ const appsModule = {
         }
     },
     
-    // Load apps data when section becomes active
+    // Load apps for initial display
     loadApps: function() {
-        console.log('[Apps] Loading apps data for ' + this.currentApp);
+        // Load the currently selected app
+        this.loadAppSettings(this.currentApp);
+    },
+    
+    // Load app settings
+    loadAppSettings: function(app) {
+        console.log(`[Apps] Loading settings for ${app}`);
         
-        // Disable save button until changes are made
-        if (this.elements.saveAppsButton) {
-            this.elements.saveAppsButton.disabled = true;
+        // Get the container to put the settings in
+        const appPanel = document.getElementById(app + 'Apps');
+        if (!appPanel) {
+            console.error(`App panel not found for ${app}`);
+            return;
         }
-        this.settingsChanged = false;
         
-        // Get all settings to populate forms
-        fetch('/api/settings')
-            .then(response => response.json())
-            .then(data => {
-                console.log('Loaded settings:', data);
+        // Clear existing content
+        appPanel.innerHTML = '<div class="loading-panel"><i class="fas fa-spinner fa-spin"></i> Loading settings...</div>';
+        
+        // Fetch settings for this app
+        fetch(`/api/settings/${app}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(appSettings => {
+                console.log(`[Apps] Received settings for ${app}:`, appSettings);
                 
-                // Store original settings for comparison
-                this.originalSettings = data;
+                // Clear loading message
+                appPanel.innerHTML = '';
                 
-                // Ensure current app panel is visible
-                this.showAppPanel(this.currentApp);
+                // Create a form container with the app-type attribute
+                const formElement = document.createElement('form');
+                formElement.classList.add('settings-form');
+                formElement.setAttribute('data-app-type', app);
+                appPanel.appendChild(formElement);
                 
-                // Populate each app's settings form
-                this.populateAllAppPanels(data);
+                // Generate the form using SettingsForms module
+                if (typeof SettingsForms !== 'undefined') {
+                    const formFunction = SettingsForms[`generate${app.charAt(0).toUpperCase()}${app.slice(1)}Form`];
+                    if (typeof formFunction === 'function') {
+                        formFunction(formElement, appSettings);
+                        
+                        // Update duration displays for this app
+                        if (typeof SettingsForms.updateDurationDisplay === 'function') {
+                            SettingsForms.updateDurationDisplay();
+                        }
+                        
+                        // Add change listener to detect modifications
+                        this.addFormChangeListeners(formElement);
+                    } else {
+                        console.warn(`Form generation function not found for ${app}`);
+                        appPanel.innerHTML = `<div class="settings-message">Settings for ${app.charAt(0).toUpperCase() + app.slice(1)} are not available.</div>`;
+                    }
+                } else {
+                    console.error('SettingsForms module not found');
+                    appPanel.innerHTML = '<div class="error-panel">Unable to generate settings form. Please reload the page.</div>';
+                }
             })
             .catch(error => {
-                console.error('Error loading settings:', error);
-                const appPanel = document.getElementById(this.currentApp + 'Apps');
-                if (appPanel) {
-                    appPanel.innerHTML = '<div class="error-panel"><i class="fas fa-exclamation-triangle"></i> Failed to load app settings. Please try again.</div>';
-                }
+                console.error(`Error loading ${app} settings:`, error);
+                appPanel.innerHTML = `<div class="error-panel"><i class="fas fa-exclamation-triangle"></i> Error loading settings: ${error.message}</div>`;
             });
-    },
-    
-    // Populate all app panels with settings
-    populateAllAppPanels: function(data) {
-        // Clear existing panels
-        this.elements.appAppsPanels.forEach(panel => {
-            panel.innerHTML = '';
-        });
-        
-        // Populate each app panel
-        if (data.sonarr) this.populateAppPanel('sonarr', data.sonarr);
-        if (data.radarr) this.populateAppPanel('radarr', data.radarr);
-        if (data.lidarr) this.populateAppPanel('lidarr', data.lidarr);
-        if (data.readarr) this.populateAppPanel('readarr', data.readarr);
-        if (data.whisparr) this.populateAppPanel('whisparr', data.whisparr);
-        if (data.swaparr) this.populateAppPanel('swaparr', data.swaparr);
-    },
-    
-    // Populate a specific app panel with settings
-    populateAppPanel: function(app, appSettings) {
-        const appPanel = document.getElementById(app + 'Apps');
-        if (!appPanel) return;
-        
-        // Create settings container
-        const settingsContainer = document.createElement('div');
-        settingsContainer.className = 'settings-group';
-        
-        // Create settings form
-        const settingsForm = document.createElement('div');
-        settingsForm.id = app + 'SettingsForm';
-        settingsForm.className = 'settings-form';
-        
-        // Add to container and panel
-        settingsContainer.appendChild(settingsForm);
-        appPanel.appendChild(settingsContainer);
-        
-        // Generate the form using SettingsForms module
-        if (typeof SettingsForms !== 'undefined') {
-            const formFunction = SettingsForms[`generate${app.charAt(0).toUpperCase()}${app.slice(1)}Form`];
-            if (typeof formFunction === 'function') {
-                formFunction(settingsForm, appSettings);
-                
-                // Update duration displays for this app
-                if (typeof SettingsForms.updateDurationDisplay === 'function') {
-                    SettingsForms.updateDurationDisplay();
-                }
-                
-                // Add change listener to detect modifications
-                this.addFormChangeListeners(settingsForm);
-            } else {
-                console.warn(`Form generation function not found for ${app}`);
-                settingsForm.innerHTML = `<div class="settings-message">Settings for ${app.charAt(0).toUpperCase() + app.slice(1)} are not available.</div>`;
-            }
-        } else {
-            console.error('SettingsForms module not found');
-            settingsForm.innerHTML = '<div class="error-panel">Unable to generate settings form. Please reload the page.</div>';
-        }
     },
     
     // Add change event listeners to form elements
@@ -236,6 +213,9 @@ const appsModule = {
         // Reset changed state
         this.settingsChanged = false;
         this.elements.saveAppsButton.disabled = true;
+        
+        // Load the newly selected app's settings
+        this.loadAppSettings(selectedApp);
     },
     
     // Mark apps as changed
@@ -258,10 +238,16 @@ const appsModule = {
         }
         
         // Get the form element
-        const appForm = appPanel.querySelector('.settings-form');
+        const appForm = appPanel.querySelector('form.settings-form');
         if (!appForm) {
             console.error(`Settings form not found for ${this.currentApp}`);
             return;
+        }
+        
+        // Check that the form has the correct data-app-type attribute
+        if (appForm.getAttribute('data-app-type') !== this.currentApp) {
+            console.error(`Form has incorrect app type: ${appForm.getAttribute('data-app-type')}, expected: ${this.currentApp}`);
+            appForm.setAttribute('data-app-type', this.currentApp);
         }
         
         // Get settings using SettingsForms
@@ -270,10 +256,12 @@ const appsModule = {
             appSettings = SettingsForms.getFormSettings(appForm);
             if (!appSettings) {
                 console.error(`Could not get settings for ${this.currentApp}`);
+                alert(`Error: Could not collect settings from the form. Please try again.`);
                 return;
             }
         } else {
             console.error('SettingsForms module or getFormSettings function not found');
+            alert('Error: Settings module not found. Please refresh the page and try again.');
             return;
         }
         
