@@ -97,7 +97,16 @@ const SettingsForms = {
                     <input type="number" id="sonarr-upgrade-episodes" name="upgrade_episodes" min="0" value="${settings.upgrade_episodes !== undefined ? settings.upgrade_episodes : 0}">
                     <p class="setting-help">Number of episodes to upgrade per cycle (0 to disable)</p>
                 </div>
-                 <div class="setting-item">
+                <div class="setting-item">
+                    <label for="sonarr_search_interval">Search Interval:</label>
+                    <input type="number" id="sonarr_search_interval" name="search_interval" min="60" value="${settings.search_interval !== undefined ? settings.search_interval : 900}">
+                    <p class="setting-help">Time between searches in seconds (15 minutes = 900 seconds)</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Additional Options</h3>
+                <div class="setting-item">
                     <label for="sonarr_monitored_only">Monitored Only:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="sonarr_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
@@ -105,43 +114,27 @@ const SettingsForms = {
                     </label>
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
-            </div>
-        `;
-        
-        // Advanced Settings
-        let advancedSettingsHtml = `
-            <div class="settings-group">
-                <h3>Advanced Settings</h3>
-                 <div class="setting-item">
-                    <label for="sonarr_api_timeout">API Timeout:</label>
-                    <input type="number" id="sonarr_api_timeout" name="api_timeout" min="10" max="300" value="${settings.api_timeout || 120}">
-                    <p class="setting-help">Timeout for API requests in seconds</p>
+                <div class="setting-item">
+                    <label for="sonarr_skip_future_releases">Skip Future Releases:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="sonarr_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip searching for episodes with future air dates</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr_command_wait_delay">Command Wait Delay:</label>
-                    <input type="number" id="sonarr_command_wait_delay" name="command_wait_delay" min="1" value="${settings.command_wait_delay || 1}">
-                    <p class="setting-help">Delay between checking command status in seconds</p>
-                </div>
-                <div class="setting-item">
-                    <label for="sonarr_command_wait_attempts">Command Wait Attempts:</label>
-                    <input type="number" id="sonarr_command_wait_attempts" name="command_wait_attempts" min="1" value="${settings.command_wait_attempts || 600}">
-                    <p class="setting-help">Maximum number of status check attempts</p>
-                </div>
-                <div class="setting-item">
-                    <label for="sonarr_minimum_download_queue_size">Min Download Queue Size:</label>
-                    <input type="number" id="sonarr_minimum_download_queue_size" name="minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size !== undefined ? settings.minimum_download_queue_size : -1}">
-                    <p class="setting-help">Minimum download queue size before Huntarr stops adding items (-1 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="sonarr_log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="sonarr_log_refresh_interval_seconds" name="log_refresh_interval_seconds" min="5" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">How often Huntarr refreshes logs from this app (seconds)</p>
+                    <label for="sonarr_skip_metadata_refresh">Skip Metadata Refresh:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="sonarr_skip_metadata_refresh" name="skip_metadata_refresh" ${settings.skip_metadata_refresh === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip refreshing metadata before searching</p>
                 </div>
             </div>
         `;
 
         // Set the content
-        container.innerHTML = instancesHtml + searchSettingsHtml + advancedSettingsHtml;
+        container.innerHTML = instancesHtml + searchSettingsHtml;
 
         // Setup instance management (add/remove/test)
         SettingsForms.setupInstanceManagement(container, 'sonarr', settings.instances.length);
@@ -235,14 +228,9 @@ const SettingsForms = {
                     <p class="setting-help">Number of movies to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="radarr_sleep_duration">Search Interval:</label>
-                    <input type="number" id="radarr_sleep_duration" min="60" value="${settings.sleep_duration || 900}">
-                    <p class="setting-help">Time between searches in seconds (<span id="radarr_sleep_duration_hours"></span>)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="radarr_state_reset_interval_hours">Reset Interval:</label>
-                    <input type="number" id="radarr_state_reset_interval_hours" min="1" value="${settings.state_reset_interval_hours || 168}">
-                    <p class="setting-help">Hours between state resets (default: 168 = 7 days)</p>
+                    <label for="radarr_search_interval">Search Interval:</label>
+                    <input type="number" id="radarr_search_interval" name="search_interval" min="60" value="${settings.search_interval !== undefined ? settings.search_interval : 900}">
+                    <p class="setting-help">Time between searches in seconds (15 minutes = 900 seconds)</p>
                 </div>
             </div>
             
@@ -271,46 +259,6 @@ const SettingsForms = {
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Skip refreshing movie metadata before searching</p>
-                </div>
-            </div>
-            
-            <div class="settings-group">
-                <h3>Advanced Settings</h3>
-                <div class="setting-item">
-                    <label for="radarr_random_missing">Random Missing:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="radarr_random_missing" ${settings.random_missing !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Select random missing items instead of sequential order</p>
-                </div>
-                <div class="setting-item">
-                    <label for="radarr_random_upgrades">Random Upgrades:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="radarr_random_upgrades" ${settings.random_upgrades !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Select random items for quality upgrades</p>
-                </div>
-                <div class="setting-item">
-                    <label for="radarr_api_timeout">API Timeout:</label>
-                    <input type="number" id="radarr_api_timeout" min="10" max="300" value="${settings.api_timeout || 60}">
-                    <p class="setting-help">Timeout for API requests in seconds</p>
-                </div>
-                <div class="setting-item">
-                    <label for="radarr_command_wait_delay">Command Wait Delay:</label>
-                    <input type="number" id="radarr_command_wait_delay" min="1" value="${settings.command_wait_delay || 1}">
-                    <p class="setting-help">Delay between checking command status in seconds</p>
-                </div>
-                <div class="setting-item">
-                    <label for="radarr_command_wait_attempts">Command Wait Attempts:</label>
-                    <input type="number" id="radarr_command_wait_attempts" min="1" value="${settings.command_wait_attempts || 600}">
-                    <p class="setting-help">Maximum number of status check attempts</p>
-                </div>
-                <div class="setting-item">
-                    <label for="radarr_minimum_download_queue_size">Min Download Queue Size:</label>
-                    <input type="number" id="radarr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
-                    <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
                 </div>
             </div>
         `;
@@ -415,14 +363,9 @@ const SettingsForms = {
                     <p class="setting-help">Number of albums to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="lidarr_sleep_duration">Search Interval:</label>
-                    <input type="number" id="lidarr_sleep_duration" min="60" value="${settings.sleep_duration || 900}">
-                    <p class="setting-help">Time between searches in seconds (<span id="lidarr_sleep_duration_hours"></span>)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="lidarr_state_reset_interval_hours">Reset Interval:</label>
-                    <input type="number" id="lidarr_state_reset_interval_hours" min="1" value="${settings.state_reset_interval_hours || 168}">
-                    <p class="setting-help">Hours between state resets (default: 168 = 7 days)</p>
+                    <label for="lidarr_search_interval">Search Interval:</label>
+                    <input type="number" id="lidarr_search_interval" name="search_interval" min="60" value="${settings.search_interval !== undefined ? settings.search_interval : 900}">
+                    <p class="setting-help">Time between searches in seconds (15 minutes = 900 seconds)</p>
                 </div>
             </div>
             
@@ -451,46 +394,6 @@ const SettingsForms = {
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Skip refreshing artist metadata before searching</p>
-                </div>
-            </div>
-            
-            <div class="settings-group">
-                <h3>Advanced Settings</h3>
-                <div class="setting-item">
-                    <label for="lidarr_random_missing">Random Missing:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="lidarr_random_missing" ${settings.random_missing !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Select random missing items instead of sequential order</p>
-                </div>
-                <div class="setting-item">
-                    <label for="lidarr_random_upgrades">Random Upgrades:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="lidarr_random_upgrades" ${settings.random_upgrades !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Select random items for quality upgrades</p>
-                </div>
-                <div class="setting-item">
-                    <label for="lidarr_api_timeout">API Timeout:</label>
-                    <input type="number" id="lidarr_api_timeout" min="10" max="300" value="${settings.api_timeout || 60}">
-                    <p class="setting-help">Timeout for API requests in seconds</p>
-                </div>
-                <div class="setting-item">
-                    <label for="lidarr_command_wait_delay">Command Wait Delay:</label>
-                    <input type="number" id="lidarr_command_wait_delay" min="1" value="${settings.command_wait_delay || 1}">
-                    <p class="setting-help">Delay between checking command status in seconds</p>
-                </div>
-                <div class="setting-item">
-                    <label for="lidarr_command_wait_attempts">Command Wait Attempts:</label>
-                    <input type="number" id="lidarr_command_wait_attempts" min="1" value="${settings.command_wait_attempts || 600}">
-                    <p class="setting-help">Maximum number of status check attempts</p>
-                </div>
-                <div class="setting-item">
-                    <label for="lidarr_minimum_download_queue_size">Min Download Queue Size:</label>
-                    <input type="number" id="lidarr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
-                    <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
                 </div>
             </div>
         `;
@@ -586,14 +489,9 @@ const SettingsForms = {
                     <p class="setting-help">Number of books to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="readarr_sleep_duration">Search Interval:</label>
-                    <input type="number" id="readarr_sleep_duration" min="60" value="${settings.sleep_duration || 900}">
-                    <p class="setting-help">Time between searches in seconds (<span id="readarr_sleep_duration_hours"></span>)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="readarr_state_reset_interval_hours">Reset Interval:</label>
-                    <input type="number" id="readarr_state_reset_interval_hours" min="1" value="${settings.state_reset_interval_hours || 168}">
-                    <p class="setting-help">Hours between state resets (default: 168 = 7 days)</p>
+                    <label for="readarr_search_interval">Search Interval:</label>
+                    <input type="number" id="readarr_search_interval" name="search_interval" min="60" value="${settings.search_interval !== undefined ? settings.search_interval : 900}">
+                    <p class="setting-help">Time between searches in seconds (15 minutes = 900 seconds)</p>
                 </div>
             </div>
             
@@ -622,46 +520,6 @@ const SettingsForms = {
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Skip refreshing author metadata before searching</p>
-                </div>
-            </div>
-            
-            <div class="settings-group">
-                <h3>Advanced Settings</h3>
-                <div class="setting-item">
-                    <label for="readarr_random_missing">Random Missing:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="readarr_random_missing" ${settings.random_missing !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Select random missing items instead of sequential order</p>
-                </div>
-                <div class="setting-item">
-                    <label for="readarr_random_upgrades">Random Upgrades:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="readarr_random_upgrades" ${settings.random_upgrades !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Select random items for quality upgrades</p>
-                </div>
-                <div class="setting-item">
-                    <label for="readarr_api_timeout">API Timeout:</label>
-                    <input type="number" id="readarr_api_timeout" min="10" max="300" value="${settings.api_timeout || 60}">
-                    <p class="setting-help">Timeout for API requests in seconds</p>
-                </div>
-                <div class="setting-item">
-                    <label for="readarr_command_wait_delay">Command Wait Delay:</label>
-                    <input type="number" id="readarr_command_wait_delay" min="1" value="${settings.command_wait_delay || 1}">
-                    <p class="setting-help">Delay between checking command status in seconds</p>
-                </div>
-                <div class="setting-item">
-                    <label for="readarr_command_wait_attempts">Command Wait Attempts:</label>
-                    <input type="number" id="readarr_command_wait_attempts" min="1" value="${settings.command_wait_attempts || 600}">
-                    <p class="setting-help">Maximum number of status check attempts</p>
-                </div>
-                <div class="setting-item">
-                    <label for="readarr_minimum_download_queue_size">Min Download Queue Size:</label>
-                    <input type="number" id="readarr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
-                    <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
                 </div>
             </div>
         `;
@@ -757,14 +615,9 @@ const SettingsForms = {
                     <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_sleep_duration">Search Interval:</label>
-                    <input type="number" id="whisparr_sleep_duration" min="60" value="${settings.sleep_duration || 900}">
-                    <p class="setting-help">Time between searches in seconds (<span id="whisparr_sleep_duration_hours"></span>)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="whisparr_state_reset_interval_hours">Reset Interval:</label>
-                    <input type="number" id="whisparr_state_reset_interval_hours" min="1" value="${settings.state_reset_interval_hours || 168}">
-                    <p class="setting-help">Hours between state resets (default: 168 = 7 days)</p>
+                    <label for="whisparr_search_interval">Search Interval:</label>
+                    <input type="number" id="whisparr_search_interval" name="search_interval" min="60" value="${settings.search_interval !== undefined ? settings.search_interval : 900}">
+                    <p class="setting-help">Time between searches in seconds (15 minutes = 900 seconds)</p>
                 </div>
             </div>
             
@@ -785,54 +638,6 @@ const SettingsForms = {
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Skip searching for scenes with future release dates</p>
-                </div>
-                <div class="setting-item">
-                    <label for="skip_scene_refresh">Skip Scene Refresh:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="skip_scene_refresh" ${settings.skip_scene_refresh === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Skip refreshing scene metadata before searching</p>
-                </div>
-            </div>
-            
-            <div class="settings-group">
-                <h3>Advanced Settings</h3>
-                <div class="setting-item">
-                    <label for="whisparr_random_missing">Random Missing:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="whisparr_random_missing" ${settings.random_missing !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Select random missing items instead of sequential order</p>
-                </div>
-                <div class="setting-item">
-                    <label for="whisparr_random_upgrades">Random Upgrades:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="whisparr_random_upgrades" ${settings.random_upgrades !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Select random items for quality upgrades</p>
-                </div>
-                <div class="setting-item">
-                    <label for="whisparr_api_timeout">API Timeout:</label>
-                    <input type="number" id="whisparr_api_timeout" min="10" max="300" value="${settings.api_timeout || 120}">
-                    <p class="setting-help">Timeout for API requests in seconds</p>
-                </div>
-                <div class="setting-item">
-                    <label for="whisparr_command_wait_delay">Command Wait Delay:</label>
-                    <input type="number" id="whisparr_command_wait_delay" min="1" value="${settings.command_wait_delay || 1}">
-                    <p class="setting-help">Delay between checking command status in seconds</p>
-                </div>
-                <div class="setting-item">
-                    <label for="whisparr_command_wait_attempts">Command Wait Attempts:</label>
-                    <input type="number" id="whisparr_command_wait_attempts" min="1" value="${settings.command_wait_attempts || 600}">
-                    <p class="setting-help">Maximum number of status check attempts</p>
-                </div>
-                <div class="setting-item">
-                    <label for="whisparr_minimum_download_queue_size">Min Download Queue Size:</label>
-                    <input type="number" id="whisparr_minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size || -1}">
-                    <p class="setting-help">Minimum download queue size to pause searching (-1 to disable)</p>
                 </div>
             </div>
         `;
@@ -1021,139 +826,134 @@ const SettingsForms = {
     },
 
     // Get settings from form
-    getFormSettings: function(form) {
-        const settings = {};
+    getFormSettings: function(container, appType) {
+        let settings = {};
         
-        // Determine the app type
-        const appType = form.getAttribute('data-app-type');
-        if (!appType) {
-            console.error('Form is missing data-app-type attribute');
-            return null;
-        }
-        
-        console.log(`[getFormSettings] Collecting settings for ${appType} form`, form);
-        
-        // Handle instances differently
-        const instances = [];
-        // Find instance containers with both old and new class names
-        const instanceContainers = form.querySelectorAll('.instance-item, .instance-panel');
-        
-        console.log(`[getFormSettings] Found ${instanceContainers.length} instance containers for ${appType}`);
-        
-        // For debugging - dump all instance container info
-        instanceContainers.forEach((instance, i) => {
-            console.log(`[getFormSettings] Instance container ${i}:`, {
-                className: instance.className,
-                dataId: instance.dataset.instanceId,
-                innerHTML: instance.innerHTML.substring(0, 100) + '...' // Just show the first bit
-            });
-        });
-        
-        // Collect instance data with improved error handling
-        instanceContainers.forEach((instance, index) => {
-            const nameInput = instance.querySelector('input[name="name"]');
-            const urlInput = instance.querySelector('input[name="api_url"]');
-            const keyInput = instance.querySelector('input[name="api_key"]');
-            const enabledInput = instance.querySelector('input[name="enabled"]');
-            
-            const name = nameInput ? nameInput.value : null;
-            const url = urlInput ? urlInput.value : null;
-            const key = keyInput ? keyInput.value : null;
-            const enabled = enabledInput ? enabledInput.checked : true; // Default to enabled if checkbox not found
-            
-            console.log(`[getFormSettings] Instance ${index} inputs:`, {
-                name: nameInput ? nameInput.value : 'null',
-                url: urlInput ? urlInput.value : 'null',
-                key: keyInput ? keyInput.value.substring(0, 3) + '...' : 'null',
-                enabled: enabledInput ? enabledInput.checked : 'null (default: true)'
-            });
-            
-            if (!name || !url || !key) {
-                console.warn(`[getFormSettings] Instance ${index} is missing required fields`);
-            }
-            
-            const instanceObj = {
-                name: name || `Instance ${index + 1}`,
-                api_url: url || "",
-                api_key: key || "",
-                enabled: enabled
-            };
-            
-            instances.push(instanceObj);
-        });
-        
-        // Ensure we always have at least one instance
-        if (instances.length === 0) {
-            console.warn('[getFormSettings] No instances found, adding a default empty instance');
-            instances.push({
-                name: 'Default',
-                api_url: '',
-                api_key: '',
-                enabled: true
-            });
-        }
-        
-        settings.instances = instances;
-        
-        // Helper function to get input value by selector
-        const getInputValue = (selector, defaultValue) => {
-            const element = form.querySelector(selector);
+        // Helper function to get input value with fallback
+        function getInputValue(selector, defaultValue) {
+            const element = container.querySelector(selector);
             if (!element) return defaultValue;
             
-            // Handle different input types
             if (element.type === 'checkbox') {
                 return element.checked;
             } else if (element.type === 'number') {
                 return parseInt(element.value) || defaultValue;
-            } else if (element.tagName === 'SELECT') {
-                return element.value;
             } else {
                 return element.value || defaultValue;
             }
-        };
+        }
         
-        // Common settings for all *arr apps
-        settings.api_timeout = getInputValue(`#${appType}_api_timeout`, 120);
-        settings.command_wait_delay = getInputValue(`#${appType}_command_wait_delay`, 1);
-        settings.command_wait_attempts = getInputValue(`#${appType}_command_wait_attempts`, 600);
-        settings.minimum_download_queue_size = getInputValue(`#${appType}_minimum_download_queue_size`, -1);
-        settings.log_refresh_interval_seconds = getInputValue(`#${appType}_log_refresh_interval_seconds`, 30);
+        // For the general settings form, collect settings including advanced settings
+        if (appType === 'general') {
+            settings.themeName = getInputValue('#theme-select', 'dark');
+            settings.resetInterval = getInputValue('#resetInterval', 168);
+            settings.clearCache = getInputValue('#clearCache', false);
+            settings.refreshSchedule = getInputValue('#refreshSchedule', false);
+            settings.disableSorting = getInputValue('#disableSorting', false);
+            settings.disableNotifications = getInputValue('#disableNotifications', false);
+            settings.openInNewTab = getInputValue('#openInNewTab', false);
+            settings.saveColumnSortState = getInputValue('#saveColumnSortState', true);
+            settings.disableAnimation = getInputValue('#disableAnimation', false);
+            settings.useCompactLayout = getInputValue('#useCompactLayout', false);
+            settings.disableAllowListPopup = getInputValue('#disableAllowListPopup', false);
+            settings.maxHistoryItems = getInputValue('#maxHistoryItems', 100);
+            settings.maxLogItems = getInputValue('#maxLogItems', 200);
+            settings.statefulExpirationHours = getInputValue('#statefulExpirationHours', 168);
+            settings.autoLoginWithoutPassword = getInputValue('#autoLoginWithoutPassword', false);
+            
+            // Add collection of advanced settings
+            settings.api_timeout = getInputValue('#api_timeout', 120);
+            settings.command_wait_delay = getInputValue('#command_wait_delay', 1);
+            settings.command_wait_attempts = getInputValue('#command_wait_attempts', 600);
+            settings.minimum_download_queue_size = getInputValue('#minimum_download_queue_size', -1);
+            settings.log_refresh_interval_seconds = getInputValue('#log_refresh_interval_seconds', 30);
+        }
         
-        // Add app-specific settings
-        if (appType === 'sonarr') {
-            settings.missing_search_mode = getInputValue('#sonarr-missing-search-mode', 'episodes');
-            settings.missing_items_to_search = getInputValue('#sonarr-missing-items-to-search', 1);
-            settings.upgrade_episodes = getInputValue('#sonarr-upgrade-episodes', 0);
-            settings.monitored_only = getInputValue('#sonarr_monitored_only', true);
-        } 
-        else if (appType === 'radarr') {
-            settings.hunt_missing_movies = getInputValue('#hunt_missing_movies', 1);
-            settings.hunt_upgrade_movies = getInputValue('#hunt_upgrade_movies', 0);
-            settings.monitored_only = getInputValue('#radarr_monitored_only', true);
-            settings.random_missing = getInputValue('#radarr_random_missing', true);
-            settings.random_upgrades = getInputValue('#radarr_random_upgrades', true);
-            settings.skip_future_releases = getInputValue('#skip_future_releases', true);
-            settings.skip_movie_refresh = getInputValue('#skip_movie_refresh', false);
-        } 
-        else if (appType === 'lidarr') {
-            settings.hunt_missing_albums = getInputValue('#hunt_missing_albums', 1);
-            settings.hunt_upgrade_albums = getInputValue('#hunt_upgrade_albums', 0);
-            settings.missing_search_mode = getInputValue('#lidarr-missing-search-mode', 'albums');
-            settings.monitored_only = getInputValue('#lidarr_monitored_only', true);
-        } 
-        else if (appType === 'readarr') {
-            settings.hunt_missing_books = getInputValue('#hunt_missing_books', 1);
-            settings.hunt_upgrade_books = getInputValue('#hunt_upgrade_books', 0);
-            settings.missing_search_mode = getInputValue('#readarr-missing-search-mode', 'books');
-            settings.monitored_only = getInputValue('#readarr_monitored_only', true);
-        } 
-        else if (appType === 'whisparr') {
-            settings.hunt_missing_movies = getInputValue('#whisparr_hunt_missing_movies', 1);
-            settings.hunt_upgrade_movies = getInputValue('#whisparr_hunt_upgrade_movies', 0);
-            settings.monitored_only = getInputValue('#whisparr_monitored_only', true);
-            settings.random_missing = getInputValue('#whisparr_random_missing', true);
-            settings.random_upgrades = getInputValue('#whisparr_random_upgrades', true);
-            settings.skip_future_releases = getInputValue('#whisparr_skip_future_releases', true);
+        // For other app types, collect settings
+        else {
+            // Handle instances differently
+            const instances = [];
+            // Find instance containers with both old and new class names
+            const instanceContainers = container.querySelectorAll('.instance-item, .instance-panel');
+            
+            // Collect instance data with improved error handling
+            instanceContainers.forEach((instance, index) => {
+                const nameInput = instance.querySelector('input[name="name"]');
+                const urlInput = instance.querySelector('input[name="api_url"]');
+                const keyInput = instance.querySelector('input[name="api_key"]');
+                const enabledInput = instance.querySelector('input[name="enabled"]');
+                
+                const name = nameInput ? nameInput.value : null;
+                const url = urlInput ? urlInput.value : null;
+                const key = keyInput ? keyInput.value : null;
+                const enabled = enabledInput ? enabledInput.checked : true; // Default to enabled if checkbox not found
+                
+                if (!name || !url || !key) {
+                    console.warn(`Instance ${index} is missing required fields`);
+                }
+                
+                const instanceObj = {
+                    name: name || `Instance ${index + 1}`,
+                    api_url: url || "",
+                    api_key: key || "",
+                    enabled: enabled
+                };
+                
+                instances.push(instanceObj);
+            });
+            
+            // Ensure we always have at least one instance
+            if (instances.length === 0) {
+                console.warn('No instances found, adding a default empty instance');
+                instances.push({
+                    name: 'Default',
+                    api_url: '',
+                    api_key: '',
+                    enabled: true
+                });
+            }
+            
+            settings.instances = instances;
+            
+            // Add app-specific settings
+            if (appType === 'sonarr') {
+                settings.missing_search_mode = getInputValue('#sonarr-missing-search-mode', 'episodes');
+                settings.missing_items_to_search = getInputValue('#sonarr-missing-items-to-search', 1);
+                settings.upgrade_episodes = getInputValue('#sonarr-upgrade-episodes', 0);
+                settings.search_interval = getInputValue('#sonarr_search_interval', 900);
+                settings.monitored_only = getInputValue('#sonarr_monitored_only', true);
+                settings.skip_future_releases = getInputValue('#sonarr_skip_future_releases', true);
+                settings.skip_metadata_refresh = getInputValue('#sonarr_skip_metadata_refresh', false);
+            } 
+            else if (appType === 'radarr') {
+                settings.hunt_missing_movies = getInputValue('#hunt_missing_movies', 1);
+                settings.hunt_upgrade_movies = getInputValue('#hunt_upgrade_movies', 0);
+                settings.monitored_only = getInputValue('#radarr_monitored_only', true);
+                settings.skip_future_releases = getInputValue('#skip_future_releases', true);
+                settings.skip_movie_refresh = getInputValue('#skip_movie_refresh', false);
+                settings.search_interval = getInputValue('#radarr_search_interval', 900);
+            } 
+            else if (appType === 'lidarr') {
+                settings.hunt_missing_albums = getInputValue('#hunt_missing_albums', 1);
+                settings.hunt_upgrade_albums = getInputValue('#hunt_upgrade_albums', 0);
+                settings.missing_search_mode = getInputValue('#lidarr-missing-search-mode', 'albums');
+                settings.monitored_only = getInputValue('#lidarr_monitored_only', true);
+                settings.search_interval = getInputValue('#lidarr_search_interval', 900);
+            } 
+            else if (appType === 'readarr') {
+                settings.hunt_missing_books = getInputValue('#hunt_missing_books', 1);
+                settings.hunt_upgrade_books = getInputValue('#hunt_upgrade_books', 0);
+                settings.missing_search_mode = getInputValue('#readarr-missing-search-mode', 'books');
+                settings.monitored_only = getInputValue('#readarr_monitored_only', true);
+                settings.search_interval = getInputValue('#readarr_search_interval', 900);
+            } 
+            else if (appType === 'whisparr') {
+                settings.hunt_missing_movies = getInputValue('#whisparr_hunt_missing_movies', 1);
+                settings.hunt_upgrade_movies = getInputValue('#whisparr_hunt_upgrade_movies', 0);
+                settings.monitored_only = getInputValue('#whisparr_monitored_only', true);
+                settings.skip_future_releases = getInputValue('#whisparr_skip_future_releases', true);
+                settings.search_interval = getInputValue('#whisparr_search_interval', 900);
+            }
         }
         
         console.log('Collected settings for', appType, settings);
@@ -1227,6 +1027,35 @@ const SettingsForms = {
                     <p class="setting-help">Allow access without login when connecting from local network IP addresses (e.g., 192.168.x.x, 10.x.x.x)</p>
                 </div>
             </div>
+            
+            <div class="settings-group">
+                <h3>Advanced Settings</h3>
+                <div class="setting-item">
+                    <label for="api_timeout">API Timeout:</label>
+                    <input type="number" id="api_timeout" min="10" value="${settings.api_timeout !== undefined ? settings.api_timeout : 120}">
+                    <p class="setting-help">API request timeout in seconds</p>
+                </div>
+                <div class="setting-item">
+                    <label for="command_wait_delay">Command Wait Delay:</label>
+                    <input type="number" id="command_wait_delay" min="1" value="${settings.command_wait_delay !== undefined ? settings.command_wait_delay : 1}">
+                    <p class="setting-help">Delay between command status checks in seconds</p>
+                </div>
+                <div class="setting-item">
+                    <label for="command_wait_attempts">Command Wait Attempts:</label>
+                    <input type="number" id="command_wait_attempts" min="1" value="${settings.command_wait_attempts !== undefined ? settings.command_wait_attempts : 600}">
+                    <p class="setting-help">Maximum number of attempts to check command status</p>
+                </div>
+                <div class="setting-item">
+                    <label for="minimum_download_queue_size">Minimum Download Queue Size:</label>
+                    <input type="number" id="minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size !== undefined ? settings.minimum_download_queue_size : -1}">
+                    <p class="setting-help">Minimum size of download queue before processing (-1 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
+                    <input type="number" id="log_refresh_interval_seconds" min="5" value="${settings.log_refresh_interval_seconds !== undefined ? settings.log_refresh_interval_seconds : 30}">
+                    <p class="setting-help">How often Huntarr refreshes logs from apps (seconds)</p>
+                </div>
+            </div>
         `;
         
         // Add listener for stateful management hours input
@@ -1235,7 +1064,7 @@ const SettingsForms = {
         
         if (statefulHoursInput && statefulDaysSpan) {
             statefulHoursInput.addEventListener('input', function() {
-                const hours = parseInt(this.value) || 168;
+                const hours = parseInt(this.value);
                 const days = (hours / 24).toFixed(1);
                 statefulDaysSpan.textContent = `${days} days`;
             });

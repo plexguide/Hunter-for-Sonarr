@@ -140,7 +140,7 @@ const appsModule = {
 
         // Save button
         if (this.elements.saveAppsButton) {
-            this.elements.saveAppsButton.addEventListener('click', () => this.saveApps());
+            this.elements.saveAppsButton.addEventListener('click', (event) => this.saveApps(event));
         }
     },
     
@@ -333,63 +333,36 @@ const appsModule = {
     },
     
     // Save apps settings
-    saveApps: function() {
-        console.log('[Apps] Saving app settings for ' + this.currentApp);
+    saveApps: function(event) {
+        event.preventDefault();
         
-        // Get the app panel for the current app
-        const appPanel = document.getElementById(this.currentApp + 'Apps');
-        if (!appPanel) {
-            console.error(`App panel not found for ${this.currentApp}`);
+        const activeTabContent = document.querySelector('.tab-pane.active');
+        if (!activeTabContent) return;
+        
+        const appType = activeTabContent.getAttribute('data-app-type');
+        if (!appType) {
+            console.error('Active tab content is missing data-app-type attribute');
             return;
         }
         
-        // Get the form element
-        const appForm = appPanel.querySelector('form.settings-form');
-        if (!appForm) {
-            console.error(`Settings form not found for ${this.currentApp}`);
-            return;
-        }
+        console.log(`Saving settings for ${appType}`);
         
-        // Check that the form has the correct data-app-type attribute
-        if (appForm.getAttribute('data-app-type') !== this.currentApp) {
-            console.error(`Form has incorrect app type: ${appForm.getAttribute('data-app-type')}, expected: ${this.currentApp}`);
-            appForm.setAttribute('data-app-type', this.currentApp);
-        }
+        // Use the updated getFormSettings function with container and appType
+        const settings = SettingsForms.getFormSettings(activeTabContent, appType);
         
-        // Get settings using SettingsForms
-        let appSettings = null;
-        if (typeof SettingsForms !== 'undefined' && typeof SettingsForms.getFormSettings === 'function') {
-            appSettings = SettingsForms.getFormSettings(appForm);
-            if (!appSettings) {
-                console.error(`Could not get settings for ${this.currentApp}`);
-                if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
-                    huntarrUI.showNotification('Error: Could not collect settings from the form. Please try again.', 'error');
-                } else {
-                    alert('Error: Could not collect settings from the form. Please try again.');
-                }
-                return;
-            }
-        } else {
-            console.error('SettingsForms module or getFormSettings function not found');
-            if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
-                huntarrUI.showNotification('Error: Settings module not found. Please refresh the page and try again.', 'error');
-            } else {
-                alert('Error: Settings module not found. Please refresh the page and try again.');
-            }
-            return;
-        }
+        console.log(`Collected settings for ${appType}:`, settings);
         
-        console.log(`[Apps] Sending settings for ${this.currentApp}:`, appSettings);
-        console.log(`[Apps] Number of instances found for ${this.currentApp}:`, appSettings.instances?.length || 0);
-        console.log(`[Apps] Instances detail:`, JSON.stringify(appSettings.instances, null, 2));
+        console.log(`[Apps] Sending settings for ${appType}:`, settings);
+        console.log(`[Apps] Number of instances found for ${appType}:`, settings.instances?.length || 0);
+        console.log(`[Apps] Instances detail:`, JSON.stringify(settings.instances, null, 2));
         
         // Send settings update request to the correct app-specific endpoint
-        fetch(`/api/settings/${this.currentApp}`, {
+        fetch(`/api/settings/${appType}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(appSettings)
+            body: JSON.stringify(settings)
         })
         .then(response => {
             if (!response.ok) {
