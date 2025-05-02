@@ -178,31 +178,30 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="radarr_instance_${index}_name">Name:</label>
-                            <input type="text" id="radarr_instance_${index}_name" value="${instance.name || ''}">
+                            <label for="radarr-name-${index}">Name:</label>
+                            <input type="text" id="radarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Radarr instance">
                             <p class="setting-help">Friendly name for this Radarr instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="radarr_instance_${index}_api_url">URL:</label>
-                            <input type="text" id="radarr_instance_${index}_api_url" value="${instance.api_url || ''}">
+                            <label for="radarr-url-${index}">URL:</label>
+                            <input type="text" id="radarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Radarr (e.g., http://localhost:7878)">
                             <p class="setting-help">Base URL for Radarr (e.g., http://localhost:7878)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="radarr_instance_${index}_api_key">API Key:</label>
-                            <input type="text" id="radarr_instance_${index}_api_key" value="${instance.api_key || ''}">
+                            <label for="radarr-key-${index}">API Key:</label>
+                            <input type="text" id="radarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Radarr">
                             <p class="setting-help">API key for Radarr</p>
                         </div>
                         <div class="setting-item">
-                            <label for="radarr_instance_${index}_enabled">Enabled:</label>
+                            <label for="radarr-enabled-${index}">Enabled:</label>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="radarr_instance_${index}_enabled" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <input type="checkbox" id="radarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        <div class="setting-item">
-                            <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
-                            <span class="connection-status" id="radarr_instance_${index}_status"></span>
-                        </div>
+                        <button type="button" class="test-connection-btn" data-instance="${index}">
+                            <i class="fas fa-plug"></i> Test Connection
+                        </button>
                     </div>
                 </div>
             `;
@@ -326,13 +325,13 @@ const SettingsForms = {
         if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
             settings.instances = [{
                 name: "Default",
-                api_url: settings.api_url || "",
-                api_key: settings.api_key || "",
+                api_url: settings.api_url || "", // Legacy support
+                api_key: settings.api_key || "", // Legacy support
                 enabled: true
             }];
         }
         
-        // Create a container for instances with a scrollable area for many instances
+        // Create a container for instances
         let instancesHtml = `
             <div class="settings-group">
                 <h3>Lidarr Instances</h3>
@@ -351,37 +350,35 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="lidarr_instance_${index}_name">Name:</label>
-                            <input type="text" id="lidarr_instance_${index}_name" value="${instance.name || ''}">
+                            <label for="lidarr-name-${index}">Name:</label>
+                            <input type="text" id="lidarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Lidarr instance">
                             <p class="setting-help">Friendly name for this Lidarr instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="lidarr_instance_${index}_api_url">URL:</label>
-                            <input type="text" id="lidarr_instance_${index}_api_url" value="${instance.api_url || ''}">
+                            <label for="lidarr-url-${index}">URL:</label>
+                            <input type="text" id="lidarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Lidarr (e.g., http://localhost:8686)">
                             <p class="setting-help">Base URL for Lidarr (e.g., http://localhost:8686)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="lidarr_instance_${index}_api_key">API Key:</label>
-                            <input type="text" id="lidarr_instance_${index}_api_key" value="${instance.api_key || ''}">
+                            <label for="lidarr-key-${index}">API Key:</label>
+                            <input type="text" id="lidarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Lidarr">
                             <p class="setting-help">API key for Lidarr</p>
                         </div>
                         <div class="setting-item">
-                            <label for="lidarr_instance_${index}_enabled">Enabled:</label>
+                            <label for="lidarr-enabled-${index}">Enabled:</label>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="lidarr_instance_${index}_enabled" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <input type="checkbox" id="lidarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        <div class="setting-item">
-                            <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
-                            <span class="connection-status" id="lidarr_instance_${index}_status"></span>
-                        </div>
+                        <button type="button" class="test-connection-btn" data-instance="${index}">
+                            <i class="fas fa-plug"></i> Test Connection
+                        </button>
                     </div>
                 </div>
             `;
         });
-        
-        // Add a button to add new instances (limit to 9 total)
+
         instancesHtml += `
                 </div> <!-- instances-container -->
                 <div class="button-container" style="text-align: center; margin-top: 15px;">
@@ -508,13 +505,13 @@ const SettingsForms = {
         if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
             settings.instances = [{
                 name: "Default",
-                api_url: settings.api_url || "",
-                api_key: settings.api_key || "",
+                api_url: settings.api_url || "", // Legacy support
+                api_key: settings.api_key || "", // Legacy support
                 enabled: true
             }];
         }
         
-        // Create a container for instances with a scrollable area for many instances
+        // Create a container for instances
         let instancesHtml = `
             <div class="settings-group">
                 <h3>Readarr Instances</h3>
@@ -533,37 +530,35 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="readarr_instance_${index}_name">Name:</label>
-                            <input type="text" id="readarr_instance_${index}_name" value="${instance.name || ''}">
+                            <label for="readarr-name-${index}">Name:</label>
+                            <input type="text" id="readarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Readarr instance">
                             <p class="setting-help">Friendly name for this Readarr instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="readarr_instance_${index}_api_url">URL:</label>
-                            <input type="text" id="readarr_instance_${index}_api_url" value="${instance.api_url || ''}">
+                            <label for="readarr-url-${index}">URL:</label>
+                            <input type="text" id="readarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Readarr (e.g., http://localhost:8787)">
                             <p class="setting-help">Base URL for Readarr (e.g., http://localhost:8787)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="readarr_instance_${index}_api_key">API Key:</label>
-                            <input type="text" id="readarr_instance_${index}_api_key" value="${instance.api_key || ''}">
+                            <label for="readarr-key-${index}">API Key:</label>
+                            <input type="text" id="readarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Readarr">
                             <p class="setting-help">API key for Readarr</p>
                         </div>
                         <div class="setting-item">
-                            <label for="readarr_instance_${index}_enabled">Enabled:</label>
+                            <label for="readarr-enabled-${index}">Enabled:</label>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="readarr_instance_${index}_enabled" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <input type="checkbox" id="readarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        <div class="setting-item">
-                            <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
-                            <span class="connection-status" id="readarr_instance_${index}_status"></span>
-                        </div>
+                        <button type="button" class="test-connection-btn" data-instance="${index}">
+                            <i class="fas fa-plug"></i> Test Connection
+                        </button>
                     </div>
                 </div>
             `;
         });
-        
-        // Add a button to add new instances (limit to 9 total)
+
         instancesHtml += `
                 </div> <!-- instances-container -->
                 <div class="button-container" style="text-align: center; margin-top: 15px;">
@@ -681,16 +676,16 @@ const SettingsForms = {
         if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
             settings.instances = [{
                 name: "Default",
-                api_url: settings.api_url || "",
-                api_key: settings.api_key || "",
+                api_url: settings.api_url || "", // Legacy support
+                api_key: settings.api_key || "", // Legacy support
                 enabled: true
             }];
         }
         
-        // Create a container for instances with a scrollable area for many instances
+        // Create a container for instances
         let instancesHtml = `
             <div class="settings-group">
-                <h3>Whisparr Instances (Eros API v3 Only)</h3>
+                <h3>Whisparr Instances</h3>
                 <div class="instances-container">
         `;
         
@@ -706,37 +701,35 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="whisparr_instance_${index}_name">Name:</label>
-                            <input type="text" id="whisparr_instance_${index}_name" value="${instance.name || ''}">
+                            <label for="whisparr-name-${index}">Name:</label>
+                            <input type="text" id="whisparr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Whisparr instance">
                             <p class="setting-help">Friendly name for this Whisparr instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="whisparr_instance_${index}_api_url">URL:</label>
-                            <input type="text" id="whisparr_instance_${index}_api_url" value="${instance.api_url || ''}">
+                            <label for="whisparr-url-${index}">URL:</label>
+                            <input type="text" id="whisparr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Whisparr (e.g., http://localhost:6969)">
                             <p class="setting-help">Base URL for Whisparr (e.g., http://localhost:6969)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="whisparr_instance_${index}_api_key">API Key:</label>
-                            <input type="text" id="whisparr_instance_${index}_api_key" value="${instance.api_key || ''}">
+                            <label for="whisparr-key-${index}">API Key:</label>
+                            <input type="text" id="whisparr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr">
                             <p class="setting-help">API key for Whisparr</p>
                         </div>
                         <div class="setting-item">
-                            <label for="whisparr_instance_${index}_enabled">Enabled:</label>
+                            <label for="whisparr-enabled-${index}">Enabled:</label>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="whisparr_instance_${index}_enabled" class="instance-enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <input type="checkbox" id="whisparr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        <div class="setting-item">
-                            <button type="button" class="test-connection-btn" data-instance-id="${index}">Test Connection</button>
-                            <span class="connection-status" id="whisparr_instance_${index}_status"></span>
-                        </div>
+                        <button type="button" class="test-connection-btn" data-instance="${index}">
+                            <i class="fas fa-plug"></i> Test Connection
+                        </button>
                     </div>
                 </div>
             `;
         });
-        
-        // Add a button to add new instances (limit to 9 total)
+
         instancesHtml += `
                 </div> <!-- instances-container -->
                 <div class="button-container" style="text-align: center; margin-top: 15px;">
@@ -1081,8 +1074,8 @@ const SettingsForms = {
             
             const instanceObj = {
                 name: name || `Instance ${index + 1}`,
-                api_url: url || '',
-                api_key: key || '',
+                api_url: url || "",
+                api_key: key || "",
                 enabled: enabled
             };
             
