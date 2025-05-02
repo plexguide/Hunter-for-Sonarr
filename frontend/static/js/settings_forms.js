@@ -1040,7 +1040,10 @@ const SettingsForms = {
         
         // Handle instances differently
         const instances = [];
-        const instanceContainers = form.querySelectorAll('.instance-panel');
+        // Find instance containers with both old and new class names
+        const instanceContainers = form.querySelectorAll('.instance-item, .instance-panel');
+        
+        console.log(`Found ${instanceContainers.length} instance containers for ${appType}`);
         
         instanceContainers.forEach((instance, index) => {
             const instanceObj = {
@@ -1049,25 +1052,74 @@ const SettingsForms = {
                 api_key: instance.querySelector('input[name="api_key"]')?.value || '',
                 enabled: instance.querySelector('input[name="enabled"]')?.checked || false
             };
+            console.log(`Instance ${index}: ${instanceObj.name}, enabled: ${instanceObj.enabled}`);
             instances.push(instanceObj);
         });
         
         settings.instances = instances;
         
-        // Add additional settings based on app type
-        if (appType === 'sonarr' || appType === 'lidarr' || appType === 'readarr' || appType === 'whisparr') {
-            // Get missing search settings
-            const searchModeSelector = form.querySelector('select[name="missing_search_mode"]');
-            if (searchModeSelector) {
-                settings.missing_search_mode = searchModeSelector.value;
-            }
+        // Helper function to get input value by selector
+        const getInputValue = (selector, defaultValue) => {
+            const element = form.querySelector(selector);
+            if (!element) return defaultValue;
             
-            const missingItemsInput = form.querySelector('input[name="missing_items_to_search"]');
-            if (missingItemsInput) {
-                settings.missing_items_to_search = parseInt(missingItemsInput.value) || 0;
+            // Handle different input types
+            if (element.type === 'checkbox') {
+                return element.checked;
+            } else if (element.type === 'number') {
+                return parseInt(element.value) || defaultValue;
+            } else if (element.tagName === 'SELECT') {
+                return element.value;
+            } else {
+                return element.value || defaultValue;
             }
+        };
+        
+        // Common settings for all *arr apps
+        settings.api_timeout = getInputValue(`#${appType}_api_timeout`, 120);
+        settings.command_wait_delay = getInputValue(`#${appType}_command_wait_delay`, 1);
+        settings.command_wait_attempts = getInputValue(`#${appType}_command_wait_attempts`, 600);
+        settings.minimum_download_queue_size = getInputValue(`#${appType}_minimum_download_queue_size`, -1);
+        settings.log_refresh_interval_seconds = getInputValue(`#${appType}_log_refresh_interval_seconds`, 30);
+        
+        // Add app-specific settings
+        if (appType === 'sonarr') {
+            settings.missing_search_mode = getInputValue('#sonarr-missing-search-mode', 'episodes');
+            settings.missing_items_to_search = getInputValue('#sonarr-missing-items-to-search', 1);
+            settings.upgrade_episodes = getInputValue('#sonarr-upgrade-episodes', 0);
+            settings.monitored_only = getInputValue('#sonarr_monitored_only', true);
+        } 
+        else if (appType === 'radarr') {
+            settings.hunt_missing_movies = getInputValue('#hunt_missing_movies', 1);
+            settings.hunt_upgrade_movies = getInputValue('#hunt_upgrade_movies', 0);
+            settings.monitored_only = getInputValue('#radarr_monitored_only', true);
+            settings.random_missing = getInputValue('#radarr_random_missing', true);
+            settings.random_upgrades = getInputValue('#radarr_random_upgrades', true);
+            settings.skip_future_releases = getInputValue('#skip_future_releases', true);
+            settings.skip_movie_refresh = getInputValue('#skip_movie_refresh', false);
+        } 
+        else if (appType === 'lidarr') {
+            settings.hunt_missing_albums = getInputValue('#hunt_missing_albums', 1);
+            settings.hunt_upgrade_albums = getInputValue('#hunt_upgrade_albums', 0);
+            settings.missing_search_mode = getInputValue('#lidarr-missing-search-mode', 'albums');
+            settings.monitored_only = getInputValue('#lidarr_monitored_only', true);
+        } 
+        else if (appType === 'readarr') {
+            settings.hunt_missing_books = getInputValue('#hunt_missing_books', 1);
+            settings.hunt_upgrade_books = getInputValue('#hunt_upgrade_books', 0);
+            settings.missing_search_mode = getInputValue('#readarr-missing-search-mode', 'books');
+            settings.monitored_only = getInputValue('#readarr_monitored_only', true);
+        } 
+        else if (appType === 'whisparr') {
+            settings.hunt_missing_movies = getInputValue('#whisparr_hunt_missing_movies', 1);
+            settings.hunt_upgrade_movies = getInputValue('#whisparr_hunt_upgrade_movies', 0);
+            settings.monitored_only = getInputValue('#whisparr_monitored_only', true);
+            settings.random_missing = getInputValue('#whisparr_random_missing', true);
+            settings.random_upgrades = getInputValue('#whisparr_random_upgrades', true);
+            settings.skip_future_releases = getInputValue('#whisparr_skip_future_releases', true);
         }
         
+        console.log('Collected settings for', appType, settings);
         return settings;
     },
     
