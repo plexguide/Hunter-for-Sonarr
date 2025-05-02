@@ -18,7 +18,7 @@ sonarr_logger = get_logger("sonarr")
 def process_cutoff_upgrades(
     api_url: str,
     api_key: str,
-    instance_name: str = "Default",
+    instance_name: str,
     api_timeout: int = 60,
     monitored_only: bool = True,
     skip_series_refresh: bool = False,

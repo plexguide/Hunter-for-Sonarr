@@ -31,12 +31,6 @@ def ensure_history_dir():
         for app in history_locks.keys():
             app_dir = HISTORY_BASE_PATH / app
             app_dir.mkdir(exist_ok=True, parents=True)
-            
-            # Create legacy app files if they don't exist (for backwards compatibility)
-            legacy_history_file = HISTORY_BASE_PATH / f"{app}_history.json"
-            if not legacy_history_file.exists():
-                with open(legacy_history_file, 'w') as f:
-                    json.dump([], f)
                     
         return True
     except Exception as e:
@@ -45,13 +39,13 @@ def ensure_history_dir():
 
 def get_history_file_path(app_type, instance_name=None):
     """Get the appropriate history file path based on app type and instance name"""
-    if instance_name:
-        # Create safe filename from instance name (same as in stateful_manager.py)
-        safe_instance_name = "".join([c if c.isalnum() else "_" for c in instance_name])
-        return HISTORY_BASE_PATH / app_type / f"{safe_instance_name}.json"
-    else:
-        # Legacy path format
-        return HISTORY_BASE_PATH / f"{app_type}_history.json"
+    # If no instance name is provided, use "Default"
+    if instance_name is None:
+        instance_name = "Default"
+    
+    # Create safe filename from instance name (same as in stateful_manager.py)
+    safe_instance_name = "".join([c if c.isalnum() else "_" for c in instance_name])
+    return HISTORY_BASE_PATH / app_type / f"{safe_instance_name}.json"
 
 def add_history_entry(app_type, entry_data):
     """
@@ -78,6 +72,10 @@ def add_history_entry(app_type, entry_data):
             logger.error(f"Missing required field: {field}")
             return None
     
+    # Log the instance name for debugging
+    instance_name = entry_data["instance_name"]
+    logger.debug(f"Adding history entry for {app_type} with instance_name: '{instance_name}'")
+    
     # Create the entry with timestamp
     timestamp = int(time.time())
     entry = {
@@ -85,13 +83,13 @@ def add_history_entry(app_type, entry_data):
         "date_time_readable": datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S'),
         "processed_info": entry_data["name"],
         "id": entry_data["id"],
-        "instance_name": entry_data["instance_name"],
+        "instance_name": instance_name,  # Use the instance_name we extracted above
         "operation_type": entry_data.get("operation_type", "missing"),  # Default to "missing" if not specified
         "app_type": app_type  # Include app_type in the entry for display in UI
     }
     
-    instance_name = entry_data["instance_name"]
     history_file = get_history_file_path(app_type, instance_name)
+    logger.debug(f"Writing to history file: {history_file}")
     
     # Make sure the parent directory exists
     history_file.parent.mkdir(exist_ok=True, parents=True)
@@ -114,18 +112,6 @@ def add_history_entry(app_type, entry_data):
         # Write back to file
         with open(history_file, 'w') as f:
             json.dump(history_data, f, indent=2)
-        
-        # Also add to legacy file for backward compatibility
-        legacy_file = get_history_file_path(app_type)
-        try:
-            with open(legacy_file, 'r') as f:
-                legacy_data = json.load(f)
-        except (json.JSONDecodeError, FileNotFoundError):
-            legacy_data = []
-            
-        legacy_data.insert(0, entry)
-        with open(legacy_file, 'w') as f:
-            json.dump(legacy_data, f, indent=2)
     
     logger.info(f"Added history entry for {app_type}-{instance_name}: {entry_data['name']}")
     return entry
@@ -158,16 +144,6 @@ def get_history(app_type, search_query=None, page=1, page_size=20):
         for app in history_locks.keys():
             app_dir = HISTORY_BASE_PATH / app
             
-            # Check both legacy files and instance-specific files
-            legacy_file = get_history_file_path(app)
-            try:
-                if legacy_file.exists():
-                    with open(legacy_file, 'r') as f:
-                        app_history = json.load(f)
-                        result.extend(app_history)
-            except (json.JSONDecodeError, FileNotFoundError) as e:
-                logger.warning(f"Error reading legacy history file for {app}: {str(e)}")
-            
             # Find and read all instance files
             if app_dir.exists():
                 for history_file in app_dir.glob("*.json"):
@@ -175,6 +151,7 @@ def get_history(app_type, search_query=None, page=1, page_size=20):
                         with open(history_file, 'r') as f:
                             instance_history = json.load(f)
                             result.extend(instance_history)
+                            logger.debug(f"Read {len(instance_history)} entries from {history_file}")
                     except (json.JSONDecodeError, FileNotFoundError) as e:
                         logger.warning(f"Error reading instance history file {history_file}: {str(e)}")
     else:
@@ -196,23 +173,7 @@ def get_history(app_type, search_query=None, page=1, page_size=20):
                         result.extend(instance_history)
                         logger.debug(f"Read {len(instance_history)} entries from {history_file}")
                 except (json.JSONDecodeError, FileNotFoundError) as e:
-                    logger.warning(f"Error reading instance history file {history_file}: {str(e)}")
-        
-        # Also try to read the legacy file
-        legacy_file = get_history_file_path(app_type)
-        try:
-            if legacy_file.exists():
-                with open(legacy_file, 'r') as f:
-                    legacy_history = json.load(f)
-                    # Only add entries that aren't duplicates (by id and timestamp)
-                    existing_entries = {(entry.get("id", ""), entry.get("date_time", 0)) for entry in result}
-                    for entry in legacy_history:
-                        entry_key = (entry.get("id", ""), entry.get("date_time", 0))
-                        if entry_key not in existing_entries:
-                            result.append(entry)
-                    logger.debug(f"Read {len(legacy_history)} entries from legacy file {legacy_file}")
-        except (json.JSONDecodeError, FileNotFoundError) as e:
-            logger.warning(f"Error reading legacy history file for {app_type}: {str(e)}")
+                    logger.warning(f"Error reading instance history file {history_file}: {e}")
     
     # Sort by date_time in descending order
     result = sorted(result, key=lambda x: x["date_time"], reverse=True)
@@ -290,15 +251,8 @@ def clear_history(app_type):
     
     try:
         if app_type == "all":
-            # Clear all history files
+            # Clear all history files for all apps
             for app in history_locks.keys():
-                # Clear legacy file
-                legacy_file = get_history_file_path(app)
-                if legacy_file.exists():
-                    with open(legacy_file, 'w') as f:
-                        json.dump([], f)
-                        logger.debug(f"Cleared legacy history file: {legacy_file}")
-                
                 # Clear all instance files
                 app_dir = HISTORY_BASE_PATH / app
                 # Ensure directory exists
@@ -313,14 +267,7 @@ def clear_history(app_type):
                             json.dump([], f)
                             logger.debug(f"Cleared instance history file: {history_file}")
         else:
-            # Clear legacy file
-            legacy_file = get_history_file_path(app_type)
-            if legacy_file.exists():
-                with open(legacy_file, 'w') as f:
-                    json.dump([], f)
-                    logger.debug(f"Cleared legacy history file: {legacy_file}")
-            
-            # Clear all instance files
+            # Clear all instance files for specific app
             app_dir = HISTORY_BASE_PATH / app_type
             # Ensure directory exists
             app_dir.mkdir(exist_ok=True, parents=True)

@@ -269,6 +269,7 @@ def app_specific_loop(app_type: str) -> None:
                         processed_missing = process_missing(
                             api_url=api_url,
                             api_key=api_key,
+                            instance_name=instance_name,  # Added the required instance_name parameter
                             api_timeout=api_timeout,
                             monitored_only=monitored_only,
                             skip_future_episodes=skip_future_episodes,
@@ -305,6 +306,7 @@ def app_specific_loop(app_type: str) -> None:
                         processed_upgrades = process_upgrades(
                             api_url=api_url,
                             api_key=api_key,
+                            instance_name=instance_name,  # Added the required instance_name parameter
                             api_timeout=api_timeout,
                             monitored_only=monitored_only,
                             skip_series_refresh=skip_series_refresh,

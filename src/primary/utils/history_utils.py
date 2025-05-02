@@ -20,6 +20,8 @@ def log_processed_media(app_type, media_name, media_id, instance_name, operation
     - bool - Success or failure
     """
     try:
+        logger.debug(f"Logging history entry for {app_type} - {instance_name}: '{media_name}' (ID: {media_id})")
+        
         entry_data = {
             "name": media_name,
             "id": str(media_id),
@@ -29,10 +31,10 @@ def log_processed_media(app_type, media_name, media_id, instance_name, operation
         
         result = add_history_entry(app_type, entry_data)
         if result:
-            logger.info(f"Logged history entry for {app_type}: {media_name} ({operation_type})")
+            logger.info(f"Logged history entry for {app_type} - {instance_name}: {media_name} ({operation_type})")
             return True
         else:
-            logger.error(f"Failed to log history entry for {app_type}: {media_name}")
+            logger.error(f"Failed to log history entry for {app_type} - {instance_name}: {media_name}")
             return False
     except Exception as e:
         logger.error(f"Error logging history entry: {str(e)}")

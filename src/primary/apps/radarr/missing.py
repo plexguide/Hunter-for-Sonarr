@@ -36,8 +36,8 @@ def process_missing_movies(
     processed_any = False
     
     # Extract necessary settings
-    api_url = app_settings.get("api_url")
-    api_key = app_settings.get("api_key")
+    api_url = app_settings.get("api_url", "").strip()
+    api_key = app_settings.get("api_key", "").strip()
     api_timeout = get_advanced_setting("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
@@ -45,7 +45,9 @@ def process_missing_movies(
     hunt_missing_movies = app_settings.get("hunt_missing_movies", 0)
     command_wait_delay = get_advanced_setting("command_wait_delay", 5)
     command_wait_attempts = get_advanced_setting("command_wait_attempts", 12)
-    instance_name = app_settings.get("name", "Default")
+    
+    # Get instance name - check for instance_name first, fall back to legacy "name" key if needed
+    instance_name = app_settings.get("instance_name", app_settings.get("name", "Radarr Default"))
 
     if not api_url or not api_key:
         radarr_logger.error("API URL or Key not configured in settings. Cannot process missing movies.")
