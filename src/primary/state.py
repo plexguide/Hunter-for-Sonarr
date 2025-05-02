@@ -109,7 +109,7 @@ def check_state_reset(app_type: str = None) -> bool:
     current_app_type = app_type
     
     # Use a much longer default interval (1 week = 168 hours) to prevent frequent resets
-    reset_interval = settings_manager.get_setting(current_app_type, "state_reset_interval_hours", 168)
+    reset_interval = settings_manager.get_advanced_setting("stateful_management_hours", 168)
     
     last_reset = get_last_reset_time(current_app_type)
     now = datetime.datetime.now()
@@ -186,7 +186,7 @@ def calculate_reset_time(app_type: str = None) -> str:
         
     current_app_type = app_type
     
-    reset_interval = settings_manager.get_setting(current_app_type, "state_reset_interval_hours", 168)
+    reset_interval = settings_manager.get_advanced_setting("stateful_management_hours", 168)
     
     last_reset = get_last_reset_time(current_app_type)
     next_reset = last_reset + datetime.timedelta(hours=reset_interval)

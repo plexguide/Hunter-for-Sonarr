@@ -21,21 +21,20 @@
             // Cache elements used by Sonarr settings form
             this.elements.apiUrlInput = document.getElementById('sonarr_api_url');
             this.elements.apiKeyInput = document.getElementById('sonarr_api_key');
-            this.elements.huntMissingShowsInput = document.getElementById('hunt_missing_shows');
-            this.elements.huntUpgradeEpisodesInput = document.getElementById('hunt_upgrade_episodes');
-            this.elements.sleepDurationInput = document.getElementById('sleep_duration'); // Note: ID might be generic now
-            this.elements.sleepDurationHoursSpan = document.getElementById('sleep_duration_hours'); // Note: ID might be generic now
-            this.elements.stateResetIntervalInput = document.getElementById('state_reset_interval_hours'); // Note: ID might be generic now
-            this.elements.monitoredOnlyInput = document.getElementById('monitored_only'); // Note: ID might be generic now
-            this.elements.skipFutureEpisodesInput = document.getElementById('skip_future_episodes');
-            this.elements.skipSeriesRefreshInput = document.getElementById('skip_series_refresh');
-            this.elements.randomMissingInput = document.getElementById('random_missing'); // Note: ID might be generic now
-            this.elements.randomUpgradesInput = document.getElementById('random_upgrades'); // Note: ID might be generic now
-            this.elements.debugModeInput = document.getElementById('debug_mode'); // Note: ID might be generic now
-            this.elements.apiTimeoutInput = document.getElementById('api_timeout'); // Note: ID might be generic now
-            this.elements.commandWaitDelayInput = document.getElementById('command_wait_delay'); // Note: ID might be generic now
-            this.elements.commandWaitAttemptsInput = document.getElementById('command_wait_attempts'); // Note: ID might be generic now
-            this.elements.minimumDownloadQueueSizeInput = document.getElementById('minimum_download_queue_size'); // Note: ID might be generic now
+            this.elements.huntMissingItemsInput = document.getElementById('sonarr-hunt-missing-items');
+            this.elements.huntUpgradeItemsInput = document.getElementById('sonarr-hunt-upgrade-items');
+            this.elements.sleepDurationInput = document.getElementById('sonarr_sleep_duration');
+            this.elements.sleepDurationHoursSpan = document.getElementById('sonarr_sleep_duration_hours');
+            this.elements.monitoredOnlyInput = document.getElementById('sonarr_monitored_only');
+            this.elements.skipFutureEpisodesInput = document.getElementById('sonarr_skip_future_episodes');
+            this.elements.skipSeriesRefreshInput = document.getElementById('sonarr_skip_series_refresh');
+            this.elements.randomMissingInput = document.getElementById('sonarr_random_missing'); 
+            this.elements.randomUpgradesInput = document.getElementById('sonarr_random_upgrades'); 
+            this.elements.debugModeInput = document.getElementById('sonarr_debug_mode'); 
+            this.elements.apiTimeoutInput = document.getElementById('sonarr_api_timeout'); 
+            this.elements.commandWaitDelayInput = document.getElementById('sonarr_command_wait_delay'); 
+            this.elements.commandWaitAttemptsInput = document.getElementById('sonarr_command_wait_attempts'); 
+            this.elements.minimumDownloadQueueSizeInput = document.getElementById('sonarr_minimum_download_queue_size'); 
             // Add other Sonarr-specific elements if any
         },
 

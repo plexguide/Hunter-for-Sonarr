@@ -278,7 +278,9 @@ ADVANCED_SETTINGS = [
     "command_wait_delay", 
     "command_wait_attempts", 
     "minimum_download_queue_size",
-    "log_refresh_interval_seconds"
+    "log_refresh_interval_seconds",
+    "debug_mode",
+    "stateful_management_hours"
 ]
 
 def get_advanced_setting(setting_name, default_value=None):

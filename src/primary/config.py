@@ -122,7 +122,8 @@ def log_configuration(app_name: str):
     api_key = settings.get("api_key", "")
     debug_mode = settings.get("debug_mode", False)
     sleep_duration = settings.get("sleep_duration", 900)
-    state_reset_interval = settings.get("state_reset_interval_hours", 168)
+    # Get state reset interval
+    state_reset_interval = settings_manager.get_advanced_setting("stateful_management_hours", 168)
     monitored_only = settings.get("monitored_only", True)
     min_queue_size = settings.get("minimum_download_queue_size", -1)
 
@@ -153,7 +154,7 @@ def log_configuration(app_name: str):
         # Use hunt_upgrade_items
         log.info(f"Hunt Upgrade Items: {settings.get('hunt_upgrade_items', 0)}") 
         log.info(f"Sleep Duration: {settings.get('sleep_duration', 900)} seconds")
-        log.info(f"State Reset Interval: {settings.get('state_reset_interval_hours', 168)} hours")
+        log.info(f"State Reset Interval: {state_reset_interval} hours")
         log.info(f"Monitored Only: {settings.get('monitored_only', True)}")
         log.info(f"Minimum Download Queue Size: {settings.get('minimum_download_queue_size', -1)}")
     elif app_name == "readarr":

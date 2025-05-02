@@ -11,15 +11,8 @@
   "hunt_missing_items": 1,
   "hunt_upgrade_items": 0,
   "sleep_duration": 900,
-  "state_reset_interval_hours": 168,
   "monitored_only": true,
   "skip_series_refresh": true,
   "skip_future_releases": true,
-  "skip_scene_refresh": true,
-  "debug_mode": false,
-  "api_timeout": 120,
-  "command_wait_delay": 1,
-  "command_wait_attempts": 600,
-  "minimum_download_queue_size": -1,
-  "log_refresh_interval_seconds": 30
+  "skip_scene_refresh": true
 }
