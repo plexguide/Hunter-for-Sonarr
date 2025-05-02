@@ -41,9 +41,9 @@ def setup_main_logger(debug_mode=None):
     use_debug_mode = False
     if debug_mode is None:
         try:
-            # Use a safe approach to avoid circular imports if possible
-            from primary.config import DEBUG_MODE as CONFIG_DEBUG_MODE
-            use_debug_mode = CONFIG_DEBUG_MODE
+            # Use the get_debug_mode function to check general settings
+            from src.primary.config import get_debug_mode
+            use_debug_mode = get_debug_mode()
         except (ImportError, AttributeError):
             pass # Default to False
     else:
@@ -117,12 +117,11 @@ def get_logger(app_type: str) -> logging.Logger:
     
     # Determine debug mode setting safely
     try:
-        from primary import config
-        debug_mode = getattr(config, "DEBUG_MODE", False)
+        from src.primary.config import get_debug_mode
+        debug_mode = get_debug_mode()
     except ImportError:
         debug_mode = False
-            
-    # Set appropriate log level
+        
     app_logger.setLevel(logging.DEBUG if debug_mode else logging.INFO)
     
     # Reset handlers in case this logger existed before but wasn't cached
@@ -157,6 +156,48 @@ def get_logger(app_type: str) -> logging.Logger:
         app_logger.debug(f"Debug logging enabled for {app_type} logger")
         
     return app_logger
+
+def update_logging_levels(debug_mode=None):
+    """
+    Update all logger levels based on the current debug mode setting.
+    Call this after settings are changed in the UI to apply changes immediately.
+    
+    Args:
+        debug_mode: Force a specific debug mode, or None to read from settings
+    """
+    # Determine debug mode from settings if not specified
+    if debug_mode is None:
+        try:
+            from src.primary.config import get_debug_mode
+            debug_mode = get_debug_mode()
+        except (ImportError, AttributeError):
+            debug_mode = False
+    
+    # Set level for main logger
+    level = logging.DEBUG if debug_mode else logging.INFO
+    if logger:
+        logger.setLevel(level)
+        for handler in logger.handlers:
+            handler.setLevel(level)
+    
+    # Set level for all app loggers
+    for app_type, app_logger in app_loggers.items():
+        app_logger.setLevel(level)
+        for handler in app_logger.handlers:
+            handler.setLevel(level)
+    
+    # Set root logger level too
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+    for handler in root_logger.handlers:
+        handler.setLevel(level)
+
+    # Force Python's logging module to respect the log level for all existing loggers
+    for name, logger_instance in logging.Logger.manager.loggerDict.items():
+        if isinstance(logger_instance, logging.Logger):
+            logger_instance.setLevel(level)
+    
+    return debug_mode
 
 def debug_log(message: str, data: object = None, app_type: Optional[str] = None) -> None:
     """

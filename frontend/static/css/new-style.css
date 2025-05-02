@@ -1553,6 +1553,25 @@ input:checked + .slider:before {
     background-color: rgba(var(--accent-color-rgb), 0.1);
 }
 
+/* Operation Type Styles in History Table */
+.operation-missing {
+    background-color: #005a9e;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    display: inline-block;
+}
+
+.operation-upgrade {
+    background-color: #2a9d8f;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    display: inline-block;
+}
+
 /* History Controls */
 .history-controls {
     display: flex;

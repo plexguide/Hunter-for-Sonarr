@@ -13,6 +13,7 @@ from src.primary.apps.radarr import api as radarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
+from src.primary.settings_manager import load_settings, get_advanced_setting
 
 # Get logger for the app
 radarr_logger = get_logger("radarr")
@@ -35,16 +36,18 @@ def process_missing_movies(
     processed_any = False
     
     # Extract necessary settings
-    api_url = app_settings.get("api_url")
-    api_key = app_settings.get("api_key")
-    api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
+    api_url = app_settings.get("api_url", "").strip()
+    api_key = app_settings.get("api_key", "").strip()
+    api_timeout = get_advanced_setting("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_movie_refresh = app_settings.get("skip_movie_refresh", False)
     hunt_missing_movies = app_settings.get("hunt_missing_movies", 0)
-    command_wait_delay = app_settings.get("command_wait_delay", 5)
-    command_wait_attempts = app_settings.get("command_wait_attempts", 12)
-    instance_name = app_settings.get("name", "Default")
+    command_wait_delay = get_advanced_setting("command_wait_delay", 5)
+    command_wait_attempts = get_advanced_setting("command_wait_attempts", 12)
+    
+    # Get instance name - check for instance_name first, fall back to legacy "name" key if needed
+    instance_name = app_settings.get("instance_name", app_settings.get("name", "Radarr Default"))
 
     if not api_url or not api_key:
         radarr_logger.error("API URL or Key not configured in settings. Cannot process missing movies.")
@@ -154,12 +157,14 @@ def process_missing_movies(
         
         if search_success:
             radarr_logger.info(f"Successfully triggered search for movie '{movie_title}'")
-            add_processed_id("radarr", instance_name, str(movie_id))
+            # Immediately add to processed IDs to prevent duplicate processing
+            success = add_processed_id("radarr", instance_name, str(movie_id))
+            radarr_logger.debug(f"Added processed ID: {movie_id}, success: {success}")
             
             # Log to history system
             year = movie.get("year", "Unknown Year")
             media_name = f"{movie_title} ({year})"
-            log_processed_media("radarr", media_name, movie_id, instance_name)
+            log_processed_media("radarr", media_name, movie_id, instance_name, "missing")
             radarr_logger.debug(f"Logged history entry for movie: {media_name}")
             
             increment_stat("radarr", "hunted")

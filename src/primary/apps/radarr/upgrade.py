@@ -33,15 +33,17 @@ def process_cutoff_upgrades(
     processed_any = False
     
     # Extract necessary settings
-    api_url = app_settings.get("api_url")
-    api_key = app_settings.get("api_key")
+    api_url = app_settings.get("api_url", "").strip()
+    api_key = app_settings.get("api_key", "").strip()
     api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_movie_refresh = app_settings.get("skip_movie_refresh", False)
     hunt_upgrade_movies = app_settings.get("hunt_upgrade_movies", 0)
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
-    instance_name = app_settings.get("name", "Default")
+    
+    # Get instance name - check for instance_name first, fall back to legacy "name" key if needed
+    instance_name = app_settings.get("instance_name", app_settings.get("name", "Radarr Default"))
     
     # Get movies eligible for upgrade
     radarr_logger.info("Retrieving movies eligible for cutoff upgrade...")

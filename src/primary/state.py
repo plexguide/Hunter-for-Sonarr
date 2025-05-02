@@ -108,6 +108,7 @@ def check_state_reset(app_type: str = None) -> bool:
         
     current_app_type = app_type
     
+    # Use a much longer default interval (1 week = 168 hours) to prevent frequent resets
     reset_interval = settings_manager.get_setting(current_app_type, "state_reset_interval_hours", 168)
     
     last_reset = get_last_reset_time(current_app_type)
@@ -116,15 +117,26 @@ def check_state_reset(app_type: str = None) -> bool:
     delta = now - last_reset
     hours_passed = delta.total_seconds() / 3600
     
-    if hours_passed >= reset_interval:
-        logger.info(f"State files for {current_app_type} have not been reset in {hours_passed:.1f} hours (interval: {reset_interval}h). Resetting now.")
-        
-        clear_processed_ids(current_app_type)
-        
-        set_last_reset_time(now, current_app_type)
-        
-        return True
+    # Log every cycle to help diagnose state reset issues
+    logger.debug(f"State check for {current_app_type}: {hours_passed:.1f} hours since last reset (interval: {reset_interval}h)")
     
+    if hours_passed >= reset_interval:
+        logger.warning(f"State files for {current_app_type} will be reset after {hours_passed:.1f} hours (interval: {reset_interval}h)")
+        logger.warning(f"This will cause all previously processed media to be eligible for processing again")
+        
+        # Add additional safeguard - only reset if more than double the interval has passed
+        # This helps prevent accidental resets due to clock issues or other anomalies
+        if hours_passed >= (reset_interval * 2):
+            logger.info(f"Confirmed state reset for {current_app_type} after {hours_passed:.1f} hours")
+            clear_processed_ids(current_app_type)
+            set_last_reset_time(now, current_app_type)
+            return True
+        else:
+            logger.info(f"State reset postponed for {current_app_type} - will proceed when {reset_interval * 2}h have passed")
+            # Update last reset time partially to avoid immediate reset next cycle
+            half_delta = datetime.timedelta(hours=reset_interval/2)
+            set_last_reset_time(now - half_delta, current_app_type)
+            
     return False
 
 def clear_processed_ids(app_type: str = None) -> None:

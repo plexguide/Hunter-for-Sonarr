@@ -252,23 +252,21 @@ def process_missing_albums(
                 lidarr_logger.info(f"Triggering Artist Search for '{artist_name}' (ID: {artist_id}) on instance {instance_name}")
                 try:
                     # Use the correct API function name
-                    command_id = lidarr_api.search_artist(api_url, api_key, artist_id, api_timeout)
-                    if command_id:
-                        # Log with the retrieved artist name
-                        lidarr_logger.info(f"Artist search triggered for '{artist_name}' (ID: {artist_id}) on {instance_name}. Command ID: {command_id}")
-                        increment_stat("lidarr", "hunted") # Changed from "missing" to "hunted"
-                        processed_count += 1 # Count artists searched
-                        processed_artists_or_albums.add(artist_id)
-                        
-                        # Add to processed list
-                        add_processed_id("lidarr", instance_name, str(artist_id))
-                        lidarr_logger.debug(f"Added artist ID {artist_id} to processed list for {instance_name}")
-                        
-                        # Log to history system
-                        log_processed_media("lidarr", f"{artist_name}", artist_id, instance_name)
-                        lidarr_logger.debug(f"Logged history entry for artist: {artist_name}")
-                        
-                        time.sleep(0.1) # Small delay between triggers
+                    lidarr_api.search_artist(api_url, api_key, api_timeout, artist_id)
+                    lidarr_logger.info(f"Successfully triggered search for artist '{artist_name}' (ID: {artist_id})")
+                    
+                    # Mark as processed right away
+                    processed_artists_or_albums.add(artist_id)
+                    
+                    # Add to processed list
+                    success = add_processed_id("lidarr", instance_name, str(artist_id))
+                    lidarr_logger.debug(f"Added artist ID {artist_id} to processed list for {instance_name}, success: {success}")
+                    
+                    # Log to history system
+                    log_processed_media("lidarr", f"{artist_name}", artist_id, instance_name, "missing")
+                    lidarr_logger.debug(f"Logged history entry for artist: {artist_name}")
+                    
+                    time.sleep(0.1) # Small delay between triggers
                 except Exception as e:
                     lidarr_logger.warning(f"Failed to trigger artist search for ID {artist_id} on {instance_name}: {e}")
 
@@ -307,10 +305,10 @@ def process_missing_albums(
                 processed_count += len(album_ids_to_search) # Count albums searched
                 processed_artists_or_albums.update(album_ids_to_search)
                 
-                # Add album IDs to processed list
+                # Add album IDs to processed list immediately
                 for album_id in album_ids_to_search:
-                    add_processed_id("lidarr", instance_name, str(album_id))
-                    lidarr_logger.debug(f"Added album ID {album_id} to processed list for {instance_name}")
+                    success = add_processed_id("lidarr", instance_name, str(album_id))
+                    lidarr_logger.debug(f"Added album ID {album_id} to processed list for {instance_name}, success: {success}")
                     
                     # Log to history system
                     album_info = missing_items_dict.get(album_id)
@@ -319,7 +317,7 @@ def process_missing_albums(
                         title = album_info.get('title', f'Album ID {album_id}')
                         artist_name = album_info.get('artist', {}).get('artistName', 'Unknown Artist')
                         media_name = f"{artist_name} - {title}"
-                        log_processed_media("lidarr", media_name, album_id, instance_name)
+                        log_processed_media("lidarr", media_name, album_id, instance_name, "missing")
                         lidarr_logger.debug(f"Logged history entry for album: {media_name}")
                     
                 time.sleep(command_wait_delay) # Basic delay after the single command
