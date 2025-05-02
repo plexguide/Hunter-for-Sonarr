@@ -293,12 +293,20 @@ const appsModule = {
             appSettings = SettingsForms.getFormSettings(appForm);
             if (!appSettings) {
                 console.error(`Could not get settings for ${this.currentApp}`);
-                alert(`Error: Could not collect settings from the form. Please try again.`);
+                if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
+                    huntarrUI.showNotification('Error: Could not collect settings from the form. Please try again.', 'error');
+                } else {
+                    alert('Error: Could not collect settings from the form. Please try again.');
+                }
                 return;
             }
         } else {
             console.error('SettingsForms module or getFormSettings function not found');
-            alert('Error: Settings module not found. Please refresh the page and try again.');
+            if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
+                huntarrUI.showNotification('Error: Settings module not found. Please refresh the page and try again.', 'error');
+            } else {
+                alert('Error: Settings module not found. Please refresh the page and try again.');
+            }
             return;
         }
         
@@ -330,11 +338,19 @@ const appsModule = {
             }
             
             // Show success message
-            alert('Settings saved successfully!');
+            if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
+                huntarrUI.showNotification('Settings saved successfully', 'success');
+            } else {
+                alert('Settings saved successfully!');
+            }
         })
         .catch(error => {
             console.error('Error saving settings:', error);
-            alert(`Error saving settings: ${error.message}`);
+            if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
+                huntarrUI.showNotification(`Error saving settings: ${error.message}`, 'error');
+            } else {
+                alert(`Error saving settings: ${error.message}`);
+            }
         });
     }
 };
