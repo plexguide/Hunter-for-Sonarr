@@ -6,6 +6,9 @@
 const SettingsForms = {
     // Generate Sonarr settings form
     generateSonarrForm: function(container, settings = {}) {
+        // Add data-app-type attribute to container
+        container.setAttribute('data-app-type', 'sonarr');
+        
         // Make sure the instances array exists
         if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
             settings.instances = [{
@@ -142,6 +145,9 @@ const SettingsForms = {
     
     // Generate Radarr settings form
     generateRadarrForm: function(container, settings = {}) {
+        // Add data-app-type attribute to container
+        container.setAttribute('data-app-type', 'radarr');
+        
         // Make sure the instances array exists
         if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
             settings.instances = [{
@@ -269,6 +275,9 @@ const SettingsForms = {
     
     // Generate Lidarr settings form
     generateLidarrForm: function(container, settings = {}) {
+        // Add data-app-type attribute to container
+        container.setAttribute('data-app-type', 'lidarr');
+        
         // Make sure the instances array exists
         if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
             settings.instances = [{
@@ -404,6 +413,9 @@ const SettingsForms = {
     
     // Generate Readarr settings form
     generateReadarrForm: function(container, settings = {}) {
+        // Add data-app-type attribute to container
+        container.setAttribute('data-app-type', 'readarr');
+        
         // Make sure the instances array exists
         if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
             settings.instances = [{
@@ -530,6 +542,9 @@ const SettingsForms = {
     
     // Generate Whisparr settings form
     generateWhisparrForm: function(container, settings = {}) {
+        // Add data-app-type attribute to container
+        container.setAttribute('data-app-type', 'whisparr');
+        
         // Make sure the instances array exists
         if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
             settings.instances = [{
@@ -648,6 +663,9 @@ const SettingsForms = {
     
     // Generate Swaparr settings form
     generateSwaparrForm: function(container, settings = {}) {
+        // Add data-app-type attribute to container
+        container.setAttribute('data-app-type', 'swaparr');
+        
         // Create the HTML for the Swaparr settings form
         container.innerHTML = `
             <div class="settings-group">
@@ -962,6 +980,9 @@ const SettingsForms = {
     
     // Generate General settings form
     generateGeneralForm: function(container, settings = {}) {
+        // Add data-app-type attribute to container
+        container.setAttribute('data-app-type', 'general');
+        
         container.innerHTML = `
             <div class="settings-group">
                 <h3>System Settings</h3>

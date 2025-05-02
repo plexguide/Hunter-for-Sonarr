@@ -215,49 +215,71 @@ const appsModule = {
     
     // Add change event listeners to form elements
     addFormChangeListeners: function(form) {
-        const elementsToWatch = form.querySelectorAll('input, select, textarea');
-        elementsToWatch.forEach(element => {
-            element.addEventListener('change', () => {
-                console.log('Form element changed, marking settings as changed');
-                this.markAppsAsChanged();
-            });
+        if (!form) return;
+        
+        console.log(`Adding form change listeners to form with app type: ${form.getAttribute('data-app-type')}`);
+        
+        // Function to handle form element changes
+        const handleChange = () => {
+            console.log('Form changed, enabling save button');
+            this.markAppsAsChanged();
+        };
+        
+        // Add listeners to all form inputs, selects, and textareas
+        const formElements = form.querySelectorAll('input, select, textarea');
+        formElements.forEach(element => {
+            // Skip buttons
+            if (element.type === 'button' || element.type === 'submit') return;
+            
+            // Remove any existing change listeners to avoid duplicates
+            element.removeEventListener('change', handleChange);
+            element.removeEventListener('input', handleChange);
+            
+            // Add change listeners
+            element.addEventListener('change', handleChange);
+            
+            // For text and number inputs, also listen for input events
+            if (element.type === 'text' || element.type === 'number' || element.type === 'textarea') {
+                element.addEventListener('input', handleChange);
+            }
+            
+            console.log(`Added change listener to ${element.tagName} with id: ${element.id || 'no-id'}`);
         });
         
-        // Add mutation observer to detect when instances are added or removed
-        const instancesContainer = form.querySelector('.instances-container');
-        if (instancesContainer) {
-            console.log('Setting up mutation observer for instances container');
+        // Also add a MutationObserver to detect when instances are added or removed
+        // This is needed because adding/removing instances doesn't trigger input events
+        try {
+            // Check if we already have an observer for this form
+            if (this.observer) {
+                this.observer.disconnect();
+            }
             
-            // Create a mutation observer to watch for changes to the instances container
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    // If nodes were added or removed, mark settings as changed
+            // Create a new MutationObserver
+            this.observer = new MutationObserver((mutations) => {
+                let shouldUpdate = false;
+                
+                mutations.forEach(mutation => {
+                    // Check for elements added or removed
                     if (mutation.type === 'childList' && 
-                        (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
-                        console.log('Instances container changed:', 
-                            mutation.addedNodes.length > 0 ? 'Added nodes' : 'Removed nodes');
-                        this.markAppsAsChanged();
-                        
-                        // If nodes were added, also add change listeners to them
-                        if (mutation.addedNodes.length > 0) {
-                            mutation.addedNodes.forEach(node => {
-                                if (node.querySelectorAll) {
-                                    const newInputs = node.querySelectorAll('input, select, textarea');
-                                    newInputs.forEach(input => {
-                                        input.addEventListener('change', () => {
-                                            console.log('New input changed, marking settings as changed');
-                                            this.markAppsAsChanged();
-                                        });
-                                    });
-                                }
-                            });
-                        }
+                       (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
+                        shouldUpdate = true;
                     }
                 });
+                
+                if (shouldUpdate) {
+                    console.log('Instances container changed - form changed, enabling save button');
+                    this.markAppsAsChanged();
+                }
             });
             
-            // Start observing
-            observer.observe(instancesContainer, { childList: true, subtree: true });
+            // Start observing instances container for changes
+            const instancesContainers = form.querySelectorAll('.instances-container');
+            instancesContainers.forEach(container => {
+                this.observer.observe(container, { childList: true, subtree: true });
+                console.log(`Added MutationObserver to container: ${container.className}`);
+            });
+        } catch (error) {
+            console.error('Error setting up MutationObserver:', error);
         }
     },
     
@@ -266,27 +288,33 @@ const appsModule = {
         this.settingsChanged = true;
         if (this.elements.saveAppsButton) {
             this.elements.saveAppsButton.disabled = false;
-        }
-        
-        // Also notify main UI if available
-        if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.markSettingsAsChanged === 'function') {
-            huntarrUI.markSettingsAsChanged();
+            console.log('Save button enabled');
+        } else {
+            console.error('Save button element not found');
         }
     },
     
     // Show specific app panel and hide others
     showAppPanel: function(app) {
+        console.log(`Showing app panel for ${app}`);
         // Hide all app panels
         this.elements.appAppsPanels.forEach(panel => {
-            panel.classList.remove('active');
             panel.style.display = 'none';
+            panel.classList.remove('active');
         });
         
-        // Show the selected app's panel
-        const selectedPanel = document.getElementById(app + 'Apps');
-        if (selectedPanel) {
-            selectedPanel.classList.add('active');
-            selectedPanel.style.display = 'block';
+        // Show the selected app panel
+        const appPanel = document.getElementById(`${app}Apps`);
+        if (appPanel) {
+            appPanel.style.display = 'block';
+            appPanel.classList.add('active');
+            
+            // Ensure the panel has the correct data-app-type attribute
+            appPanel.setAttribute('data-app-type', app);
+            
+            console.log(`App panel for ${app} is now active`);
+        } else {
+            console.error(`App panel for ${app} not found`);
         }
     },
     
@@ -332,31 +360,88 @@ const appsModule = {
         this.loadAppSettings(selectedApp);
     },
     
-    // Save apps settings
+    // Save apps settings - completely rewritten for reliability
     saveApps: function(event) {
-        event.preventDefault();
+        if (event) event.preventDefault();
         
-        const activeTabContent = document.querySelector('.tab-pane.active');
-        if (!activeTabContent) return;
+        console.log('[Apps] Save button clicked');
         
-        const appType = activeTabContent.getAttribute('data-app-type');
+        // Get the current app from module state
+        const appType = this.currentApp;
         if (!appType) {
-            console.error('Active tab content is missing data-app-type attribute');
+            console.error('No current app selected');
+            
+            // Emergency fallback - try to find the visible app panel
+            const visiblePanel = document.querySelector('.app-apps-panel[style*="display: block"]');
+            if (visiblePanel && visiblePanel.id) {
+                // Extract app type from panel ID (e.g., "sonarrApps" -> "sonarr")
+                const extractedType = visiblePanel.id.replace('Apps', '');
+                console.log(`Fallback: Found visible panel with ID ${visiblePanel.id}, extracted app type: ${extractedType}`);
+                
+                if (extractedType) {
+                    // Continue with the extracted app type
+                    return this.saveAppSettings(extractedType, visiblePanel);
+                }
+            }
+            
+            if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
+                huntarrUI.showNotification('Error: Could not determine which app settings to save', 'error');
+            } else {
+                alert('Error: Could not determine which app settings to save');
+            }
             return;
         }
         
-        console.log(`Saving settings for ${appType}`);
+        // Direct DOM access to find the app panel
+        const appPanel = document.getElementById(`${appType}Apps`);
+        if (!appPanel) {
+            console.error(`App panel not found for ${appType}`);
+            if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
+                huntarrUI.showNotification(`Error: App panel not found for ${appType}`, 'error');
+            } else {
+                alert(`Error: App panel not found for ${appType}`);
+            }
+            return;
+        }
         
-        // Use the updated getFormSettings function with container and appType
-        const settings = SettingsForms.getFormSettings(activeTabContent, appType);
+        // Proceed with saving for the found app panel
+        this.saveAppSettings(appType, appPanel);
+    },
+    
+    // Helper function to save settings for a specific app
+    saveAppSettings: function(appType, appPanel) {
+        console.log(`Collecting settings for ${appType}`);
         
-        console.log(`Collected settings for ${appType}:`, settings);
+        let settings;
+        try {
+            // Make sure the app type is set on the panel for SettingsForms
+            appPanel.setAttribute('data-app-type', appType);
+            
+            // Get settings from the form
+            settings = SettingsForms.getFormSettings(appPanel, appType);
+            console.log(`Collected settings for ${appType}:`, settings);
+        } catch (error) {
+            console.error(`Error collecting settings for ${appType}:`, error);
+            if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
+                huntarrUI.showNotification(`Error collecting settings: ${error.message}`, 'error');
+            } else {
+                alert(`Error collecting settings: ${error.message}`);
+            }
+            return;
+        }
         
-        console.log(`[Apps] Sending settings for ${appType}:`, settings);
-        console.log(`[Apps] Number of instances found for ${appType}:`, settings.instances?.length || 0);
-        console.log(`[Apps] Instances detail:`, JSON.stringify(settings.instances, null, 2));
+        // Add specific logging for settings critical to stateful management
+        if (appType === 'general') {
+            console.log('Stateful management settings being saved:', {
+                statefulExpirationHours: settings.statefulExpirationHours,
+                api_timeout: settings.api_timeout,
+                command_wait_delay: settings.command_wait_delay,
+                command_wait_attempts: settings.command_wait_attempts
+            });
+        }
         
-        // Send settings update request to the correct app-specific endpoint
+        // Send settings to the server
+        console.log(`Sending ${appType} settings to server...`);
         fetch(`/api/settings/${appType}`, {
             method: 'POST',
             headers: {
@@ -371,23 +456,23 @@ const appsModule = {
             return response.json();
         })
         .then(data => {
-            console.log('Settings saved:', data);
+            console.log(`${appType} settings saved successfully:`, data);
             
-            // Disable save button and clear unsaved changes flag
+            // Disable save button and reset state
             this.settingsChanged = false;
             if (this.elements.saveAppsButton) {
                 this.elements.saveAppsButton.disabled = true;
             }
             
-            // Show success message
+            // Show success notification
             if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
-                huntarrUI.showNotification('Settings saved successfully', 'success');
+                huntarrUI.showNotification(`${appType} settings saved successfully`, 'success');
             } else {
-                alert('Settings saved successfully!');
+                alert(`${appType} settings saved successfully`);
             }
         })
         .catch(error => {
-            console.error('Error saving settings:', error);
+            console.error(`Error saving ${appType} settings:`, error);
             if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
                 huntarrUI.showNotification(`Error saving settings: ${error.message}`, 'error');
             } else {
@@ -400,4 +485,13 @@ const appsModule = {
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', () => {
     appsModule.init();
+    
+    // Add a direct event listener to the save button for maximum reliability
+    const saveButton = document.getElementById('saveAppsButton');
+    if (saveButton) {
+        saveButton.addEventListener('click', function(event) {
+            console.log('Save button clicked directly');
+            appsModule.saveApps(event);
+        });
+    }
 });
