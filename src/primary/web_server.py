@@ -27,7 +27,7 @@ from flask import Flask, render_template, request, jsonify, Response, send_from_
 # from src.primary.config import API_URL # No longer needed directly
 # Use only settings_manager
 from src.primary import settings_manager
-from src.primary.utils.logger import setup_main_logger, get_logger, LOG_DIR # Import get_logger and LOG_DIR
+from src.primary.utils.logger import setup_main_logger, get_logger, LOG_DIR, update_logging_levels # Import get_logger, LOG_DIR, and update_logging_levels
 from src.primary.auth import (
     authenticate_request, user_exists, create_user, verify_user, create_session,
     logout, SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret,
@@ -379,6 +379,9 @@ def save_general_settings():
             pass
         except Exception as e:
             general_logger.error(f"Error updating expiration timing: {e}")
+        
+        # Update logging levels immediately when general settings are changed
+        update_logging_levels()
         
         # Return all settings
         return jsonify(settings_manager.get_all_settings())
