@@ -4,12 +4,13 @@ import time
 from datetime import datetime
 import threading
 import logging
+import pathlib
 
 # Create a logger
 logger = logging.getLogger(__name__)
 
 # Path will be /config/history in production
-HISTORY_BASE_PATH = "/config/history"
+HISTORY_BASE_PATH = pathlib.Path("/config/history")
 
 # Lock to prevent race conditions during file operations
 history_locks = {
@@ -21,19 +22,36 @@ history_locks = {
 }
 
 def ensure_history_dir():
-    """Ensure the history directory exists"""
+    """Ensure the history directory exists with app-specific subdirectories"""
     try:
-        os.makedirs(HISTORY_BASE_PATH, exist_ok=True)
-        # Create app-specific files if they don't exist
+        # Create base directory
+        HISTORY_BASE_PATH.mkdir(exist_ok=True, parents=True)
+        
+        # Create app-specific directories
         for app in history_locks.keys():
-            history_file = os.path.join(HISTORY_BASE_PATH, f"{app}_history.json")
-            if not os.path.exists(history_file):
-                with open(history_file, 'w') as f:
+            app_dir = HISTORY_BASE_PATH / app
+            app_dir.mkdir(exist_ok=True, parents=True)
+            
+            # Create legacy app files if they don't exist (for backwards compatibility)
+            legacy_history_file = HISTORY_BASE_PATH / f"{app}_history.json"
+            if not legacy_history_file.exists():
+                with open(legacy_history_file, 'w') as f:
                     json.dump([], f)
+                    
         return True
     except Exception as e:
         logger.error(f"Failed to create history directory: {str(e)}")
         return False
+
+def get_history_file_path(app_type, instance_name=None):
+    """Get the appropriate history file path based on app type and instance name"""
+    if instance_name:
+        # Create safe filename from instance name (same as in stateful_manager.py)
+        safe_instance_name = "".join([c if c.isalnum() else "_" for c in instance_name])
+        return HISTORY_BASE_PATH / app_type / f"{safe_instance_name}.json"
+    else:
+        # Legacy path format
+        return HISTORY_BASE_PATH / f"{app_type}_history.json"
 
 def add_history_entry(app_type, entry_data):
     """
@@ -72,13 +90,20 @@ def add_history_entry(app_type, entry_data):
         "app_type": app_type  # Include app_type in the entry for display in UI
     }
     
-    history_file = os.path.join(HISTORY_BASE_PATH, f"{app_type}_history.json")
+    instance_name = entry_data["instance_name"]
+    history_file = get_history_file_path(app_type, instance_name)
+    
+    # Make sure the parent directory exists
+    history_file.parent.mkdir(exist_ok=True, parents=True)
     
     # Thread-safe file operation
     with history_locks[app_type]:
         try:
-            with open(history_file, 'r') as f:
-                history_data = json.load(f)
+            if history_file.exists():
+                with open(history_file, 'r') as f:
+                    history_data = json.load(f)
+            else:
+                history_data = []
         except (json.JSONDecodeError, FileNotFoundError):
             # If file doesn't exist or is corrupt, start with empty list
             history_data = []
@@ -89,8 +114,20 @@ def add_history_entry(app_type, entry_data):
         # Write back to file
         with open(history_file, 'w') as f:
             json.dump(history_data, f, indent=2)
+        
+        # Also add to legacy file for backward compatibility
+        legacy_file = get_history_file_path(app_type)
+        try:
+            with open(legacy_file, 'r') as f:
+                legacy_data = json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError):
+            legacy_data = []
+            
+        legacy_data.insert(0, entry)
+        with open(legacy_file, 'w') as f:
+            json.dump(legacy_data, f, indent=2)
     
-    logger.info(f"Added history entry for {app_type}: {entry_data['name']}")
+    logger.info(f"Added history entry for {app_type}-{instance_name}: {entry_data['name']}")
     return entry
 
 def get_history(app_type, search_query=None, page=1, page_size=20):
@@ -117,29 +154,68 @@ def get_history(app_type, search_query=None, page=1, page_size=20):
     result = []
     
     if app_type == "all":
-        # Combine histories from all apps
-        all_history = []
+        # Combine histories from all apps and their instances
         for app in history_locks.keys():
-            history_file = os.path.join(HISTORY_BASE_PATH, f"{app}_history.json")
+            app_dir = HISTORY_BASE_PATH / app
+            
+            # Check both legacy files and instance-specific files
+            legacy_file = get_history_file_path(app)
             try:
-                with open(history_file, 'r') as f:
-                    app_history = json.load(f)
-                    all_history.extend(app_history)
+                if legacy_file.exists():
+                    with open(legacy_file, 'r') as f:
+                        app_history = json.load(f)
+                        result.extend(app_history)
             except (json.JSONDecodeError, FileNotFoundError) as e:
-                logger.warning(f"Error reading history file for {app}: {str(e)}")
-                continue
-        
-        # Sort by date_time in descending order
-        result = sorted(all_history, key=lambda x: x["date_time"], reverse=True)
+                logger.warning(f"Error reading legacy history file for {app}: {str(e)}")
+            
+            # Find and read all instance files
+            if app_dir.exists():
+                for history_file in app_dir.glob("*.json"):
+                    try:
+                        with open(history_file, 'r') as f:
+                            instance_history = json.load(f)
+                            result.extend(instance_history)
+                    except (json.JSONDecodeError, FileNotFoundError) as e:
+                        logger.warning(f"Error reading instance history file {history_file}: {str(e)}")
     else:
-        # Get history for specific app
-        history_file = os.path.join(HISTORY_BASE_PATH, f"{app_type}_history.json")
+        # Get history for specific app - combine all instances
+        app_dir = HISTORY_BASE_PATH / app_type
+        
+        # Make sure app directory exists
+        app_dir.mkdir(exist_ok=True, parents=True)
+        
+        # Read from all instance files
+        if app_dir.exists():
+            instance_files = list(app_dir.glob("*.json"))
+            logger.debug(f"Found {len(instance_files)} instance files for {app_type}: {[f.name for f in instance_files]}")
+            
+            for history_file in instance_files:
+                try:
+                    with open(history_file, 'r') as f:
+                        instance_history = json.load(f)
+                        result.extend(instance_history)
+                        logger.debug(f"Read {len(instance_history)} entries from {history_file}")
+                except (json.JSONDecodeError, FileNotFoundError) as e:
+                    logger.warning(f"Error reading instance history file {history_file}: {str(e)}")
+        
+        # Also try to read the legacy file
+        legacy_file = get_history_file_path(app_type)
         try:
-            with open(history_file, 'r') as f:
-                result = json.load(f)
+            if legacy_file.exists():
+                with open(legacy_file, 'r') as f:
+                    legacy_history = json.load(f)
+                    # Only add entries that aren't duplicates (by id and timestamp)
+                    existing_entries = {(entry.get("id", ""), entry.get("date_time", 0)) for entry in result}
+                    for entry in legacy_history:
+                        entry_key = (entry.get("id", ""), entry.get("date_time", 0))
+                        if entry_key not in existing_entries:
+                            result.append(entry)
+                    logger.debug(f"Read {len(legacy_history)} entries from legacy file {legacy_file}")
         except (json.JSONDecodeError, FileNotFoundError) as e:
-            logger.warning(f"Error reading history file for {app_type}: {str(e)}")
-            result = []
+            logger.warning(f"Error reading legacy history file for {app_type}: {str(e)}")
+    
+    # Sort by date_time in descending order
+    result = sorted(result, key=lambda x: x["date_time"], reverse=True)
     
     # Apply search filter if provided
     if search_query and search_query.strip():
@@ -199,36 +275,248 @@ def clear_history(app_type):
     Clear history for an app
     
     Parameters:
-    - app_type: str - The app type (sonarr, radarr, etc) or 'all'
+    - app_type: str - The app type (sonarr, radarr, etc) or "all" to clear all history
+    
+    Returns:
+    - bool - Success or failure
     """
     if not ensure_history_dir():
         logger.error("Could not ensure history directory exists")
         return False
     
-    if app_type == "all":
-        # Clear all histories
-        for app in history_locks.keys():
-            history_file = os.path.join(HISTORY_BASE_PATH, f"{app}_history.json")
-            with history_locks[app]:
-                try:
-                    with open(history_file, 'w') as f:
-                        json.dump([], f)
-                except Exception as e:
-                    logger.error(f"Failed to clear history for {app}: {str(e)}")
-                    return False
-    elif app_type in history_locks:
-        # Clear specific app history
-        history_file = os.path.join(HISTORY_BASE_PATH, f"{app_type}_history.json")
-        with history_locks[app_type]:
-            try:
-                with open(history_file, 'w') as f:
-                    json.dump([], f)
-            except Exception as e:
-                logger.error(f"Failed to clear history for {app_type}: {str(e)}")
-                return False
-    else:
+    if app_type not in history_locks and app_type != "all":
         logger.error(f"Invalid app type: {app_type}")
         return False
     
-    logger.info(f"Cleared history for {app_type}")
-    return True
+    try:
+        if app_type == "all":
+            # Clear all history files
+            for app in history_locks.keys():
+                # Clear legacy file
+                legacy_file = get_history_file_path(app)
+                if legacy_file.exists():
+                    with open(legacy_file, 'w') as f:
+                        json.dump([], f)
+                        logger.debug(f"Cleared legacy history file: {legacy_file}")
+                
+                # Clear all instance files
+                app_dir = HISTORY_BASE_PATH / app
+                # Ensure directory exists
+                app_dir.mkdir(exist_ok=True, parents=True)
+                
+                if app_dir.exists():
+                    instance_files = list(app_dir.glob("*.json"))
+                    logger.debug(f"Found {len(instance_files)} instance files to clear for {app}")
+                    
+                    for history_file in instance_files:
+                        with open(history_file, 'w') as f:
+                            json.dump([], f)
+                            logger.debug(f"Cleared instance history file: {history_file}")
+        else:
+            # Clear legacy file
+            legacy_file = get_history_file_path(app_type)
+            if legacy_file.exists():
+                with open(legacy_file, 'w') as f:
+                    json.dump([], f)
+                    logger.debug(f"Cleared legacy history file: {legacy_file}")
+            
+            # Clear all instance files
+            app_dir = HISTORY_BASE_PATH / app_type
+            # Ensure directory exists
+            app_dir.mkdir(exist_ok=True, parents=True)
+            
+            if app_dir.exists():
+                instance_files = list(app_dir.glob("*.json"))
+                logger.debug(f"Found {len(instance_files)} instance files to clear for {app_type}")
+                
+                for history_file in instance_files:
+                    with open(history_file, 'w') as f:
+                        json.dump([], f)
+                        logger.debug(f"Cleared instance history file: {history_file}")
+        
+        logger.info(f"Successfully cleared history for {app_type}")
+        return True
+    except Exception as e:
+        logger.error(f"Error clearing history for {app_type}: {str(e)}")
+        return False
+
+def handle_instance_rename(app_type, old_instance_name, new_instance_name):
+    """
+    Handle renaming of an instance by moving history entries to a new file.
+    
+    Parameters:
+    - app_type: str - The app type (sonarr, radarr, etc)
+    - old_instance_name: str - Previous instance name
+    - new_instance_name: str - New instance name
+    
+    Returns:
+    - bool - Success or failure
+    """
+    if not ensure_history_dir():
+        logger.error("Could not ensure history directory exists")
+        return False
+    
+    if app_type not in history_locks:
+        logger.error(f"Invalid app type: {app_type}")
+        return False
+    
+    # If names are the same, nothing to do
+    if old_instance_name == new_instance_name:
+        return True
+    
+    logger.info(f"Handling instance rename for {app_type}: {old_instance_name} -> {new_instance_name}")
+    
+    # Get paths for old and new history files
+    old_file = get_history_file_path(app_type, old_instance_name)
+    new_file = get_history_file_path(app_type, new_instance_name)
+    
+    # Ensure parent directories exist
+    new_file.parent.mkdir(exist_ok=True, parents=True)
+    
+    # Thread-safe operation
+    with history_locks[app_type]:
+        try:
+            # Load old data if it exists
+            old_data = []
+            if old_file.exists():
+                try:
+                    with open(old_file, 'r') as f:
+                        old_data = json.load(f)
+                    logger.info(f"Loaded {len(old_data)} history entries from {old_file}")
+                except (json.JSONDecodeError, FileNotFoundError) as e:
+                    logger.warning(f"Error reading old history file {old_file}: {e}")
+            
+            # Update instance_name in all entries
+            for entry in old_data:
+                entry["instance_name"] = new_instance_name
+            
+            # Create or load new file
+            new_data = []
+            if new_file.exists():
+                try:
+                    with open(new_file, 'r') as f:
+                        new_data = json.load(f)
+                    logger.info(f"Loaded {len(new_data)} existing history entries from {new_file}")
+                except (json.JSONDecodeError, FileNotFoundError) as e:
+                    logger.warning(f"Error reading new history file {new_file}: {e}")
+            
+            # Merge data, avoiding duplicates
+            existing_keys = {(entry.get("id", ""), entry.get("date_time", 0)) for entry in new_data}
+            for entry in old_data:
+                entry_key = (entry.get("id", ""), entry.get("date_time", 0))
+                if entry_key not in existing_keys:
+                    new_data.append(entry)
+            
+            # Sort by timestamp
+            new_data = sorted(new_data, key=lambda x: x.get("date_time", 0), reverse=True)
+            
+            # Save merged data to new file
+            with open(new_file, 'w') as f:
+                json.dump(new_data, f, indent=2)
+            logger.info(f"Saved {len(new_data)} history entries to {new_file}")
+            
+            # Optionally delete old file if it exists
+            if old_file.exists():
+                old_file.unlink()
+                logger.info(f"Deleted old history file {old_file}")
+            
+            return True
+        except Exception as e:
+            logger.error(f"Error renaming instance history: {e}")
+            return False
+
+def initialize_instance_history(app_type, instance_name):
+    """
+    Initialize or ensure history file exists for a specific instance.
+    This should be called whenever an instance is created or configured.
+    
+    Parameters:
+    - app_type: str - The app type (sonarr, radarr, etc)
+    - instance_name: str - Name of the instance
+    
+    Returns:
+    - str - Path to the history file
+    """
+    if not ensure_history_dir():
+        logger.error("Could not ensure history directory exists")
+        return None
+    
+    if app_type not in history_locks:
+        logger.error(f"Invalid app type: {app_type}")
+        return None
+    
+    try:
+        # Get the history file path
+        history_file = get_history_file_path(app_type, instance_name)
+        
+        # Ensure parent directory exists
+        history_file.parent.mkdir(exist_ok=True, parents=True)
+        
+        # Create the file if it doesn't exist
+        if not history_file.exists():
+            with open(history_file, 'w') as f:
+                json.dump([], f)
+            logger.info(f"Created history file for {app_type}/{instance_name}: {history_file}")
+        
+        return str(history_file)
+    except Exception as e:
+        logger.error(f"Error initializing history for {app_type}/{instance_name}: {e}")
+        return None
+
+def sync_history_files_with_instances():
+    """
+    Synchronize history files with existing instances.
+    This ensures that every instance has a corresponding history file.
+    
+    Returns:
+    - dict - Information about what was synchronized
+    """
+    result = {
+        "success": False,
+        "app_instances": {},
+        "created_files": [],
+        "error": None
+    }
+    
+    try:
+        # First ensure history directories exist
+        ensure_history_dir()
+        
+        # Load settings for each app type to find instances
+        for app_type in history_locks.keys():
+            app_dir = HISTORY_BASE_PATH / app_type
+            app_dir.mkdir(exist_ok=True, parents=True)
+            
+            result["app_instances"][app_type] = []
+            
+            # Let's check for instance settings from settings directory
+            instances_dir = pathlib.Path("/config") / app_type
+            if instances_dir.exists():
+                for instance_file in instances_dir.glob("*.json"):
+                    try:
+                        # Extract instance name from filename
+                        instance_name = instance_file.stem
+                        result["app_instances"][app_type].append(instance_name)
+                        logger.info(f"Found instance for {app_type}: {instance_name}")
+                        
+                        # Create history file for this instance if it doesn't exist
+                        history_file = get_history_file_path(app_type, instance_name)
+                        if not history_file.exists():
+                            history_file.parent.mkdir(exist_ok=True, parents=True)
+                            with open(history_file, 'w') as f:
+                                json.dump([], f)
+                            logger.info(f"Created history file for {app_type}/{instance_name}: {history_file}")
+                            result["created_files"].append(str(history_file))
+                    except Exception as e:
+                        logger.error(f"Error processing instance file {instance_file}: {e}")
+        
+        result["success"] = True
+        return result
+    except Exception as e:
+        logger.error(f"Error syncing history files with instances: {e}")
+        result["error"] = str(e)
+        return result
+
+# Run the synchronization on module import
+sync_result = sync_history_files_with_instances()
+logger.info(f"History synchronization result: {sync_result}")
