@@ -16,6 +16,10 @@ from src.primary.utils.logger import logger, get_logger # Import get_logger
 # Removed global constants like APP_TYPE, API_URL, API_KEY, SLEEP_DURATION etc.
 # Settings should be fetched directly using settings_manager when needed.
 
+# Enable debug logging across the application
+# Set to True for detailed logs, False for production
+DEBUG_MODE = True # Default: False
+
 # Determine the hunt mode for a specific app
 def determine_hunt_mode(app_name: str) -> str:
     """Determine the hunt mode for a specific app based on its settings."""

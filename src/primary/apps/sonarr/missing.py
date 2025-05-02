@@ -183,6 +183,12 @@ def process_missing_episodes_mode(
         search_command_id = sonarr_api.search_episode(api_url, api_key, api_timeout, episode_ids)
 
         if search_command_id:
+            # Add episode IDs to stateful manager IMMEDIATELY after processing each batch
+            for episode_id in episode_ids:
+                # Force flush to disk by calling add_processed_id immediately for each ID
+                success = add_processed_id("sonarr", instance_name, str(episode_id))
+                sonarr_logger.debug(f"Added processed ID: {episode_id}, success: {success}")
+            
             # Wait for search command to complete
             if wait_for_command(
                 api_url, api_key, api_timeout, search_command_id,
@@ -192,27 +198,23 @@ def process_missing_episodes_mode(
                 processed_any = True # Mark that we did something
                 sonarr_logger.info(f"Successfully processed and searched for {len(episode_ids)} episodes in series {series_id}.")
                 
-                # Add episode IDs to stateful manager
-                for episode_id in episode_ids:
-                    add_processed_id("sonarr", instance_name, episode_id)
-                    
-                    # Log to history system
-                    # Find the corresponding episode data for this ID
-                    for episode in episodes_to_search:
-                        if episode.get('id') == episode_id:
-                            series_title = episode.get('series', {}).get('title', 'Unknown Series')
-                            episode_title = episode.get('title', 'Unknown Episode')
-                            season_number = episode.get('seasonNumber', 'Unknown Season')
-                            episode_number = episode.get('episodeNumber', 'Unknown Episode')
+                # Log to history system
+                # Find the corresponding episode data for this ID
+                for episode in episodes_to_search:
+                    if episode.get('id') == episode_id:
+                        series_title = episode.get('series', {}).get('title', 'Unknown Series')
+                        episode_title = episode.get('title', 'Unknown Episode')
+                        season_number = episode.get('seasonNumber', 'Unknown Season')
+                        episode_number = episode.get('episodeNumber', 'Unknown Episode')
+                        
+                        try:
+                            season_episode = f"S{season_number:02d}E{episode_number:02d}"
+                        except (ValueError, TypeError):
+                            season_episode = f"S{season_number}E{episode_number}"
                             
-                            try:
-                                season_episode = f"S{season_number:02d}E{episode_number:02d}"
-                            except (ValueError, TypeError):
-                                season_episode = f"S{season_number}E{episode_number}"
-                                
-                            media_name = f"{series_title} - {season_episode} - {episode_title}"
-                            log_processed_media("sonarr", media_name, episode_id, instance_name, "missing")
-                            break
+                        media_name = f"{series_title} - {season_episode} - {episode_title}"
+                        log_processed_media("sonarr", media_name, episode_id, instance_name, "missing")
+                        break
                 
                 # Increment the hunted statistics
                 increment_stat("sonarr", "hunted", len(episode_ids))
@@ -482,13 +484,15 @@ def process_missing_shows_mode(
             processed_any = True
             sonarr_logger.info(f"Successfully processed {len(episode_ids)} missing episodes in {show_title}")
             
+            # Add episode IDs to stateful manager IMMEDIATELY after processing each batch
+            for episode_id in episode_ids:
+                # Force flush to disk by calling add_processed_id immediately for each ID
+                success = add_processed_id("sonarr", instance_name, str(episode_id))
+                sonarr_logger.debug(f"Added processed ID: {episode_id}, success: {success}")
+            
             # Add series ID to processed list
             add_processed_id("sonarr", instance_name, str(show_id))
             sonarr_logger.debug(f"Added series ID {show_id} to processed list for {instance_name}")
-            
-            # Add episode IDs to stateful manager
-            for episode_id in episode_ids:
-                add_processed_id("sonarr", instance_name, str(episode_id))
             
             # Increment the hunted statistics
             increment_stat("sonarr", "hunted", len(episode_ids))
