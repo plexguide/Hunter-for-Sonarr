@@ -916,7 +916,7 @@ const SettingsForms = {
                 </div>
             </div>
         `;
-
+        
         // Load Swaparr status automatically
         const resetStrikesBtn = container.querySelector('#reset_swaparr_strikes');
         const statusContainer = container.querySelector('#swaparr_status');
@@ -1327,7 +1327,7 @@ const SettingsForms = {
                 const url = urlInput.value.trim();
                 const apiKey = keyInput.value.trim();
                 
-                console.log(`Testing connection for ${appType} - URL: ${url}, API Key: ${apiKey.substring(0, 3)}...`);
+                console.log(`Testing connection for ${appType} - URL: ${url}, API Key: ${apiKey.substring(0, 5)}...`);
                 
                 if (!url) {
                     alert('Please enter a valid URL');
@@ -1461,7 +1461,7 @@ const SettingsForms = {
                 // Set content for the new instance using the updated structure
                 newInstanceDiv.innerHTML = `
                     <div class="instance-header">
-                        <h4>Instance ${currentCount + 1}: New Instance</h4>
+                        <h4>Instance ${currentCount + 1}: Instance ${currentCount + 1}</h4>
                         <div class="instance-actions">
                              <button type="button" class="remove-instance-btn">Remove</button>
                         </div>
@@ -1469,7 +1469,7 @@ const SettingsForms = {
                     <div class="instance-content">
                         <div class="setting-item">
                             <label for="${appType}-name-${currentCount}">Name:</label>
-                            <input type="text" id="${appType}-name-${currentCount}" name="name" value="New Instance" placeholder="Friendly name for this instance">
+                            <input type="text" id="${appType}-name-${currentCount}" name="name" value="Instance ${currentCount + 1}" placeholder="Friendly name for this instance">
                             <p class="setting-help">Friendly name for this ${appType} instance</p>
                         </div>
                         <div class="setting-item">
