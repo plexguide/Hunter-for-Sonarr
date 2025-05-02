@@ -15,12 +15,76 @@ const appsModule = {
     
     // Initialize the apps module
     init: function() {
+        // Cache DOM elements
         this.cacheElements();
+        
+        // Set up event listeners
         this.setupEventListeners();
         
-        // Initial load if apps is active section
-        if (huntarrUI && huntarrUI.currentSection === 'apps') {
-            this.loadApps();
+        // Initialize state
+        this.settingsChanged = false;
+        
+        // Load apps for initial display
+        this.loadApps();
+        
+        // Register with the main unsaved changes system if available
+        this.registerUnsavedChangesHandler();
+    },
+    
+    // Register with the main unsaved changes system
+    registerUnsavedChangesHandler: function() {
+        // Add our own beforeunload handler for direct page exits
+        if (!window._appsBeforeUnloadHandlerRegistered) {
+            const originalBeforeUnload = window.onbeforeunload;
+            window.onbeforeunload = (event) => {
+                // Check if apps has unsaved changes
+                if (this.settingsChanged) {
+                    // Standard way to trigger the browser's confirmation dialog
+                    event.preventDefault(); 
+                    event.returnValue = 'You have unsaved changes. Are you sure you want to leave? Changes will be lost.';
+                    return 'You have unsaved changes. Are you sure you want to leave? Changes will be lost.';
+                }
+                
+                // Fall back to original handler if we don't have changes
+                if (originalBeforeUnload) {
+                    return originalBeforeUnload(event);
+                }
+                return undefined;
+            };
+            
+            // Mark that we've registered the handler
+            window._appsBeforeUnloadHandlerRegistered = true;
+        }
+        
+        // Integrate with huntarrUI if available
+        if (typeof huntarrUI !== 'undefined') {
+            // Store original markSettingsAsChanged function if it exists
+            const originalMarkChanged = huntarrUI.markSettingsAsChanged;
+            
+            // Override with our function that knows about both systems
+            huntarrUI.markSettingsAsChanged = () => {
+                // Call original if it existed
+                if (originalMarkChanged) {
+                    originalMarkChanged.call(huntarrUI);
+                }
+                
+                // Set the flag for the main UI
+                huntarrUI.settingsChanged = true;
+            };
+            
+            // Listen for navigation to non-apps pages
+            document.addEventListener('click', (event) => {
+                const navLink = event.target.closest('a[href^="#"]');
+                if (navLink) {
+                    const targetPage = navLink.getAttribute('href').substring(1);
+                    // If navigating away from apps page and we have changes
+                    if (targetPage !== 'apps' && this.settingsChanged) {
+                        if (!confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
+                            event.preventDefault();
+                        }
+                    }
+                }
+            });
         }
     },
     
@@ -197,6 +261,19 @@ const appsModule = {
         }
     },
     
+    // Mark apps as changed
+    markAppsAsChanged: function() {
+        this.settingsChanged = true;
+        if (this.elements.saveAppsButton) {
+            this.elements.saveAppsButton.disabled = false;
+        }
+        
+        // Also notify main UI if available
+        if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.markSettingsAsChanged === 'function') {
+            huntarrUI.markSettingsAsChanged();
+        }
+    },
+    
     // Show specific app panel and hide others
     showAppPanel: function(app) {
         // Hide all app panels
@@ -253,14 +330,6 @@ const appsModule = {
         
         // Load the newly selected app's settings
         this.loadAppSettings(selectedApp);
-    },
-    
-    // Mark apps as changed
-    markAppsAsChanged: function() {
-        this.settingsChanged = true;
-        if (this.elements.saveAppsButton) {
-            this.elements.saveAppsButton.disabled = false;
-        }
     },
     
     // Save apps settings
@@ -331,7 +400,7 @@ const appsModule = {
         .then(data => {
             console.log('Settings saved:', data);
             
-            // Disable save button
+            // Disable save button and clear unsaved changes flag
             this.settingsChanged = false;
             if (this.elements.saveAppsButton) {
                 this.elements.saveAppsButton.disabled = true;
