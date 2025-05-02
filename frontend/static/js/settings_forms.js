@@ -225,12 +225,12 @@ const SettingsForms = {
                 <h3>Search Settings</h3>
                 <div class="setting-item">
                     <label for="radarr_hunt_missing_movies">Missing Movies to Search:</label>
-                    <input type="number" id="radarr_hunt_missing_movies" name="hunt_missing_movies" min="0" value="${settings.hunt_missing_movies || 1}">
+                    <input type="number" id="radarr_hunt_missing_movies" name="hunt_missing_movies" min="0" value="${settings.hunt_missing_movies !== undefined ? (settings.hunt_missing_movies === 0 ? 0 : settings.hunt_missing_movies) : 1}">
                     <p class="setting-help">Number of missing movies to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
                     <label for="radarr_hunt_upgrade_movies">Movies to Upgrade:</label>
-                    <input type="number" id="radarr_hunt_upgrade_movies" name="hunt_upgrade_movies" min="0" value="${settings.hunt_upgrade_movies || 0}">
+                    <input type="number" id="radarr_hunt_upgrade_movies" name="hunt_upgrade_movies" min="0" value="${settings.hunt_upgrade_movies !== undefined ? (settings.hunt_upgrade_movies === 0 ? 0 : settings.hunt_upgrade_movies) : 0}">
                     <p class="setting-help">Number of movies to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
@@ -362,13 +362,13 @@ const SettingsForms = {
                 </div>
                 <div class="setting-item">
                     <label for="lidarr_hunt_missing_items">Missing Items to Search:</label>
-                    <input type="number" id="lidarr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items || 1}">
+                    <input type="number" id="lidarr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of artists with missing albums to search per cycle (0 to disable)</p>
                 </div>
                 
                 <div class="setting-item">
                     <label for="lidarr_hunt_upgrade_items">Items to Upgrade:</label>
-                    <input type="number" id="lidarr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items || 0}">
+                    <input type="number" id="lidarr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
                     <p class="setting-help">Number of albums to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
@@ -492,12 +492,12 @@ const SettingsForms = {
                 <h3>Search Settings</h3>
                 <div class="setting-item">
                     <label for="readarr_hunt_missing_books">Missing Books to Search:</label>
-                    <input type="number" id="readarr_hunt_missing_books" min="0" value="${settings.hunt_missing_books || 1}">
+                    <input type="number" id="readarr_hunt_missing_books" name="hunt_missing_books" min="0" value="${settings.hunt_missing_books !== undefined ? settings.hunt_missing_books : 1}">
                     <p class="setting-help">Number of missing books to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
                     <label for="readarr_hunt_upgrade_books">Books to Upgrade:</label>
-                    <input type="number" id="readarr_hunt_upgrade_books" min="0" value="${settings.hunt_upgrade_books || 0}">
+                    <input type="number" id="readarr_hunt_upgrade_books" name="hunt_upgrade_books" min="0" value="${settings.hunt_upgrade_books !== undefined ? settings.hunt_upgrade_books : 0}">
                     <p class="setting-help">Number of books to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
@@ -621,12 +621,12 @@ const SettingsForms = {
                 <h3>Search Settings</h3>
                 <div class="setting-item">
                     <label for="whisparr_hunt_missing_items">Missing Items to Search:</label>
-                    <input type="number" id="whisparr_hunt_missing_items" min="0" value="${settings.hunt_missing_items || settings.hunt_missing_scenes || 1}">
+                    <input type="number" id="whisparr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
                     <label for="whisparr_hunt_upgrade_items">Items to Upgrade:</label>
-                    <input type="number" id="whisparr_hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items || settings.hunt_upgrade_scenes || 0}">
+                    <input type="number" id="whisparr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
                     <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
