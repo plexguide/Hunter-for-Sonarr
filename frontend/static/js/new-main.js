@@ -608,6 +608,9 @@ let huntarrUI = {
             selectedPanel.classList.add('active');
             selectedPanel.style.display = 'block';
         }
+        
+        this.currentSettingsTab = app;
+        console.log(`[huntarrUI] Switched settings tab to: ${this.currentSettingsTab}`); // Added logging
     },
     
     // Logs handling
