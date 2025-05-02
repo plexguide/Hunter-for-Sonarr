@@ -31,6 +31,9 @@ const SettingsForms = {
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
+                            <button type="button" class="test-connection-btn" data-instance="${index}" style="margin-left: 10px;">
+                                <i class="fas fa-plug"></i> Test Connection
+                            </button>
                         </div>
                     </div>
                     <div class="instance-content">
@@ -56,9 +59,6 @@ const SettingsForms = {
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        <button type="button" class="test-connection-btn" data-instance="${index}">
-                            <i class="fas fa-plug"></i> Test Connection
-                        </button>
                     </div>
                 </div>
             `;
@@ -174,6 +174,9 @@ const SettingsForms = {
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
+                            <button type="button" class="test-connection-btn" data-instance="${index}" style="margin-left: 10px;">
+                                <i class="fas fa-plug"></i> Test Connection
+                            </button>
                         </div>
                     </div>
                     <div class="instance-content">
@@ -199,9 +202,6 @@ const SettingsForms = {
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        <button type="button" class="test-connection-btn" data-instance="${index}">
-                            <i class="fas fa-plug"></i> Test Connection
-                        </button>
                     </div>
                 </div>
             `;
@@ -346,6 +346,9 @@ const SettingsForms = {
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
+                            <button type="button" class="test-connection-btn" data-instance="${index}" style="margin-left: 10px;">
+                                <i class="fas fa-plug"></i> Test Connection
+                            </button>
                         </div>
                     </div>
                     <div class="instance-content">
@@ -371,9 +374,6 @@ const SettingsForms = {
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        <button type="button" class="test-connection-btn" data-instance="${index}">
-                            <i class="fas fa-plug"></i> Test Connection
-                        </button>
                     </div>
                 </div>
             `;
@@ -526,6 +526,9 @@ const SettingsForms = {
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
+                            <button type="button" class="test-connection-btn" data-instance="${index}" style="margin-left: 10px;">
+                                <i class="fas fa-plug"></i> Test Connection
+                            </button>
                         </div>
                     </div>
                     <div class="instance-content">
@@ -551,9 +554,6 @@ const SettingsForms = {
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        <button type="button" class="test-connection-btn" data-instance="${index}">
-                            <i class="fas fa-plug"></i> Test Connection
-                        </button>
                     </div>
                 </div>
             `;
@@ -697,6 +697,9 @@ const SettingsForms = {
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
+                            <button type="button" class="test-connection-btn" data-instance="${index}" style="margin-left: 10px;">
+                                <i class="fas fa-plug"></i> Test Connection
+                            </button>
                         </div>
                     </div>
                     <div class="instance-content">
@@ -722,9 +725,6 @@ const SettingsForms = {
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        <button type="button" class="test-connection-btn" data-instance="${index}">
-                            <i class="fas fa-plug"></i> Test Connection
-                        </button>
                     </div>
                 </div>
             `;
@@ -1501,6 +1501,9 @@ const SettingsForms = {
                         <h4>Instance ${currentCount + 1}: Instance ${currentCount + 1}</h4>
                         <div class="instance-actions">
                              <button type="button" class="remove-instance-btn">Remove</button>
+                             <button type="button" class="test-connection-btn" data-instance="${currentCount}" style="margin-left: 10px;">
+                                <i class="fas fa-plug"></i> Test Connection
+                            </button>
                         </div>
                     </div>
                     <div class="instance-content">
@@ -1526,9 +1529,6 @@ const SettingsForms = {
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        <button type="button" class="test-connection-btn" data-instance="${currentCount}">
-                            <i class="fas fa-plug"></i> Test Connection
-                        </button>
                     </div>
                 `;
                 
