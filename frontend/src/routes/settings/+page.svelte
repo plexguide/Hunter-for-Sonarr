@@ -37,8 +37,9 @@
   // Helper to ensure numeric values are handled correctly
   function ensureNumericValues(data) {
     const numericFields = [
-      'missingEpisodesSearch', 'upgradeEpisodesSearch', 'searchInterval',
-      'hunt_missing_shows', 'hunt_upgrade_episodes', 'sleep_duration'
+      'hunt_missing_items', 'hunt_upgrade_items', 'sleep_duration',
+      'hunt_missing_books', 'hunt_upgrade_books',
+      'hunt_missing_movies', 'hunt_upgrade_movies'
     ];
     
     const result = { ...data };

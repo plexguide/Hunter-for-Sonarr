@@ -968,7 +968,7 @@ const SettingsForms = {
                 settings.hunt_missing_items = getInputValue('#whisparr_hunt_missing_items', 1);
                 settings.hunt_upgrade_items = getInputValue('#whisparr_hunt_upgrade_items', 0);
                 settings.monitored_only = getInputValue('#whisparr_monitored_only', true);
-                settings.version = getInputValue('#whisparr-api-version', 'v3');
+                settings.whisparr_version = getInputValue('#whisparr-api-version', 'v3');
                 settings.skip_future_releases = getInputValue('#whisparr_skip_future_releases', true);
                 settings.sleep_duration = getInputValue('#whisparr_sleep_duration', 900);
             }
