@@ -210,13 +210,13 @@ const SettingsForms = {
         
         // Add a button to add new instances (limit to 9 total)
         instancesHtml += `
-                <div class="add-instance-container">
-                    <button type="button" id="add-radarr-instance" class="add-instance-btn" ${settings.instances.length >= 9 ? 'disabled' : ''}>
-                        Add Radarr Instance (${settings.instances.length}/9)
+                </div> <!-- instances-container -->
+                <div class="button-container" style="text-align: center; margin-top: 15px;">
+                    <button type="button" class="add-instance-btn add-radarr-instance-btn">
+                        <i class="fas fa-plus"></i> Add Radarr Instance (${settings.instances.length}/9)
                     </button>
                 </div>
-            </div>
-        </div>
+            </div> <!-- settings-group -->
         `;
         
         // Continue with the rest of the settings form
@@ -383,13 +383,13 @@ const SettingsForms = {
         
         // Add a button to add new instances (limit to 9 total)
         instancesHtml += `
-                <div class="add-instance-container">
-                    <button type="button" id="add-lidarr-instance" class="add-instance-btn" ${settings.instances.length >= 9 ? 'disabled' : ''}>
-                        Add Lidarr Instance (${settings.instances.length}/9)
+                </div> <!-- instances-container -->
+                <div class="button-container" style="text-align: center; margin-top: 15px;">
+                    <button type="button" class="add-instance-btn add-lidarr-instance-btn">
+                        <i class="fas fa-plus"></i> Add Lidarr Instance (${settings.instances.length}/9)
                     </button>
                 </div>
-            </div>
-        </div>
+            </div> <!-- settings-group -->
         `;
         
         // Continue with the rest of the settings form
@@ -565,13 +565,13 @@ const SettingsForms = {
         
         // Add a button to add new instances (limit to 9 total)
         instancesHtml += `
-                <div class="add-instance-container">
-                    <button type="button" id="add-readarr-instance" class="add-instance-btn" ${settings.instances.length >= 9 ? 'disabled' : ''}>
-                        Add Readarr Instance (${settings.instances.length}/9)
+                </div> <!-- instances-container -->
+                <div class="button-container" style="text-align: center; margin-top: 15px;">
+                    <button type="button" class="add-instance-btn add-readarr-instance-btn">
+                        <i class="fas fa-plus"></i> Add Readarr Instance (${settings.instances.length}/9)
                     </button>
                 </div>
-            </div>
-        </div>
+            </div> <!-- settings-group -->
         `;
         
         // Continue with the rest of the settings form
@@ -738,13 +738,13 @@ const SettingsForms = {
         
         // Add a button to add new instances (limit to 9 total)
         instancesHtml += `
-                <div class="add-instance-container">
-                    <button type="button" id="add-whisparr-instance" class="add-instance-btn" ${settings.instances.length >= 9 ? 'disabled' : ''}>
-                        Add Whisparr Instance (${settings.instances.length}/9)
+                </div> <!-- instances-container -->
+                <div class="button-container" style="text-align: center; margin-top: 15px;">
+                    <button type="button" class="add-instance-btn add-whisparr-instance-btn">
+                        <i class="fas fa-plus"></i> Add Whisparr Instance (${settings.instances.length}/9)
                     </button>
                 </div>
-            </div>
-        </div>
+            </div> <!-- settings-group -->
         `;
         
         // Continue with the rest of the settings form
@@ -947,6 +947,7 @@ const SettingsForms = {
                 statusContainer.innerHTML = statusHTML;
             })
             .catch(error => {
+                console.error('Error loading Swaparr status:', error);
                 statusContainer.innerHTML = `<p>Error fetching status: ${error.message}</p>`;
             });
             
@@ -1536,9 +1537,26 @@ const SettingsForms = {
         buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
         buttonElement.disabled = true;
         
-        console.log(`Testing connection to ${app} at ${url} with API key: ${apiKey.substring(0, 5)}...`);
+        console.log(`Testing connection for ${app} - URL: ${url}, API Key: ${apiKey.substring(0, 5)}...`);
         
-        // Make the API request to the test-connection endpoint
+        if (!url) {
+            alert('Please enter a valid URL');
+            urlInput.focus();
+            return;
+        }
+        
+        if (!apiKey) {
+            alert('Please enter a valid API key');
+            keyInput.focus();
+            return;
+        }
+        
+        // Show testing status
+        const originalButtonHTML = buttonElement.innerHTML;
+        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+        buttonElement.disabled = true;
+        
+        // Make the API request
         fetch(`/api/${app}/test-connection`, {
             method: 'POST',
             headers: {
@@ -1551,7 +1569,7 @@ const SettingsForms = {
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
             }
             return response.json();
         })
@@ -1562,11 +1580,10 @@ const SettingsForms = {
             buttonElement.disabled = false;
             
             if (data.success) {
-                // Success - change button to show success briefly
+                // Success
                 buttonElement.innerHTML = '<i class="fas fa-check"></i> Connected!';
                 buttonElement.classList.add('test-success');
                 
-                // Show version info if available
                 let successMessage = `Successfully connected to ${app.charAt(0).toUpperCase() + app.slice(1)}`;
                 if (data.version) {
                     successMessage += ` (version ${data.version})`;
@@ -1575,22 +1592,20 @@ const SettingsForms = {
                 // Alert the user of success
                 alert(successMessage);
                 
-                // Reset the button after a delay
+                // Reset button after delay
                 setTimeout(() => {
-                    buttonElement.innerHTML = originalButtonText;
+                    buttonElement.innerHTML = originalButtonHTML;
                     buttonElement.classList.remove('test-success');
                 }, 3000);
             } else {
-                // Failure with error message from server
+                // Failure
                 buttonElement.innerHTML = '<i class="fas fa-times"></i> Failed';
                 buttonElement.classList.add('test-failed');
                 
-                // Alert the user with the error message
                 alert(`Connection failed: ${data.message || 'Unknown error'}`);
                 
-                // Reset the button after a delay
                 setTimeout(() => {
-                    buttonElement.innerHTML = originalButtonText;
+                    buttonElement.innerHTML = originalButtonHTML;
                     buttonElement.classList.remove('test-failed');
                 }, 3000);
             }
@@ -1598,17 +1613,14 @@ const SettingsForms = {
         .catch(error => {
             console.error(`Test connection error:`, error);
             
-            // Reset button showing error
             buttonElement.disabled = false;
             buttonElement.innerHTML = '<i class="fas fa-times"></i> Error';
             buttonElement.classList.add('test-failed');
             
-            // Alert the user with the error
             alert(`Connection test failed: ${error.message}`);
             
-            // Reset the button after a delay
             setTimeout(() => {
-                buttonElement.innerHTML = originalButtonText;
+                buttonElement.innerHTML = originalButtonHTML;
                 buttonElement.classList.remove('test-failed');
             }, 3000);
         });
