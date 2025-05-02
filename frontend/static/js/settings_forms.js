@@ -82,28 +82,28 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="sonarr-missing-search-mode">Missing Search Mode:</label>
-                    <select id="sonarr-missing-search-mode" name="missing_search_mode">
-                        <option value="episodes" ${settings.missing_search_mode === 'episodes' ? 'selected' : ''}>Episodes</option>
-                        <option value="seasons" ${settings.missing_search_mode === 'seasons' ? 'selected' : ''}>Seasons</option>
-                        <option value="shows" ${settings.missing_search_mode === 'shows' ? 'selected' : ''}>Shows</option>
+                    <label for="sonarr-hunt-missing-mode">Missing Search Mode:</label>
+                    <select id="sonarr-hunt-missing-mode" name="hunt_missing_mode">
+                        <option value="episodes" ${settings.hunt_missing_mode === 'episodes' ? 'selected' : ''}>Episodes</option>
+                        <option value="seasons" ${settings.hunt_missing_mode === 'seasons' ? 'selected' : ''}>Seasons</option>
+                        <option value="shows" ${settings.hunt_missing_mode === 'shows' ? 'selected' : ''}>Shows</option>
                     </select>
-                    <p class="setting-help">How to group and search for missing items (Season Packs recommended for torrent users)</p>
+                    <p class="setting-help">How to search for missing Sonarr content</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr-missing-items-to-search">Missing Items to Search:</label>
-                    <input type="number" id="sonarr-missing-items-to-search" name="missing_items_to_search" min="0" value="${settings.missing_items_to_search !== undefined ? settings.missing_items_to_search : 1}">
+                    <label for="sonarr-hunt-missing-items">Missing Items to Search:</label>
+                    <input type="number" id="sonarr-hunt-missing-items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr-upgrade-episodes">Episodes to Upgrade:</label>
-                    <input type="number" id="sonarr-upgrade-episodes" name="upgrade_episodes" min="0" value="${settings.upgrade_episodes !== undefined ? settings.upgrade_episodes : 0}">
+                    <label for="sonarr-hunt-upgrade-items">Upgrade Items to Search:</label>
+                    <input type="number" id="sonarr-hunt-upgrade-items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
                     <p class="setting-help">Number of episodes to upgrade per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr_search_interval">Search Interval:</label>
-                    <input type="number" id="sonarr_search_interval" name="search_interval" min="60" value="${settings.search_interval !== undefined ? settings.search_interval : 900}">
-                    <p class="setting-help">Time between searches in seconds (15 minutes = 900 seconds)</p>
+                    <label for="sonarr_sleep_duration">Sleep Duration:</label>
+                    <input type="number" id="sonarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                    <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
             </div>
             
@@ -224,19 +224,19 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="hunt_missing_movies">Missing Movies to Search:</label>
-                    <input type="number" id="hunt_missing_movies" min="0" value="${settings.hunt_missing_movies || 1}">
+                    <label for="radarr_hunt_missing_movies">Missing Movies to Search:</label>
+                    <input type="number" id="radarr_hunt_missing_movies" name="hunt_missing_movies" min="0" value="${settings.hunt_missing_movies || 1}">
                     <p class="setting-help">Number of missing movies to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="hunt_upgrade_movies">Movies to Upgrade:</label>
-                    <input type="number" id="hunt_upgrade_movies" min="0" value="${settings.hunt_upgrade_movies || 0}">
+                    <label for="radarr_hunt_upgrade_movies">Movies to Upgrade:</label>
+                    <input type="number" id="radarr_hunt_upgrade_movies" name="hunt_upgrade_movies" min="0" value="${settings.hunt_upgrade_movies || 0}">
                     <p class="setting-help">Number of movies to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="radarr_search_interval">Search Interval:</label>
-                    <input type="number" id="radarr_search_interval" name="search_interval" min="60" value="${settings.search_interval !== undefined ? settings.search_interval : 900}">
-                    <p class="setting-help">Time between searches in seconds (15 minutes = 900 seconds)</p>
+                    <label for="radarr_sleep_duration">Sleep Duration:</label>
+                    <input type="number" id="radarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                    <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
             </div>
             
@@ -353,28 +353,28 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="hunt_missing_mode">Missing Search Mode:</label>
-                    <select id="hunt_missing_mode">
-                        <option value="artist" ${settings.hunt_missing_mode === 'album' ? '' : 'selected'}>Artist</option>
+                    <label for="lidarr_hunt_missing_mode">Missing Search Mode:</label>
+                    <select id="lidarr_hunt_missing_mode" name="hunt_missing_mode">
+                        <option value="artist" ${settings.hunt_missing_mode === 'artist' ? 'selected' : ''}>Artist</option>
                         <option value="album" ${settings.hunt_missing_mode === 'album' ? 'selected' : ''}>Album</option>
                     </select>
                     <p class="setting-help">Whether to search by artist (all missing albums for artist) or individual albums</p>
                 </div>
                 <div class="setting-item">
-                    <label for="hunt_missing_items">Missing Items to Search:</label>
-                    <input type="number" id="hunt_missing_items" min="0" value="${settings.hunt_missing_items || 1}">
+                    <label for="lidarr_hunt_missing_items">Missing Items to Search:</label>
+                    <input type="number" id="lidarr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items || 1}">
                     <p class="setting-help">Number of artists with missing albums to search per cycle (0 to disable)</p>
                 </div>
                 
                 <div class="setting-item">
-                    <label for="hunt_upgrade_items">Items to Upgrade:</label>
-                    <input type="number" id="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items || 0}">
+                    <label for="lidarr_hunt_upgrade_items">Items to Upgrade:</label>
+                    <input type="number" id="lidarr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items || 0}">
                     <p class="setting-help">Number of albums to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="lidarr_search_interval">Search Interval:</label>
-                    <input type="number" id="lidarr_search_interval" name="search_interval" min="60" value="${settings.search_interval !== undefined ? settings.search_interval : 900}">
-                    <p class="setting-help">Time between searches in seconds (15 minutes = 900 seconds)</p>
+                    <label for="lidarr_sleep_duration">Sleep Duration:</label>
+                    <input type="number" id="lidarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                    <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
             </div>
             
@@ -491,19 +491,19 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="hunt_missing_books">Missing Books to Search:</label>
-                    <input type="number" id="hunt_missing_books" min="0" value="${settings.hunt_missing_books || 1}">
+                    <label for="readarr_hunt_missing_books">Missing Books to Search:</label>
+                    <input type="number" id="readarr_hunt_missing_books" min="0" value="${settings.hunt_missing_books || 1}">
                     <p class="setting-help">Number of missing books to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="hunt_upgrade_books">Books to Upgrade:</label>
-                    <input type="number" id="hunt_upgrade_books" min="0" value="${settings.hunt_upgrade_books || 0}">
+                    <label for="readarr_hunt_upgrade_books">Books to Upgrade:</label>
+                    <input type="number" id="readarr_hunt_upgrade_books" min="0" value="${settings.hunt_upgrade_books || 0}">
                     <p class="setting-help">Number of books to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="readarr_search_interval">Search Interval:</label>
-                    <input type="number" id="readarr_search_interval" name="search_interval" min="60" value="${settings.search_interval !== undefined ? settings.search_interval : 900}">
-                    <p class="setting-help">Time between searches in seconds (15 minutes = 900 seconds)</p>
+                    <label for="readarr_sleep_duration">Sleep Duration:</label>
+                    <input type="number" id="readarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                    <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
             </div>
             
@@ -620,19 +620,19 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="hunt_missing_items">Missing Items to Search:</label>
-                    <input type="number" id="hunt_missing_items" min="0" value="${settings.hunt_missing_items || settings.hunt_missing_scenes || 1}">
+                    <label for="whisparr_hunt_missing_items">Missing Items to Search:</label>
+                    <input type="number" id="whisparr_hunt_missing_items" min="0" value="${settings.hunt_missing_items || settings.hunt_missing_scenes || 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="hunt_upgrade_items">Items to Upgrade:</label>
-                    <input type="number" id="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items || settings.hunt_upgrade_scenes || 0}">
+                    <label for="whisparr_hunt_upgrade_items">Items to Upgrade:</label>
+                    <input type="number" id="whisparr_hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items || settings.hunt_upgrade_scenes || 0}">
                     <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_search_interval">Search Interval:</label>
-                    <input type="number" id="whisparr_search_interval" name="search_interval" min="60" value="${settings.search_interval !== undefined ? settings.search_interval : 900}">
-                    <p class="setting-help">Time between searches in seconds (15 minutes = 900 seconds)</p>
+                    <label for="whisparr_sleep_duration">Sleep Duration:</label>
+                    <input type="number" id="whisparr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                    <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
             </div>
             
@@ -935,42 +935,42 @@ const SettingsForms = {
             
             // Add app-specific settings
             if (appType === 'sonarr') {
-                settings.missing_search_mode = getInputValue('#sonarr-missing-search-mode', 'episodes');
-                settings.missing_items_to_search = getInputValue('#sonarr-missing-items-to-search', 1);
-                settings.upgrade_episodes = getInputValue('#sonarr-upgrade-episodes', 0);
-                settings.search_interval = getInputValue('#sonarr_search_interval', 900);
+                settings.hunt_missing_mode = getInputValue('#sonarr-hunt-missing-mode', 'episodes');
+                settings.hunt_missing_items = getInputValue('#sonarr-hunt-missing-items', 1);
+                settings.hunt_upgrade_items = getInputValue('#sonarr-hunt-upgrade-items', 0);
+                settings.sleep_duration = getInputValue('#sonarr_sleep_duration', 900);
                 settings.monitored_only = getInputValue('#sonarr_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#sonarr_skip_future_releases', true);
                 settings.skip_metadata_refresh = getInputValue('#sonarr_skip_metadata_refresh', false);
             } 
             else if (appType === 'radarr') {
-                settings.hunt_missing_movies = getInputValue('#hunt_missing_movies', 1);
-                settings.hunt_upgrade_movies = getInputValue('#hunt_upgrade_movies', 0);
+                settings.hunt_missing_movies = getInputValue('#radarr_hunt_missing_movies', 1);
+                settings.hunt_upgrade_movies = getInputValue('#radarr_hunt_upgrade_movies', 0);
                 settings.monitored_only = getInputValue('#radarr_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#skip_future_releases', true);
                 settings.skip_movie_refresh = getInputValue('#skip_movie_refresh', false);
-                settings.search_interval = getInputValue('#radarr_search_interval', 900);
+                settings.sleep_duration = getInputValue('#radarr_sleep_duration', 900);
             } 
             else if (appType === 'lidarr') {
-                settings.hunt_missing_albums = getInputValue('#hunt_missing_albums', 1);
-                settings.hunt_upgrade_albums = getInputValue('#hunt_upgrade_albums', 0);
-                settings.missing_search_mode = getInputValue('#lidarr-missing-search-mode', 'albums');
+                settings.hunt_missing_items = getInputValue('#lidarr_hunt_missing_items', 1);
+                settings.hunt_upgrade_items = getInputValue('#lidarr_hunt_upgrade_items', 0);
+                settings.hunt_missing_mode = getInputValue('#lidarr_hunt_missing_mode', 'artist');
                 settings.monitored_only = getInputValue('#lidarr_monitored_only', true);
-                settings.search_interval = getInputValue('#lidarr_search_interval', 900);
+                settings.sleep_duration = getInputValue('#lidarr_sleep_duration', 900);
             } 
             else if (appType === 'readarr') {
-                settings.hunt_missing_books = getInputValue('#hunt_missing_books', 1);
-                settings.hunt_upgrade_books = getInputValue('#hunt_upgrade_books', 0);
-                settings.missing_search_mode = getInputValue('#readarr-missing-search-mode', 'books');
+                settings.hunt_missing_books = getInputValue('#readarr_hunt_missing_books', 1);
+                settings.hunt_upgrade_books = getInputValue('#readarr_hunt_upgrade_books', 0);
                 settings.monitored_only = getInputValue('#readarr_monitored_only', true);
-                settings.search_interval = getInputValue('#readarr_search_interval', 900);
+                settings.sleep_duration = getInputValue('#readarr_sleep_duration', 900);
             } 
             else if (appType === 'whisparr') {
-                settings.hunt_missing_movies = getInputValue('#whisparr_hunt_missing_movies', 1);
-                settings.hunt_upgrade_movies = getInputValue('#whisparr_hunt_upgrade_movies', 0);
+                settings.hunt_missing_items = getInputValue('#whisparr_hunt_missing_items', 1);
+                settings.hunt_upgrade_items = getInputValue('#whisparr_hunt_upgrade_items', 0);
                 settings.monitored_only = getInputValue('#whisparr_monitored_only', true);
+                settings.version = getInputValue('#whisparr-api-version', 'v3');
                 settings.skip_future_releases = getInputValue('#whisparr_skip_future_releases', true);
-                settings.search_interval = getInputValue('#whisparr_search_interval', 900);
+                settings.sleep_duration = getInputValue('#whisparr_sleep_duration', 900);
             }
         }
         
