@@ -18,7 +18,15 @@ from src.primary.utils.logger import logger, get_logger # Import get_logger
 
 # Enable debug logging across the application
 # Set to True for detailed logs, False for production
-DEBUG_MODE = True # Default: False
+DEBUG_MODE = False # Changed default to False
+
+# Add a function to get the debug mode from settings
+def get_debug_mode():
+    """Get the debug mode setting from general settings"""
+    try:
+        return settings_manager.get_setting("general", "debug_mode", False)
+    except Exception:
+        return False
 
 # Determine the hunt mode for a specific app
 def determine_hunt_mode(app_name: str) -> str:
@@ -62,7 +70,7 @@ def determine_hunt_mode(app_name: str) -> str:
 def configure_logging(app_name: str = None):
     """Configure logging level based on the debug setting of a specific app or globally."""
     try:
-        debug_mode = False
+        debug_mode = get_debug_mode()
         log_instance = logger # Default to the main logger
 
         if app_name:

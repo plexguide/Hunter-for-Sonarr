@@ -41,9 +41,9 @@ def setup_main_logger(debug_mode=None):
     use_debug_mode = False
     if debug_mode is None:
         try:
-            # Use a safe approach to avoid circular imports if possible
-            from primary.config import DEBUG_MODE as CONFIG_DEBUG_MODE
-            use_debug_mode = CONFIG_DEBUG_MODE
+            # Use the get_debug_mode function to check general settings
+            from src.primary.config import get_debug_mode
+            use_debug_mode = get_debug_mode()
         except (ImportError, AttributeError):
             pass # Default to False
     else:
@@ -117,12 +117,11 @@ def get_logger(app_type: str) -> logging.Logger:
     
     # Determine debug mode setting safely
     try:
-        from primary import config
-        debug_mode = getattr(config, "DEBUG_MODE", False)
+        from src.primary.config import get_debug_mode
+        debug_mode = get_debug_mode()
     except ImportError:
         debug_mode = False
-            
-    # Set appropriate log level
+        
     app_logger.setLevel(logging.DEBUG if debug_mode else logging.INFO)
     
     # Reset handlers in case this logger existed before but wasn't cached
