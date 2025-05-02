@@ -85,10 +85,10 @@ const SettingsForms = {
                     <label for="sonarr-hunt-missing-mode">Missing Search Mode:</label>
                     <select id="sonarr-hunt-missing-mode" name="hunt_missing_mode">
                         <option value="episodes" ${settings.hunt_missing_mode === 'episodes' ? 'selected' : ''}>Episodes</option>
-                        <option value="seasons" ${settings.hunt_missing_mode === 'seasons' ? 'selected' : ''}>Seasons</option>
+                        <option value="seasons_packs" ${settings.hunt_missing_mode === 'seasons_packs' ? 'selected' : ''}>Season Packs</option>
                         <option value="shows" ${settings.hunt_missing_mode === 'shows' ? 'selected' : ''}>Shows</option>
                     </select>
-                    <p class="setting-help">How to search for missing Sonarr content</p>
+                    <p class="setting-help">How to search for missing Sonarr content (Season Packs recommended for torrent users)</p>
                 </div>
                 <div class="setting-item">
                     <label for="sonarr-hunt-missing-items">Missing Items to Search:</label>
@@ -118,20 +118,20 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr_skip_future_releases">Skip Future Releases:</label>
+                    <label for="sonarr_skip_future_episodes">Skip Future Episodes:</label>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="sonarr_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
+                        <input type="checkbox" id="sonarr_skip_future_episodes" name="skip_future_episodes" ${settings.skip_future_episodes !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Skip searching for episodes with future air dates</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr_skip_metadata_refresh">Skip Metadata Refresh:</label>
+                    <label for="sonarr_skip_series_refresh">Skip Series Refresh:</label>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="sonarr_skip_metadata_refresh" name="skip_metadata_refresh" ${settings.skip_metadata_refresh === true ? 'checked' : ''}>
+                        <input type="checkbox" id="sonarr_skip_series_refresh" name="skip_series_refresh" ${settings.skip_series_refresh === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
-                    <p class="setting-help">Skip refreshing metadata before searching</p>
+                    <p class="setting-help">Skip refreshing series metadata before searching</p>
                 </div>
             </div>
         `;
@@ -855,7 +855,8 @@ const SettingsForms = {
             if (element.type === 'checkbox') {
                 return element.checked;
             } else if (element.type === 'number') {
-                return parseInt(element.value) || defaultValue;
+                const parsedValue = parseInt(element.value);
+                return !isNaN(parsedValue) ? parsedValue : defaultValue;
             } else {
                 return element.value || defaultValue;
             }
@@ -940,8 +941,8 @@ const SettingsForms = {
                 settings.hunt_upgrade_items = getInputValue('#sonarr-hunt-upgrade-items', 0);
                 settings.sleep_duration = getInputValue('#sonarr_sleep_duration', 900);
                 settings.monitored_only = getInputValue('#sonarr_monitored_only', true);
-                settings.skip_future_releases = getInputValue('#sonarr_skip_future_releases', true);
-                settings.skip_metadata_refresh = getInputValue('#sonarr_skip_metadata_refresh', false);
+                settings.skip_future_episodes = getInputValue('#sonarr_skip_future_episodes', true);
+                settings.skip_series_refresh = getInputValue('#sonarr_skip_series_refresh', false);
             } 
             else if (appType === 'radarr') {
                 settings.hunt_missing_movies = getInputValue('#radarr_hunt_missing_movies', 1);
