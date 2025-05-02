@@ -342,8 +342,17 @@ def process_missing_seasons_packs_mode(
             
             # Add season to processed list
             season_id = f"{series_id}_{season_number}"
-            add_processed_id("sonarr", instance_name, season_id)
-            sonarr_logger.debug(f"Added season ID {season_id} to processed list for {instance_name}")
+            success = add_processed_id("sonarr", instance_name, season_id)
+            sonarr_logger.debug(f"Added season ID {season_id} to processed list for {instance_name}, success: {success}")
+            
+            # Log to history system
+            media_name = f"{series_title} - Season {season_number} (contains {episode_count} missing episodes)"
+            log_processed_media("sonarr", media_name, season_id, instance_name, "missing")
+            sonarr_logger.debug(f"Logged history entry for season pack: {media_name}")
+            
+            # Increment the hunted statistics
+            increment_stat("sonarr", "hunted", episode_count)  # Count all episodes in the season pack
+            sonarr_logger.debug(f"Incremented sonarr hunted statistics by {episode_count} (full season)")
             
             # Wait for command to complete if configured
             if command_wait_delay > 0 and command_wait_attempts > 0:
@@ -351,9 +360,9 @@ def process_missing_seasons_packs_mode(
                     api_url, api_key, api_timeout, command_id, 
                     command_wait_delay, command_wait_attempts, "Season Search", stop_check
                 ):
-                    # Increment stats by the number of episodes in the season
-                    increment_stat("sonarr", "hunted", episode_count)
-                    sonarr_logger.debug(f"Incremented sonarr hunted statistics by {episode_count} (full season)")
+                    pass
+        else:
+            sonarr_logger.error(f"Failed to trigger search for {series_title}.")
     
     sonarr_logger.info(f"Processed {processed_count} missing season packs for Sonarr.")
     return processed_any
@@ -489,10 +498,33 @@ def process_missing_shows_mode(
                 # Force flush to disk by calling add_processed_id immediately for each ID
                 success = add_processed_id("sonarr", instance_name, str(episode_id))
                 sonarr_logger.debug(f"Added processed ID: {episode_id}, success: {success}")
+                
+                # Log each episode to history
+                # Find the corresponding episode data 
+                for episode in missing_episodes:
+                    if episode.get('id') == episode_id:
+                        season = episode.get('seasonNumber', 'Unknown')
+                        ep_num = episode.get('episodeNumber', 'Unknown')
+                        title = episode.get('title', 'Unknown Title')
+                        
+                        try:
+                            season_episode = f"S{season:02d}E{ep_num:02d}"
+                        except (ValueError, TypeError):
+                            season_episode = f"S{season}E{ep_num}"
+                            
+                        media_name = f"{show_title} - {season_episode} - {title}"
+                        log_processed_media("sonarr", media_name, str(episode_id), instance_name, "missing")
+                        sonarr_logger.debug(f"Logged history entry for episode: {media_name}")
+                        break
             
             # Add series ID to processed list
-            add_processed_id("sonarr", instance_name, str(show_id))
-            sonarr_logger.debug(f"Added series ID {show_id} to processed list for {instance_name}")
+            success = add_processed_id("sonarr", instance_name, str(show_id))
+            sonarr_logger.debug(f"Added series ID {show_id} to processed list for {instance_name}, success: {success}")
+            
+            # Also log the entire show to history
+            media_name = f"{show_title} - Complete Series ({len(episode_ids)} episodes)"
+            log_processed_media("sonarr", media_name, str(show_id), instance_name, "missing")
+            sonarr_logger.debug(f"Logged history entry for complete series: {media_name}")
             
             # Increment the hunted statistics
             increment_stat("sonarr", "hunted", len(episode_ids))
