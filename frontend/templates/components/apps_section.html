@@ -1,0 +1,37 @@
+<section id="appsSection" class="content-section">
+    <div class="section-header">
+        <h2>App Settings</h2>
+        <button id="saveAppsButton" class="save-button" disabled>
+            <i class="fas fa-save"></i> Save
+        </button>
+    </div>
+
+    <div class="log-dropdown-container">
+        <div class="log-dropdown">
+            <button class="log-dropdown-btn">
+                <span id="current-apps-app">Sonarr</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="log-dropdown-content">
+                <a href="#" class="log-option active" data-app="sonarr">Sonarr</a>
+                <a href="#" class="log-option" data-app="radarr">Radarr</a>
+                <a href="#" class="log-option" data-app="lidarr">Lidarr</a>
+                <a href="#" class="log-option" data-app="readarr">Readarr</a>
+                <a href="#" class="log-option" data-app="whisparr">Whisparr</a>
+                <a href="#" class="log-option" data-app="swaparr">Swaparr</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="settings-group">
+        <div class="settings-content">
+            <!-- App forms will be loaded here dynamically -->
+            <div id="sonarrApps" class="app-apps-panel active" style="display: block;"></div>
+            <div id="radarrApps" class="app-apps-panel"></div>
+            <div id="lidarrApps" class="app-apps-panel"></div>
+            <div id="readarrApps" class="app-apps-panel"></div>
+            <div id="whisparrApps" class="app-apps-panel"></div>
+            <div id="swaparrApps" class="app-apps-panel"></div>
+        </div>
+    </div>
+</section>

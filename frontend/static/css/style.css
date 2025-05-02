@@ -873,7 +873,6 @@ input:checked + .toggle-slider:before {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
     gap: 4px;
     transition: background-color 0.2s ease;
     width: fit-content;
@@ -1115,7 +1114,6 @@ input:checked + .toggle-slider:before {
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 10px;
     transition: background-color 0.3s;
 }
@@ -1276,4 +1274,171 @@ input:checked + .toggle-slider:before {
 
 #reset_stateful_btn i {
     font-size: 13px;
+}
+
+/* Apps Section */
+/* Use the existing log dropdown styles for app section. No custom CSS needed for the dropdown itself. */
+
+/* App settings content styling */
+.settings-content {
+    margin-top: 20px;
+}
+
+.app-apps-panel {
+    display: none;
+    width: 100%;
+}
+
+.app-apps-panel.active {
+    display: block;
+}
+
+/* Instance panel styling */
+.instance-panel {
+    background-color: var(--bg-secondary, #2c2c2c);
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color, #3c3c3c);
+}
+
+.instance-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color, #3c3c3c);
+}
+
+.instance-name {
+    flex: 1;
+    padding: 8px;
+    background-color: var(--bg-tertiary, #252525);
+    border: 1px solid var(--border-color, #3c3c3c);
+    border-radius: 4px;
+    color: var(--text-primary, white);
+    font-size: 14px;
+}
+
+.form-field {
+    margin-bottom: 15px;
+}
+
+.form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 400;
+    color: var(--text-primary, #f0f0f0);
+    font-size: 14px;
+}
+
+.form-field input {
+    padding: 8px;
+    background-color: var(--bg-tertiary, #252525);
+    border: 1px solid var(--border-color, #3c3c3c);
+    border-radius: 4px;
+    color: var(--text-primary, white);
+    width: 100%;
+    max-width: 500px;
+    font-size: 14px;
+}
+
+/* Button styling */
+.add-instance-btn {
+    background-color: var(--accent-color, #007bff);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+.add-instance-btn:hover {
+    background-color: var(--accent-hover, #0069d9);
+}
+
+.remove-instance-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-instance-btn:hover {
+    background-color: #c82333;
+}
+
+.test-connection-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.test-connection-btn:hover {
+    background-color: #218838;
+}
+
+/* Match styling with existing settings UI */
+#appsSection .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color, #3c3c3c);
+    padding-bottom: 10px;
+}
+
+#appsSection .settings-group {
+    margin-top: 20px;
+    margin-bottom: 30px;
+    background-color: var(--bg-secondary, #252525);
+    border-radius: 4px;
+    padding: 20px;
+}
+
+#appsSection .settings-group-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color, #363636);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary, #f0f0f0);
+}
+
+.loading-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: var(--text-primary, #f0f0f0);
+    gap: 10px;
+}
+
+.error-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #dc3545;
+    gap: 10px;
 }

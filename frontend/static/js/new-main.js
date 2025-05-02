@@ -419,6 +419,18 @@ let huntarrUI = {
             this.currentSection = 'history';
             // Disconnect logs if switching away from logs
             this.disconnectAllEventSources(); 
+        } else if (section === 'apps' && document.getElementById('appsSection')) {
+            document.getElementById('appsSection').classList.add('active');
+            if (document.getElementById('appsNav')) document.getElementById('appsNav').classList.add('active');
+            newTitle = 'Apps';
+            this.currentSection = 'apps';
+            // Disconnect logs if switching away from logs
+            this.disconnectAllEventSources();
+            
+            // Load apps if the apps module exists
+            if (typeof appsModule !== 'undefined') {
+                appsModule.loadApps();
+            }
         } else if (section === 'settings' && this.elements.settingsSection) {
             this.elements.settingsSection.classList.add('active');
             if (this.elements.settingsNav) this.elements.settingsNav.classList.add('active');

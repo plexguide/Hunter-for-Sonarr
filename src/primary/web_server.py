@@ -346,96 +346,75 @@ def logs_stream():
     response.headers['X-Accel-Buffering'] = 'no'  # Disable nginx buffering if using nginx
     return response
 
-@app.route('/api/settings', methods=['GET', 'POST'])
+@app.route('/api/settings', methods=['GET'])
 def api_settings():
     if request.method == 'GET':
         # Return all settings using the new manager function
         all_settings = settings_manager.get_all_settings() # Corrected function name
         return jsonify(all_settings)
 
-    elif request.method == 'POST':
-        data = request.json
-        web_logger = get_logger("web_server")
-        web_logger.debug(f"Received settings save request: {data}")
-
-        # Expecting data format like: { "sonarr": { "api_url": "...", ... } }
-        if not isinstance(data, dict) or len(data) != 1:
-            return jsonify({"success": False, "error": "Invalid payload format. Expected {'app_name': {settings...}}"}), 400
-
-        app_name = list(data.keys())[0]
-        settings_data = data[app_name]
-
-        if app_name not in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
-             # Allow saving settings for potentially unknown apps if needed, or return error
-             # For now, let's restrict to known types
-             return jsonify({"success": False, "error": f"Unknown application type: {app_name}"}), 400
-
-        # Save the settings using the manager
-        success = settings_manager.save_settings(app_name, settings_data) # Corrected function name
-
-        if success:
-            # ---> ADDED: Update stateful expiration if general settings were saved <---
-            if app_name == 'general':
-                try:
-                    new_hours = int(settings_data.get('stateful_management_hours'))
-                    if new_hours > 0:
-                        web_logger.info(f"General settings saved, updating stateful expiration to {new_hours} hours.")
-                        update_lock_expiration(hours=new_hours)
-                    else:
-                        web_logger.warning("Invalid stateful_management_hours value received, not updating expiration.")
-                except (ValueError, TypeError) as e:
-                    web_logger.error(f"Could not update stateful expiration after saving general settings: {e}")
-                except Exception as e:
-                     web_logger.error(f"Unexpected error updating stateful expiration: {e}")
-            # ---> END ADDED SECTION <---
-
-            # Return the full updated configuration
-            all_settings = settings_manager.get_all_settings() # Corrected: Use get_all_settings
-            return jsonify(all_settings) # Return the full config object
-        else:
-            return jsonify({"success": False, "error": f"Failed to save settings for {app_name}"}), 500
-
 @app.route('/api/settings/general', methods=['POST'])
 def save_general_settings():
     general_logger = get_logger("web_server")
     general_logger.info("Received request to save general settings.")
-    try:
-        data = request.get_json()
-        if not data or 'general' not in data:
-            general_logger.error("Invalid payload received for saving general settings.")
-            return jsonify({"success": False, "error": "Invalid payload"}), 400
+    
+    # Make sure we have data
+    if not request.is_json:
+        return jsonify({"success": False, "error": "Expected JSON data"}), 400
+    
+    data = request.json
+    
+    # Save general settings
+    success = settings_manager.save_settings('general', data)
+    
+    if success:
+        # Update expiration timing from general settings if applicable
+        try:
+            new_hours = int(data.get('stateful_management_hours'))
+            if new_hours > 0:
+                general_logger.info(f"Updating stateful expiration to {new_hours} hours.")
+                update_lock_expiration(hours=new_hours)
+        except (ValueError, TypeError, KeyError):
+            # Don't update if the value wasn't provided or is invalid
+            pass
+        except Exception as e:
+            general_logger.error(f"Error updating expiration timing: {e}")
+        
+        # Return all settings
+        return jsonify(settings_manager.get_all_settings())
+    else:
+        return jsonify({"success": False, "error": "Failed to save general settings"}), 500
 
-        general_settings_data = data['general']
-        general_logger.debug(f"Saving general settings data: {general_settings_data}")
-
-        # Save the entire general settings dictionary
-        success = settings_manager.save_settings('general', general_settings_data)
-
+@app.route('/api/settings/<app_name>', methods=['GET', 'POST'])
+def handle_app_settings(app_name):
+    web_logger = get_logger("web_server")
+    
+    # Validate app_name
+    if app_name not in settings_manager.KNOWN_APP_TYPES:
+        return jsonify({"success": False, "error": f"Unknown application type: {app_name}"}), 400
+    
+    if request.method == 'GET':
+        # Return settings for the specific app
+        app_settings = settings_manager.load_settings(app_name)
+        return jsonify(app_settings)
+    
+    elif request.method == 'POST':
+        # Make sure we have data
+        if not request.is_json:
+            return jsonify({"success": False, "error": "Expected JSON data"}), 400
+        
+        data = request.json
+        web_logger.debug(f"Received {app_name} settings save request: {data}")
+        
+        # Save the app settings
+        success = settings_manager.save_settings(app_name, data)
+        
         if success:
-            # ---> ADDED: Update stateful expiration if general settings were saved <---
-            try:
-                new_hours = int(general_settings_data.get('stateful_management_hours'))
-                if new_hours > 0:
-                    general_logger.info(f"General settings saved, updating stateful expiration to {new_hours} hours.")
-                    update_lock_expiration(hours=new_hours)
-                else:
-                    general_logger.warning("Invalid stateful_management_hours value received, not updating expiration.")
-            except (ValueError, TypeError) as e:
-                general_logger.error(f"Could not update stateful expiration after saving general settings: {e}")
-            except Exception as e:
-                 general_logger.error(f"Unexpected error updating stateful expiration: {e}")
-            # ---> END ADDED SECTION <---
-
-            general_logger.info("General settings saved successfully.")
-            # Return the full updated config
-            full_config = settings_manager.load_settings()
-            return jsonify(full_config)
+            web_logger.info(f"Successfully saved {app_name} settings")
+            return jsonify({"success": True})
         else:
-            general_logger.error("Failed to save general settings via settings_manager.")
-            return jsonify({"success": False, "error": "Failed to save settings"}), 500
-    except Exception as e:
-        general_logger.error(f"Error saving general settings: {e}", exc_info=True)
-        return jsonify({"success": False, "error": str(e)}), 500
+            web_logger.error(f"Failed to save {app_name} settings")
+            return jsonify({"success": False, "error": f"Failed to save {app_name} settings"}), 500
 
 @app.route('/api/settings/theme', methods=['GET', 'POST'])
 def api_theme():
