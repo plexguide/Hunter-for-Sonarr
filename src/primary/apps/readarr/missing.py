@@ -140,7 +140,7 @@ def process_missing_books(
             readarr_logger.debug(f"Added author ID {author_id} to processed list for {instance_name}")
             
             # Log to history system
-            log_processed_media("readarr", author_name, author_id, instance_name)
+            log_processed_media("readarr", author_name, author_id, instance_name, "missing")
             readarr_logger.debug(f"Logged history entry for author: {author_name}")
             
             processed_count += 1 # Count processed authors/groups

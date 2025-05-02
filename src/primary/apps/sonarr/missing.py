@@ -211,7 +211,7 @@ def process_missing_episodes_mode(
                                 season_episode = f"S{season_number}E{episode_number}"
                                 
                             media_name = f"{series_title} - {season_episode} - {episode_title}"
-                            log_processed_media("sonarr", media_name, episode_id, instance_name)
+                            log_processed_media("sonarr", media_name, episode_id, instance_name, "missing")
                             break
                 
                 # Increment the hunted statistics

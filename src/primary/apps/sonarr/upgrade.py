@@ -207,8 +207,8 @@ def process_upgrade_episodes_mode(
                                 season_episode = f"S{season_number}E{episode_number}"
                                 
                             # Record the upgrade in history with quality upgrade identifier
-                            media_name = f"{series_title} - {season_episode} - {episode_title} [UPGRADE]"
-                            log_processed_media("sonarr", media_name, episode_id, instance_name)
+                            media_name = f"{series_title} - {season_episode} - {episode_title}"
+                            log_processed_media("sonarr", media_name, episode_id, instance_name, "upgrade")
                             sonarr_logger.debug(f"Logged quality upgrade to history for episode ID {episode_id}")
                     except Exception as e:
                         sonarr_logger.error(f"Failed to log history for episode ID {episode_id}: {str(e)}")
@@ -365,8 +365,8 @@ def process_upgrade_seasons_mode(
                                 season_episode = f"S{season_number}E{episode_number}"
                                 
                             # Record the upgrade in history with quality upgrade identifier
-                            media_name = f"{series_title} - {season_episode} - {episode_title} [UPGRADE]"
-                            log_processed_media("sonarr", media_name, episode_id, instance_name)
+                            media_name = f"{series_title} - {season_episode} - {episode_title}"
+                            log_processed_media("sonarr", media_name, episode_id, instance_name, "upgrade")
                             sonarr_logger.debug(f"Logged quality upgrade to history for episode ID {episode_id}")
                     except Exception as e:
                         sonarr_logger.error(f"Failed to log history for episode ID {episode_id}: {str(e)}")
@@ -518,8 +518,8 @@ def process_upgrade_shows_mode(
                                 season_episode = f"S{season_number}E{episode_number}"
                                 
                             # Record the upgrade in history with quality upgrade identifier
-                            media_name = f"{series_title} - {season_episode} - {episode_title} [UPGRADE]"
-                            log_processed_media("sonarr", media_name, episode_id, instance_name)
+                            media_name = f"{series_title} - {season_episode} - {episode_title}"
+                            log_processed_media("sonarr", media_name, episode_id, instance_name, "upgrade")
                             sonarr_logger.debug(f"Logged quality upgrade to history for episode ID {episode_id}")
                     except Exception as e:
                         sonarr_logger.error(f"Failed to log history for episode ID {episode_id}: {str(e)}")

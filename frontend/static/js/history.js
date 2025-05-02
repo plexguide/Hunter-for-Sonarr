@@ -232,6 +232,7 @@ const historyModule = {
             row.innerHTML = `
                 <td>${entry.date_time_readable}</td>
                 <td>${this.escapeHtml(entry.processed_info)}</td>
+                <td>${this.formatOperationType(entry.operation_type)}</td>
                 <td>${this.escapeHtml(entry.id)}</td>
                 <td>${this.escapeHtml(entry.instance_name)}</td>
                 <td>${this.escapeHtml(entry.how_long_ago)}</td>
@@ -293,6 +294,18 @@ const historyModule = {
         };
         
         return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+    },
+    
+    // Helper function to format operation type
+    formatOperationType: function(operationType) {
+        switch (operationType) {
+            case 'missing':
+                return '<span class="operation-missing">Missing</span>';
+            case 'upgrade':
+                return '<span class="operation-upgrade">Upgrade</span>';
+            default:
+                return operationType ? this.escapeHtml(operationType.charAt(0).toUpperCase() + operationType.slice(1)) : 'Unknown';
+        }
     }
 };
 

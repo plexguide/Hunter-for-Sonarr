@@ -265,7 +265,7 @@ def process_missing_albums(
                         lidarr_logger.debug(f"Added artist ID {artist_id} to processed list for {instance_name}")
                         
                         # Log to history system
-                        log_processed_media("lidarr", f"{artist_name}", artist_id, instance_name)
+                        log_processed_media("lidarr", f"{artist_name}", artist_id, instance_name, "missing")
                         lidarr_logger.debug(f"Logged history entry for artist: {artist_name}")
                         
                         time.sleep(0.1) # Small delay between triggers
@@ -319,7 +319,7 @@ def process_missing_albums(
                         title = album_info.get('title', f'Album ID {album_id}')
                         artist_name = album_info.get('artist', {}).get('artistName', 'Unknown Artist')
                         media_name = f"{artist_name} - {title}"
-                        log_processed_media("lidarr", media_name, album_id, instance_name)
+                        log_processed_media("lidarr", media_name, album_id, instance_name, "missing")
                         lidarr_logger.debug(f"Logged history entry for album: {media_name}")
                     
                 time.sleep(command_wait_delay) # Basic delay after the single command
