@@ -171,9 +171,9 @@ def process_missing_items(
         if search_command_id:
             whisparr_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
             
-            # Add item ID to processed list
-            add_processed_id("whisparr", instance_name, str(item_id))
-            whisparr_logger.debug(f"Added item ID {item_id} to processed list for {instance_name}")
+            # Add item ID to processed list immediately
+            success = add_processed_id("whisparr", instance_name, str(item_id))
+            whisparr_logger.debug(f"Added item ID {item_id} to processed list for {instance_name}, success: {success}")
             
             # Log to history system
             media_name = f"{title} - {season_episode}"

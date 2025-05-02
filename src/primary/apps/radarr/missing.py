@@ -154,7 +154,9 @@ def process_missing_movies(
         
         if search_success:
             radarr_logger.info(f"Successfully triggered search for movie '{movie_title}'")
-            add_processed_id("radarr", instance_name, str(movie_id))
+            # Immediately add to processed IDs to prevent duplicate processing
+            success = add_processed_id("radarr", instance_name, str(movie_id))
+            radarr_logger.debug(f"Added processed ID: {movie_id}, success: {success}")
             
             # Log to history system
             year = movie.get("year", "Unknown Year")

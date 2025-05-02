@@ -135,9 +135,9 @@ def process_missing_books(
             readarr_logger.info(f"Triggered book search command {command_id} for author {author_name}. Assuming success for now.") # Log only command ID
             increment_stat("readarr", "hunted")
             
-            # Add author ID to processed list
-            add_processed_id("readarr", instance_name, str(author_id))
-            readarr_logger.debug(f"Added author ID {author_id} to processed list for {instance_name}")
+            # Add author ID to processed list immediately
+            success = add_processed_id("readarr", instance_name, str(author_id))
+            readarr_logger.debug(f"Added author ID {author_id} to processed list for {instance_name}, success: {success}")
             
             # Log to history system
             log_processed_media("readarr", author_name, author_id, instance_name, "missing")
