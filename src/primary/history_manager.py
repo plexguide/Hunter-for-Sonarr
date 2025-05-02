@@ -68,7 +68,8 @@ def add_history_entry(app_type, entry_data):
         "processed_info": entry_data["name"],
         "id": entry_data["id"],
         "instance_name": entry_data["instance_name"],
-        "operation_type": entry_data.get("operation_type", "missing")  # Default to "missing" if not specified
+        "operation_type": entry_data.get("operation_type", "missing"),  # Default to "missing" if not specified
+        "app_type": app_type  # Include app_type in the entry for display in UI
     }
     
     history_file = os.path.join(HISTORY_BASE_PATH, f"{app_type}_history.json")
