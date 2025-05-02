@@ -250,36 +250,49 @@ const appsModule = {
     saveApps: function() {
         console.log('[Apps] Saving app settings for ' + this.currentApp);
         
-        // Gather settings from all app forms
-        const allSettings = {};
-        const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'swaparr'];
+        // Get the app panel for the current app
+        const appPanel = document.getElementById(this.currentApp + 'Apps');
+        if (!appPanel) {
+            console.error(`App panel not found for ${this.currentApp}`);
+            return;
+        }
         
-        // Loop through each app and collect settings
-        apps.forEach(app => {
-            const appPanel = document.getElementById(app + 'Apps');
-            if (!appPanel) return;
-            
-            const appForm = appPanel.querySelector('.settings-form');
-            if (!appForm) return;
-            
-            // Get settings using SettingsForms
-            if (typeof SettingsForms !== 'undefined' && typeof SettingsForms.getFormSettings === 'function') {
-                const appSettings = SettingsForms.getFormSettings(appForm);
-                if (appSettings) {
-                    allSettings[app] = appSettings;
-                }
+        // Get the form element
+        const appForm = appPanel.querySelector('.settings-form');
+        if (!appForm) {
+            console.error(`Settings form not found for ${this.currentApp}`);
+            return;
+        }
+        
+        // Get settings using SettingsForms
+        let appSettings = null;
+        if (typeof SettingsForms !== 'undefined' && typeof SettingsForms.getFormSettings === 'function') {
+            appSettings = SettingsForms.getFormSettings(appForm);
+            if (!appSettings) {
+                console.error(`Could not get settings for ${this.currentApp}`);
+                return;
             }
-        });
+        } else {
+            console.error('SettingsForms module or getFormSettings function not found');
+            return;
+        }
         
-        // Send settings update request
-        fetch('/api/settings', {
+        console.log(`[Apps] Sending settings for ${this.currentApp}:`, appSettings);
+        
+        // Send settings update request to the correct app-specific endpoint
+        fetch(`/api/settings/${this.currentApp}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ [this.currentApp]: allSettings[this.currentApp] })
+            body: JSON.stringify(appSettings)
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             console.log('Settings saved:', data);
             
@@ -291,13 +304,10 @@ const appsModule = {
             
             // Show success message
             alert('Settings saved successfully!');
-            
-            // Update original settings
-            this.originalSettings = data;
         })
         .catch(error => {
             console.error('Error saving settings:', error);
-            alert('Error saving settings. Please try again.');
+            alert(`Error saving settings: ${error.message}`);
         });
     }
 };

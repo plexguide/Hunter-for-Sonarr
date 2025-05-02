@@ -926,18 +926,17 @@ let huntarrUI = {
             
         console.log(`[huntarrUI] Local access bypass changed: ${isLocalAccessBypassChanged}`);
 
-        // Add app_type to the payload if needed by backend
-        const payload = { [app]: settings };
+        console.log(`[huntarrUI] Sending settings payload for ${app}:`, settings);
 
-        console.log(`[huntarrUI] Sending settings payload for ${app}:`, payload);
-
-        // Use the correct endpoint /api/settings
-        fetch(`/api/settings`, {
+        // Use the correct endpoint based on app type
+        const endpoint = app === 'general' ? '/api/settings/general' : `/api/settings/${app}`;
+        
+        fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(settings)
         })
         .then(response => {
             if (!response.ok) {
@@ -2027,12 +2026,12 @@ let huntarrUI = {
             }
         })
         .catch(error => {
-            console.error('Error updating stateful expiration:', error);
-            this.showNotification(`Failed to update expiration: ${error.message}`, 'error');
-            // Reset the UI
-            if (expiresDateEl) {
-                expiresDateEl.textContent = 'Error updating';
-            }
+             console.error('Error updating stateful expiration:', error);
+             this.showNotification(`Failed to update expiration: ${error.message}`, 'error');
+             // Reset the UI
+             if (expiresDateEl) {
+                 expiresDateEl.textContent = 'Error updating';
+             }
         });
     },
 };
