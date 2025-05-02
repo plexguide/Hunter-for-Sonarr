@@ -15,6 +15,7 @@ from src.primary.apps.whisparr import api as whisparr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
+from src.primary.settings_manager import get_advanced_setting
 
 # Get logger for the app
 whisparr_logger = get_logger("whisparr")
@@ -50,7 +51,9 @@ def process_missing_items(
     
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
-    state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)
+    
+    # Use the centralized advanced setting for stateful management hours
+    stateful_management_hours = get_advanced_setting("stateful_management_hours", 168)
     
     # Log that we're using Eros API v3
     whisparr_logger.info(f"Using Whisparr Eros API v3 for instance: {instance_name}")

@@ -6,5 +6,9 @@
   "enable_notifications": false,
   "notification_level": "info",
   "local_access_bypass": false,
-  "stateful_management_hours": 168
+  "stateful_management_hours": 168,
+  "command_wait_delay": 1,
+  "command_wait_attempts": 600,
+  "minimum_download_queue_size": -1,
+  "api_timeout": 120
 }
