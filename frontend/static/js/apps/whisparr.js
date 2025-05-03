@@ -103,19 +103,59 @@ function setupWhisparrForm() {
     });
 
     // Get Whisparr version if connection details are present and version display exists
-    if (apiUrlInput && apiKeyInput && whisparrVersionDisplay && apiUrlInput.value && apiKeyInput.value) {
+    // Only perform auto-check if we haven't already fetched the version
+    if (apiUrlInput && apiKeyInput && whisparrVersionDisplay && 
+        apiUrlInput.value && apiKeyInput.value && 
+        (!whisparrVersionDisplay.textContent || whisparrVersionDisplay.textContent === 'Unknown')) {
+        
+        // Set a flag to prevent automatic version checks from triggering unsaved changes
+        const wasSettingsChanged = typeof huntarrUI !== 'undefined' ? huntarrUI.settingsChanged : false;
+        
         getWhisparrVersion();
+        
+        // Restore the original settingsChanged state after the version check
+        if (typeof huntarrUI !== 'undefined' && huntarrUI.settingsChanged !== wasSettingsChanged) {
+            setTimeout(() => {
+                huntarrUI.settingsChanged = wasSettingsChanged;
+                console.log("[whisparr.js] Restored settingsChanged state after version check");
+                
+                // If there are no actual changes, update the save button state
+                if (!wasSettingsChanged && typeof huntarrUI.updateSaveResetButtonState === 'function') {
+                    huntarrUI.updateSaveResetButtonState(false);
+                }
+            }, 100);
+        }
     }
 
     // Function to get Whisparr version
     function getWhisparrVersion() {
-         if (!whisparrVersionDisplay) return; // Check if element exists
+        if (!whisparrVersionDisplay) return; // Check if element exists
 
+        const wasSettingsChanged = typeof huntarrUI !== 'undefined' ? huntarrUI.settingsChanged : false;
+        
         fetch('/api/whisparr/get-versions')
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.version) {
-                    whisparrVersionDisplay.textContent = `v${data.version}`; // Prepend 'v'
+                    // Temporarily store the textContent so we can detect if it actually changes
+                    const oldContent = whisparrVersionDisplay.textContent;
+                    const newContent = `v${data.version}`;
+                    
+                    if (oldContent !== newContent) {
+                        whisparrVersionDisplay.textContent = newContent; // Prepend 'v'
+                        
+                        // Restore settings changed state to prevent triggering the dialog
+                        if (typeof huntarrUI !== 'undefined') {
+                            setTimeout(() => {
+                                huntarrUI.settingsChanged = wasSettingsChanged;
+                                
+                                // If there are no actual changes, update the save button state
+                                if (!wasSettingsChanged && typeof huntarrUI.updateSaveResetButtonState === 'function') {
+                                    huntarrUI.updateSaveResetButtonState(false);
+                                }
+                            }, 50);
+                        }
+                    }
                 } else {
                     whisparrVersionDisplay.textContent = 'Unknown';
                 }
@@ -123,6 +163,18 @@ function setupWhisparrForm() {
             .catch(error => {
                 whisparrVersionDisplay.textContent = 'Error';
                 console.error('Error fetching Whisparr version:', error);
+            })
+            .finally(() => {
+                // Final safety check to restore settings state
+                if (typeof huntarrUI !== 'undefined' && huntarrUI.settingsChanged !== wasSettingsChanged) {
+                    setTimeout(() => {
+                        huntarrUI.settingsChanged = wasSettingsChanged;
+                        // If there are no actual changes, update the save button state
+                        if (!wasSettingsChanged && typeof huntarrUI.updateSaveResetButtonState === 'function') {
+                            huntarrUI.updateSaveResetButtonState(false);
+                        }
+                    }, 100);
+                }
             });
     }
 }
