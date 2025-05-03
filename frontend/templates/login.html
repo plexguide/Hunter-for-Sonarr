@@ -23,14 +23,192 @@
     <link rel="icon" href="/static/logo/16.png">
     <!-- Preload script to prevent flashing -->
     <script src="/static/js/theme-preload.js"></script>
-    <!-- Improve logo loading -->
+    <!-- Modern login styles -->
     <style>
-        .login-logo {
-            opacity: 0;
-            transition: opacity 0.2s ease-in-out;
+        .login-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #13171f 0%, #1c2230 100%);
+            margin: 0;
+            padding: 20px;
         }
+        
+        .login-container {
+            width: 400px;
+            max-width: 90%;
+            background: linear-gradient(180deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: 1px solid rgba(90, 109, 137, 0.15);
+        }
+        
+        .login-header {
+            background: linear-gradient(180deg, rgba(18, 22, 30, 0.98), rgba(24, 28, 37, 0.95));
+            padding: 30px 0;
+            text-align: center;
+            border-bottom: 1px solid rgba(90, 109, 137, 0.15);
+        }
+        
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+            transition: transform 0.3s ease, opacity 0.2s ease-in-out;
+        }
+        
         .login-logo.loaded {
             opacity: 1;
+        }
+        
+        .login-logo:hover {
+            transform: scale(1.05);
+        }
+        
+        .login-header h1 {
+            margin: 0;
+            color: #fff;
+            font-size: 24px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .login-form {
+            padding: 30px;
+        }
+        
+        .login-form h2 {
+            margin: 0 0 25px;
+            text-align: center;
+            font-size: 20px;
+            color: #fff;
+            font-weight: 500;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .form-group label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+        
+        .form-group label i {
+            margin-right: 8px;
+            color: rgba(65, 105, 225, 0.9);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(90, 109, 137, 0.2);
+            border-radius: 8px;
+            background-color: rgba(28, 36, 54, 0.6);
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            border-color: rgba(65, 105, 225, 0.6);
+            box-shadow: 0 0 0 3px rgba(65, 105, 225, 0.2);
+            outline: none;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 40px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.6);
+            z-index: 10;
+        }
+        
+        .toggle-password:hover {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .form-check {
+            display: flex;
+            align-items: center;
+        }
+        
+        .login-button {
+            background: linear-gradient(135deg, #3a71e4 0%, #5481e6 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(58, 113, 228, 0.3);
+        }
+        
+        .login-button:hover {
+            background: linear-gradient(135deg, #4a7deb 0%, #6491fa 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(58, 113, 228, 0.4);
+        }
+        
+        .login-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(58, 113, 228, 0.3);
+        }
+        
+        .additional-options {
+            text-align: center;
+            margin-top: 25px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+        
+        .error-message {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: #ff6b6b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            border-left: 4px solid #dc3545;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .login-container {
+                width: 95%;
+            }
+            
+            .login-form {
+                padding: 20px;
+            }
+            
+            .login-header {
+                padding: 20px 0;
+            }
+            
+            .login-logo {
+                width: 60px;
+                height: 60px;
+            }
         }
     </style>
 </head>
@@ -42,6 +220,7 @@
         </div>
         <div class="login-form">
             <h2>Log in to your account</h2>
+            <div id="errorMessage" class="error-message"></div>
             <form action="/login" method="POST" id="loginForm">
                 <div class="form-group">
                     <label for="username">
@@ -56,108 +235,135 @@
                         <span>Password</span>
                     </label>
                     <input type="password" id="password" name="password" required>
+                    <i class="toggle-password fas fa-eye" id="togglePassword"></i>
                 </div>
                 <div class="form-group" id="twoFactorGroup" style="display: none;">
-                    <label for="twoFactorCode"> <!-- Changed from 'otp' to 'twoFactorCode' for consistency -->
+                    <label for="twoFactorCode">
                         <i class="fas fa-shield-alt"></i>
-                        <span>2FA Code</span>
+                        <span>Two-Factor Code</span>
                     </label>
-                    <!-- Add id="twoFactorCode" to the input -->
-                    <input type="text" id="twoFactorCode" name="otp" placeholder="Enter 6-digit code" maxlength="6" autocomplete="off">
+                    <input type="text" id="twoFactorCode" name="twoFactorCode" placeholder="Enter your 6-digit code" maxlength="6">
                 </div>
-                <div class="error-message" id="errorMessage"></div>
-                <button type="submit" class="login-button">
+                <div class="form-actions">
+                    <div class="form-check">
+                        <input type="checkbox" id="rememberMe" name="rememberMe">
+                        <label for="rememberMe" style="margin-left: 5px;">Remember me</label>
+                    </div>
+                </div>
+                <button type="submit" class="login-button" id="loginButton">
                     <i class="fas fa-sign-in-alt"></i> Log In
                 </button>
             </form>
         </div>
-        <!-- Removed Theme Toggle Section -->
     </div>
 
     <script>
         const loginForm = document.getElementById('loginForm');
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
-        const otpInput = document.getElementById('twoFactorCode'); // Use the new ID
+        const otpInput = document.getElementById('twoFactorCode');
+        const errorMessage = document.getElementById('errorMessage');
         const twoFactorGroup = document.getElementById('twoFactorGroup');
-        const errorElement = document.getElementById('errorMessage');
-
-        loginForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            errorElement.textContent = ''; // Clear previous errors
-            errorElement.style.display = 'none';
-
-            const username = usernameInput.value;
+        const togglePassword = document.getElementById('togglePassword');
+        
+        // Toggle password visibility
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+        
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Clear previous errors
+            errorMessage.style.display = 'none';
+            errorMessage.textContent = '';
+            
+            const username = usernameInput.value.trim();
             const password = passwordInput.value;
-            // Base request body
-            let requestBody = {
-                username: username,
-                password: password
-            };
-
-            // If 2FA input is visible and has a value, add it to the request body
-            if (twoFactorGroup.style.display !== 'none' && otpInput.value) {
-                requestBody.otp_code = otpInput.value; // Use 'otp_code' key expected by backend
+            
+            if (!username || !password) {
+                showError('Please enter both username and password.');
+                return;
             }
-
-            fetch('/login', { // Changed from /api/login to /login
+            
+            // If 2FA field is visible, make sure it's filled
+            if (twoFactorGroup.style.display !== 'none') {
+                const otpCode = otpInput.value.trim();
+                if (!otpCode) {
+                    showError('Please enter your two-factor authentication code.');
+                    return;
+                }
+                
+                if (otpCode.length !== 6 || !/^\d+$/.test(otpCode)) {
+                    showError('Two-factor code must be 6 digits.');
+                    return;
+                }
+            }
+            
+            // Show loading state on button
+            const loginButton = document.getElementById('loginButton');
+            const originalText = loginButton.innerHTML;
+            loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+            loginButton.disabled = true;
+            
+            // Submit the form data
+            fetch('/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(requestBody) // Send the constructed body
+                body: JSON.stringify({
+                    username: username,
+                    password: password,
+                    twoFactorCode: otpInput.value || '',
+                    rememberMe: document.getElementById('rememberMe').checked
+                })
             })
             .then(response => {
-                // Store status for later use
-                const status = response.status;
-                // Try to parse JSON regardless of status code, as 401 might have a JSON body
-                return response.json().then(data => ({ status, ok: response.ok, data }));
-            })
-            .then(({ status, ok, data }) => { // Destructure the object
-                console.log('Login response status:', status);
-                console.log('Login response ok:', ok);
-                console.log('Login response data:', data);
-
-                if (ok && data.success) { // Check ok status AND success field
-                    console.log('Login successful, redirecting to:', data.redirect || '/');
-                    window.location.href = data.redirect || '/';
-                } else if (data.requires_2fa) { // Check for requires_2fa field from backend
-                    // 2FA is required
-                    twoFactorGroup.style.display = 'block'; // Ensure 2FA field is visible
-                    if (requestBody.otp_code) {
-                        // 2FA code WAS provided in this request, but was invalid (backend confirmed)
-                        console.log('Login failed: Invalid 2FA code provided.');
-                        errorElement.textContent = data.error || 'Invalid 2FA code'; // Show the specific error from backend
-                        errorElement.style.display = 'block';
-                        otpInput.focus(); // Focus the OTP input again
-                        otpInput.select(); // Select the text for easy replacement
-                    } else {
-                        // 2FA code was NOT provided in this request, this is the first prompt
-                        console.log('Login requires 2FA.');
-                        errorElement.textContent = 'Please enter your 6-digit 2FA code.'; // Show a neutral prompt instead of backend error
-                        errorElement.style.display = 'block'; // Show the prompt
-                        otpInput.focus(); // Focus the OTP input
-                    }
+                if (response.ok) {
+                    return response.json();
                 } else {
-                    // Handle other login failures (e.g., bad password, server error)
-                    console.log('Login failed:', data.error || `HTTP error! status: ${status}`);
-                    // Hide 2FA input if login fails for other reasons
-                    twoFactorGroup.style.display = 'none';
-                    otpInput.value = ''; // Clear OTP input on failure
-                    errorElement.textContent = data.error || `Login failed (status: ${status})`; // Use backend error or generic
-                    errorElement.style.display = 'block';
+                    throw new Error('Network response was not ok');
+                }
+            })
+            .then(data => {
+                if (data.success) {
+                    // Redirect to dashboard or home
+                    window.location.href = data.redirect || '/';
+                } else if (data.requiresTwoFactor) {
+                    // Show 2FA field
+                    twoFactorGroup.style.display = 'block';
+                    otpInput.focus();
+                    
+                    // Reset button
+                    loginButton.innerHTML = originalText;
+                    loginButton.disabled = false;
+                } else {
+                    // Show error
+                    showError(data.message || 'Invalid username or password.');
+                    
+                    // Reset button
+                    loginButton.innerHTML = originalText;
+                    loginButton.disabled = false;
                 }
             })
             .catch(error => {
-                // Catch network errors or JSON parsing errors
-                console.error('Login fetch/processing error:', error);
-                errorElement.textContent = 'Login failed. Could not connect to server or invalid response.';
-                errorElement.style.display = 'block';
-                // Hide 2FA input on network/parse error
-                twoFactorGroup.style.display = 'none';
-                otpInput.value = '';
+                console.error('Error:', error);
+                showError('An error occurred during login. Please try again.');
+                
+                // Reset button
+                loginButton.innerHTML = originalText;
+                loginButton.disabled = false;
             });
         });
+        
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
     </script>
 </body>
 </html>

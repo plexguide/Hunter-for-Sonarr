@@ -1,44 +1,53 @@
 <section id="homeSection" class="content-section">
     <div class="dashboard-grid stack-layout">
-        <!-- Updated banner with version info -->
-        <div class="card banner-card">
-            <div class="banner-content">
-                <p>
-                    <i class="fas fa-code-branch version-icon"></i>
-                    <span id="version-number">Version <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank"><span id="version-value">...</span></a></span>
-                    &nbsp;&nbsp;|&nbsp;&nbsp;
-                    <i class="fas fa-cloud-download-alt version-icon"></i>
-                    <span id="latest-version-number">Latest: <a href="https://github.com/plexguide/Huntarr.io/releases/latest" target="_blank"><span id="latest-version-value">Loading...</span></a></span>
-                    &nbsp;&nbsp;|&nbsp;&nbsp;
-                    <i class="fas fa-star version-icon star-icon"></i>
-                    <span id="github-stars"><a href="https://github.com/plexguide/huntarr" target="_blank"><span id="github-stars-value">Loading...</span></a></span>
-                </p>
+        <!-- Community & Resources Hub (redesigned links section) -->
+        <div class="card community-hub-card">
+            <div class="card-header">
+                <h3>Community & Resources</h3>
             </div>
-        </div>
-
-        <!-- Important links card (removed welcome header) -->
-        <div class="card info-card">
-            <div class="important-links">
-                <a href="https://discord.gg/VQbZCGzQsn" target="_blank" class="link-button">
-                    <i class="fab fa-discord"></i>
-                    Discord Community
-                </a>
-                <a href="https://www.reddit.com/r/huntarr/" target="_blank" class="link-button">
-                    <i class="fab fa-reddit"></i>
-                    Reddit Community
-                </a>
-                <a href="https://github.com/plexguide/Huntarr/issues" target="_blank" class="link-button">
-                    <i class="fas fa-bug"></i>
-                    GitHub Issues
-                </a>
-                <a href="https://github.com/plexguide/Huntarr/wiki" target="_blank" class="link-button">
-                    <i class="fas fa-book"></i>
-                    Documentation Wiki
-                </a>
-                <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank" class="link-button">
-                    <i class="fas fa-history"></i>
-                    ChangeLog
-                </a>
+            <div class="community-resources-container">
+                <div class="community-links-grid">
+                    <a href="https://discord.gg/VQbZCGzQsn" target="_blank" class="community-link discord">
+                        <div class="icon-container">
+                            <i class="fab fa-discord"></i>
+                        </div>
+                        <div class="link-details">
+                            <span class="link-title">Discord</span>
+                        </div>
+                    </a>
+                    <a href="https://www.reddit.com/r/huntarr/" target="_blank" class="community-link reddit">
+                        <div class="icon-container">
+                            <i class="fab fa-reddit"></i>
+                        </div>
+                        <div class="link-details">
+                            <span class="link-title">Reddit</span>
+                        </div>
+                    </a>
+                    <a href="https://github.com/plexguide/Huntarr/issues" target="_blank" class="community-link github">
+                        <div class="icon-container">
+                            <i class="fas fa-bug"></i>
+                        </div>
+                        <div class="link-details">
+                            <span class="link-title">Issues</span>
+                        </div>
+                    </a>
+                    <a href="https://github.com/plexguide/Huntarr/wiki" target="_blank" class="community-link wiki">
+                        <div class="icon-container">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="link-details">
+                            <span class="link-title">Wiki</span>
+                        </div>
+                    </a>
+                    <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank" class="community-link changelog">
+                        <div class="icon-container">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <div class="link-details">
+                            <span class="link-title">Changelog</span>
+                        </div>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -56,17 +65,19 @@
                             <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="app-content">
-                            <img src="/static/arrs/48-sonarr.png" alt="Sonarr Logo" class="app-logo">
+                            <div class="app-icon-wrapper">
+                                <img src="/static/arrs/48-sonarr.png" alt="Sonarr Logo" class="app-logo">
+                            </div>
                             <h4>Sonarr</h4>
                         </div>
                         <div class="stats-numbers">
                             <div class="stat-box">
-                                <span class="stat-number" id="sonarr-hunted">6</span>
-                                <span class="stat-label">Searches Triggered</span>
+                                <div class="stat-number" id="sonarrHomeSearches">0</div>
+                                <div class="stat-label">Searches Triggered</div>
                             </div>
                             <div class="stat-box">
-                                <span class="stat-number" id="sonarr-upgraded">6</span>
-                                <span class="stat-label">Upgrades Triggered</span>
+                                <div class="stat-number" id="sonarrHomeUpgrades">0</div>
+                                <div class="stat-label">Upgrades Triggered</div>
                             </div>
                         </div>
                     </div>
@@ -77,7 +88,9 @@
                             <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="app-content">
-                            <img src="/static/arrs/48-radarr.png" alt="Radarr Logo" class="app-logo">
+                            <div class="app-icon-wrapper">
+                                <img src="/static/arrs/48-radarr.png" alt="Radarr Logo" class="app-logo">
+                            </div>
                             <h4>Radarr</h4>
                         </div>
                         <div class="stats-numbers">
@@ -98,7 +111,9 @@
                             <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="app-content">
-                            <img src="/static/arrs/48-lidarr.png" alt="Lidarr Logo" class="app-logo">
+                            <div class="app-icon-wrapper">
+                                <img src="/static/arrs/48-lidarr.png" alt="Lidarr Logo" class="app-logo">
+                            </div>
                             <h4>Lidarr</h4>
                         </div>
                         <div class="stats-numbers">
@@ -119,7 +134,9 @@
                             <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="app-content">
-                            <img src="/static/arrs/48-readarr.png" alt="Readarr Logo" class="app-logo">
+                            <div class="app-icon-wrapper">
+                                <img src="/static/arrs/48-readarr.png" alt="Readarr Logo" class="app-logo">
+                            </div>
                             <h4>Readarr</h4>
                         </div>
                         <div class="stats-numbers">
@@ -140,7 +157,9 @@
                             <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="app-content">
-                            <img src="/static/arrs/48-whisparr.png" alt="Whisparr Logo" class="app-logo">
+                            <div class="app-icon-wrapper">
+                                <img src="/static/arrs/48-whisparr.png" alt="Whisparr Logo" class="app-logo">
+                            </div>
                             <h4>Whisparr</h4>
                         </div>
                         <div class="stats-numbers">
@@ -158,27 +177,43 @@
             </div>
         </div>
 
-        <div class="card thanks-card">
-            <div class="thanks-container">
-                <div class="thanks-item">
-                    <i class="fas fa-heart thanks-icon"></i>
-                    <div class="thanks-text">
-                        Thank you for using Huntarr ~ <a href="https://github.com/Admin9705/" target="_blank">Admin9705</a>
-                    </div>
+        <!-- GitHub Sponsors Section -->
+        <div class="card sponsors-card">
+            <div class="card-header">
+                <h3>GitHub Sponsors (Rotated Randomly)</h3>
+                <a href="https://github.com/sponsors/plexguide" target="_blank" class="action-button primary">
+                    <i class="fas fa-heart"></i> Become a Sponsor
+                </a>
+            </div>
+            <div class="sponsors-container">
+                <div id="sponsors-loading" class="sponsors-loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading sponsors...
+                </div>
+                <div id="sponsors-list" class="sponsors-list">
+                    <!-- Sponsors will be dynamically loaded here -->
+                </div>
+                <div id="sponsors-error" class="sponsors-error" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i> 
+                    <span>Could not load sponsors</span>
                 </div>
             </div>
         </div>
+
     </div>
     
     <!-- Fixed banner at the bottom of the viewport -->
     <div class="fixed-banner-footer">
-        <p>
-            <i class="fas fa-heart donation-icon"></i> 
-            <a href="https://donate.plex.one" target="_blank">Donate</a> for Daughter's College Fund!
-            &nbsp;&nbsp;|&nbsp;&nbsp;
-            <i class="fas fa-star star-icon"></i> 
-            <a href="https://github.com/plexguide/huntarr" target="_blank">Star Huntarr on GitHub</a> - Helps!
-        </p>
+        <div class="footer-content">
+            <div class="footer-item">
+                <i class="fas fa-heart donation-icon"></i> 
+                <a href="https://donate.plex.one" target="_blank">Donate</a> for Daughter's College Fund!
+            </div>
+            <div class="footer-divider"></div>
+            <div class="footer-item">
+                <i class="fas fa-star star-icon"></i> 
+                <a href="https://github.com/plexguide/huntarr" target="_blank">Star Huntarr on GitHub</a> - Helps!
+            </div>
+        </div>
     </div>
 </section>
 
@@ -272,58 +307,84 @@
         background-color: #24c6dc;
     }
     
-    /* Media Stats Styles - Updated to match new design */
+    /* Stats card styling */
+    .stats-card {
+        width: 100%;
+        background-color: rgba(24, 28, 37, 0.6);
+        border: 1px solid rgba(90, 109, 137, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .stats-card .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background-color: rgba(32, 38, 50, 0.6);
+        border-bottom: 1px solid rgba(90, 109, 137, 0.2);
+        margin-bottom: 0;
+    }
+    
+    .stats-card .card-header h3 {
+        margin: 0;
+        color: #e0e6ed;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
     .media-stats-container {
-        padding: 0;
-        text-align: center;
+        padding: 20px;
+        background-color: rgba(15, 18, 24, 0.4);
     }
     
     .app-stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-bottom: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
     }
     
-    /* Enhanced card styling */
     .app-stats-card {
-        background-color: var(--bg-secondary);
-        border-radius: 8px;
-        padding: 12px;
+        background: rgba(24, 28, 37, 0.8);
+        border-radius: 12px;
+        padding: 20px;
         text-align: center;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         transition: all 0.3s ease;
         position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-height: 180px;
+        min-height: 200px;
         justify-content: space-between;
-        border: 1px solid var(--border-color);
+        border: 1px solid rgba(120, 140, 180, 0.15);
     }
     
+    /* Removing card-level border styles since we only want rings around the icons */
+    
     .app-stats-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        border-color: rgba(120, 140, 180, 0.3);
     }
 
     /* Status container styling */
     .status-container {
         width: 100%;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
         display: flex;
         justify-content: center;
     }
     
     .status-badge {
-        padding: 5px 15px;
+        padding: 6px 16px;
         border-radius: 20px;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 12px;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        box-shadow: none;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
     /* App content styling */
@@ -331,29 +392,73 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .app-icon-wrapper {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        background: rgba(28, 34, 46, 0.8);
+        margin-bottom: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        border: 2px solid rgba(120, 140, 180, 0.2);
+    }
+    
+    /* Sonarr blue icon ring */
+    .app-stats-card.sonarr .app-icon-wrapper {
+        border: 2px solid rgba(0, 174, 240, 0.8);
+        box-shadow: 0 0 15px rgba(0, 174, 240, 0.4);
+    }
+    
+    /* Radarr yellow icon ring */
+    .app-stats-card.radarr .app-icon-wrapper {
+        border: 2px solid rgba(253, 203, 43, 0.8);
+        box-shadow: 0 0 15px rgba(253, 203, 43, 0.4);
+    }
+    
+    /* Lidarr green icon ring */
+    .app-stats-card.lidarr .app-icon-wrapper {
+        border: 2px solid rgba(49, 197, 56, 0.8);
+        box-shadow: 0 0 15px rgba(49, 197, 56, 0.4);
+    }
+    
+    /* Readarr red icon ring */
+    .app-stats-card.readarr .app-icon-wrapper {
+        border: 2px solid rgba(192, 45, 40, 0.8);
+        box-shadow: 0 0 15px rgba(192, 45, 40, 0.4);
+    }
+    
+    /* Whisparr purple icon ring */
+    .app-stats-card.whisparr .app-icon-wrapper {
+        border: 2px solid rgba(195, 0, 230, 0.8);
+        box-shadow: 0 0 15px rgba(195, 0, 230, 0.4);
     }
     
     .app-logo {
         width: 40px;
         height: 40px;
-        margin-bottom: 8px;
     }
     
     .app-stats-card h4 {
         margin: 0;
-        font-size: 1.1em;
+        font-size: 16px;
         font-weight: 600;
+        color: #e0e6ed;
+        letter-spacing: 0.5px;
     }
     
     /* Stats display styling */
     .stats-numbers {
         display: flex;
-        gap: 10px;
+        gap: 15px;
         width: 100%;
-        padding-top: 12px;
+        padding-top: 15px;
         margin-top: auto;
-        border-top: 1px solid var(--border-color);
+        border-top: 1px solid rgba(120, 140, 180, 0.15);
     }
 
     .stat-box {
@@ -364,43 +469,91 @@
     }
 
     .stat-number {
-        font-size: 2rem;
-        font-weight: 600;
+        font-size: 28px;
+        font-weight: 700;
         line-height: 1;
-        color: var(--text-primary);
+        background: linear-gradient(to bottom right, #fff, #a0a8b8);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 6px;
     }
     
     .stat-label {
-        font-size: 0.8rem;
-        margin-top: 2px;
-        color: var(--text-secondary);
+        font-size: 12px;
+        color: #a0a8b8;
+        font-weight: 500;
     }
     
-    /* App-specific accent colors */
+    /* App-specific accent colors for sonarr */
+    .app-stats-card.sonarr .app-icon-wrapper {
+        border-color: rgba(0, 174, 240, 0.5);
+        box-shadow: 0 0 15px rgba(0, 174, 240, 0.2);
+    }
+    
     .app-stats-card.sonarr .stat-number {
-        color: #00aef0;
+        background: linear-gradient(to bottom right, #5acdff, #00aef0);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* App-specific accent colors for radarr */
+    .app-stats-card.radarr .app-icon-wrapper {
+        border-color: rgba(253, 203, 43, 0.5);
+        box-shadow: 0 0 15px rgba(253, 203, 43, 0.2);
     }
     
     .app-stats-card.radarr .stat-number {
-        color: #fdcb2b;
+        background: linear-gradient(to bottom right, #ffe066, #fdcb2b);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* App-specific accent colors for lidarr */
+    .app-stats-card.lidarr .app-icon-wrapper {
+        border-color: rgba(49, 197, 56, 0.5);
+        box-shadow: 0 0 15px rgba(49, 197, 56, 0.2);
     }
     
     .app-stats-card.lidarr .stat-number {
-        color: #31c538;
+        background: linear-gradient(to bottom right, #5de264, #31c538);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* App-specific accent colors for readarr */
+    .app-stats-card.readarr .app-icon-wrapper {
+        border-color: rgba(192, 45, 40, 0.5);
+        box-shadow: 0 0 15px rgba(192, 45, 40, 0.2);
     }
     
     .app-stats-card.readarr .stat-number {
-        color: #c02d28;
+        background: linear-gradient(to bottom right, #e35751, #c02d28);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* App-specific accent colors for whisparr */
+    .app-stats-card.whisparr .app-icon-wrapper {
+        border-color: rgba(195, 0, 230, 0.5);
+        box-shadow: 0 0 15px rgba(195, 0, 230, 0.2);
     }
     
     .app-stats-card.whisparr .stat-number {
-        color: #c300e6;
+        background: linear-gradient(to bottom right, #e64dff, #c300e6);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
     
     /* Status badge colors */
     .status-badge.connected {
         background-color: rgba(39, 174, 96, 0.15);
-        color: #27ae60;
+        color: #2ecc71;
         border: 1px solid rgba(39, 174, 96, 0.3);
     }
     
@@ -417,9 +570,9 @@
     }
     
     .status-badge.loading {
-        background-color: rgba(255, 183, 77, 0.15);
-        color: #ffb74d;
-        border: 1px solid rgba(255, 183, 77, 0.3);
+        background-color: rgba(41, 128, 185, 0.15);
+        color: #3498db;
+        border: 1px solid rgba(41, 128, 185, 0.3);
     }
     
     /* Header for cards */
@@ -485,44 +638,178 @@
         font-weight: 600;
     }
     
-    /* Enhanced Special Thanks styling */
-    .card.thanks-card {
-        padding: 12px 15px;
+    /* Developer credit styling */
+    .developer-credit {
+        color: var(--text-secondary);
+        font-weight: 500;
     }
-
-    .thanks-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 12px;
+    
+    .developer-credit a {
+        color: #3498db;
+        font-weight: 600;
+        text-decoration: none;
     }
-
-    .thanks-item {
+    
+    .developer-credit a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Sponsors section styling */
+    .sponsors-card {
+        width: 100%;
+        background-color: rgba(24, 28, 37, 0.6);
+        border: 1px solid rgba(90, 109, 137, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .sponsors-card .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background-color: rgba(32, 38, 50, 0.6);
+        border-bottom: 1px solid rgba(90, 109, 137, 0.2);
+    }
+    
+    .sponsors-card .card-header h3 {
+        margin: 0;
+        color: #e0e6ed;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .sponsors-container {
+        padding: 20px;
+        background-color: rgba(15, 18, 24, 0.4);
+    }
+    
+    .sponsors-loading, .sponsors-error {
+        text-align: center;
+        padding: 24px;
+        color: #a0a8b8;
+        font-size: 15px;
+    }
+    
+    .sponsors-error {
+        color: #f44336;
+    }
+    
+    .sponsors-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        justify-content: center;
+    }
+    
+    .sponsor-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: linear-gradient(145deg, rgba(38, 46, 63, 0.7), rgba(28, 34, 46, 0.7));
+        border-radius: 10px;
+        padding: 15px;
+        min-width: 110px;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(120, 140, 180, 0.15);
+        text-decoration: none;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+    
+    .sponsor-item:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 7px 18px rgba(0, 0, 0, 0.25);
+        border-color: rgba(120, 140, 180, 0.3);
+    }
+    
+    .sponsor-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid transparent;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+        background-color: #2a3142;
+    }
+    
+    /* Different border colors based on sponsorship tier */
+    .sponsor-item[title*="Gold"] .sponsor-avatar {
+        border-color: #ffd700;
+        box-shadow: 0 0 9px rgba(255, 215, 0, 0.5);
+    }
+    
+    .sponsor-item[title*="Silver"] .sponsor-avatar {
+        border-color: #c0c0c0;
+        box-shadow: 0 0 9px rgba(192, 192, 192, 0.5);
+    }
+    
+    .sponsor-item[title*="Bronze"] .sponsor-avatar {
+        border-color: #cd7f32;
+        box-shadow: 0 0 9px rgba(205, 127, 50, 0.5);
+    }
+    
+    .sponsor-name {
+        margin-top: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #e0e6ed;
+        text-align: center;
+        word-break: break-word;
+    }
+    
+    .sponsor-tier {
+        margin-top: 5px;
+        font-size: 10px;
+        padding: 3px 7px;
+        border-radius: 10px;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #a0a8b8;
+    }
+    
+    /* Different tier badge styles */
+    .sponsor-item[title*="Gold"] .sponsor-tier {
+        background-color: rgba(255, 215, 0, 0.2);
+        color: #ffd700;
+    }
+    
+    .sponsor-item[title*="Silver"] .sponsor-tier {
+        background-color: rgba(192, 192, 192, 0.2);
+        color: #c0c0c0;
+    }
+    
+    .sponsor-item[title*="Bronze"] .sponsor-tier {
+        background-color: rgba(205, 127, 50, 0.2);
+        color: #cd7f32;
+    }
+    
+    /* Become a sponsor button styling */
+    .sponsors-card .action-button.primary {
+        background: linear-gradient(135deg, #4a8eff, #1a5eff);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 14px;
         display: flex;
         align-items: center;
-        gap: 10px;
-        background-color: var(--bg-tertiary);
-        padding: 12px 15px;
-        border-radius: 6px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    }
-
-    .thanks-icon {
-        font-size: 1.3em;
-        color: var(--accent-color);
-        width: 25px;
-        text-align: center;
-    }
-
-    .thanks-text {
-        font-size: 0.9em;
-        color: var(--text-secondary);
-        line-height: 1.5;
-    }
-
-    .thanks-text a {
-        color: var(--accent-color);
+        transition: all 0.2s ease;
         text-decoration: none;
+        box-shadow: 0 2px 8px rgba(26, 94, 255, 0.3);
+        white-space: nowrap;
+        min-width: 160px;
+        justify-content: center;
+    }
+    
+    .sponsors-card .action-button.primary:hover {
+        background: linear-gradient(135deg, #5a9bff, #2a6fff);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(26, 94, 255, 0.4);
+    }
+    
+    .sponsors-card .action-button.primary i {
+        margin-right: 6px;
+        color: #ff8a8a;
     }
     
     /* Fixed banner footer styling */
@@ -533,36 +820,184 @@
         right: 0;
         text-align: center;
         padding: 10px 20px;
-        background-color: var(--bg-secondary);
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        border-top: 1px solid var(--border-color);
+        background: linear-gradient(180deg, rgba(24, 28, 37, 0.95), rgba(18, 22, 30, 0.98));
+        box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(90, 109, 137, 0.15);
         z-index: 1000; /* Ensure it's above other elements */
+        backdrop-filter: blur(5px);
     }
     
-    .fixed-banner-footer p {
-        margin: 0;
-        font-size: 1em;
-        color: var(--text-primary);
-        font-weight: 500;
+    .fixed-banner-footer .footer-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .fixed-banner-footer .footer-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        color: #e0e6ed;
+        transition: transform 0.2s;
+    }
+    
+    .fixed-banner-footer .footer-item:hover {
+        transform: translateY(-2px);
+    }
+    
+    .fixed-banner-footer .footer-divider {
+        width: 1px;
+        height: 20px;
+        background-color: rgba(120, 140, 180, 0.3);
     }
     
     .fixed-banner-footer a {
-        color: var(--accent-color);
+        color: #3498db;
         text-decoration: none;
         font-weight: 600;
-        transition: color 0.2s, text-decoration 0.2s;
+        transition: all 0.2s ease;
     }
     
     .fixed-banner-footer a:hover {
-        text-decoration: underline;
-        color: var(--accent-hover);
+        text-decoration: none;
+        color: #5dade2;
     }
     
     .fixed-banner-footer .donation-icon {
-        color: var(--error-color, #ff6b6b);
+        color: #ff6b6b;
+        font-size: 16px;
     }
     
     .fixed-banner-footer .star-icon {
-        color: var(--warning-color, #ffd700);
+        color: #ffd700;
+        font-size: 16px;
+    }
+    
+    /* Responsive footer */
+    @media (max-width: 600px) {
+        .fixed-banner-footer .footer-content {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .fixed-banner-footer .footer-divider {
+            display: none;
+        }
+    }
+    
+    /* Community & Resources Hub styling */
+    .community-hub-card {
+        width: 100%;
+        background-color: rgba(24, 28, 37, 0.6);
+        border: 1px solid rgba(90, 109, 137, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .community-hub-card .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background-color: rgba(32, 38, 50, 0.6);
+        border-bottom: 1px solid rgba(90, 109, 137, 0.2);
+    }
+    
+    .community-hub-card .card-header h3 {
+        margin: 0;
+        color: #e0e6ed;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .community-resources-container {
+        padding: 20px;
+        background-color: rgba(15, 18, 24, 0.4);
+    }
+    
+    .community-links-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    
+    .community-link {
+        display: flex;
+        align-items: center;
+        background: rgba(28, 34, 46, 0.7);
+        border-radius: 8px;
+        padding: 10px 12px;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(120, 140, 180, 0.15);
+        text-decoration: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .community-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        background: rgba(38, 46, 63, 0.8);
+    }
+    
+    .icon-container {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin-right: 12px;
+        flex-shrink: 0;
+        font-size: 18px;
+        color: white;
+    }
+    
+    .link-details {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .link-title {
+        font-weight: 600;
+        font-size: 14px;
+        color: #e0e6ed;
+    }
+    
+    /* Icon styles for each link type */
+    .community-link.discord .icon-container {
+        background: linear-gradient(135deg, #7289DA, #5865F2);
+    }
+    
+    .community-link.reddit .icon-container {
+        background: linear-gradient(135deg, #FF4500, #FF6A33);
+    }
+    
+    .community-link.github .icon-container {
+        background: linear-gradient(135deg, #24292E, #404448);
+    }
+    
+    .community-link.wiki .icon-container {
+        background: linear-gradient(135deg, #1ABC9C, #16A085);
+    }
+    
+    .community-link.changelog .icon-container {
+        background: linear-gradient(135deg, #3498DB, #2980B9);
+    }
+    
+    /* Media queries for responsiveness */
+    @media (max-width: 768px) {
+        .community-links-grid {
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+    }
+    
+    @media (max-width: 500px) {
+        .community-links-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>

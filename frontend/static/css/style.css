@@ -99,23 +99,46 @@ button {
 .app-container {
     display: flex;
     height: 100vh;
+    width: 100%;
     overflow: hidden;
 }
 
-/* Sidebar */
 .sidebar {
-    width: 240px;
-    background-color: var(--sidebar-bg);
-    color: var(--sidebar-text);
+    width: 250px;
+    height: 100vh;
+    background: linear-gradient(180deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+    border-right: 1px solid rgba(90, 109, 137, 0.15);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
-    padding: 20px 0;
-    height: 100%;
-    overflow: auto;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 100;
     flex-shrink: 0;
+    overflow-y: auto;
 }
 
+.main-content {
+    flex: 1;
+    min-width: 0; /* Important for flex child to respect parent constraints */
+    height: 100vh;
+    overflow-y: auto;
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* Content Section styles */
+.content-section {
+    display: none;
+    padding: 20px;
+    height: calc(100vh - 60px); /* 60px is topbar height */
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.content-section.active {
+    display: block;
+}
+
+/* Sidebar */
 .logo-container {
     display: flex;
     align-items: center;
@@ -896,64 +919,98 @@ input:checked + .toggle-slider:before {
 }
 
 /* Responsive Adjustments */
-@media (max-width: 992px) {
+@media (max-width: 768px) {
     .sidebar {
-        width: 70px;
+        width: 60px !important;
+        min-width: 60px !important;
+        max-width: 60px !important;
     }
     
-    .sidebar h1, .nav-item span, .switch-label {
-        display: none;
+    .main-content {
+        margin-left: 0 !important;
+        width: calc(100% - 60px) !important;
     }
     
-    .nav-item i {
-        margin-right: 0;
-        font-size: 22px;
-    }
-    
-    .logo-container {
+    /* Navbar item adjustments */
+    .nav-item {
+        padding: 10px 0;
         justify-content: center;
     }
     
+    .nav-item span {
+        display: none !important;
+    }
+    
+    .nav-icon-wrapper {
+        margin-right: 0 !important;
+    }
+    
+    /* Logo container */
+    .logo-container {
+        justify-content: center !important;
+        padding: 15px 0 !important;
+    }
+    
+    .logo-container h1 {
+        display: none !important;
+    }
+    
     .logo {
-        margin-right: 0;
+        width: 40px !important;
+        height: 40px !important;
     }
     
-    .settings-group {
-        padding: 15px;
+    /* Fix active/hover state */
+    .nav-item:hover,
+    .nav-item.active {
+        background: rgba(65, 105, 225, 0.2) !important;
+        width: 50px !important;
+        margin: 0 auto !important;
+        border-radius: 8px !important;
     }
     
-    .setting-item label {
-        width: 100%;
-        margin-bottom: 8px;
+    /* Topbar adjustments */
+    .topbar-section.center {
+        position: relative !important;
+        left: 0 !important;
+        transform: none !important;
+        justify-content: center !important;
     }
     
-    .setting-help {
-        margin-left: 0;
+    /* Version bar */
+    .version-bar {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
     }
     
-    .stats-grid {
-        grid-template-columns: 1fr;
+    .version-item, .developer-credit {
+        font-size: 12px !important;
     }
 }
 
-@media (max-width: 768px) {
-    .dashboard-grid {
+@media (max-width: 480px) {
+    .community-links {
+        flex-direction: column;
+    }
+    
+    .community-link-card {
+        width: 100%;
+    }
+    
+    .app-stats-grid {
         grid-template-columns: 1fr;
     }
     
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
+    .sponsors-list {
+        grid-template-columns: repeat(2, 1fr);
     }
     
-    .app-tabs, .settings-actions {
-        width: 100%;
-        overflow-x: auto;
+    .version-bar {
+        gap: 8px;
     }
     
-    .app-tab, .settings-tab {
-        flex: 1;
-        white-space: nowrap;
+    .version-divider {
+        display: none;
     }
 }
 
