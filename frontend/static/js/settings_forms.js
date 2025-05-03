@@ -843,6 +843,22 @@ const SettingsForms = {
         }
     },
 
+    // Format date nicely for display
+    formatDate: function(date) {
+        if (!date) return 'Never';
+        
+        const options = {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        };
+        
+        return date.toLocaleString('en-US', options);
+    },
+    
     // Get settings from form
     getFormSettings: function(container, appType) {
         let settings = {};
@@ -877,7 +893,7 @@ const SettingsForms = {
             settings.disableAllowListPopup = getInputValue('#disableAllowListPopup', false);
             settings.maxHistoryItems = getInputValue('#maxHistoryItems', 100);
             settings.maxLogItems = getInputValue('#maxLogItems', 200);
-            settings.statefulExpirationHours = getInputValue('#statefulExpirationHours', 168);
+            settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);
             settings.autoLoginWithoutPassword = getInputValue('#autoLoginWithoutPassword', false);
             
             // Add collection of advanced settings
@@ -1015,7 +1031,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <div class="stateful-header-row">
                     <h3>Stateful Management</h3>
-                    <button id="reset_stateful_btn"><i class="fas fa-trash"></i> Reset</button>
+                    <!-- Original reset button removed, now using emergency button -->
                 </div>
                 <div id="stateful-section" class="setting-info-block">
                     <div id="stateful-notification" class="notification error" style="display: none;">
@@ -1082,7 +1098,7 @@ const SettingsForms = {
             </div>
         `;
         
-        // Add listener for stateful management hours input
+        // Get hours input and days span elements once
         const statefulHoursInput = container.querySelector('#stateful_management_hours');
         const statefulDaysSpan = container.querySelector('#stateful_management_days');
         
@@ -1125,12 +1141,12 @@ const SettingsForms = {
                     
                     if (createdDateEl && parsedData.created_at_ts) {
                         const createdDate = new Date(parsedData.created_at_ts * 1000);
-                        createdDateEl.textContent = formatDateNicely(createdDate);
+                        createdDateEl.textContent = this.formatDate(createdDate);
                     }
                     
                     if (expiresDateEl && parsedData.expires_at_ts) {
                         const expiresDate = new Date(parsedData.expires_at_ts * 1000);
-                        expiresDateEl.textContent = formatDateNicely(expiresDate);
+                        expiresDateEl.textContent = this.formatDate(expiresDate);
                     }
                     
                     // Still fetch fresh data in the background, but don't update UI
@@ -1166,7 +1182,7 @@ const SettingsForms = {
                 if (createdDateEl) {
                     if (data.created_at_ts) {
                         const createdDate = new Date(data.created_at_ts * 1000);
-                        createdDateEl.textContent = formatDateNicely(createdDate);
+                        createdDateEl.textContent = this.formatDate(createdDate);
                     } else {
                         createdDateEl.textContent = 'Not yet created';
                     }
@@ -1175,7 +1191,7 @@ const SettingsForms = {
                 if (expiresDateEl) {
                     if (data.expires_at_ts) {
                         const expiresDate = new Date(data.expires_at_ts * 1000);
-                        expiresDateEl.textContent = formatDateNicely(expiresDate);
+                        expiresDateEl.textContent = this.formatDate(expiresDate);
                     } else {
                         expiresDateEl.textContent = 'Not set';
                     }
@@ -1196,14 +1212,14 @@ const SettingsForms = {
                         
                         if (createdDateEl && parsedData.created_at_ts) {
                             const createdDate = new Date(parsedData.created_at_ts * 1000);
-                            createdDateEl.textContent = formatDateNicely(createdDate) + ' (cached)';
+                            createdDateEl.textContent = this.formatDate(createdDate) + ' (cached)';
                         } else if (createdDateEl) {
                             createdDateEl.textContent = 'Not available';
                         }
                         
                         if (expiresDateEl && parsedData.expires_at_ts) {
                             const expiresDate = new Date(parsedData.expires_at_ts * 1000);
-                            expiresDateEl.textContent = formatDateNicely(expiresDate) + ' (cached)';
+                            expiresDateEl.textContent = this.formatDate(expiresDate) + ' (cached)';
                         } else if (expiresDateEl) {
                             expiresDateEl.textContent = 'Not available';
                         }
@@ -1241,39 +1257,6 @@ const SettingsForms = {
                     }
                 })
                 .catch(error => console.warn('Silent stateful info fetch failed:', error));
-        }
-        
-        // Helper function to format dates nicely
-        function formatDateNicely(date) {
-            if (!date || !(date instanceof Date) || isNaN(date)) {
-                return 'Invalid date';
-            }
-            
-            const options = {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: true
-            };
-            
-            return date.toLocaleString('en-US', options);
-        }
-        
-        // Add listener for reset stateful button
-        const resetStatefulBtn = container.querySelector('#reset_stateful_btn');
-        if (resetStatefulBtn && typeof huntarrUI !== 'undefined' && typeof huntarrUI.resetStatefulManagement === 'function') {
-            resetStatefulBtn.addEventListener('click', function() {
-                if (confirm('Are you sure you want to reset stateful management? This will clear all processed media IDs.')) {
-                    huntarrUI.resetStatefulManagement();
-                }
-            });
-        } else if (!resetStatefulBtn) {
-            console.warn('Could not find #reset_stateful_btn to attach listener.');
-        } else {
-             console.warn('huntarrUI or huntarrUI.resetStatefulManagement is not available.');
         }
     },
     
