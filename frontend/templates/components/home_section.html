@@ -29,7 +29,6 @@
                         </div>
                         <div class="link-details">
                             <span class="link-title">Discord</span>
-                            <span class="link-description">Join our community chat</span>
                         </div>
                     </a>
                     <a href="https://www.reddit.com/r/huntarr/" target="_blank" class="community-link reddit">
@@ -38,7 +37,6 @@
                         </div>
                         <div class="link-details">
                             <span class="link-title">Reddit</span>
-                            <span class="link-description">Discuss and share tips</span>
                         </div>
                     </a>
                     <a href="https://github.com/plexguide/Huntarr/issues" target="_blank" class="community-link github">
@@ -47,7 +45,6 @@
                         </div>
                         <div class="link-details">
                             <span class="link-title">Issues</span>
-                            <span class="link-description">Report bugs & features</span>
                         </div>
                     </a>
                     <a href="https://github.com/plexguide/Huntarr/wiki" target="_blank" class="community-link wiki">
@@ -56,7 +53,6 @@
                         </div>
                         <div class="link-details">
                             <span class="link-title">Documentation</span>
-                            <span class="link-description">Guides & setup help</span>
                         </div>
                     </a>
                     <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank" class="community-link changelog">
@@ -65,16 +61,6 @@
                         </div>
                         <div class="link-details">
                             <span class="link-title">Changelog</span>
-                            <span class="link-description">Latest updates</span>
-                        </div>
-                    </a>
-                    <a href="https://github.com/sponsors/plexguide" target="_blank" class="community-link sponsor">
-                        <div class="icon-container">
-                            <i class="fas fa-heart"></i>
-                        </div>
-                        <div class="link-details">
-                            <span class="link-title">Sponsor</span>
-                            <span class="link-description">Support development</span>
                         </div>
                     </a>
                 </div>
@@ -118,7 +104,9 @@
                             <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="app-content">
-                            <img src="/static/arrs/48-radarr.png" alt="Radarr Logo" class="app-logo">
+                            <div class="app-icon-wrapper">
+                                <img src="/static/arrs/48-radarr.png" alt="Radarr Logo" class="app-logo">
+                            </div>
                             <h4>Radarr</h4>
                         </div>
                         <div class="stats-numbers">
@@ -139,7 +127,9 @@
                             <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="app-content">
-                            <img src="/static/arrs/48-lidarr.png" alt="Lidarr Logo" class="app-logo">
+                            <div class="app-icon-wrapper">
+                                <img src="/static/arrs/48-lidarr.png" alt="Lidarr Logo" class="app-logo">
+                            </div>
                             <h4>Lidarr</h4>
                         </div>
                         <div class="stats-numbers">
@@ -160,7 +150,9 @@
                             <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="app-content">
-                            <img src="/static/arrs/48-readarr.png" alt="Readarr Logo" class="app-logo">
+                            <div class="app-icon-wrapper">
+                                <img src="/static/arrs/48-readarr.png" alt="Readarr Logo" class="app-logo">
+                            </div>
                             <h4>Readarr</h4>
                         </div>
                         <div class="stats-numbers">
@@ -181,7 +173,9 @@
                             <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="app-content">
-                            <img src="/static/arrs/48-whisparr.png" alt="Whisparr Logo" class="app-logo">
+                            <div class="app-icon-wrapper">
+                                <img src="/static/arrs/48-whisparr.png" alt="Whisparr Logo" class="app-logo">
+                            </div>
                             <h4>Whisparr</h4>
                         </div>
                         <div class="stats-numbers">
@@ -373,7 +367,7 @@
     }
     
     .app-stats-card {
-        background: linear-gradient(145deg, rgba(38, 46, 63, 0.7), rgba(28, 34, 46, 0.7));
+        background: rgba(24, 28, 37, 0.8);
         border-radius: 12px;
         padding: 20px;
         text-align: center;
@@ -387,6 +381,8 @@
         justify-content: space-between;
         border: 1px solid rgba(120, 140, 180, 0.15);
     }
+    
+    /* Removing card-level border styles since we only want rings around the icons */
     
     .app-stats-card:hover {
         transform: translateY(-5px);
@@ -428,10 +424,40 @@
         justify-content: center;
         align-items: center;
         border-radius: 50%;
-        background: linear-gradient(145deg, rgba(48, 56, 73, 0.7), rgba(38, 46, 63, 0.7));
+        background: rgba(28, 34, 46, 0.8);
         margin-bottom: 12px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         border: 2px solid rgba(120, 140, 180, 0.2);
+    }
+    
+    /* Sonarr blue icon ring */
+    .app-stats-card.sonarr .app-icon-wrapper {
+        border: 2px solid rgba(0, 174, 240, 0.8);
+        box-shadow: 0 0 15px rgba(0, 174, 240, 0.4);
+    }
+    
+    /* Radarr yellow icon ring */
+    .app-stats-card.radarr .app-icon-wrapper {
+        border: 2px solid rgba(253, 203, 43, 0.8);
+        box-shadow: 0 0 15px rgba(253, 203, 43, 0.4);
+    }
+    
+    /* Lidarr green icon ring */
+    .app-stats-card.lidarr .app-icon-wrapper {
+        border: 2px solid rgba(49, 197, 56, 0.8);
+        box-shadow: 0 0 15px rgba(49, 197, 56, 0.4);
+    }
+    
+    /* Readarr red icon ring */
+    .app-stats-card.readarr .app-icon-wrapper {
+        border: 2px solid rgba(192, 45, 40, 0.8);
+        box-shadow: 0 0 15px rgba(192, 45, 40, 0.4);
+    }
+    
+    /* Whisparr purple icon ring */
+    .app-stats-card.whisparr .app-icon-wrapper {
+        border: 2px solid rgba(195, 0, 230, 0.8);
+        box-shadow: 0 0 15px rgba(195, 0, 230, 0.4);
     }
     
     .app-logo {
@@ -905,38 +931,38 @@
     
     .community-links-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
     }
     
     .community-link {
         display: flex;
         align-items: center;
-        background: linear-gradient(145deg, rgba(38, 46, 63, 0.7), rgba(28, 34, 46, 0.7));
-        border-radius: 10px;
-        padding: 16px;
-        transition: all 0.3s ease;
+        background: rgba(28, 34, 46, 0.7);
+        border-radius: 8px;
+        padding: 10px 12px;
+        transition: all 0.2s ease;
         border: 1px solid rgba(120, 140, 180, 0.15);
         text-decoration: none;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .community-link:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-        border-color: rgba(120, 140, 180, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        background: rgba(38, 46, 63, 0.8);
     }
     
     .icon-container {
-        width: 48px;
-        height: 48px;
+        width: 36px;
+        height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 12px;
-        margin-right: 16px;
+        border-radius: 8px;
+        margin-right: 12px;
         flex-shrink: 0;
-        font-size: 22px;
+        font-size: 18px;
         color: white;
     }
     
@@ -947,15 +973,8 @@
     
     .link-title {
         font-weight: 600;
-        font-size: 16px;
+        font-size: 14px;
         color: #e0e6ed;
-        margin-bottom: 4px;
-    }
-    
-    .link-description {
-        font-size: 13px;
-        color: #a0a8b8;
-        opacity: 0.8;
     }
     
     /* Icon styles for each link type */
@@ -977,10 +996,6 @@
     
     .community-link.changelog .icon-container {
         background: linear-gradient(135deg, #3498DB, #2980B9);
-    }
-    
-    .community-link.sponsor .icon-container {
-        background: linear-gradient(135deg, #E74C3C, #C0392B);
     }
     
     /* Media queries for responsiveness */
