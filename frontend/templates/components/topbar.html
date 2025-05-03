@@ -1,7 +1,173 @@
 <div class="top-bar">
-    <div class="page-title" id="currentPageTitle"></div>
-    <div class="user-info" id="userInfoContainer">
-        <span id="username">User</span>
-        <a href="#" id="logoutLink" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a> <!-- Changed href to # and added id -->
+    <div class="topbar-section left">
+        <div class="page-title" id="currentPageTitle"></div>
+    </div>
+    <div class="topbar-section center">
+        <div class="version-bar">
+            <div class="version-item">
+                <i class="fas fa-code-branch version-icon"></i>
+                <span>Version <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank"><span id="version-value">6.2.1</span></a></span>
+            </div>
+            <div class="version-divider"></div>
+            <div class="version-item">
+                <i class="fas fa-cloud-download-alt version-icon"></i>
+                <span>Latest: <a href="https://github.com/plexguide/Huntarr.io/releases/latest" target="_blank"><span id="latest-version-value">6.2.1</span></a></span>
+            </div>
+            <div class="version-divider"></div>
+            <div class="version-item">
+                <i class="fas fa-star version-icon star-icon"></i>
+                <span><a href="https://github.com/plexguide/huntarr" target="_blank"><span id="github-stars-value">764</span></a></span>
+            </div>
+            <div class="version-divider"></div>
+            <div class="version-item">
+                <span class="developer-credit">Thanks 4 Using Huntarr - <a href="https://github.com/Admin9705/" target="_blank">Admin9705</a></span>
+            </div>
+        </div>
+    </div>
+    <div class="topbar-section right">
+        <div class="user-info" id="userInfoContainer">
+            <span id="username">User</span>
+            <a href="#" id="logoutLink" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
     </div>
 </div>
+
+<style>
+    .top-bar {
+        height: 60px;
+        background: linear-gradient(180deg, rgba(18, 22, 30, 0.95), rgba(24, 28, 37, 0.98));
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        border-bottom: 1px solid rgba(90, 109, 137, 0.15);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .topbar-section {
+        display: flex;
+        align-items: center;
+    }
+    
+    .topbar-section.left {
+        flex: 1;
+        justify-content: flex-start;
+    }
+    
+    .topbar-section.center {
+        flex: 2;
+        justify-content: center;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: auto;
+    }
+    
+    .topbar-section.right {
+        flex: 1;
+        justify-content: flex-end;
+    }
+    
+    .version-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        white-space: nowrap;
+    }
+    
+    .version-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        color: #e0e6ed;
+    }
+    
+    .version-divider {
+        width: 1px;
+        height: 16px;
+        background-color: rgba(120, 140, 180, 0.3);
+    }
+    
+    .version-icon {
+        color: #3498db;
+        font-size: 14px;
+    }
+    
+    .star-icon {
+        color: #ffd700;
+    }
+    
+    .version-bar a {
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .version-bar a:hover {
+        color: #5dade2;
+    }
+    
+    .developer-credit {
+        color: #e0e6ed;
+    }
+    
+    .developer-credit a {
+        color: #3498db;
+        font-weight: 600;
+    }
+    
+    /* Responsive styling */
+    @media (max-width: 768px) {
+        .version-bar {
+            display: none;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Connect to the loaded elements from home_section
+        const versionElement = document.getElementById('version-value');
+        const latestVersionElement = document.getElementById('latest-version-value');
+        const starsElement = document.getElementById('github-stars-value');
+        
+        // Function to get the values from localStorage if they exist
+        function updateVersionInfo() {
+            // Version
+            try {
+                const versionInfo = localStorage.getItem('huntarr-version-info');
+                if (versionInfo) {
+                    const parsedInfo = JSON.parse(versionInfo);
+                    if (parsedInfo.currentVersion) {
+                        versionElement.textContent = parsedInfo.currentVersion;
+                    }
+                    if (parsedInfo.latestVersion) {
+                        latestVersionElement.textContent = parsedInfo.latestVersion;
+                    }
+                }
+                
+                // Stars
+                const starsInfo = localStorage.getItem('huntarr-github-stars');
+                if (starsInfo) {
+                    starsElement.textContent = starsInfo;
+                }
+            } catch (e) {
+                console.error('Error updating version info:', e);
+            }
+        }
+        
+        // Initial update
+        updateVersionInfo();
+        
+        // Watch for changes (in case the home page updates values)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'huntarr-version-info' || e.key === 'huntarr-github-stars') {
+                updateVersionInfo();
+            }
+        });
+    });
+</script>

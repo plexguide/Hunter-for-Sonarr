@@ -1,73 +1,137 @@
 <div class="user-section">
     <div class="user-card">
         <h3><i class="fas fa-user-edit"></i> Change Username</h3>
-        <div class="setting-item">
+        <div class="form-group">
             <label for="currentUsername">Current Username:</label>
-            <span id="currentUsername">Loading...</span>
+            <div class="current-value" id="currentUsername">Loading...</div>
         </div>
-        <div class="setting-item">
+        <div class="form-group">
             <label for="newUsername">New Username:</label>
             <input type="text" id="newUsername" class="form-control">
         </div>
-        <button id="saveUsername" class="user-button save-button">Save Username</button>
-        <div id="usernameStatus" style="display: none;"></div>
+        <div class="form-actions">
+            <button id="saveUsername" class="action-button primary-button">
+                <i class="fas fa-save"></i> Save Username
+            </button>
+        </div>
+        <div id="usernameStatus" class="status-message" style="display: none;"></div>
     </div>
     
     <div class="user-card">
         <h3><i class="fas fa-key"></i> Change Password</h3>
-        <div class="setting-item">
+        <div class="form-group">
             <label for="currentPassword">Current Password:</label>
-            <input type="password" id="currentPassword" class="form-control">
+            <div class="password-field">
+                <input type="password" id="currentPassword" class="form-control">
+                <i class="toggle-password fas fa-eye" data-target="currentPassword"></i>
+            </div>
         </div>
-        <div class="setting-item">
+        <div class="form-group">
             <label for="newPassword">New Password:</label>
-            <input type="password" id="newPassword" class="form-control">
+            <div class="password-field">
+                <input type="password" id="newPassword" class="form-control">
+                <i class="toggle-password fas fa-eye" data-target="newPassword"></i>
+            </div>
         </div>
-        <div class="setting-item">
+        <div class="form-group">
             <label for="confirmPassword">Confirm Password:</label>
-            <input type="password" id="confirmPassword" class="form-control">
+            <div class="password-field">
+                <input type="password" id="confirmPassword" class="form-control">
+                <i class="toggle-password fas fa-eye" data-target="confirmPassword"></i>
+            </div>
         </div>
-        <button id="savePassword" class="user-button save-button">Save Password</button>
-        <div id="passwordStatus" style="display: none;"></div>
+        <div class="form-actions">
+            <button id="savePassword" class="action-button primary-button">
+                <i class="fas fa-save"></i> Save Password
+            </button>
+        </div>
+        <div id="passwordStatus" class="status-message" style="display: none;"></div>
     </div>
     
     <div class="user-card">
         <h3><i class="fas fa-shield-alt"></i> Two-Factor Authentication</h3>
-        <div id="twoFactorStatus" class="setting-item">
+        <div class="form-group">
             <label>Status:</label>
-            <span id="twoFactorEnabled">Loading...</span>
+            <div class="status-badge" id="twoFactorEnabled">Loading...</div>
         </div>
         
         <div id="enableTwoFactorSection" style="display: none;">
-            <button id="enableTwoFactor" class="user-button">Enable 2FA</button>
+            <div class="form-actions">
+                <button id="enableTwoFactor" class="action-button secondary-button">
+                    <i class="fas fa-lock"></i> Enable 2FA
+                </button>
+            </div>
         </div>
         
         <div id="setupTwoFactorSection" style="display: none;">
-            <div class="qr-code-container">
+            <div class="qr-container">
                 <div class="qr-code">
                     <img id="qrCode" src="" alt="QR Code">
                 </div>
+                <div class="form-group">
+                    <label for="secretKey">Secret Key:</label>
+                    <div class="secret-key-container">
+                        <div class="secret-key" id="secretKey"></div>
+                        <button class="copy-button" onclick="copySecretKey()">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <p class="help-text">Use this key if you can't scan the QR code</p>
+                </div>
             </div>
-            <div class="setting-item">
-                <label for="secretKey">Secret Key:</label>
-                <div class="secret-key" id="secretKey"></div>
-                <p class="setting-help">Use this key if you can't scan the QR code</p>
-            </div>
-            <div class="setting-item">
+            <div class="form-group">
                 <label for="verificationCode">Verification Code:</label>
-                <input type="text" id="verificationCode" class="form-control" placeholder="000000" maxlength="6">
+                <input type="text" id="verificationCode" class="form-control verification-code" placeholder="Enter 6-digit code" maxlength="6">
             </div>
-            <button id="verifyTwoFactor" class="user-button save-button">Verify and Enable</button>
-            <div id="verifyStatus" style="display: none;"></div>
+            <div class="form-actions">
+                <button id="verifyTwoFactor" class="action-button primary-button">
+                    <i class="fas fa-check-circle"></i> Verify and Enable
+                </button>
+            </div>
+            <div id="verifyStatus" class="status-message" style="display: none;"></div>
         </div>
         
         <div id="disableTwoFactorSection" style="display: none;">
-            <div class="setting-item">
-                <label for="disableCode">Verification Code:</label>
-                <input type="text" id="disableCode" class="form-control" placeholder="000000" maxlength="6">
+            <div class="form-actions">
+                <button id="disableTwoFactor" class="action-button danger-button">
+                    <i class="fas fa-unlock"></i> Disable 2FA
+                </button>
             </div>
-            <button id="disableTwoFactor" class="user-button danger-button">Disable 2FA</button>
-            <div id="disableStatus" style="display: none;"></div>
         </div>
     </div>
 </div>
+
+<script>
+    // Toggle password visibility
+    document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+        toggle.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const target = document.getElementById(targetId);
+            
+            if (target.type === 'password') {
+                target.type = 'text';
+                this.classList.remove('fa-eye');
+                this.classList.add('fa-eye-slash');
+            } else {
+                target.type = 'password';
+                this.classList.remove('fa-eye-slash');
+                this.classList.add('fa-eye');
+            }
+        });
+    });
+    
+    // Copy secret key to clipboard
+    function copySecretKey() {
+        const secretKey = document.getElementById('secretKey').textContent;
+        navigator.clipboard.writeText(secretKey).then(function() {
+            const copyButton = document.querySelector('.copy-button');
+            const originalText = copyButton.innerHTML;
+            
+            copyButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            
+            setTimeout(function() {
+                copyButton.innerHTML = originalText;
+            }, 2000);
+        });
+    }
+</script>

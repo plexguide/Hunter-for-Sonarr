@@ -2,18 +2,20 @@
     <div class="section-header">
         <!-- History App Dropdown -->
         <div class="history-dropdown-container">
-            <div class="history-dropdown">
-                <button class="history-dropdown-btn">
-                    <span id="current-history-app">All</span>
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-                <div class="history-dropdown-content">
-                    <a href="#" class="history-option active" data-app="all">All</a>
-                    <a href="#" class="history-option" data-app="sonarr">Sonarr</a>
-                    <a href="#" class="history-option" data-app="radarr">Radarr</a>
-                    <a href="#" class="history-option" data-app="lidarr">Lidarr</a>
-                    <a href="#" class="history-option" data-app="readarr">Readarr</a>
-                    <a href="#" class="history-option" data-app="whisparr">Whisparr</a>
+            <div class="history-dropdown-wrapper">
+                <div class="history-dropdown">
+                    <button class="history-dropdown-btn">
+                        <span id="current-history-app">All</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="history-dropdown-content">
+                        <a href="#" class="history-option active" data-app="all">All</a>
+                        <a href="#" class="history-option" data-app="sonarr">Sonarr</a>
+                        <a href="#" class="history-option" data-app="radarr">Radarr</a>
+                        <a href="#" class="history-option" data-app="lidarr">Lidarr</a>
+                        <a href="#" class="history-option" data-app="readarr">Readarr</a>
+                        <a href="#" class="history-option" data-app="whisparr">Whisparr</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -47,21 +49,23 @@
     </div>
     
     <div class="history-container">
-        <table class="history-table">
-            <thead>
-                <tr>
-                    <th>Date and Time</th>
-                    <th>Processed Information</th>
-                    <th>Operation</th>
-                    <th>ID Number</th>
-                    <th>Name of Instance</th>
-                    <th>How Long Ago</th>
-                </tr>
-            </thead>
-            <tbody id="historyTableBody">
-                <!-- History items will be loaded here -->
-            </tbody>
-        </table>
+        <div class="modern-table-wrapper">
+            <table class="modern-table history-table">
+                <thead>
+                    <tr>
+                        <th>Date and Time</th>
+                        <th>Processed Information</th>
+                        <th>Operation</th>
+                        <th>ID Number</th>
+                        <th>Name of Instance</th>
+                        <th>How Long Ago</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <!-- History items will be loaded here -->
+                </tbody>
+            </table>
+        </div>
         
         <!-- Empty state message -->
         <div id="historyEmptyState" class="empty-state-message">
@@ -96,6 +100,368 @@
 </section>
 
 <style>
+    /* Modern History Section Styling */
+    #historySection {
+        padding: 20px;
+        padding-bottom: 60px;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    /* Dropdown styling */
+    .history-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .history-dropdown-btn {
+        background: linear-gradient(135deg, rgba(28, 36, 54, 0.9), rgba(24, 32, 48, 0.8));
+        color: white;
+        padding: 8px 15px;
+        border: 1px solid rgba(90, 109, 137, 0.3);
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+        min-width: 120px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .history-dropdown-btn:hover {
+        background: linear-gradient(135deg, rgba(38, 46, 64, 0.9), rgba(34, 42, 58, 0.8));
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .history-dropdown-btn i {
+        margin-left: auto;
+        transition: transform 0.3s ease;
+    }
+    
+    .history-dropdown-content {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 160px;
+        z-index: 100;
+        background: linear-gradient(135deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+        border-radius: 8px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(90, 109, 137, 0.2);
+        overflow: hidden;
+        margin-top: 5px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+    
+    /* Fix dropdown disappearing when moving to content */
+    .history-dropdown-wrapper {
+        position: relative;
+        padding-bottom: 5px; /* Create space to safely move to dropdown */
+    }
+    
+    .history-dropdown-wrapper:after {
+        content: '';
+        position: absolute;
+        height: 10px; /* Invisible bridge between button and content */
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 99;
+    }
+    
+    .history-dropdown-wrapper:hover .history-dropdown-content,
+    .history-dropdown-content:hover {
+        display: block;
+    }
+    
+    .history-dropdown-wrapper:hover .history-dropdown-btn i {
+        transform: rotate(180deg);
+    }
+    
+    .history-option {
+        color: white;
+        padding: 10px 15px;
+        text-decoration: none;
+        display: block;
+        transition: all 0.2s ease;
+        text-align: left;
+        border-bottom: 1px solid rgba(90, 109, 137, 0.1);
+    }
+    
+    .history-option:last-child {
+        border-bottom: none;
+    }
+    
+    .history-option:hover {
+        background: rgba(65, 105, 225, 0.2);
+    }
+    
+    .history-option.active {
+        background: rgba(65, 105, 225, 0.3);
+        font-weight: 500;
+    }
+    
+    /* Search and controls styling */
+    .history-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .history-search {
+        position: relative;
+        width: 250px;
+    }
+    
+    .history-search input {
+        width: 100%;
+        padding: 8px 40px 8px 12px;
+        border: 1px solid rgba(90, 109, 137, 0.3);
+        border-radius: 8px;
+        background-color: rgba(28, 36, 54, 0.6);
+        color: white;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+    
+    .history-search input:focus {
+        outline: none;
+        border-color: rgba(65, 105, 225, 0.6);
+        box-shadow: 0 0 0 2px rgba(65, 105, 225, 0.2);
+    }
+    
+    .history-search button {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        padding: 5px;
+        transition: color 0.2s ease;
+    }
+    
+    .history-search button:hover {
+        color: rgba(255, 255, 255, 1);
+    }
+    
+    .history-page-size {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .history-page-size label {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+    }
+    
+    .history-page-size select {
+        padding: 6px 10px;
+        border: 1px solid rgba(90, 109, 137, 0.3);
+        border-radius: 6px;
+        background-color: rgba(28, 36, 54, 0.6);
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .history-page-size select:focus {
+        outline: none;
+        border-color: rgba(65, 105, 225, 0.6);
+    }
+    
+    .clear-button {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #e74c3c 0%, #f15846 100%);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+    }
+    
+    .clear-button:hover {
+        background: linear-gradient(135deg, #f15846 0%, #f3695a 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+    }
+    
+    /* Table styling */
+    .modern-table-wrapper {
+        overflow-x: auto;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        background: linear-gradient(180deg, rgba(22, 26, 34, 0.8), rgba(18, 22, 30, 0.75));
+        border: 1px solid rgba(90, 109, 137, 0.15);
+    }
+    
+    .modern-table, .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        color: white;
+        min-width: 800px;
+    }
+    
+    .modern-table thead, .history-table thead {
+        background: linear-gradient(90deg, rgba(18, 22, 30, 0.95), rgba(24, 28, 37, 0.9));
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .modern-table th, .history-table th {
+        padding: 14px 15px;
+        font-weight: 600;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        border-bottom: 1px solid rgba(90, 109, 137, 0.25);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .modern-table td, .history-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid rgba(90, 109, 137, 0.1);
+        font-size: 14px;
+        transition: background-color 0.2s ease;
+    }
+    
+    .modern-table tbody tr, .history-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    
+    .modern-table tbody tr:hover, .history-table tbody tr:hover {
+        background-color: rgba(65, 105, 225, 0.1);
+    }
+    
+    .modern-table tbody tr:last-child td, .history-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Operation status styling */
+    .operation-status {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-weight: 500;
+        font-size: 12px;
+        text-align: center;
+        min-width: 80px;
+    }
+    
+    .operation-status.success {
+        background-color: rgba(40, 167, 69, 0.2);
+        color: #2ecc71;
+        border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+    
+    .operation-status.error, .operation-status.missing {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #ff6b6b;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+    
+    .operation-status.warning {
+        background-color: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+    
+    /* Empty state and loading styling */
+    .empty-state-message, .loading-indicator {
+        text-align: center;
+        padding: 50px 20px;
+        color: rgba(255, 255, 255, 0.7);
+        display: none;
+    }
+    
+    .empty-state-message i, .loading-indicator i {
+        margin-bottom: 15px;
+        opacity: 0.8;
+    }
+    
+    .empty-state-message p, .loading-indicator p {
+        font-size: 16px;
+    }
+    
+    /* Pagination controls styling */
+    .pagination-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+        gap: 15px;
+    }
+    
+    .pagination-button {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, rgba(28, 36, 54, 0.8), rgba(24, 32, 48, 0.7));
+        border: 1px solid rgba(90, 109, 137, 0.3);
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .pagination-button:hover:not(:disabled) {
+        background: linear-gradient(135deg, rgba(38, 46, 64, 0.9), rgba(34, 42, 58, 0.8));
+        transform: translateY(-1px);
+    }
+    
+    .pagination-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    #historyPageInfo {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .history-dropdown-container, .history-controls {
+            width: 100%;
+        }
+        
+        .history-search {
+            width: 100%;
+        }
+        
+        .pagination-controls {
+            flex-wrap: wrap;
+        }
+    }
+    
     /* Fixed banner footer styling */
     .fixed-banner-footer {
         position: fixed;
@@ -104,26 +470,21 @@
         right: 0;
         text-align: center;
         padding: 10px 20px;
-        background-color: var(--bg-secondary);
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        border-top: 1px solid var(--border-color);
+        background: linear-gradient(135deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.15);
+        border-top: 1px solid rgba(90, 109, 137, 0.25);
         z-index: 1000; /* Ensure it's above other elements */
-    }
-    
-    /* Add bottom padding to the section to prevent content from being hidden behind the fixed banner */
-    #historySection {
-        padding-bottom: 50px;
     }
     
     .fixed-banner-footer p {
         margin: 0;
-        font-size: 1em;
-        color: var(--text-primary);
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.9);
         font-weight: 500;
     }
     
     .fixed-banner-footer a {
-        color: var(--accent-color);
+        color: #3a71e4;
         text-decoration: none;
         font-weight: 600;
         transition: color 0.2s, text-decoration 0.2s;
@@ -131,14 +492,41 @@
     
     .fixed-banner-footer a:hover {
         text-decoration: underline;
-        color: var(--accent-hover);
+        color: #5481e6;
     }
     
     .fixed-banner-footer .donation-icon {
-        color: var(--error-color, #ff6b6b);
+        color: #ff6b6b;
     }
     
     .fixed-banner-footer .star-icon {
-        color: var(--warning-color, #ffd700);
+        color: #ffc107;
     }
 </style>
+
+<script>
+    // Fixes for formatting the history items
+    document.addEventListener('DOMContentLoaded', function() {
+        // Original function exists in history.js
+        const originalRenderHistoryData = historyModule.renderHistoryData;
+        
+        if (typeof historyModule !== 'undefined') {
+            // Override the render method to apply our styling
+            historyModule.renderHistoryData = function(data) {
+                // Call the original render method
+                originalRenderHistoryData.call(this, data);
+                
+                // After the data is rendered, format the operation status columns
+                const operationCells = document.querySelectorAll('#historyTableBody tr td:nth-child(3)');
+                operationCells.forEach(cell => {
+                    const operationText = cell.textContent.trim();
+                    const statusClass = operationText.toLowerCase() === 'success' ? 'success' : 
+                                 operationText.toLowerCase() === 'missing' ? 'missing' : 
+                                 operationText.toLowerCase() === 'warning' ? 'warning' : 'error';
+                    
+                    cell.innerHTML = `<span class="operation-status ${statusClass}">${operationText}</span>`;
+                });
+            };
+        }
+    });
+</script>

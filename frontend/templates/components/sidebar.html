@@ -1,41 +1,245 @@
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
     <div class="logo-container">
-        <img src="/static/logo/256.png" alt="Huntarr Logo" class="logo">
+        <img src="/static/logo/256.png" alt="Huntarr Logo" class="logo logo-large">
+        <img src="/static/logo/32.png" alt="Huntarr Logo" class="logo logo-small">
         <h1>Huntarr</h1>
     </div>
     
     <nav class="nav-menu">
-        <a href="#home" class="nav-item" id="homeNav">
-            <i class="fas fa-home"></i>
+        <a href="/" class="nav-item" id="homeNav">
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-home"></i>
+            </div>
             <span>Home</span>
         </a>
-        <a href="#history" class="nav-item" id="historyNav">
-            <i class="fas fa-history"></i>
+        <a href="/#history" class="nav-item" id="historyNav">
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-history"></i>
+            </div>
             <span>History</span>
         </a>
-        <a href="#logs" class="nav-item" id="logsNav">
-            <i class="fas fa-list-alt"></i>
+        <a href="/#logs" class="nav-item" id="logsNav">
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-list-alt"></i>
+            </div>
             <span>Logs</span>
         </a>
-        <a href="#apps" class="nav-item" id="appsNav">
-            <i class="fas fa-tools"></i>
+        <a href="/#apps" class="nav-item" id="appsNav">
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-tools"></i>
+            </div>
             <span>Apps</span>
         </a>
-        <a href="#settings" class="nav-item" id="settingsNav">
-            <i class="fas fa-cog"></i>
+        <a href="/#settings" class="nav-item" id="settingsNav">
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-cog"></i>
+            </div>
             <span>Settings</span>
         </a>
         <a href="/user" class="nav-item" id="userNav">
-            <i class="fas fa-user"></i>
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-user"></i>
+            </div>
             <span>User</span>
         </a>
         <a href="https://github.com/plexguide/Unraid_Intel-ARC_Deployment" class="nav-item" target="_blank" rel="noopener noreferrer">
-            <i class="fas fa-film"></i>
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-film"></i>
+            </div>
             <span>My AV1 Guide</span>
         </a>
         <a href="https://github.com/sponsors/plexguide" class="nav-item" target="_blank" rel="noopener noreferrer">
-            <i class="fas fa-heart"></i>
+            <div class="nav-icon-wrapper heart-icon">
+                <i class="fas fa-heart"></i>
+            </div>
             <span>Project Sponsors</span>
         </a>
     </nav>
 </div>
+
+<style>
+    .sidebar {
+        width: 250px;
+        height: 100vh;
+        background: linear-gradient(180deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+        border-right: 1px solid rgba(90, 109, 137, 0.15);
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        z-index: 1000;
+        flex-shrink: 0;
+        overflow-y: auto;
+        position: relative;
+    }
+    
+    .logo-container {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        border-bottom: 1px solid rgba(90, 109, 137, 0.15);
+    }
+    
+    .logo {
+        width: 40px;
+        height: 40px;
+        margin-right: 10px;
+    }
+    
+    .logo-small {
+        display: none;
+    }
+    
+    .logo-container h1 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+        color: #fff;
+    }
+    
+    .nav-menu {
+        display: flex;
+        flex-direction: column;
+        padding: 20px 0;
+        flex-grow: 1;
+    }
+    
+    .nav-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-radius: 0;
+        margin-bottom: 5px;
+    }
+    
+    .nav-icon-wrapper {
+        width: 35px;
+        height: 35px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 15px;
+        position: relative;
+        border-radius: 8px;
+    }
+    
+    .nav-icon-wrapper i {
+        font-size: 16px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    
+    .nav-item span {
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .nav-item:hover {
+        background: rgba(59, 130, 246, 0.2);
+        color: #fff;
+    }
+    
+    .nav-item.active {
+        background: rgba(59, 130, 246, 0.9);
+        color: #ffffff;
+    }
+    
+    /* Mobile view optimization */
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 60px !important;
+            min-width: 60px !important;
+            max-width: 60px !important;
+        }
+        
+        .sidebar .nav-item span {
+            display: none;
+        }
+        
+        .sidebar .logo-container {
+            justify-content: center;
+            padding: 15px 0;
+            height: 60px;
+        }
+        
+        .sidebar .logo-container h1 {
+            display: none;
+        }
+        
+        .logo-large {
+            display: none;
+        }
+        
+        .logo-small {
+            display: block;
+            width: 32px;
+            height: 32px;
+            margin: 0;
+        }
+        
+        .nav-menu {
+            padding: 10px 0;
+        }
+        
+        .nav-item {
+            width: 60px;
+            justify-content: center;
+            padding: 12px 0;
+            margin-bottom: 8px;
+        }
+        
+        .nav-item:hover,
+        .nav-item.active {
+            width: 42px;
+            height: 42px;
+            margin: 0 auto 8px auto;
+            border-radius: 10px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .nav-icon-wrapper {
+            margin-right: 0;
+            width: 32px;
+            height: 32px;
+        }
+        
+        .nav-icon-wrapper i {
+            font-size: 15px;
+        }
+    }
+</style>
+
+<script>
+    // Function to set active nav item based on the current hash
+    function setActiveNavItem() {
+        // Get all nav items
+        const navItems = document.querySelectorAll('.nav-item');
+        
+        // Remove active class from all items
+        navItems.forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Get current hash, default to home if none
+        const currentHash = window.location.hash || '#home';
+        
+        // Find nav item with matching href and add active class
+        const activeItem = document.querySelector(`.nav-item[href="${currentHash}"]`);
+        if (activeItem) {
+            activeItem.classList.add('active');
+        }
+    }
+    
+    // Set active on page load
+    document.addEventListener('DOMContentLoaded', setActiveNavItem);
+    
+    // Update active when hash changes
+    window.addEventListener('hashchange', setActiveNavItem);
+</script>
