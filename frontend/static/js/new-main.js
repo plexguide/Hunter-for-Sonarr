@@ -52,6 +52,9 @@ let huntarrUI = {
         this.loadCurrentVersion(); // Load current version
         this.loadLatestVersion(); // Load latest version from GitHub
         
+        // Preload stateful management info so it's ready when needed
+        this.loadStatefulInfo();
+        
         // Ensure logo is applied
         if (typeof window.applyLogoToAllElements === 'function') {
             window.applyLogoToAllElements();
@@ -1721,10 +1724,10 @@ let huntarrUI = {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                this.showNotification(data.message, 'success');
+                this.showNotification('Statistics reset successfully', 'success');
                 this.loadMediaStats(); // Refresh the stats display
             } else {
-                this.showNotification(data.message || 'Failed to reset statistics', 'error');
+                this.showNotification('Failed to reset statistics', 'error');
             }
         })
         .catch(error => {
@@ -1850,11 +1853,16 @@ let huntarrUI = {
     },
     
     // Load stateful management info
-    loadStatefulInfo: function() {
+    loadStatefulInfo: function(attempts = 0) {
         const initialStateEl = document.getElementById('stateful_initial_state');
         const expiresDateEl = document.getElementById('stateful_expires_date');
         const intervalInput = document.getElementById('stateful_management_hours');
         const intervalDaysSpan = document.getElementById('stateful_management_days');
+        
+        // Max retry attempts
+        const maxAttempts = 3;
+        
+        console.log(`[StatefulInfo] Loading stateful info (attempt ${attempts + 1})`);
         
         fetch('/api/stateful/info', { cache: 'no-cache' }) // Add no-cache header
         .then(response => {
@@ -1870,6 +1878,13 @@ let huntarrUI = {
                     initialStateEl.textContent = this.formatDateNicely(createdDate);
                 } else if (initialStateEl) {
                     initialStateEl.textContent = 'N/A';
+                    
+                    // If we got N/A but this is not our last attempt, retry
+                    if (attempts < maxAttempts && !data.created_at_ts) {
+                        console.log(`[StatefulInfo] No timestamp data, will retry (${attempts + 1}/${maxAttempts})`);
+                        setTimeout(() => this.loadStatefulInfo(attempts + 1), 500); // Retry after 500ms
+                        return;
+                    }
                 }
                 
                 if (expiresDateEl && data.expires_at_ts) {
@@ -1877,6 +1892,12 @@ let huntarrUI = {
                     expiresDateEl.textContent = this.formatDateNicely(expiresDate);
                 } else if (expiresDateEl) {
                     expiresDateEl.textContent = 'N/A';
+                    
+                    // If we got N/A but this is not our last attempt, retry 
+                    if (attempts < maxAttempts && !data.expires_at_ts) {
+                        // We already scheduled a retry above, no need to do it again
+                        return;
+                    }
                 }
                 
                 // Update interval input and days display
@@ -1898,7 +1919,14 @@ let huntarrUI = {
             }
         })
         .catch(error => {
-            console.error('Error loading stateful info:', error);
+            console.error(`Error loading stateful info (attempt ${attempts + 1}/${maxAttempts + 1}):`, error);
+            
+            // Retry if we haven't reached max attempts
+            if (attempts < maxAttempts) {
+                console.log(`[StatefulInfo] Retrying in 500ms (attempt ${attempts + 1}/${maxAttempts})`);
+                setTimeout(() => this.loadStatefulInfo(attempts + 1), 500);
+                return;
+            }
             
             if (initialStateEl) initialStateEl.textContent = 'Error loading data';
             if (expiresDateEl) expiresDateEl.textContent = 'Error loading data';

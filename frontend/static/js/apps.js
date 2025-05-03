@@ -108,6 +108,9 @@ const appsModule = {
                         
                         if (!confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
                             event.preventDefault();
+                        } else {
+                            // User clicked OK, reset the settings changed flag
+                            this.settingsChanged = false;
                         }
                     }
                 }
