@@ -1474,29 +1474,40 @@ const SettingsForms = {
     
     // Test connection to an *arr API
     testConnection: function(app, url, apiKey, buttonElement) {
-        // Show testing indicator on button
-        const originalButtonText = buttonElement.innerHTML;
-        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
-        buttonElement.disabled = true;
-        
-        console.log(`Testing connection for ${app} - URL: ${url}, API Key: ${apiKey.substring(0, 5)}...`);
-        
-        if (!url) {
-            alert('Please enter a valid URL');
-            urlInput.focus();
-            return;
-        }
-        
-        if (!apiKey) {
-            alert('Please enter a valid API key');
-            keyInput.focus();
-            return;
+        // Find or create a status message element next to the button
+        let statusElement = buttonElement.closest('.instance-actions').querySelector('.connection-message');
+        if (!statusElement) {
+            statusElement = document.createElement('span');
+            statusElement.className = 'connection-message';
+            statusElement.style.marginLeft = '10px';
+            statusElement.style.fontWeight = 'bold';
+            buttonElement.closest('.instance-actions').insertBefore(statusElement, buttonElement);
         }
         
         // Show testing status
         const originalButtonHTML = buttonElement.innerHTML;
         buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
         buttonElement.disabled = true;
+        statusElement.textContent = 'Testing connection...';
+        statusElement.style.color = '#888';
+        
+        console.log(`Testing connection for ${app} - URL: ${url}, API Key: ${apiKey.substring(0, 5)}...`);
+        
+        if (!url) {
+            statusElement.textContent = 'Please enter a valid URL';
+            statusElement.style.color = 'red';
+            buttonElement.innerHTML = originalButtonHTML;
+            buttonElement.disabled = false;
+            return;
+        }
+        
+        if (!apiKey) {
+            statusElement.textContent = 'Please enter a valid API key';
+            statusElement.style.color = 'red';
+            buttonElement.innerHTML = originalButtonHTML;
+            buttonElement.disabled = false;
+            return;
+        }
         
         // Make the API request
         fetch(`/api/${app}/test-connection`, {
@@ -1523,48 +1534,34 @@ const SettingsForms = {
             
             if (data.success) {
                 // Success
-                buttonElement.innerHTML = '<i class="fas fa-check"></i> Connected!';
-                buttonElement.classList.add('test-success');
+                buttonElement.innerHTML = '<i class="fas fa-plug"></i> Test Connection';
                 
-                let successMessage = `Successfully connected to ${app.charAt(0).toUpperCase() + app.slice(1)}`;
+                let successMessage = `Connected successfully`;
                 if (data.version) {
-                    successMessage += ` (version ${data.version})`;
+                    successMessage += ` (v${data.version})`;
                 }
                 
-                // Alert the user of success
-                alert(successMessage);
-                
-                // Reset button after delay
-                setTimeout(() => {
-                    buttonElement.innerHTML = originalButtonHTML;
-                    buttonElement.classList.remove('test-success');
-                }, 3000);
+                // Show success message
+                statusElement.textContent = successMessage;
+                statusElement.style.color = 'green';
             } else {
                 // Failure
-                buttonElement.innerHTML = '<i class="fas fa-times"></i> Failed';
-                buttonElement.classList.add('test-failed');
+                buttonElement.innerHTML = '<i class="fas fa-plug"></i> Test Connection';
                 
-                alert(`Connection failed: ${data.message || 'Unknown error'}`);
-                
-                setTimeout(() => {
-                    buttonElement.innerHTML = originalButtonHTML;
-                    buttonElement.classList.remove('test-failed');
-                }, 3000);
+                // Show error message
+                statusElement.textContent = data.message || 'Connection failed';
+                statusElement.style.color = 'red';
             }
         })
         .catch(error => {
             console.error(`Test connection error:`, error);
             
             buttonElement.disabled = false;
-            buttonElement.innerHTML = '<i class="fas fa-times"></i> Error';
-            buttonElement.classList.add('test-failed');
+            buttonElement.innerHTML = '<i class="fas fa-plug"></i> Test Connection';
             
-            alert(`Connection test failed: ${error.message}`);
-            
-            setTimeout(() => {
-                buttonElement.innerHTML = originalButtonHTML;
-                buttonElement.classList.remove('test-failed');
-            }, 3000);
+            // Show error message
+            statusElement.textContent = error.message || 'Connection error';
+            statusElement.style.color = 'red';
         });
     },
 };
