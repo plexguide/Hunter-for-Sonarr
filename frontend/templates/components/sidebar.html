@@ -6,36 +6,199 @@
     
     <nav class="nav-menu">
         <a href="#home" class="nav-item" id="homeNav">
-            <i class="fas fa-home"></i>
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-home"></i>
+            </div>
             <span>Home</span>
         </a>
         <a href="#history" class="nav-item" id="historyNav">
-            <i class="fas fa-history"></i>
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-history"></i>
+            </div>
             <span>History</span>
         </a>
         <a href="#logs" class="nav-item" id="logsNav">
-            <i class="fas fa-list-alt"></i>
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-list-alt"></i>
+            </div>
             <span>Logs</span>
         </a>
         <a href="#apps" class="nav-item" id="appsNav">
-            <i class="fas fa-tools"></i>
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-tools"></i>
+            </div>
             <span>Apps</span>
         </a>
         <a href="#settings" class="nav-item" id="settingsNav">
-            <i class="fas fa-cog"></i>
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-cog"></i>
+            </div>
             <span>Settings</span>
         </a>
         <a href="/user" class="nav-item" id="userNav">
-            <i class="fas fa-user"></i>
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-user"></i>
+            </div>
             <span>User</span>
         </a>
         <a href="https://github.com/plexguide/Unraid_Intel-ARC_Deployment" class="nav-item" target="_blank" rel="noopener noreferrer">
-            <i class="fas fa-film"></i>
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-film"></i>
+            </div>
             <span>My AV1 Guide</span>
         </a>
         <a href="https://github.com/sponsors/plexguide" class="nav-item" target="_blank" rel="noopener noreferrer">
-            <i class="fas fa-heart"></i>
+            <div class="nav-icon-wrapper heart-icon">
+                <i class="fas fa-heart"></i>
+            </div>
             <span>Project Sponsors</span>
         </a>
     </nav>
 </div>
+
+<style>
+    .sidebar {
+        width: 250px;
+        height: 100vh;
+        background: linear-gradient(180deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+        border-right: 1px solid rgba(90, 109, 137, 0.15);
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        z-index: 1000;
+    }
+    
+    .logo-container {
+        padding: 25px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        border-bottom: 1px solid rgba(90, 109, 137, 0.15);
+    }
+    
+    .logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 10px;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+        transition: transform 0.3s ease;
+    }
+    
+    .logo-container:hover .logo {
+        transform: scale(1.05);
+    }
+    
+    .logo-container h1 {
+        color: #ffffff;
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0;
+        letter-spacing: 0.5px;
+    }
+    
+    .nav-menu {
+        display: flex;
+        flex-direction: column;
+        padding: 15px 0;
+        overflow-y: auto;
+    }
+    
+    .nav-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        position: relative;
+        margin: 4px 8px;
+        border-radius: 8px;
+    }
+    
+    .nav-item:hover {
+        background: rgba(59, 130, 246, 0.1);
+        color: #ffffff;
+        transform: translateX(3px);
+    }
+    
+    .nav-item.active {
+        background: rgba(59, 130, 246, 0.9);
+        color: #ffffff;
+        box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+    }
+    
+    .nav-icon-wrapper {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(28, 36, 54, 0.6);
+        border-radius: 8px;
+        margin-right: 12px;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(90, 109, 137, 0.15);
+    }
+    
+    .nav-item:hover .nav-icon-wrapper {
+        background: rgba(59, 130, 246, 0.2);
+        transform: scale(1.05);
+    }
+    
+    .nav-item.active .nav-icon-wrapper {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .nav-item i {
+        font-size: 16px;
+        width: 20px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .nav-icon-wrapper.heart-icon {
+        background: rgba(225, 29, 72, 0.2);
+    }
+    
+    .nav-item:hover .nav-icon-wrapper.heart-icon {
+        background: rgba(225, 29, 72, 0.3);
+    }
+    
+    /* Active state for the current page */
+    #homeNav.active, #historyNav.active, #logsNav.active, #appsNav.active, #settingsNav.active, #userNav.active {
+        background: rgba(59, 130, 246, 0.9);
+        color: #ffffff;
+    }
+</style>
+
+<script>
+    // Function to set active nav item based on the current hash
+    function setActiveNavItem() {
+        // Get all nav items
+        const navItems = document.querySelectorAll('.nav-item');
+        
+        // Remove active class from all items
+        navItems.forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Get current hash, default to home if none
+        const currentHash = window.location.hash || '#home';
+        
+        // Find nav item with matching href and add active class
+        const activeItem = document.querySelector(`.nav-item[href="${currentHash}"]`);
+        if (activeItem) {
+            activeItem.classList.add('active');
+        }
+    }
+    
+    // Set active on page load
+    document.addEventListener('DOMContentLoaded', setActiveNavItem);
+    
+    // Update active when hash changes
+    window.addEventListener('hashchange', setActiveNavItem);
+</script>
