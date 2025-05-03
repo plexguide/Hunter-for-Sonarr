@@ -251,7 +251,7 @@ let huntarrUI = {
         
         // Monitor for window beforeunload to warn about unsaved settings
         window.addEventListener('beforeunload', (e) => {
-            if (this.settingsChanged) {
+            if (this.settingsChanged && this.hasFormChanges(this.currentSettingsTab)) {
                 // Standard way to show a confirmation dialog when navigating away
                 e.preventDefault();
                 e.returnValue = ''; // Chrome requires returnValue to be set
@@ -361,10 +361,14 @@ let huntarrUI = {
 
         // Check for unsaved changes ONLY if navigating INTERNALLY away from settings
         if (isInternalLink && this.currentSection === 'settings' && targetSection !== 'settings' && this.settingsChanged) {
-            if (!confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
+            // Use our new comparison function to check if there are actual changes
+            const hasRealChanges = this.hasFormChanges(this.currentSettingsTab);
+            
+            if (hasRealChanges && !confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
                 return; // Stop navigation if user cancels
             }
-             // User confirmed, reset flag before navigating
+            
+            // User confirmed or no real changes, reset flag before navigating
             this.settingsChanged = false;
             this.updateSaveResetButtonState(false); 
         }
@@ -2037,6 +2041,24 @@ let huntarrUI = {
                  expiresDateEl.textContent = 'Error updating';
              }
         });
+    },
+
+    // Add a proper hasFormChanges function to compare form values with original values
+    hasFormChanges: function(app) {
+        if (!app || !this.originalSettings || !this.originalSettings[app]) return false;
+        
+        const form = document.getElementById(`${app}Settings`);
+        if (!form) return false;
+        
+        const currentSettings = this.getFormSettings(app);
+        if (!currentSettings) return false;
+        
+        // Deep comparison of current settings with original settings
+        // For complex objects like instances, we need to stringify them for comparison
+        const originalJSON = JSON.stringify(this.originalSettings[app]);
+        const currentJSON = JSON.stringify(currentSettings);
+        
+        return originalJSON !== currentJSON;
     },
 };
 
