@@ -131,13 +131,21 @@ def save_stats(stats: Dict[str, Dict[str, int]]) -> bool:
     
     try:
         logger.debug(f"Saving stats to: {STATS_FILE}")
-        with open(STATS_FILE, 'w') as f:
+        # First write to a temp file, then move it to avoid partial writes
+        temp_file = f"{STATS_FILE}.tmp"
+        with open(temp_file, 'w') as f:
             json.dump(stats, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        
+        # Move the temp file to the actual file
+        os.replace(temp_file, STATS_FILE)
+        
         logger.info(f"===> Successfully wrote stats to file: {STATS_FILE}")
         logger.debug(f"Stats saved successfully: {stats}")
         return True
     except Exception as e:
-        logger.error(f"Error saving stats to {STATS_FILE}: {e}")
+        logger.error(f"Error saving stats to {STATS_FILE}: {e}", exc_info=True)
         return False
 
 def increment_stat(app_type: str, stat_type: str, count: int = 1) -> bool:
