@@ -963,6 +963,8 @@ const SettingsForms = {
                 settings.hunt_missing_books = getInputValue('#readarr_hunt_missing_books', 1);
                 settings.hunt_upgrade_books = getInputValue('#readarr_hunt_upgrade_books', 0);
                 settings.monitored_only = getInputValue('#readarr_monitored_only', true);
+                settings.skip_future_releases = getInputValue('#readarr_skip_future_releases', true);
+                settings.skip_author_refresh = getInputValue('#skip_author_refresh', false);
                 settings.sleep_duration = getInputValue('#readarr_sleep_duration', 900);
             } 
             else if (appType === 'whisparr') {
