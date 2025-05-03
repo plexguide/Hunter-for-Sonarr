@@ -5,8 +5,8 @@
     {% include 'components/head.html' %}
     <style>
         .user-section {
-            padding: 20px;
-            max-width: 800px;
+            padding: 15px;
+            max-width: 600px;
             margin: 0 auto;
         }
         
@@ -17,251 +17,372 @@
         }
         
         .user-card {
-            background-color: var(--card-bg);
+            background: linear-gradient(180deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-            overflow: hidden; /* Ensure content doesn't overflow the card */
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            padding: 18px;
+            margin-bottom: 18px;
+            border: 1px solid rgba(90, 109, 137, 0.15);
+            overflow: hidden;
         }
         
         .user-card h3 {
             display: flex;
             align-items: center;
             margin-top: 0;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
         }
         
         .user-card h3 i {
-            margin-right: 10px;
-            color: var(--accent-color);
+            margin-right: 8px;
+            color: rgba(65, 105, 225, 0.9);
+            font-size: 14px;
         }
         
-        .user-button {
-            padding: 8px 16px;
-            margin-top: 10px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            font-weight: 500;
-            transition: all 0.2s;
+        .form-group {
+            margin-bottom: 14px;
+            position: relative;
         }
         
-        .save-button {
-            background-color: #28a745;
-            color: white;
-        }
-        
-        .danger-button {
-            background-color: #dc3545;
-            color: white;
-        }
-        
-        .user-button:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-        
-        .qr-code-container {
-            margin: 15px auto;
-            text-align: center;
-        }
-        
-        .qr-code {
-            max-width: 160px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 8px;
-            border-radius: 5px;
-        }
-        
-        .qr-code img {
-            width: 100%;
-            height: auto;
+        .form-group label {
             display: block;
-        }
-        
-        .secret-key {
-            background-color: #2c2c2c;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-            font-family: monospace;
-            word-break: break-all;
-        }
-        
-        .status-success {
-            background-color: rgba(46, 204, 113, 0.2);
-            color: #2ecc71;
-            visibility: visible;
-            height: auto;
-            padding: 10px;
-            margin-top: 15px;
-        }
-        
-        .status-error {
-            background-color: rgba(231, 76, 60, 0.2);
-            color: #e74c3c;
-            visibility: visible;
-            height: auto;
-            padding: 10px;
-            margin-top: 15px;
-        }
-        
-        .setting-item {
-            margin-bottom: 15px;
-        }
-        
-        .setting-item label {
-            display: block;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
+            color: rgba(255, 255, 255, 0.9);
             font-weight: 500;
+            font-size: 13px;
+        }
+        
+        .current-value {
+            padding: 8px 10px;
+            background: rgba(28, 36, 54, 0.6);
+            border-radius: 6px;
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(90, 109, 137, 0.2);
+            font-size: 14px;
         }
         
         .form-control {
             width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #444;
-            border-radius: 4px;
-            background-color: #333;
+            padding: 8px 10px;
+            border: 1px solid rgba(90, 109, 137, 0.2);
+            border-radius: 6px;
+            background-color: rgba(28, 36, 54, 0.6);
             color: #fff;
+            font-size: 14px;
+            transition: all 0.3s ease;
         }
         
-        /* Ensure setupTwoFactorSection content is scrollable */
-        #setupTwoFactorSection {
-            max-height: 70vh;
-            overflow-y: auto;
-            padding-bottom: 20px;
+        .form-control:focus {
+            border-color: rgba(65, 105, 225, 0.6);
+            box-shadow: 0 0 0 2px rgba(65, 105, 225, 0.2);
+            outline: none;
+        }
+        
+        .password-field {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.6);
+            z-index: 10;
+            font-size: 12px;
+        }
+        
+        .toggle-password:hover {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .form-actions {
+            margin-top: 14px;
+            display: flex;
+            gap: 7px;
+        }
+        
+        .action-button {
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .primary-button {
+            background: linear-gradient(135deg, #3a71e4 0%, #5481e6 100%);
+            color: white;
+            box-shadow: 0 3px 8px rgba(58, 113, 228, 0.3);
+        }
+        
+        .primary-button:hover {
+            background: linear-gradient(135deg, #4a7deb 0%, #6491fa 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(58, 113, 228, 0.4);
+        }
+        
+        .secondary-button {
+            background: linear-gradient(135deg, #38495a 0%, #465b70 100%);
+            color: white;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .secondary-button:hover {
+            background: linear-gradient(135deg, #465b70 0%, #546d84 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+        }
+        
+        .danger-button {
+            background: linear-gradient(135deg, #e74c3c 0%, #f15846 100%);
+            color: white;
+            box-shadow: 0 3px 8px rgba(231, 76, 60, 0.3);
+        }
+        
+        .danger-button:hover {
+            background: linear-gradient(135deg, #f15846 0%, #f3695a 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.4);
+        }
+        
+        .status-message {
+            margin-top: 12px;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        
+        .status-message.success {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: #2ecc71;
+            border-left: 3px solid #28a745;
+        }
+        
+        .status-message.error {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: #ff6b6b;
+            border-left: 3px solid #dc3545;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .status-badge.enabled {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: #2ecc71;
+            border: 1px solid rgba(40, 167, 69, 0.4);
+        }
+        
+        .status-badge.disabled {
+            background-color: rgba(108, 117, 125, 0.2);
+            color: #adb5bd;
+            border: 1px solid rgba(108, 117, 125, 0.4);
+        }
+        
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 14px 0;
+        }
+        
+        .qr-code {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .secret-key-container {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 7px;
+        }
+        
+        .secret-key {
+            font-family: monospace;
+            padding: 7px 10px;
+            background: rgba(28, 36, 54, 0.8);
+            border-radius: 6px;
+            border: 1px solid rgba(90, 109, 137, 0.3);
+            color: rgba(255, 255, 255, 0.9);
+            flex: 1;
+            font-size: 12px;
+            user-select: all;
+        }
+        
+        .copy-button {
+            background: transparent;
+            border: 1px solid rgba(90, 109, 137, 0.3);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .copy-button:hover {
+            background: rgba(90, 109, 137, 0.1);
+            border-color: rgba(90, 109, 137, 0.5);
+            color: white;
+        }
+        
+        .help-text {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+        }
+        
+        .verification-code {
+            font-family: monospace;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .user-card {
+                padding: 15px;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .action-button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .secret-key-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .copy-button {
+                margin-top: 7px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Custom Sidebar Navigation with absolute URLs -->
-        <div class="sidebar">
-            <div class="logo-container">
-                <img src="/static/logo/256.png" alt="Huntarr Logo" class="logo" onload="this.classList.add('loaded')">
-                <h1>Huntarr</h1>
-            </div>
-            
-            <nav class="nav-menu">
-                <a href="/" class="nav-item" id="homeNav">
-                    <i class="fas fa-home"></i>
-                    <span>Home</span>
-                </a>
-                <a href="/#history" class="nav-item" id="historyNav">
-                    <i class="fas fa-history"></i>
-                    <span>History</span>
-                </a>
-                <a href="/#logs" class="nav-item" id="logsNav">
-                    <i class="fas fa-list-alt"></i>
-                    <span>Logs</span>
-                </a>
-                <a href="/#apps" class="nav-item" id="appsNav">
-                    <i class="fas fa-tools"></i>
-                    <span>Apps</span>
-                </a>
-                <a href="/#settings" class="nav-item" id="settingsNav">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-                <a href="/user" class="nav-item active" id="userNav">
-                    <i class="fas fa-user"></i>
-                    <span>User</span>
-                </a>
-                <a href="https://github.com/plexguide/Unraid_Intel-ARC_Deployment" class="nav-item" target="_blank" rel="noopener noreferrer">
-                    <i class="fas fa-film"></i>
-                    <span>My AV1 Guide</span>
-                </a>
-                <a href="https://github.com/sponsors/plexguide" class="nav-item" target="_blank" rel="noopener noreferrer">
-                    <i class="fas fa-heart"></i>
-                    <span>Project Sponsors</span>
-                </a>
-            </nav>
-        </div>
+    <div class="app-container mobile-optimized">
+        {% include 'components/sidebar.html' %}
         
-        <!-- Main Content Area -->
         <div class="main-content">
             {% include 'components/topbar.html' %}
             
             <div class="user-section">
                 <div class="user-card">
                     <h3><i class="fas fa-user-edit"></i> Change Username</h3>
-                    <div class="setting-item">
+                    <div class="form-group">
                         <label for="currentUsername">Current Username:</label>
-                        <span id="currentUsername">Loading...</span>
+                        <span id="currentUsername" class="current-value">Loading...</span>
                     </div>
-                    <div class="setting-item">
+                    <div class="form-group">
                         <label for="newUsername">New Username:</label>
                         <input type="text" id="newUsername" class="form-control">
                     </div>
-                    <div class="setting-item"> <!-- Added password field -->
+                    <div class="form-group">
                         <label for="currentPasswordForUsernameChange">Current Password:</label>
                         <input type="password" id="currentPasswordForUsernameChange" class="form-control" required>
                     </div>
-                    <button id="saveUsername" class="user-button save-button">Save Username</button>
-                    <div id="usernameStatus" style="display: none;"></div>
+                    <div class="form-actions">
+                        <button id="saveUsername" class="action-button primary-button">Save Username</button>
+                    </div>
+                    <div id="usernameStatus" class="status-message" style="display: none;"></div>
                 </div>
                 
                 <div class="user-card">
                     <h3><i class="fas fa-key"></i> Change Password</h3>
-                    <div class="setting-item">
+                    <div class="form-group">
                         <label for="currentPassword">Current Password:</label>
                         <input type="password" id="currentPassword" class="form-control">
                     </div>
-                    <div class="setting-item">
+                    <div class="form-group">
                         <label for="newPassword">New Password:</label>
                         <input type="password" id="newPassword" class="form-control">
                     </div>
-                    <div class="setting-item">
+                    <div class="form-group">
                         <label for="confirmPassword">Confirm Password:</label>
                         <input type="password" id="confirmPassword" class="form-control">
                     </div>
-                    <button id="savePassword" class="user-button save-button">Save Password</button>
-                    <div id="passwordStatus" style="display: none;"></div>
+                    <div class="form-actions">
+                        <button id="savePassword" class="action-button primary-button">Save Password</button>
+                    </div>
+                    <div id="passwordStatus" class="status-message" style="display: none;"></div>
                 </div>
                 
                 <div class="user-card">
                     <h3><i class="fas fa-shield-alt"></i> Two-Factor Authentication</h3>
-                    <div id="twoFactorStatus" class="setting-item">
+                    <div class="form-group">
                         <label>Status:</label>
-                        <span id="twoFactorEnabled">Loading...</span>
+                        <span id="twoFactorEnabled" class="status-badge" style="display: none;">Loading...</span>
                     </div>
                     
                     <div id="enableTwoFactorSection" style="display: none;">
-                        <button id="enableTwoFactor" class="user-button save-button">Enable 2FA</button>
+                        <div class="form-actions">
+                            <button id="enableTwoFactor" class="action-button primary-button">Enable 2FA</button>
+                        </div>
                     </div>
                     
                     <div id="setupTwoFactorSection" style="display: none;">
-                        <div class="qr-code-container">
+                        <div class="qr-container">
                             <div class="qr-code">
                                 <img id="qrCode" src="" alt="QR Code">
                             </div>
                         </div>
-                        <div class="setting-item">
+                        <div class="form-group">
                             <label for="secretKey">Secret Key:</label>
-                            <div class="secret-key" id="secretKey"></div>
-                            <p class="setting-help">Use this key if you can't scan the QR code</p>
+                            <div class="secret-key-container">
+                                <div id="secretKey" class="secret-key"></div>
+                                <button class="copy-button">Copy</button>
+                            </div>
+                            <p class="help-text">Use this key if you can't scan the QR code</p>
                         </div>
-                        <div class="setting-item">
+                        <div class="form-group">
                             <label for="verificationCode">Verification Code:</label>
                             <input type="text" id="verificationCode" class="form-control" placeholder="000000" maxlength="6">
                         </div>
-                        <button id="verifyTwoFactor" class="user-button save-button">Verify and Enable</button>
-                        <div id="verifyStatus" style="display: none;"></div>
+                        <div class="form-actions">
+                            <button id="verifyTwoFactor" class="action-button primary-button">Verify and Enable</button>
+                        </div>
+                        <div id="verifyStatus" class="status-message" style="display: none;"></div>
                     </div>
                     
                     <div id="disableTwoFactorSection" style="display: none;">
-                        <div class="setting-item">
+                        <div class="form-group">
                             <label for="currentPasswordFor2FADisable">Current Password:</label>
                             <input type="password" id="currentPasswordFor2FADisable" class="form-control" placeholder="Enter your password" required>
                         </div>
-                        <div class="setting-item"> <!-- Added OTP code field -->
+                        <div class="form-group">
                             <label for="otpCodeFor2FADisable">Current OTP Code:</label>
                             <input type="text" id="otpCodeFor2FADisable" class="form-control" placeholder="000000" maxlength="6" required>
                         </div>
-                        <button id="disableTwoFactor" class="user-button danger-button">Disable 2FA</button>
-                        <div id="disableStatus" style="display: none;"></div>
+                        <div class="form-actions">
+                            <button id="disableTwoFactor" class="action-button danger-button">Disable 2FA</button>
+                        </div>
+                        <div id="disableStatus" class="status-message" style="display: none;"></div>
                     </div>
                 </div>
             </div>
