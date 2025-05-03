@@ -877,7 +877,7 @@ const SettingsForms = {
             settings.disableAllowListPopup = getInputValue('#disableAllowListPopup', false);
             settings.maxHistoryItems = getInputValue('#maxHistoryItems', 100);
             settings.maxLogItems = getInputValue('#maxLogItems', 200);
-            settings.statefulExpirationHours = getInputValue('#statefulExpirationHours', 168);
+            settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);
             settings.autoLoginWithoutPassword = getInputValue('#autoLoginWithoutPassword', false);
             
             // Add collection of advanced settings

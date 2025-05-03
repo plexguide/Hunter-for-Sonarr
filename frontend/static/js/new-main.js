@@ -1043,7 +1043,25 @@ let huntarrUI = {
             
             // If general settings were saved, refresh the stateful info display
             if (app === 'general') {
-                this.loadStatefulInfo();
+                // Update the displayed interval hours if it's available in the settings
+                if (settings.stateful_management_hours && document.getElementById('stateful_management_hours')) {
+                    const intervalInput = document.getElementById('stateful_management_hours');
+                    const intervalDaysSpan = document.getElementById('stateful_management_days');
+                    
+                    // Update the input value
+                    intervalInput.value = settings.stateful_management_hours;
+                    
+                    // Update the days display
+                    if (intervalDaysSpan) {
+                        const days = (settings.stateful_management_hours / 24).toFixed(1);
+                        intervalDaysSpan.textContent = `${days} days`;
+                    }
+                    
+                    // Also directly update the stateful expiration on the server
+                    this.updateStatefulExpiration(settings.stateful_management_hours);
+                } else {
+                    this.loadStatefulInfo();
+                }
             }
         })
         .catch(error => {
@@ -2228,7 +2246,7 @@ let huntarrUI = {
         .then(response => {
             console.log("Reset response received:", response.status, response.statusText);
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
             return response.json();
         })
@@ -2312,127 +2330,40 @@ let huntarrUI = {
         });
     },
 
-    // Add dedicated setup for the stateful reset button and a handler function
-    setupStatefulResetButton: function() {
-        const resetStatefulBtn = document.getElementById('reset_stateful_btn');
-        if (resetStatefulBtn) {
-            console.log('Found reset_stateful_btn, attaching event listener');
-            
-            // Remove any existing listeners to prevent duplicates
-            resetStatefulBtn.removeEventListener('click', this.handleStatefulReset);
-            
-            // Attach the event handler
-            this.handleStatefulReset = this.handleStatefulReset.bind(this);
-            resetStatefulBtn.addEventListener('click', this.handleStatefulReset);
-        } else {
-            // If button not found yet, try again after a short delay
-            // This handles cases where the button is added to the DOM after initial load
-            console.log('reset_stateful_btn not found yet, will try again in 500ms');
-            setTimeout(() => this.setupStatefulResetButton(), 500);
+    // Add the updateStatefulExpiration method
+    updateStatefulExpiration: function(hours) {
+        if (!hours || typeof hours !== 'number' || hours <= 0) {
+            console.error('[huntarrUI] Invalid hours value for updateStatefulExpiration:', hours);
+            return;
         }
-    },
-    
-    // Handler for stateful reset button click
-    handleStatefulReset: function(event) {
-        event.preventDefault();
-        console.log('Stateful reset button clicked');
         
-        // Create and show a custom confirmation dialog using vanilla JS or jQuery
-        // First check if we have jQuery
-        if (typeof $ !== 'undefined') {
-            // Using jQuery modal if available
-            console.log("Using jQuery for modal dialog");
-            
-            // Remove any existing modal
-            $('#resetConfirmModal').remove();
-            
-            // Create modal HTML
-            const modalHtml = `
-                <div id="resetConfirmModal" class="modal fade">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Confirm Reset</h5>
-                                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                            </div>
-                            <div class="modal-body">
-                                <p>Are you sure you want to reset stateful management? This will clear all processed media IDs.</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-danger" id="confirmResetBtn">Reset</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Add to DOM
-            $('body').append(modalHtml);
-            
-            // Handle confirmation
-            $('#confirmResetBtn').on('click', () => {
-                $('#resetConfirmModal').modal('hide');
-                this.resetStatefulManagement();
-            });
-            
-            // Show modal
-            $('#resetConfirmModal').modal('show');
-        } else {
-            // Fallback to custom dialog using vanilla JS
-            console.log("Using custom vanilla JS dialog");
-            
-            // Create a simple modal dialog
-            const modalDiv = document.createElement('div');
-            modalDiv.id = 'customResetModal';
-            modalDiv.style.position = 'fixed';
-            modalDiv.style.top = '0';
-            modalDiv.style.left = '0';
-            modalDiv.style.width = '100%';
-            modalDiv.style.height = '100%';
-            modalDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-            modalDiv.style.display = 'flex';
-            modalDiv.style.alignItems = 'center';
-            modalDiv.style.justifyContent = 'center';
-            modalDiv.style.zIndex = '9999';
-            
-            const modalContent = document.createElement('div');
-            modalContent.style.backgroundColor = '#2a2e39'; // Dark theme background
-            modalContent.style.color = '#ffffff'; // White text
-            modalContent.style.borderRadius = '8px';
-            modalContent.style.width = '500px'; // Increased width
-            modalContent.style.maxWidth = '90%'; // Ensure it doesn't overflow on mobile
-            modalContent.style.padding = '30px'; // Increased padding
-            modalContent.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.5)';
-            modalContent.innerHTML = `
-                <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 24px; color: #ffffff;">Confirm Reset</h2>
-                <p style="font-size: 16px; line-height: 1.5; margin-bottom: 25px;">Are you sure you want to reset Stateful Management? This will clear all processed media IDs.</p>
-                <div style="display: flex; justify-content: flex-end; margin-top: 30px;">
-                    <button id="cancelResetBtn" style="margin-right: 15px; padding: 10px 20px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Cancel</button>
-                    <button id="confirmCustomResetBtn" style="padding: 10px 20px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Reset</button>
-                </div>
-            `;
-            
-            modalDiv.appendChild(modalContent);
-            document.body.appendChild(modalDiv);
-            
-            // Handle button clicks
-            document.getElementById('cancelResetBtn').addEventListener('click', () => {
-                document.body.removeChild(modalDiv);
-            });
-            
-            document.getElementById('confirmCustomResetBtn').addEventListener('click', () => {
-                document.body.removeChild(modalDiv);
-                this.resetStatefulManagement();
-            });
-            
-            // Close when clicking outside the modal
-            modalDiv.addEventListener('click', (e) => {
-                if (e.target === modalDiv) {
-                    document.body.removeChild(modalDiv);
-                }
-            });
-        }
+        console.log(`[huntarrUI] Directly updating stateful expiration to ${hours} hours`);
+        
+        // Make a direct API call to update the stateful expiration
+        HuntarrUtils.fetchWithTimeout('/api/stateful/update-expiration', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ hours: hours })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('[huntarrUI] Stateful expiration updated successfully:', data);
+            // Update the expiration date display
+            const expiresDateEl = document.getElementById('stateful_expires_date');
+            if (expiresDateEl && data.expires_date) {
+                expiresDateEl.textContent = data.expires_date;
+            }
+        })
+        .catch(error => {
+            console.error('[huntarrUI] Error updating stateful expiration:', error);
+        });
     },
     
     // Add global event handler and method to track saved settings across all apps
@@ -2523,9 +2454,6 @@ let huntarrUI = {
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', () => {
     huntarrUI.init();
-    
-    // Remove the version loading from scripts.html as it's now in new-main.js
-    // ... existing event listeners ...
 });
 
 // Expose huntarrUI to the global scope for access by app modules

@@ -47,7 +47,7 @@ def initialize_lock_file() -> None:
         try:
             current_time = int(time.time())
             # Get the expiration hours setting
-            expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
+            expiration_hours = get_advanced_setting("stateful_management_hours", DEFAULT_HOURS)
             
             expires_at = current_time + (expiration_hours * 3600)
             
@@ -76,7 +76,7 @@ def get_lock_info() -> Dict[str, Any]:
             
         if "expires_at" not in lock_info or lock_info["expires_at"] is None:
             # Recalculate expiration if missing
-            expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
+            expiration_hours = get_advanced_setting("stateful_management_hours", DEFAULT_HOURS)
             lock_info["expires_at"] = lock_info["created_at"] + (expiration_hours * 3600)
             
             # Save the updated info
@@ -88,7 +88,7 @@ def get_lock_info() -> Dict[str, Any]:
         stateful_logger.error(f"Error reading lock file: {e}")
         # Return default values if there's an error
         current_time = int(time.time())
-        expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
+        expiration_hours = get_advanced_setting("stateful_management_hours", DEFAULT_HOURS)
         expires_at = current_time + (expiration_hours * 3600)
         
         return {
@@ -99,7 +99,7 @@ def get_lock_info() -> Dict[str, Any]:
 def update_lock_expiration(hours: int = None) -> None:
     """Update the lock expiration based on the hours setting."""
     if hours is None:
-        expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
+        expiration_hours = get_advanced_setting("stateful_management_hours", DEFAULT_HOURS)
     
     lock_info = get_lock_info()
     created_at = lock_info.get("created_at", int(time.time()))
@@ -129,7 +129,7 @@ def reset_stateful_management() -> bool:
     """
     try:
         # Get the expiration hours setting BEFORE writing the lock file
-        expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
+        expiration_hours = get_advanced_setting("stateful_management_hours", DEFAULT_HOURS)
         
         # Create new lock file with calculated expiration
         current_time = int(time.time())
@@ -304,7 +304,7 @@ def get_stateful_management_info() -> Dict[str, Any]:
     expires_at_ts = lock_info.get("expires_at")
     
     # Get the interval setting
-    expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
+    expiration_hours = get_advanced_setting("stateful_management_hours", DEFAULT_HOURS)
 
     return {
         "created_at_ts": created_at_ts,
@@ -329,7 +329,7 @@ def initialize_stateful_system():
     try:
         initialize_lock_file()
         # Update expiration time
-        expiration_hours = get_advanced_setting("statefulExpirationHours", DEFAULT_HOURS)
+        expiration_hours = get_advanced_setting("stateful_management_hours", DEFAULT_HOURS)
         update_lock_expiration(expiration_hours)
         stateful_logger.info(f"Stateful lock file initialized with {expiration_hours} hour expiration")
     except Exception as e:
