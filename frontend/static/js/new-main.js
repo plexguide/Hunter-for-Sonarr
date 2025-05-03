@@ -51,6 +51,7 @@ let huntarrUI = {
         this.loadMediaStats(); // Load media statistics
         this.loadCurrentVersion(); // Load current version
         this.loadLatestVersion(); // Load latest version from GitHub
+        this.loadGitHubStarCount(); // Load GitHub star count
         
         // Preload stateful management info so it's ready when needed
         this.loadStatefulInfo();
@@ -1825,6 +1826,57 @@ let huntarrUI = {
                 const latestVersionElement = document.getElementById('latest-version-value');
                 if (latestVersionElement) {
                     latestVersionElement.textContent = error.message === 'Rate limited' ? 'Rate Limited' : 'Error';
+                }
+            });
+    },
+
+    // Load GitHub star count
+    loadGitHubStarCount: function() {
+        const starsElement = document.getElementById('github-stars-value');
+        if (!starsElement) return;
+        
+        starsElement.textContent = 'Loading...';
+        
+        // GitHub API endpoint for repository information
+        const apiUrl = 'https://api.github.com/repos/plexguide/huntarr';
+        
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`GitHub API error: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.stargazers_count !== undefined) {
+                    // Format the number with commas for thousands
+                    const formattedStars = data.stargazers_count.toLocaleString();
+                    starsElement.textContent = formattedStars;
+                    
+                    // Store in localStorage to avoid excessive API requests
+                    const cacheData = {
+                        stars: data.stargazers_count,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem('huntarr-github-stars', JSON.stringify(cacheData));
+                } else {
+                    throw new Error('Star count not found in response');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching GitHub stars:', error);
+                
+                // Try to load from cache if we have it
+                const cachedData = localStorage.getItem('huntarr-github-stars');
+                if (cachedData) {
+                    try {
+                        const parsed = JSON.parse(cachedData);
+                        starsElement.textContent = parsed.stars.toLocaleString();
+                    } catch (e) {
+                        starsElement.textContent = 'N/A';
+                    }
+                } else {
+                    starsElement.textContent = 'N/A';
                 }
             });
     },
