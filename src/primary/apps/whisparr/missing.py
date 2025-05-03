@@ -59,8 +59,8 @@ def process_missing_items(
     # Use the centralized advanced setting for stateful management hours
     stateful_management_hours = get_advanced_setting("stateful_management_hours", 168)
     
-    # Log that we're using Eros API v3
-    whisparr_logger.info(f"Using Whisparr Eros API v3 for instance: {instance_name}")
+    # Log that we're using Whisparr V2 API
+    whisparr_logger.info(f"Using Whisparr V2 API for instance: {instance_name}")
 
     # Skip if hunt_missing_items is set to 0
     if hunt_missing_items <= 0:

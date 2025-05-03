@@ -44,6 +44,17 @@ const appsModule = {
                 
                 // Check if apps has unsaved changes
                 if (this.settingsChanged) {
+                    // Do a final check for actual changes
+                    const currentPanel = document.getElementById(this.currentApp + 'Apps');
+                    if (currentPanel) {
+                        const form = currentPanel.querySelector('form');
+                        if (form && !this.hasFormChanges(form)) {
+                            // No actual changes, don't show warning
+                            this.settingsChanged = false;
+                            return undefined;
+                        }
+                    }
+                    
                     // Standard way to trigger the browser's confirmation dialog
                     event.preventDefault(); 
                     event.returnValue = 'You have unsaved changes. Are you sure you want to leave? Changes will be lost.';
@@ -84,6 +95,17 @@ const appsModule = {
                     const targetPage = navLink.getAttribute('href').substring(1);
                     // If navigating away from apps page and we have changes
                     if (targetPage !== 'apps' && this.settingsChanged && !window._appsCurrentlySaving) {
+                        // Do a final check for actual changes
+                        const currentPanel = document.getElementById(this.currentApp + 'Apps');
+                        if (currentPanel) {
+                            const form = currentPanel.querySelector('form');
+                            if (form && !this.hasFormChanges(form)) {
+                                // No actual changes, allow navigation without warning
+                                this.settingsChanged = false;
+                                return;
+                            }
+                        }
+                        
                         if (!confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
                             event.preventDefault();
                         }
@@ -201,6 +223,9 @@ const appsModule = {
                             SettingsForms.updateDurationDisplay();
                         }
                         
+                        // Store original form values after form is generated
+                        this.storeOriginalFormValues(appPanel);
+                        
                         // Add change listener to detect modifications
                         this.addFormChangeListeners(formElement);
                     } else {
@@ -226,8 +251,12 @@ const appsModule = {
         
         // Function to handle form element changes
         const handleChange = () => {
-            console.log('Form changed, enabling save button');
-            this.markAppsAsChanged();
+            if (this.hasFormChanges(form)) {
+                console.log('Form changed, enabling save button');
+                this.markAppsAsChanged();
+            } else {
+                console.log('No actual changes, save button remains disabled');
+            }
         };
         
         // Add listeners to all form inputs, selects, and textareas
@@ -272,8 +301,13 @@ const appsModule = {
                 });
                 
                 if (shouldUpdate) {
-                    console.log('Instances container changed - form changed, enabling save button');
-                    this.markAppsAsChanged();
+                    console.log('Instances container changed - checking for form changes');
+                    if (this.hasFormChanges(form)) {
+                        console.log('Form changed, enabling save button');
+                        this.markAppsAsChanged();
+                    } else {
+                        console.log('No actual changes, save button remains disabled');
+                    }
                 }
             });
             
@@ -297,6 +331,30 @@ const appsModule = {
         } else {
             console.error('Save button element not found');
         }
+    },
+    
+    // Check if the form has actual changes compared to original values
+    hasFormChanges: function(form) {
+        if (!form || !this.originalSettings) return true;
+        
+        let hasChanges = false;
+        const formElements = form.querySelectorAll('input, select, textarea');
+        
+        formElements.forEach(element => {
+            // Skip buttons
+            if (element.type === 'button' || element.type === 'submit') return;
+            
+            const originalValue = this.originalSettings[element.id];
+            const currentValue = element.type === 'checkbox' ? element.checked : element.value;
+            
+            // Compare with original value
+            if (originalValue !== undefined && String(originalValue) !== String(currentValue)) {
+                console.log(`Element changed: ${element.id}, Original: ${originalValue}, Current: ${currentValue}`);
+                hasChanges = true;
+            }
+        });
+        
+        return hasChanges;
     },
     
     // Show specific app panel and hide others
@@ -422,7 +480,14 @@ const appsModule = {
     
     // Helper function to save settings for a specific app
     saveAppSettings: function(appType, appPanel) {
-        console.log(`Collecting settings for ${appType}`);
+        console.log(`Saving settings for ${appType}`);
+        
+        // For Whisparr, ensure we indicate we're working with V2
+        let apiVersion = "";
+        if (appType === "whisparr") {
+            console.log("Saving Whisparr V2 settings");
+            apiVersion = "V2";
+        }
         
         let settings;
         try {
@@ -470,6 +535,9 @@ const appsModule = {
         .then(data => {
             console.log(`${appType} settings saved successfully:`, data);
             
+            // Store the current form values as the new "original" values
+            this.storeOriginalFormValues(appPanel);
+            
             // Disable save button and reset state
             this.settingsChanged = false;
             if (this.elements.saveAppsButton) {
@@ -496,6 +564,21 @@ const appsModule = {
             // Reset the saving flag
             window._appsCurrentlySaving = false;
         });
+    },
+    
+    // Store the current form values as the new "original" values
+    storeOriginalFormValues: function(appPanel) {
+        const form = appPanel.querySelector('form');
+        if (!form) return;
+        
+        const originalValues = {};
+        const formElements = form.querySelectorAll('input, select, textarea');
+        formElements.forEach(element => {
+            originalValues[element.id] = element.value;
+        });
+        
+        this.originalSettings = originalValues;
+        console.log('Original form values stored:', this.originalSettings);
     }
 };
 

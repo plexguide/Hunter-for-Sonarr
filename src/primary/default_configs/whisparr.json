@@ -7,7 +7,6 @@
       "enabled": true
     }
   ],
-  "whisparr_version": "v3",
   "hunt_missing_items": 1,
   "hunt_upgrade_items": 0,
   "sleep_duration": 900,

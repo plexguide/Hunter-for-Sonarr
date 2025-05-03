@@ -2,7 +2,7 @@
 Whisparr app module for Huntarr
 Contains functionality for missing items and quality upgrades in Whisparr
 
-Exclusively supports the v3 Eros API.
+Exclusively supports the v2 API (legacy).
 """
 
 # Module exports
@@ -27,8 +27,8 @@ def get_configured_instances():
         whisparr_logger.debug("No settings found for Whisparr")
         return instances
 
-    # Always use Eros API v3
-    whisparr_logger.info("Using Whisparr Eros API v3 exclusively")
+    # Always use Whisparr V2 API
+    whisparr_logger.info("Using Whisparr V2 API exclusively")
 
     # Check if instances are configured
     if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
@@ -49,44 +49,36 @@ def get_configured_instances():
 
             # Only include properly configured instances
             if is_enabled and api_url and api_key:
-                # Return only essential instance details
-                instance_data = {
-                    "instance_name": instance.get("name", "Default"),
-                    "api_url": api_url,
-                    "api_key": api_key
-                }
-                instances.append(instance_data) 
-                whisparr_logger.info(f"Added valid instance: {instance_data}") 
-            elif not is_enabled:
-                whisparr_logger.debug(f"Skipping disabled instance: {instance.get('name', 'Unnamed')}")
+                instance_name = instance.get("name", "Default")
+                
+                # Create a settings object for this instance by combining global settings with instance-specific ones
+                instance_settings = settings.copy()
+                
+                # Remove instances list to avoid confusion
+                if "instances" in instance_settings:
+                    del instance_settings["instances"]
+                
+                # Override with instance-specific settings
+                instance_settings["api_url"] = api_url
+                instance_settings["api_key"] = api_key
+                instance_settings["instance_name"] = instance_name
+                
+                # Add timeout setting with default if not present
+                if "api_timeout" not in instance_settings:
+                    instance_settings["api_timeout"] = 30
+                
+                whisparr_logger.info(f"Adding configured Whisparr instance: {instance_name}")
+                instances.append(instance_settings)
             else:
-                # Log specifically why it's skipped (missing URL/Key but enabled)
-                whisparr_logger.warning(f"Skipping instance '{instance.get('name', 'Unnamed')}' due to missing API URL or key (URL: '{api_url}', Key Set: {bool(api_key)}) ")
+                name = instance.get("name", "Unnamed")
+                if not is_enabled:
+                    whisparr_logger.debug(f"Skipping disabled instance: {name}")
+                else:
+                    whisparr_logger.warning(f"Skipping instance {name} due to missing API URL or API Key")
     else:
-        whisparr_logger.info("No 'instances' list found or list is empty. Checking legacy config.")
-        # Fallback to legacy single-instance config
-        api_url = settings.get("api_url", "").strip()
-        api_key = settings.get("api_key", "").strip()
-
-        # Ensure URL has proper scheme
-        if api_url and not (api_url.startswith('http://') or api_url.startswith('https://')):
-            whisparr_logger.warning(f"API URL missing http(s) scheme: {api_url}")
-            api_url = f"http://{api_url}"
-            whisparr_logger.warning(f"Auto-correcting URL to: {api_url}")
-
-        if api_url and api_key:
-            # Create a clean instance_data dict for the legacy instance
-            instance_data = {
-                "instance_name": "Default", 
-                "api_url": api_url,
-                "api_key": api_key
-            }
-            instances.append(instance_data) 
-            whisparr_logger.info(f"Added valid legacy instance: {instance_data}") 
-        else:
-            whisparr_logger.warning("No API URL or key found in legacy configuration")
-
-    whisparr_logger.info(f"Returning {len(instances)} configured instances: {instances}") 
+        whisparr_logger.debug("No instances array found in settings or it's empty")
+    
+    whisparr_logger.info(f"Found {len(instances)} configured and enabled Whisparr instances")
     return instances
 
 __all__ = ["process_missing_items", "process_missing_scenes", "process_cutoff_upgrades", "get_configured_instances"]
