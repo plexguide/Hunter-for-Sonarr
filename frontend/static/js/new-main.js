@@ -1047,6 +1047,7 @@ let huntarrUI = {
                 if (settings.stateful_management_hours && document.getElementById('stateful_management_hours')) {
                     const intervalInput = document.getElementById('stateful_management_hours');
                     const intervalDaysSpan = document.getElementById('stateful_management_days');
+                    const expiresDateEl = document.getElementById('stateful_expires_date');
                     
                     // Update the input value
                     intervalInput.value = settings.stateful_management_hours;
@@ -1057,8 +1058,13 @@ let huntarrUI = {
                         intervalDaysSpan.textContent = `${days} days`;
                     }
                     
-                    // Also directly update the stateful expiration on the server
-                    this.updateStatefulExpiration(settings.stateful_management_hours);
+                    // Show updating indicator
+                    if (expiresDateEl) {
+                        expiresDateEl.textContent = 'Updating...';
+                    }
+                    
+                    // Also directly update the stateful expiration on the server and update UI
+                    this.updateStatefulExpirationOnUI();
                 } else {
                     this.loadStatefulInfo();
                 }
@@ -1267,8 +1273,7 @@ let huntarrUI = {
         
         // Get current settings
         const currentSettings = this.getFormSettings(appName);
-        
-        // Add new instance
+
         if (!currentSettings.instances) {
             currentSettings.instances = [];
         }
@@ -1985,7 +1990,7 @@ let huntarrUI = {
     },
     
     // Load stateful management info
-    loadStatefulInfo: function(attempts = 0) {
+    loadStatefulInfo: function(attempts = 0, skipCache = false) {
         const initialStateEl = document.getElementById('stateful_initial_state');
         const expiresDateEl = document.getElementById('stateful_expires_date');
         const intervalInput = document.getElementById('stateful_management_hours');
@@ -1994,17 +1999,17 @@ let huntarrUI = {
         // Max retry attempts - increased for better reliability
         const maxAttempts = 5;
         
-        console.log(`[StatefulInfo] Loading stateful info (attempt ${attempts + 1})`);
+        console.log(`[StatefulInfo] Loading stateful info (attempt ${attempts + 1}, skipCache: ${skipCache})`);
         
         // Update UI to show loading state instead of N/A on first attempt
         if (attempts === 0) {
-            if (initialStateEl) initialStateEl.textContent = 'Loading...';
-            if (expiresDateEl) expiresDateEl.textContent = 'Loading...';
+            if (initialStateEl && initialStateEl.textContent !== 'Loading...') initialStateEl.textContent = 'Loading...';
+            if (expiresDateEl && expiresDateEl.textContent !== 'Updating...') expiresDateEl.textContent = 'Loading...';
         }
         
         // First check if we have cached data in localStorage that we can use immediately
         const cachedStatefulData = localStorage.getItem('huntarr-stateful-data');
-        if (cachedStatefulData && attempts === 0) {
+        if (!skipCache && cachedStatefulData && attempts === 0) {
             try {
                 const parsedData = JSON.parse(cachedStatefulData);
                 const cacheAge = Date.now() - parsedData.timestamp;
@@ -2290,6 +2295,8 @@ let huntarrUI = {
         
         // Show updating indicator
         const expiresDateEl = document.getElementById('stateful_expires_date');
+        const initialStateEl = document.getElementById('stateful_initial_state');
+        
         if (expiresDateEl) {
             expiresDateEl.textContent = 'Updating...';
         }
@@ -2311,11 +2318,13 @@ let huntarrUI = {
         })
         .then(data => {
             if (data.success) {
-                this.showNotification(`Updated expiration to ${hours} hours`, 'success');
-                // Reload the stateful info after a short delay
-                setTimeout(() => {
-                    this.loadStatefulInfo();
-                }, 500);
+                console.log('[huntarrUI] Stateful expiration updated successfully:', data);
+                
+                // Get updated info to show proper dates
+                this.loadStatefulInfo(0, true);
+                
+                // Show a notification
+                this.showNotification(`Updated expiration to ${hours} hours (${(hours/24).toFixed(1)} days)`, 'success');
             } else {
                 throw new Error(data.message || 'Unknown error updating expiration');
             }
@@ -2327,6 +2336,9 @@ let huntarrUI = {
              if (expiresDateEl) {
                  expiresDateEl.textContent = 'Error updating';
              }
+             
+             // Try to reload original data
+             setTimeout(() => this.loadStatefulInfo(), 1000);
         });
     },
 

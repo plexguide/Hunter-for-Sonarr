@@ -96,10 +96,12 @@ def get_lock_info() -> Dict[str, Any]:
             "expires_at": expires_at
         }
 
-def update_lock_expiration(hours: int = None) -> None:
+def update_lock_expiration(hours: int = None) -> bool:
     """Update the lock expiration based on the hours setting."""
     if hours is None:
         expiration_hours = get_advanced_setting("stateful_management_hours", DEFAULT_HOURS)
+    else:
+        expiration_hours = hours
     
     lock_info = get_lock_info()
     created_at = lock_info.get("created_at", int(time.time()))
@@ -111,8 +113,10 @@ def update_lock_expiration(hours: int = None) -> None:
         with open(LOCK_FILE, 'w') as f:
             json.dump(lock_info, f, indent=2)
         stateful_logger.info(f"Updated lock expiration to {datetime.datetime.fromtimestamp(expires_at)}")
+        return True
     except Exception as e:
         stateful_logger.error(f"Error updating lock expiration: {e}")
+        return False
 
 def reset_stateful_management() -> bool:
     """
