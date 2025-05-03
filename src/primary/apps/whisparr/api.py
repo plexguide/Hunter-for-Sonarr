@@ -3,7 +3,7 @@
 Whisparr-specific API functions
 Handles all communication with the Whisparr API
 
-Exclusively uses the Eros API v3
+Exclusively uses the Whisparr V2 API
 """
 
 import requests
@@ -23,7 +23,7 @@ session = requests.Session()
 
 def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
     """
-    Make a request to the Whisparr Eros API.
+    Make a request to the Whisparr V2 API.
     
     Args:
         api_url: The base URL of the Whisparr API
@@ -40,9 +40,9 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         whisparr_logger.error("API URL or API key is missing. Check your settings.")
         return None
     
-    # Always use v3 for Eros API
-    api_base = "api/v3"
-    whisparr_logger.debug(f"Using Whisparr Eros API: {api_base}")
+    # Always use v2 for Whisparr API
+    api_base = "api"
+    whisparr_logger.debug(f"Using Whisparr V2 API: {api_base}")
     
     # Full URL - ensure no double slashes
     url = f"{api_url.rstrip('/')}/{api_base}/{endpoint.lstrip('/')}"
@@ -107,7 +107,7 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int
     if response is None:
         return -1
     
-    # V2 and V3 both use records in queue response, but sometimes the structure is different
+    # V2 API uses records in queue response
     if isinstance(response, dict) and "records" in response:
         return len(response["records"])
     elif isinstance(response, list):
@@ -131,7 +131,7 @@ def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitor
     try:
         whisparr_logger.debug(f"Retrieving missing items...")
         
-        # Endpoint parameters - always use v3 format since we're using v3 API
+        # Endpoint parameters - always use v2 format
         endpoint = "wanted/missing?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
         
         response = arr_request(api_url, api_key, api_timeout, endpoint)
@@ -171,7 +171,7 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
     try:
         whisparr_logger.debug(f"Retrieving cutoff unmet items...")
         
-        # Endpoint - always use v3 format
+        # Endpoint - always use v2 format
         endpoint = "wanted/cutoff?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
         
         response = arr_request(api_url, api_key, api_timeout, endpoint)
@@ -186,7 +186,7 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
         
         whisparr_logger.debug(f"Found {len(items)} cutoff unmet items")
         
-        # Just filter monitored if needed - we're always using v3 API now
+        # Just filter monitored if needed
         if monitored_only:
             items = [item for item in items if item.get("monitored", False)]
             whisparr_logger.debug(f"Found {len(items)} cutoff unmet items after filtering monitored")
@@ -267,7 +267,7 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
     try:
         whisparr_logger.debug(f"Searching for items with IDs: {item_ids}")
         
-        # Always use the same payload format since we're always using v3 API
+        # Always use the same payload format since we're always using v2 API
         payload = {
             "name": "EpisodeSearch",
             "episodeIds": item_ids
@@ -337,7 +337,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         if response is not None:
             # Get the version information if available
             version = response.get("version", "unknown")
-            whisparr_logger.info(f"Successfully connected to Whisparr {version} using API v3")
+            whisparr_logger.info(f"Successfully connected to Whisparr {version} using API v2")
             return True
         else:
             whisparr_logger.error("Failed to connect to Whisparr API")
