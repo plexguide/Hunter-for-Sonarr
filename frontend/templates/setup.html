@@ -246,6 +246,34 @@
             box-shadow: 0 2px 8px rgba(58, 113, 228, 0.3);
         }
         
+        /* Skip button styling */
+        .skip-button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.9) 0%, rgba(220, 53, 69, 0.8) 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+            cursor: pointer;
+        }
+        
+        .skip-button:hover {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 1) 0%, rgba(220, 53, 69, 0.9) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4);
+        }
+        
+        .skip-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+        }
+        
         /* Error message styling */
         .error-message {
             background-color: rgba(220, 53, 69, 0.2);
@@ -279,10 +307,27 @@
         
         .qr-code {
             background: white;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 10px;
+            border-radius: 8px;
             margin-bottom: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 15px;
+        }
+        
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        /* Responsive QR code for mobile */
+        @media (max-width: 768px) {
+            .qr-code {
+                width: 30%;
+                height: auto;
+            }
         }
         
         .secret-key {
@@ -364,7 +409,7 @@
         <div class="login-form">
             <div class="setup-steps">
                 <div id="step1" class="step active">1. Create Account</div>
-                <div id="step2" class="step">2. Setup 2FA (Optional)</div>
+                <div id="step2" class="step">2. Setup 2FA</div>
                 <div id="step3" class="step">3. Finish</div>
             </div>
             
@@ -402,9 +447,8 @@
             
             <div id="twoFactorSetup" class="setup-section">
                 <h2>Setup Two-Factor Authentication</h2>
-                <p>Enhance your account security (optional)</p>
                 <div class="qr-container">
-                    <p>Scan this QR code with your authenticator app:</p>
+                    <p>Scan this QR code with your auth app:</p>
                     <div class="qr-code" id="qrCode">
                         <img src="" alt="QR Code" style="display: none;"> <!-- Add img tag, initially hidden -->
                     </div>
@@ -423,9 +467,9 @@
                         <button type="button" id="twoFactorNextButton" class="next-button">
                             <i class="fas fa-check"></i> Verify & Continue
                         </button>
-                        <a id="skip2FALink" class="back-button">
-                            <i class="fas fa-arrow-left"></i> Skip 2FA setup
-                        </a>
+                        <button id="skip2FALink" class="skip-button">
+                            <i class="fas fa-times"></i> Skip 2FA setup
+                        </button>
                     </div>
                 </div>
             </div>
@@ -444,7 +488,7 @@
                     </div>
                     <p><i class="fas fa-check-circle" style="color: #4CAF50;"></i> You can now proceed to the main interface.</p>
                 </div>
-                <div class="form-actions">
+                <div class="form-actions" style="justify-content: center;">
                     <button type="button" id="finishSetupButton" class="submit-button">
                         <i class="fas fa-home"></i> Go to Dashboard
                     </button>

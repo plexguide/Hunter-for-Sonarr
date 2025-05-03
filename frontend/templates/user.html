@@ -207,6 +207,23 @@
             border-radius: 8px;
             margin-bottom: 10px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 10px;
+        }
+        
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        /* Responsive QR code for mobile */
+        @media (max-width: 768px) {
+            .qr-code {
+                width: 30%;
+                height: auto;
+            }
         }
         
         .secret-key-container {
