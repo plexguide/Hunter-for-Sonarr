@@ -1,6 +1,6 @@
 (function() {
     // Store logo URL consistently across the app - use local path instead of GitHub
-    const LOGO_URL = '/static/logo/64.png';
+    const LOGO_URL = '/static/logo/256.png';
     
     // Create and preload image with local path
     const preloadImg = new Image();
@@ -56,8 +56,8 @@
                 img.onerror = function() {
                     // Fallback if local path fails
                     console.warn('Logo failed to load, trying alternate source');
-                    if (this.src !== '/logo/64.png') {
-                        this.src = '/logo/64.png';
+                    if (this.src !== '/logo/256.png') {
+                        this.src = '/logo/256.png';
                     }
                 };
             }

@@ -24,7 +24,7 @@ let huntarrUI = {
     suppressUnsavedChangesCheck: false, // Flag to suppress unsaved changes dialog
     
     // Logo URL
-    logoUrl: '/static/logo/64.png',
+    logoUrl: '/static/logo/256.png',
     
     // Element references
     elements: {},
@@ -70,6 +70,14 @@ let huntarrUI = {
         
         // Add global event handler for unsaved changes
         this.registerGlobalUnsavedChangesHandler();
+        
+        // Set up the stateful reset button (call immediately and also after a delay)
+        this.setupStatefulResetButton();
+        
+        // Also call it again after a delay in case settings are loaded dynamically
+        setTimeout(() => {
+            this.setupStatefulResetButton();
+        }, 1000);
     },
     
     // Cache DOM elements for better performance
@@ -273,7 +281,7 @@ let huntarrUI = {
         // Stateful management reset button
         const resetStatefulBtn = document.getElementById('reset_stateful_btn');
         if (resetStatefulBtn) {
-            resetStatefulBtn.addEventListener('click', () => this.resetStatefulManagement());
+            resetStatefulBtn.addEventListener('click', () => this.handleStatefulReset());
         }
         
         // Stateful management hours input
@@ -2186,48 +2194,67 @@ let huntarrUI = {
     
     // Reset stateful management - clear all processed IDs
     resetStatefulManagement: function() {
+        console.log("Reset stateful management function called");
+        
         // Show a loading indicator or disable the button
         const resetBtn = document.getElementById('reset_stateful_btn');
         if (resetBtn) {
             resetBtn.disabled = true;
-            resetBtn.textContent = 'Resetting...';
+            const originalText = resetBtn.innerHTML;
+            resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+            console.log("Reset button found and disabled:", resetBtn);
+        } else {
+            console.error("Reset button not found in the DOM!");
         }
+        
+        // Add debug logging
+        console.log("Sending reset request to /api/stateful/reset");
         
         fetch('/api/stateful/reset', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
             },
             cache: 'no-cache' // Add cache control to prevent caching
         })
         .then(response => {
+            console.log("Reset response received:", response.status, response.statusText);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
             }
             return response.json();
         })
         .then(data => {
+            console.log("Reset response data:", data);
+            
             if (data.success) {
                 this.showNotification('Stateful management reset successfully', 'success');
                 // Wait a moment before reloading the info to ensure it's refreshed
                 setTimeout(() => {
-                    this.loadStatefulInfo(); // Reload stateful info to update the UI
-                }, 500);
+                    this.loadStatefulInfo(0); // Reload stateful info with fresh attempt
+                    
+                    // Re-enable the button
+                    if (resetBtn) {
+                        resetBtn.disabled = false;
+                        resetBtn.innerHTML = '<i class="fas fa-trash"></i> Reset';
+                    }
+                }, 1000);
             } else {
                 throw new Error(data.message || 'Unknown error resetting stateful management');
             }
         })
         .catch(error => {
-            console.error('Error resetting stateful management:', error);
-            this.showNotification(`Failed to reset stateful management: ${error.message}`, 'error');
-        })
-        .finally(() => {
-            // Restore the button state
-            if (resetBtn) {
-                resetBtn.disabled = false;
-                resetBtn.textContent = 'Reset Stateful Management';
-            }
+             console.error("Error resetting stateful management:", error);
+             this.showNotification(`Error resetting stateful management: ${error.message}`, 'error');
+            
+             // Re-enable the button
+             if (resetBtn) {
+                 resetBtn.disabled = false;
+                 resetBtn.innerHTML = '<i class="fas fa-trash"></i> Reset';
+             }
         });
     },
     
@@ -2280,24 +2307,37 @@ let huntarrUI = {
         });
     },
 
-    // Add a proper hasFormChanges function to compare form values with original values
-    hasFormChanges: function(app) {
-        if (!app || !this.originalSettings || !this.originalSettings[app]) return false;
-        
-        const form = document.getElementById(`${app}Settings`);
-        if (!form) return false;
-        
-        const currentSettings = this.getFormSettings(app);
-        if (!currentSettings) return false;
-        
-        // Deep comparison of current settings with original settings
-        // For complex objects like instances, we need to stringify them for comparison
-        const originalJSON = JSON.stringify(this.originalSettings[app]);
-        const currentJSON = JSON.stringify(currentSettings);
-        
-        return originalJSON !== currentJSON;
+    // Add dedicated setup for the stateful reset button and a handler function
+    setupStatefulResetButton: function() {
+        const resetStatefulBtn = document.getElementById('reset_stateful_btn');
+        if (resetStatefulBtn) {
+            console.log('Found reset_stateful_btn, attaching event listener');
+            
+            // Remove any existing listeners to prevent duplicates
+            resetStatefulBtn.removeEventListener('click', this.handleStatefulReset);
+            
+            // Attach the event handler
+            this.handleStatefulReset = this.handleStatefulReset.bind(this);
+            resetStatefulBtn.addEventListener('click', this.handleStatefulReset);
+        } else {
+            // If button not found yet, try again after a short delay
+            // This handles cases where the button is added to the DOM after initial load
+            console.log('reset_stateful_btn not found yet, will try again in 500ms');
+            setTimeout(() => this.setupStatefulResetButton(), 500);
+        }
     },
     
+    // Handler for stateful reset button click
+    handleStatefulReset: function(event) {
+        event.preventDefault();
+        console.log('Stateful reset button clicked');
+        
+        // Show confirmation dialog
+        if (confirm('Are you sure you want to reset stateful management? This will clear all processed media IDs.')) {
+            this.resetStatefulManagement();
+        }
+    },
+
     // Add global event handler and method to track saved settings across all apps
     registerGlobalUnsavedChangesHandler: function() {
         window.addEventListener('beforeunload', this.handleUnsavedChangesBeforeUnload.bind(this));
@@ -2362,6 +2402,24 @@ let huntarrUI = {
             event.returnValue = 'You have unsaved changes. Do you want to continue without saving?';
             return event.returnValue;
         }
+    },
+    
+    // Add a proper hasFormChanges function to compare form values with original values
+    hasFormChanges: function(app) {
+        if (!app || !this.originalSettings || !this.originalSettings[app]) return false;
+        
+        const form = document.getElementById(`${app}Settings`);
+        if (!form) return false;
+        
+        const currentSettings = this.getFormSettings(app);
+        if (!currentSettings) return false;
+        
+        // Deep comparison of current settings with original settings
+        // For complex objects like instances, we need to stringify them for comparison
+        const originalJSON = JSON.stringify(this.originalSettings[app]);
+        const currentJSON = JSON.stringify(currentSettings);
+        
+        return originalJSON !== currentJSON;
     },
 };
 
