@@ -85,10 +85,10 @@ const SettingsForms = {
                     <label for="sonarr-hunt-missing-mode">Missing Search Mode:</label>
                     <select id="sonarr-hunt-missing-mode" name="hunt_missing_mode">
                         <option value="episodes" ${settings.hunt_missing_mode === 'episodes' ? 'selected' : ''}>Episodes</option>
-                        <option value="seasons" ${settings.hunt_missing_mode === 'seasons' ? 'selected' : ''}>Seasons</option>
+                        <option value="seasons_packs" ${settings.hunt_missing_mode === 'seasons_packs' ? 'selected' : ''}>Season Packs</option>
                         <option value="shows" ${settings.hunt_missing_mode === 'shows' ? 'selected' : ''}>Shows</option>
                     </select>
-                    <p class="setting-help">How to search for missing Sonarr content</p>
+                    <p class="setting-help">How to search for missing Sonarr content (Season Packs recommended for torrent users)</p>
                 </div>
                 <div class="setting-item">
                     <label for="sonarr-hunt-missing-items">Missing Items to Search:</label>
@@ -118,20 +118,20 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr_skip_future_releases">Skip Future Releases:</label>
+                    <label for="sonarr_skip_future_episodes">Skip Future Episodes:</label>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="sonarr_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
+                        <input type="checkbox" id="sonarr_skip_future_episodes" name="skip_future_episodes" ${settings.skip_future_episodes !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Skip searching for episodes with future air dates</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr_skip_metadata_refresh">Skip Metadata Refresh:</label>
+                    <label for="sonarr_skip_series_refresh">Skip Series Refresh:</label>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="sonarr_skip_metadata_refresh" name="skip_metadata_refresh" ${settings.skip_metadata_refresh === true ? 'checked' : ''}>
+                        <input type="checkbox" id="sonarr_skip_series_refresh" name="skip_series_refresh" ${settings.skip_series_refresh === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
-                    <p class="setting-help">Skip refreshing metadata before searching</p>
+                    <p class="setting-help">Skip refreshing series metadata before searching</p>
                 </div>
             </div>
         `;
@@ -225,12 +225,12 @@ const SettingsForms = {
                 <h3>Search Settings</h3>
                 <div class="setting-item">
                     <label for="radarr_hunt_missing_movies">Missing Movies to Search:</label>
-                    <input type="number" id="radarr_hunt_missing_movies" name="hunt_missing_movies" min="0" value="${settings.hunt_missing_movies || 1}">
+                    <input type="number" id="radarr_hunt_missing_movies" name="hunt_missing_movies" min="0" value="${settings.hunt_missing_movies !== undefined ? (settings.hunt_missing_movies === 0 ? 0 : settings.hunt_missing_movies) : 1}">
                     <p class="setting-help">Number of missing movies to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
                     <label for="radarr_hunt_upgrade_movies">Movies to Upgrade:</label>
-                    <input type="number" id="radarr_hunt_upgrade_movies" name="hunt_upgrade_movies" min="0" value="${settings.hunt_upgrade_movies || 0}">
+                    <input type="number" id="radarr_hunt_upgrade_movies" name="hunt_upgrade_movies" min="0" value="${settings.hunt_upgrade_movies !== undefined ? (settings.hunt_upgrade_movies === 0 ? 0 : settings.hunt_upgrade_movies) : 0}">
                     <p class="setting-help">Number of movies to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
@@ -362,13 +362,13 @@ const SettingsForms = {
                 </div>
                 <div class="setting-item">
                     <label for="lidarr_hunt_missing_items">Missing Items to Search:</label>
-                    <input type="number" id="lidarr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items || 1}">
+                    <input type="number" id="lidarr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of artists with missing albums to search per cycle (0 to disable)</p>
                 </div>
                 
                 <div class="setting-item">
                     <label for="lidarr_hunt_upgrade_items">Items to Upgrade:</label>
-                    <input type="number" id="lidarr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items || 0}">
+                    <input type="number" id="lidarr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
                     <p class="setting-help">Number of albums to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
@@ -492,12 +492,12 @@ const SettingsForms = {
                 <h3>Search Settings</h3>
                 <div class="setting-item">
                     <label for="readarr_hunt_missing_books">Missing Books to Search:</label>
-                    <input type="number" id="readarr_hunt_missing_books" min="0" value="${settings.hunt_missing_books || 1}">
+                    <input type="number" id="readarr_hunt_missing_books" name="hunt_missing_books" min="0" value="${settings.hunt_missing_books !== undefined ? settings.hunt_missing_books : 1}">
                     <p class="setting-help">Number of missing books to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
                     <label for="readarr_hunt_upgrade_books">Books to Upgrade:</label>
-                    <input type="number" id="readarr_hunt_upgrade_books" min="0" value="${settings.hunt_upgrade_books || 0}">
+                    <input type="number" id="readarr_hunt_upgrade_books" name="hunt_upgrade_books" min="0" value="${settings.hunt_upgrade_books !== undefined ? settings.hunt_upgrade_books : 0}">
                     <p class="setting-help">Number of books to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
@@ -621,12 +621,12 @@ const SettingsForms = {
                 <h3>Search Settings</h3>
                 <div class="setting-item">
                     <label for="whisparr_hunt_missing_items">Missing Items to Search:</label>
-                    <input type="number" id="whisparr_hunt_missing_items" min="0" value="${settings.hunt_missing_items || settings.hunt_missing_scenes || 1}">
+                    <input type="number" id="whisparr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
                     <label for="whisparr_hunt_upgrade_items">Items to Upgrade:</label>
-                    <input type="number" id="whisparr_hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items || settings.hunt_upgrade_scenes || 0}">
+                    <input type="number" id="whisparr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
                     <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
@@ -855,7 +855,8 @@ const SettingsForms = {
             if (element.type === 'checkbox') {
                 return element.checked;
             } else if (element.type === 'number') {
-                return parseInt(element.value) || defaultValue;
+                const parsedValue = parseInt(element.value);
+                return !isNaN(parsedValue) ? parsedValue : defaultValue;
             } else {
                 return element.value || defaultValue;
             }
@@ -940,8 +941,8 @@ const SettingsForms = {
                 settings.hunt_upgrade_items = getInputValue('#sonarr-hunt-upgrade-items', 0);
                 settings.sleep_duration = getInputValue('#sonarr_sleep_duration', 900);
                 settings.monitored_only = getInputValue('#sonarr_monitored_only', true);
-                settings.skip_future_releases = getInputValue('#sonarr_skip_future_releases', true);
-                settings.skip_metadata_refresh = getInputValue('#sonarr_skip_metadata_refresh', false);
+                settings.skip_future_episodes = getInputValue('#sonarr_skip_future_episodes', true);
+                settings.skip_series_refresh = getInputValue('#sonarr_skip_series_refresh', false);
             } 
             else if (appType === 'radarr') {
                 settings.hunt_missing_movies = getInputValue('#radarr_hunt_missing_movies', 1);
@@ -962,6 +963,8 @@ const SettingsForms = {
                 settings.hunt_missing_books = getInputValue('#readarr_hunt_missing_books', 1);
                 settings.hunt_upgrade_books = getInputValue('#readarr_hunt_upgrade_books', 0);
                 settings.monitored_only = getInputValue('#readarr_monitored_only', true);
+                settings.skip_future_releases = getInputValue('#readarr_skip_future_releases', true);
+                settings.skip_author_refresh = getInputValue('#skip_author_refresh', false);
                 settings.sleep_duration = getInputValue('#readarr_sleep_duration', 900);
             } 
             else if (appType === 'whisparr') {
@@ -1095,11 +1098,58 @@ const SettingsForms = {
         const createdDateEl = document.getElementById('stateful_initial_state');
         const expiresDateEl = document.getElementById('stateful_expires_date');
 
-        // Set initial state to Loading...
-        if (createdDateEl) createdDateEl.textContent = 'Loading...';
-        if (expiresDateEl) expiresDateEl.textContent = 'Loading...';
+        // Skip loading if huntarrUI has already loaded this data to prevent flashing
+        if (window.huntarrUI && window.huntarrUI._cachedStatefulData) {
+            console.log('[SettingsForms] Using existing huntarrUI cached stateful data');
+            return; // Exit early - main.js already has this covered
+        }
+        
+        // Only set to Loading if not already populated
+        if (createdDateEl && (!createdDateEl.textContent || createdDateEl.textContent === 'N/A')) {
+            createdDateEl.textContent = 'Loading...';
+        }
+        if (expiresDateEl && (!expiresDateEl.textContent || expiresDateEl.textContent === 'N/A')) {
+            expiresDateEl.textContent = 'Loading...';
+        }
 
-        fetch('/api/stateful/info')
+        // Check if data is already cached in localStorage
+        const cachedStatefulData = localStorage.getItem('huntarr-stateful-data');
+        if (cachedStatefulData) {
+            try {
+                const parsedData = JSON.parse(cachedStatefulData);
+                const cacheAge = Date.now() - parsedData.timestamp;
+                
+                // Use cache if it's less than 5 minutes old
+                if (cacheAge < 300000) {
+                    console.log('[SettingsForms] Using cached stateful data');
+                    
+                    if (createdDateEl && parsedData.created_at_ts) {
+                        const createdDate = new Date(parsedData.created_at_ts * 1000);
+                        createdDateEl.textContent = formatDateNicely(createdDate);
+                    }
+                    
+                    if (expiresDateEl && parsedData.expires_at_ts) {
+                        const expiresDate = new Date(parsedData.expires_at_ts * 1000);
+                        expiresDateEl.textContent = formatDateNicely(expiresDate);
+                    }
+                    
+                    // Still fetch fresh data in the background, but don't update UI
+                    fetchStatefulInfoSilently();
+                    return;
+                }
+            } catch (e) {
+                console.warn('[SettingsForms] Error parsing cached stateful data:', e);
+            }
+        }
+
+        fetch('/api/stateful/info', {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -1107,27 +1157,110 @@ const SettingsForms = {
                 return response.json();
              })
             .then(data => {
-                if (createdDateEl && data.created_date) {
-                    createdDateEl.textContent = data.created_date;
-                } else if (createdDateEl) {
-                    createdDateEl.textContent = 'N/A'; // Handle missing data
+                // Cache the response with a timestamp for future use
+                localStorage.setItem('huntarr-stateful-data', JSON.stringify({
+                    ...data,
+                    timestamp: Date.now()
+                }));
+                
+                if (createdDateEl) {
+                    if (data.created_at_ts) {
+                        const createdDate = new Date(data.created_at_ts * 1000);
+                        createdDateEl.textContent = formatDateNicely(createdDate);
+                    } else {
+                        createdDateEl.textContent = 'Not yet created';
+                    }
                 }
                 
-                if (expiresDateEl && data.expires_date) {
-                    expiresDateEl.textContent = data.expires_date;
-                } else if (expiresDateEl) {
-                    expiresDateEl.textContent = 'N/A'; // Handle missing data
+                if (expiresDateEl) {
+                    if (data.expires_at_ts) {
+                        const expiresDate = new Date(data.expires_at_ts * 1000);
+                        expiresDateEl.textContent = formatDateNicely(expiresDate);
+                    } else {
+                        expiresDateEl.textContent = 'Not set';
+                    }
+                }
+                
+                // Store data for other components to use
+                if (window.huntarrUI) {
+                    window.huntarrUI._cachedStatefulData = data;
                 }
             })
             .catch(error => {
-                console.error('Error loading stateful management info:', error);
-                if (createdDateEl) createdDateEl.textContent = 'Error loading';
-                if (expiresDateEl) expiresDateEl.textContent = 'Error loading';
-                // const notificationEl = document.getElementById('stateful-notification');
-                // if (notificationEl) {
-                //     notificationEl.style.display = 'block';
-                // }
+                console.error('Error loading stateful info:', error);
+                
+                // Try using cached data as fallback
+                if (cachedStatefulData) {
+                    try {
+                        const parsedData = JSON.parse(cachedStatefulData);
+                        
+                        if (createdDateEl && parsedData.created_at_ts) {
+                            const createdDate = new Date(parsedData.created_at_ts * 1000);
+                            createdDateEl.textContent = formatDateNicely(createdDate) + ' (cached)';
+                        } else if (createdDateEl) {
+                            createdDateEl.textContent = 'Not available';
+                        }
+                        
+                        if (expiresDateEl && parsedData.expires_at_ts) {
+                            const expiresDate = new Date(parsedData.expires_at_ts * 1000);
+                            expiresDateEl.textContent = formatDateNicely(expiresDate) + ' (cached)';
+                        } else if (expiresDateEl) {
+                            expiresDateEl.textContent = 'Not available';
+                        }
+                    } catch (e) {
+                        if (createdDateEl) createdDateEl.textContent = 'Not available';
+                        if (expiresDateEl) expiresDateEl.textContent = 'Not available';
+                    }
+                } else {
+                    if (createdDateEl) createdDateEl.textContent = 'Not available';
+                    if (expiresDateEl) expiresDateEl.textContent = 'Not available';
+                }
             });
+            
+        // Helper function to fetch data silently without updating UI
+        function fetchStatefulInfoSilently() {
+            fetch('/api/stateful/info', {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            })
+                .then(response => response.ok ? response.json() : null)
+                .then(data => {
+                    if (data && data.success) {
+                        localStorage.setItem('huntarr-stateful-data', JSON.stringify({
+                            ...data,
+                            timestamp: Date.now()
+                        }));
+                        
+                        if (window.huntarrUI) {
+                            window.huntarrUI._cachedStatefulData = data;
+                        }
+                    }
+                })
+                .catch(error => console.warn('Silent stateful info fetch failed:', error));
+        }
+        
+        // Helper function to format dates nicely
+        function formatDateNicely(date) {
+            if (!date || !(date instanceof Date) || isNaN(date)) {
+                return 'Invalid date';
+            }
+            
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            };
+            
+            return date.toLocaleString('en-US', options);
+        }
         
         // Add listener for reset stateful button
         const resetStatefulBtn = container.querySelector('#reset_stateful_btn');
@@ -1471,29 +1604,52 @@ const SettingsForms = {
     
     // Test connection to an *arr API
     testConnection: function(app, url, apiKey, buttonElement) {
-        // Show testing indicator on button
-        const originalButtonText = buttonElement.innerHTML;
-        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
-        buttonElement.disabled = true;
-        
-        console.log(`Testing connection for ${app} - URL: ${url}, API Key: ${apiKey.substring(0, 5)}...`);
-        
-        if (!url) {
-            alert('Please enter a valid URL');
-            urlInput.focus();
-            return;
+        // Temporarily suppress change detection to prevent the unsaved changes dialog
+        if (window.huntarrUI && window.huntarrUI.suppressUnsavedChangesCheck) {
+            window.huntarrUI.suppressUnsavedChangesCheck = true;
         }
         
-        if (!apiKey) {
-            alert('Please enter a valid API key');
-            keyInput.focus();
-            return;
+        // Also set a global flag used by the apps module
+        window._suppressUnsavedChangesDialog = true;
+        
+        // Find or create a status message element next to the button
+        let statusElement = buttonElement.closest('.instance-actions').querySelector('.connection-message');
+        if (!statusElement) {
+            statusElement = document.createElement('span');
+            statusElement.className = 'connection-message';
+            statusElement.style.marginLeft = '10px';
+            statusElement.style.fontWeight = 'bold';
+            buttonElement.closest('.instance-actions').insertBefore(statusElement, buttonElement);
         }
         
         // Show testing status
         const originalButtonHTML = buttonElement.innerHTML;
         buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
         buttonElement.disabled = true;
+        statusElement.textContent = 'Testing connection...';
+        statusElement.style.color = '#888';
+        
+        console.log(`Testing connection for ${app} - URL: ${url}, API Key: ${apiKey.substring(0, 5)}...`);
+        
+        if (!url) {
+            statusElement.textContent = 'Please enter a valid URL';
+            statusElement.style.color = 'red';
+            buttonElement.innerHTML = originalButtonHTML;
+            buttonElement.disabled = false;
+            // Reset suppression flags
+            this._resetSuppressionFlags();
+            return;
+        }
+        
+        if (!apiKey) {
+            statusElement.textContent = 'Please enter a valid API key';
+            statusElement.style.color = 'red';
+            buttonElement.innerHTML = originalButtonHTML;
+            buttonElement.disabled = false;
+            // Reset suppression flags
+            this._resetSuppressionFlags();
+            return;
+        }
         
         // Make the API request
         fetch(`/api/${app}/test-connection`, {
@@ -1520,48 +1676,53 @@ const SettingsForms = {
             
             if (data.success) {
                 // Success
-                buttonElement.innerHTML = '<i class="fas fa-check"></i> Connected!';
-                buttonElement.classList.add('test-success');
+                buttonElement.innerHTML = '<i class="fas fa-plug"></i> Test Connection';
                 
-                let successMessage = `Successfully connected to ${app.charAt(0).toUpperCase() + app.slice(1)}`;
+                let successMessage = `Connected successfully`;
                 if (data.version) {
-                    successMessage += ` (version ${data.version})`;
+                    successMessage += ` (v${data.version})`;
                 }
                 
-                // Alert the user of success
-                alert(successMessage);
-                
-                // Reset button after delay
-                setTimeout(() => {
-                    buttonElement.innerHTML = originalButtonHTML;
-                    buttonElement.classList.remove('test-success');
-                }, 3000);
+                // Show success message
+                statusElement.textContent = successMessage;
+                statusElement.style.color = 'green';
             } else {
                 // Failure
-                buttonElement.innerHTML = '<i class="fas fa-times"></i> Failed';
-                buttonElement.classList.add('test-failed');
+                buttonElement.innerHTML = '<i class="fas fa-plug"></i> Test Connection';
                 
-                alert(`Connection failed: ${data.message || 'Unknown error'}`);
-                
-                setTimeout(() => {
-                    buttonElement.innerHTML = originalButtonHTML;
-                    buttonElement.classList.remove('test-failed');
-                }, 3000);
+                // Show error message
+                const errorMsg = data.message || 'Connection failed';
+                statusElement.textContent = errorMsg;
+                statusElement.style.color = 'red';
             }
+            
+            // Reset suppression flags after a short delay to handle any potential redirects
+            setTimeout(() => {
+                this._resetSuppressionFlags();
+            }, 500);
         })
         .catch(error => {
-            console.error(`Test connection error:`, error);
+            console.error(`Connection test error:`, error);
             
+            // Reset button
+            buttonElement.innerHTML = originalButtonHTML;
             buttonElement.disabled = false;
-            buttonElement.innerHTML = '<i class="fas fa-times"></i> Error';
-            buttonElement.classList.add('test-failed');
             
-            alert(`Connection test failed: ${error.message}`);
+            // Show error message
+            statusElement.textContent = `Error: ${error.message}`;
+            statusElement.style.color = 'red';
             
-            setTimeout(() => {
-                buttonElement.innerHTML = originalButtonHTML;
-                buttonElement.classList.remove('test-failed');
-            }, 3000);
+            // Reset suppression flags
+            this._resetSuppressionFlags();
         });
+    },
+    
+    // Helper method to reset unsaved changes suppression flags
+    _resetSuppressionFlags: function() {
+        // Reset all suppression flags
+        if (window.huntarrUI) {
+            window.huntarrUI.suppressUnsavedChangesCheck = false;
+        }
+        window._suppressUnsavedChangesDialog = false;
     },
 };

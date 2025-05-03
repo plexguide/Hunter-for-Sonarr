@@ -9,6 +9,9 @@
                     &nbsp;&nbsp;|&nbsp;&nbsp;
                     <i class="fas fa-cloud-download-alt version-icon"></i>
                     <span id="latest-version-number">Latest: <a href="https://github.com/plexguide/Huntarr.io/releases/latest" target="_blank"><span id="latest-version-value">Loading...</span></a></span>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                    <i class="fas fa-star version-icon star-icon"></i>
+                    <span id="github-stars"><a href="https://github.com/plexguide/huntarr" target="_blank"><span id="github-stars-value">Loading...</span></a></span>
                 </p>
             </div>
         </div>
@@ -156,30 +159,29 @@
         </div>
 
         <div class="card thanks-card">
-            <h3><i class="fas fa-handshake"></i> Special Thanks</h3>
             <div class="thanks-container">
-                <div class="thanks-item">
-                    <i class="fas fa-users thanks-icon"></i>
-                    <div class="thanks-text">
-                        Thank you to <a href="https://github.com/zpatten" target="_blank">ZPatten</a>, <a href="https://github.com/FrancisAgostini" target="_blank">Maddogg7697</a>, and <a href="https://github.com/MacaidenXIII" target="_blank">MacaidenXIII</a> for kickstarting this project!
-                    </div>
-                </div>
-                <div class="thanks-item">
-                    <i class="fas fa-tools thanks-icon"></i>
-                    <div class="thanks-text">
-                        Thank you to <a href="https://ninjacentral.co.za" target="_blank">ninjacentral.co.za</a> for original API indexer insights and <a href="https://store.elfhosted.com/elf/huntarr" target="_blank">Get ElfHosted!</a> for easy deployment.
-                    </div>
-                </div>
                 <div class="thanks-item">
                     <i class="fas fa-heart thanks-icon"></i>
                     <div class="thanks-text">
-                        I thank my daughter for my inspiration in life. Thank you for using Huntarr ~ <a href="https://github.com/Admin9705/" target="_blank">Admin9705</a>
+                        Thank you for using Huntarr ~ <a href="https://github.com/Admin9705/" target="_blank">Admin9705</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    {% include 'components/footer.html' %}
+    
+    <!-- Fixed banner at the bottom of the viewport -->
+    <div class="fixed-banner-footer">
+        <p>
+            <a href="https://Huntarr.io" target="_blank">Huntarr.io</a> &copy; 2025
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            <i class="fas fa-heart donation-icon"></i> 
+            <a href="https://donate.plex.one" target="_blank">Donate @ PLEX.one</a> for Daughter's College Fund!
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            <i class="fas fa-star star-icon"></i> 
+            <a href="https://github.com/plexguide/huntarr" target="_blank">Star Huntarr on GitHub</a> - Really Helps!
+        </p>
+    </div>
 </section>
 
 <style>
@@ -188,6 +190,7 @@
         flex-direction: column;
         gap: 20px;
         width: 100%;
+        padding-bottom: 50px; /* Add padding to prevent content from being hidden by fixed banner */
     }
     
     .stack-layout .card {
@@ -485,8 +488,8 @@
     }
     
     /* Enhanced Special Thanks styling */
-    .card.thanks-card h3 {
-        margin-bottom: 12px;
+    .card.thanks-card {
+        padding: 12px 15px;
     }
 
     .thanks-container {
@@ -522,5 +525,46 @@
     .thanks-text a {
         color: var(--accent-color);
         text-decoration: none;
+    }
+    
+    /* Fixed banner footer styling */
+    .fixed-banner-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        padding: 10px 20px;
+        background-color: var(--bg-secondary);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        border-top: 1px solid var(--border-color);
+        z-index: 1000; /* Ensure it's above other elements */
+    }
+    
+    .fixed-banner-footer p {
+        margin: 0;
+        font-size: 1em;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .fixed-banner-footer a {
+        color: var(--accent-color);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s, text-decoration 0.2s;
+    }
+    
+    .fixed-banner-footer a:hover {
+        text-decoration: underline;
+        color: var(--accent-hover);
+    }
+    
+    .fixed-banner-footer .donation-icon {
+        color: var(--error-color, #ff6b6b);
+    }
+    
+    .fixed-banner-footer .star-icon {
+        color: var(--warning-color, #ffd700);
     }
 </style>

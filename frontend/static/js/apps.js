@@ -5,16 +5,31 @@
 
 const appsModule = {
     // State
-    currentApp: 'sonarr',
+    currentApp: null,
     isLoading: false,
-    settingsChanged: false,
-    originalSettings: {},
+    settingsChanged: false, // Flag to track unsaved settings changes
+    originalSettings: {}, // Store original settings to compare
+    appsWithChanges: [], // Track which apps have unsaved changes
     
     // DOM elements
     elements: {},
     
     // Initialize the apps module
     init: function() {
+        // Initialize state
+        this.currentApp = null;
+        this.settingsChanged = false; // Flag to track unsaved settings changes
+        this.originalSettings = {}; // Store original settings to compare
+        
+        // Set a global flag to indicate we've loaded
+        window._appsModuleLoaded = true;
+        
+        // Add global variable to track if we're in the middle of saving
+        window._appsCurrentlySaving = false;
+        
+        // Add global variable to disable change detection temporarily
+        window._appsSuppressChangeDetection = false;
+        
         // Cache DOM elements
         this.cacheElements();
         
@@ -33,59 +48,80 @@ const appsModule = {
     
     // Register with the main unsaved changes system
     registerUnsavedChangesHandler: function() {
-        // Add our own beforeunload handler for direct page exits
-        if (!window._appsBeforeUnloadHandlerRegistered) {
-            const originalBeforeUnload = window.onbeforeunload;
-            window.onbeforeunload = (event) => {
-                // Check if apps has unsaved changes
-                if (this.settingsChanged) {
-                    // Standard way to trigger the browser's confirmation dialog
-                    event.preventDefault(); 
-                    event.returnValue = 'You have unsaved changes. Are you sure you want to leave? Changes will be lost.';
-                    return 'You have unsaved changes. Are you sure you want to leave? Changes will be lost.';
-                }
-                
-                // Fall back to original handler if we don't have changes
-                if (originalBeforeUnload) {
-                    return originalBeforeUnload(event);
-                }
-                return undefined;
-            };
+        // Check if we already have the event listener
+        if (!this._unsavedChangesHandlerRegistered) {
+            this._unsavedChangesHandlerRegistered = true;
             
-            // Mark that we've registered the handler
-            window._appsBeforeUnloadHandlerRegistered = true;
-        }
-        
-        // Integrate with huntarrUI if available
-        if (typeof huntarrUI !== 'undefined') {
-            // Store original markSettingsAsChanged function if it exists
-            const originalMarkChanged = huntarrUI.markSettingsAsChanged;
-            
-            // Override with our function that knows about both systems
-            huntarrUI.markSettingsAsChanged = () => {
-                // Call original if it existed
-                if (originalMarkChanged) {
-                    originalMarkChanged.call(huntarrUI);
-                }
-                
-                // Set the flag for the main UI
-                huntarrUI.settingsChanged = true;
-            };
-            
-            // Listen for navigation to non-apps pages
             document.addEventListener('click', (event) => {
-                const navLink = event.target.closest('a[href^="#"]');
-                if (navLink) {
-                    const targetPage = navLink.getAttribute('href').substring(1);
-                    // If navigating away from apps page and we have changes
-                    if (targetPage !== 'apps' && this.settingsChanged) {
+                // Skip handling if currently saving or change detection is suppressed
+                if (window._appsCurrentlySaving || window._appsSuppressChangeDetection) {
+                    return;
+                }
+                
+                // Only check for navigation away from apps section
+                const navItem = event.target.closest('.nav-item, a');
+                if (navItem) {
+                    const href = navItem.getAttribute('href');
+                    
+                    // Skip if clicking within the apps section or on external links
+                    if (!href || href === '#apps' || href.startsWith('http') || navItem.getAttribute('target') === '_blank') {
+                        return;
+                    }
+                    
+                    // Immediately clear the settingsChanged flag if we're not actually on the apps page
+                    if (window.location.hash !== '#apps') {
+                        this.settingsChanged = false;
+                        return;
+                    }
+                    
+                    // Check for unsaved changes
+                    if (this.hasUnsavedChanges()) {
                         if (!confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
                             event.preventDefault();
+                        } else {
+                            // User clicked OK, reset the settings changed flag
+                            this.settingsChanged = false;
                         }
                     }
                 }
             });
+            
+            // Also handle browser back/forward navigation
+            window.addEventListener('beforeunload', (event) => {
+                // Skip if currently saving, suppression active, or not on apps page
+                if (window._appsCurrentlySaving || 
+                    window._appsSuppressChangeDetection || 
+                    window.location.hash !== '#apps') {
+                    return;
+                }
+                
+                // Check for unsaved changes
+                if (this.hasUnsavedChanges()) {
+                    // Show standard browser confirmation
+                    event.preventDefault();
+                    event.returnValue = 'You have unsaved changes. Are you sure you want to leave? Changes will be lost.';
+                    return event.returnValue;
+                }
+            });
         }
+    },
+    
+    // Check for unsaved changes before navigating away
+    hasUnsavedChanges: function() {
+        // If test connection suppression is active, return false to prevent dialog
+        if (window._suppressUnsavedChangesDialog === true) {
+            console.log('Unsaved changes check suppressed due to test connection');
+            return false;
+        }
+        
+        // If the app is currently saving, don't consider it as having unsaved changes
+        if (window._appsCurrentlySaving) {
+            console.log('Skipping unsaved changes check because app is currently saving');
+            return false;
+        }
+        
+        // Check if settings have changed
+        return this.settingsChanged === true;
     },
     
     // Cache DOM elements
@@ -146,6 +182,26 @@ const appsModule = {
     
     // Load apps for initial display
     loadApps: function() {
+        // Set default app if none is selected
+        if (!this.currentApp) {
+            this.currentApp = 'sonarr'; // Default to Sonarr
+            
+            // Update the dropdown text to show current app
+            if (this.elements.currentAppsApp) {
+                this.elements.currentAppsApp.textContent = 'Sonarr';
+            }
+            
+            // Mark the sonarr option as active in the dropdown
+            if (this.elements.appsOptions) {
+                this.elements.appsOptions.forEach(option => {
+                    option.classList.remove('active');
+                    if (option.getAttribute('data-app') === 'sonarr') {
+                        option.classList.add('active');
+                    }
+                });
+            }
+        }
+        
         // Load the currently selected app
         this.loadAppSettings(this.currentApp);
     },
@@ -196,6 +252,9 @@ const appsModule = {
                             SettingsForms.updateDurationDisplay();
                         }
                         
+                        // Store original form values after form is generated
+                        this.storeOriginalFormValues(appPanel);
+                        
                         // Add change listener to detect modifications
                         this.addFormChangeListeners(formElement);
                     } else {
@@ -221,8 +280,12 @@ const appsModule = {
         
         // Function to handle form element changes
         const handleChange = () => {
-            console.log('Form changed, enabling save button');
-            this.markAppsAsChanged();
+            if (this.hasFormChanges(form)) {
+                console.log('Form changed, enabling save button');
+                this.markAppsAsChanged();
+            } else {
+                console.log('No actual changes, save button remains disabled');
+            }
         };
         
         // Add listeners to all form inputs, selects, and textareas
@@ -267,8 +330,13 @@ const appsModule = {
                 });
                 
                 if (shouldUpdate) {
-                    console.log('Instances container changed - form changed, enabling save button');
-                    this.markAppsAsChanged();
+                    console.log('Instances container changed - checking for form changes');
+                    if (this.hasFormChanges(form)) {
+                        console.log('Form changed, enabling save button');
+                        this.markAppsAsChanged();
+                    } else {
+                        console.log('No actual changes, save button remains disabled');
+                    }
                 }
             });
             
@@ -286,12 +354,67 @@ const appsModule = {
     // Mark apps as changed
     markAppsAsChanged: function() {
         this.settingsChanged = true;
+        
+        // Find the currently visible app panel and track it in our list of changed apps
+        const currentApp = document.querySelector('.app-panel:not([style*="display: none"])');
+        if (currentApp) {
+            const appType = currentApp.getAttribute('data-app-type');
+            if (appType) {
+                // Initialize the array if it doesn't exist yet
+                if (!this.appsWithChanges) {
+                    this.appsWithChanges = [];
+                }
+                
+                // Add this app to the list of apps with changes if not already there
+                if (!this.appsWithChanges.includes(appType)) {
+                    this.appsWithChanges.push(appType);
+                    console.log(`Added ${appType} to appsWithChanges:`, this.appsWithChanges);
+                }
+                
+                // Set the global tracking flag for this specific app
+                if (!window._hasAppChanges) {
+                    window._hasAppChanges = {};
+                }
+                window._hasAppChanges[appType] = true;
+                
+                // Also update the huntarrUI tracking if available
+                if (window.huntarrUI && window.huntarrUI.formChanged) {
+                    window.huntarrUI.formChanged[appType] = true;
+                    window.huntarrUI.hasUnsavedChanges = true;
+                }
+            }
+        }
+        
         if (this.elements.saveAppsButton) {
             this.elements.saveAppsButton.disabled = false;
             console.log('Save button enabled');
         } else {
             console.error('Save button element not found');
         }
+    },
+    
+    // Check if the form has actual changes compared to original values
+    hasFormChanges: function(form) {
+        if (!form || !this.originalSettings) return true;
+        
+        let hasChanges = false;
+        const formElements = form.querySelectorAll('input, select, textarea');
+        
+        formElements.forEach(element => {
+            // Skip buttons
+            if (element.type === 'button' || element.type === 'submit') return;
+            
+            const originalValue = this.originalSettings[element.id];
+            const currentValue = element.type === 'checkbox' ? element.checked : element.value;
+            
+            // Compare with original value
+            if (originalValue !== undefined && String(originalValue) !== String(currentValue)) {
+                console.log(`Element changed: ${element.id}, Original: ${originalValue}, Current: ${currentValue}`);
+                hasChanges = true;
+            }
+        });
+        
+        return hasChanges;
     },
     
     // Show specific app panel and hide others
@@ -341,6 +464,10 @@ const appsModule = {
         
         // Update the current app text with proper capitalization
         let displayName = selectedApp.charAt(0).toUpperCase() + selectedApp.slice(1);
+        // Special handling for Whisparr V2
+        if (selectedApp === 'whisparr') {
+            displayName = 'Whisparr V2';
+        }
         this.elements.currentAppsApp.textContent = displayName;
         
         // Close the dropdown
@@ -365,6 +492,9 @@ const appsModule = {
         if (event) event.preventDefault();
         
         console.log('[Apps] Save button clicked');
+        
+        // Set a flag that we're in the middle of saving
+        window._appsCurrentlySaving = true;
         
         // Get the current app from module state
         const appType = this.currentApp;
@@ -410,7 +540,14 @@ const appsModule = {
     
     // Helper function to save settings for a specific app
     saveAppSettings: function(appType, appPanel) {
-        console.log(`Collecting settings for ${appType}`);
+        console.log(`Saving settings for ${appType}`);
+        
+        // For Whisparr, ensure we indicate we're working with V2
+        let apiVersion = "";
+        if (appType === "whisparr") {
+            console.log("Saving Whisparr V2 settings");
+            apiVersion = "V2";
+        }
         
         let settings;
         try {
@@ -458,11 +595,28 @@ const appsModule = {
         .then(data => {
             console.log(`${appType} settings saved successfully:`, data);
             
+            // Temporarily suppress change detection
+            window._appsSuppressChangeDetection = true;
+            
+            // Store the current form values as the new "original" values
+            this.storeOriginalFormValues(appPanel);
+            
             // Disable save button and reset state
             this.settingsChanged = false;
             if (this.elements.saveAppsButton) {
                 this.elements.saveAppsButton.disabled = true;
             }
+            
+            // Reset the saving flag
+            window._appsCurrentlySaving = false;
+            
+            // Ensure form elements are properly updated to reflect saved state
+            this.markFormAsUnchanged(appPanel);
+            
+            // After a short delay, re-enable change detection
+            setTimeout(() => {
+                window._appsSuppressChangeDetection = false;
+            }, 1000);
             
             // Show success notification
             if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
@@ -478,7 +632,86 @@ const appsModule = {
             } else {
                 alert(`Error saving settings: ${error.message}`);
             }
+            // Reset the saving flag
+            window._appsCurrentlySaving = false;
         });
+    },
+    
+    // Store the current form values as the new "original" values
+    storeOriginalFormValues: function(appPanel) {
+        const form = appPanel.querySelector('form');
+        if (!form) return;
+        
+        const originalValues = {};
+        const formElements = form.querySelectorAll('input, select, textarea');
+        formElements.forEach(element => {
+            originalValues[element.id] = element.value;
+        });
+        
+        this.originalSettings = originalValues;
+        console.log('Original form values stored:', this.originalSettings);
+    },
+    
+    // Mark form as unchanged
+    markFormAsUnchanged: function(appPanel) {
+        const form = appPanel.querySelector('form');
+        if (!form) return;
+        
+        // First, remove the 'changed' class from all form elements
+        const formElements = form.querySelectorAll('input, select, textarea');
+        formElements.forEach(element => {
+            element.classList.remove('changed');
+        });
+        
+        // Get the app type to properly handle app-specific flags
+        const appType = appPanel.getAttribute('data-app-type') || '';
+        console.log(`Marking form as unchanged for app type: ${appType}`);
+        
+        // Clear app-specific change flags
+        if (window._hasAppChanges && typeof window._hasAppChanges === 'object') {
+            window._hasAppChanges[appType] = false;
+        }
+        
+        // Ensure we reset all change tracking for this app
+        try {
+            // Reset any form change flags
+            if (form.dataset) {
+                form.dataset.hasChanges = 'false';
+            }
+            
+            // Clear any app-specific data attributes that might be tracking changes
+            appPanel.querySelectorAll('[data-changed="true"]').forEach(el => {
+                el.setAttribute('data-changed', 'false');
+            });
+            
+            // Reset the internal change tracking for this specific app
+            if (appType && this.appsWithChanges && this.appsWithChanges.includes(appType)) {
+                this.appsWithChanges = this.appsWithChanges.filter(app => app !== appType);
+                console.log(`Removed ${appType} from appsWithChanges:`, this.appsWithChanges);
+            }
+            
+            // Force update overall app state
+            this.settingsChanged = this.appsWithChanges && this.appsWithChanges.length > 0;
+            
+            // Explicitly handle Readarr, Lidarr, and Whisparr which seem to have issues
+            if (appType === 'readarr' || appType === 'lidarr' || appType === 'whisparr' || appType === 'whisparrv2') {
+                console.log(`Special handling for ${appType} to ensure changes are cleared`);
+                // Force additional global state updates
+                if (window.huntarrUI && window.huntarrUI.formChanged) {
+                    window.huntarrUI.formChanged[appType] = false;
+                }
+                // Reset the global changed state tracker if this was the only app with changes
+                if (!this.settingsChanged && window.huntarrUI) {
+                    window.huntarrUI.hasUnsavedChanges = false;
+                }
+                // Force immediate re-evaluation of the form state
+                setTimeout(() => {
+                    this.hasFormChanges(form);
+                }, 10);
+            }
+        } catch (error) {
+            console.error(`Error in markFormAsUnchanged for ${appType}:`, error);
+        }
     }
 };
 
