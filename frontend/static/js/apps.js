@@ -193,6 +193,26 @@ const appsModule = {
     
     // Load apps for initial display
     loadApps: function() {
+        // Set default app if none is selected
+        if (!this.currentApp) {
+            this.currentApp = 'sonarr'; // Default to Sonarr
+            
+            // Update the dropdown text to show current app
+            if (this.elements.currentAppsApp) {
+                this.elements.currentAppsApp.textContent = 'Sonarr';
+            }
+            
+            // Mark the sonarr option as active in the dropdown
+            if (this.elements.appsOptions) {
+                this.elements.appsOptions.forEach(option => {
+                    option.classList.remove('active');
+                    if (option.getAttribute('data-app') === 'sonarr') {
+                        option.classList.add('active');
+                    }
+                });
+            }
+        }
+        
         // Load the currently selected app
         this.loadAppSettings(this.currentApp);
     },

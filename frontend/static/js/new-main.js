@@ -438,6 +438,10 @@ let huntarrUI = {
             this.currentSection = 'home';
             // Disconnect logs if switching away from logs
             this.disconnectAllEventSources(); 
+            // Check app connections when returning to home page to update status
+            this.checkAppConnections();
+            // Also refresh media stats
+            this.loadMediaStats();
         } else if (section === 'logs' && this.elements.logsSection) {
             this.elements.logsSection.classList.add('active');
             if (this.elements.logsNav) this.elements.logsNav.classList.add('active');
