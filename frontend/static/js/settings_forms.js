@@ -1098,11 +1098,58 @@ const SettingsForms = {
         const createdDateEl = document.getElementById('stateful_initial_state');
         const expiresDateEl = document.getElementById('stateful_expires_date');
 
-        // Set initial state to Loading...
-        if (createdDateEl) createdDateEl.textContent = 'Loading...';
-        if (expiresDateEl) expiresDateEl.textContent = 'Loading...';
+        // Skip loading if huntarrUI has already loaded this data to prevent flashing
+        if (window.huntarrUI && window.huntarrUI._cachedStatefulData) {
+            console.log('[SettingsForms] Using existing huntarrUI cached stateful data');
+            return; // Exit early - main.js already has this covered
+        }
+        
+        // Only set to Loading if not already populated
+        if (createdDateEl && (!createdDateEl.textContent || createdDateEl.textContent === 'N/A')) {
+            createdDateEl.textContent = 'Loading...';
+        }
+        if (expiresDateEl && (!expiresDateEl.textContent || expiresDateEl.textContent === 'N/A')) {
+            expiresDateEl.textContent = 'Loading...';
+        }
 
-        fetch('/api/stateful/info')
+        // Check if data is already cached in localStorage
+        const cachedStatefulData = localStorage.getItem('huntarr-stateful-data');
+        if (cachedStatefulData) {
+            try {
+                const parsedData = JSON.parse(cachedStatefulData);
+                const cacheAge = Date.now() - parsedData.timestamp;
+                
+                // Use cache if it's less than 5 minutes old
+                if (cacheAge < 300000) {
+                    console.log('[SettingsForms] Using cached stateful data');
+                    
+                    if (createdDateEl && parsedData.created_at_ts) {
+                        const createdDate = new Date(parsedData.created_at_ts * 1000);
+                        createdDateEl.textContent = formatDateNicely(createdDate);
+                    }
+                    
+                    if (expiresDateEl && parsedData.expires_at_ts) {
+                        const expiresDate = new Date(parsedData.expires_at_ts * 1000);
+                        expiresDateEl.textContent = formatDateNicely(expiresDate);
+                    }
+                    
+                    // Still fetch fresh data in the background, but don't update UI
+                    fetchStatefulInfoSilently();
+                    return;
+                }
+            } catch (e) {
+                console.warn('[SettingsForms] Error parsing cached stateful data:', e);
+            }
+        }
+
+        fetch('/api/stateful/info', {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -1110,27 +1157,110 @@ const SettingsForms = {
                 return response.json();
              })
             .then(data => {
-                if (createdDateEl && data.created_date) {
-                    createdDateEl.textContent = data.created_date;
-                } else if (createdDateEl) {
-                    createdDateEl.textContent = 'N/A'; // Handle missing data
+                // Cache the response with a timestamp for future use
+                localStorage.setItem('huntarr-stateful-data', JSON.stringify({
+                    ...data,
+                    timestamp: Date.now()
+                }));
+                
+                if (createdDateEl) {
+                    if (data.created_at_ts) {
+                        const createdDate = new Date(data.created_at_ts * 1000);
+                        createdDateEl.textContent = formatDateNicely(createdDate);
+                    } else {
+                        createdDateEl.textContent = 'Not yet created';
+                    }
                 }
                 
-                if (expiresDateEl && data.expires_date) {
-                    expiresDateEl.textContent = data.expires_date;
-                } else if (expiresDateEl) {
-                    expiresDateEl.textContent = 'N/A'; // Handle missing data
+                if (expiresDateEl) {
+                    if (data.expires_at_ts) {
+                        const expiresDate = new Date(data.expires_at_ts * 1000);
+                        expiresDateEl.textContent = formatDateNicely(expiresDate);
+                    } else {
+                        expiresDateEl.textContent = 'Not set';
+                    }
+                }
+                
+                // Store data for other components to use
+                if (window.huntarrUI) {
+                    window.huntarrUI._cachedStatefulData = data;
                 }
             })
             .catch(error => {
-                console.error('Error loading stateful management info:', error);
-                if (createdDateEl) createdDateEl.textContent = 'Error loading';
-                if (expiresDateEl) expiresDateEl.textContent = 'Error loading';
-                // const notificationEl = document.getElementById('stateful-notification');
-                // if (notificationEl) {
-                //     notificationEl.style.display = 'block';
-                // }
+                console.error('Error loading stateful info:', error);
+                
+                // Try using cached data as fallback
+                if (cachedStatefulData) {
+                    try {
+                        const parsedData = JSON.parse(cachedStatefulData);
+                        
+                        if (createdDateEl && parsedData.created_at_ts) {
+                            const createdDate = new Date(parsedData.created_at_ts * 1000);
+                            createdDateEl.textContent = formatDateNicely(createdDate) + ' (cached)';
+                        } else if (createdDateEl) {
+                            createdDateEl.textContent = 'Not available';
+                        }
+                        
+                        if (expiresDateEl && parsedData.expires_at_ts) {
+                            const expiresDate = new Date(parsedData.expires_at_ts * 1000);
+                            expiresDateEl.textContent = formatDateNicely(expiresDate) + ' (cached)';
+                        } else if (expiresDateEl) {
+                            expiresDateEl.textContent = 'Not available';
+                        }
+                    } catch (e) {
+                        if (createdDateEl) createdDateEl.textContent = 'Not available';
+                        if (expiresDateEl) expiresDateEl.textContent = 'Not available';
+                    }
+                } else {
+                    if (createdDateEl) createdDateEl.textContent = 'Not available';
+                    if (expiresDateEl) expiresDateEl.textContent = 'Not available';
+                }
             });
+            
+        // Helper function to fetch data silently without updating UI
+        function fetchStatefulInfoSilently() {
+            fetch('/api/stateful/info', {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            })
+                .then(response => response.ok ? response.json() : null)
+                .then(data => {
+                    if (data && data.success) {
+                        localStorage.setItem('huntarr-stateful-data', JSON.stringify({
+                            ...data,
+                            timestamp: Date.now()
+                        }));
+                        
+                        if (window.huntarrUI) {
+                            window.huntarrUI._cachedStatefulData = data;
+                        }
+                    }
+                })
+                .catch(error => console.warn('Silent stateful info fetch failed:', error));
+        }
+        
+        // Helper function to format dates nicely
+        function formatDateNicely(date) {
+            if (!date || !(date instanceof Date) || isNaN(date)) {
+                return 'Invalid date';
+            }
+            
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            };
+            
+            return date.toLocaleString('en-US', options);
+        }
         
         // Add listener for reset stateful button
         const resetStatefulBtn = container.querySelector('#reset_stateful_btn');

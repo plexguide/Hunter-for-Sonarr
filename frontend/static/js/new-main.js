@@ -1964,12 +1964,49 @@ let huntarrUI = {
         
         console.log(`[StatefulInfo] Loading stateful info (attempt ${attempts + 1})`);
         
-        // Update UI to show loading state instead of N/A
+        // Update UI to show loading state instead of N/A on first attempt
         if (attempts === 0) {
             if (initialStateEl) initialStateEl.textContent = 'Loading...';
             if (expiresDateEl) expiresDateEl.textContent = 'Loading...';
         }
         
+        // First check if we have cached data in localStorage that we can use immediately
+        const cachedStatefulData = localStorage.getItem('huntarr-stateful-data');
+        if (cachedStatefulData && attempts === 0) {
+            try {
+                const parsedData = JSON.parse(cachedStatefulData);
+                const cacheAge = Date.now() - parsedData.timestamp;
+                
+                // Use cache if it's less than 5 minutes old while waiting for fresh data
+                if (cacheAge < 300000) {
+                    console.log('[StatefulInfo] Using cached data while fetching fresh data');
+                    
+                    // Display cached data
+                    if (initialStateEl && parsedData.created_at_ts) {
+                        const createdDate = new Date(parsedData.created_at_ts * 1000);
+                        initialStateEl.textContent = this.formatDateNicely(createdDate);
+                    }
+                    
+                    if (expiresDateEl && parsedData.expires_at_ts) {
+                        const expiresDate = new Date(parsedData.expires_at_ts * 1000);
+                        expiresDateEl.textContent = this.formatDateNicely(expiresDate);
+                    }
+                    
+                    // Update interval input and days display
+                    if (intervalInput && parsedData.interval_hours) {
+                        intervalInput.value = parsedData.interval_hours;
+                        if (intervalDaysSpan) {
+                            const days = (parsedData.interval_hours / 24).toFixed(1);
+                            intervalDaysSpan.textContent = `${days} days`;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('[StatefulInfo] Error parsing cached data:', e);
+            }
+        }
+        
+        // Always fetch fresh data from the server
         fetch('/api/stateful/info', { 
             cache: 'no-cache',
             headers: {
@@ -1986,30 +2023,37 @@ let huntarrUI = {
         })
         .then(data => {
             if (data.success) {
-                if (initialStateEl && data.created_at_ts) {
-                    const createdDate = new Date(data.created_at_ts * 1000);
-                    initialStateEl.textContent = this.formatDateNicely(createdDate);
-                } else if (initialStateEl) {
-                    initialStateEl.textContent = 'N/A';
-                    
-                    // If we got N/A but this is not our last attempt, retry with shorter delay
-                    if (attempts < maxAttempts && !data.created_at_ts) {
-                        console.log(`[StatefulInfo] No timestamp data, will retry (${attempts + 1}/${maxAttempts})`);
-                        setTimeout(() => this.loadStatefulInfo(attempts + 1), 300); // Retry after 300ms
-                        return;
+                // Cache the response with a timestamp for future use
+                localStorage.setItem('huntarr-stateful-data', JSON.stringify({
+                    ...data,
+                    timestamp: Date.now()
+                }));
+                
+                // Handle initial state date
+                if (initialStateEl) {
+                    if (data.created_at_ts) {
+                        const createdDate = new Date(data.created_at_ts * 1000);
+                        initialStateEl.textContent = this.formatDateNicely(createdDate);
+                    } else {
+                        initialStateEl.textContent = 'Not yet created';
+                        
+                        // If this is the first state load attempt and no timestamp exists,
+                        // it might be because the state file hasn't been created yet
+                        if (attempts < maxAttempts) {
+                            console.log(`[StatefulInfo] No initial state timestamp, will retry (${attempts + 1}/${maxAttempts})`);
+                            setTimeout(() => this.loadStatefulInfo(attempts + 1), 500); // Longer delay for better chance of success
+                            return;
+                        }
                     }
                 }
                 
-                if (expiresDateEl && data.expires_at_ts) {
-                    const expiresDate = new Date(data.expires_at_ts * 1000);
-                    expiresDateEl.textContent = this.formatDateNicely(expiresDate);
-                } else if (expiresDateEl) {
-                    expiresDateEl.textContent = 'N/A';
-                    
-                    // If we got N/A but this is not our last attempt, retry 
-                    if (attempts < maxAttempts && !data.expires_at_ts) {
-                        // We already scheduled a retry above, no need to do it again
-                        return;
+                // Handle expiration date
+                if (expiresDateEl) {
+                    if (data.expires_at_ts) {
+                        const expiresDate = new Date(data.expires_at_ts * 1000);
+                        expiresDateEl.textContent = this.formatDateNicely(expiresDate);
+                    } else {
+                        expiresDateEl.textContent = 'Not set';
                     }
                 }
                 
@@ -2030,6 +2074,8 @@ let huntarrUI = {
                 
                 // Store the data for future reference
                 this._cachedStatefulData = data;
+                
+                console.log('[StatefulInfo] Successfully loaded and displayed stateful data');
             } else {
                 throw new Error(data.message || 'Failed to load stateful info');
             }
@@ -2037,22 +2083,59 @@ let huntarrUI = {
         .catch(error => {
             console.error(`Error loading stateful info (attempt ${attempts + 1}/${maxAttempts + 1}):`, error);
             
-            // Retry if we haven't reached max attempts with shorter delay
+            // Retry if we haven't reached max attempts with exponential backoff
             if (attempts < maxAttempts) {
-                console.log(`[StatefulInfo] Retrying in 300ms (attempt ${attempts + 1}/${maxAttempts})`);
-                setTimeout(() => this.loadStatefulInfo(attempts + 1), 300);
+                const delay = Math.min(2000, 300 * Math.pow(2, attempts)); // Exponential backoff with max 2000ms
+                console.log(`[StatefulInfo] Retrying in ${delay}ms (attempt ${attempts + 1}/${maxAttempts})`);
+                setTimeout(() => this.loadStatefulInfo(attempts + 1), delay);
                 return;
             }
             
-            if (initialStateEl) initialStateEl.textContent = 'Error loading data';
-            if (expiresDateEl) expiresDateEl.textContent = 'Error loading data';
+            // Use cached data as fallback if available
+            const cachedStatefulData = localStorage.getItem('huntarr-stateful-data');
+            if (cachedStatefulData) {
+                try {
+                    console.log('[StatefulInfo] Using cached data as fallback after failed fetch');
+                    const parsedData = JSON.parse(cachedStatefulData);
+                    
+                    if (initialStateEl && parsedData.created_at_ts) {
+                        const createdDate = new Date(parsedData.created_at_ts * 1000);
+                        initialStateEl.textContent = this.formatDateNicely(createdDate) + ' (cached)';
+                    } else if (initialStateEl) {
+                        initialStateEl.textContent = 'Not available';
+                    }
+                    
+                    if (expiresDateEl && parsedData.expires_at_ts) {
+                        const expiresDate = new Date(parsedData.expires_at_ts * 1000);
+                        expiresDateEl.textContent = this.formatDateNicely(expiresDate) + ' (cached)';
+                    } else if (expiresDateEl) {
+                        expiresDateEl.textContent = 'Not available';
+                    }
+                    
+                    // Update interval input and days display from cache
+                    if (intervalInput && parsedData.interval_hours) {
+                        intervalInput.value = parsedData.interval_hours;
+                        if (intervalDaysSpan) {
+                            const days = (parsedData.interval_hours / 24).toFixed(1);
+                            intervalDaysSpan.textContent = `${days} days`;
+                        }
+                    }
+                    
+                    return;
+                } catch (e) {
+                    console.warn('[StatefulInfo] Error parsing cached data as fallback:', e);
+                }
+            }
+            
+            // Final fallback if no cached data
+            if (initialStateEl) initialStateEl.textContent = 'Not available';
+            if (expiresDateEl) expiresDateEl.textContent = 'Not available';
             
             // Show error notification
             const notification = document.getElementById('stateful-notification');
             if (notification) {
-                notification.textContent = 'Failed to load stateful management info. Check logs for details.';
                 notification.style.display = 'block';
-                notification.className = 'notification error'; // Ensure class is set
+                notification.textContent = 'Could not load stateful management info. This may affect media tracking.';
             }
         });
     },
