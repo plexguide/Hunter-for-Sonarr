@@ -341,6 +341,10 @@ const appsModule = {
         
         // Update the current app text with proper capitalization
         let displayName = selectedApp.charAt(0).toUpperCase() + selectedApp.slice(1);
+        // Special handling for Whisparr V2
+        if (selectedApp === 'whisparr') {
+            displayName = 'Whisparr V2';
+        }
         this.elements.currentAppsApp.textContent = displayName;
         
         // Close the dropdown

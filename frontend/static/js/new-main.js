@@ -533,6 +533,10 @@ let huntarrUI = {
         
         // Update the current log app text with proper capitalization
         let displayName = app.charAt(0).toUpperCase() + app.slice(1);
+        // Special handling for Whisparr V2
+        if (app === 'whisparr') {
+            displayName = 'Whisparr V2';
+        }
         this.elements.currentLogApp.textContent = displayName;
         
         // Close the dropdown
