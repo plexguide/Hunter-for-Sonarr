@@ -158,6 +158,28 @@
             </div>
         </div>
 
+        <!-- GitHub Sponsors Section -->
+        <div class="card sponsors-card">
+            <div class="card-header">
+                <h3>GitHub Sponsors</h3>
+                <a href="https://github.com/sponsors/plexguide" target="_blank" class="action-button primary">
+                    <i class="fas fa-heart"></i> Become a Sponsor
+                </a>
+            </div>
+            <div class="sponsors-container">
+                <div id="sponsors-loading" class="sponsors-loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading sponsors...
+                </div>
+                <div id="sponsors-list" class="sponsors-list">
+                    <!-- Sponsors will be dynamically loaded here -->
+                </div>
+                <div id="sponsors-error" class="sponsors-error" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i> 
+                    <span>Could not load sponsors</span>
+                </div>
+            </div>
+        </div>
+
         <div class="card thanks-card">
             <div class="thanks-container">
                 <div class="thanks-item">
@@ -494,6 +516,7 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 12px;
+        padding: 10px;
     }
 
     .thanks-item {
@@ -523,6 +546,69 @@
     .thanks-text a {
         color: var(--accent-color);
         text-decoration: none;
+    }
+    
+    /* Sponsors section styling */
+    .sponsors-card {
+        width: 100%;
+    }
+    
+    .sponsors-container {
+        padding: 15px;
+    }
+    
+    .sponsors-loading, .sponsors-error {
+        text-align: center;
+        padding: 20px;
+        color: #888;
+    }
+    
+    .sponsors-error {
+        color: #f44336;
+    }
+    
+    .sponsors-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+    }
+    
+    .sponsor-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 12px;
+        min-width: 120px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .sponsor-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .sponsor-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #4a90e2;
+    }
+    
+    .sponsor-name {
+        margin-top: 8px;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .sponsor-tier {
+        font-size: 0.8em;
+        color: #4a90e2;
+        margin-top: 4px;
     }
     
     /* Fixed banner footer styling */
