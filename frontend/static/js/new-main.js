@@ -1769,7 +1769,7 @@ let huntarrUI = {
         
         // Show a success notification
         this.showNotification('Statistics reset successfully', 'success');
-        
+
         // Try to send the reset to the server, but don't depend on it
         try {
             const requestBody = appType ? { app_type: appType } : {};
@@ -2104,7 +2104,12 @@ let huntarrUI = {
                 const delay = Math.min(2000, 300 * Math.pow(2, attempts)); // Exponential backoff with max 2000ms
                 console.log(`[StatefulInfo] Retrying in ${delay}ms (attempt ${attempts + 1}/${maxAttempts})`);
                 setTimeout(() => {
-                    this.loadStatefulInfo(attempts + 1);
+                    // Double-check if still on the same page before retrying
+                    if (document.getElementById('stateful_management_hours')) {
+                        this.loadStatefulInfo(attempts + 1);
+                    } else {
+                        console.log(`[StatefulInfo] Stateful info retry cancelled; user navigated away.`);
+                    }
                 }, delay);
                 return;
             }
@@ -2332,16 +2337,104 @@ let huntarrUI = {
         event.preventDefault();
         console.log('Stateful reset button clicked');
         
-        // Show confirmation dialog
-        if (confirm('Are you sure you want to reset stateful management? This will clear all processed media IDs.')) {
-            this.resetStatefulManagement();
+        // Create and show a custom confirmation dialog using vanilla JS or jQuery
+        // First check if we have jQuery
+        if (typeof $ !== 'undefined') {
+            // Using jQuery modal if available
+            console.log("Using jQuery for modal dialog");
+            
+            // Remove any existing modal
+            $('#resetConfirmModal').remove();
+            
+            // Create modal HTML
+            const modalHtml = `
+                <div id="resetConfirmModal" class="modal fade">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirm Reset</h5>
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure you want to reset stateful management? This will clear all processed media IDs.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" id="confirmResetBtn">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add to DOM
+            $('body').append(modalHtml);
+            
+            // Handle confirmation
+            $('#confirmResetBtn').on('click', () => {
+                $('#resetConfirmModal').modal('hide');
+                this.resetStatefulManagement();
+            });
+            
+            // Show modal
+            $('#resetConfirmModal').modal('show');
+        } else {
+            // Fallback to custom dialog using vanilla JS
+            console.log("Using custom vanilla JS dialog");
+            
+            // Create a simple modal dialog
+            const modalDiv = document.createElement('div');
+            modalDiv.id = 'customResetModal';
+            modalDiv.style.position = 'fixed';
+            modalDiv.style.top = '0';
+            modalDiv.style.left = '0';
+            modalDiv.style.width = '100%';
+            modalDiv.style.height = '100%';
+            modalDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            modalDiv.style.display = 'flex';
+            modalDiv.style.alignItems = 'center';
+            modalDiv.style.justifyContent = 'center';
+            modalDiv.style.zIndex = '9999';
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.backgroundColor = '#2a2e39'; // Dark theme background
+            modalContent.style.color = '#ffffff'; // White text
+            modalContent.style.borderRadius = '8px';
+            modalContent.style.width = '500px'; // Increased width
+            modalContent.style.maxWidth = '90%'; // Ensure it doesn't overflow on mobile
+            modalContent.style.padding = '30px'; // Increased padding
+            modalContent.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.5)';
+            modalContent.innerHTML = `
+                <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 24px; color: #ffffff;">Confirm Reset</h2>
+                <p style="font-size: 16px; line-height: 1.5; margin-bottom: 25px;">Are you sure you want to reset Stateful Management? This will clear all processed media IDs.</p>
+                <div style="display: flex; justify-content: flex-end; margin-top: 30px;">
+                    <button id="cancelResetBtn" style="margin-right: 15px; padding: 10px 20px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Cancel</button>
+                    <button id="confirmCustomResetBtn" style="padding: 10px 20px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Reset</button>
+                </div>
+            `;
+            
+            modalDiv.appendChild(modalContent);
+            document.body.appendChild(modalDiv);
+            
+            // Handle button clicks
+            document.getElementById('cancelResetBtn').addEventListener('click', () => {
+                document.body.removeChild(modalDiv);
+            });
+            
+            document.getElementById('confirmCustomResetBtn').addEventListener('click', () => {
+                document.body.removeChild(modalDiv);
+                this.resetStatefulManagement();
+            });
+            
+            // Close when clicking outside the modal
+            modalDiv.addEventListener('click', (e) => {
+                if (e.target === modalDiv) {
+                    document.body.removeChild(modalDiv);
+                }
+            });
         }
     },
-
-    // Add a helper function to fetch with timeout using the global settings
-    // Removed this function as we now use the shared utility version
-    // fetchWithTimeout: function(url, options = {}) { ... }
-
+    
     // Add global event handler and method to track saved settings across all apps
     registerGlobalUnsavedChangesHandler: function() {
         window.addEventListener('beforeunload', this.handleUnsavedChangesBeforeUnload.bind(this));
