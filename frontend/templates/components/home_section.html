@@ -95,17 +95,19 @@
                             <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="app-content">
-                            <img src="/static/arrs/48-sonarr.png" alt="Sonarr Logo" class="app-logo">
+                            <div class="app-icon-wrapper">
+                                <img src="/static/arrs/48-sonarr.png" alt="Sonarr Logo" class="app-logo">
+                            </div>
                             <h4>Sonarr</h4>
                         </div>
                         <div class="stats-numbers">
                             <div class="stat-box">
-                                <span class="stat-number" id="sonarr-hunted">6</span>
-                                <span class="stat-label">Searches Triggered</span>
+                                <div class="stat-number" id="sonarrHomeSearches">0</div>
+                                <div class="stat-label">Searches Triggered</div>
                             </div>
                             <div class="stat-box">
-                                <span class="stat-number" id="sonarr-upgraded">6</span>
-                                <span class="stat-label">Upgrades Triggered</span>
+                                <div class="stat-number" id="sonarrHomeUpgrades">0</div>
+                                <div class="stat-label">Upgrades Triggered</div>
                             </div>
                         </div>
                     </div>
@@ -333,58 +335,82 @@
         background-color: #24c6dc;
     }
     
-    /* Media Stats Styles - Updated to match new design */
+    /* Stats card styling */
+    .stats-card {
+        width: 100%;
+        background-color: rgba(24, 28, 37, 0.6);
+        border: 1px solid rgba(90, 109, 137, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .stats-card .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background-color: rgba(32, 38, 50, 0.6);
+        border-bottom: 1px solid rgba(90, 109, 137, 0.2);
+        margin-bottom: 0;
+    }
+    
+    .stats-card .card-header h3 {
+        margin: 0;
+        color: #e0e6ed;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
     .media-stats-container {
-        padding: 0;
-        text-align: center;
+        padding: 20px;
+        background-color: rgba(15, 18, 24, 0.4);
     }
     
     .app-stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-bottom: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
     }
     
-    /* Enhanced card styling */
     .app-stats-card {
-        background-color: var(--bg-secondary);
-        border-radius: 8px;
-        padding: 12px;
+        background: linear-gradient(145deg, rgba(38, 46, 63, 0.7), rgba(28, 34, 46, 0.7));
+        border-radius: 12px;
+        padding: 20px;
         text-align: center;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         transition: all 0.3s ease;
         position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-height: 180px;
+        min-height: 200px;
         justify-content: space-between;
-        border: 1px solid var(--border-color);
+        border: 1px solid rgba(120, 140, 180, 0.15);
     }
     
     .app-stats-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        border-color: rgba(120, 140, 180, 0.3);
     }
 
     /* Status container styling */
     .status-container {
         width: 100%;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
         display: flex;
         justify-content: center;
     }
     
     .status-badge {
-        padding: 5px 15px;
+        padding: 6px 16px;
         border-radius: 20px;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 12px;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        box-shadow: none;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
     /* App content styling */
@@ -392,29 +418,43 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .app-icon-wrapper {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        background: linear-gradient(145deg, rgba(48, 56, 73, 0.7), rgba(38, 46, 63, 0.7));
+        margin-bottom: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        border: 2px solid rgba(120, 140, 180, 0.2);
     }
     
     .app-logo {
         width: 40px;
         height: 40px;
-        margin-bottom: 8px;
     }
     
     .app-stats-card h4 {
         margin: 0;
-        font-size: 1.1em;
+        font-size: 16px;
         font-weight: 600;
+        color: #e0e6ed;
+        letter-spacing: 0.5px;
     }
     
     /* Stats display styling */
     .stats-numbers {
         display: flex;
-        gap: 10px;
+        gap: 15px;
         width: 100%;
-        padding-top: 12px;
+        padding-top: 15px;
         margin-top: auto;
-        border-top: 1px solid var(--border-color);
+        border-top: 1px solid rgba(120, 140, 180, 0.15);
     }
 
     .stat-box {
@@ -425,43 +465,91 @@
     }
 
     .stat-number {
-        font-size: 2rem;
-        font-weight: 600;
+        font-size: 28px;
+        font-weight: 700;
         line-height: 1;
-        color: var(--text-primary);
+        background: linear-gradient(to bottom right, #fff, #a0a8b8);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 6px;
     }
     
     .stat-label {
-        font-size: 0.8rem;
-        margin-top: 2px;
-        color: var(--text-secondary);
+        font-size: 12px;
+        color: #a0a8b8;
+        font-weight: 500;
     }
     
-    /* App-specific accent colors */
+    /* App-specific accent colors for sonarr */
+    .app-stats-card.sonarr .app-icon-wrapper {
+        border-color: rgba(0, 174, 240, 0.5);
+        box-shadow: 0 0 15px rgba(0, 174, 240, 0.2);
+    }
+    
     .app-stats-card.sonarr .stat-number {
-        color: #00aef0;
+        background: linear-gradient(to bottom right, #5acdff, #00aef0);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* App-specific accent colors for radarr */
+    .app-stats-card.radarr .app-icon-wrapper {
+        border-color: rgba(253, 203, 43, 0.5);
+        box-shadow: 0 0 15px rgba(253, 203, 43, 0.2);
     }
     
     .app-stats-card.radarr .stat-number {
-        color: #fdcb2b;
+        background: linear-gradient(to bottom right, #ffe066, #fdcb2b);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* App-specific accent colors for lidarr */
+    .app-stats-card.lidarr .app-icon-wrapper {
+        border-color: rgba(49, 197, 56, 0.5);
+        box-shadow: 0 0 15px rgba(49, 197, 56, 0.2);
     }
     
     .app-stats-card.lidarr .stat-number {
-        color: #31c538;
+        background: linear-gradient(to bottom right, #5de264, #31c538);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* App-specific accent colors for readarr */
+    .app-stats-card.readarr .app-icon-wrapper {
+        border-color: rgba(192, 45, 40, 0.5);
+        box-shadow: 0 0 15px rgba(192, 45, 40, 0.2);
     }
     
     .app-stats-card.readarr .stat-number {
-        color: #c02d28;
+        background: linear-gradient(to bottom right, #e35751, #c02d28);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* App-specific accent colors for whisparr */
+    .app-stats-card.whisparr .app-icon-wrapper {
+        border-color: rgba(195, 0, 230, 0.5);
+        box-shadow: 0 0 15px rgba(195, 0, 230, 0.2);
     }
     
     .app-stats-card.whisparr .stat-number {
-        color: #c300e6;
+        background: linear-gradient(to bottom right, #e64dff, #c300e6);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
     
     /* Status badge colors */
     .status-badge.connected {
         background-color: rgba(39, 174, 96, 0.15);
-        color: #27ae60;
+        color: #2ecc71;
         border: 1px solid rgba(39, 174, 96, 0.3);
     }
     
@@ -478,9 +566,9 @@
     }
     
     .status-badge.loading {
-        background-color: rgba(255, 183, 77, 0.15);
-        color: #ffb74d;
-        border: 1px solid rgba(255, 183, 77, 0.3);
+        background-color: rgba(41, 128, 185, 0.15);
+        color: #3498db;
+        border: 1px solid rgba(41, 128, 185, 0.3);
     }
     
     /* Header for cards */
