@@ -191,33 +191,71 @@ def process_missing_albums(
             # Prepare a list for artist details log
             artist_details_log = []
             
+            # First, fetch detailed artist info for each artist ID to enhance logs
+            artist_details = {}
+            for artist_id in entities_to_search_ids:
+                # Get artist details from API for better logging
+                artist_data = lidarr_api.get_artist_by_id(api_url, api_key, api_timeout, artist_id)
+                if artist_data:
+                    artist_details[artist_id] = artist_data
+            
+            lidarr_logger.info(f"Artists selected for processing in this cycle:")
+            for i, artist_id in enumerate(entities_to_search_ids):
+                # Get artist name and any additional details
+                artist_name = f"Artist ID {artist_id}" # Default if name not found
+                artist_metadata = ""
+                
+                if artist_id in artist_details:
+                    artist_data = artist_details[artist_id]
+                    artist_name = artist_data.get('artistName', artist_name)
+                    # Add year active or debut year if available
+                    if 'statistics' in artist_data and 'albumCount' in artist_data['statistics']:
+                        album_count = artist_data['statistics']['albumCount']
+                        artist_metadata = f"({album_count} albums)"
+                    # Get genre info if available
+                    if 'genres' in artist_data and artist_data['genres']:
+                        genres = ", ".join(artist_data['genres'][:2])  # Limit to first 2 genres
+                        if artist_metadata:
+                            artist_metadata = f"{artist_metadata} - {genres}"
+                        else:
+                            artist_metadata = f"({genres})"
+                
+                detail_line = f"{i+1}. {artist_name} {artist_metadata} - ID: {artist_id}"
+                artist_details_log.append(detail_line)
+                lidarr_logger.info(f" {detail_line}")
+                
             lidarr_logger.info(f"Triggering Artist Search for {len(entities_to_search_ids)} artists on {instance_name}...")
             for i, artist_id in enumerate(entities_to_search_ids):
                 if stop_check(): # Use the new stop_check function
                     lidarr_logger.warning("Shutdown requested during artist search trigger.")
                     break
 
-                # Get artist name from the first album associated with this artist ID
+                # Get artist name from cached details or first album
                 artist_name = f"Artist ID {artist_id}" # Default if name not found
-                if artist_id in items_by_artist and items_by_artist[artist_id]:
-                    # Access nested structure safely
+                if artist_id in artist_details:
+                    artist_data = artist_details[artist_id]
+                    artist_name = artist_data.get('artistName', artist_name)
+                elif artist_id in items_by_artist and items_by_artist[artist_id]:
+                    # Fallback to album info if direct artist details not available
                     first_album = items_by_artist[artist_id][0]
                     artist_info = first_album.get('artist')
                     if artist_info and isinstance(artist_info, dict):
                          artist_name = artist_info.get('artistName', artist_name)
-                
-                # Add to detailed log list
-                artist_details_log.append(f"{i+1}. {artist_name} (ID: {artist_id})")
-
-                lidarr_logger.info(f"Triggering Artist Search for '{artist_name}' (ID: {artist_id}) on instance {instance_name}")
                 
                 # Mark the artist as processed right away - BEFORE triggering the search
                 success = add_processed_id("lidarr", instance_name, str(artist_id))
                 lidarr_logger.debug(f"Added artist ID {artist_id} to processed list for {instance_name}, success: {success}")
                 
                 # Trigger the search AFTER marking as processed
-                lidarr_api.search_artist(api_url, api_key, api_timeout, artist_id)
-                lidarr_logger.info(f"Successfully triggered search for artist '{artist_name}' (ID: {artist_id})")
+                command_result = lidarr_api.search_artist(api_url, api_key, api_timeout, artist_id)
+                command_id = command_result.get('id', 'unknown') if command_result else 'failed'
+                lidarr_logger.info(f"Triggered Lidarr ArtistSearch for artist ID: {artist_id}, Command ID: {command_id}")
+                
+                # Increment stats for UI tracking
+                if command_result:
+                    increment_stat("lidarr", "hunted")
+                    processed_count += 1  # Count successful searches
+                    processed_artists_or_albums.add(artist_id)
                 
                 # Also mark all albums from this artist as processed
                 if artist_id in items_by_artist:
@@ -242,21 +280,44 @@ def process_missing_albums(
             album_details_log = []
             # Create a dict for quick lookup based on album ID
             missing_items_dict = {item['id']: item for item in missing_items if 'id' in item}
+            
+            # First, fetch additional album details for better logging if needed
+            album_details = {}
             for album_id in album_ids_to_search:
+                album_details[album_id] = lidarr_api.get_albums(api_url, api_key, api_timeout, album_id)
+            
+            lidarr_logger.info(f"Albums selected for processing in this cycle:")
+            for idx, album_id in enumerate(album_ids_to_search):
                 album_info = missing_items_dict.get(album_id)
                 if album_info:
                     # Safely get title and artist name, provide defaults
                     title = album_info.get('title', f'Album ID {album_id}')
                     artist_name = album_info.get('artist', {}).get('artistName', 'Unknown Artist')
-                    album_details_log.append(f"{len(album_details_log) + 1}. {artist_name} - {title} (ID: {album_id})")
+                    
+                    # Get additional metadata if available
+                    release_year = ""
+                    if 'releaseDate' in album_info and album_info['releaseDate']:
+                        try:
+                            release_date = album_info['releaseDate'].split('T')[0]
+                            release_year = f"({release_date[:4]})"
+                        except (IndexError, ValueError):
+                            pass
+                    
+                    # Get quality if available
+                    quality_info = ""
+                    if album_details.get(album_id) and 'quality' in album_details[album_id]:
+                        quality = album_details[album_id]['quality'].get('quality', {}).get('name', '')
+                        if quality:
+                            quality_info = f"[{quality}]"
+                    
+                    detail_line = f"{idx+1}. {artist_name} - {title} {release_year} {quality_info} - ID: {album_id}"
+                    album_details_log.append(detail_line)
+                    lidarr_logger.info(f" {detail_line}")
                 else:
                     # Fallback if album ID wasn't found in the fetched missing items (should be rare)
-                    album_details_log.append(f"{len(album_details_log) + 1}. Album ID {album_id} (Details not found)")
-
-            # Log each album on a new line for better readability
-            lidarr_logger.info(f"Albums selected for processing in this cycle:")
-            for album_detail in album_details_log:
-                lidarr_logger.info(f" {album_detail}")
+                    detail_line = f"{idx+1}. Album ID {album_id} (Details not found)"
+                    album_details_log.append(detail_line)
+                    lidarr_logger.info(f" {detail_line}")
 
             # Mark the albums as processed BEFORE triggering the search
             for album_id in album_ids_to_search:
