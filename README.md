@@ -16,7 +16,8 @@
 | Radarr      | **✅ Ready**  |
 | Lidarr      | **✅ Ready**  |
 | Readarr     | **✅ Ready**  |
-| Whisparr    | **❌ Not Ready** |
+| Whisparr v2 | **✅ Ready**  |
+| Whisparr v3 | **✅ Ready**  |
 | Bazarr    | **❌ Not Ready** |
 
 
