@@ -2,20 +2,22 @@
     <div class="section-header">
         <!-- Replace Log Tabs with Dropdown -->
         <div class="log-dropdown-container">
-            <div class="log-dropdown">
-                <button class="log-dropdown-btn">
-                    <span id="current-log-app">All</span>
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-                <div class="log-dropdown-content">
-                    <a href="#" class="log-option active" data-app="all">All</a>
-                    <a href="#" class="log-option" data-app="sonarr">Sonarr</a>
-                    <a href="#" class="log-option" data-app="radarr">Radarr</a>
-                    <a href="#" class="log-option" data-app="lidarr">Lidarr</a>
-                    <a href="#" class="log-option" data-app="readarr">Readarr</a>
-                    <a href="#" class="log-option" data-app="whisparr">Whisparr V2</a>
-                    <a href="#" class="log-option" data-app="swaparr">Swaparr</a>
-                    <a href="#" class="log-option" data-app="system">System</a>
+            <div class="log-dropdown-wrapper">
+                <div class="log-dropdown">
+                    <button class="log-dropdown-btn">
+                        <span id="current-log-app">All</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="log-dropdown-content">
+                        <a href="#" class="log-option active" data-app="all">All</a>
+                        <a href="#" class="log-option" data-app="sonarr">Sonarr</a>
+                        <a href="#" class="log-option" data-app="radarr">Radarr</a>
+                        <a href="#" class="log-option" data-app="lidarr">Lidarr</a>
+                        <a href="#" class="log-option" data-app="readarr">Readarr</a>
+                        <a href="#" class="log-option" data-app="whisparr">Whisparr V2</a>
+                        <a href="#" class="log-option" data-app="swaparr">Swaparr</a>
+                        <a href="#" class="log-option" data-app="system">System</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -35,7 +37,7 @@
         </div>
     </div>
     
-    <div class="logs" id="logsContainer"></div>
+    <div id="logsContainer" class="logs"></div>
     
     <!-- Fixed banner at the bottom of the viewport -->
     <div class="fixed-banner-footer">
@@ -50,6 +52,340 @@
 </section>
 
 <style>
+    /* Modern Logs Section Styling */
+    #logsSection {
+        padding: 20px;
+        padding-bottom: 60px; /* Extra padding to account for the footer */
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    /* Dropdown styling */
+    .log-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .log-dropdown-btn {
+        background: linear-gradient(135deg, rgba(28, 36, 54, 0.9), rgba(24, 32, 48, 0.8));
+        color: white;
+        padding: 8px 15px;
+        border: 1px solid rgba(90, 109, 137, 0.3);
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+        min-width: 120px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .log-dropdown-btn:hover {
+        background: linear-gradient(135deg, rgba(38, 46, 64, 0.9), rgba(34, 42, 58, 0.8));
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .log-dropdown-btn i {
+        margin-left: auto;
+        transition: transform 0.3s ease;
+    }
+    
+    .log-dropdown-content {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 160px;
+        z-index: 100;
+        background: linear-gradient(135deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+        border-radius: 8px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(90, 109, 137, 0.2);
+        overflow: hidden;
+        margin-top: 5px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+    
+    /* Fix dropdown disappearing when moving to content */
+    .log-dropdown-wrapper {
+        position: relative;
+        padding-bottom: 5px; /* Create space to safely move to dropdown */
+    }
+    
+    .log-dropdown-wrapper:after {
+        content: '';
+        position: absolute;
+        height: 10px; /* Invisible bridge between button and content */
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 99;
+    }
+    
+    .log-dropdown-wrapper:hover .log-dropdown-content,
+    .log-dropdown-content:hover {
+        display: block;
+    }
+    
+    .log-dropdown-wrapper:hover .log-dropdown-btn i {
+        transform: rotate(180deg);
+    }
+    
+    .log-option {
+        color: white;
+        padding: 10px 15px;
+        text-decoration: none;
+        display: block;
+        transition: all 0.2s ease;
+        text-align: left;
+        border-bottom: 1px solid rgba(90, 109, 137, 0.1);
+    }
+    
+    .log-option:last-child {
+        border-bottom: none;
+    }
+    
+    .log-option:hover {
+        background: rgba(65, 105, 225, 0.2);
+    }
+    
+    .log-option.active {
+        background: rgba(65, 105, 225, 0.3);
+        font-weight: 500;
+    }
+    
+    /* Controls styling */
+    .log-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .connection-status {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        padding: 5px 10px;
+        border-radius: 8px;
+        background: rgba(28, 36, 54, 0.6);
+        border: 1px solid rgba(90, 109, 137, 0.3);
+    }
+    
+    #logConnectionStatus {
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    
+    #logConnectionStatus.status-connected {
+        color: #2ecc71;
+        background: rgba(46, 204, 113, 0.1);
+        border: 1px solid rgba(46, 204, 113, 0.3);
+    }
+    
+    #logConnectionStatus.status-disconnected {
+        color: #95a5a6;
+        background: rgba(149, 165, 166, 0.1);
+        border: 1px solid rgba(149, 165, 166, 0.3);
+    }
+    
+    #logConnectionStatus.status-error {
+        color: #ff6b6b;
+        background: rgba(231, 76, 60, 0.1);
+        border: 1px solid rgba(231, 76, 60, 0.3);
+    }
+    
+    .log-options {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .auto-scroll {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 8px;
+        background: rgba(28, 36, 54, 0.6);
+        border: 1px solid rgba(90, 109, 137, 0.3);
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+        user-select: none;
+        transition: all 0.2s ease;
+    }
+    
+    .auto-scroll:hover {
+        background: rgba(38, 46, 64, 0.7);
+    }
+    
+    .auto-scroll input {
+        margin: 0;
+        cursor: pointer;
+    }
+    
+    .clear-button {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #e74c3c 0%, #f15846 100%);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+    }
+    
+    .clear-button:hover {
+        background: linear-gradient(135deg, #f15846 0%, #f3695a 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+    }
+    
+    /* Logs container styling */
+    .logs {
+        height: calc(100vh - 200px);
+        overflow-y: auto;
+        background: linear-gradient(180deg, rgba(22, 26, 34, 0.8), rgba(18, 22, 30, 0.75));
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(90, 109, 137, 0.15);
+        padding: 15px;
+        font-family: 'Courier New', monospace;
+        line-height: 1.5;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .logs::-webkit-scrollbar {
+        width: 10px;
+    }
+    
+    .logs::-webkit-scrollbar-track {
+        background: rgba(18, 22, 30, 0.5);
+        border-radius: 0 10px 10px 0;
+    }
+    
+    .logs::-webkit-scrollbar-thumb {
+        background: rgba(90, 109, 137, 0.5);
+        border-radius: 5px;
+    }
+    
+    .logs::-webkit-scrollbar-thumb:hover {
+        background: rgba(90, 109, 137, 0.8);
+    }
+    
+    /* Log entry styling */
+    .log-entry {
+        padding: 4px 0;
+        margin-bottom: 2px;
+        border-radius: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 8px;
+        line-height: 1.4;
+    }
+    
+    .log-timestamp {
+        color: #95a5a6;
+        font-weight: 600;
+        min-width: 65px;
+    }
+    
+    .log-app {
+        color: #3498db;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 3px;
+        background: rgba(52, 152, 219, 0.1);
+        border: 1px solid rgba(52, 152, 219, 0.3);
+    }
+    
+    .log-level {
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-weight: 700;
+        font-size: 11px;
+        text-transform: uppercase;
+        min-width: 50px;
+        text-align: center;
+    }
+    
+    .log-level-debug {
+        color: #95a5a6;
+        background: rgba(149, 165, 166, 0.1);
+        border: 1px solid rgba(149, 165, 166, 0.3);
+    }
+    
+    .log-level-info {
+        color: #3498db;
+        background: rgba(52, 152, 219, 0.1);
+        border: 1px solid rgba(52, 152, 219, 0.3);
+    }
+    
+    .log-level-warning, .log-level-warn {
+        color: #f39c12;
+        background: rgba(243, 156, 18, 0.1);
+        border: 1px solid rgba(243, 156, 18, 0.3);
+    }
+    
+    .log-level-error {
+        color: #e74c3c;
+        background: rgba(231, 76, 60, 0.1);
+        border: 1px solid rgba(231, 76, 60, 0.3);
+    }
+    
+    .log-logger {
+        color: #9b59b6;
+        font-style: italic;
+        font-size: 12px;
+    }
+    
+    .log-message {
+        flex: 1 0 100%;
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin-top: 2px;
+        padding-left: 4px;
+        border-left: 3px solid rgba(90, 109, 137, 0.3);
+    }
+    
+    /* Log entry colors based on level */
+    .log-entry.log-debug .log-message {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .log-entry.log-info .log-message {
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .log-entry.log-warning .log-message, .log-entry.log-warn .log-message {
+        color: #f39c12;
+    }
+    
+    .log-entry.log-error .log-message {
+        color: #e74c3c;
+    }
+    
     /* Fixed banner footer styling */
     .fixed-banner-footer {
         position: fixed;
@@ -58,26 +394,21 @@
         right: 0;
         text-align: center;
         padding: 10px 20px;
-        background-color: var(--bg-secondary);
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        border-top: 1px solid var(--border-color);
+        background: linear-gradient(135deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.15);
+        border-top: 1px solid rgba(90, 109, 137, 0.25);
         z-index: 1000; /* Ensure it's above other elements */
-    }
-    
-    /* Add bottom padding to prevent content from being hidden behind the fixed banner */
-    #logsContainer {
-        padding-bottom: 50px;
     }
     
     .fixed-banner-footer p {
         margin: 0;
-        font-size: 1em;
-        color: var(--text-primary);
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.9);
         font-weight: 500;
     }
     
     .fixed-banner-footer a {
-        color: var(--accent-color);
+        color: #3a71e4;
         text-decoration: none;
         font-weight: 600;
         transition: color 0.2s, text-decoration 0.2s;
@@ -85,14 +416,41 @@
     
     .fixed-banner-footer a:hover {
         text-decoration: underline;
-        color: var(--accent-hover);
+        color: #5481e6;
     }
     
     .fixed-banner-footer .donation-icon {
-        color: var(--error-color, #ff6b6b);
+        color: #ff6b6b;
     }
     
     .fixed-banner-footer .star-icon {
-        color: var(--warning-color, #ffd700);
+        color: #ffc107;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .log-dropdown-container, .log-controls {
+            width: 100%;
+        }
+        
+        .log-controls {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .log-options {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .logs {
+            height: calc(100vh - 280px);
+        }
     }
 </style>

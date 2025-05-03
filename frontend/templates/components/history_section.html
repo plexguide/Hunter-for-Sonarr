@@ -2,18 +2,20 @@
     <div class="section-header">
         <!-- History App Dropdown -->
         <div class="history-dropdown-container">
-            <div class="history-dropdown">
-                <button class="history-dropdown-btn">
-                    <span id="current-history-app">All</span>
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-                <div class="history-dropdown-content">
-                    <a href="#" class="history-option active" data-app="all">All</a>
-                    <a href="#" class="history-option" data-app="sonarr">Sonarr</a>
-                    <a href="#" class="history-option" data-app="radarr">Radarr</a>
-                    <a href="#" class="history-option" data-app="lidarr">Lidarr</a>
-                    <a href="#" class="history-option" data-app="readarr">Readarr</a>
-                    <a href="#" class="history-option" data-app="whisparr">Whisparr</a>
+            <div class="history-dropdown-wrapper">
+                <div class="history-dropdown">
+                    <button class="history-dropdown-btn">
+                        <span id="current-history-app">All</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="history-dropdown-content">
+                        <a href="#" class="history-option active" data-app="all">All</a>
+                        <a href="#" class="history-option" data-app="sonarr">Sonarr</a>
+                        <a href="#" class="history-option" data-app="radarr">Radarr</a>
+                        <a href="#" class="history-option" data-app="lidarr">Lidarr</a>
+                        <a href="#" class="history-option" data-app="readarr">Readarr</a>
+                        <a href="#" class="history-option" data-app="whisparr">Whisparr</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -158,13 +160,32 @@
         border: 1px solid rgba(90, 109, 137, 0.2);
         overflow: hidden;
         margin-top: 5px;
+        padding-top: 5px;
+        padding-bottom: 5px;
     }
     
-    .history-dropdown:hover .history-dropdown-content {
+    /* Fix dropdown disappearing when moving to content */
+    .history-dropdown-wrapper {
+        position: relative;
+        padding-bottom: 5px; /* Create space to safely move to dropdown */
+    }
+    
+    .history-dropdown-wrapper:after {
+        content: '';
+        position: absolute;
+        height: 10px; /* Invisible bridge between button and content */
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 99;
+    }
+    
+    .history-dropdown-wrapper:hover .history-dropdown-content,
+    .history-dropdown-content:hover {
         display: block;
     }
     
-    .history-dropdown:hover .history-dropdown-btn i {
+    .history-dropdown-wrapper:hover .history-dropdown-btn i {
         transform: rotate(180deg);
     }
     
