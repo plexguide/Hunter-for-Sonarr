@@ -348,9 +348,17 @@ let huntarrUI = {
     
     // Navigation handling
     handleNavigation: function(e) {
-        e.preventDefault();
         const targetElement = e.currentTarget; // Get the clicked nav item
-        const href = targetElement.getAttribute('href'); 
+        const href = targetElement.getAttribute('href');
+        const target = targetElement.getAttribute('target');
+        
+        // Allow links with target="_blank" to open in a new window (return early)
+        if (target === '_blank') {
+            return; // Let the default click behavior happen
+        }
+        
+        // For all other links, prevent default behavior and handle internally
+        e.preventDefault();
 
         if (!href) return; // Exit if no href
 
