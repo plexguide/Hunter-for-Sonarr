@@ -221,13 +221,17 @@
     
     <!-- Fixed banner at the bottom of the viewport -->
     <div class="fixed-banner-footer">
-        <p>
-            <i class="fas fa-heart donation-icon"></i> 
-            <a href="https://donate.plex.one" target="_blank">Donate</a> for Daughter's College Fund!
-            &nbsp;&nbsp;|&nbsp;&nbsp;
-            <i class="fas fa-star star-icon"></i> 
-            <a href="https://github.com/plexguide/huntarr" target="_blank">Star Huntarr on GitHub</a> - Helps!
-        </p>
+        <div class="footer-content">
+            <div class="footer-item">
+                <i class="fas fa-heart donation-icon"></i> 
+                <a href="https://donate.plex.one" target="_blank">Donate</a> for Daughter's College Fund!
+            </div>
+            <div class="footer-divider"></div>
+            <div class="footer-item">
+                <i class="fas fa-star star-icon"></i> 
+                <a href="https://github.com/plexguide/huntarr" target="_blank">Star Huntarr on GitHub</a> - Helps!
+            </div>
+        </div>
     </div>
 </section>
 
@@ -834,37 +838,73 @@
         right: 0;
         text-align: center;
         padding: 10px 20px;
-        background-color: var(--bg-secondary);
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        border-top: 1px solid var(--border-color);
+        background: linear-gradient(180deg, rgba(24, 28, 37, 0.95), rgba(18, 22, 30, 0.98));
+        box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(90, 109, 137, 0.15);
         z-index: 1000; /* Ensure it's above other elements */
+        backdrop-filter: blur(5px);
     }
     
-    .fixed-banner-footer p {
-        margin: 0;
-        font-size: 1em;
-        color: var(--text-primary);
-        font-weight: 500;
+    .fixed-banner-footer .footer-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .fixed-banner-footer .footer-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        color: #e0e6ed;
+        transition: transform 0.2s;
+    }
+    
+    .fixed-banner-footer .footer-item:hover {
+        transform: translateY(-2px);
+    }
+    
+    .fixed-banner-footer .footer-divider {
+        width: 1px;
+        height: 20px;
+        background-color: rgba(120, 140, 180, 0.3);
     }
     
     .fixed-banner-footer a {
-        color: var(--accent-color);
+        color: #3498db;
         text-decoration: none;
         font-weight: 600;
-        transition: color 0.2s, text-decoration 0.2s;
+        transition: all 0.2s ease;
     }
     
     .fixed-banner-footer a:hover {
-        text-decoration: underline;
-        color: var(--accent-hover);
+        text-decoration: none;
+        color: #5dade2;
     }
     
     .fixed-banner-footer .donation-icon {
-        color: var(--error-color, #ff6b6b);
+        color: #ff6b6b;
+        font-size: 16px;
     }
     
     .fixed-banner-footer .star-icon {
-        color: var(--warning-color, #ffd700);
+        color: #ffd700;
+        font-size: 16px;
+    }
+    
+    /* Responsive footer */
+    @media (max-width: 600px) {
+        .fixed-banner-footer .footer-content {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .fixed-banner-footer .footer-divider {
+            display: none;
+        }
     }
     
     /* Community & Resources Hub styling */
