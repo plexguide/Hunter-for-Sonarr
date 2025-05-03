@@ -385,6 +385,21 @@ let huntarrUI = {
             this.settingsChanged = false;
             this.updateSaveResetButtonState(false); 
         }
+        
+        // Add special handling for apps section - clear global app module flags
+        if (this.currentSection === 'apps' && targetSection !== 'apps') {
+            // Reset the app module flags when navigating away
+            if (window._appsModuleLoaded) {
+                window._appsSuppressChangeDetection = true;
+                if (window.appsModule && typeof window.appsModule.settingsChanged !== 'undefined') {
+                    window.appsModule.settingsChanged = false;
+                }
+                // Schedule ending suppression to avoid any edge case issues
+                setTimeout(() => {
+                    window._appsSuppressChangeDetection = false;
+                }, 1000);
+            }
+        }
 
         // Proceed with navigation
         if (isInternalLink) {
