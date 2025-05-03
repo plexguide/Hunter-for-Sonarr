@@ -1,6 +1,7 @@
 <div class="sidebar" id="sidebar">
     <div class="logo-container">
-        <img src="/static/logo/256.png" alt="Huntarr Logo" class="logo">
+        <img src="/static/logo/256.png" alt="Huntarr Logo" class="logo logo-large">
+        <img src="/static/logo/32.png" alt="Huntarr Logo" class="logo logo-small">
         <h1>Huntarr</h1>
     </div>
     
@@ -72,39 +73,34 @@
     }
     
     .logo-container {
-        padding: 25px 20px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        flex-direction: column;
+        padding: 20px;
         border-bottom: 1px solid rgba(90, 109, 137, 0.15);
     }
     
     .logo {
-        width: 80px;
-        height: 80px;
-        margin-bottom: 10px;
-        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
-        transition: transform 0.3s ease;
+        width: 40px;
+        height: 40px;
+        margin-right: 10px;
     }
     
-    .logo-container:hover .logo {
-        transform: scale(1.05);
+    .logo-small {
+        display: none;
     }
     
     .logo-container h1 {
-        color: #ffffff;
-        font-size: 24px;
+        font-size: 18px;
         font-weight: 600;
         margin: 0;
-        letter-spacing: 0.5px;
+        color: #fff;
     }
     
     .nav-menu {
         display: flex;
         flex-direction: column;
-        padding: 15px 0;
-        overflow-y: auto;
+        padding: 20px 0;
+        flex-grow: 1;
     }
     
     .nav-item {
@@ -113,75 +109,41 @@
         padding: 12px 20px;
         color: rgba(255, 255, 255, 0.8);
         text-decoration: none;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        position: relative;
-        margin: 4px 8px;
-        border-radius: 8px;
-    }
-    
-    .nav-item:hover {
-        background: rgba(59, 130, 246, 0.1);
-        color: #ffffff;
-        transform: translateX(3px);
-    }
-    
-    .nav-item.active {
-        background: rgba(59, 130, 246, 0.9);
-        color: #ffffff;
-        box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        transition: all 0.3s ease;
+        border-radius: 0;
+        margin-bottom: 5px;
     }
     
     .nav-icon-wrapper {
-        width: 36px;
-        height: 36px;
+        width: 35px;
+        height: 35px;
         display: flex;
-        align-items: center;
         justify-content: center;
-        background: rgba(28, 36, 54, 0.6);
-        border-radius: 8px;
-        margin-right: 12px;
-        transition: all 0.2s ease;
-        border: 1px solid rgba(90, 109, 137, 0.15);
-        padding: 0;
+        align-items: center;
+        margin-right: 15px;
         position: relative;
+        border-radius: 8px;
     }
     
-    .nav-item i {
+    .nav-icon-wrapper i {
         font-size: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-        color: rgba(255, 255, 255, 0.8);
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        margin: 0;
     }
     
-    .nav-item:hover .nav-icon-wrapper {
+    .nav-item span {
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .nav-item:hover {
         background: rgba(59, 130, 246, 0.2);
-        transform: scale(1.05);
+        color: #fff;
     }
     
-    .nav-item.active .nav-icon-wrapper {
-        background: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.3);
-    }
-    
-    .nav-icon-wrapper.heart-icon {
-        background: rgba(225, 29, 72, 0.2);
-    }
-    
-    .nav-item:hover .nav-icon-wrapper.heart-icon {
-        background: rgba(225, 29, 72, 0.3);
-    }
-    
-    /* Active state for the current page */
-    #homeNav.active, #historyNav.active, #logsNav.active, #appsNav.active, #settingsNav.active, #userNav.active {
+    .nav-item.active {
         background: rgba(59, 130, 246, 0.9);
         color: #ffffff;
     }
@@ -198,24 +160,58 @@
             display: none;
         }
         
+        .sidebar .logo-container {
+            justify-content: center;
+            padding: 15px 0;
+            height: 60px;
+        }
+        
         .sidebar .logo-container h1 {
             display: none;
+        }
+        
+        .logo-large {
+            display: none;
+        }
+        
+        .logo-small {
+            display: block;
+            width: 32px;
+            height: 32px;
+            margin: 0;
+        }
+        
+        .nav-menu {
+            padding: 10px 0;
         }
         
         .nav-item {
             width: 60px;
             justify-content: center;
-            padding: 10px 0;
+            padding: 12px 0;
+            margin-bottom: 8px;
         }
         
         .nav-item:hover,
         .nav-item.active {
-            width: 50px;
-            margin: 0 auto;
+            width: 42px;
+            height: 42px;
+            margin: 0 auto 8px auto;
+            border-radius: 10px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .nav-icon-wrapper {
             margin-right: 0;
+            width: 32px;
+            height: 32px;
+        }
+        
+        .nav-icon-wrapper i {
+            font-size: 15px;
         }
     }
 </style>
