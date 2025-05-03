@@ -1,4 +1,4 @@
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
     <div class="logo-container">
         <img src="/static/logo/256.png" alt="Huntarr Logo" class="logo">
         <h1>Huntarr</h1>
@@ -184,6 +184,39 @@
     #homeNav.active, #historyNav.active, #logsNav.active, #appsNav.active, #settingsNav.active, #userNav.active {
         background: rgba(59, 130, 246, 0.9);
         color: #ffffff;
+    }
+    
+    /* Mobile view optimization */
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 60px !important;
+            min-width: 60px !important;
+            max-width: 60px !important;
+        }
+        
+        .sidebar .nav-item span {
+            display: none;
+        }
+        
+        .sidebar .logo-container h1 {
+            display: none;
+        }
+        
+        .nav-item {
+            width: 60px;
+            justify-content: center;
+            padding: 10px 0;
+        }
+        
+        .nav-item:hover,
+        .nav-item.active {
+            width: 50px;
+            margin: 0 auto;
+        }
+        
+        .nav-icon-wrapper {
+            margin-right: 0;
+        }
     }
 </style>
 
