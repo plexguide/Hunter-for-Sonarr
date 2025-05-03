@@ -1,6 +1,11 @@
 // Direct reset button implementation - completely separate from the regular UI
 // This will add a new red button directly to the stateful management section
 
+// Set a flag to prevent showing expiration update notification on reset
+window.justCompletedStatefulReset = false;
+// Keep track of the current stateful hours value to detect real changes
+window.lastStatefulHoursValue = null;
+
 // Run this code as soon as this script is loaded
 (function() {
     function insertDirectResetButton() {
@@ -44,6 +49,9 @@
                 this.innerText = '⏳ Resetting...';
                 this.style.background = '#666';
                 
+                // Mark that we're performing a reset to prevent expiration notification
+                window.justCompletedStatefulReset = true;
+                
                 // Make direct API call
                 fetch('/api/stateful/reset', {
                     method: 'POST',
@@ -59,7 +67,9 @@
                 })
                 .then(data => {
                     alert('✅ Success! Stateful management has been reset.');
-                    window.location.reload();
+                    
+                    // Reload the page with a query parameter to indicate reset was done
+                    window.location.href = window.location.pathname + '?reset=done' + window.location.hash;
                 })
                 .catch(error => {
                     console.error('Reset failed:', error);
@@ -69,6 +79,9 @@
                     this.disabled = false;
                     this.innerText = '🔥 EMERGENCY RESET 🔥';
                     this.style.background = 'linear-gradient(to right, #ff0000, #8b0000)';
+                    
+                    // Clear the reset flag since operation failed
+                    window.justCompletedStatefulReset = false;
                 });
             }
             
@@ -79,6 +92,17 @@
         // Add the button to the page
         headerRow.appendChild(resetButton);
         console.log('Emergency reset button added successfully');
+        
+        // Track the initial value of the stateful hours input
+        const hoursInput = document.getElementById('stateful_management_hours');
+        if (hoursInput) {
+            window.lastStatefulHoursValue = parseInt(hoursInput.value);
+            
+            // Add a change listener to detect when the user actually changes the value
+            hoursInput.addEventListener('change', function() {
+                window.lastStatefulHoursValue = parseInt(this.value);
+            });
+        }
     }
     
     // Try to add the button immediately
@@ -89,4 +113,43 @@
     
     // And again when everything is fully loaded
     window.addEventListener('load', insertDirectResetButton);
+    
+    // Add a global interceptor for the notification system
+    const originalShowNotification = window.huntarrUI && window.huntarrUI.showNotification;
+    if (originalShowNotification) {
+        window.huntarrUI.showNotification = function(message, type) {
+            // If we just completed a reset and this is an expiration update notification, don't show it
+            if (window.justCompletedStatefulReset && message.includes('Updated expiration to')) {
+                console.log('Suppressing expiration update notification after reset');
+                window.justCompletedStatefulReset = false; // Reset the flag
+                return;
+            }
+            
+            // Also suppress expiration notifications when saving general settings if hours didn't change
+            if (message.includes('Updated expiration to')) {
+                const hoursInput = document.getElementById('stateful_management_hours');
+                if (hoursInput) {
+                    const currentValue = parseInt(hoursInput.value);
+                    // Only show notification if the value actually changed
+                    if (window.lastStatefulHoursValue === currentValue) {
+                        console.log('Suppressing expiration notification because hours value did not change');
+                        return;
+                    }
+                    // Update our tracked value
+                    window.lastStatefulHoursValue = currentValue;
+                }
+            }
+            
+            // Saving settings already shows a "Settings saved successfully" notification,
+            // so we don't need the expiration one too - suppress it if we just saved settings
+            if (message.includes('Updated expiration to') && document.getElementById('saveSettingsButton')?.disabled) {
+                console.log('Suppressing expiration notification after saving general settings');
+                return;
+            }
+            
+            // Otherwise, proceed with the original notification
+            return originalShowNotification.call(this, message, type);
+        };
+        console.log('Notification system intercepted to handle notifications properly');
+    }
 })();
