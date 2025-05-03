@@ -13,6 +13,7 @@ from src.primary.apps.readarr import api as readarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
+from src.primary.state import check_state_reset
 
 # Get logger for the app
 readarr_logger = get_logger("readarr")
@@ -32,6 +33,10 @@ def process_cutoff_upgrades(
         True if any books were processed for upgrades, False otherwise.
     """
     readarr_logger.info("Starting quality cutoff upgrades processing cycle for Readarr.")
+    
+    # Reset state files if enough time has passed
+    check_state_reset("readarr")
+    
     processed_any = False
     
     # Extract necessary settings
@@ -111,60 +116,34 @@ def process_cutoff_upgrades(
     processed_count = 0
     processed_something = False
 
-    for book in books_to_process:
-        if stop_check():
-            readarr_logger.info("Stop signal received, aborting Readarr upgrade cycle.")
-            break
-            
-        book_id = book.get("id")
-        author_id = book.get("authorId") # Needed for refresh?
-        book_title = book.get("title")
-        author_name = book.get("authorName")
+    book_ids_to_search = [book.get("id") for book in books_to_process]
+
+    # Mark books as processed BEFORE triggering any searches
+    for book_id in book_ids_to_search:
+        add_processed_id("readarr", instance_name, str(book_id))
+        readarr_logger.debug(f"Added book ID {book_id} to processed list for {instance_name}")
         
-        readarr_logger.info(f"Processing upgrade for book: \"{book_title}\" (Book ID: {book_id})")
-
-        # Refresh author (optional, check if needed for upgrades)
-        # Ensure refresh_author also uses explicit credentials if it uses arr_request internally
-        # Currently, refresh_author uses arr_request without passing credentials, let's fix that too.
-        if not skip_author_refresh and author_id:
-            readarr_logger.info(f"  - Refreshing author info (ID: {author_id})...")
-            # Assuming refresh_author needs explicit credentials now
-            refresh_result = readarr_api.refresh_author(author_id, api_url=api_url, api_key=api_key, api_timeout=api_timeout) 
-            time.sleep(5) # Basic wait
-            if not refresh_result:
-                 readarr_logger.warning(f"  - Failed to trigger author refresh for {author_id}. Continuing search anyway.")
-        elif skip_author_refresh:
-             readarr_logger.info(f"  - Skipping author refresh (skip_author_refresh=true)")
-
-        # Search for book upgrade
-        # Ensure search_books uses explicit credentials (it already does)
-        readarr_logger.info(f"  - Searching for upgrade for book...")
-        search_command_data = readarr_api.search_books(api_url, api_key, [book_id], api_timeout) # Pass credentials
-
-        if search_command_data:
-            command_id = search_command_data.get('id') # Extract command ID
-            readarr_logger.info(f"Triggered book search command {command_id} for upgrade.")
-            increment_stat("readarr", "upgraded") # Assuming 'upgraded' stat exists
+    # Now trigger the search
+    search_command_result = readarr_api.search_books(api_url, api_key, book_ids_to_search, api_timeout)
+        
+    if search_command_result:
+        command_id = search_command_result
+        readarr_logger.info(f"Triggered upgrade search command {command_id} for {len(book_ids_to_search)} books.")
+        increment_stat("readarr", "upgraded")
             
-            # Add book ID to processed list
-            add_processed_id("readarr", instance_name, str(book_id))
-            readarr_logger.debug(f"Added book ID {book_id} to processed list for {instance_name}")
-            
-            # Log to history so the upgrade appears in the history UI
-            author_name = author_name or "Unknown Author"
+        # Log to history system for each book
+        for book in books_to_process:
+            author_name = book.get("authorName")
+            book_title = book.get("title")
             media_name = f"{author_name} - {book_title}"
-            log_processed_media("readarr", media_name, book_id, instance_name, "upgrade")
-            readarr_logger.debug(f"Logged quality upgrade to history for book ID {book_id}")
+            log_processed_media("readarr", media_name, book.get("id"), instance_name, "upgrade")
+            readarr_logger.debug(f"Logged quality upgrade to history for book ID {book.get('id')}")
             
-            processed_count += 1
-            processed_something = True
-            readarr_logger.info(f"Processed {processed_count}/{len(books_to_process)} book upgrades this cycle.")
-        else:
-            readarr_logger.error(f"Failed to trigger search for book {book_title} upgrade.")
-
-        if processed_count >= hunt_upgrade_books:
-            readarr_logger.info(f"Reached target of {hunt_upgrade_books} books processed for upgrade this cycle.")
-            break
+        processed_count += len(book_ids_to_search)
+        processed_something = True
+        readarr_logger.info(f"Processed {processed_count} book upgrades this cycle.")
+    else:
+        readarr_logger.error(f"Failed to trigger search for book upgrades.")
 
     readarr_logger.info(f"Completed processing {processed_count} books for upgrade this cycle.")
     

@@ -12,6 +12,7 @@ from src.primary.apps.readarr import api as readarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
+from src.primary.state import check_state_reset
 
 # Get logger for the app
 readarr_logger = get_logger("readarr")
@@ -32,6 +33,9 @@ def process_missing_books(
     """
     readarr_logger.info("Starting missing books processing cycle for Readarr.")
     processed_any = False
+    
+    # Reset state files if enough time has passed
+    check_state_reset("readarr")
     
     # Extract necessary settings
     api_url = app_settings.get("api_url")
@@ -127,6 +131,11 @@ def process_missing_books(
         log_message = f"Triggering Book Search for {len(book_details)} books by author '{author_name}': [{details_string}]"
         readarr_logger.debug(log_message) # Changed level from INFO to DEBUG
         
+        # Mark author as processed BEFORE triggering any searches
+        add_processed_id("readarr", instance_name, str(author_id))
+        readarr_logger.debug(f"Added author ID {author_id} to processed list for {instance_name}")
+        
+        # Now trigger the search
         search_command_result = readarr_api.search_books(api_url, api_key, book_ids_for_author, api_timeout)
 
         if search_command_result:
@@ -134,10 +143,6 @@ def process_missing_books(
             command_id = search_command_result.get('id') if isinstance(search_command_result, dict) else search_command_result
             readarr_logger.info(f"Triggered book search command {command_id} for author {author_name}. Assuming success for now.") # Log only command ID
             increment_stat("readarr", "hunted")
-            
-            # Add author ID to processed list immediately
-            success = add_processed_id("readarr", instance_name, str(author_id))
-            readarr_logger.debug(f"Added author ID {author_id} to processed list for {instance_name}, success: {success}")
             
             # Log to history system
             log_processed_media("readarr", author_name, author_id, instance_name, "missing")

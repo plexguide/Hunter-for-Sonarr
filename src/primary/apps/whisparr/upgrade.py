@@ -16,6 +16,7 @@ from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.settings_manager import get_advanced_setting
+from src.primary.state import check_state_reset
 
 # Get logger for the app
 whisparr_logger = get_logger("whisparr")
@@ -36,6 +37,9 @@ def process_cutoff_upgrades(
     """
     whisparr_logger.info("Starting quality cutoff upgrades processing cycle for Whisparr.")
     processed_any = False
+    
+    # Reset state files if enough time has passed
+    check_state_reset("whisparr")
     
     # Extract necessary settings
     api_url = app_settings.get("api_url")
@@ -144,15 +148,15 @@ def process_cutoff_upgrades(
             whisparr_logger.info(f"Stop requested before searching for {title}. Aborting...")
             break
         
+        # Mark the item as processed BEFORE triggering any searches
+        add_processed_id("whisparr", instance_name, str(item_id))
+        whisparr_logger.debug(f"Added item ID {item_id} to processed list for {instance_name}")
+        
         # Search for the item
         whisparr_logger.info(" - Searching for quality upgrade...")
         search_command_id = whisparr_api.item_search(api_url, api_key, api_timeout, [item_id])
         if search_command_id:
             whisparr_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
-            
-            # Add item ID to processed list
-            add_processed_id("whisparr", instance_name, str(item_id))
-            whisparr_logger.debug(f"Added item ID {item_id} to processed list for {instance_name}")
             
             # Log to history so the upgrade appears in the history UI
             series_title = item.get("series", {}).get("title", "Unknown Series")

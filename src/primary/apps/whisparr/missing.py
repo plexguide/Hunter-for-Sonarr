@@ -16,6 +16,7 @@ from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.settings_manager import get_advanced_setting
+from src.primary.state import check_state_reset
 
 # Get logger for the app
 whisparr_logger = get_logger("whisparr")
@@ -36,6 +37,9 @@ def process_missing_items(
     """
     whisparr_logger.info("Starting missing items processing cycle for Whisparr.")
     processed_any = False
+    
+    # Reset state files if enough time has passed
+    check_state_reset("whisparr")
     
     # Extract necessary settings
     api_url = app_settings.get("api_url")
@@ -163,6 +167,10 @@ def process_missing_items(
         else:
             whisparr_logger.info(" - Skipping item refresh (skip_item_refresh=true)")
         
+        # Mark the item as processed BEFORE triggering any searches
+        add_processed_id("whisparr", instance_name, str(item_id))
+        whisparr_logger.debug(f"Added item ID {item_id} to processed list for {instance_name}")
+        
         # Check for stop signal before searching
         if stop_check():
             whisparr_logger.info(f"Stop requested before searching for {title}. Aborting...")
@@ -173,10 +181,6 @@ def process_missing_items(
         search_command_id = whisparr_api.item_search(api_url, api_key, api_timeout, [item_id])
         if search_command_id:
             whisparr_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
-            
-            # Add item ID to processed list immediately
-            success = add_processed_id("whisparr", instance_name, str(item_id))
-            whisparr_logger.debug(f"Added item ID {item_id} to processed list for {instance_name}, success: {success}")
             
             # Log to history system
             media_name = f"{title} - {season_episode}"
