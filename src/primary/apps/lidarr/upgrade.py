@@ -11,6 +11,7 @@ from src.primary.utils.logger import get_logger
 from src.primary.apps.lidarr import api as lidarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.state import check_state_reset  # Add the missing import
 from src.primary.utils.history_utils import log_processed_media
 
 # Get logger for the app
@@ -60,8 +61,14 @@ def process_cutoff_upgrades(
         lidarr_logger.info(f"'hunt_upgrade_items' is {hunt_upgrade_items} or less. Skipping upgrade processing for {instance_name}.")
         return False
 
+    lidarr_logger.info(f"Looking for quality upgrades for {instance_name}")
+    lidarr_logger.debug(f"Processing up to {hunt_upgrade_items} items for quality upgrade")
+    
+    # Reset state files if enough time has passed
+    check_state_reset("lidarr")
+    
     processed_count = 0
-    total_items_to_process = hunt_upgrade_items
+    processed_any = False
 
     try:
         lidarr_logger.info(f"Fetching cutoff unmet albums for {instance_name}...")
@@ -80,23 +87,23 @@ def process_cutoff_upgrades(
 
         lidarr_logger.info(f"Found {len(cutoff_unmet_albums)} cutoff unmet albums for {instance_name}.")
 
-        # Filter out already processed albums using stateful management
+        # Filter out already processed items
         unprocessed_albums = []
         for album in cutoff_unmet_albums:
-            album_id = str(album.get("id"))
+            album_id = str(album.get('id'))
             if not is_processed("lidarr", instance_name, album_id):
                 unprocessed_albums.append(album)
             else:
                 lidarr_logger.debug(f"Skipping already processed album ID: {album_id}")
         
-        lidarr_logger.info(f"Found {len(unprocessed_albums)} unprocessed cutoff unmet albums out of {len(cutoff_unmet_albums)} total.")
+        lidarr_logger.info(f"Found {len(unprocessed_albums)} unprocessed albums out of {len(cutoff_unmet_albums)} total albums eligible for quality upgrade.")
         
         if not unprocessed_albums:
-            lidarr_logger.info(f"No unprocessed cutoff unmet albums found for {instance_name}. All available albums have been processed.")
+            lidarr_logger.info("No unprocessed albums found for quality upgrade. Skipping cycle.")
             return False
 
         # Always select albums randomly
-        albums_to_search = random.sample(unprocessed_albums, min(len(unprocessed_albums), total_items_to_process))
+        albums_to_search = random.sample(unprocessed_albums, min(len(unprocessed_albums), hunt_upgrade_items))
         lidarr_logger.info(f"Randomly selected {len(albums_to_search)} albums for upgrade search.")
 
         album_ids_to_search = [album['id'] for album in albums_to_search]
@@ -125,6 +132,11 @@ def process_cutoff_upgrades(
             lidarr_logger.warning("Shutdown requested, stopping upgrade album search.")
             return False # Return False as no search was triggered in this case
 
+        # Mark albums as processed BEFORE triggering search
+        for album_id in album_ids_to_search:
+            add_processed_id("lidarr", instance_name, str(album_id))
+            lidarr_logger.debug(f"Added album ID {album_id} to processed list for {instance_name}")
+
         lidarr_logger.info(f"Triggering Album Search for {len(album_ids_to_search)} albums for upgrade on instance {instance_name}: {album_ids_to_search}")
         # Pass necessary details extracted above to the API function
         command_id = lidarr_api.search_albums(
@@ -137,11 +149,8 @@ def process_cutoff_upgrades(
             lidarr_logger.debug(f"Upgrade album search command triggered with ID: {command_id} for albums: {album_ids_to_search}")
             increment_stat("lidarr", "upgraded") # Use appropriate stat key
             
-            # Add album IDs to processed list
+            # Log to history
             for album_id in album_ids_to_search:
-                add_processed_id("lidarr", instance_name, str(album_id))
-                lidarr_logger.debug(f"Added album ID {album_id} to processed list for {instance_name}")
-                
                 # Find the album info for this ID to log to history
                 for album in albums_to_search:
                     if album['id'] == album_id:
