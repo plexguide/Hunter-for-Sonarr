@@ -16,6 +16,18 @@ from src.primary.utils.logger import logger, get_logger # Import get_logger
 # Removed global constants like APP_TYPE, API_URL, API_KEY, SLEEP_DURATION etc.
 # Settings should be fetched directly using settings_manager when needed.
 
+# Enable debug logging across the application
+# Set to True for detailed logs, False for production
+DEBUG_MODE = False # Changed default to False
+
+# Add a function to get the debug mode from settings
+def get_debug_mode():
+    """Get the debug mode setting from general settings"""
+    try:
+        return settings_manager.get_setting("general", "debug_mode", False)
+    except Exception:
+        return False
+
 # Determine the hunt mode for a specific app
 def determine_hunt_mode(app_name: str) -> str:
     """Determine the hunt mode for a specific app based on its settings."""
@@ -58,7 +70,7 @@ def determine_hunt_mode(app_name: str) -> str:
 def configure_logging(app_name: str = None):
     """Configure logging level based on the debug setting of a specific app or globally."""
     try:
-        debug_mode = False
+        debug_mode = get_debug_mode()
         log_instance = logger # Default to the main logger
 
         if app_name:
@@ -110,7 +122,8 @@ def log_configuration(app_name: str):
     api_key = settings.get("api_key", "")
     debug_mode = settings.get("debug_mode", False)
     sleep_duration = settings.get("sleep_duration", 900)
-    state_reset_interval = settings.get("state_reset_interval_hours", 168)
+    # Get state reset interval
+    state_reset_interval = settings_manager.get_advanced_setting("stateful_management_hours", 168)
     monitored_only = settings.get("monitored_only", True)
     min_queue_size = settings.get("minimum_download_queue_size", -1)
 
@@ -141,7 +154,7 @@ def log_configuration(app_name: str):
         # Use hunt_upgrade_items
         log.info(f"Hunt Upgrade Items: {settings.get('hunt_upgrade_items', 0)}") 
         log.info(f"Sleep Duration: {settings.get('sleep_duration', 900)} seconds")
-        log.info(f"State Reset Interval: {settings.get('state_reset_interval_hours', 168)} hours")
+        log.info(f"State Reset Interval: {state_reset_interval} hours")
         log.info(f"Monitored Only: {settings.get('monitored_only', True)}")
         log.info(f"Minimum Download Queue Size: {settings.get('minimum_download_queue_size', -1)}")
     elif app_name == "readarr":

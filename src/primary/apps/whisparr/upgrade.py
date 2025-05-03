@@ -13,6 +13,10 @@ from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.whisparr import api as whisparr_api
 from src.primary.stats_manager import increment_stat
+from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.utils.history_utils import log_processed_media
+from src.primary.settings_manager import get_advanced_setting
+from src.primary.state import check_state_reset
 
 # Get logger for the app
 whisparr_logger = get_logger("whisparr")
@@ -34,24 +38,26 @@ def process_cutoff_upgrades(
     whisparr_logger.info("Starting quality cutoff upgrades processing cycle for Whisparr.")
     processed_any = False
     
+    # Reset state files if enough time has passed
+    check_state_reset("whisparr")
+    
     # Extract necessary settings
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
+    instance_name = app_settings.get("instance_name", "Whisparr Default")
     api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_item_refresh = app_settings.get("skip_item_refresh", False)
-    random_upgrades = app_settings.get("random_upgrades", False)
     
     # Use the new hunt_upgrade_items parameter name, falling back to hunt_upgrade_scenes for backwards compatibility
     hunt_upgrade_items = app_settings.get("hunt_upgrade_items", app_settings.get("hunt_upgrade_scenes", 0))
     
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
-    state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)  
+    state_reset_interval_hours = get_advanced_setting("stateful_management_hours", 168)  
     
-    # Get the API version to use (v2 or v3)
-    api_version = app_settings.get("whisparr_version", "v3")
-    whisparr_logger.info(f"Using Whisparr API version: {api_version}")
+    # Log that we're using Whisparr V2 API
+    whisparr_logger.info(f"Using Whisparr V2 API for instance: {instance_name}")
 
     # Skip if hunt_upgrade_items is set to 0
     if hunt_upgrade_items <= 0:
@@ -65,7 +71,7 @@ def process_cutoff_upgrades(
 
     # Get items eligible for upgrade
     whisparr_logger.info(f"Retrieving items eligible for cutoff upgrade...")
-    upgrade_eligible_data = whisparr_api.get_cutoff_unmet_items(api_url, api_key, api_timeout, monitored_only, api_version)
+    upgrade_eligible_data = whisparr_api.get_cutoff_unmet_items(api_url, api_key, api_timeout, monitored_only)
     
     if not upgrade_eligible_data:
         whisparr_logger.info("No items found eligible for upgrade or error retrieving them.")
@@ -78,18 +84,27 @@ def process_cutoff_upgrades(
         
     whisparr_logger.info(f"Found {len(upgrade_eligible_data)} items eligible for quality upgrade.")
     
+    # Filter out already processed items using stateful management
+    unprocessed_items = []
+    for item in upgrade_eligible_data:
+        item_id = str(item.get("id"))
+        if not is_processed("whisparr", instance_name, item_id):
+            unprocessed_items.append(item)
+        else:
+            whisparr_logger.debug(f"Skipping already processed item ID: {item_id}")
+    
+    whisparr_logger.info(f"Found {len(unprocessed_items)} unprocessed items out of {len(upgrade_eligible_data)} total items eligible for quality upgrade.")
+    
+    if not unprocessed_items:
+        whisparr_logger.info(f"No unprocessed items found for {instance_name}. All available items have been processed.")
+        return False
+    
     items_processed = 0
     processing_done = False
     
-    # Select items to upgrade based on configuration
-    if random_upgrades:
-        whisparr_logger.info(f"Randomly selecting up to {hunt_upgrade_items} items for quality upgrade.")
-        items_to_upgrade = random.sample(upgrade_eligible_data, min(len(upgrade_eligible_data), hunt_upgrade_items))
-    else:
-        whisparr_logger.info(f"Selecting the first {hunt_upgrade_items} items for quality upgrade (sorted by title).")
-        # Sort by title for consistent ordering if not random
-        upgrade_eligible_data.sort(key=lambda x: x.get("title", ""))
-        items_to_upgrade = upgrade_eligible_data[:hunt_upgrade_items]
+    # Always use random selection for upgrades
+    whisparr_logger.info(f"Randomly selecting up to {hunt_upgrade_items} items for quality upgrade.")
+    items_to_upgrade = random.sample(unprocessed_items, min(len(unprocessed_items), hunt_upgrade_items))
     
     whisparr_logger.info(f"Selected {len(items_to_upgrade)} items for quality upgrade.")
     
@@ -119,7 +134,7 @@ def process_cutoff_upgrades(
         refresh_command_id = None
         if not skip_item_refresh:
             whisparr_logger.info(" - Refreshing item information...")
-            refresh_command_id = whisparr_api.refresh_item(api_url, api_key, api_timeout, item_id, api_version)
+            refresh_command_id = whisparr_api.refresh_item(api_url, api_key, api_timeout, item_id)
             if refresh_command_id:
                 whisparr_logger.info(f"Triggered refresh command {refresh_command_id}. Waiting a few seconds...")
                 time.sleep(5) # Basic wait
@@ -133,11 +148,22 @@ def process_cutoff_upgrades(
             whisparr_logger.info(f"Stop requested before searching for {title}. Aborting...")
             break
         
+        # Mark the item as processed BEFORE triggering any searches
+        add_processed_id("whisparr", instance_name, str(item_id))
+        whisparr_logger.debug(f"Added item ID {item_id} to processed list for {instance_name}")
+        
         # Search for the item
         whisparr_logger.info(" - Searching for quality upgrade...")
-        search_command_id = whisparr_api.item_search(api_url, api_key, api_timeout, [item_id], api_version)
+        search_command_id = whisparr_api.item_search(api_url, api_key, api_timeout, [item_id])
         if search_command_id:
             whisparr_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
+            
+            # Log to history so the upgrade appears in the history UI
+            series_title = item.get("series", {}).get("title", "Unknown Series")
+            media_name = f"{series_title} - {season_episode} - {title}"
+            log_processed_media("whisparr", media_name, item_id, instance_name, "upgrade")
+            whisparr_logger.debug(f"Logged quality upgrade to history for item ID {item_id}")
+            
             items_processed += 1
             processing_done = True
             

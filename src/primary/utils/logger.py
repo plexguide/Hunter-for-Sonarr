@@ -28,178 +28,176 @@ APP_LOG_FILES = {
 }
 
 # Global logger instances
-logger = None
+logger: Optional[logging.Logger] = None
 app_loggers: Dict[str, logging.Logger] = {}
 
-def setup_logger(debug_mode=None, app_type=None):
-    """Set up the logging configuration for the application
-    
-    Args:
-        debug_mode: Whether to enable debug logging
-        app_type: The type of application (sonarr, radarr, etc.)
-        
-    Returns:
-        A configured Logger instance
-    """
-    global logger, app_loggers
-    
-    # Create a logger with the name "Huntarr" instead of including the edition
-    app_logger = logging.getLogger("Huntarr")
-    
-    # Set debug mode from parameter or fallback to config
-    if debug_mode is None:
-        try:
-            from primary import config
-            debug_mode = getattr(config, "DEBUG_MODE", False)
-        except ImportError:
-            debug_mode = False
-    
-    # Get DEBUG_MODE from config, but only if we haven't been given a value
-    # Use a safe approach to avoid circular imports
+def setup_main_logger(debug_mode=None):
+    """Set up the main Huntarr logger."""
+    global logger
+    log_name = "huntarr"
+    log_file = MAIN_LOG_FILE
+
+    # Determine debug mode safely
     use_debug_mode = False
     if debug_mode is None:
         try:
-            # Try to get DEBUG_MODE from config, but don't fail if it's not available
-            from primary.config import DEBUG_MODE as CONFIG_DEBUG_MODE
-            use_debug_mode = CONFIG_DEBUG_MODE
+            # Use the get_debug_mode function to check general settings
+            from src.primary.config import get_debug_mode
+            use_debug_mode = get_debug_mode()
         except (ImportError, AttributeError):
-            # Default to False if there's any issue
-            pass
+            pass # Default to False
     else:
         use_debug_mode = debug_mode
-    
-    # Determine the logger and log file to use
-    if app_type in APP_LOG_FILES:
-        # Use or create an app-specific logger
-        log_name = f"huntarr.{app_type}"
-        log_file = APP_LOG_FILES[app_type]
-        
-        if log_name in app_loggers:
-            # Reset existing logger
-            current_logger = app_loggers[log_name]
-            for handler in current_logger.handlers[:]:
-                current_logger.removeHandler(handler)
-        else:
-            # Create a new logger
-            current_logger = logging.getLogger(log_name)
-            app_loggers[log_name] = current_logger
-    else:
-        # Use or create the main logger
-        log_name = "huntarr"
-        log_file = MAIN_LOG_FILE
-        
-        if logger is None:
-            # First-time setup
-            current_logger = logging.getLogger(log_name)
-            logger = current_logger
-        else:
-            # Reset handlers to avoid duplicates
-            current_logger = logger
-            for handler in current_logger.handlers[:]:
-                current_logger.removeHandler(handler)
-    
-    # Set the log level based on use_debug_mode
+
+    # Get or create the main logger instance
+    current_logger = logging.getLogger(log_name)
+
+    # Reset handlers each time setup is called to avoid duplicates
+    # This is important if setup might be called again (e.g., config reload)
+    for handler in current_logger.handlers[:]:
+        current_logger.removeHandler(handler)
+
+    current_logger.propagate = False # Prevent propagation to root logger
     current_logger.setLevel(logging.DEBUG if use_debug_mode else logging.INFO)
-    
+
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG if use_debug_mode else logging.INFO)
-    
-    # Create file handler for the web interface
+
+    # Create file handler
     file_handler = logging.FileHandler(log_file)
     file_handler.setLevel(logging.DEBUG if use_debug_mode else logging.INFO)
-    
-    # Set format - clearly indicate if this is a main log or app-specific log
-    log_format = "%(asctime)s - "
-    if app_type:
-        # For app-specific logs, show clearly it's about interaction with that app
-        log_format += f"huntarr-{app_type} - "
-    else:
-        # For main logger, just show it's Huntarr
-        log_format += "huntarr - "
-    log_format += "%(levelname)s - %(message)s"
-    
-    formatter = logging.Formatter(
-        log_format,
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+
+    # Set format for the main logger
+    log_format = "%(asctime)s - huntarr - %(levelname)s - %(message)s"
+    formatter = logging.Formatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
     console_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
-    
-    # Add handlers to logger
+
+    # Add handlers to the main logger
     current_logger.addHandler(console_handler)
     current_logger.addHandler(file_handler)
-    
-    if use_debug_mode:
-        current_logger.debug("Debug logging enabled")
-    
-    return current_logger
 
-# Create the main logger instance on module import
-logger = setup_logger()
+    if use_debug_mode:
+        current_logger.debug("Debug logging enabled for main logger")
+
+    logger = current_logger # Assign to the global variable
+    return current_logger
 
 def get_logger(app_type: str) -> logging.Logger:
     """
-    Get a logger for a specific app type.
+    Get or create a logger for a specific app type.
     
     Args:
-        app_type: The app type to get a logger for.
+        app_type: The app type (e.g., 'sonarr', 'radarr').
         
     Returns:
-        A logger specific to the app type.
+        A logger specific to the app type, or the main logger if app_type is invalid.
     """
-    # Check if we already have this logger configured
+    if app_type not in APP_LOG_FILES:
+        # Fallback to main logger if the app type is not recognized
+        global logger
+        if logger is None:
+            # Ensure main logger is initialized if accessed before module-level setup
+            setup_main_logger()
+        # We checked logger is not None, so we can assert its type
+        assert logger is not None
+        return logger
+
     log_name = f"huntarr.{app_type}"
     if log_name in app_loggers:
+        # Return cached logger instance
         return app_loggers[log_name]
     
-    # If not, set up a new logger properly
-    if app_type in APP_LOG_FILES:
-        # Create the logger with the correct name
-        app_logger = logging.getLogger(log_name)
+    # If not cached, set up a new logger for this app type
+    app_logger = logging.getLogger(log_name)
+    
+    # Prevent propagation to the main 'huntarr' logger or root logger
+    app_logger.propagate = False
+    
+    # Determine debug mode setting safely
+    try:
+        from src.primary.config import get_debug_mode
+        debug_mode = get_debug_mode()
+    except ImportError:
+        debug_mode = False
         
-        # Prevent propagation to avoid duplicate logs
-        app_logger.propagate = False
+    app_logger.setLevel(logging.DEBUG if debug_mode else logging.INFO)
+    
+    # Reset handlers in case this logger existed before but wasn't cached
+    # (e.g., across restarts without clearing logging._handlers)
+    for handler in app_logger.handlers[:]:
+        app_logger.removeHandler(handler)
+
+    # Create console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.DEBUG if debug_mode else logging.INFO)
+    
+    # Create file handler for the specific app log file
+    log_file = APP_LOG_FILES[app_type]
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.DEBUG if debug_mode else logging.INFO)
+    
+    # Set a distinct format for this app log
+    log_format = f"%(asctime)s - huntarr.{app_type} - %(levelname)s - %(message)s"
+    formatter = logging.Formatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
+    
+    console_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+    
+    # Add the handlers specific to this app logger
+    app_logger.addHandler(console_handler)
+    app_logger.addHandler(file_handler)
+    
+    # Cache the configured logger
+    app_loggers[log_name] = app_logger
+
+    if debug_mode:
+        app_logger.debug(f"Debug logging enabled for {app_type} logger")
         
-        # Get debug mode setting
+    return app_logger
+
+def update_logging_levels(debug_mode=None):
+    """
+    Update all logger levels based on the current debug mode setting.
+    Call this after settings are changed in the UI to apply changes immediately.
+    
+    Args:
+        debug_mode: Force a specific debug mode, or None to read from settings
+    """
+    # Determine debug mode from settings if not specified
+    if debug_mode is None:
         try:
-            from primary import config
-            debug_mode = getattr(config, "DEBUG_MODE", False)
-        except ImportError:
+            from src.primary.config import get_debug_mode
+            debug_mode = get_debug_mode()
+        except (ImportError, AttributeError):
             debug_mode = False
-            
-        # Set appropriate log level
-        app_logger.setLevel(logging.DEBUG if debug_mode else logging.INFO)
-        
-        # Create console handler
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.DEBUG if debug_mode else logging.INFO)
-        
-        # Create file handler
-        log_file = APP_LOG_FILES[app_type]
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(logging.DEBUG if debug_mode else logging.INFO)
-        
-        # Set format for this app
-        log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        formatter = logging.Formatter(
-            log_format,
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-        
-        console_handler.setFormatter(formatter)
-        file_handler.setFormatter(formatter)
-        
-        # Add handlers
-        app_logger.addHandler(console_handler)
-        app_logger.addHandler(file_handler)
-        
-        # Store in our cache
-        app_loggers[log_name] = app_logger
-        return app_logger
-    else:
-        # Return the main logger if the app type is not recognized
-        return logger
+    
+    # Set level for main logger
+    level = logging.DEBUG if debug_mode else logging.INFO
+    if logger:
+        logger.setLevel(level)
+        for handler in logger.handlers:
+            handler.setLevel(level)
+    
+    # Set level for all app loggers
+    for app_type, app_logger in app_loggers.items():
+        app_logger.setLevel(level)
+        for handler in app_logger.handlers:
+            handler.setLevel(level)
+    
+    # Set root logger level too
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+    for handler in root_logger.handlers:
+        handler.setLevel(level)
+
+    # Force Python's logging module to respect the log level for all existing loggers
+    for name, logger_instance in logging.Logger.manager.loggerDict.items():
+        if isinstance(logger_instance, logging.Logger):
+            logger_instance.setLevel(level)
+    
+    return debug_mode
 
 def debug_log(message: str, data: object = None, app_type: Optional[str] = None) -> None:
     """
@@ -226,3 +224,6 @@ def debug_log(message: str, data: object = None, app_type: Optional[str] = None)
                 if len(data_str) > 500:
                     data_str = data_str[:500] + "..."
                 current_logger.debug(data_str)
+
+# Initialize the main logger instance when the module is imported
+logger = setup_main_logger()

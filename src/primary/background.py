@@ -18,8 +18,8 @@ from typing import Dict, List, Optional
 __version__ = "1.0.0" # Consider updating this based on changes
 
 # Set up logging first
-from src.primary.utils.logger import setup_logger, get_logger # Import get_logger
-logger = setup_logger()
+from src.primary.utils.logger import setup_main_logger, get_logger # Import get_logger
+logger = setup_main_logger()
 
 # Import necessary modules
 from src.primary import config, settings_manager
@@ -260,7 +260,6 @@ def app_specific_loop(app_type: str) -> None:
                     monitored_only = combined_settings.get("monitored_only", True)
                     skip_future_episodes = combined_settings.get("skip_future_episodes", True)
                     skip_series_refresh = combined_settings.get("skip_series_refresh", False)
-                    random_missing = combined_settings.get("random_missing", False)
                     hunt_missing_items = combined_settings.get("hunt_missing_items", 0)
                     hunt_missing_mode = combined_settings.get("hunt_missing_mode", "episodes")
                     command_wait_delay = combined_settings.get("command_wait_delay", 5)
@@ -270,11 +269,11 @@ def app_specific_loop(app_type: str) -> None:
                         processed_missing = process_missing(
                             api_url=api_url,
                             api_key=api_key,
+                            instance_name=instance_name,  # Added the required instance_name parameter
                             api_timeout=api_timeout,
                             monitored_only=monitored_only,
                             skip_future_episodes=skip_future_episodes,
                             skip_series_refresh=skip_series_refresh,
-                            random_missing=random_missing,
                             hunt_missing_items=hunt_missing_items,
                             hunt_missing_mode=hunt_missing_mode,
                             command_wait_delay=command_wait_delay,
@@ -300,7 +299,6 @@ def app_specific_loop(app_type: str) -> None:
                         api_timeout = combined_settings.get("api_timeout", 90)
                         monitored_only = combined_settings.get("monitored_only", True)
                         skip_series_refresh = combined_settings.get("skip_series_refresh", False)
-                        random_upgrades = combined_settings.get("random_upgrades", False)
                         hunt_upgrade_items = combined_settings.get("hunt_upgrade_items", 0)
                         command_wait_delay = combined_settings.get("command_wait_delay", 5)
                         command_wait_attempts = combined_settings.get("command_wait_attempts", 12)
@@ -308,10 +306,10 @@ def app_specific_loop(app_type: str) -> None:
                         processed_upgrades = process_upgrades(
                             api_url=api_url,
                             api_key=api_key,
+                            instance_name=instance_name,  # Added the required instance_name parameter
                             api_timeout=api_timeout,
                             monitored_only=monitored_only,
                             skip_series_refresh=skip_series_refresh,
-                            random_upgrades=random_upgrades,
                             hunt_upgrade_items=hunt_upgrade_items,
                             command_wait_delay=command_wait_delay,
                             command_wait_attempts=command_wait_attempts,

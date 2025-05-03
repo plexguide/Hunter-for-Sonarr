@@ -1,0 +1,146 @@
+<section id="historySection" class="content-section">
+    <div class="section-header">
+        <!-- History App Dropdown -->
+        <div class="history-dropdown-container">
+            <div class="history-dropdown">
+                <button class="history-dropdown-btn">
+                    <span id="current-history-app">All</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="history-dropdown-content">
+                    <a href="#" class="history-option active" data-app="all">All</a>
+                    <a href="#" class="history-option" data-app="sonarr">Sonarr</a>
+                    <a href="#" class="history-option" data-app="radarr">Radarr</a>
+                    <a href="#" class="history-option" data-app="lidarr">Lidarr</a>
+                    <a href="#" class="history-option" data-app="readarr">Readarr</a>
+                    <a href="#" class="history-option" data-app="whisparr">Whisparr</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search and Controls -->
+        <div class="history-controls">
+            <div class="history-search">
+                <input type="text" id="historySearchInput" placeholder="Search...">
+                <button id="historySearchButton">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            
+            <div class="history-page-size">
+                <label for="historyPageSize">Show:</label>
+                <select id="historyPageSize">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="30">30</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="250">250</option>
+                    <option value="1000">1000</option>
+                </select>
+            </div>
+            
+            <button id="clearHistoryButton" class="clear-button">
+                <i class="fas fa-trash-alt"></i> Clear
+            </button>
+        </div>
+    </div>
+    
+    <div class="history-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Date and Time</th>
+                    <th>Processed Information</th>
+                    <th>Operation</th>
+                    <th>ID Number</th>
+                    <th>Name of Instance</th>
+                    <th>How Long Ago</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody">
+                <!-- History items will be loaded here -->
+            </tbody>
+        </table>
+        
+        <!-- Empty state message -->
+        <div id="historyEmptyState" class="empty-state-message">
+            <i class="fas fa-history fa-3x"></i>
+            <p>No history found. Items will appear here when media is processed.</p>
+        </div>
+        
+        <!-- Loading indicator -->
+        <div id="historyLoading" class="loading-indicator">
+            <i class="fas fa-spinner fa-spin fa-3x"></i>
+            <p>Loading history...</p>
+        </div>
+    </div>
+    
+    <!-- Pagination controls -->
+    <div class="pagination-controls">
+        <button id="historyPrevPage" class="pagination-button"><i class="fas fa-chevron-left"></i> Previous</button>
+        <span id="historyPageInfo">Page <span id="historyCurrentPage">1</span> of <span id="historyTotalPages">1</span></span>
+        <button id="historyNextPage" class="pagination-button">Next <i class="fas fa-chevron-right"></i></button>
+    </div>
+    
+    <!-- Fixed banner at the bottom of the viewport -->
+    <div class="fixed-banner-footer">
+        <p>
+            <a href="https://Huntarr.io" target="_blank">Huntarr.io</a> &copy; 2025
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            <i class="fas fa-heart donation-icon"></i> 
+            <a href="https://donate.plex.one" target="_blank">Donate @ PLEX.one</a> for Daughter's College Fund!
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            <i class="fas fa-star star-icon"></i> 
+            <a href="https://github.com/plexguide/huntarr" target="_blank">Star Huntarr on GitHub</a> - Really Helps!
+        </p>
+    </div>
+</section>
+
+<style>
+    /* Fixed banner footer styling */
+    .fixed-banner-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        padding: 10px 20px;
+        background-color: var(--bg-secondary);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        border-top: 1px solid var(--border-color);
+        z-index: 1000; /* Ensure it's above other elements */
+    }
+    
+    /* Add bottom padding to the section to prevent content from being hidden behind the fixed banner */
+    #historySection {
+        padding-bottom: 50px;
+    }
+    
+    .fixed-banner-footer p {
+        margin: 0;
+        font-size: 1em;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .fixed-banner-footer a {
+        color: var(--accent-color);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s, text-decoration 0.2s;
+    }
+    
+    .fixed-banner-footer a:hover {
+        text-decoration: underline;
+        color: var(--accent-hover);
+    }
+    
+    .fixed-banner-footer .donation-icon {
+        color: var(--error-color, #ff6b6b);
+    }
+    
+    .fixed-banner-footer .star-icon {
+        color: var(--warning-color, #ffd700);
+    }
+</style>

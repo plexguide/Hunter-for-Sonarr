@@ -8,6 +8,7 @@ let huntarrUI = {
     eventSources: {},
     currentSection: 'home', // Default section
     currentLogApp: 'all', // Default log app
+    currentHistoryApp: 'all', // Default history app
     autoScroll: true,
     configuredApps: {
         sonarr: false,
@@ -18,9 +19,12 @@ let huntarrUI = {
     },
     originalSettings: {}, // Store the full original settings object
     settingsChanged: false, // Flag to track unsaved settings changes
+    hasUnsavedChanges: false, // Global flag for unsaved changes across all apps
+    formChanged: {}, // Track unsaved changes per app
+    suppressUnsavedChangesCheck: false, // Flag to suppress unsaved changes dialog
     
     // Logo URL
-    logoUrl: '/static/logo/64.png',
+    logoUrl: '/static/logo/256.png',
     
     // Element references
     elements: {},
@@ -35,7 +39,8 @@ let huntarrUI = {
 
         const resetButton = document.getElementById('reset-stats');
         if (resetButton) {
-            resetButton.addEventListener('click', () => {
+            resetButton.addEventListener('click', (e) => {
+                e.preventDefault();
                 this.resetMediaStats();
             });
         }
@@ -50,6 +55,10 @@ let huntarrUI = {
         this.loadMediaStats(); // Load media statistics
         this.loadCurrentVersion(); // Load current version
         this.loadLatestVersion(); // Load latest version from GitHub
+        this.loadGitHubStarCount(); // Load GitHub star count
+        
+        // Preload stateful management info so it's ready when needed
+        this.loadStatefulInfo();
         
         // Ensure logo is applied
         if (typeof window.applyLogoToAllElements === 'function') {
@@ -58,6 +67,17 @@ let huntarrUI = {
         
         // Initialize instance event handlers
         this.setupInstanceEventHandlers();
+        
+        // Add global event handler for unsaved changes
+        this.registerGlobalUnsavedChangesHandler();
+        
+        // Set up the stateful reset button (call immediately and also after a delay)
+        this.setupStatefulResetButton();
+        
+        // Also call it again after a delay in case settings are loaded dynamically
+        setTimeout(() => {
+            this.setupStatefulResetButton();
+        }, 1000);
     },
     
     // Cache DOM elements for better performance
@@ -66,6 +86,7 @@ let huntarrUI = {
         this.elements.navItems = document.querySelectorAll('.nav-item');
         this.elements.homeNav = document.getElementById('homeNav');
         this.elements.logsNav = document.getElementById('logsNav');
+        this.elements.historyNav = document.getElementById('historyNav');
         this.elements.settingsNav = document.getElementById('settingsNav');
         this.elements.userNav = document.getElementById('userNav');
         
@@ -73,12 +94,29 @@ let huntarrUI = {
         this.elements.sections = document.querySelectorAll('.content-section');
         this.elements.homeSection = document.getElementById('homeSection');
         this.elements.logsSection = document.getElementById('logsSection');
+        this.elements.historySection = document.getElementById('historySection');
         this.elements.settingsSection = document.getElementById('settingsSection');
         
         // App tabs & Settings Tabs
         this.elements.appTabs = document.querySelectorAll('.app-tab'); // For logs section
-        this.elements.logTabs = document.querySelectorAll('.log-tab'); // Added log tabs
-        this.elements.settingsTabs = document.querySelectorAll('.settings-tab');
+        this.elements.logOptions = document.querySelectorAll('.log-option'); // New: replaced logTabs with logOptions
+        this.elements.currentLogApp = document.getElementById('current-log-app'); // New: dropdown current selection text
+        this.elements.logDropdownBtn = document.querySelector('.log-dropdown-btn'); // New: dropdown toggle button
+        this.elements.logDropdownContent = document.querySelector('.log-dropdown-content'); // New: dropdown content
+        
+        // History dropdown elements
+        this.elements.historyOptions = document.querySelectorAll('.history-option'); // History dropdown options
+        this.elements.currentHistoryApp = document.getElementById('current-history-app'); // Current history app text
+        this.elements.historyDropdownBtn = document.querySelector('.history-dropdown-btn'); // History dropdown button
+        this.elements.historyDropdownContent = document.querySelector('.history-dropdown-content'); // History dropdown content
+        this.elements.historyPlaceholderText = document.getElementById('history-placeholder-text'); // Placeholder text for history
+        
+        // Settings dropdown elements
+        this.elements.settingsOptions = document.querySelectorAll('.settings-option'); // New: settings dropdown options
+        this.elements.currentSettingsApp = document.getElementById('current-settings-app'); // New: current settings app text
+        this.elements.settingsDropdownBtn = document.querySelector('.settings-dropdown-btn'); // New: settings dropdown button
+        this.elements.settingsDropdownContent = document.querySelector('.settings-dropdown-content'); // New: dropdown content
+        
         this.elements.appSettingsPanels = document.querySelectorAll('.app-settings-panel');
         
         // Logs
@@ -112,57 +150,146 @@ let huntarrUI = {
     setupEventListeners: function() {
         // Navigation
         this.elements.navItems.forEach(item => {
-            item.addEventListener('click', this.handleNavigation.bind(this));
+            item.addEventListener('click', (e) => this.handleNavigation(e));
         });
         
-        // App tabs
-        this.elements.appTabs.forEach(tab => {
-            tab.addEventListener('click', this.handleAppTabChange.bind(this));
-        });
-        
-        // Settings tabs
-        this.elements.settingsTabs.forEach(tab => {
-            tab.addEventListener('click', this.handleSettingsTabChange.bind(this));
-        });
-        
-        // Log tabs (New)
-        this.elements.logTabs.forEach(tab => {
-            tab.addEventListener('click', this.handleLogTabChange.bind(this));
-        });
-        
-        // Logs
+        // Log auto-scroll setting
         if (this.elements.autoScrollCheckbox) {
             this.elements.autoScrollCheckbox.addEventListener('change', (e) => {
                 this.autoScroll = e.target.checked;
             });
         }
         
+        // Clear logs button
         if (this.elements.clearLogsButton) {
-            this.elements.clearLogsButton.addEventListener('click', this.clearLogs.bind(this));
+            this.elements.clearLogsButton.addEventListener('click', () => this.clearLogs());
         }
         
-        // Settings
+        // App tabs in logs section
+        this.elements.appTabs.forEach(tab => {
+            tab.addEventListener('click', (e) => this.handleAppTabChange(e));
+        });
+        
+        // Log options dropdown
+        this.elements.logOptions.forEach(option => {
+            option.addEventListener('click', (e) => this.handleLogOptionChange(e));
+        });
+        
+        // Log dropdown toggle
+        if (this.elements.logDropdownBtn) {
+            this.elements.logDropdownBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.elements.logDropdownContent.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.log-dropdown') && this.elements.logDropdownContent.classList.contains('show')) {
+                    this.elements.logDropdownContent.classList.remove('show');
+                }
+            });
+        }
+        
+        // History dropdown toggle
+        if (this.elements.historyDropdownBtn) {
+            this.elements.historyDropdownBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.elements.historyDropdownContent.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.history-dropdown') && this.elements.historyDropdownContent.classList.contains('show')) {
+                    this.elements.historyDropdownContent.classList.remove('show');
+                }
+            });
+        }
+        
+        // History options
+        this.elements.historyOptions.forEach(option => {
+            option.addEventListener('click', (e) => this.handleHistoryOptionChange(e));
+        });
+        
+        // Settings dropdown toggle
+        if (this.elements.settingsDropdownBtn) {
+            this.elements.settingsDropdownBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.elements.settingsDropdownContent.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.settings-dropdown') && this.elements.settingsDropdownContent.classList.contains('show')) {
+                    this.elements.settingsDropdownContent.classList.remove('show');
+                }
+            });
+        }
+        
+        // Settings options
+        this.elements.settingsOptions.forEach(option => {
+            option.addEventListener('click', (e) => this.handleSettingsOptionChange(e));
+        });
+        
+        // Save settings button
         if (this.elements.saveSettingsButton) {
-            this.elements.saveSettingsButton.addEventListener('click', this.saveSettings.bind(this));
+            this.elements.saveSettingsButton.addEventListener('click', () => this.saveSettings());
         }
         
-        // Actions
+        // Start hunt button
         if (this.elements.startHuntButton) {
-            this.elements.startHuntButton.addEventListener('click', this.startHunt.bind(this));
+            this.elements.startHuntButton.addEventListener('click', () => this.startHunt());
         }
         
+        // Stop hunt button
         if (this.elements.stopHuntButton) {
-            this.elements.stopHuntButton.addEventListener('click', this.stopHunt.bind(this));
+            this.elements.stopHuntButton.addEventListener('click', () => this.stopHunt());
         }
         
-        // Theme
-        // if (this.elements.themeToggle) { // Removed theme toggle
-        //     this.elements.themeToggle.addEventListener('change', this.handleThemeToggle.bind(this));
-        // }
+        // Logout button
+        if (this.elements.logoutLink) {
+            this.elements.logoutLink.addEventListener('click', (e) => this.logout(e));
+        }
         
-        // Logout
-        if (this.elements.logoutLink) { // Added listener for logout
-            this.elements.logoutLink.addEventListener('click', this.logout.bind(this));
+        // Dark mode toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (darkModeToggle) {
+            const prefersDarkMode = localStorage.getItem('huntarr-dark-mode') === 'true';
+            darkModeToggle.checked = prefersDarkMode;
+            
+            darkModeToggle.addEventListener('change', function() {
+                const isDarkMode = this.checked;
+                document.body.classList.toggle('dark-theme', isDarkMode);
+                localStorage.setItem('huntarr-dark-mode', isDarkMode);
+            });
+        }
+        
+        // Settings inputs change tracking
+        document.querySelectorAll('#settingsSection input, #settingsSection select').forEach(element => {
+            element.addEventListener('change', () => this.markSettingsAsChanged());
+        });
+        
+        // Monitor for window beforeunload to warn about unsaved settings
+        window.addEventListener('beforeunload', (e) => {
+            if (this.settingsChanged && this.hasFormChanges(this.currentSettingsTab)) {
+                // Standard way to show a confirmation dialog when navigating away
+                e.preventDefault();
+                e.returnValue = ''; // Chrome requires returnValue to be set
+                return ''; // Legacy browsers
+            }
+        });
+        
+        // Stateful management reset button
+        const resetStatefulBtn = document.getElementById('reset_stateful_btn');
+        if (resetStatefulBtn) {
+            resetStatefulBtn.addEventListener('click', () => this.handleStatefulReset());
+        }
+        
+        // Stateful management hours input
+        const statefulHoursInput = document.getElementById('stateful_management_hours');
+        if (statefulHoursInput) {
+            statefulHoursInput.addEventListener('change', () => {
+                this.updateStatefulExpirationOnUI();
+            });
         }
         
         // Handle window hash change
@@ -235,9 +362,17 @@ let huntarrUI = {
     
     // Navigation handling
     handleNavigation: function(e) {
-        e.preventDefault();
         const targetElement = e.currentTarget; // Get the clicked nav item
-        const href = targetElement.getAttribute('href'); 
+        const href = targetElement.getAttribute('href');
+        const target = targetElement.getAttribute('target');
+        
+        // Allow links with target="_blank" to open in a new window (return early)
+        if (target === '_blank') {
+            return; // Let the default click behavior happen
+        }
+        
+        // For all other links, prevent default behavior and handle internally
+        e.preventDefault();
 
         if (!href) return; // Exit if no href
 
@@ -253,12 +388,31 @@ let huntarrUI = {
 
         // Check for unsaved changes ONLY if navigating INTERNALLY away from settings
         if (isInternalLink && this.currentSection === 'settings' && targetSection !== 'settings' && this.settingsChanged) {
-            if (!confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
+            // Use our new comparison function to check if there are actual changes
+            const hasRealChanges = this.hasFormChanges(this.currentSettingsTab);
+            
+            if (hasRealChanges && !confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
                 return; // Stop navigation if user cancels
             }
-             // User confirmed, reset flag before navigating
+            
+            // User confirmed or no real changes, reset flag before navigating
             this.settingsChanged = false;
             this.updateSaveResetButtonState(false); 
+        }
+        
+        // Add special handling for apps section - clear global app module flags
+        if (this.currentSection === 'apps' && targetSection !== 'apps') {
+            // Reset the app module flags when navigating away
+            if (window._appsModuleLoaded) {
+                window._appsSuppressChangeDetection = true;
+                if (window.appsModule && typeof window.appsModule.settingsChanged !== 'undefined') {
+                    window.appsModule.settingsChanged = false;
+                }
+                // Schedule ending suppression to avoid any edge case issues
+                setTimeout(() => {
+                    window._appsSuppressChangeDetection = false;
+                }, 1000);
+            }
         }
 
         // Proceed with navigation
@@ -298,12 +452,35 @@ let huntarrUI = {
             this.currentSection = 'home';
             // Disconnect logs if switching away from logs
             this.disconnectAllEventSources(); 
+            // Check app connections when returning to home page to update status
+            this.checkAppConnections();
+            // Also refresh media stats
+            this.loadMediaStats();
         } else if (section === 'logs' && this.elements.logsSection) {
             this.elements.logsSection.classList.add('active');
             if (this.elements.logsNav) this.elements.logsNav.classList.add('active');
             newTitle = 'Logs';
             this.currentSection = 'logs';
             this.connectToLogs();
+        } else if (section === 'history' && this.elements.historySection) {
+            this.elements.historySection.classList.add('active');
+            if (this.elements.historyNav) this.elements.historyNav.classList.add('active');
+            newTitle = 'History';
+            this.currentSection = 'history';
+            // Disconnect logs if switching away from logs
+            this.disconnectAllEventSources(); 
+        } else if (section === 'apps' && document.getElementById('appsSection')) {
+            document.getElementById('appsSection').classList.add('active');
+            if (document.getElementById('appsNav')) document.getElementById('appsNav').classList.add('active');
+            newTitle = 'Apps';
+            this.currentSection = 'apps';
+            // Disconnect logs if switching away from logs
+            this.disconnectAllEventSources();
+            
+            // Load apps if the apps module exists
+            if (typeof appsModule !== 'undefined') {
+                appsModule.loadApps();
+            }
         } else if (section === 'settings' && this.elements.settingsSection) {
             this.elements.settingsSection.classList.add('active');
             if (this.elements.settingsNav) this.elements.settingsNav.classList.add('active');
@@ -336,7 +513,12 @@ let huntarrUI = {
                 }
             }
             
+            // Load stateful info immediately, don't wait for loadAllSettings to complete
+            this.loadStatefulInfo();
+            
+            // Load all settings after stateful info has started loading
             this.loadAllSettings();
+            
             // Disconnect logs if switching away from logs
             this.disconnectAllEventSources(); 
         } else if (section === 'sponsors' && sponsorsSection) { // ADDED sponsors case
@@ -386,68 +568,115 @@ let huntarrUI = {
         this.connectToLogs();
     },
     
-    // Log tab switching (New)
-    handleLogTabChange: function(e) {
+    // Log option dropdown handling
+    handleLogOptionChange: function(e) {
+        e.preventDefault(); // Prevent default anchor behavior
+        
         const app = e.target.getAttribute('data-app');
         if (!app || app === this.currentLogApp) return; // Do nothing if same tab clicked
         
-        // Update active tab
-        this.elements.logTabs.forEach(tab => {
-            tab.classList.remove('active');
+        // Update active option
+        this.elements.logOptions.forEach(option => {
+            option.classList.remove('active');
         });
         e.target.classList.add('active');
+        
+        // Update the current log app text with proper capitalization
+        let displayName = app.charAt(0).toUpperCase() + app.slice(1);
+        // Special handling for Whisparr V2
+        if (app === 'whisparr') {
+            displayName = 'Whisparr V2';
+        }
+        this.elements.currentLogApp.textContent = displayName;
+        
+        // Close the dropdown
+        this.elements.logDropdownContent.classList.remove('show');
         
         // Switch to the selected app logs
         this.currentLogApp = app;
         this.clearLogs(); // Clear existing logs before switching
         this.connectToLogs(); // Reconnect to the new log source
     },
-
-    // Settings tab switching
-    handleSettingsTabChange: function(e) {
-        // Use currentTarget to ensure we get the button, not the inner element
-        const targetTab = e.currentTarget;
-        const app = targetTab.dataset.app; // Use dataset.app as added in SettingsForms
-
-        if (!app) {
-             console.error("Settings tab clicked, but no data-app attribute found.");
-             return; // Should not happen if HTML is correct
+    
+    // History option dropdown handling
+    handleHistoryOptionChange: function(e) {
+        e.preventDefault(); // Prevent default anchor behavior
+        
+        const app = e.target.getAttribute('data-app');
+        if (!app || app === this.currentHistoryApp) return; // Do nothing if same tab clicked
+        
+        // Update active option
+        this.elements.historyOptions.forEach(option => {
+            option.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        // Update the current history app text with proper capitalization
+        let displayName = app.charAt(0).toUpperCase() + app.slice(1);
+        this.elements.currentHistoryApp.textContent = displayName;
+        
+        // Close the dropdown
+        this.elements.historyDropdownContent.classList.remove('show');
+        
+        // Switch to the selected app history
+        this.currentHistoryApp = app;
+        // this.clearHistory(); // Clear existing history before switching
+        // this.connectToHistory(); // Reconnect to the new history source
+        
+        // Update the placeholder text based on the selected app
+        this.updateHistoryPlaceholder(app);
+    },
+    
+    // Update the history placeholder text based on the selected app
+    updateHistoryPlaceholder: function(app) {
+        if (!this.elements.historyPlaceholderText) return;
+        
+        let message = "";
+        if (app === 'all') {
+            message = "The History feature will be available in a future update. Stay tuned for enhancements that will allow you to view your media processing history.";
+        } else {
+            let displayName = this.capitalizeFirst(app);
+            message = `The ${displayName} History feature is under development and will be available in a future update. You'll be able to track your ${displayName} media processing history here.`;
         }
-        e.preventDefault(); // Prevent default if it was an anchor
-
-        // Check for unsaved changes before switching tabs
-        if (this.settingsChanged) {
-            if (!confirm('You have unsaved changes on the current tab. Switch tabs anyway? Changes will be lost.')) {
-                return; // Stop tab switch if user cancels
-            }
-             // User confirmed, reset flag before switching
-            this.settingsChanged = false;
-            this.updateSaveResetButtonState(false);
-        }
-
-        // Remove active class from all tabs and panels
-        this.elements.settingsTabs.forEach(tab => tab.classList.remove('active'));
+        
+        this.elements.historyPlaceholderText.textContent = message;
+    },
+    
+    // Settings option handling
+    handleSettingsOptionChange: function(e) {
+        e.preventDefault(); // Prevent default anchor behavior
+        
+        const app = e.target.getAttribute('data-app');
+        if (!app || app === this.currentSettingsApp) return; // Do nothing if same tab clicked
+        
+        // Update active option
+        this.elements.settingsOptions.forEach(option => {
+            option.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        // Update the current settings app text with proper capitalization
+        let displayName = app.charAt(0).toUpperCase() + app.slice(1);
+        this.elements.currentSettingsApp.textContent = displayName;
+        
+        // Close the dropdown
+        this.elements.settingsDropdownContent.classList.remove('show');
+        
+        // Hide all settings panels
         this.elements.appSettingsPanels.forEach(panel => {
             panel.classList.remove('active');
-            panel.style.display = 'none'; // Explicitly hide
+            panel.style.display = 'none';
         });
-
-        // Set the target tab as active
-        targetTab.classList.add('active');
-
-        // Show the corresponding settings panel
-        const panelElement = document.getElementById(`${app}Settings`);
-        if (panelElement) {
-            panelElement.classList.add('active');
-            panelElement.style.display = 'block'; // Explicitly show
-            this.currentSettingsTab = app; // Update current tab state
-            // Ensure settings are populated for this tab using the stored originalSettings
-            this.populateSettingsForm(app, this.originalSettings[app] || {});
-            // Reset save button state when switching tabs (already done above if confirmed)
-            this.updateSaveResetButtonState(false); // Ensure it's disabled on new tab
-        } else {
-             console.error(`Settings panel not found for app: ${app}`);
+        
+        // Show the selected app's settings panel
+        const selectedPanel = document.getElementById(app + 'Settings');
+        if (selectedPanel) {
+            selectedPanel.classList.add('active');
+            selectedPanel.style.display = 'block';
         }
+        
+        this.currentSettingsTab = app;
+        console.log(`[huntarrUI] Switched settings tab to: ${this.currentSettingsTab}`); // Added logging
     },
     
     // Logs handling
@@ -649,30 +878,40 @@ let huntarrUI = {
     
     // Settings handling
     loadAllSettings: function() {
-        // Ensure buttons are disabled and flag is reset when loading settings section
-        this.settingsChanged = false;
+        // Disable save button until changes are made
         this.updateSaveResetButtonState(false);
+        this.settingsChanged = false;
         
-        console.log("[huntarrUI] Loading all settings...");
-        fetch(`/api/settings`) // Fetch the entire settings object
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+        // Get all settings to populate forms
+        HuntarrUtils.fetchWithTimeout('/api/settings')
+            .then(response => response.json())
             .then(data => {
-                console.log("[huntarrUI] All settings loaded:", data);
-                this.originalSettings = JSON.parse(JSON.stringify(data)); // Store deep copy
-
-                // Populate the currently active settings form
-                this.populateSettingsForm(this.currentSettingsTab, this.originalSettings[this.currentSettingsTab] || {});
-                // Optionally pre-populate others if needed, but might be redundant if done on tab switch
+                console.log('Loaded settings:', data);
+                
+                // Store original settings for comparison
+                this.originalSettings = data;
+                
+                // Populate each app's settings form
+                if (data.sonarr) this.populateSettingsForm('sonarr', data.sonarr);
+                if (data.radarr) this.populateSettingsForm('radarr', data.radarr);
+                if (data.lidarr) this.populateSettingsForm('lidarr', data.lidarr);
+                if (data.readarr) this.populateSettingsForm('readarr', data.readarr);
+                if (data.whisparr) this.populateSettingsForm('whisparr', data.whisparr);
+                if (data.swaparr) this.populateSettingsForm('swaparr', data.swaparr);
+                if (data.general) this.populateSettingsForm('general', data.general);
+                
+                // Update duration displays (like sleep durations)
+                if (typeof SettingsForms !== 'undefined' && 
+                    typeof SettingsForms.updateDurationDisplay === 'function') {
+                    SettingsForms.updateDurationDisplay();
+                }
+                
+                // Load stateful info immediately, don't wait for loadAllSettings to complete
+                this.loadStatefulInfo();
             })
             .catch(error => {
-                console.error(`Error loading all settings:`, error);
-                this.showNotification(`Error loading settings: ${error.message}`, 'error');
-                this.originalSettings = {}; // Reset on error
+                console.error('Error loading settings:', error);
+                this.showNotification('Error loading settings. Please try again.', 'error');
             });
     },
     
@@ -741,18 +980,17 @@ let huntarrUI = {
             
         console.log(`[huntarrUI] Local access bypass changed: ${isLocalAccessBypassChanged}`);
 
-        // Add app_type to the payload if needed by backend
-        const payload = { [app]: settings };
+        console.log(`[huntarrUI] Sending settings payload for ${app}:`, settings);
 
-        console.log(`[huntarrUI] Sending settings payload for ${app}:`, payload);
-
-        // Use the correct endpoint /api/settings
-        fetch(`/api/settings`, {
+        // Use the correct endpoint based on app type
+        const endpoint = app === 'general' ? '/api/settings/general' : `/api/settings/${app}`;
+        
+        HuntarrUtils.fetchWithTimeout(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(settings)
         })
         .then(response => {
             if (!response.ok) {
@@ -802,6 +1040,11 @@ let huntarrUI = {
             // Update connection status and UI
             this.checkAppConnection(app);
             this.updateHomeConnectionStatus();
+            
+            // If general settings were saved, refresh the stateful info display
+            if (app === 'general') {
+                this.loadStatefulInfo();
+            }
         })
         .catch(error => {
             console.error('Error saving settings:', error);
@@ -1098,7 +1341,7 @@ let huntarrUI = {
         // Check for trailing slashes in URL
         if (url.endsWith('/') || url.endsWith('\\')) {
             statusSpan.textContent = 'Remove trailing slash from URL (/ or \\)';
-            statusSpan.className = 'connection-status error';
+            statusSpan.className = 'status-error';
             return;
         }
         
@@ -1106,7 +1349,7 @@ let huntarrUI = {
         url = url.trim().replace(/[/\\]+$/, '');
         
         // Make the API request to test the connection
-        fetch(`/api/${appName}/test-connection`, {
+        HuntarrUtils.fetchWithTimeout(`/api/${appName}/test-connection`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1200,7 +1443,7 @@ let huntarrUI = {
     },
     
     checkAppConnection: function(app) {
-        fetch(`/api/status/${app}`)
+        HuntarrUtils.fetchWithTimeout(`/api/status/${app}`)
             .then(response => response.json())
             .then(data => {
                 // Pass the whole data object for all apps
@@ -1278,7 +1521,7 @@ let huntarrUI = {
     
     // User actions
     startHunt: function() {
-        fetch('/api/hunt/start', { method: 'POST' })
+        HuntarrUtils.fetchWithTimeout('/api/hunt/start', { method: 'POST' })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -1294,7 +1537,7 @@ let huntarrUI = {
     },
     
     stopHunt: function() {
-        fetch('/api/hunt/stop', { method: 'POST' })
+        HuntarrUtils.fetchWithTimeout('/api/hunt/stop', { method: 'POST' })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -1314,7 +1557,7 @@ let huntarrUI = {
         const usernameElement = document.getElementById('username');
         if (!usernameElement) return;
         
-        fetch('/api/user/info')
+        HuntarrUtils.fetchWithTimeout('/api/user/info')
             .then(response => response.json())
             .then(data => {
                 if (data.username) {
@@ -1335,7 +1578,7 @@ let huntarrUI = {
     // Check if local access bypass is enabled and update UI accordingly
     checkLocalAccessBypassStatus: function() {
         console.log("Checking local access bypass status...");
-        fetch('/api/get_local_access_bypass_status') // Corrected URL
+        HuntarrUtils.fetchWithTimeout('/api/get_local_access_bypass_status') // Corrected URL
             .then(response => {
                 if (!response.ok) {
                     // Log error if response is not OK (e.g., 404, 500)
@@ -1418,7 +1661,7 @@ let huntarrUI = {
     logout: function(e) { // Added logout function
         e.preventDefault(); // Prevent default link behavior
         console.log('[huntarrUI] Logging out...');
-        fetch('/logout', { // Use the correct endpoint defined in Flask
+        HuntarrUtils.fetchWithTimeout('/logout', { // Use the correct endpoint defined in Flask
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1442,7 +1685,7 @@ let huntarrUI = {
     
     // Media statistics handling
     loadMediaStats: function() {
-        fetch('/api/stats')
+        HuntarrUtils.fetchWithTimeout('/api/stats')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -1504,36 +1747,56 @@ let huntarrUI = {
     },
     
     resetMediaStats: function(appType = null) {
-        const confirmMessage = appType 
-            ? `Are you sure you want to reset statistics for ${appType}?` 
-            : 'Are you sure you want to reset all media statistics?';
-            
-        if (!confirm(confirmMessage)) {
-            return;
+        // Directly update the UI first to provide immediate feedback
+        const stats = {
+            'sonarr': {'hunted': 0, 'upgraded': 0},
+            'radarr': {'hunted': 0, 'upgraded': 0},
+            'lidarr': {'hunted': 0, 'upgraded': 0},
+            'readarr': {'hunted': 0, 'upgraded': 0},
+            'whisparr': {'hunted': 0, 'upgraded': 0}
+        };
+        
+        // Immediately update UI before even showing the confirmation
+        if (appType) {
+            // Only reset the specific app's stats
+            this.updateStatsDisplay({
+                [appType]: stats[appType]
+            });
+        } else {
+            // Reset all stats
+            this.updateStatsDisplay(stats);
         }
         
-        const requestBody = appType ? { app_type: appType } : {};
-        
-        fetch('/api/stats/reset', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                this.showNotification(data.message, 'success');
-                this.loadMediaStats(); // Refresh the stats display
-            } else {
-                this.showNotification(data.message || 'Failed to reset statistics', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error resetting statistics:', error);
-            this.showNotification('Error resetting statistics', 'error');
-        });
+        // Show a success notification
+        this.showNotification('Statistics reset successfully', 'success');
+
+        // Try to send the reset to the server, but don't depend on it
+        try {
+            const requestBody = appType ? { app_type: appType } : {};
+            
+            HuntarrUtils.fetchWithTimeout('/api/stats/reset', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => {
+                // Just log the response, don't rely on it for UI feedback
+                if (!response.ok) {
+                    console.warn('Server responded with non-OK status for stats reset');
+                }
+                return response.json().catch(() => ({}));
+            })
+            .then(data => {
+                console.log('Stats reset response:', data);
+            })
+            .catch(error => {
+                console.warn('Error communicating with server for stats reset:', error);
+            });
+        } catch (error) {
+            console.warn('Error in stats reset:', error);
+        }
     },
     
     // Utility functions
@@ -1575,7 +1838,7 @@ let huntarrUI = {
 
     // Load current version from version.txt
     loadCurrentVersion: function() {
-        fetch('/version.txt')
+        HuntarrUtils.fetchWithTimeout('/version.txt')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to load version.txt');
@@ -1599,7 +1862,7 @@ let huntarrUI = {
 
     // Load latest version from GitHub releases
     loadLatestVersion: function() {
-        fetch('https://api.github.com/repos/plexguide/Huntarr.io/releases/latest')
+        HuntarrUtils.fetchWithTimeout('https://api.github.com/repos/plexguide/Huntarr.io/releases/latest')
             .then(response => {
                 if (!response.ok) {
                     // Handle rate limiting or other errors
@@ -1629,6 +1892,57 @@ let huntarrUI = {
             });
     },
 
+    // Load GitHub star count
+    loadGitHubStarCount: function() {
+        const starsElement = document.getElementById('github-stars-value');
+        if (!starsElement) return;
+        
+        starsElement.textContent = 'Loading...';
+        
+        // GitHub API endpoint for repository information
+        const apiUrl = 'https://api.github.com/repos/plexguide/huntarr';
+        
+        HuntarrUtils.fetchWithTimeout(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`GitHub API error: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.stargazers_count !== undefined) {
+                    // Format the number with commas for thousands
+                    const formattedStars = data.stargazers_count.toLocaleString();
+                    starsElement.textContent = formattedStars;
+                    
+                    // Store in localStorage to avoid excessive API requests
+                    const cacheData = {
+                        stars: data.stargazers_count,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem('huntarr-github-stars', JSON.stringify(cacheData));
+                } else {
+                    throw new Error('Star count not found in response');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching GitHub stars:', error);
+                
+                // Try to load from cache if we have it
+                const cachedData = localStorage.getItem('huntarr-github-stars');
+                if (cachedData) {
+                    try {
+                        const parsed = JSON.parse(cachedData);
+                        starsElement.textContent = parsed.stars.toLocaleString();
+                    } catch (e) {
+                        starsElement.textContent = 'N/A';
+                    }
+                } else {
+                    starsElement.textContent = 'N/A';
+                }
+            });
+    },
+
     // Add or modify this function to handle enabling/disabling save/reset
     updateSaveResetButtonState(enable) { // Changed signature
         const saveButton = this.elements.saveSettingsButton;
@@ -1650,6 +1964,559 @@ let huntarrUI = {
         // This function should ideally call checkAppConnection for all relevant apps
         // or use the stored configuredApps status if checkAppConnection updates it.
         this.checkAppConnections(); // Re-check all connections after a save might be simplest
+    },
+    
+    // Load stateful management info
+    loadStatefulInfo: function(attempts = 0) {
+        const initialStateEl = document.getElementById('stateful_initial_state');
+        const expiresDateEl = document.getElementById('stateful_expires_date');
+        const intervalInput = document.getElementById('stateful_management_hours');
+        const intervalDaysSpan = document.getElementById('stateful_management_days');
+        
+        // Max retry attempts - increased for better reliability
+        const maxAttempts = 5;
+        
+        console.log(`[StatefulInfo] Loading stateful info (attempt ${attempts + 1})`);
+        
+        // Update UI to show loading state instead of N/A on first attempt
+        if (attempts === 0) {
+            if (initialStateEl) initialStateEl.textContent = 'Loading...';
+            if (expiresDateEl) expiresDateEl.textContent = 'Loading...';
+        }
+        
+        // First check if we have cached data in localStorage that we can use immediately
+        const cachedStatefulData = localStorage.getItem('huntarr-stateful-data');
+        if (cachedStatefulData && attempts === 0) {
+            try {
+                const parsedData = JSON.parse(cachedStatefulData);
+                const cacheAge = Date.now() - parsedData.timestamp;
+                
+                // Use cache if it's less than 5 minutes old while waiting for fresh data
+                if (cacheAge < 300000) {
+                    console.log('[StatefulInfo] Using cached data while fetching fresh data');
+                    
+                    // Display cached data
+                    if (initialStateEl && parsedData.created_at_ts) {
+                        const createdDate = new Date(parsedData.created_at_ts * 1000);
+                        initialStateEl.textContent = this.formatDateNicely(createdDate);
+                    }
+                    
+                    if (expiresDateEl && parsedData.expires_at_ts) {
+                        const expiresDate = new Date(parsedData.expires_at_ts * 1000);
+                        expiresDateEl.textContent = this.formatDateNicely(expiresDate);
+                    }
+                    
+                    // Update interval input and days display
+                    if (intervalInput && parsedData.interval_hours) {
+                        intervalInput.value = parsedData.interval_hours;
+                        if (intervalDaysSpan) {
+                            const days = (parsedData.interval_hours / 24).toFixed(1);
+                            intervalDaysSpan.textContent = `${days} days`;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('[StatefulInfo] Error parsing cached data:', e);
+            }
+        }
+        
+        // Always fetch fresh data from the server
+        HuntarrUtils.fetchWithTimeout('/api/stateful/info', { 
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Cache the response with a timestamp for future use
+                localStorage.setItem('huntarr-stateful-data', JSON.stringify({
+                    ...data,
+                    timestamp: Date.now()
+                }));
+                
+                // Handle initial state date
+                if (initialStateEl) {
+                    if (data.created_at_ts) {
+                        const createdDate = new Date(data.created_at_ts * 1000);
+                        initialStateEl.textContent = this.formatDateNicely(createdDate);
+                    } else {
+                        initialStateEl.textContent = 'Not yet created';
+                        
+                        // If this is the first state load attempt and no timestamp exists,
+                        // it might be because the state file hasn't been created yet
+                        if (attempts < maxAttempts) {
+                            console.log(`[StatefulInfo] No initial state timestamp, will retry (${attempts + 1}/${maxAttempts})`);
+                            setTimeout(() => {
+                                this.loadStatefulInfo(attempts + 1);
+                            }, 500); // Longer delay for better chance of success
+                            return;
+                        }
+                    }
+                }
+                
+                // Handle expiration date
+                if (expiresDateEl) {
+                    if (data.expires_at_ts) {
+                        const expiresDate = new Date(data.expires_at_ts * 1000);
+                        expiresDateEl.textContent = this.formatDateNicely(expiresDate);
+                    } else {
+                        expiresDateEl.textContent = 'Not set';
+                    }
+                }
+                
+                // Update interval input and days display
+                if (intervalInput && data.interval_hours) {
+                    intervalInput.value = data.interval_hours;
+                    if (intervalDaysSpan) {
+                        const days = (data.interval_hours / 24).toFixed(1);
+                        intervalDaysSpan.textContent = `${days} days`;
+                    }
+                }
+                
+                // Hide error notification if it was visible
+                const notification = document.getElementById('stateful-notification');
+                if (notification) {
+                    notification.style.display = 'none';
+                }
+                
+                // Store the data for future reference
+                this._cachedStatefulData = data;
+                
+                console.log('[StatefulInfo] Successfully loaded and displayed stateful data');
+            } else {
+                throw new Error(data.message || 'Failed to load stateful info');
+            }
+        })
+        .catch(error => {
+            console.error(`Error loading stateful info (attempt ${attempts + 1}/${maxAttempts + 1}):`, error);
+            
+            // Retry if we haven't reached max attempts with exponential backoff
+            if (attempts < maxAttempts) {
+                const delay = Math.min(2000, 300 * Math.pow(2, attempts)); // Exponential backoff with max 2000ms
+                console.log(`[StatefulInfo] Retrying in ${delay}ms (attempt ${attempts + 1}/${maxAttempts})`);
+                setTimeout(() => {
+                    // Double-check if still on the same page before retrying
+                    if (document.getElementById('stateful_management_hours')) {
+                        this.loadStatefulInfo(attempts + 1);
+                    } else {
+                        console.log(`[StatefulInfo] Stateful info retry cancelled; user navigated away.`);
+                    }
+                }, delay);
+                return;
+            }
+            
+            // Use cached data as fallback if available
+            const cachedStatefulData = localStorage.getItem('huntarr-stateful-data');
+            if (cachedStatefulData) {
+                try {
+                    console.log('[StatefulInfo] Using cached data as fallback after failed fetch');
+                    const parsedData = JSON.parse(cachedStatefulData);
+                    
+                    if (initialStateEl && parsedData.created_at_ts) {
+                        const createdDate = new Date(parsedData.created_at_ts * 1000);
+                        initialStateEl.textContent = this.formatDateNicely(createdDate) + ' (cached)';
+                    } else if (initialStateEl) {
+                        initialStateEl.textContent = 'Not available';
+                    }
+                    
+                    if (expiresDateEl && parsedData.expires_at_ts) {
+                        const expiresDate = new Date(parsedData.expires_at_ts * 1000);
+                        expiresDateEl.textContent = this.formatDateNicely(expiresDate) + ' (cached)';
+                    } else if (expiresDateEl) {
+                        expiresDateEl.textContent = 'Not available';
+                    }
+                    
+                    // Update interval input and days display from cache
+                    if (intervalInput && parsedData.interval_hours) {
+                        intervalInput.value = parsedData.interval_hours;
+                        if (intervalDaysSpan) {
+                            const days = (parsedData.interval_hours / 24).toFixed(1);
+                            intervalDaysSpan.textContent = `${days} days`;
+                        }
+                    }
+                    
+                    return;
+                } catch (e) {
+                    console.warn('[StatefulInfo] Error parsing cached data as fallback:', e);
+                }
+            }
+            
+            // Final fallback if no cached data
+            if (initialStateEl) initialStateEl.textContent = 'Not available';
+            if (expiresDateEl) expiresDateEl.textContent = 'Not available';
+            
+            // Show error notification
+            const notification = document.getElementById('stateful-notification');
+            if (notification) {
+                notification.style.display = 'block';
+                notification.textContent = 'Could not load stateful management info. This may affect media tracking.';
+            }
+        });
+    },
+    
+    // Format date nicely with time, day, and relative time indication
+    formatDateNicely: function(date) {
+        if (!(date instanceof Date) || isNaN(date)) {
+            return 'Invalid date';
+        }
+        
+        const options = { 
+            weekday: 'short',
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+        
+        const formattedDate = date.toLocaleDateString(undefined, options);
+        
+        // Add relative time indicator (e.g., "in 6 days" or "7 days ago")
+        const now = new Date();
+        const diffTime = date.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        let relativeTime = '';
+        if (diffDays > 0) {
+            relativeTime = ` (in ${diffDays} day${diffDays !== 1 ? 's' : ''})`;
+        } else if (diffDays < 0) {
+            relativeTime = ` (${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''} ago)`;
+        } else {
+            relativeTime = ' (today)';
+        }
+        
+        return `${formattedDate}${relativeTime}`;
+    },
+    
+    // Reset stateful management - clear all processed IDs
+    resetStatefulManagement: function() {
+        console.log("Reset stateful management function called");
+        
+        // Show a loading indicator or disable the button
+        const resetBtn = document.getElementById('reset_stateful_btn');
+        if (resetBtn) {
+            resetBtn.disabled = true;
+            const originalText = resetBtn.innerHTML;
+            resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+            console.log("Reset button found and disabled:", resetBtn);
+        } else {
+            console.error("Reset button not found in the DOM!");
+        }
+        
+        // Add debug logging
+        console.log("Sending reset request to /api/stateful/reset");
+        
+        HuntarrUtils.fetchWithTimeout('/api/stateful/reset', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            },
+            cache: 'no-cache' // Add cache control to prevent caching
+        })
+        .then(response => {
+            console.log("Reset response received:", response.status, response.statusText);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Reset response data:", data);
+            
+            if (data.success) {
+                this.showNotification('Stateful management reset successfully', 'success');
+                // Wait a moment before reloading the info to ensure it's refreshed
+                setTimeout(() => {
+                    this.loadStatefulInfo(0); // Reload stateful info with fresh attempt
+                    
+                    // Re-enable the button
+                    if (resetBtn) {
+                        resetBtn.disabled = false;
+                        resetBtn.innerHTML = '<i class="fas fa-trash"></i> Reset';
+                    }
+                }, 1000);
+            } else {
+                throw new Error(data.message || 'Unknown error resetting stateful management');
+            }
+        })
+        .catch(error => {
+             console.error("Error resetting stateful management:", error);
+             this.showNotification(`Error resetting stateful management: ${error.message}`, 'error');
+            
+             // Re-enable the button
+             if (resetBtn) {
+                 resetBtn.disabled = false;
+                 resetBtn.innerHTML = '<i class="fas fa-trash"></i> Reset';
+             }
+        });
+    },
+    
+    // Update stateful management expiration based on hours input
+    updateStatefulExpirationOnUI: function() {
+        const hoursInput = document.getElementById('stateful_management_hours');
+        if (!hoursInput) return;
+        
+        const hours = parseInt(hoursInput.value) || 168;
+        
+        // Show updating indicator
+        const expiresDateEl = document.getElementById('stateful_expires_date');
+        if (expiresDateEl) {
+            expiresDateEl.textContent = 'Updating...';
+        }
+        
+        HuntarrUtils.fetchWithTimeout('/api/stateful/update-expiration', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ hours: hours }),
+            cache: 'no-cache'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                this.showNotification(`Updated expiration to ${hours} hours`, 'success');
+                // Reload the stateful info after a short delay
+                setTimeout(() => {
+                    this.loadStatefulInfo();
+                }, 500);
+            } else {
+                throw new Error(data.message || 'Unknown error updating expiration');
+            }
+        })
+        .catch(error => {
+             console.error('Error updating stateful expiration:', error);
+             this.showNotification(`Failed to update expiration: ${error.message}`, 'error');
+             // Reset the UI
+             if (expiresDateEl) {
+                 expiresDateEl.textContent = 'Error updating';
+             }
+        });
+    },
+
+    // Add dedicated setup for the stateful reset button and a handler function
+    setupStatefulResetButton: function() {
+        const resetStatefulBtn = document.getElementById('reset_stateful_btn');
+        if (resetStatefulBtn) {
+            console.log('Found reset_stateful_btn, attaching event listener');
+            
+            // Remove any existing listeners to prevent duplicates
+            resetStatefulBtn.removeEventListener('click', this.handleStatefulReset);
+            
+            // Attach the event handler
+            this.handleStatefulReset = this.handleStatefulReset.bind(this);
+            resetStatefulBtn.addEventListener('click', this.handleStatefulReset);
+        } else {
+            // If button not found yet, try again after a short delay
+            // This handles cases where the button is added to the DOM after initial load
+            console.log('reset_stateful_btn not found yet, will try again in 500ms');
+            setTimeout(() => this.setupStatefulResetButton(), 500);
+        }
+    },
+    
+    // Handler for stateful reset button click
+    handleStatefulReset: function(event) {
+        event.preventDefault();
+        console.log('Stateful reset button clicked');
+        
+        // Create and show a custom confirmation dialog using vanilla JS or jQuery
+        // First check if we have jQuery
+        if (typeof $ !== 'undefined') {
+            // Using jQuery modal if available
+            console.log("Using jQuery for modal dialog");
+            
+            // Remove any existing modal
+            $('#resetConfirmModal').remove();
+            
+            // Create modal HTML
+            const modalHtml = `
+                <div id="resetConfirmModal" class="modal fade">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirm Reset</h5>
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure you want to reset stateful management? This will clear all processed media IDs.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" id="confirmResetBtn">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add to DOM
+            $('body').append(modalHtml);
+            
+            // Handle confirmation
+            $('#confirmResetBtn').on('click', () => {
+                $('#resetConfirmModal').modal('hide');
+                this.resetStatefulManagement();
+            });
+            
+            // Show modal
+            $('#resetConfirmModal').modal('show');
+        } else {
+            // Fallback to custom dialog using vanilla JS
+            console.log("Using custom vanilla JS dialog");
+            
+            // Create a simple modal dialog
+            const modalDiv = document.createElement('div');
+            modalDiv.id = 'customResetModal';
+            modalDiv.style.position = 'fixed';
+            modalDiv.style.top = '0';
+            modalDiv.style.left = '0';
+            modalDiv.style.width = '100%';
+            modalDiv.style.height = '100%';
+            modalDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            modalDiv.style.display = 'flex';
+            modalDiv.style.alignItems = 'center';
+            modalDiv.style.justifyContent = 'center';
+            modalDiv.style.zIndex = '9999';
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.backgroundColor = '#2a2e39'; // Dark theme background
+            modalContent.style.color = '#ffffff'; // White text
+            modalContent.style.borderRadius = '8px';
+            modalContent.style.width = '500px'; // Increased width
+            modalContent.style.maxWidth = '90%'; // Ensure it doesn't overflow on mobile
+            modalContent.style.padding = '30px'; // Increased padding
+            modalContent.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.5)';
+            modalContent.innerHTML = `
+                <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 24px; color: #ffffff;">Confirm Reset</h2>
+                <p style="font-size: 16px; line-height: 1.5; margin-bottom: 25px;">Are you sure you want to reset Stateful Management? This will clear all processed media IDs.</p>
+                <div style="display: flex; justify-content: flex-end; margin-top: 30px;">
+                    <button id="cancelResetBtn" style="margin-right: 15px; padding: 10px 20px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Cancel</button>
+                    <button id="confirmCustomResetBtn" style="padding: 10px 20px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Reset</button>
+                </div>
+            `;
+            
+            modalDiv.appendChild(modalContent);
+            document.body.appendChild(modalDiv);
+            
+            // Handle button clicks
+            document.getElementById('cancelResetBtn').addEventListener('click', () => {
+                document.body.removeChild(modalDiv);
+            });
+            
+            document.getElementById('confirmCustomResetBtn').addEventListener('click', () => {
+                document.body.removeChild(modalDiv);
+                this.resetStatefulManagement();
+            });
+            
+            // Close when clicking outside the modal
+            modalDiv.addEventListener('click', (e) => {
+                if (e.target === modalDiv) {
+                    document.body.removeChild(modalDiv);
+                }
+            });
+        }
+    },
+    
+    // Add global event handler and method to track saved settings across all apps
+    registerGlobalUnsavedChangesHandler: function() {
+        window.addEventListener('beforeunload', this.handleUnsavedChangesBeforeUnload.bind(this));
+        
+        // Reset hasUnsavedChanges when settings are saved
+        document.addEventListener('settings:saved', (event) => {
+            if (event.detail && event.detail.appType) {
+                console.log(`settings:saved event received for ${event.detail.appType}`);
+                if (this.formChanged) {
+                    this.formChanged[event.detail.appType] = false;
+                }
+                
+                // Also clear the change tracking in the appsModule if it exists
+                if (window.appsModule) {
+                    // Reset the app in the tracking array
+                    if (window.appsModule.appsWithChanges && 
+                        window.appsModule.appsWithChanges.includes(event.detail.appType)) {
+                        window.appsModule.appsWithChanges = 
+                            window.appsModule.appsWithChanges.filter(app => app !== event.detail.appType);
+                    }
+                    
+                    // Only update the overall flag if there are no apps with changes left
+                    if (!window.appsModule.appsWithChanges || window.appsModule.appsWithChanges.length === 0) {
+                        window.appsModule.settingsChanged = false;
+                    }
+                }
+                
+                // Check if there are any remaining form changes
+                this.checkForRemainingChanges();
+            }
+        });
+    },
+    
+    // New method to check if any forms still have changes
+    checkForRemainingChanges: function() {
+        if (!this.formChanged) return;
+        
+        // Check if any forms still have changes
+        const hasAnyChanges = Object.values(this.formChanged).some(val => val === true);
+        
+        console.log('Checking for remaining form changes:', {
+            formChanged: this.formChanged,
+            hasAnyChanges: hasAnyChanges
+        });
+        
+        // Update the global flag
+        this.hasUnsavedChanges = hasAnyChanges;
+    },
+    
+    // Handle unsaved changes before unload
+    handleUnsavedChangesBeforeUnload: function(event) {
+        // Check if we should suppress the check (used for test connection functionality)
+        if (this.suppressUnsavedChangesCheck || window._suppressUnsavedChangesDialog) {
+            console.log('Unsaved changes check suppressed');
+            return;
+        }
+        
+        // If we have unsaved changes, show confirmation dialog
+        if (this.hasUnsavedChanges) {
+            console.log('Preventing navigation due to unsaved changes');
+            event.preventDefault();
+            event.returnValue = 'You have unsaved changes. Do you want to continue without saving?';
+            return event.returnValue;
+        }
+    },
+    
+    // Add a proper hasFormChanges function to compare form values with original values
+    hasFormChanges: function(app) {
+        if (!app || !this.originalSettings || !this.originalSettings[app]) return false;
+        
+        const form = document.getElementById(`${app}Settings`);
+        if (!form) return false;
+        
+        const currentSettings = this.getFormSettings(app);
+        if (!currentSettings) return false;
+        
+        // Deep comparison of current settings with original settings
+        // For complex objects like instances, we need to stringify them for comparison
+        const originalJSON = JSON.stringify(this.originalSettings[app]);
+        const currentJSON = JSON.stringify(currentSettings);
+        
+        return originalJSON !== currentJSON;
     },
 };
 

@@ -40,9 +40,13 @@ def get_configured_instances():
 
             # Only include properly configured instances
             if is_enabled and api_url and api_key:
+                # Get the exact instance name as configured in the UI
+                instance_name = instance.get("name", "Default") 
+                sonarr_logger.info(f"Using configured instance name: '{instance_name}' for Sonarr instance")
+                
                 # Return only essential instance details
                 instance_data = {
-                    "instance_name": instance.get("name", "Default"),
+                    "instance_name": instance_name,
                     "api_url": api_url,
                     "api_key": api_key,
                 }
@@ -73,7 +77,7 @@ def get_configured_instances():
                 "api_key": api_key,
             }
             instances.append(instance_data)
-            # sonarr_logger.info(f"Added valid legacy instance: {instance_data}") # Removed verbose log
+            sonarr_logger.info(f"Using legacy configuration with instance name: 'Default'")
         else:
             sonarr_logger.warning("No API URL or key found in legacy configuration")
 

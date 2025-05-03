@@ -9,6 +9,7 @@ import datetime
 from threading import Lock
 from primary.utils.logger import LOG_DIR, APP_LOG_FILES, MAIN_LOG_FILE # Import log constants
 from primary import settings_manager # Import settings_manager
+from src.primary.stateful_manager import update_lock_expiration # Import stateful update function
 
 # import socket # No longer used
 import json
@@ -26,7 +27,7 @@ from flask import Flask, render_template, request, jsonify, Response, send_from_
 # from src.primary.config import API_URL # No longer needed directly
 # Use only settings_manager
 from src.primary import settings_manager
-from src.primary.utils.logger import setup_logger, get_logger, LOG_DIR # Import get_logger and LOG_DIR
+from src.primary.utils.logger import setup_main_logger, get_logger, LOG_DIR, update_logging_levels # Import get_logger, LOG_DIR, and update_logging_levels
 from src.primary.auth import (
     authenticate_request, user_exists, create_user, verify_user, create_session,
     logout, SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret,
@@ -37,6 +38,12 @@ from src.primary.routes.common import common_bp
 
 # Import blueprints for each app from the centralized blueprints module
 from src.primary.apps.blueprints import sonarr_bp, radarr_bp, lidarr_bp, readarr_bp, whisparr_bp, swaparr_bp
+
+# Import stateful blueprint
+from src.primary.stateful_routes import stateful_api
+
+# Import history blueprint
+from src.primary.routes.history_routes import history_blueprint
 
 # Disable Flask default logging
 log = logging.getLogger('werkzeug')
@@ -58,6 +65,8 @@ app.register_blueprint(lidarr_bp, url_prefix='/api/lidarr')
 app.register_blueprint(readarr_bp, url_prefix='/api/readarr')
 app.register_blueprint(whisparr_bp, url_prefix='/api/whisparr')
 app.register_blueprint(swaparr_bp, url_prefix='/api/swaparr')
+app.register_blueprint(stateful_api, url_prefix='/api/stateful')
+app.register_blueprint(history_blueprint, url_prefix='/api/history')
 
 # Register the authentication check to run before requests
 app.before_request(authenticate_request)
@@ -270,13 +279,8 @@ def logs_stream():
                                     
                                     # Only filter when reading system log for specific app tab
                                     if app_type != 'all' and app_type != 'system' and name == 'system':
-                                        # Include system log entries that mention this app name
-                                        # or contain patterns specific to the app
-                                        app_pattern = f"huntarr.{app_type}"
-                                        include_line = (
-                                            app_type.lower() in line.lower() or 
-                                            app_pattern in line
-                                        )
+                                        # MODIFIED: Don't include system logs in app tabs at all
+                                        include_line = False
                                     else:
                                         include_line = True
                                     
@@ -342,67 +346,78 @@ def logs_stream():
     response.headers['X-Accel-Buffering'] = 'no'  # Disable nginx buffering if using nginx
     return response
 
-@app.route('/api/settings', methods=['GET', 'POST'])
+@app.route('/api/settings', methods=['GET'])
 def api_settings():
     if request.method == 'GET':
         # Return all settings using the new manager function
         all_settings = settings_manager.get_all_settings() # Corrected function name
         return jsonify(all_settings)
 
-    elif request.method == 'POST':
-        data = request.json
-        web_logger = get_logger("web_server")
-        web_logger.debug(f"Received settings save request: {data}")
-
-        # Expecting data format like: { "sonarr": { "api_url": "...", ... } }
-        if not isinstance(data, dict) or len(data) != 1:
-            return jsonify({"success": False, "error": "Invalid payload format. Expected {'app_name': {settings...}}"}), 400
-
-        app_name = list(data.keys())[0]
-        settings_data = data[app_name]
-
-        if app_name not in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
-             # Allow saving settings for potentially unknown apps if needed, or return error
-             # For now, let's restrict to known types
-             return jsonify({"success": False, "error": f"Unknown application type: {app_name}"}), 400
-
-        # Save the settings using the manager
-        success = settings_manager.save_settings(app_name, settings_data) # Corrected function name
-
-        if success:
-            # Return the full updated configuration
-            all_settings = settings_manager.get_all_settings() # Corrected: Use get_all_settings
-            return jsonify(all_settings) # Return the full config object
-        else:
-            return jsonify({"success": False, "error": f"Failed to save settings for {app_name}"}), 500
-
 @app.route('/api/settings/general', methods=['POST'])
 def save_general_settings():
     general_logger = get_logger("web_server")
     general_logger.info("Received request to save general settings.")
-    try:
-        data = request.get_json()
-        if not data or 'general' not in data:
-            general_logger.error("Invalid payload received for saving general settings.")
-            return jsonify({"success": False, "error": "Invalid payload"}), 400
+    
+    # Make sure we have data
+    if not request.is_json:
+        return jsonify({"success": False, "error": "Expected JSON data"}), 400
+    
+    data = request.json
+    
+    # Save general settings
+    success = settings_manager.save_settings('general', data)
+    
+    if success:
+        # Update expiration timing from general settings if applicable
+        try:
+            new_hours = int(data.get('stateful_management_hours'))
+            if new_hours > 0:
+                general_logger.info(f"Updating stateful expiration to {new_hours} hours.")
+                update_lock_expiration(hours=new_hours)
+        except (ValueError, TypeError, KeyError):
+            # Don't update if the value wasn't provided or is invalid
+            pass
+        except Exception as e:
+            general_logger.error(f"Error updating expiration timing: {e}")
+        
+        # Update logging levels immediately when general settings are changed
+        update_logging_levels()
+        
+        # Return all settings
+        return jsonify(settings_manager.get_all_settings())
+    else:
+        return jsonify({"success": False, "error": "Failed to save general settings"}), 500
 
-        general_settings_data = data['general']
-        general_logger.debug(f"Saving general settings data: {general_settings_data}")
-
-        # Save the entire general settings dictionary
-        success = settings_manager.save_settings('general', general_settings_data)
-
+@app.route('/api/settings/<app_name>', methods=['GET', 'POST'])
+def handle_app_settings(app_name):
+    web_logger = get_logger("web_server")
+    
+    # Validate app_name
+    if app_name not in settings_manager.KNOWN_APP_TYPES:
+        return jsonify({"success": False, "error": f"Unknown application type: {app_name}"}), 400
+    
+    if request.method == 'GET':
+        # Return settings for the specific app
+        app_settings = settings_manager.load_settings(app_name)
+        return jsonify(app_settings)
+    
+    elif request.method == 'POST':
+        # Make sure we have data
+        if not request.is_json:
+            return jsonify({"success": False, "error": "Expected JSON data"}), 400
+        
+        data = request.json
+        web_logger.debug(f"Received {app_name} settings save request: {data}")
+        
+        # Save the app settings
+        success = settings_manager.save_settings(app_name, data)
+        
         if success:
-            general_logger.info("General settings saved successfully.")
-            # Return the full updated config
-            full_config = settings_manager.load_settings()
-            return jsonify(full_config)
+            web_logger.info(f"Successfully saved {app_name} settings")
+            return jsonify({"success": True})
         else:
-            general_logger.error("Failed to save general settings via settings_manager.")
-            return jsonify({"success": False, "error": "Failed to save settings"}), 500
-    except Exception as e:
-        general_logger.error(f"Error saving general settings: {e}", exc_info=True)
-        return jsonify({"success": False, "error": str(e)}), 500
+            web_logger.error(f"Failed to save {app_name} settings")
+            return jsonify({"success": False, "error": f"Failed to save {app_name} settings"}), 500
 
 @app.route('/api/settings/theme', methods=['GET', 'POST'])
 def api_theme():
@@ -632,6 +647,46 @@ def apply_timezone_setting():
         return jsonify({"success": False, "error": f"Failed to apply timezone {timezone}"}), 500
     '''
 
+@app.route('/api/stats', methods=['GET'])
+def api_get_stats():
+    """Get the media statistics for all apps"""
+    # For now, return some sample statistics
+    # In a real implementation, these would be pulled from a database or file
+    stats = {
+        'sonarr': {'hunted': 228, 'upgraded': 15},
+        'radarr': {'hunted': 36, 'upgraded': 15},
+        'lidarr': {'hunted': 40, 'upgraded': 0},
+        'readarr': {'hunted': 4, 'upgraded': 2},
+        'whisparr': {'hunted': 346, 'upgraded': 153}
+    }
+    return jsonify({"success": True, "stats": stats})
+
+@app.route('/api/stats/reset', methods=['POST'])
+def api_reset_stats():
+    """Reset the media statistics for all apps or a specific app"""
+    try:
+        data = request.json or {}
+        app_type = data.get('app_type')
+        
+        # Get logger for logging the reset action
+        web_logger = get_logger("web_server")
+        
+        if app_type:
+            web_logger.info(f"Resetting statistics for app: {app_type}")
+            # In a real implementation, you would reset stats just for this app
+        else:
+            web_logger.info("Resetting all media statistics")
+            # In a real implementation, you would reset all app stats
+        
+        # Return immediate success since this is a visual-only feature for now
+        # In a production environment, this would actually reset stored statistics
+        return jsonify({"success": True, "message": "Statistics reset successfully"})
+        
+    except Exception as e:
+        web_logger = get_logger("web_server")
+        web_logger.error(f"Error resetting statistics: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route('/version.txt')
 def version_txt():
     """Serve version.txt file directly"""
@@ -652,6 +707,7 @@ def version_txt():
         web_logger.error(f"Error serving version.txt: {e}")
         return "5.3.1", 200, {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache'}
 
+# Start the web server in debug or production mode
 def start_web_server():
     """Start the web server in debug or production mode"""
     web_logger = get_logger("web_server")

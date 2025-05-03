@@ -6,10 +6,13 @@ Handles albums that do not meet the configured quality cutoff.
 
 import time
 import random
-from typing import Dict, Any, Optional, Callable, List # Added List
+from typing import Dict, Any, Optional, Callable, List, Union # Added List and Union
 from src.primary.utils.logger import get_logger
 from src.primary.apps.lidarr import api as lidarr_api
 from src.primary.stats_manager import increment_stat
+from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.state import check_state_reset  # Add the missing import
+from src.primary.utils.history_utils import log_processed_media
 
 # Get logger for the app
 lidarr_logger = get_logger(__name__) # Use __name__ for correct logger hierarchy
@@ -40,7 +43,6 @@ def process_cutoff_upgrades(
     # General Lidarr settings (also from app_settings)
     hunt_upgrade_items = app_settings.get("hunt_upgrade_items", 0)
     monitored_only = app_settings.get("monitored_only", True)
-    random_upgrades = app_settings.get("random_upgrades", True)
     api_timeout = app_settings.get("api_timeout", 120)
     command_wait_delay = app_settings.get("command_wait_delay", 1)
     command_wait_attempts = app_settings.get("command_wait_attempts", 600)
@@ -59,8 +61,14 @@ def process_cutoff_upgrades(
         lidarr_logger.info(f"'hunt_upgrade_items' is {hunt_upgrade_items} or less. Skipping upgrade processing for {instance_name}.")
         return False
 
+    lidarr_logger.info(f"Looking for quality upgrades for {instance_name}")
+    lidarr_logger.debug(f"Processing up to {hunt_upgrade_items} items for quality upgrade")
+    
+    # Reset state files if enough time has passed
+    check_state_reset("lidarr")
+    
     processed_count = 0
-    total_items_to_process = hunt_upgrade_items
+    processed_any = False
 
     try:
         lidarr_logger.info(f"Fetching cutoff unmet albums for {instance_name}...")
@@ -79,14 +87,24 @@ def process_cutoff_upgrades(
 
         lidarr_logger.info(f"Found {len(cutoff_unmet_albums)} cutoff unmet albums for {instance_name}.")
 
-        # Select albums to search
-        albums_to_search: List[Dict[str, Any]] = [] # Ensure type hint
-        if random_upgrades:
-            albums_to_search = random.sample(cutoff_unmet_albums, min(len(cutoff_unmet_albums), total_items_to_process))
-            lidarr_logger.debug(f"Randomly selected {len(albums_to_search)} albums out of {len(cutoff_unmet_albums)} to search for upgrades.")
-        else:
-            albums_to_search = cutoff_unmet_albums[:total_items_to_process]
-            lidarr_logger.debug(f"Selected the first {len(albums_to_search)} albums out of {len(cutoff_unmet_albums)} to search for upgrades.")
+        # Filter out already processed items
+        unprocessed_albums = []
+        for album in cutoff_unmet_albums:
+            album_id = str(album.get('id'))
+            if not is_processed("lidarr", instance_name, album_id):
+                unprocessed_albums.append(album)
+            else:
+                lidarr_logger.debug(f"Skipping already processed album ID: {album_id}")
+        
+        lidarr_logger.info(f"Found {len(unprocessed_albums)} unprocessed albums out of {len(cutoff_unmet_albums)} total albums eligible for quality upgrade.")
+        
+        if not unprocessed_albums:
+            lidarr_logger.info("No unprocessed albums found for quality upgrade. Skipping cycle.")
+            return False
+
+        # Always select albums randomly
+        albums_to_search = random.sample(unprocessed_albums, min(len(unprocessed_albums), hunt_upgrade_items))
+        lidarr_logger.info(f"Randomly selected {len(albums_to_search)} albums for upgrade search.")
 
         album_ids_to_search = [album['id'] for album in albums_to_search]
 
@@ -94,10 +112,30 @@ def process_cutoff_upgrades(
              lidarr_logger.info("No album IDs selected for upgrade search. Skipping trigger.")
              return False
 
+        # Prepare detailed album information for logging
+        album_details_log = []
+        for i, album in enumerate(albums_to_search):
+            # Extract useful information for logging
+            album_title = album.get('title', f'Album ID {album["id"]}')
+            artist_name = album.get('artist', {}).get('artistName', 'Unknown Artist')
+            quality = album.get('quality', {}).get('quality', {}).get('name', 'Unknown Quality')
+            album_details_log.append(f"{i+1}. {artist_name} - {album_title} (ID: {album['id']}, Current Quality: {quality})")
+
+        # Log each album on a separate line for better readability
+        if album_details_log:
+            lidarr_logger.info(f"Albums selected for quality upgrade in this cycle:")
+            for album_detail in album_details_log:
+                lidarr_logger.info(f" {album_detail}")
+
         # Check stop event before triggering search
         if stop_check and stop_check(): # Use the passed stop_check function
             lidarr_logger.warning("Shutdown requested, stopping upgrade album search.")
             return False # Return False as no search was triggered in this case
+
+        # Mark albums as processed BEFORE triggering search
+        for album_id in album_ids_to_search:
+            add_processed_id("lidarr", instance_name, str(album_id))
+            lidarr_logger.debug(f"Added album ID {album_id} to processed list for {instance_name}")
 
         lidarr_logger.info(f"Triggering Album Search for {len(album_ids_to_search)} albums for upgrade on instance {instance_name}: {album_ids_to_search}")
         # Pass necessary details extracted above to the API function
@@ -110,6 +148,19 @@ def process_cutoff_upgrades(
         if command_id:
             lidarr_logger.debug(f"Upgrade album search command triggered with ID: {command_id} for albums: {album_ids_to_search}")
             increment_stat("lidarr", "upgraded") # Use appropriate stat key
+            
+            # Log to history
+            for album_id in album_ids_to_search:
+                # Find the album info for this ID to log to history
+                for album in albums_to_search:
+                    if album['id'] == album_id:
+                        album_title = album.get('title', f'Album ID {album_id}')
+                        artist_name = album.get('artist', {}).get('artistName', 'Unknown Artist')
+                        media_name = f"{artist_name} - {album_title}"
+                        log_processed_media("lidarr", media_name, album_id, instance_name, "upgrade")
+                        lidarr_logger.debug(f"Logged quality upgrade to history for album ID {album_id}")
+                        break
+                
             time.sleep(command_wait_delay) # Basic delay
             processed_count += len(album_ids_to_search)
             processed_any = True # Mark that we processed something

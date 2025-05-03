@@ -9,6 +9,9 @@
                     &nbsp;&nbsp;|&nbsp;&nbsp;
                     <i class="fas fa-cloud-download-alt version-icon"></i>
                     <span id="latest-version-number">Latest: <a href="https://github.com/plexguide/Huntarr.io/releases/latest" target="_blank"><span id="latest-version-value">Loading...</span></a></span>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                    <i class="fas fa-star version-icon star-icon"></i>
+                    <span id="github-stars"><a href="https://github.com/plexguide/huntarr" target="_blank"><span id="github-stars-value">Loading...</span></a></span>
                 </p>
             </div>
         </div>
@@ -156,30 +159,29 @@
         </div>
 
         <div class="card thanks-card">
-            <h3><i class="fas fa-handshake"></i> Special Thanks</h3>
             <div class="thanks-container">
-                <div class="thanks-item">
-                    <i class="fas fa-users thanks-icon"></i>
-                    <div class="thanks-text">
-                        Thank you to <a href="https://github.com/zpatten" target="_blank">ZPatten</a>, <a href="https://github.com/FrancisAgostini" target="_blank">Maddogg7697</a>, and <a href="https://github.com/MacaidenXIII" target="_blank">MacaidenXIII</a> for kickstarting this project!
-                    </div>
-                </div>
-                <div class="thanks-item">
-                    <i class="fas fa-tools thanks-icon"></i>
-                    <div class="thanks-text">
-                        Thank you to <a href="https://ninjacentral.co.za" target="_blank">ninjacentral.co.za</a> for original API indexer insights and <a href="https://store.elfhosted.com/elf/huntarr" target="_blank">Get ElfHosted!</a> for easy deployment.
-                    </div>
-                </div>
                 <div class="thanks-item">
                     <i class="fas fa-heart thanks-icon"></i>
                     <div class="thanks-text">
-                        I thank my daughter for my inspiration in life. Thank you for using Huntarr ~ <a href="https://github.com/Admin9705/" target="_blank">Admin9705</a>
+                        Thank you for using Huntarr ~ <a href="https://github.com/Admin9705/" target="_blank">Admin9705</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    {% include 'components/footer.html' %}
+    
+    <!-- Fixed banner at the bottom of the viewport -->
+    <div class="fixed-banner-footer">
+        <p>
+            <a href="https://Huntarr.io" target="_blank">Huntarr.io</a> &copy; 2025
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            <i class="fas fa-heart donation-icon"></i> 
+            <a href="https://donate.plex.one" target="_blank">Donate @ PLEX.one</a> for Daughter's College Fund!
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            <i class="fas fa-star star-icon"></i> 
+            <a href="https://github.com/plexguide/huntarr" target="_blank">Star Huntarr on GitHub</a> - Really Helps!
+        </p>
+    </div>
 </section>
 
 <style>
@@ -188,6 +190,7 @@
         flex-direction: column;
         gap: 20px;
         width: 100%;
+        padding-bottom: 50px; /* Add padding to prevent content from being hidden by fixed banner */
     }
     
     .stack-layout .card {
@@ -206,8 +209,8 @@
     /* Banner card styles */
     .banner-card {
         background-color: var(--bg-secondary);
-        padding: 15px;
-        border-left: 4px solid var(--accent-color);
+        padding: 12px 15px;
+        border-left: 3px solid var(--accent-color);
     }
 
     .banner-content {
@@ -229,8 +232,8 @@
     .important-links {
         display: flex;
         flex-wrap: wrap;
-        gap: 12px;
-        margin-top: 12px;
+        gap: 10px;
+        margin-top: 10px;
         justify-content: center;
     }
 
@@ -238,26 +241,28 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        padding: 9px 15px;
+        padding: 8px 14px;
         background-color: var(--bg-tertiary);
         border-radius: 6px;
         color: var(--text-primary);
         text-decoration: none;
         transition: all 0.2s ease;
         font-weight: 500;
-        font-size: 0.9rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        font-size: 0.85rem;
+        box-shadow: none;
+        border: 1px solid var(--border-color);
     }
 
     .link-button i {
-        font-size: 0.9em;
+        font-size: 0.85em;
     }
 
     .link-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: none;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         background-color: var(--accent-color);
         color: white;
+        border-color: var(--accent-color);
     }
 
     .sponsor-button {
@@ -271,14 +276,14 @@
     
     /* Media Stats Styles - Updated to match new design */
     .media-stats-container {
-        padding: 10px;
+        padding: 0;
         text-align: center;
     }
     
     .app-stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
         margin-bottom: 20px;
     }
     
@@ -286,40 +291,41 @@
     .app-stats-card {
         background-color: var(--bg-secondary);
         border-radius: 8px;
-        padding: 15px;
+        padding: 12px;
         text-align: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         transition: all 0.3s ease;
         position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-height: 220px;
+        min-height: 180px;
         justify-content: space-between;
+        border: 1px solid var(--border-color);
     }
     
     .app-stats-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     /* Status container styling */
     .status-container {
         width: 100%;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
         display: flex;
         justify-content: center;
     }
     
     .status-badge {
-        padding: 6px 18px;
+        padding: 5px 15px;
         border-radius: 20px;
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: none;
     }
 
     /* App content styling */
@@ -327,29 +333,29 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-bottom: 5px;
+        margin-bottom: 10px;
     }
     
     .app-logo {
-        width: 48px;
-        height: 48px;
-        margin-bottom: 10px;
+        width: 40px;
+        height: 40px;
+        margin-bottom: 8px;
     }
     
     .app-stats-card h4 {
         margin: 0;
-        font-size: 1.2em;
+        font-size: 1.1em;
         font-weight: 600;
     }
     
     /* Stats display styling */
     .stats-numbers {
         display: flex;
-        gap: 15px;
+        gap: 10px;
         width: 100%;
-        padding-top: 10px;
+        padding-top: 12px;
         margin-top: auto;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 1px solid var(--border-color);
     }
 
     .stat-box {
@@ -360,14 +366,15 @@
     }
 
     .stat-number {
-        font-size: 2.5rem;
-        font-weight: 700;
+        font-size: 2rem;
+        font-weight: 600;
         line-height: 1;
+        color: var(--text-primary);
     }
     
     .stat-label {
-        font-size: 0.85rem;
-        margin-top: 5px;
+        font-size: 0.8rem;
+        margin-top: 2px;
         color: var(--text-secondary);
     }
     
@@ -394,23 +401,27 @@
     
     /* Status badge colors */
     .status-badge.connected {
-        background-color: #4caf50;
-        color: white;
+        background-color: rgba(39, 174, 96, 0.15);
+        color: #27ae60;
+        border: 1px solid rgba(39, 174, 96, 0.3);
     }
     
     .status-badge.partially-connected {
-        background-color: #ffc107; /* Yellow for partial connection */
-        color: #333; /* Darker text for yellow background */
+        background-color: rgba(243, 156, 18, 0.15);
+        color: #f39c12;
+        border: 1px solid rgba(243, 156, 18, 0.3);
     }
     
     .status-badge.not-connected {
-        background-color: #f44336; /* Red for no connection */
-        color: white;
+        background-color: rgba(231, 76, 60, 0.15);
+        color: #e74c3c;
+        border: 1px solid rgba(231, 76, 60, 0.3);
     }
     
     .status-badge.loading {
-        background-color: #ffb74d;
-        color: #333;
+        background-color: rgba(255, 183, 77, 0.15);
+        color: #ffb74d;
+        border: 1px solid rgba(255, 183, 77, 0.3);
     }
     
     /* Header for cards */
@@ -418,20 +429,20 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px; /* Add some space below the header */
+        margin-bottom: 15px;
     }
 
     .card h3 {
         margin-top: 0;
-        margin-bottom: 0; /* Remove bottom margin as spacing is handled by .card-header */
+        margin-bottom: 0;
     }
 
     /* Ensure button in header doesn't inherit odd margins and adjust padding */
     .card-header .action-button {
         margin: 0;
-        padding: 6px 12px; /* Slightly smaller padding */
-        font-size: 0.9em; /* Slightly smaller font */
-        flex-grow: 0; /* Prevent button from stretching */
+        padding: 6px 12px;
+        font-size: 0.9em;
+        flex-grow: 0;
     }
 
     /* Re-add danger button style */
@@ -477,35 +488,36 @@
     }
     
     /* Enhanced Special Thanks styling */
-    .card.thanks-card h3 {
-        margin-bottom: 15px; /* Space below title */
+    .card.thanks-card {
+        padding: 12px 15px;
     }
 
     .thanks-container {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
-        gap: 15px; /* Spacing between items */
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 12px;
     }
 
     .thanks-item {
         display: flex;
         align-items: center;
         gap: 10px;
-        background-color: var(--bg-tertiary); /* Slightly different background */
-        padding: 15px;
+        background-color: var(--bg-tertiary);
+        padding: 12px 15px;
         border-radius: 6px;
         border: 1px solid var(--border-color);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
 
     .thanks-icon {
-        font-size: 1.5em;
+        font-size: 1.3em;
         color: var(--accent-color);
-        width: 30px; /* Fixed width for alignment */
+        width: 25px;
         text-align: center;
     }
 
     .thanks-text {
-        font-size: 0.95em;
+        font-size: 0.9em;
         color: var(--text-secondary);
         line-height: 1.5;
     }
@@ -513,5 +525,46 @@
     .thanks-text a {
         color: var(--accent-color);
         text-decoration: none;
+    }
+    
+    /* Fixed banner footer styling */
+    .fixed-banner-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        padding: 10px 20px;
+        background-color: var(--bg-secondary);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        border-top: 1px solid var(--border-color);
+        z-index: 1000; /* Ensure it's above other elements */
+    }
+    
+    .fixed-banner-footer p {
+        margin: 0;
+        font-size: 1em;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .fixed-banner-footer a {
+        color: var(--accent-color);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s, text-decoration 0.2s;
+    }
+    
+    .fixed-banner-footer a:hover {
+        text-decoration: underline;
+        color: var(--accent-hover);
+    }
+    
+    .fixed-banner-footer .donation-icon {
+        color: var(--error-color, #ff6b6b);
+    }
+    
+    .fixed-banner-footer .star-icon {
+        color: var(--warning-color, #ffd700);
     }
 </style>

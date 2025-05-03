@@ -13,6 +13,10 @@ from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.whisparr import api as whisparr_api
 from src.primary.stats_manager import increment_stat
+from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.utils.history_utils import log_processed_media
+from src.primary.settings_manager import get_advanced_setting
+from src.primary.state import check_state_reset
 
 # Get logger for the app
 whisparr_logger = get_logger("whisparr")
@@ -34,25 +38,29 @@ def process_missing_items(
     whisparr_logger.info("Starting missing items processing cycle for Whisparr.")
     processed_any = False
     
+    # Reset state files if enough time has passed
+    check_state_reset("whisparr")
+    
     # Extract necessary settings
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
+    instance_name = app_settings.get("instance_name", "Whisparr Default")
     api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_item_refresh = app_settings.get("skip_item_refresh", False)
-    random_missing = app_settings.get("random_missing", False)
     
     # Use the new hunt_missing_items parameter name, falling back to hunt_missing_scenes for backwards compatibility
     hunt_missing_items = app_settings.get("hunt_missing_items", app_settings.get("hunt_missing_scenes", 0))
     
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)
-    state_reset_interval_hours = app_settings.get("state_reset_interval_hours", 168)
     
-    # Get the API version to use (v2 or v3)
-    api_version = app_settings.get("whisparr_version", "v3")
-    whisparr_logger.info(f"Using Whisparr API version: {api_version}")
+    # Use the centralized advanced setting for stateful management hours
+    stateful_management_hours = get_advanced_setting("stateful_management_hours", 168)
+    
+    # Log that we're using Whisparr V2 API
+    whisparr_logger.info(f"Using Whisparr V2 API for instance: {instance_name}")
 
     # Skip if hunt_missing_items is set to 0
     if hunt_missing_items <= 0:
@@ -66,7 +74,7 @@ def process_missing_items(
     
     # Get missing items
     whisparr_logger.info(f"Retrieving items with missing files...")
-    missing_items = whisparr_api.get_items_with_missing(api_url, api_key, api_timeout, monitored_only, api_version) 
+    missing_items = whisparr_api.get_items_with_missing(api_url, api_key, api_timeout, monitored_only) 
     
     if missing_items is None: # API call failed
         whisparr_logger.error("Failed to retrieve missing items from Whisparr API.")
@@ -103,18 +111,27 @@ def process_missing_items(
         whisparr_logger.info("No missing items left to process after filtering future releases.")
         return False
         
+    # Filter out already processed items using stateful management
+    unprocessed_items = []
+    for item in missing_items:
+        item_id = str(item.get("id"))
+        if not is_processed("whisparr", instance_name, item_id):
+            unprocessed_items.append(item)
+        else:
+            whisparr_logger.debug(f"Skipping already processed item ID: {item_id}")
+    
+    whisparr_logger.info(f"Found {len(unprocessed_items)} unprocessed items out of {len(missing_items)} total items with missing files.")
+    
+    if not unprocessed_items:
+        whisparr_logger.info(f"No unprocessed items found for {instance_name}. All available items have been processed.")
+        return False
+        
     items_processed = 0
     processing_done = False
     
     # Select items to search based on configuration
-    if random_missing:
-        whisparr_logger.info(f"Randomly selecting up to {hunt_missing_items} missing items.")
-        items_to_search = random.sample(missing_items, min(len(missing_items), hunt_missing_items))
-    else:
-        whisparr_logger.info(f"Selecting the first {hunt_missing_items} missing items (sorted by title).")
-        # Sort by title for consistent ordering if not random
-        missing_items.sort(key=lambda x: x.get("title", ""))
-        items_to_search = missing_items[:hunt_missing_items]
+    whisparr_logger.info(f"Randomly selecting up to {hunt_missing_items} missing items.")
+    items_to_search = random.sample(unprocessed_items, min(len(unprocessed_items), hunt_missing_items))
     
     whisparr_logger.info(f"Selected {len(items_to_search)} missing items to search.")
 
@@ -141,7 +158,7 @@ def process_missing_items(
         refresh_command_id = None
         if not skip_item_refresh:
             whisparr_logger.info(" - Refreshing item information...")
-            refresh_command_id = whisparr_api.refresh_item(api_url, api_key, api_timeout, item_id, api_version)
+            refresh_command_id = whisparr_api.refresh_item(api_url, api_key, api_timeout, item_id)
             if refresh_command_id:
                 whisparr_logger.info(f"Triggered refresh command {refresh_command_id}. Waiting a few seconds...")
                 time.sleep(5) # Basic wait
@@ -150,6 +167,10 @@ def process_missing_items(
         else:
             whisparr_logger.info(" - Skipping item refresh (skip_item_refresh=true)")
         
+        # Mark the item as processed BEFORE triggering any searches
+        add_processed_id("whisparr", instance_name, str(item_id))
+        whisparr_logger.debug(f"Added item ID {item_id} to processed list for {instance_name}")
+        
         # Check for stop signal before searching
         if stop_check():
             whisparr_logger.info(f"Stop requested before searching for {title}. Aborting...")
@@ -157,9 +178,15 @@ def process_missing_items(
         
         # Search for the item
         whisparr_logger.info(" - Searching for missing item...")
-        search_command_id = whisparr_api.item_search(api_url, api_key, api_timeout, [item_id], api_version)
+        search_command_id = whisparr_api.item_search(api_url, api_key, api_timeout, [item_id])
         if search_command_id:
             whisparr_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
+            
+            # Log to history system
+            media_name = f"{title} - {season_episode}"
+            log_processed_media("whisparr", media_name, item_id, instance_name, "missing")
+            whisparr_logger.debug(f"Logged history entry for item: {media_name}")
+            
             items_processed += 1
             processing_done = True
             

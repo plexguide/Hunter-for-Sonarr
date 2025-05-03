@@ -24,7 +24,7 @@ def test_connection():
         return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
     
     # Log the test attempt
-    whisparr_logger.info(f"Testing connection to Whisparr API at {api_url}")
+    whisparr_logger.info(f"Testing connection to Whisparr V2 API at {api_url}")
     
     # First check if URL is properly formatted
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
@@ -32,11 +32,11 @@ def test_connection():
         whisparr_logger.error(error_msg)
         return jsonify({"success": False, "message": error_msg}), 400
         
-    # For Whisparr, use api/v3
-    api_base = "api/v3"
-    test_url = f"{api_url.rstrip('/')}/{api_base}/system/status"
+    # For Whisparr V2, we can try both with and without /api/v3 path
+    # First try with direct API access
+    test_url = f"{api_url.rstrip('/')}/api/system/status"
     headers = {'X-Api-Key': api_key}
-
+    
     try:
         # Use a connection timeout separate from read timeout
         response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
@@ -44,136 +44,123 @@ def test_connection():
         # Log HTTP status code for diagnostic purposes
         whisparr_logger.debug(f"Whisparr API status code: {response.status_code}")
         
+        # If we get a 404, try with /api/v3 path since Whisparr V2 might be using API V3 format
+        if response.status_code == 404:
+            test_url = f"{api_url.rstrip('/')}/api/v3/system/status"
+            whisparr_logger.debug(f"First attempt failed, trying alternate API path: {test_url}")
+            response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
+            whisparr_logger.debug(f"Whisparr API V3 status code: {response.status_code}")
+        
         # Check HTTP status code
         response.raise_for_status()
 
         # Ensure the response is valid JSON
         try:
             response_data = response.json()
+            whisparr_logger.debug(f"Whisparr API response: {response_data}")
             
-            # We no longer save keys here since we use instances
-            # keys_manager.save_api_keys("whisparr", api_url, api_key)
+            # Verify this is actually a Whisparr API by checking for version
+            version = response_data.get('version', None)
+            if not version:
+                error_msg = "API response doesn't contain version information, may not be Whisparr"
+                whisparr_logger.error(error_msg)
+                return jsonify({"success": False, "message": error_msg}), 400
             
-            whisparr_logger.info(f"Successfully connected to Whisparr API version: {response_data.get('version', 'unknown')}")
-
-            # Return success with some useful information
-            return jsonify({
-                "success": True,
-                "message": "Successfully connected to Whisparr API",
-                "version": response_data.get('version', 'unknown')
-            })
+            # Accept both V2 and V3 API formats for Whisparr V2
+            # The version number should still start with 2 for Whisparr V2, even if using API V3
+            if version.startswith('2'):
+                whisparr_logger.info(f"Successfully connected to Whisparr V2 API version {version}")
+                return jsonify({
+                    "success": True, 
+                    "message": f"Successfully connected to Whisparr V2 (version {version})",
+                    "version": version
+                })
+            elif version.startswith('3'):
+                error_msg = f"Connected to Whisparr Eros (version {version}). Huntarr requires Whisparr V2."
+                whisparr_logger.error(error_msg)
+                return jsonify({"success": False, "message": error_msg}), 400
+            else:
+                # Connected to some other version
+                error_msg = f"Connected to Whisparr version {version}, but Huntarr requires Whisparr V2"
+                whisparr_logger.error(error_msg)
+                return jsonify({"success": False, "message": error_msg}), 400
+                
         except ValueError:
-            error_msg = "Invalid JSON response from Whisparr API"
-            whisparr_logger.error(f"{error_msg}. Response content: {response.text[:200]}")
-            return jsonify({"success": False, "message": error_msg}), 500
-
-    except requests.exceptions.Timeout as e:
-        error_msg = f"Connection timed out after {api_timeout} seconds"
-        whisparr_logger.error(f"{error_msg}: {str(e)}")
-        return jsonify({"success": False, "message": error_msg}), 504
-        
-    except requests.exceptions.ConnectionError as e:
-        error_msg = "Connection error - check hostname and port"
-        details = str(e)
-        # Check for common DNS resolution errors
-        if "Name or service not known" in details or "getaddrinfo failed" in details:
-            error_msg = "DNS resolution failed - check hostname"
-        # Check for common connection refused errors
-        elif "Connection refused" in details:
-            error_msg = "Connection refused - check if Whisparr is running and the port is correct"
-        
-        whisparr_logger.error(f"{error_msg}: {details}")
-        return jsonify({"success": False, "message": f"{error_msg}: {details}"}), 502
-        
-    except requests.exceptions.RequestException as e:
-        error_message = f"Connection failed: {str(e)}"
-        
-        if hasattr(e, 'response') and e.response is not None:
-            status_code = e.response.status_code
+            error_msg = "Invalid JSON response from API. Are you sure this is a Whisparr API?"
+            whisparr_logger.error(f"{error_msg}. Response: {response.text[:200]}")
+            return jsonify({"success": False, "message": error_msg}), 400
             
-            # Add specific messages based on common status codes
-            if status_code == 401:
-                error_message = "Authentication failed: Invalid API key"
-            elif status_code == 403:
-                error_message = "Access forbidden: Check API key permissions"
-            elif status_code == 404:
-                error_message = "API endpoint not found: Check API URL"
-            elif status_code >= 500:
-                error_message = f"Whisparr server error (HTTP {status_code}): The Whisparr server is experiencing issues"
-            
-            # Try to extract more error details if available
-            try:
-                error_details = e.response.json()
-                error_message += f" - {error_details.get('message', 'No details')}"
-            except ValueError:
-                if e.response.text:
-                    error_message += f" - Response: {e.response.text[:200]}"
+    except requests.exceptions.Timeout:
+        error_msg = f"Connection timed out after {api_timeout} seconds. Check that Whisparr is running and accessible."
+        whisparr_logger.error(error_msg)
+        return jsonify({"success": False, "message": error_msg}), 408
         
-        whisparr_logger.error(error_message)
-        return jsonify({"success": False, "message": error_message}), 500
+    except requests.exceptions.ConnectionError:
+        error_msg = "Failed to connect. Check that the URL is correct and that Whisparr is running."
+        whisparr_logger.error(error_msg)
+        return jsonify({"success": False, "message": error_msg}), 502
+        
+    except requests.exceptions.HTTPError as e:
+        if response.status_code == 401:
+            error_msg = "API key invalid or unauthorized"
+        elif response.status_code == 404:
+            error_msg = "API endpoint not found. Check that the URL is correct."
+        else:
+            error_msg = f"HTTP error: {str(e)}"
+        whisparr_logger.error(error_msg)
+        return jsonify({"success": False, "message": error_msg}), response.status_code
         
     except Exception as e:
-        error_msg = f"An unexpected error occurred: {str(e)}"
+        error_msg = f"Unexpected error: {str(e)}"
         whisparr_logger.error(error_msg)
         return jsonify({"success": False, "message": error_msg}), 500
 
 # Function to check if Whisparr is configured
 def is_configured():
-    """Check if Whisparr API credentials are configured by checking if at least one instance is enabled"""
-    settings = load_settings("whisparr")
-    
-    if not settings:
-        whisparr_logger.debug("No settings found for Whisparr")
-        return False
+    """Check if Whisparr API credentials are configured"""
+    try:
+        api_keys = keys_manager.load_api_keys("whisparr")
+        instances = api_keys.get("instances", [])
         
-    # Check if instances are configured
-    if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
-        for instance in settings["instances"]:
-            if instance.get("enabled", True) and instance.get("api_url") and instance.get("api_key"):
-                whisparr_logger.debug(f"Found configured Whisparr instance: {instance.get('name', 'Unnamed')}")
+        for instance in instances:
+            if instance.get("enabled", True):
                 return True
                 
-        whisparr_logger.debug("No enabled Whisparr instances found with valid API URL and key")
         return False
-    
-    # Fallback to legacy single-instance config
-    api_url = settings.get("api_url")
-    api_key = settings.get("api_key")
-    return bool(api_url and api_key)
+    except Exception as e:
+        whisparr_logger.error(f"Error checking if Whisparr is configured: {str(e)}")
+        return False
 
 # Get all valid instances from settings
 def get_configured_instances():
     """Get all configured and enabled Whisparr instances"""
-    settings = load_settings("whisparr")
-    instances = []
-    
-    if not settings:
-        whisparr_logger.debug("No settings found for Whisparr")
-        return instances
+    try:
+        api_keys = keys_manager.load_api_keys("whisparr")
+        instances = api_keys.get("instances", [])
         
-    # Check if instances are configured
-    if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
-        for instance in settings["instances"]:
-            if instance.get("enabled", True) and instance.get("api_url") and instance.get("api_key"):
-                # Create a settings object for this instance by combining global settings with instance-specific ones
-                instance_settings = settings.copy()
-                # Remove instances list to avoid confusion
-                if "instances" in instance_settings:
-                    del instance_settings["instances"]
+        enabled_instances = []
+        for instance in instances:
+            if not instance.get("enabled", True):
+                continue
                 
-                # Override with instance-specific connection settings
-                instance_settings["api_url"] = instance.get("api_url")
-                instance_settings["api_key"] = instance.get("api_key")
-                instance_settings["instance_name"] = instance.get("name", "Default")
+            api_url = instance.get("api_url")
+            api_key = instance.get("api_key")
+            
+            if not api_url or not api_key:
+                continue
                 
-                instances.append(instance_settings)
-    else:
-        # Fallback to legacy single-instance config
-        api_url = settings.get("api_url")
-        api_key = settings.get("api_key")
-        if api_url and api_key:
-            settings["instance_name"] = "Default"
-            instances.append(settings)
-    
-    whisparr_logger.info(f"Found {len(instances)} configured and enabled Whisparr instances")
-    return instances
+            # Add name and timeout
+            instance_name = instance.get("name", "Default")
+            api_timeout = instance.get("api_timeout", 90)
+            
+            enabled_instances.append({
+                "api_url": api_url,
+                "api_key": api_key,
+                "instance_name": instance_name,
+                "api_timeout": api_timeout
+            })
+            
+        return enabled_instances
+    except Exception as e:
+        whisparr_logger.error(f"Error getting configured Whisparr instances: {str(e)}")
+        return []
