@@ -1859,12 +1859,25 @@ let huntarrUI = {
         const intervalInput = document.getElementById('stateful_management_hours');
         const intervalDaysSpan = document.getElementById('stateful_management_days');
         
-        // Max retry attempts
-        const maxAttempts = 3;
+        // Max retry attempts - increased for better reliability
+        const maxAttempts = 5;
         
         console.log(`[StatefulInfo] Loading stateful info (attempt ${attempts + 1})`);
         
-        fetch('/api/stateful/info', { cache: 'no-cache' }) // Add no-cache header
+        // Update UI to show loading state instead of N/A
+        if (attempts === 0) {
+            if (initialStateEl) initialStateEl.textContent = 'Loading...';
+            if (expiresDateEl) expiresDateEl.textContent = 'Loading...';
+        }
+        
+        fetch('/api/stateful/info', { 
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        })
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
@@ -1879,10 +1892,10 @@ let huntarrUI = {
                 } else if (initialStateEl) {
                     initialStateEl.textContent = 'N/A';
                     
-                    // If we got N/A but this is not our last attempt, retry
+                    // If we got N/A but this is not our last attempt, retry with shorter delay
                     if (attempts < maxAttempts && !data.created_at_ts) {
                         console.log(`[StatefulInfo] No timestamp data, will retry (${attempts + 1}/${maxAttempts})`);
-                        setTimeout(() => this.loadStatefulInfo(attempts + 1), 500); // Retry after 500ms
+                        setTimeout(() => this.loadStatefulInfo(attempts + 1), 300); // Retry after 300ms
                         return;
                     }
                 }
@@ -1914,6 +1927,9 @@ let huntarrUI = {
                 if (notification) {
                     notification.style.display = 'none';
                 }
+                
+                // Store the data for future reference
+                this._cachedStatefulData = data;
             } else {
                 throw new Error(data.message || 'Failed to load stateful info');
             }
@@ -1921,10 +1937,10 @@ let huntarrUI = {
         .catch(error => {
             console.error(`Error loading stateful info (attempt ${attempts + 1}/${maxAttempts + 1}):`, error);
             
-            // Retry if we haven't reached max attempts
+            // Retry if we haven't reached max attempts with shorter delay
             if (attempts < maxAttempts) {
-                console.log(`[StatefulInfo] Retrying in 500ms (attempt ${attempts + 1}/${maxAttempts})`);
-                setTimeout(() => this.loadStatefulInfo(attempts + 1), 500);
+                console.log(`[StatefulInfo] Retrying in 300ms (attempt ${attempts + 1}/${maxAttempts})`);
+                setTimeout(() => this.loadStatefulInfo(attempts + 1), 300);
                 return;
             }
             
