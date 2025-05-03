@@ -54,7 +54,7 @@
                             <i class="fas fa-book"></i>
                         </div>
                         <div class="link-details">
-                            <span class="link-title">Documentation</span>
+                            <span class="link-title">Wiki</span>
                         </div>
                     </a>
                     <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank" class="community-link changelog">
@@ -198,7 +198,7 @@
         <!-- GitHub Sponsors Section -->
         <div class="card sponsors-card">
             <div class="card-header">
-                <h3>GitHub Sponsors</h3>
+                <h3>GitHub Sponsors (Rotated Randomly)</h3>
                 <a href="https://github.com/sponsors/plexguide" target="_blank" class="action-button primary">
                     <i class="fas fa-heart"></i> Become a Sponsor
                 </a>
@@ -712,7 +712,7 @@
     .sponsors-list {
         display: flex;
         flex-wrap: wrap;
-        gap: 16px;
+        gap: 14px;
         justify-content: center;
     }
     
@@ -721,24 +721,24 @@
         flex-direction: column;
         align-items: center;
         background: linear-gradient(145deg, rgba(38, 46, 63, 0.7), rgba(28, 34, 46, 0.7));
-        border-radius: 12px;
-        padding: 18px;
-        min-width: 130px;
+        border-radius: 10px;
+        padding: 15px;
+        min-width: 110px;
         transition: all 0.3s ease;
         border: 1px solid rgba(120, 140, 180, 0.15);
         text-decoration: none;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     }
     
     .sponsor-item:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        transform: translateY(-4px);
+        box-shadow: 0 7px 18px rgba(0, 0, 0, 0.25);
         border-color: rgba(120, 140, 180, 0.3);
     }
     
     .sponsor-avatar {
-        width: 70px;
-        height: 70px;
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
         object-fit: cover;
         border: 3px solid transparent;
@@ -749,34 +749,35 @@
     /* Different border colors based on sponsorship tier */
     .sponsor-item[title*="Gold"] .sponsor-avatar {
         border-color: #ffd700;
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        box-shadow: 0 0 9px rgba(255, 215, 0, 0.5);
     }
     
     .sponsor-item[title*="Silver"] .sponsor-avatar {
         border-color: #c0c0c0;
-        box-shadow: 0 0 10px rgba(192, 192, 192, 0.5);
+        box-shadow: 0 0 9px rgba(192, 192, 192, 0.5);
     }
     
     .sponsor-item[title*="Bronze"] .sponsor-avatar {
         border-color: #cd7f32;
-        box-shadow: 0 0 10px rgba(205, 127, 50, 0.5);
+        box-shadow: 0 0 9px rgba(205, 127, 50, 0.5);
     }
     
     .sponsor-name {
-        margin-top: 12px;
+        margin-top: 10px;
         font-weight: 600;
-        text-align: center;
+        font-size: 13px;
         color: #e0e6ed;
-        font-size: 15px;
+        text-align: center;
+        word-break: break-word;
     }
     
     .sponsor-tier {
-        margin-top: 6px;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 600;
-        text-align: center;
+        margin-top: 5px;
+        font-size: 10px;
+        padding: 3px 7px;
+        border-radius: 10px;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #a0a8b8;
     }
     
     /* Different tier badge styles */

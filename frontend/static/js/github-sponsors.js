@@ -170,8 +170,12 @@ const GithubSponsors = {
             return;
         }
         
+        // Shuffle and limit to 10 random sponsors
+        const shuffledSponsors = this.shuffleArray([...sponsors]);
+        const limitedSponsors = shuffledSponsors.slice(0, 10);
+        
         // Create sponsor elements
-        sponsors.forEach(sponsor => {
+        limitedSponsors.forEach(sponsor => {
             const sponsorEl = document.createElement('a');
             sponsorEl.href = sponsor.url;
             sponsorEl.target = '_blank';
@@ -186,6 +190,15 @@ const GithubSponsors = {
             
             sponsorsListEl.appendChild(sponsorEl);
         });
+    },
+    
+    // Utility function to shuffle an array (Fisher-Yates algorithm)
+    shuffleArray: function(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
     },
     
     // Mock implementation to get sponsors
