@@ -17,7 +17,7 @@
 | Lidarr      | **✅ Ready**  |
 | Readarr     | **✅ Ready**  |
 | Whisparr v2 | **✅ Ready**  |
-| Whisparr v3 | **✅ Ready**  |
+| Whisparr v3 | **❌ Not Ready**  |
 | Bazarr    | **❌ Not Ready** |
 
 
