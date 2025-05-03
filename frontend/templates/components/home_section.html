@@ -12,6 +12,8 @@
                     &nbsp;&nbsp;|&nbsp;&nbsp;
                     <i class="fas fa-star version-icon star-icon"></i>
                     <span id="github-stars"><a href="https://github.com/plexguide/huntarr" target="_blank"><span id="github-stars-value">Loading...</span></a></span>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                    <span class="developer-credit">Thanks 4 Using Huntarr - <a href="https://github.com/Admin9705/" target="_blank">Admin9705</a></span>
                 </p>
             </div>
         </div>
@@ -215,16 +217,6 @@
             </div>
         </div>
 
-        <div class="card thanks-card">
-            <div class="thanks-container">
-                <div class="thanks-item">
-                    <i class="fas fa-heart thanks-icon"></i>
-                    <div class="thanks-text">
-                        Thank you for using Huntarr ~ <a href="https://github.com/Admin9705/" target="_blank">Admin9705</a>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
     
     <!-- Fixed banner at the bottom of the viewport -->
@@ -660,45 +652,20 @@
         font-weight: 600;
     }
     
-    /* Enhanced Special Thanks styling */
-    .card.thanks-card {
-        padding: 12px 15px;
-    }
-
-    .thanks-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 12px;
-        padding: 10px;
-    }
-
-    .thanks-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        background-color: var(--bg-tertiary);
-        padding: 12px 15px;
-        border-radius: 6px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    }
-
-    .thanks-icon {
-        font-size: 1.3em;
-        color: var(--accent-color);
-        width: 25px;
-        text-align: center;
-    }
-
-    .thanks-text {
-        font-size: 0.9em;
+    /* Developer credit styling */
+    .developer-credit {
         color: var(--text-secondary);
-        line-height: 1.5;
+        font-weight: 500;
     }
-
-    .thanks-text a {
-        color: var(--accent-color);
+    
+    .developer-credit a {
+        color: #3498db;
+        font-weight: 600;
         text-decoration: none;
+    }
+    
+    .developer-credit a:hover {
+        text-decoration: underline;
     }
     
     /* Sponsors section styling */
