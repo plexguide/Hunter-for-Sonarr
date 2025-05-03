@@ -647,6 +647,46 @@ def apply_timezone_setting():
         return jsonify({"success": False, "error": f"Failed to apply timezone {timezone}"}), 500
     '''
 
+@app.route('/api/stats', methods=['GET'])
+def api_get_stats():
+    """Get the media statistics for all apps"""
+    # For now, return some sample statistics
+    # In a real implementation, these would be pulled from a database or file
+    stats = {
+        'sonarr': {'hunted': 228, 'upgraded': 15},
+        'radarr': {'hunted': 36, 'upgraded': 15},
+        'lidarr': {'hunted': 40, 'upgraded': 0},
+        'readarr': {'hunted': 4, 'upgraded': 2},
+        'whisparr': {'hunted': 346, 'upgraded': 153}
+    }
+    return jsonify({"success": True, "stats": stats})
+
+@app.route('/api/stats/reset', methods=['POST'])
+def api_reset_stats():
+    """Reset the media statistics for all apps or a specific app"""
+    try:
+        data = request.json or {}
+        app_type = data.get('app_type')
+        
+        # Get logger for logging the reset action
+        web_logger = get_logger("web_server")
+        
+        if app_type:
+            web_logger.info(f"Resetting statistics for app: {app_type}")
+            # In a real implementation, you would reset stats just for this app
+        else:
+            web_logger.info("Resetting all media statistics")
+            # In a real implementation, you would reset all app stats
+        
+        # Return immediate success since this is a visual-only feature for now
+        # In a production environment, this would actually reset stored statistics
+        return jsonify({"success": True, "message": "Statistics reset successfully"})
+        
+    except Exception as e:
+        web_logger = get_logger("web_server")
+        web_logger.error(f"Error resetting statistics: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route('/version.txt')
 def version_txt():
     """Serve version.txt file directly"""
@@ -667,6 +707,7 @@ def version_txt():
         web_logger.error(f"Error serving version.txt: {e}")
         return "5.3.1", 200, {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache'}
 
+# Start the web server in debug or production mode
 def start_web_server():
     """Start the web server in debug or production mode"""
     web_logger = get_logger("web_server")

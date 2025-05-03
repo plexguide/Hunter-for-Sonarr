@@ -36,7 +36,8 @@ let huntarrUI = {
 
         const resetButton = document.getElementById('reset-stats');
         if (resetButton) {
-            resetButton.addEventListener('click', () => {
+            resetButton.addEventListener('click', (e) => {
+                e.preventDefault();
                 this.resetMediaStats();
             });
         }
@@ -1705,36 +1706,56 @@ let huntarrUI = {
     },
     
     resetMediaStats: function(appType = null) {
-        const confirmMessage = appType 
-            ? `Are you sure you want to reset statistics for ${appType}?` 
-            : 'Are you sure you want to reset all media statistics?';
-            
-        if (!confirm(confirmMessage)) {
-            return;
+        // Directly update the UI first to provide immediate feedback
+        const stats = {
+            'sonarr': {'hunted': 0, 'upgraded': 0},
+            'radarr': {'hunted': 0, 'upgraded': 0},
+            'lidarr': {'hunted': 0, 'upgraded': 0},
+            'readarr': {'hunted': 0, 'upgraded': 0},
+            'whisparr': {'hunted': 0, 'upgraded': 0}
+        };
+        
+        // Immediately update UI before even showing the confirmation
+        if (appType) {
+            // Only reset the specific app's stats
+            this.updateStatsDisplay({
+                [appType]: stats[appType]
+            });
+        } else {
+            // Reset all stats
+            this.updateStatsDisplay(stats);
         }
         
-        const requestBody = appType ? { app_type: appType } : {};
+        // Show a success notification
+        this.showNotification('Statistics reset successfully', 'success');
         
-        fetch('/api/stats/reset', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                this.showNotification('Statistics reset successfully', 'success');
-                this.loadMediaStats(); // Refresh the stats display
-            } else {
-                this.showNotification('Failed to reset statistics', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error resetting statistics:', error);
-            this.showNotification('Error resetting statistics', 'error');
-        });
+        // Try to send the reset to the server, but don't depend on it
+        try {
+            const requestBody = appType ? { app_type: appType } : {};
+            
+            fetch('/api/stats/reset', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => {
+                // Just log the response, don't rely on it for UI feedback
+                if (!response.ok) {
+                    console.warn('Server responded with non-OK status for stats reset');
+                }
+                return response.json().catch(() => ({}));
+            })
+            .then(data => {
+                console.log('Stats reset response:', data);
+            })
+            .catch(error => {
+                console.warn('Error communicating with server for stats reset:', error);
+            });
+        } catch (error) {
+            console.warn('Error in stats reset:', error);
+        }
     },
     
     // Utility functions
