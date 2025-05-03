@@ -883,7 +883,7 @@ let huntarrUI = {
         this.settingsChanged = false;
         
         // Get all settings to populate forms
-        fetch('/api/settings')
+        HuntarrUtils.fetchWithTimeout('/api/settings')
             .then(response => response.json())
             .then(data => {
                 console.log('Loaded settings:', data);
@@ -985,7 +985,7 @@ let huntarrUI = {
         // Use the correct endpoint based on app type
         const endpoint = app === 'general' ? '/api/settings/general' : `/api/settings/${app}`;
         
-        fetch(endpoint, {
+        HuntarrUtils.fetchWithTimeout(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1349,7 +1349,7 @@ let huntarrUI = {
         url = url.trim().replace(/[/\\]+$/, '');
         
         // Make the API request to test the connection
-        fetch(`/api/${appName}/test-connection`, {
+        HuntarrUtils.fetchWithTimeout(`/api/${appName}/test-connection`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1443,7 +1443,7 @@ let huntarrUI = {
     },
     
     checkAppConnection: function(app) {
-        fetch(`/api/status/${app}`)
+        HuntarrUtils.fetchWithTimeout(`/api/status/${app}`)
             .then(response => response.json())
             .then(data => {
                 // Pass the whole data object for all apps
@@ -1521,7 +1521,7 @@ let huntarrUI = {
     
     // User actions
     startHunt: function() {
-        fetch('/api/hunt/start', { method: 'POST' })
+        HuntarrUtils.fetchWithTimeout('/api/hunt/start', { method: 'POST' })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -1537,7 +1537,7 @@ let huntarrUI = {
     },
     
     stopHunt: function() {
-        fetch('/api/hunt/stop', { method: 'POST' })
+        HuntarrUtils.fetchWithTimeout('/api/hunt/stop', { method: 'POST' })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -1557,7 +1557,7 @@ let huntarrUI = {
         const usernameElement = document.getElementById('username');
         if (!usernameElement) return;
         
-        fetch('/api/user/info')
+        HuntarrUtils.fetchWithTimeout('/api/user/info')
             .then(response => response.json())
             .then(data => {
                 if (data.username) {
@@ -1578,7 +1578,7 @@ let huntarrUI = {
     // Check if local access bypass is enabled and update UI accordingly
     checkLocalAccessBypassStatus: function() {
         console.log("Checking local access bypass status...");
-        fetch('/api/get_local_access_bypass_status') // Corrected URL
+        HuntarrUtils.fetchWithTimeout('/api/get_local_access_bypass_status') // Corrected URL
             .then(response => {
                 if (!response.ok) {
                     // Log error if response is not OK (e.g., 404, 500)
@@ -1661,7 +1661,7 @@ let huntarrUI = {
     logout: function(e) { // Added logout function
         e.preventDefault(); // Prevent default link behavior
         console.log('[huntarrUI] Logging out...');
-        fetch('/logout', { // Use the correct endpoint defined in Flask
+        HuntarrUtils.fetchWithTimeout('/logout', { // Use the correct endpoint defined in Flask
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1685,7 +1685,7 @@ let huntarrUI = {
     
     // Media statistics handling
     loadMediaStats: function() {
-        fetch('/api/stats')
+        HuntarrUtils.fetchWithTimeout('/api/stats')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -1774,7 +1774,7 @@ let huntarrUI = {
         try {
             const requestBody = appType ? { app_type: appType } : {};
             
-            fetch('/api/stats/reset', {
+            HuntarrUtils.fetchWithTimeout('/api/stats/reset', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1838,7 +1838,7 @@ let huntarrUI = {
 
     // Load current version from version.txt
     loadCurrentVersion: function() {
-        fetch('/version.txt')
+        HuntarrUtils.fetchWithTimeout('/version.txt')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to load version.txt');
@@ -1862,7 +1862,7 @@ let huntarrUI = {
 
     // Load latest version from GitHub releases
     loadLatestVersion: function() {
-        fetch('https://api.github.com/repos/plexguide/Huntarr.io/releases/latest')
+        HuntarrUtils.fetchWithTimeout('https://api.github.com/repos/plexguide/Huntarr.io/releases/latest')
             .then(response => {
                 if (!response.ok) {
                     // Handle rate limiting or other errors
@@ -1902,7 +1902,7 @@ let huntarrUI = {
         // GitHub API endpoint for repository information
         const apiUrl = 'https://api.github.com/repos/plexguide/huntarr';
         
-        fetch(apiUrl)
+        HuntarrUtils.fetchWithTimeout(apiUrl)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`GitHub API error: ${response.status}`);
@@ -2021,7 +2021,7 @@ let huntarrUI = {
         }
         
         // Always fetch fresh data from the server
-        fetch('/api/stateful/info', { 
+        HuntarrUtils.fetchWithTimeout('/api/stateful/info', { 
             cache: 'no-cache',
             headers: {
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -2210,7 +2210,7 @@ let huntarrUI = {
         // Add debug logging
         console.log("Sending reset request to /api/stateful/reset");
         
-        fetch('/api/stateful/reset', {
+        HuntarrUtils.fetchWithTimeout('/api/stateful/reset', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -2271,7 +2271,7 @@ let huntarrUI = {
             expiresDateEl.textContent = 'Updating...';
         }
         
-        fetch('/api/stateful/update-expiration', {
+        HuntarrUtils.fetchWithTimeout('/api/stateful/update-expiration', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -2337,6 +2337,10 @@ let huntarrUI = {
             this.resetStatefulManagement();
         }
     },
+
+    // Add a helper function to fetch with timeout using the global settings
+    // Removed this function as we now use the shared utility version
+    // fetchWithTimeout: function(url, options = {}) { ... }
 
     // Add global event handler and method to track saved settings across all apps
     registerGlobalUnsavedChangesHandler: function() {
