@@ -74,10 +74,22 @@ def process_cutoff_upgrades(
             release_date_str = book.get('releaseDate')
             if release_date_str:
                 try:
-                    # Readarr release dates are usually just YYYY-MM-DD
-                    release_date = datetime.datetime.strptime(release_date_str, '%Y-%m-%d').replace(tzinfo=datetime.timezone.utc)
+                    # Try to parse ISO format first (with time component)
+                    try:
+                        # Handle ISO format date strings like '2023-10-17T04:00:00Z'
+                        # fromisoformat doesn't handle 'Z' timezone, so we replace it
+                        release_date_str_fixed = release_date_str.replace('Z', '+00:00')
+                        release_date = datetime.datetime.fromisoformat(release_date_str_fixed)
+                    except ValueError:
+                        # Fall back to simple YYYY-MM-DD format
+                        release_date = datetime.datetime.strptime(release_date_str, '%Y-%m-%d')
+                        # Add UTC timezone for consistent comparison
+                        release_date = release_date.replace(tzinfo=datetime.timezone.utc)
+                    
                     if release_date <= now:
                         filtered_books.append(book)
+                    else:
+                        readarr_logger.debug(f"Skipping future book ID {book.get('id')} with release date {release_date_str}")
                 except ValueError:
                     readarr_logger.warning(f"Could not parse release date '{release_date_str}' for book ID {book.get('id')}. Including anyway.")
                     filtered_books.append(book)
