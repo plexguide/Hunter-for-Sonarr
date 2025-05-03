@@ -37,6 +37,11 @@ const appsModule = {
         if (!window._appsBeforeUnloadHandlerRegistered) {
             const originalBeforeUnload = window.onbeforeunload;
             window.onbeforeunload = (event) => {
+                // Skip check if we're currently saving
+                if (window._appsCurrentlySaving) {
+                    return undefined;
+                }
+                
                 // Check if apps has unsaved changes
                 if (this.settingsChanged) {
                     // Standard way to trigger the browser's confirmation dialog
@@ -78,7 +83,7 @@ const appsModule = {
                 if (navLink) {
                     const targetPage = navLink.getAttribute('href').substring(1);
                     // If navigating away from apps page and we have changes
-                    if (targetPage !== 'apps' && this.settingsChanged) {
+                    if (targetPage !== 'apps' && this.settingsChanged && !window._appsCurrentlySaving) {
                         if (!confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
                             event.preventDefault();
                         }
@@ -370,6 +375,9 @@ const appsModule = {
         
         console.log('[Apps] Save button clicked');
         
+        // Set a flag that we're in the middle of saving
+        window._appsCurrentlySaving = true;
+        
         // Get the current app from module state
         const appType = this.currentApp;
         if (!appType) {
@@ -468,6 +476,9 @@ const appsModule = {
                 this.elements.saveAppsButton.disabled = true;
             }
             
+            // Reset the saving flag
+            window._appsCurrentlySaving = false;
+            
             // Show success notification
             if (typeof huntarrUI !== 'undefined' && typeof huntarrUI.showNotification === 'function') {
                 huntarrUI.showNotification(`${appType} settings saved successfully`, 'success');
@@ -482,6 +493,8 @@ const appsModule = {
             } else {
                 alert(`Error saving settings: ${error.message}`);
             }
+            // Reset the saving flag
+            window._appsCurrentlySaving = false;
         });
     }
 };
