@@ -1604,6 +1604,14 @@ const SettingsForms = {
     
     // Test connection to an *arr API
     testConnection: function(app, url, apiKey, buttonElement) {
+        // Temporarily suppress change detection to prevent the unsaved changes dialog
+        if (window.huntarrUI && window.huntarrUI.suppressUnsavedChangesCheck) {
+            window.huntarrUI.suppressUnsavedChangesCheck = true;
+        }
+        
+        // Also set a global flag used by the apps module
+        window._suppressUnsavedChangesDialog = true;
+        
         // Find or create a status message element next to the button
         let statusElement = buttonElement.closest('.instance-actions').querySelector('.connection-message');
         if (!statusElement) {
@@ -1628,6 +1636,8 @@ const SettingsForms = {
             statusElement.style.color = 'red';
             buttonElement.innerHTML = originalButtonHTML;
             buttonElement.disabled = false;
+            // Reset suppression flags
+            this._resetSuppressionFlags();
             return;
         }
         
@@ -1636,6 +1646,8 @@ const SettingsForms = {
             statusElement.style.color = 'red';
             buttonElement.innerHTML = originalButtonHTML;
             buttonElement.disabled = false;
+            // Reset suppression flags
+            this._resetSuppressionFlags();
             return;
         }
         
@@ -1679,19 +1691,38 @@ const SettingsForms = {
                 buttonElement.innerHTML = '<i class="fas fa-plug"></i> Test Connection';
                 
                 // Show error message
-                statusElement.textContent = data.message || 'Connection failed';
+                const errorMsg = data.message || 'Connection failed';
+                statusElement.textContent = errorMsg;
                 statusElement.style.color = 'red';
             }
+            
+            // Reset suppression flags after a short delay to handle any potential redirects
+            setTimeout(() => {
+                this._resetSuppressionFlags();
+            }, 500);
         })
         .catch(error => {
-            console.error(`Test connection error:`, error);
+            console.error(`Connection test error:`, error);
             
+            // Reset button
+            buttonElement.innerHTML = originalButtonHTML;
             buttonElement.disabled = false;
-            buttonElement.innerHTML = '<i class="fas fa-plug"></i> Test Connection';
             
             // Show error message
-            statusElement.textContent = error.message || 'Connection error';
+            statusElement.textContent = `Error: ${error.message}`;
             statusElement.style.color = 'red';
+            
+            // Reset suppression flags
+            this._resetSuppressionFlags();
         });
+    },
+    
+    // Helper method to reset unsaved changes suppression flags
+    _resetSuppressionFlags: function() {
+        // Reset all suppression flags
+        if (window.huntarrUI) {
+            window.huntarrUI.suppressUnsavedChangesCheck = false;
+        }
+        window._suppressUnsavedChangesDialog = false;
     },
 };

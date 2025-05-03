@@ -9,6 +9,7 @@ const appsModule = {
     isLoading: false,
     settingsChanged: false, // Flag to track unsaved settings changes
     originalSettings: {}, // Store original settings to compare
+    appsWithChanges: [], // Track which apps have unsaved changes
     
     // DOM elements
     elements: {},
@@ -74,22 +75,7 @@ const appsModule = {
                     }
                     
                     // Check for unsaved changes
-                    if (this.settingsChanged) {
-                        // First check if there's actually a panel visible
-                        const currentPanel = document.querySelector('.app-apps-panel[style*="display: block"]');
-                        if (currentPanel) {
-                            const form = currentPanel.querySelector('form');
-                            if (form && !this.hasFormChanges(form)) {
-                                // No actual changes, allow navigation without warning
-                                this.settingsChanged = false;
-                                return;
-                            }
-                        } else {
-                            // No panel is visible, so no actual changes
-                            this.settingsChanged = false;
-                            return;
-                        }
-                        
+                    if (this.hasUnsavedChanges()) {
                         if (!confirm('You have unsaved changes. Are you sure you want to leave? Changes will be lost.')) {
                             event.preventDefault();
                         } else {
@@ -110,22 +96,7 @@ const appsModule = {
                 }
                 
                 // Check for unsaved changes
-                if (this.settingsChanged) {
-                    // First check if there's actually a panel visible
-                    const currentPanel = document.querySelector('.app-apps-panel[style*="display: block"]');
-                    if (currentPanel) {
-                        const form = currentPanel.querySelector('form');
-                        if (form && !this.hasFormChanges(form)) {
-                            // No actual changes, allow navigation without warning
-                            this.settingsChanged = false;
-                            return;
-                        }
-                    } else {
-                        // No panel is visible, so no actual changes
-                        this.settingsChanged = false;
-                        return;
-                    }
-                    
+                if (this.hasUnsavedChanges()) {
                     // Show standard browser confirmation
                     event.preventDefault();
                     event.returnValue = 'You have unsaved changes. Are you sure you want to leave? Changes will be lost.';
@@ -133,6 +104,24 @@ const appsModule = {
                 }
             });
         }
+    },
+    
+    // Check for unsaved changes before navigating away
+    hasUnsavedChanges: function() {
+        // If test connection suppression is active, return false to prevent dialog
+        if (window._suppressUnsavedChangesDialog === true) {
+            console.log('Unsaved changes check suppressed due to test connection');
+            return false;
+        }
+        
+        // If the app is currently saving, don't consider it as having unsaved changes
+        if (window._appsCurrentlySaving) {
+            console.log('Skipping unsaved changes check because app is currently saving');
+            return false;
+        }
+        
+        // Check if settings have changed
+        return this.settingsChanged === true;
     },
     
     // Cache DOM elements
@@ -365,6 +354,37 @@ const appsModule = {
     // Mark apps as changed
     markAppsAsChanged: function() {
         this.settingsChanged = true;
+        
+        // Find the currently visible app panel and track it in our list of changed apps
+        const currentApp = document.querySelector('.app-panel:not([style*="display: none"])');
+        if (currentApp) {
+            const appType = currentApp.getAttribute('data-app-type');
+            if (appType) {
+                // Initialize the array if it doesn't exist yet
+                if (!this.appsWithChanges) {
+                    this.appsWithChanges = [];
+                }
+                
+                // Add this app to the list of apps with changes if not already there
+                if (!this.appsWithChanges.includes(appType)) {
+                    this.appsWithChanges.push(appType);
+                    console.log(`Added ${appType} to appsWithChanges:`, this.appsWithChanges);
+                }
+                
+                // Set the global tracking flag for this specific app
+                if (!window._hasAppChanges) {
+                    window._hasAppChanges = {};
+                }
+                window._hasAppChanges[appType] = true;
+                
+                // Also update the huntarrUI tracking if available
+                if (window.huntarrUI && window.huntarrUI.formChanged) {
+                    window.huntarrUI.formChanged[appType] = true;
+                    window.huntarrUI.hasUnsavedChanges = true;
+                }
+            }
+        }
+        
         if (this.elements.saveAppsButton) {
             this.elements.saveAppsButton.disabled = false;
             console.log('Save button enabled');
@@ -637,10 +657,61 @@ const appsModule = {
         const form = appPanel.querySelector('form');
         if (!form) return;
         
+        // First, remove the 'changed' class from all form elements
         const formElements = form.querySelectorAll('input, select, textarea');
         formElements.forEach(element => {
             element.classList.remove('changed');
         });
+        
+        // Get the app type to properly handle app-specific flags
+        const appType = appPanel.getAttribute('data-app-type') || '';
+        console.log(`Marking form as unchanged for app type: ${appType}`);
+        
+        // Clear app-specific change flags
+        if (window._hasAppChanges && typeof window._hasAppChanges === 'object') {
+            window._hasAppChanges[appType] = false;
+        }
+        
+        // Ensure we reset all change tracking for this app
+        try {
+            // Reset any form change flags
+            if (form.dataset) {
+                form.dataset.hasChanges = 'false';
+            }
+            
+            // Clear any app-specific data attributes that might be tracking changes
+            appPanel.querySelectorAll('[data-changed="true"]').forEach(el => {
+                el.setAttribute('data-changed', 'false');
+            });
+            
+            // Reset the internal change tracking for this specific app
+            if (appType && this.appsWithChanges && this.appsWithChanges.includes(appType)) {
+                this.appsWithChanges = this.appsWithChanges.filter(app => app !== appType);
+                console.log(`Removed ${appType} from appsWithChanges:`, this.appsWithChanges);
+            }
+            
+            // Force update overall app state
+            this.settingsChanged = this.appsWithChanges && this.appsWithChanges.length > 0;
+            
+            // Explicitly handle Readarr, Lidarr, and Whisparr which seem to have issues
+            if (appType === 'readarr' || appType === 'lidarr' || appType === 'whisparr' || appType === 'whisparrv2') {
+                console.log(`Special handling for ${appType} to ensure changes are cleared`);
+                // Force additional global state updates
+                if (window.huntarrUI && window.huntarrUI.formChanged) {
+                    window.huntarrUI.formChanged[appType] = false;
+                }
+                // Reset the global changed state tracker if this was the only app with changes
+                if (!this.settingsChanged && window.huntarrUI) {
+                    window.huntarrUI.hasUnsavedChanges = false;
+                }
+                // Force immediate re-evaluation of the form state
+                setTimeout(() => {
+                    this.hasFormChanges(form);
+                }, 10);
+            }
+        } catch (error) {
+            console.error(`Error in markFormAsUnchanged for ${appType}:`, error);
+        }
     }
 };
 

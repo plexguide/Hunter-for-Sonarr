@@ -19,6 +19,9 @@ let huntarrUI = {
     },
     originalSettings: {}, // Store the full original settings object
     settingsChanged: false, // Flag to track unsaved settings changes
+    hasUnsavedChanges: false, // Global flag for unsaved changes across all apps
+    formChanged: {}, // Track unsaved changes per app
+    suppressUnsavedChangesCheck: false, // Flag to suppress unsaved changes dialog
     
     // Logo URL
     logoUrl: '/static/logo/64.png',
@@ -64,6 +67,9 @@ let huntarrUI = {
         
         // Initialize instance event handlers
         this.setupInstanceEventHandlers();
+        
+        // Add global event handler for unsaved changes
+        this.registerGlobalUnsavedChangesHandler();
     },
     
     // Cache DOM elements for better performance
@@ -2041,7 +2047,9 @@ let huntarrUI = {
                         // it might be because the state file hasn't been created yet
                         if (attempts < maxAttempts) {
                             console.log(`[StatefulInfo] No initial state timestamp, will retry (${attempts + 1}/${maxAttempts})`);
-                            setTimeout(() => this.loadStatefulInfo(attempts + 1), 500); // Longer delay for better chance of success
+                            setTimeout(() => {
+                                this.loadStatefulInfo(attempts + 1);
+                            }, 500); // Longer delay for better chance of success
                             return;
                         }
                     }
@@ -2087,7 +2095,9 @@ let huntarrUI = {
             if (attempts < maxAttempts) {
                 const delay = Math.min(2000, 300 * Math.pow(2, attempts)); // Exponential backoff with max 2000ms
                 console.log(`[StatefulInfo] Retrying in ${delay}ms (attempt ${attempts + 1}/${maxAttempts})`);
-                setTimeout(() => this.loadStatefulInfo(attempts + 1), delay);
+                setTimeout(() => {
+                    this.loadStatefulInfo(attempts + 1);
+                }, delay);
                 return;
             }
             
@@ -2286,6 +2296,72 @@ let huntarrUI = {
         const currentJSON = JSON.stringify(currentSettings);
         
         return originalJSON !== currentJSON;
+    },
+    
+    // Add global event handler and method to track saved settings across all apps
+    registerGlobalUnsavedChangesHandler: function() {
+        window.addEventListener('beforeunload', this.handleUnsavedChangesBeforeUnload.bind(this));
+        
+        // Reset hasUnsavedChanges when settings are saved
+        document.addEventListener('settings:saved', (event) => {
+            if (event.detail && event.detail.appType) {
+                console.log(`settings:saved event received for ${event.detail.appType}`);
+                if (this.formChanged) {
+                    this.formChanged[event.detail.appType] = false;
+                }
+                
+                // Also clear the change tracking in the appsModule if it exists
+                if (window.appsModule) {
+                    // Reset the app in the tracking array
+                    if (window.appsModule.appsWithChanges && 
+                        window.appsModule.appsWithChanges.includes(event.detail.appType)) {
+                        window.appsModule.appsWithChanges = 
+                            window.appsModule.appsWithChanges.filter(app => app !== event.detail.appType);
+                    }
+                    
+                    // Only update the overall flag if there are no apps with changes left
+                    if (!window.appsModule.appsWithChanges || window.appsModule.appsWithChanges.length === 0) {
+                        window.appsModule.settingsChanged = false;
+                    }
+                }
+                
+                // Check if there are any remaining form changes
+                this.checkForRemainingChanges();
+            }
+        });
+    },
+    
+    // New method to check if any forms still have changes
+    checkForRemainingChanges: function() {
+        if (!this.formChanged) return;
+        
+        // Check if any forms still have changes
+        const hasAnyChanges = Object.values(this.formChanged).some(val => val === true);
+        
+        console.log('Checking for remaining form changes:', {
+            formChanged: this.formChanged,
+            hasAnyChanges: hasAnyChanges
+        });
+        
+        // Update the global flag
+        this.hasUnsavedChanges = hasAnyChanges;
+    },
+    
+    // Handle unsaved changes before unload
+    handleUnsavedChangesBeforeUnload: function(event) {
+        // Check if we should suppress the check (used for test connection functionality)
+        if (this.suppressUnsavedChangesCheck || window._suppressUnsavedChangesDialog) {
+            console.log('Unsaved changes check suppressed');
+            return;
+        }
+        
+        // If we have unsaved changes, show confirmation dialog
+        if (this.hasUnsavedChanges) {
+            console.log('Preventing navigation due to unsaved changes');
+            event.preventDefault();
+            event.returnValue = 'You have unsaved changes. Do you want to continue without saving?';
+            return event.returnValue;
+        }
     },
 };
 
