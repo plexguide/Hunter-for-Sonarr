@@ -551,16 +551,38 @@
     /* Sponsors section styling */
     .sponsors-card {
         width: 100%;
+        background-color: rgba(24, 28, 37, 0.6);
+        border: 1px solid rgba(90, 109, 137, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .sponsors-card .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background-color: rgba(32, 38, 50, 0.6);
+        border-bottom: 1px solid rgba(90, 109, 137, 0.2);
+    }
+    
+    .sponsors-card .card-header h3 {
+        margin: 0;
+        color: #e0e6ed;
+        font-size: 18px;
+        font-weight: 600;
     }
     
     .sponsors-container {
-        padding: 15px;
+        padding: 20px;
+        background-color: rgba(15, 18, 24, 0.4);
     }
     
     .sponsors-loading, .sponsors-error {
         text-align: center;
-        padding: 20px;
-        color: #888;
+        padding: 24px;
+        color: #a0a8b8;
+        font-size: 15px;
     }
     
     .sponsors-error {
@@ -570,7 +592,7 @@
     .sponsors-list {
         display: flex;
         flex-wrap: wrap;
-        gap: 15px;
+        gap: 16px;
         justify-content: center;
     }
     
@@ -578,37 +600,106 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 8px;
-        padding: 12px;
-        min-width: 120px;
-        transition: transform 0.2s, box-shadow 0.2s;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(145deg, rgba(38, 46, 63, 0.7), rgba(28, 34, 46, 0.7));
+        border-radius: 12px;
+        padding: 18px;
+        min-width: 130px;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(120, 140, 180, 0.15);
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     
     .sponsor-item:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        border-color: rgba(120, 140, 180, 0.3);
     }
     
     .sponsor-avatar {
-        width: 64px;
-        height: 64px;
+        width: 70px;
+        height: 70px;
         border-radius: 50%;
         object-fit: cover;
-        border: 2px solid #4a90e2;
+        border: 3px solid transparent;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+        background-color: #2a3142;
+    }
+    
+    /* Different border colors based on sponsorship tier */
+    .sponsor-item[title*="Gold"] .sponsor-avatar {
+        border-color: #ffd700;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+    
+    .sponsor-item[title*="Silver"] .sponsor-avatar {
+        border-color: #c0c0c0;
+        box-shadow: 0 0 10px rgba(192, 192, 192, 0.5);
+    }
+    
+    .sponsor-item[title*="Bronze"] .sponsor-avatar {
+        border-color: #cd7f32;
+        box-shadow: 0 0 10px rgba(205, 127, 50, 0.5);
     }
     
     .sponsor-name {
-        margin-top: 8px;
-        font-weight: 500;
+        margin-top: 12px;
+        font-weight: 600;
         text-align: center;
+        color: #e0e6ed;
+        font-size: 15px;
     }
     
     .sponsor-tier {
-        font-size: 0.8em;
-        color: #4a90e2;
-        margin-top: 4px;
+        margin-top: 6px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    /* Different tier badge styles */
+    .sponsor-item[title*="Gold"] .sponsor-tier {
+        background-color: rgba(255, 215, 0, 0.2);
+        color: #ffd700;
+    }
+    
+    .sponsor-item[title*="Silver"] .sponsor-tier {
+        background-color: rgba(192, 192, 192, 0.2);
+        color: #c0c0c0;
+    }
+    
+    .sponsor-item[title*="Bronze"] .sponsor-tier {
+        background-color: rgba(205, 127, 50, 0.2);
+        color: #cd7f32;
+    }
+    
+    /* Become a sponsor button styling */
+    .sponsors-card .action-button.primary {
+        background: linear-gradient(135deg, #4a8eff, #1a5eff);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        box-shadow: 0 2px 8px rgba(26, 94, 255, 0.3);
+    }
+    
+    .sponsors-card .action-button.primary:hover {
+        background: linear-gradient(135deg, #5a9bff, #2a6fff);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(26, 94, 255, 0.4);
+    }
+    
+    .sponsors-card .action-button.primary i {
+        margin-right: 6px;
+        color: #ff8a8a;
     }
     
     /* Fixed banner footer styling */

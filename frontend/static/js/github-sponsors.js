@@ -151,39 +151,51 @@ const GithubSponsors = {
             setTimeout(() => {
                 const mockSponsors = [
                     {
-                        name: 'JohnDoe',
-                        url: 'https://github.com/JohnDoe',
-                        avatarUrl: 'https://avatars.githubusercontent.com/u/1234567',
+                        name: 'MediaServer Pro',
+                        url: 'https://github.com/mediaserverpro',
+                        avatarUrl: 'https://ui-avatars.com/api/?name=MS&background=4A90E2&color=fff&size=200',
                         tier: 'Gold Sponsor'
                     },
                     {
-                        name: 'JaneSmith',
-                        url: 'https://github.com/JaneSmith',
-                        avatarUrl: 'https://avatars.githubusercontent.com/u/2345678',
+                        name: 'StreamVault',
+                        url: 'https://github.com/streamvault',
+                        avatarUrl: 'https://ui-avatars.com/api/?name=SV&background=6C5CE7&color=fff&size=200',
+                        tier: 'Gold Sponsor'
+                    },
+                    {
+                        name: 'MediaStack',
+                        url: 'https://github.com/mediastack',
+                        avatarUrl: 'https://ui-avatars.com/api/?name=MS&background=00B894&color=fff&size=200',
                         tier: 'Silver Sponsor'
                     },
                     {
-                        name: 'TechCorp',
-                        url: 'https://github.com/TechCorp',
-                        avatarUrl: 'https://avatars.githubusercontent.com/u/3456789',
-                        tier: 'Gold Sponsor'
+                        name: 'NASGuru',
+                        url: 'https://github.com/nasguru',
+                        avatarUrl: 'https://ui-avatars.com/api/?name=NG&background=FD79A8&color=fff&size=200',
+                        tier: 'Silver Sponsor'
                     },
                     {
-                        name: 'MediaSolutions',
-                        url: 'https://github.com/MediaSolutions',
-                        avatarUrl: 'https://avatars.githubusercontent.com/u/4567890',
+                        name: 'ServerSquad',
+                        url: 'https://github.com/serversquad',
+                        avatarUrl: 'https://ui-avatars.com/api/?name=SS&background=F1C40F&color=fff&size=200',
                         tier: 'Bronze Sponsor'
                     },
                     {
-                        name: 'DevOpsGuru',
-                        url: 'https://github.com/DevOpsGuru',
-                        avatarUrl: 'https://avatars.githubusercontent.com/u/5678901',
-                        tier: 'Silver Sponsor'
+                        name: 'CloudCache',
+                        url: 'https://github.com/cloudcache',
+                        avatarUrl: 'https://ui-avatars.com/api/?name=CC&background=E74C3C&color=fff&size=200',
+                        tier: 'Bronze Sponsor'
                     },
                     {
-                        name: 'CloudExperts',
-                        url: 'https://github.com/CloudExperts',
-                        avatarUrl: 'https://avatars.githubusercontent.com/u/6789012',
+                        name: 'MediaMinder',
+                        url: 'https://github.com/mediaminder',
+                        avatarUrl: 'https://ui-avatars.com/api/?name=MM&background=9B59B6&color=fff&size=200',
+                        tier: 'Bronze Sponsor'
+                    },
+                    {
+                        name: 'StreamSage',
+                        url: 'https://github.com/streamsage',
+                        avatarUrl: 'https://ui-avatars.com/api/?name=SS&background=2ECC71&color=fff&size=200',
                         tier: 'Bronze Sponsor'
                     }
                 ];
