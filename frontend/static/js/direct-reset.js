@@ -113,6 +113,32 @@ window.lastStatefulHoursValue = null;
     
     // And again when everything is fully loaded
     window.addEventListener('load', insertDirectResetButton);
+
+    // Also check periodically to make sure the button exists
+    setInterval(function() {
+        const headerRow = document.querySelector('.stateful-header-row');
+        if (headerRow && !document.getElementById('emergency_reset_btn')) {
+            console.log('Emergency reset button missing, re-adding it');
+            insertDirectResetButton();
+        }
+    }, 1000); // Check every second
+    
+    // Also listen for potential UI updates that might remove our button
+    // Especially listen for when settings are saved
+    const saveButton = document.getElementById('saveSettingsButton');
+    if (saveButton) {
+        saveButton.addEventListener('click', function() {
+            // After settings are saved, the UI might refresh
+            // Wait a short moment then check if our button is still there
+            setTimeout(function() {
+                const headerRow = document.querySelector('.stateful-header-row');
+                if (headerRow && !document.getElementById('emergency_reset_btn')) {
+                    console.log('Emergency reset button missing after save, re-adding it');
+                    insertDirectResetButton();
+                }
+            }, 500); // Check half a second after save
+        });
+    }
     
     // Add a global interceptor for the notification system
     const originalShowNotification = window.huntarrUI && window.huntarrUI.showNotification;
