@@ -24,6 +24,7 @@ APP_LOG_FILES = {
     "lidarr": LOG_DIR / "lidarr.log", # Updated filename
     "readarr": LOG_DIR / "readarr.log", # Updated filename
     "whisparr": LOG_DIR / "whisparr.log", # Added Whisparr
+    "eros": LOG_DIR / "eros.log",      # Added Eros for Whisparr V3
     "swaparr": LOG_DIR / "swaparr.log"  # Added Swaparr
 }
 

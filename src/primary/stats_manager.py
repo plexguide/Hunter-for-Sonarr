@@ -112,7 +112,9 @@ def get_default_stats() -> Dict[str, Dict[str, int]]:
         "radarr": {"hunted": 0, "upgraded": 0},
         "lidarr": {"hunted": 0, "upgraded": 0},
         "readarr": {"hunted": 0, "upgraded": 0},
-        "whisparr": {"hunted": 0, "upgraded": 0}
+        "whisparr": {"hunted": 0, "upgraded": 0},
+        "eros": {"hunted": 0, "upgraded": 0},
+        "swaparr": {"hunted": 0, "upgraded": 0}
     }
 
 def save_stats(stats: Dict[str, Dict[str, int]]) -> bool:
@@ -160,7 +162,7 @@ def increment_stat(app_type: str, stat_type: str, count: int = 1) -> bool:
     Returns:
         True if successful, False otherwise
     """
-    if app_type not in ["sonarr", "radarr", "lidarr", "readarr", "whisparr"]:
+    if app_type not in ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros", "swaparr"]:
         logger.error(f"Invalid app_type: {app_type}")
         return False
         

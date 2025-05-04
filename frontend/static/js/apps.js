@@ -464,9 +464,11 @@ const appsModule = {
         
         // Update the current app text with proper capitalization
         let displayName = selectedApp.charAt(0).toUpperCase() + selectedApp.slice(1);
-        // Special handling for Whisparr V2
+        // Special handling for app display names
         if (selectedApp === 'whisparr') {
             displayName = 'Whisparr V2';
+        } else if (selectedApp === 'eros') {
+            displayName = 'Whisparr V3';
         }
         this.elements.currentAppsApp.textContent = displayName;
         

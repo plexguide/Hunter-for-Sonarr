@@ -1,5 +1,31 @@
 <section id="homeSection" class="content-section">
     <div class="dashboard-grid stack-layout">
+        <!-- Support Links: Header removed, integrated directly into the layout -->
+        <div class="card support-links-card">
+            <div class="support-links-container">
+                <div class="support-links-grid">
+                    <a href="https://github.com/plexguide/huntarr" target="_blank" class="support-link github">
+                        <div class="icon-container">
+                            <i class="fas fa-star star-icon"></i>
+                        </div>
+                        <div class="link-details">
+                            <span class="link-title">Star on GitHub</span>
+                            <span class="link-description">Helps the project!</span>
+                        </div>
+                    </a>
+                    <a href="https://donate.plex.one" target="_blank" class="support-link donate">
+                        <div class="icon-container">
+                            <i class="fas fa-heart donation-icon"></i>
+                        </div>
+                        <div class="link-details">
+                            <span class="link-title">Donate</span>
+                            <span class="link-description">Daughter's College Fund!</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
         <!-- Community & Resources Hub (redesigned links section) -->
         <div class="card community-hub-card">
             <div class="card-header">
@@ -158,9 +184,9 @@
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
-                                <img src="/static/arrs/48-whisparr.png" alt="Whisparr Logo" class="app-logo">
+                                <img src="/static/arrs/48-whisparr.png" alt="Whisparr V2 Logo" class="app-logo">
                             </div>
-                            <h4>Whisparr</h4>
+                            <h4>Whisparr V2</h4>
                         </div>
                         <div class="stats-numbers">
                             <div class="stat-box">
@@ -173,25 +199,33 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Eros Card -->
+                    <div class="app-stats-card eros">
+                        <div class="status-container">
+                            <span id="erosHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        </div>
+                        <div class="app-content">
+                            <div class="app-icon-wrapper">
+                                <img src="/static/arrs/48-whisparr.png" alt="Whisparr V3 Logo" class="app-logo">
+                            </div>
+                            <h4>Whisparr V3</h4>
+                        </div>
+                        <div class="stats-numbers">
+                            <div class="stat-box">
+                                <span class="stat-number" id="eros-hunted">0</span>
+                                <span class="stat-label">Searches Triggered</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-number" id="eros-upgraded">0</span>
+                                <span class="stat-label">Upgrades Triggered</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-    </div>
-    
-    <!-- Fixed banner at the bottom of the viewport -->
-    <div class="fixed-banner-footer">
-        <div class="footer-content">
-            <div class="footer-item">
-                <i class="fas fa-heart donation-icon"></i> 
-                <a href="https://donate.plex.one" target="_blank">Donate</a> for Daughter's College Fund!
-            </div>
-            <div class="footer-divider"></div>
-            <div class="footer-item">
-                <i class="fas fa-star star-icon"></i> 
-                <a href="https://github.com/plexguide/huntarr" target="_blank">Star Huntarr on GitHub</a> - Helps!
-            </div>
-        </div>
     </div>
 </section>
 
@@ -201,7 +235,7 @@
         flex-direction: column;
         gap: 20px;
         width: 100%;
-        padding-bottom: 50px; /* Add padding to prevent content from being hidden by fixed banner */
+        padding-bottom: 20px; /* Reduced padding since we removed the fixed banner */
     }
     
     .stack-layout .card {
@@ -416,6 +450,12 @@
         box-shadow: 0 0 15px rgba(195, 0, 230, 0.4);
     }
     
+    /* Eros purple icon ring */
+    .app-stats-card.eros .app-icon-wrapper {
+        border: 2px solid rgba(195, 0, 230, 0.8);
+        box-shadow: 0 0 15px rgba(195, 0, 230, 0.4);
+    }
+    
     .app-logo {
         width: 40px;
         height: 40px;
@@ -522,6 +562,19 @@
     }
     
     .app-stats-card.whisparr .stat-number {
+        background: linear-gradient(to bottom right, #e64dff, #c300e6);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* App-specific accent colors for eros */
+    .app-stats-card.eros .app-icon-wrapper {
+        border-color: rgba(195, 0, 230, 0.5);
+        box-shadow: 0 0 15px rgba(195, 0, 230, 0.2);
+    }
+    
+    .app-stats-card.eros .stat-number {
         background: linear-gradient(to bottom right, #e64dff, #c300e6);
         -webkit-background-clip: text;
         background-clip: text;
@@ -675,9 +728,8 @@
         border-radius: 8px;
         padding: 10px 12px;
         transition: all 0.2s ease;
-        border: 1px solid rgba(120, 140, 180, 0.15);
         text-decoration: none;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        color: #e1e6ef;
     }
     
     .community-link:hover {
@@ -744,80 +796,105 @@
         }
     }
     
-    /* Fixed banner footer styling */
-    .fixed-banner-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        text-align: center;
-        padding: 10px 20px;
-        background: linear-gradient(180deg, rgba(24, 28, 37, 0.95), rgba(18, 22, 30, 0.98));
-        box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.2);
-        border-top: 1px solid rgba(90, 109, 137, 0.15);
-        z-index: 1000; /* Ensure it's above other elements */
-        backdrop-filter: blur(5px);
+    /* Support Links styling */
+    .support-links-container {
+        padding: 4px;
     }
     
-    .fixed-banner-footer .footer-content {
+    .support-links-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .support-link {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        background: linear-gradient(145deg, rgba(32, 37, 49, 0.7), rgba(27, 32, 43, 0.7));
+        border: 1px solid rgba(90, 109, 137, 0.1);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: #e1e6ef;
+    }
+    
+    .support-link:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 15px rgba(0, 0, 0, 0.2);
+        border-color: rgba(90, 109, 137, 0.3);
+        background: linear-gradient(145deg, rgba(37, 42, 54, 0.8), rgba(32, 37, 48, 0.8));
+    }
+    
+    .support-link .icon-container {
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
+        width: 45px;
+        height: 45px;
+        font-size: 1.4rem;
+        margin-right: 15px;
+        flex-shrink: 0;
     }
     
-    .fixed-banner-footer .footer-item {
+    .support-link .link-details {
         display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 14px;
-        color: #e0e6ed;
-        transition: transform 0.2s;
+        flex-direction: column;
+        min-width: 0;
     }
     
-    .fixed-banner-footer .footer-item:hover {
-        transform: translateY(-2px);
+    .support-link .link-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-bottom: 3px;
+        white-space: nowrap;
     }
     
-    .fixed-banner-footer .footer-divider {
-        width: 1px;
-        height: 20px;
-        background-color: rgba(120, 140, 180, 0.3);
+    .support-link .link-description {
+        font-size: 0.8rem;
+        color: rgba(225, 230, 239, 0.7);
+        white-space: normal;
+        word-wrap: break-word;
     }
     
-    .fixed-banner-footer a {
-        color: #3498db;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-    
-    .fixed-banner-footer a:hover {
-        text-decoration: none;
-        color: #5dade2;
-    }
-    
-    .fixed-banner-footer .donation-icon {
-        color: #ff6b6b;
-        font-size: 16px;
-    }
-    
-    .fixed-banner-footer .star-icon {
-        color: #ffd700;
-        font-size: 16px;
-    }
-    
-    /* Responsive footer */
-    @media (max-width: 600px) {
-        .fixed-banner-footer .footer-content {
-            flex-direction: column;
-            gap: 10px;
+    /* Mobile optimizations for support links */
+    @media (max-width: 768px) {
+        .support-links-grid {
+            gap: 8px;
         }
         
-        .fixed-banner-footer .footer-divider {
-            display: none;
+        .support-link {
+            padding: 12px;
         }
+        
+        .support-link .icon-container {
+            width: 36px;
+            height: 36px;
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+        
+        .support-link .link-title {
+            font-size: 0.9rem;
+        }
+        
+        .support-link .link-description {
+            font-size: 0.75rem;
+        }
+    }
+    
+    /* Even smaller screens */
+    @media (max-width: 480px) {
+        .support-links-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .support-link.donate .icon-container {
+        color: #ff6b6b;
+    }
+    
+    .support-link.github .icon-container {
+        color: #ffc107;
     }
 </style>

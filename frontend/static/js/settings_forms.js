@@ -549,19 +549,19 @@ const SettingsForms = {
         if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
             settings.instances = [{
                 name: "Default",
-                api_url: settings.api_url || "", // Legacy support
-                api_key: settings.api_key || "", // Legacy support
+                api_url: "",
+                api_key: "",
                 enabled: true
             }];
         }
-        
+
         // Create a container for instances
         let instancesHtml = `
             <div class="settings-group">
-                <h3>Whisparr Instances</h3>
+                <h3>Whisparr V2 Instances</h3>
                 <div class="instances-container">
         `;
-        
+
         // Generate form elements for each instance
         settings.instances.forEach((instance, index) => {
             instancesHtml += `
@@ -578,18 +578,18 @@ const SettingsForms = {
                     <div class="instance-content">
                         <div class="setting-item">
                             <label for="whisparr-name-${index}">Name:</label>
-                            <input type="text" id="whisparr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Whisparr instance">
-                            <p class="setting-help">Friendly name for this Whisparr instance</p>
+                            <input type="text" id="whisparr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Whisparr V2 instance">
+                            <p class="setting-help">Friendly name for this Whisparr V2 instance</p>
                         </div>
                         <div class="setting-item">
                             <label for="whisparr-url-${index}">URL:</label>
-                            <input type="text" id="whisparr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Whisparr (e.g., http://localhost:6969)">
-                            <p class="setting-help">Base URL for Whisparr (e.g., http://localhost:6969)</p>
+                            <input type="text" id="whisparr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Whisparr V2 (e.g., http://localhost:6969)">
+                            <p class="setting-help">Base URL for Whisparr V2 (e.g., http://localhost:6969)</p>
                         </div>
                         <div class="setting-item">
                             <label for="whisparr-key-${index}">API Key:</label>
-                            <input type="text" id="whisparr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr">
-                            <p class="setting-help">API key for Whisparr</p>
+                            <input type="text" id="whisparr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr V2">
+                            <p class="setting-help">API key for Whisparr V2</p>
                         </div>
                         <div class="setting-item">
                             <label for="whisparr-enabled-${index}">Enabled:</label>
@@ -607,16 +607,14 @@ const SettingsForms = {
                 </div> <!-- instances-container -->
                 <div class="button-container" style="text-align: center; margin-top: 15px;">
                     <button type="button" class="add-instance-btn add-whisparr-instance-btn">
-                        <i class="fas fa-plus"></i> Add Whisparr Instance (${settings.instances.length}/9)
+                        <i class="fas fa-plus"></i> Add Whisparr V2 Instance (${settings.instances.length}/9)
                     </button>
                 </div>
             </div> <!-- settings-group -->
         `;
-        
-        // Continue with the rest of the settings form
-        container.innerHTML = `
-            ${instancesHtml}
-            
+
+        // Search Settings
+        let searchSettingsHtml = `
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
@@ -641,7 +639,7 @@ const SettingsForms = {
                 <div class="setting-item">
                     <label for="whisparr_monitored_only">Monitored Only:</label>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="whisparr_monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
+                        <input type="checkbox" id="whisparr_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Only search for monitored items</p>
@@ -649,16 +647,187 @@ const SettingsForms = {
                 <div class="setting-item">
                     <label for="whisparr_skip_future_releases">Skip Future Releases:</label>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="whisparr_skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
+                        <input type="checkbox" id="whisparr_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Skip searching for scenes with future release dates</p>
                 </div>
+                <div class="setting-item">
+                    <label for="whisparr_skip_series_refresh">Skip Series Refresh:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="whisparr_skip_series_refresh" name="skip_series_refresh" ${settings.skip_series_refresh === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip refreshing series metadata before searching</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_skip_scene_refresh">Skip Scene Refresh:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="whisparr_skip_scene_refresh" name="skip_scene_refresh" ${settings.skip_scene_refresh === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip refreshing scene info before searching</p>
+                </div>
             </div>
         `;
 
+        // Set the content
+        container.innerHTML = instancesHtml + searchSettingsHtml;
+
         // Add event listeners for the instance management
-        SettingsForms.setupInstanceManagement(container, 'whisparr', settings.instances.length);
+        this.setupInstanceManagement(container, 'whisparr', settings.instances.length);
+        
+        // Update duration display
+        this.updateDurationDisplay();
+    },
+    
+    // Generate Eros settings form
+    generateErosForm: function(container, settings = {}) {
+        // Add data-app-type attribute to container
+        container.setAttribute('data-app-type', 'eros');
+        
+        // Make sure the instances array exists
+        if (!settings.instances || !Array.isArray(settings.instances) || settings.instances.length === 0) {
+            settings.instances = [{
+                name: "Default",
+                api_url: "",
+                api_key: "",
+                enabled: true
+            }];
+        }
+
+        // Create a container for instances
+        let instancesHtml = `
+            <div class="settings-group">
+                <h3>Whisparr V3 Instances</h3>
+                <div class="instances-container">
+        `;
+
+        // Generate form elements for each instance
+        settings.instances.forEach((instance, index) => {
+            instancesHtml += `
+                <div class="instance-item" data-instance-id="${index}">
+                    <div class="instance-header">
+                        <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
+                        <div class="instance-actions">
+                            ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
+                            <button type="button" class="test-connection-btn" data-instance="${index}" style="margin-left: 10px;">
+                                <i class="fas fa-plug"></i> Test Connection
+                            </button>
+                        </div>
+                    </div>
+                    <div class="instance-content">
+                        <div class="setting-item">
+                            <label for="eros-name-${index}">Name:</label>
+                            <input type="text" id="eros-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Whisparr V3 instance">
+                            <p class="setting-help">Friendly name for this Whisparr V3 instance</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="eros-url-${index}">URL:</label>
+                            <input type="text" id="eros-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Whisparr V3 (e.g., http://localhost:6969)">
+                            <p class="setting-help">Base URL for Whisparr V3 (e.g., http://localhost:6969)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="eros-key-${index}">API Key:</label>
+                            <input type="text" id="eros-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr V3">
+                            <p class="setting-help">API key for Whisparr V3</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="eros-enabled-${index}">Enabled:</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="eros-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        instancesHtml += `
+                </div> <!-- instances-container -->
+                <div class="button-container" style="text-align: center; margin-top: 15px;">
+                    <button type="button" class="add-instance-btn add-eros-instance-btn">
+                        <i class="fas fa-plus"></i> Add Whisparr V3 Instance (${settings.instances.length}/9)
+                    </button>
+                </div>
+            </div> <!-- settings-group -->
+        `;
+
+        // Search Mode dropdown
+        let searchSettingsHtml = `
+            <div class="settings-group">
+                <h3>Search Settings</h3>
+                <div class="setting-item">
+                    <label for="eros_search_mode">Search Mode:</label>
+                    <select id="eros_search_mode" name="search_mode">
+                        <option value="movie" ${settings.search_mode === 'movie' || !settings.search_mode ? 'selected' : ''}>Movie</option>
+                        <option value="scene" ${settings.search_mode === 'scene' ? 'selected' : ''}>Scene</option>
+                    </select>
+                    <p class="setting-help">How to search for missing and upgradable Whisparr V3 content (Movie-based or Scene-based)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="eros_hunt_missing_items">Missing Items to Search:</label>
+                    <input type="number" id="eros_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
+                    <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="eros_hunt_upgrade_items">Items to Upgrade:</label>
+                    <input type="number" id="eros_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
+                    <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="eros_sleep_duration">Sleep Duration:</label>
+                    <input type="number" id="eros_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                    <p class="setting-help">Time in seconds between processing cycles</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Additional Options</h3>
+                <div class="setting-item">
+                    <label for="eros_monitored_only">Monitored Only:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="eros_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Only search for monitored items</p>
+                </div>
+                <div class="setting-item">
+                    <label for="eros_skip_future_releases">Skip Future Releases:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="eros_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip searching for scenes with future release dates</p>
+                </div>
+                <div class="setting-item">
+                    <label for="eros_skip_series_refresh">Skip Series Refresh:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="eros_skip_series_refresh" name="skip_series_refresh" ${settings.skip_series_refresh === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip refreshing series metadata before searching</p>
+                </div>
+                <div class="setting-item">
+                    <label for="eros_skip_scene_refresh">Skip Scene Refresh:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="eros_skip_scene_refresh" name="skip_scene_refresh" ${settings.skip_scene_refresh === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip refreshing scene info before searching</p>
+                </div>
+            </div>
+        `;
+
+        // Set the content
+        container.innerHTML = instancesHtml + searchSettingsHtml;
+
+        // Add event listeners for the instance management
+        this.setupInstanceManagement(container, 'eros', settings.instances.length);
+        
+        // Update duration display
+        this.updateDurationDisplay();
     },
     
     // Generate Swaparr settings form

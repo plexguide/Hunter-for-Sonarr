@@ -15,6 +15,7 @@
                         <a href="#" class="history-option" data-app="lidarr">Lidarr</a>
                         <a href="#" class="history-option" data-app="readarr">Readarr</a>
                         <a href="#" class="history-option" data-app="whisparr">Whisparr</a>
+                        <a href="#" class="history-option" data-app="eros">Whisparr V3</a>
                     </div>
                 </div>
             </div>
@@ -85,17 +86,6 @@
         <button id="historyPrevPage" class="pagination-button"><i class="fas fa-chevron-left"></i> Previous</button>
         <span id="historyPageInfo">Page <span id="historyCurrentPage">1</span> of <span id="historyTotalPages">1</span></span>
         <button id="historyNextPage" class="pagination-button">Next <i class="fas fa-chevron-right"></i></button>
-    </div>
-    
-    <!-- Fixed banner at the bottom of the viewport -->
-    <div class="fixed-banner-footer">
-        <p>
-            <i class="fas fa-heart donation-icon"></i> 
-            <a href="https://donate.plex.one" target="_blank">Donate</a> for Daughter's College Fund!
-            &nbsp;&nbsp;|&nbsp;&nbsp;
-            <i class="fas fa-star star-icon"></i> 
-            <a href="https://github.com/plexguide/huntarr" target="_blank">Star Huntarr on GitHub</a> - Helps!
-        </p>
     </div>
 </section>
 
@@ -460,47 +450,6 @@
         .pagination-controls {
             flex-wrap: wrap;
         }
-    }
-    
-    /* Fixed banner footer styling */
-    .fixed-banner-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        text-align: center;
-        padding: 10px 20px;
-        background: linear-gradient(135deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
-        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.15);
-        border-top: 1px solid rgba(90, 109, 137, 0.25);
-        z-index: 1000; /* Ensure it's above other elements */
-    }
-    
-    .fixed-banner-footer p {
-        margin: 0;
-        font-size: 0.95rem;
-        color: rgba(255, 255, 255, 0.9);
-        font-weight: 500;
-    }
-    
-    .fixed-banner-footer a {
-        color: #3a71e4;
-        text-decoration: none;
-        font-weight: 600;
-        transition: color 0.2s, text-decoration 0.2s;
-    }
-    
-    .fixed-banner-footer a:hover {
-        text-decoration: underline;
-        color: #5481e6;
-    }
-    
-    .fixed-banner-footer .donation-icon {
-        color: #ff6b6b;
-    }
-    
-    .fixed-banner-footer .star-icon {
-        color: #ffc107;
     }
 </style>
 
