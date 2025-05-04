@@ -11,22 +11,62 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # Full history for versioning
     
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.10'
     
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pyinstaller
+        pip install pyinstaller==6.3.0
         pip install -r requirements.txt
+        
+    - name: Extract version from tag or version.txt
+      id: get-version
+      shell: bash
+      run: |
+        if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          # Extract version from tag (remove 'v' prefix)
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          # Update version.txt to match tag
+          echo "$VERSION" > version.txt
+          echo "Using version from tag: $VERSION"
+        else
+          # Read from version.txt
+          VERSION=$(cat version.txt | tr -d '\r\n')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version from version.txt: $VERSION"
+        fi
+    
+    - name: Update NSIS script version
+      run: |
+        $version = "${{ steps.get-version.outputs.VERSION }}"
+        $versionParts = $version.Split('.')
+        $major = $versionParts[0]
+        $minor = $versionParts[1]
+        $build = $versionParts[2]
+        
+        $nsisFile = "installer/huntarr-installer.nsi"
+        $nsisContent = Get-Content -Path $nsisFile -Raw
+        
+        $nsisContent = $nsisContent -replace '!define VERSIONMAJOR \d+', "!define VERSIONMAJOR $major"
+        $nsisContent = $nsisContent -replace '!define VERSIONMINOR \d+', "!define VERSIONMINOR $minor"
+        $nsisContent = $nsisContent -replace '!define VERSIONBUILD \d+', "!define VERSIONBUILD $build"
+        
+        Set-Content -Path $nsisFile -Value $nsisContent
+        Write-Host "Updated NSIS script version to $version"
     
     - name: Build executable with PyInstaller
       run: |
-        pyinstaller --onefile --windowed --name=Huntarr --icon=assets/huntarr.ico main.py
+        pyinstaller huntarr.spec
     
     - name: Install NSIS
       run: |
@@ -36,16 +76,51 @@ jobs:
       run: |
         makensis installer/huntarr-installer.nsi
     
+    - name: Get installer path
+      id: installer-path
+      shell: bash
+      run: |
+        VERSION="${{ steps.get-version.outputs.VERSION }}"
+        INSTALLER_FILE="Huntarr-Setup-$VERSION.exe"
+        echo "INSTALLER_FILE=$INSTALLER_FILE" >> $GITHUB_OUTPUT
+        
+        # Verify the installer was created
+        if [ -f "$INSTALLER_FILE" ]; then
+          echo "Installer found at: $INSTALLER_FILE"
+        else
+          echo "ERROR: Installer not found at expected location: $INSTALLER_FILE"
+          exit 1
+        fi
+    
     - name: Upload installer artifact
       uses: actions/upload-artifact@v3
       with:
-        name: Huntarr-Setup
-        path: installer/Huntarr-Setup.exe
+        name: Huntarr-Windows-Installer
+        path: ${{ steps.installer-path.outputs.INSTALLER_FILE }}
     
-    - name: Create Release
+    - name: Create/Update Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
-        files: installer/Huntarr-Setup.exe
+        files: ${{ steps.installer-path.outputs.INSTALLER_FILE }}
+        name: Huntarr ${{ steps.get-version.outputs.VERSION }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        body: |
+          ## Huntarr ${{ steps.get-version.outputs.VERSION }}
+          
+          ### Windows Installer
+          
+          The Windows installer includes:
+          - Full Huntarr application
+          - Windows Service support for background operation
+          - Automatic startup option
+          
+          ### Installation
+          
+          1. Download the installer: `Huntarr-Setup-${{ steps.get-version.outputs.VERSION }}.exe`
+          2. Run the installer and follow the instructions
+          3. Optionally install as a Windows service for background operation
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
