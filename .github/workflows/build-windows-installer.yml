@@ -64,6 +64,19 @@ jobs:
         Set-Content -Path $nsisFile -Value $nsisContent
         Write-Host "Updated NSIS script version to $version"
     
+    - name: Generate PyInstaller spec file
+      run: |
+        python installer/generate_spec.py
+        
+        # Verify the spec file exists
+        if (Test-Path "huntarr.spec") {
+            Write-Host "PyInstaller spec file created and verified"
+            Get-Content "huntarr.spec" | Select-Object -First 5
+        } else {
+            Write-Error "Failed to create PyInstaller spec file"
+            exit 1
+        }
+    
     - name: Build executable with PyInstaller
       run: |
         pyinstaller huntarr.spec
