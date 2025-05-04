@@ -22,6 +22,62 @@ root_logger = logging.getLogger("HuntarrRoot") # Specific logger for this entry 
 root_logger.info("--- Huntarr Main Process Starting ---")
 root_logger.info(f"Python sys.path: {sys.path}")
 
+# Check for Windows service commands
+if sys.platform == 'win32' and len(sys.argv) > 1:
+    if sys.argv[1] == '--install-service':
+        try:
+            from src.primary.windows_service import install_service
+            success = install_service()
+            sys.exit(0 if success else 1)
+        except ImportError:
+            root_logger.error("Failed to import Windows service module. Make sure pywin32 is installed.")
+            sys.exit(1)
+        except Exception as e:
+            root_logger.exception(f"Error installing Windows service: {e}")
+            sys.exit(1)
+    elif sys.argv[1] == '--remove-service':
+        try:
+            from src.primary.windows_service import remove_service
+            success = remove_service()
+            sys.exit(0 if success else 1)
+        except ImportError:
+            root_logger.error("Failed to import Windows service module. Make sure pywin32 is installed.")
+            sys.exit(1)
+        except Exception as e:
+            root_logger.exception(f"Error removing Windows service: {e}")
+            sys.exit(1)
+    elif sys.argv[1] in ['--start', '--stop', '--restart', '--debug', '--update']:
+        try:
+            import win32serviceutil
+            service_name = "Huntarr"
+            if sys.argv[1] == '--start':
+                win32serviceutil.StartService(service_name)
+                print(f"Started {service_name} service")
+            elif sys.argv[1] == '--stop':
+                win32serviceutil.StopService(service_name)
+                print(f"Stopped {service_name} service")
+            elif sys.argv[1] == '--restart':
+                win32serviceutil.RestartService(service_name)
+                print(f"Restarted {service_name} service")
+            elif sys.argv[1] == '--debug':
+                # Run the service in debug mode directly
+                from src.primary.windows_service import HuntarrService
+                win32serviceutil.HandleCommandLine(HuntarrService)
+            elif sys.argv[1] == '--update':
+                # Update the service
+                win32serviceutil.StopService(service_name)
+                from src.primary.windows_service import install_service
+                install_service()
+                win32serviceutil.StartService(service_name)
+                print(f"Updated {service_name} service")
+            sys.exit(0)
+        except ImportError:
+            root_logger.error("Failed to import Windows service module. Make sure pywin32 is installed.")
+            sys.exit(1)
+        except Exception as e:
+            root_logger.exception(f"Error managing Windows service: {e}")
+            sys.exit(1)
+
 try:
     # Import the Flask app instance
     from primary.web_server import app
