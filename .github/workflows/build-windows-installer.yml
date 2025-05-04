@@ -12,12 +12,12 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0 # Full history for versioning
     
     - name: Set up Python
-      uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      uses: actions/setup-python@v4
       with:
         python-version: '3.10'
     
@@ -91,25 +91,6 @@ jobs:
           echo "ERROR: Installer not found at expected location: $INSTALLER_FILE"
           exit 1
         fi
-    
-    - name: Use custom upload method
-      run: |
-        # Create directory for artifacts
-        mkdir -p artifacts
-        
-        # Copy the installer to the artifacts directory
-        $INSTALLER_FILE="${{ steps.installer-path.outputs.INSTALLER_FILE }}"
-        Copy-Item -Path $INSTALLER_FILE -Destination "artifacts/"
-        
-        # List files in artifacts directory
-        Get-ChildItem -Path "artifacts/"
-    
-    - name: Upload artifact
-      uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
-      with:
-        name: Huntarr-Windows-Installer
-        path: artifacts/
-        retention-days: 30
     
     - name: Create/Update Release
       if: startsWith(github.ref, 'refs/tags/')
