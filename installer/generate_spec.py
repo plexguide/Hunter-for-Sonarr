@@ -10,27 +10,90 @@ def generate_spec_file(output_path='huntarr.spec'):
     """
     Generate a PyInstaller spec file for Huntarr
     """
+    # Get the current working directory
+    cwd = os.getcwd()
+    
+    # Debug - print information about the environment
+    print(f"Current working directory: {cwd}")
+    print(f"Directory contents: {os.listdir(cwd)}")
+    
+    # Check if required directories exist
+    required_dirs = ['src', 'templates', 'static', 'assets']
+    for directory in required_dirs:
+        if os.path.exists(os.path.join(cwd, directory)):
+            print(f" Found directory: {directory}")
+        else:
+            print(f" Missing directory: {directory}")
+    
     spec_content = """# -*- mode: python ; coding: utf-8 -*-
 
 import os
+import sys
 from pathlib import Path
 
-# Get the current working directory
-cwd = os.getcwd()
+# Debug information - will be shown in build logs
+print("===== PYINSTALLER SPEC EXECUTION =====")
+print(f"Current working directory: {os.getcwd()}")
+print(f"Directory contents: {os.listdir('.')}")
 
-# Ensure paths are correct for the GitHub Actions environment
+# Function to safely resolve paths
+def safe_path(path):
+    if os.path.exists(path):
+        print(f"Path exists: {path}")
+        return path
+    else:
+        print(f"Path does not exist: {path}")
+        # Try parent directory as fallback
+        parent_path = os.path.abspath(os.path.join(os.getcwd(), '..', os.path.basename(path)))
+        if os.path.exists(parent_path):
+            print(f"Using alternative path: {parent_path}")
+            return parent_path
+        print(f"Alternative path not found either: {parent_path}")
+        # Use the original path and let PyInstaller warn about it
+        return path
+
+# List of data directories to include
+data_dirs = []
+for dir_name in ['src', 'templates', 'static', 'assets']:
+    full_path = os.path.join(os.getcwd(), dir_name)
+    if os.path.exists(full_path):
+        data_dirs.append((full_path, dir_name))
+        print(f"Adding directory: {full_path} -> {dir_name}")
+    else:
+        print(f"Warning: Could not find directory: {full_path}")
+
+# List of data files to include
+data_files = []
+for file_name in ['requirements.txt', 'version.txt']:
+    full_path = os.path.join(os.getcwd(), file_name)
+    if os.path.exists(full_path):
+        data_files.append((full_path, '.'))
+        print(f"Adding file: {full_path}")
+    else:
+        print(f"Warning: Could not find file: {full_path}")
+
+# Get icon path
+icon_path = os.path.join(os.getcwd(), 'assets', 'huntarr.ico')
+if not os.path.exists(icon_path):
+    print(f"Warning: Icon file not found: {icon_path}")
+    # Try to find the icon elsewhere
+    for root, dirs, files in os.walk(os.getcwd()):
+        for file in files:
+            if file == 'huntarr.ico':
+                icon_path = os.path.join(root, file)
+                print(f"Found icon at alternative location: {icon_path}")
+                break
+        if os.path.exists(icon_path) and icon_path != os.path.join(os.getcwd(), 'assets', 'huntarr.ico'):
+            break
+
+# Combine all datas
+all_datas = data_dirs + data_files
+
 a = Analysis(
     ['main.py'],
-    pathex=[cwd],
+    pathex=[os.getcwd()],
     binaries=[],
-    datas=[
-        (os.path.join(cwd, 'src'), 'src'),
-        (os.path.join(cwd, 'templates'), 'templates'),
-        (os.path.join(cwd, 'static'), 'static'),
-        (os.path.join(cwd, 'requirements.txt'), '.'),
-        (os.path.join(cwd, 'version.txt'), '.'),
-        (os.path.join(cwd, 'assets'), 'assets'),
-    ],
+    datas=all_datas,
     hiddenimports=[
         'flask', 'waitress', 'requests', 'dateutil', 'pyotp', 'qrcode', 'psutil', 'pytz',
         'win32timezone', 'win32serviceutil', 'win32service', 'win32event', 'servicemanager', 'socket',
@@ -62,13 +125,13 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=True,  # Changed to True to see console output for debugging
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=os.path.join(cwd, 'assets', 'huntarr.ico')
+    icon=icon_path
 )
 """
     
