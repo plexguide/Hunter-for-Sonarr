@@ -199,6 +199,12 @@ def process_missing_episodes_mode(
                 processed_any = True # Mark that we did something
                 sonarr_logger.info(f"Successfully processed and searched for {len(episode_ids)} episodes in series {series_id}.")
                 
+                # Add stats incrementing right here - this is the code path that's actually being executed
+                for episode_id in episode_ids:
+                    # Increment stat for each episode individually, just like Radarr
+                    increment_stat("sonarr", "hunted")
+                    sonarr_logger.info(f"*** STATS INCREMENT *** sonarr hunted by 1 for episode ID {episode_id}")
+                
                 # Log to history system
                 # Find the corresponding episode data for this ID
                 for episode in episodes_to_search:
@@ -214,12 +220,18 @@ def process_missing_episodes_mode(
                             season_episode = f"S{season_number}E{episode_number}"
                             
                         media_name = f"{series_title} - {season_episode} - {episode_title}"
+                        process_id = f"{series_id}_{episode_id}"
+                        add_processed_id("sonarr", instance_name, process_id)
                         log_processed_media("sonarr", media_name, episode_id, instance_name, "missing")
+                        
+                        # Increment the stat for each episode individually (like Radarr does for movies)
+                        increment_stat("sonarr", "hunted")
+                        sonarr_logger.debug(f"Incremented sonarr hunted statistic for episode {episode_id}")
                         break
                 
-                # Increment the hunted statistics
-                increment_stat("sonarr", "hunted", len(episode_ids))
-                sonarr_logger.debug(f"Incremented sonarr hunted statistics by {len(episode_ids)}")
+                # The batch increment was causing issues - removing it
+                # increment_stat("sonarr", "hunted", len(episode_ids))
+                # sonarr_logger.debug(f"Incremented sonarr hunted statistics by {len(episode_ids)}")
             else:
                 sonarr_logger.warning(f"Episode search command (ID: {search_command_id}) for series {series_id} did not complete successfully or timed out. Episodes will not be marked as processed yet.")
         else:
@@ -351,9 +363,10 @@ def process_missing_seasons_packs_mode(
             log_processed_media("sonarr", media_name, season_id, instance_name, "missing")
             sonarr_logger.debug(f"Logged history entry for season pack: {media_name}")
             
-            # Increment the hunted statistics
-            increment_stat("sonarr", "hunted", episode_count)  # Count all episodes in the season pack
-            sonarr_logger.debug(f"Incremented sonarr hunted statistics by {episode_count} (full season)")
+            # Increment stats one by one instead of in a batch
+            for i in range(episode_count):
+                increment_stat("sonarr", "hunted")
+            sonarr_logger.debug(f"Incremented sonarr hunted statistics for {episode_count} episodes in season pack")
             
             # Wait for command to complete if configured
             if command_wait_delay > 0 and command_wait_attempts > 0:

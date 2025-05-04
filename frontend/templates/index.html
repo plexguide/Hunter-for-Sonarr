@@ -26,13 +26,10 @@
             <!-- Settings Section -->
             {% include 'components/settings_section.html' %}
             
-            <!-- Sponsors Section -->
-            <section id="sponsorsSection" class="content-section">
-                <iframe id="sponsorsFrame" src="" style="width: 100%; height: 100%; border: none;"></iframe>
-            </section>
-            
         </div>
     </div>
+    
+    {% include 'components/footer.html' %}
     
     {% include 'components/scripts.html' %}
     <!-- Load settings-related scripts -->
@@ -43,8 +40,8 @@
     <script src="/static/js/apps.js"></script>
     <!-- Emergency reset button implementation -->
     <script src="/static/js/direct-reset.js"></script>
-    <!-- GitHub Sponsors integration -->
-    <script src="/static/js/github-sponsors.js"></script>
+    <!-- Stats reset handler -->
+    <script src="/static/js/stats-reset.js"></script>
     
 </body>
 </html>

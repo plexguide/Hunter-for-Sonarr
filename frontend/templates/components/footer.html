@@ -17,12 +17,23 @@
     .banner-footer {
         text-align: center;
         padding: 10px 20px;
-        margin-top: 15px;
-        margin-bottom: 10px;
-        background: linear-gradient(180deg, rgba(24, 28, 37, 0.95), rgba(18, 22, 30, 0.98));
-        border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-        border: 1px solid rgba(90, 109, 137, 0.15);
+        background-color: #1c2231;
+        border-top: 1px solid rgba(90, 109, 137, 0.15);
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        left: 0;
+        z-index: 1000;
+    }
+    
+    /* Add padding to the body to prevent content from being hidden behind the footer */
+    body {
+        padding-bottom: 50px;
+    }
+    
+    /* Make sure dropdowns appear above the footer */
+    .dropdown-menu {
+        z-index: 1001;
     }
     
     .banner-footer .footer-content {
@@ -40,50 +51,30 @@
         gap: 6px;
         font-size: 14px;
         color: #e0e6ed;
-        transition: transform 0.2s;
     }
     
-    .banner-footer .footer-item:hover {
-        transform: translateY(-2px);
+    .banner-footer a {
+        color: #59a0ff;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    
+    .banner-footer a:hover {
+        color: #4a90e2;
+        text-decoration: underline;
     }
     
     .banner-footer .footer-divider {
         width: 1px;
         height: 20px;
-        background-color: rgba(120, 140, 180, 0.3);
+        background-color: rgba(138, 153, 175, 0.3);
     }
     
-    .banner-footer a {
-        color: #3498db;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.2s ease;
+    .donation-icon {
+        color: #e74c3c;
     }
     
-    .banner-footer a:hover {
-        text-decoration: none;
-        color: #5dade2;
-    }
-    
-    .banner-footer .donation-icon {
-        color: #ff6b6b;
-        font-size: 16px;
-    }
-    
-    .banner-footer .star-icon {
-        color: #ffd700;
-        font-size: 16px;
-    }
-    
-    /* Responsive footer */
-    @media (max-width: 600px) {
-        .banner-footer .footer-content {
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .banner-footer .footer-divider {
-            display: none;
-        }
+    .star-icon {
+        color: #f1c40f;
     }
 </style>

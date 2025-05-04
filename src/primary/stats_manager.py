@@ -131,13 +131,21 @@ def save_stats(stats: Dict[str, Dict[str, int]]) -> bool:
     
     try:
         logger.debug(f"Saving stats to: {STATS_FILE}")
-        with open(STATS_FILE, 'w') as f:
+        # First write to a temp file, then move it to avoid partial writes
+        temp_file = f"{STATS_FILE}.tmp"
+        with open(temp_file, 'w') as f:
             json.dump(stats, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        
+        # Move the temp file to the actual file
+        os.replace(temp_file, STATS_FILE)
+        
         logger.info(f"===> Successfully wrote stats to file: {STATS_FILE}")
         logger.debug(f"Stats saved successfully: {stats}")
         return True
     except Exception as e:
-        logger.error(f"Error saving stats to {STATS_FILE}: {e}")
+        logger.error(f"Error saving stats to {STATS_FILE}: {e}", exc_info=True)
         return False
 
 def increment_stat(app_type: str, stat_type: str, count: int = 1) -> bool:
@@ -165,8 +173,21 @@ def increment_stat(app_type: str, stat_type: str, count: int = 1) -> bool:
         prev_value = stats[app_type][stat_type]
         stats[app_type][stat_type] += count
         new_value = stats[app_type][stat_type]
-        logger.info(f"Incrementing {app_type} {stat_type} by {count}: {prev_value} -> {new_value}")
-        return save_stats(stats)
+        logger.info(f"*** STATS INCREMENT *** {app_type} {stat_type} by {count}: {prev_value} -> {new_value}")
+        save_success = save_stats(stats)
+        
+        if not save_success:
+            logger.error(f"Failed to save stats after incrementing {app_type} {stat_type}")
+            return False
+            
+        # Add debug verification that stats were actually saved
+        verification_stats = load_stats()
+        if verification_stats[app_type][stat_type] != new_value:
+            logger.error(f"Stats verification failed! Expected {new_value} but got {verification_stats[app_type][stat_type]} for {app_type} {stat_type}")
+            return False
+            
+        logger.info(f"Successfully incremented and verified {app_type} {stat_type}")
+        return True
 
 def get_stats() -> Dict[str, Dict[str, int]]:
     """
