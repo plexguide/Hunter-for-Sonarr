@@ -4,15 +4,6 @@
         <div class="card support-links-card">
             <div class="support-links-container">
                 <div class="support-links-grid">
-                    <a href="https://donate.plex.one" target="_blank" class="support-link donate">
-                        <div class="icon-container">
-                            <i class="fas fa-heart donation-icon"></i>
-                        </div>
-                        <div class="link-details">
-                            <span class="link-title">Donate</span>
-                            <span class="link-description">Daughter's College Fund!</span>
-                        </div>
-                    </a>
                     <a href="https://github.com/plexguide/huntarr" target="_blank" class="support-link github">
                         <div class="icon-container">
                             <i class="fas fa-star star-icon"></i>
@@ -20,6 +11,15 @@
                         <div class="link-details">
                             <span class="link-title">Star on GitHub</span>
                             <span class="link-description">Helps the project!</span>
+                        </div>
+                    </a>
+                    <a href="https://donate.plex.one" target="_blank" class="support-link donate">
+                        <div class="icon-container">
+                            <i class="fas fa-heart donation-icon"></i>
+                        </div>
+                        <div class="link-details">
+                            <span class="link-title">Donate</span>
+                            <span class="link-description">Daughter's College Fund!</span>
                         </div>
                     </a>
                 </div>
@@ -798,13 +798,13 @@
     
     /* Support Links styling */
     .support-links-container {
-        padding: 15px;
+        padding: 4px;
     }
     
     .support-links-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
+        gap: 10px;
     }
     
     .support-link {
@@ -860,7 +860,7 @@
     /* Mobile optimizations for support links */
     @media (max-width: 768px) {
         .support-links-grid {
-            gap: 10px;
+            gap: 8px;
         }
         
         .support-link {
