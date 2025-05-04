@@ -32,88 +32,93 @@ def test_connection():
         whisparr_logger.error(error_msg)
         return jsonify({"success": False, "message": error_msg}), 400
         
-    # For Whisparr V2, we can try both with and without /api/v3 path
-    # First try with direct API access
-    test_url = f"{api_url.rstrip('/')}/api/system/status"
-    headers = {'X-Api-Key': api_key}
+    # Try multiple API path combinations to handle different Whisparr V2 setups
+    api_paths = [
+        "/api/system/status",     # Standard V2 path
+        "/api/v3/system/status",  # Some V2 instances use V3 API
+        "/system/status"          # Direct path without /api prefix
+    ]
     
-    try:
-        # Use a connection timeout separate from read timeout
-        response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
+    success = False
+    last_error = None
+    response_data = None
+    
+    for api_path in api_paths:
+        test_url = f"{api_url.rstrip('/')}{api_path}"
+        headers = {'X-Api-Key': api_key}
+        whisparr_logger.debug(f"Trying Whisparr API path: {test_url}")
         
-        # Log HTTP status code for diagnostic purposes
-        whisparr_logger.debug(f"Whisparr API status code: {response.status_code}")
-        
-        # If we get a 404, try with /api/v3 path since Whisparr V2 might be using API V3 format
-        if response.status_code == 404:
-            test_url = f"{api_url.rstrip('/')}/api/v3/system/status"
-            whisparr_logger.debug(f"First attempt failed, trying alternate API path: {test_url}")
-            response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
-            whisparr_logger.debug(f"Whisparr API V3 status code: {response.status_code}")
-        
-        # Check HTTP status code
-        response.raise_for_status()
-
-        # Ensure the response is valid JSON
         try:
-            response_data = response.json()
-            whisparr_logger.debug(f"Whisparr API response: {response_data}")
+            # Use a connection timeout separate from read timeout
+            response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
             
-            # Verify this is actually a Whisparr API by checking for version
-            version = response_data.get('version', None)
-            if not version:
-                error_msg = "API response doesn't contain version information, may not be Whisparr"
-                whisparr_logger.error(error_msg)
-                return jsonify({"success": False, "message": error_msg}), 400
+            # Log HTTP status code for diagnostic purposes
+            whisparr_logger.debug(f"Whisparr API status code: {response.status_code} for path {api_path}")
             
-            # Accept both V2 and V3 API formats for Whisparr V2
-            # The version number should still start with 2 for Whisparr V2, even if using API V3
-            if version.startswith('2'):
-                whisparr_logger.info(f"Successfully connected to Whisparr V2 API version {version}")
-                return jsonify({
-                    "success": True, 
-                    "message": f"Successfully connected to Whisparr V2 (version {version})",
-                    "version": version
-                })
-            elif version.startswith('3'):
-                error_msg = f"Connected to Whisparr Eros (version {version}). Huntarr requires Whisparr V2."
-                whisparr_logger.error(error_msg)
-                return jsonify({"success": False, "message": error_msg}), 400
-            else:
-                # Connected to some other version
-                error_msg = f"Connected to Whisparr version {version}, but Huntarr requires Whisparr V2"
-                whisparr_logger.error(error_msg)
-                return jsonify({"success": False, "message": error_msg}), 400
+            # Check HTTP status code
+            if response.status_code == 404:
+                # Try next path if 404
+                continue
                 
-        except ValueError:
-            error_msg = "Invalid JSON response from API. Are you sure this is a Whisparr API?"
-            whisparr_logger.error(f"{error_msg}. Response: {response.text[:200]}")
-            return jsonify({"success": False, "message": error_msg}), 400
+            response.raise_for_status()
+    
+            # Ensure the response is valid JSON
+            try:
+                response_data = response.json()
+                whisparr_logger.debug(f"Whisparr API response: {response_data}")
+                
+                # Verify this is actually a Whisparr API by checking for version
+                version = response_data.get('version', None)
+                if not version:
+                    # No version info, try next path
+                    last_error = "API response doesn't contain version information"
+                    continue
+                
+                # The version number should start with 2 for Whisparr
+                if version.startswith('2'):
+                    whisparr_logger.info(f"Successfully connected to Whisparr V2 API version {version} using path {api_path}")
+                    success = True
+                    break
+                elif version.startswith('3'):
+                    error_msg = f"Connected to Whisparr V3 (version {version}). Use the Eros integration for V3."
+                    whisparr_logger.error(error_msg)
+                    return jsonify({"success": False, "message": error_msg}), 400
+                else:
+                    # Connected to some other version, try next path
+                    last_error = f"Connected to unknown version {version}, but Huntarr requires Whisparr V2"
+                    continue
+                    
+            except ValueError:
+                last_error = "Invalid JSON response from API"
+                continue
+                
+        except requests.exceptions.Timeout:
+            last_error = f"Connection timed out after {api_timeout} seconds"
+            continue
             
-    except requests.exceptions.Timeout:
-        error_msg = f"Connection timed out after {api_timeout} seconds. Check that Whisparr is running and accessible."
+        except requests.exceptions.ConnectionError:
+            last_error = "Failed to connect. Check that the URL is correct and that Whisparr is running."
+            continue
+            
+        except requests.exceptions.HTTPError as e:
+            last_error = f"HTTP error: {str(e)}"
+            continue
+            
+        except Exception as e:
+            last_error = f"Unexpected error: {str(e)}"
+            continue
+    
+    # After trying all paths
+    if success:
+        return jsonify({
+            "success": True, 
+            "message": f"Successfully connected to Whisparr V2 (version {response_data.get('version')})",
+            "version": response_data.get('version')
+        })
+    else:
+        error_msg = last_error or "Failed to connect to Whisparr API. Please check your URL and API key."
         whisparr_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 408
-        
-    except requests.exceptions.ConnectionError:
-        error_msg = "Failed to connect. Check that the URL is correct and that Whisparr is running."
-        whisparr_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 502
-        
-    except requests.exceptions.HTTPError as e:
-        if response.status_code == 401:
-            error_msg = "API key invalid or unauthorized"
-        elif response.status_code == 404:
-            error_msg = "API endpoint not found. Check that the URL is correct."
-        else:
-            error_msg = f"HTTP error: {str(e)}"
-        whisparr_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), response.status_code
-        
-    except Exception as e:
-        error_msg = f"Unexpected error: {str(e)}"
-        whisparr_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 500
+        return jsonify({"success": False, "message": error_msg}), 400
 
 # Function to check if Whisparr is configured
 def is_configured():

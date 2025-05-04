@@ -493,7 +493,7 @@ def api_app_status(app_name):
         return jsonify({"configured": False, "connected": False, "error": "Invalid app name"}), 400
     
     try:
-        if app_name in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr']:
+        if app_name in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']:
             # --- Multi-Instance Status Check --- # 
             connected_count = 0
             total_configured = 0
