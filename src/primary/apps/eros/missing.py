@@ -153,9 +153,21 @@ def process_missing_items(
 
         item_id = item.get("id")
         title = item.get("title", "Unknown Title")
-        season_episode = f"S{item.get('seasonNumber', 0):02d}E{item.get('episodeNumber', 0):02d}"
         
-        eros_logger.info(f"Processing missing item: \"{title}\" - {season_episode} (Item ID: {item_id})")
+        # For movies, we don't use season/episode format
+        if search_mode == "movie":
+            item_info = title
+        else:
+            # If somehow using scene mode, try to format as S/E if available
+            season_number = item.get('seasonNumber')
+            episode_number = item.get('episodeNumber')
+            if season_number is not None and episode_number is not None:
+                season_episode = f"S{season_number:02d}E{episode_number:02d}"
+                item_info = f"{title} - {season_episode}"
+            else:
+                item_info = title
+        
+        eros_logger.info(f"Processing missing item: \"{item_info}\" (Item ID: {item_id})")
         
         # Mark the item as processed BEFORE triggering any searches
         add_processed_id("eros", instance_name, str(item_id))
@@ -186,9 +198,8 @@ def process_missing_items(
             eros_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
             
             # Log to history system
-            media_name = f"{title} - {season_episode}"
-            log_processed_media("eros", media_name, item_id, instance_name, "missing")
-            eros_logger.debug(f"Logged history entry for item: {media_name}")
+            log_processed_media("eros", item_info, item_id, instance_name, "missing")
+            eros_logger.debug(f"Logged history entry for item: {item_info}")
             
             items_processed += 1
             processing_done = True

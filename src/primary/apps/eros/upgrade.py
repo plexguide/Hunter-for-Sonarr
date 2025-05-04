@@ -126,11 +126,25 @@ def process_cutoff_upgrades(
         
         item_id = item.get("id")
         title = item.get("title", "Unknown Title")
-        season_episode = f"S{item.get('seasonNumber', 0):02d}E{item.get('episodeNumber', 0):02d}"
         
-        current_quality = item.get("episodeFile", {}).get("quality", {}).get("quality", {}).get("name", "Unknown")
+        # For movies, we don't use season/episode format
+        if search_mode == "movie":
+            item_info = title
+            # In Whisparr, movie quality is stored differently than TV shows
+            current_quality = item.get("movieFile", {}).get("quality", {}).get("quality", {}).get("name", "Unknown")
+        else:
+            # If somehow using scene mode, try to format as S/E if available
+            season_number = item.get('seasonNumber')
+            episode_number = item.get('episodeNumber')
+            if season_number is not None and episode_number is not None:
+                season_episode = f"S{season_number:02d}E{episode_number:02d}"
+                item_info = f"{title} - {season_episode}"
+            else:
+                item_info = title
+            # Legacy episode quality path
+            current_quality = item.get("episodeFile", {}).get("quality", {}).get("quality", {}).get("name", "Unknown")
         
-        eros_logger.info(f"Processing item for quality upgrade: \"{title}\" - {season_episode} (Item ID: {item_id})")
+        eros_logger.info(f"Processing item for quality upgrade: \"{item_info}\" (Item ID: {item_id})")
         eros_logger.info(f" - Current quality: {current_quality}")
         
         # Mark the item as processed BEFORE triggering any searches
@@ -162,9 +176,7 @@ def process_cutoff_upgrades(
             eros_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
             
             # Log to history so the upgrade appears in the history UI
-            series_title = item.get("series", {}).get("title", "Unknown Series")
-            media_name = f"{series_title} - {season_episode} - {title}"
-            log_processed_media("eros", media_name, item_id, instance_name, "upgrade")
+            log_processed_media("eros", item_info, item_id, instance_name, "upgrade")
             eros_logger.debug(f"Logged quality upgrade to history for item ID {item_id}")
             
             items_processed += 1

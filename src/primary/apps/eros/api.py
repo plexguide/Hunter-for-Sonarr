@@ -310,79 +310,24 @@ def get_quality_upgrades(api_url: str, api_key: str, api_timeout: int, monitored
 
 def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int) -> int:
     """
-    Refresh an item in Eros.
+    Refresh a movie in Whisparr V3.
     
     Args:
-        api_url: The base URL of the Eros API
+        api_url: The base URL of the Whisparr V3 API
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
-        item_id: The ID of the item to refresh
+        item_id: The ID of the movie to refresh
         
     Returns:
         The command ID if the refresh was triggered successfully, None otherwise
     """
     try:
-        eros_logger.debug(f"Refreshing item with ID {item_id}")
+        eros_logger.debug(f"Refreshing movie with ID {item_id}")
         
-        # Get episode details to find the series ID
-        episode_endpoint = f"episode/{item_id}"
-        episode_data = arr_request(api_url, api_key, api_timeout, episode_endpoint)
-        
-        if episode_data and "seriesId" in episode_data:
-            # We have the series ID, use series refresh which is more reliable
-            series_id = episode_data["seriesId"]
-            eros_logger.debug(f"Retrieved series ID {series_id} for episode {item_id}, using series refresh")
-            
-            # RefreshSeries is generally more reliable
-            payload = {
-                "name": "RefreshSeries",
-                "seriesId": series_id
-            }
-        else:
-            # Fall back to episode refresh if we can't get the series ID
-            eros_logger.debug(f"Could not retrieve series ID for episode {item_id}, using episode refresh")
-            payload = {
-                "name": "RefreshEpisode",
-                "episodeIds": [item_id]
-            }
-        
-        # Command endpoint
-        command_endpoint = "command"
-        
-        # Make the API request
-        response = arr_request(api_url, api_key, api_timeout, command_endpoint, "POST", payload)
-        
-        if response and "id" in response:
-            command_id = response["id"]
-            eros_logger.debug(f"Refresh command triggered with ID {command_id}")
-            return command_id
-        else:
-            eros_logger.error("Failed to trigger refresh command - no command ID returned")
-            return None
-            
-    except Exception as e:
-        eros_logger.error(f"Error refreshing item: {str(e)}")
-        return None
-
-def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int]) -> int:
-    """
-    Trigger a search for one or more items.
-    
-    Args:
-        api_url: The base URL of the Eros API
-        api_key: The API key for authentication
-        api_timeout: Timeout for the API request
-        item_ids: A list of item IDs to search for
-        
-    Returns:
-        The command ID if the search command was triggered successfully, None otherwise
-    """
-    try:
-        eros_logger.debug(f"Searching for items with IDs: {item_ids}")
-        
+        # In Whisparr V3, we use RefreshMovie command directly with the movieId
         payload = {
-            "name": "EpisodeSearch",
-            "episodeIds": item_ids
+            "name": "RefreshMovie",
+            "movieId": item_id
         }
         
         # Command endpoint
@@ -393,14 +338,81 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
         
         if response and "id" in response:
             command_id = response["id"]
-            eros_logger.debug(f"Search command triggered with ID {command_id}")
+            eros_logger.debug(f"Refresh movie command triggered with ID {command_id}")
             return command_id
         else:
-            eros_logger.error("Failed to trigger search command - no command ID returned")
+            eros_logger.error("Failed to trigger refresh command - no command ID returned")
             return None
-        
+            
     except Exception as e:
-        eros_logger.error(f"Error searching for items: {str(e)}")
+        eros_logger.error(f"Error refreshing movie: {str(e)}")
+        return None
+
+def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int]) -> int:
+    """
+    Trigger a search for one or more movies in Whisparr V3.
+    
+    Args:
+        api_url: The base URL of the Whisparr V3 API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        item_ids: A list of movie IDs to search for
+        
+    Returns:
+        The command ID if the search command was triggered successfully, None otherwise
+    """
+    try:
+        if not item_ids:
+            eros_logger.warning("No movie IDs provided for search.")
+            return None
+            
+        eros_logger.debug(f"Searching for movies with IDs: {item_ids}")
+
+        # Try several possible command formats, as the API might be in flux
+        possible_commands = [
+            # Format 1: MoviesSearch with integer IDs (Radarr-like)
+            {
+                "name": "MoviesSearch",
+                "movieIds": item_ids
+            },
+            # Format 2: MovieSearch with integer IDs
+            {
+                "name": "MovieSearch",
+                "movieIds": item_ids
+            },
+            # Format 3: MoviesSearch with string IDs
+            {
+                "name": "MoviesSearch",
+                "movieIds": [str(id) for id in item_ids]
+            },
+            # Format 4: MovieSearch with string IDs
+            {
+                "name": "MovieSearch",
+                "movieIds": [str(id) for id in item_ids]
+            }
+        ]
+        
+        # Command endpoint
+        command_endpoint = "command"
+        
+        # Try each command format until one works
+        for i, payload in enumerate(possible_commands):
+            eros_logger.debug(f"Trying search command format {i+1}: {payload}")
+            
+            # Make the API request
+            response = arr_request(api_url, api_key, api_timeout, command_endpoint, "POST", payload)
+            
+            if response and "id" in response:
+                command_id = response["id"]
+                eros_logger.debug(f"Search command format {i+1} succeeded with ID {command_id}")
+                return command_id
+                
+        # If we've tried all formats and none worked:
+        eros_logger.error("All search command formats failed - no command ID returned")
+        return None
+            
+    except Exception as e:
+        eros_logger.error(f"Error searching for movies: {str(e)}")
         return None
 
 def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id: int) -> Optional[Dict]:
@@ -439,10 +451,10 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
 
 def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
     """
-    Check the connection to Eros API.
+    Check the connection to Whisparr V3 API.
     
     Args:
-        api_url: The base URL of the Eros API
+        api_url: The base URL of the Whisparr V3 API
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
         
@@ -450,7 +462,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         True if the connection is successful, False otherwise
     """
     try:
-        eros_logger.debug(f"Checking connection to Eros instance at {api_url}")
+        eros_logger.debug(f"Checking connection to Whisparr V3 instance at {api_url}")
         
         endpoint = "system/status"
         response = arr_request(api_url, api_key, api_timeout, endpoint)
@@ -459,17 +471,18 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
             # Get the version information if available
             version = response.get("version", "unknown")
             
-            # Check if this is a v3.x version
-            if version and version.startswith('3'):
-                eros_logger.info(f"Successfully connected to Eros API version: {version}")
+            # Simply check if we received a valid response - Whisparr V3 is in development
+            # so the version number might be in various formats
+            if version and isinstance(version, str):
+                eros_logger.info(f"Successfully connected to Whisparr V3 API, reported version: {version}")
                 return True
             else:
-                eros_logger.warning(f"Connected to server but found unexpected version: {version}, expected 3.x")
+                eros_logger.warning(f"Connected to server but found unexpected version format: {version}")
                 return False
         else:
-            eros_logger.error("Failed to connect to Eros API")
+            eros_logger.error("Failed to connect to Whisparr V3 API")
             return False
             
     except Exception as e:
-        eros_logger.error(f"Error checking connection to Eros API: {str(e)}")
+        eros_logger.error(f"Error checking connection to Whisparr V3 API: {str(e)}")
         return False
