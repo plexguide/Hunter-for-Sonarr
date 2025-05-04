@@ -1,10 +1,7 @@
 <section id="homeSection" class="content-section">
     <div class="dashboard-grid stack-layout">
-        <!-- Support Links -->
+        <!-- Support Links: Header removed, integrated directly into the layout -->
         <div class="card support-links-card">
-            <div class="card-header">
-                <h3>Support Huntarr</h3>
-            </div>
             <div class="support-links-container">
                 <div class="support-links-grid">
                     <a href="https://donate.plex.one" target="_blank" class="support-link donate">
@@ -13,7 +10,7 @@
                         </div>
                         <div class="link-details">
                             <span class="link-title">Donate</span>
-                            <span class="link-description">For Daughter's College Fund!</span>
+                            <span class="link-description">Daughter's College Fund!</span>
                         </div>
                     </a>
                     <a href="https://github.com/plexguide/huntarr" target="_blank" class="support-link github">
@@ -731,9 +728,8 @@
         border-radius: 8px;
         padding: 10px 12px;
         transition: all 0.2s ease;
-        border: 1px solid rgba(120, 140, 180, 0.15);
         text-decoration: none;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        color: #e1e6ef;
     }
     
     .community-link:hover {
@@ -838,22 +834,60 @@
         height: 45px;
         font-size: 1.4rem;
         margin-right: 15px;
+        flex-shrink: 0;
     }
     
     .support-link .link-details {
         display: flex;
         flex-direction: column;
+        min-width: 0;
     }
     
     .support-link .link-title {
         font-weight: 700;
         font-size: 0.95rem;
         margin-bottom: 3px;
+        white-space: nowrap;
     }
     
     .support-link .link-description {
         font-size: 0.8rem;
         color: rgba(225, 230, 239, 0.7);
+        white-space: normal;
+        word-wrap: break-word;
+    }
+    
+    /* Mobile optimizations for support links */
+    @media (max-width: 768px) {
+        .support-links-grid {
+            gap: 10px;
+        }
+        
+        .support-link {
+            padding: 12px;
+        }
+        
+        .support-link .icon-container {
+            width: 36px;
+            height: 36px;
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+        
+        .support-link .link-title {
+            font-size: 0.9rem;
+        }
+        
+        .support-link .link-description {
+            font-size: 0.75rem;
+        }
+    }
+    
+    /* Even smaller screens */
+    @media (max-width: 480px) {
+        .support-links-grid {
+            grid-template-columns: 1fr;
+        }
     }
     
     .support-link.donate .icon-container {
