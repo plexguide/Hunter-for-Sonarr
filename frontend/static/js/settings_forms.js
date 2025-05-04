@@ -558,7 +558,7 @@ const SettingsForms = {
         // Create a container for instances
         let instancesHtml = `
             <div class="settings-group">
-                <h3>Whisparr Instances</h3>
+                <h3>Whisparr V2 Instances</h3>
                 <div class="instances-container">
         `;
 
@@ -578,18 +578,18 @@ const SettingsForms = {
                     <div class="instance-content">
                         <div class="setting-item">
                             <label for="whisparr-name-${index}">Name:</label>
-                            <input type="text" id="whisparr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Whisparr instance">
-                            <p class="setting-help">Friendly name for this Whisparr instance</p>
+                            <input type="text" id="whisparr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Whisparr V2 instance">
+                            <p class="setting-help">Friendly name for this Whisparr V2 instance</p>
                         </div>
                         <div class="setting-item">
                             <label for="whisparr-url-${index}">URL:</label>
-                            <input type="text" id="whisparr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Whisparr (e.g., http://localhost:6969)">
-                            <p class="setting-help">Base URL for Whisparr (e.g., http://localhost:6969)</p>
+                            <input type="text" id="whisparr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Whisparr V2 (e.g., http://localhost:6969)">
+                            <p class="setting-help">Base URL for Whisparr V2 (e.g., http://localhost:6969)</p>
                         </div>
                         <div class="setting-item">
                             <label for="whisparr-key-${index}">API Key:</label>
-                            <input type="text" id="whisparr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr">
-                            <p class="setting-help">API key for Whisparr</p>
+                            <input type="text" id="whisparr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr V2">
+                            <p class="setting-help">API key for Whisparr V2</p>
                         </div>
                         <div class="setting-item">
                             <label for="whisparr-enabled-${index}">Enabled:</label>
@@ -607,7 +607,7 @@ const SettingsForms = {
                 </div> <!-- instances-container -->
                 <div class="button-container" style="text-align: center; margin-top: 15px;">
                     <button type="button" class="add-instance-btn add-whisparr-instance-btn">
-                        <i class="fas fa-plus"></i> Add Whisparr Instance (${settings.instances.length}/9)
+                        <i class="fas fa-plus"></i> Add Whisparr V2 Instance (${settings.instances.length}/9)
                     </button>
                 </div>
             </div> <!-- settings-group -->
@@ -699,7 +699,7 @@ const SettingsForms = {
         // Create a container for instances
         let instancesHtml = `
             <div class="settings-group">
-                <h3>Eros Instances</h3>
+                <h3>Whisparr V3 Instances</h3>
                 <div class="instances-container">
         `;
 
@@ -719,18 +719,18 @@ const SettingsForms = {
                     <div class="instance-content">
                         <div class="setting-item">
                             <label for="eros-name-${index}">Name:</label>
-                            <input type="text" id="eros-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Eros instance">
-                            <p class="setting-help">Friendly name for this Eros instance</p>
+                            <input type="text" id="eros-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Whisparr V3 instance">
+                            <p class="setting-help">Friendly name for this Whisparr V3 instance</p>
                         </div>
                         <div class="setting-item">
                             <label for="eros-url-${index}">URL:</label>
-                            <input type="text" id="eros-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Eros (e.g., http://localhost:6969)">
-                            <p class="setting-help">Base URL for Eros (e.g., http://localhost:6969)</p>
+                            <input type="text" id="eros-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Whisparr V3 (e.g., http://localhost:6969)">
+                            <p class="setting-help">Base URL for Whisparr V3 (e.g., http://localhost:6969)</p>
                         </div>
                         <div class="setting-item">
                             <label for="eros-key-${index}">API Key:</label>
-                            <input type="text" id="eros-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Eros">
-                            <p class="setting-help">API key for Eros</p>
+                            <input type="text" id="eros-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr V3">
+                            <p class="setting-help">API key for Whisparr V3</p>
                         </div>
                         <div class="setting-item">
                             <label for="eros-enabled-${index}">Enabled:</label>
@@ -748,23 +748,23 @@ const SettingsForms = {
                 </div> <!-- instances-container -->
                 <div class="button-container" style="text-align: center; margin-top: 15px;">
                     <button type="button" class="add-instance-btn add-eros-instance-btn">
-                        <i class="fas fa-plus"></i> Add Eros Instance (${settings.instances.length}/9)
+                        <i class="fas fa-plus"></i> Add Whisparr V3 Instance (${settings.instances.length}/9)
                     </button>
                 </div>
             </div> <!-- settings-group -->
         `;
 
-        // Search Settings
+        // Search Mode dropdown
         let searchSettingsHtml = `
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="eros_search_mode">Missing Search Mode:</label>
+                    <label for="eros_search_mode">Search Mode:</label>
                     <select id="eros_search_mode" name="search_mode">
                         <option value="movie" ${settings.search_mode === 'movie' || !settings.search_mode ? 'selected' : ''}>Movie</option>
                         <option value="scene" ${settings.search_mode === 'scene' ? 'selected' : ''}>Scene</option>
                     </select>
-                    <p class="setting-help">How to search for missing Whisparr V3 content (Movie-based or Scene-based)</p>
+                    <p class="setting-help">How to search for missing and upgradable Whisparr V3 content (Movie-based or Scene-based)</p>
                 </div>
                 <div class="setting-item">
                     <label for="eros_hunt_missing_items">Missing Items to Search:</label>
