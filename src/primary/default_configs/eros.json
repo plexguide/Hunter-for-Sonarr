@@ -13,5 +13,6 @@
   "monitored_only": true,
   "skip_series_refresh": true,
   "skip_future_releases": true,
-  "skip_scene_refresh": true
+  "skip_scene_refresh": true,
+  "search_mode": "movie"
 }

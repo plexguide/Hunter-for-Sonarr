@@ -759,6 +759,14 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
+                    <label for="eros_search_mode">Missing Search Mode:</label>
+                    <select id="eros_search_mode" name="search_mode">
+                        <option value="movie" ${settings.search_mode === 'movie' || !settings.search_mode ? 'selected' : ''}>Movie</option>
+                        <option value="scene" ${settings.search_mode === 'scene' ? 'selected' : ''}>Scene</option>
+                    </select>
+                    <p class="setting-help">How to search for missing Whisparr V3 content (Movie-based or Scene-based)</p>
+                </div>
+                <div class="setting-item">
                     <label for="eros_hunt_missing_items">Missing Items to Search:</label>
                     <input type="number" id="eros_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>

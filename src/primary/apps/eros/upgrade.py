@@ -48,6 +48,9 @@ def process_cutoff_upgrades(
     api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_item_refresh = app_settings.get("skip_item_refresh", False)
+    search_mode = app_settings.get("search_mode", "movie")  # Default to movie mode if not specified
+    
+    eros_logger.info(f"Using search mode: {search_mode} for quality upgrades")
     
     # Use the new hunt_upgrade_items parameter name, falling back to hunt_upgrade_scenes for backwards compatibility
     hunt_upgrade_items = app_settings.get("hunt_upgrade_items", app_settings.get("hunt_upgrade_scenes", 0))
@@ -71,7 +74,7 @@ def process_cutoff_upgrades(
 
     # Get items eligible for upgrade
     eros_logger.info(f"Retrieving items eligible for cutoff upgrade...")
-    upgrade_eligible_data = eros_api.get_cutoff_unmet_items(api_url, api_key, api_timeout, monitored_only)
+    upgrade_eligible_data = eros_api.get_quality_upgrades(api_url, api_key, api_timeout, monitored_only, search_mode)
     
     if not upgrade_eligible_data:
         eros_logger.info("No items found eligible for upgrade or error retrieving them.")

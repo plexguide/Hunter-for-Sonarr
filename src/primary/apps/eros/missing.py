@@ -49,6 +49,9 @@ def process_missing_items(
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_item_refresh = app_settings.get("skip_item_refresh", False)
+    search_mode = app_settings.get("search_mode", "movie")  # Default to movie mode if not specified
+    
+    eros_logger.info(f"Using search mode: {search_mode} for missing items")
     
     # Use the new hunt_missing_items parameter name, falling back to hunt_missing_scenes for backwards compatibility
     hunt_missing_items = app_settings.get("hunt_missing_items", app_settings.get("hunt_missing_scenes", 0))
@@ -74,7 +77,7 @@ def process_missing_items(
     
     # Get missing items
     eros_logger.info(f"Retrieving items with missing files...")
-    missing_items = eros_api.get_items_with_missing(api_url, api_key, api_timeout, monitored_only) 
+    missing_items = eros_api.get_items_with_missing(api_url, api_key, api_timeout, monitored_only, search_mode) 
     
     if missing_items is None: # API call failed
         eros_logger.error("Failed to retrieve missing items from Eros API.")
