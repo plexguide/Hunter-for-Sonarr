@@ -729,7 +729,7 @@ let huntarrUI = {
                         const loggerParts = match[3].split('.');
                         if (loggerParts.length > 1) {
                             const possibleApp = loggerParts[1].toLowerCase();
-                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'swaparr'].includes(possibleApp)) {
+                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'].includes(possibleApp)) {
                                 logAppType = possibleApp;
                             }
                         }
@@ -744,6 +744,7 @@ let huntarrUI = {
                             'lidarr': ['album', 'artist', 'track', 'music', 'lidarr'],
                             'readarr': ['book', 'author', 'readarr'],
                             'whisparr': ['scene', 'adult', 'whisparr'],
+                            'eros': ['eros', 'whisparr v3', 'whisparrv3'],
                             'swaparr': ['added strike', 'max strikes reached', 'would have removed', 'strikes, removing download', 'processing stalled downloads', 'swaparr']
                         };
                         
@@ -1465,16 +1466,7 @@ let huntarrUI = {
         this.checkAppConnection('lidarr');
         this.checkAppConnection('readarr'); // Added readarr
         this.checkAppConnection('whisparr'); // Added whisparr
-        
-        // Force enable Eros without waiting for the API status
-        if (this.elements.erosHomeStatus) {
-            const appBox = this.elements.erosHomeStatus.closest('.app-stats-card');
-            if (appBox) {
-                appBox.style.display = '';
-                this.elements.erosHomeStatus.className = 'status-badge connected';
-                this.elements.erosHomeStatus.innerHTML = '<i class="fas fa-check-circle"></i> Connected 1/1';
-            }
-        }
+        this.checkAppConnection('eros'); // Enable actual Eros API check
     },
     
     checkAppConnection: function(app) {

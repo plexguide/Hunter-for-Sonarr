@@ -84,6 +84,7 @@ KNOWN_LOG_FILES = {
     "lidarr": APP_LOG_FILES.get("lidarr"),
     "readarr": APP_LOG_FILES.get("readarr"),
     "whisparr": APP_LOG_FILES.get("whisparr"),
+    "eros": APP_LOG_FILES.get("eros"),  # Added Eros to known log files
     "swaparr": APP_LOG_FILES.get("swaparr"),  # Added Swaparr to known log files
     "system": MAIN_LOG_FILE, # Map 'system' to the main huntarr log
 }

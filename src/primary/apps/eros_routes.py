@@ -18,46 +18,21 @@ eros_logger = get_logger("eros")
 PROCESSED_MISSING_FILE = get_state_file_path("eros", "processed_missing") 
 PROCESSED_UPGRADES_FILE = get_state_file_path("eros", "processed_upgrades")
 
-@eros_bp.route('/status', methods=['GET'])
-def get_status():
-    """Get the status of all configured Eros instances"""
-    try:
-        # Hard-coded response for testing
-        return jsonify({
-            "configured": True,
-            "connected": True,
-            "connected_count": 1,
-            "total_configured": 1
-        })
-    except Exception as e:
-        eros_logger.error(f"Error getting Eros status: {str(e)}")
-        return jsonify({
-            "configured": False,
-            "connected": False,
-            "error": str(e)
-        }), 500
+def get_configured_instances():
+    # Load Eros settings
+    settings = load_settings("eros")
+    instances = settings.get("instances", [])
+    return instances
 
-@eros_bp.route('/test-connection', methods=['POST'])
-def test_connection():
-    """Test connection to an Eros API instance"""
-    data = request.json
-    api_url = data.get('api_url')
-    api_key = data.get('api_key')
-    api_timeout = data.get('api_timeout', 30)  # Use longer timeout for connection test
-    
-    if not api_url or not api_key:
-        return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
-        
-    eros_logger.info(f"Testing connection to Eros API at {api_url}")
-    
+def test_connection(url, api_key):
     # Validate URL format
-    if not (api_url.startswith('http://') or api_url.startswith('https://')):
+    if not (url.startswith('http://') or url.startswith('https://')):
         error_msg = "API URL must start with http:// or https://"
         eros_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 400
+        return {"success": False, "message": error_msg}
     
     # Try to establish a socket connection first to check basic connectivity
-    parsed_url = urlparse(api_url)
+    parsed_url = urlparse(url)
     hostname = parsed_url.hostname
     port = parsed_url.port or (443 if parsed_url.scheme == 'https' else 80)
     
@@ -71,23 +46,23 @@ def test_connection():
         if result != 0:
             error_msg = f"Connection refused - Unable to connect to {hostname}:{port}. Please check if the server is running and the port is correct."
             eros_logger.error(error_msg)
-            return jsonify({"success": False, "message": error_msg}), 404
+            return {"success": False, "message": error_msg}
     except socket.gaierror:
         error_msg = f"DNS resolution failed - Cannot resolve hostname: {hostname}. Please check your URL."
         eros_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 404
+        return {"success": False, "message": error_msg}
     except Exception as e:
         # Log the socket testing error but continue with the full request
         eros_logger.debug(f"Socket test error, continuing with full request: {str(e)}")
     
     # For Eros, we only use v3 API path
-    api_url = f"{api_url.rstrip('/')}/api/v3/system/status"
+    api_url = f"{url.rstrip('/')}/api/v3/system/status"
     headers = {'X-Api-Key': api_key}
     
     try:
         # Make the request with appropriate timeouts
         eros_logger.debug(f"Trying API path: {api_url}")
-        response = requests.get(api_url, headers=headers, timeout=(5, api_timeout))
+        response = requests.get(api_url, headers=headers, timeout=(5, 30))
         
         try:
             response.raise_for_status()
@@ -101,7 +76,7 @@ def test_connection():
                 if not version:
                     error_msg = "API response doesn't contain version information. This doesn't appear to be a valid Eros server."
                     eros_logger.error(error_msg)
-                    return jsonify({"success": False, "message": error_msg}), 400
+                    return {"success": False, "message": error_msg}
                 
                 # Version check - should be v3.x for Eros
                 if version.startswith('3'):
@@ -109,61 +84,95 @@ def test_connection():
                     eros_logger.info(f"Successfully connected to Eros API version: {version} (API {detected_version})")
                     
                     # Success!
-                    return jsonify({
-                        "success": True,
-                        "message": "Successfully connected to Eros API",
-                        "version": version,
-                        "api_version": detected_version
-                    })
+                    return {"success": True, "message": "Successfully connected to Eros API", "version": version, "api_version": detected_version}
                 elif version.startswith('2'):
                     error_msg = f"Incompatible version detected: {version}. This appears to be Whisparr V2, not Eros."
                     eros_logger.error(error_msg)
-                    return jsonify({"success": False, "message": error_msg}), 400
+                    return {"success": False, "message": error_msg}
                 else:
                     error_msg = f"Unexpected version {version} detected. Eros requires API v3."
                     eros_logger.error(error_msg)
-                    return jsonify({"success": False, "message": error_msg}), 400
+                    return {"success": False, "message": error_msg}
             except ValueError:
                 error_msg = "Invalid JSON response from Eros API - This doesn't appear to be a valid Eros server"
                 eros_logger.error(f"{error_msg}. Response content: {response.text[:200]}")
-                return jsonify({"success": False, "message": error_msg}), 400
+                return {"success": False, "message": error_msg}
                 
         except requests.exceptions.HTTPError:
             # Handle specific HTTP errors
             if response.status_code == 401:
                 error_msg = "Invalid API key - Authentication failed"
                 eros_logger.error(error_msg)
-                return jsonify({"success": False, "message": error_msg}), 401
+                return {"success": False, "message": error_msg}
             elif response.status_code == 404:
                 error_msg = "API endpoint not found: This doesn't appear to be a valid Eros server. Check your URL."
                 eros_logger.error(error_msg)
-                return jsonify({"success": False, "message": error_msg}), 404
+                return {"success": False, "message": error_msg}
             else:
                 error_msg = f"Eros server error (HTTP {response.status_code}): The Eros server is experiencing issues"
                 eros_logger.error(error_msg)
-                return jsonify({"success": False, "message": error_msg}), response.status_code
+                return {"success": False, "message": error_msg}
                 
     except requests.exceptions.ConnectionError as e:
         # Connection error - server might be down or unreachable
         error_details = str(e)
         
         if "Connection refused" in error_details:
-            error_msg = f"Connection refused - Eros is not running on {api_url} or the port is incorrect"
+            error_msg = f"Connection refused - Eros is not running on {url} or the port is incorrect"
         else:
             error_msg = f"Connection error - Check if Eros is running: {error_details}"
             
         eros_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 502
+        return {"success": False, "message": error_msg}
         
     except requests.exceptions.Timeout:
         error_msg = f"Connection timed out - Eros took too long to respond"
         eros_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 504
+        return {"success": False, "message": error_msg}
         
     except Exception as e:
         error_msg = f"Unexpected error: {str(e)}"
         eros_logger.error(f"{error_msg}\n{traceback.format_exc()}")
-        return jsonify({"success": False, "message": error_msg}), 500
+        return {"success": False, "message": error_msg}
+
+@eros_bp.route('/status', methods=['GET'])
+def get_status():
+    """Get the status of all configured Eros instances"""
+    try:
+        instances = get_configured_instances()
+        eros_logger.debug(f"Eros configured instances: {instances}")
+        if instances:
+            connected_count = 0
+            for instance in instances:
+                if test_connection(instance['url'], instance['api_key'])['success']:
+                    connected_count += 1
+            return jsonify({
+                "configured": True,
+                "connected": connected_count > 0,
+                "connected_count": connected_count,
+                "total_configured": len(instances)
+            })
+        else:
+            eros_logger.debug("No Eros instances configured")
+            return jsonify({"configured": False, "connected": False})
+    except Exception as e:
+        eros_logger.error(f"Error getting Eros status: {str(e)}")
+        return jsonify({"configured": False, "connected": False, "error": str(e)})
+
+@eros_bp.route('/test-connection', methods=['POST'])
+def test_connection_endpoint():
+    """Test connection to an Eros API instance"""
+    data = request.json
+    api_url = data.get('api_url')
+    api_key = data.get('api_key')
+    api_timeout = data.get('api_timeout', 30)  # Use longer timeout for connection test
+    
+    if not api_url or not api_key:
+        return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
+        
+    eros_logger.info(f"Testing connection to Eros API at {api_url}")
+    
+    return test_connection(api_url, api_key)
 
 @eros_bp.route('/test-settings', methods=['GET'])
 def test_eros_settings():

@@ -139,26 +139,30 @@ def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitor
     try:
         eros_logger.debug(f"Retrieving missing items...")
         
-        # Endpoint parameters
-        endpoint = "wanted/missing?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
+        # In Whisparr V3, we need to use the movie endpoint with filtering
+        # We'll get all movies and filter for ones without files
+        endpoint = "movie"
         
         response = arr_request(api_url, api_key, api_timeout, endpoint)
         
         if response is None:
             return None
         
-        # Extract the episodes/items
+        # Extract the movies with missing files
         items = []
-        if isinstance(response, dict) and "records" in response:
-            items = response["records"]
-        elif isinstance(response, list):
-            items = response
+        if isinstance(response, list):
+            # Filter for movies that don't have files (hasFile = false)
+            items = [item for item in response if not item.get("hasFile", True)]
+        elif isinstance(response, dict) and "records" in response:
+            # Fallback to old format if somehow it returns in this format
+            items = [item for item in response["records"] if not item.get("hasFile", True)]
         
         # Filter monitored if needed
         if monitored_only:
             items = [item for item in items if item.get("monitored", False)]
         
         eros_logger.debug(f"Found {len(items)} missing items")
+        
         return items
         
     except Exception as e:
@@ -207,6 +211,52 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
         
     except Exception as e:
         eros_logger.error(f"Error retrieving cutoff unmet items: {str(e)}")
+        return None
+
+def get_quality_upgrades(api_url: str, api_key: str, api_timeout: int, monitored_only: bool) -> List[Dict[str, Any]]:
+    """
+    Get a list of items that can be upgraded to better quality.
+
+    Args:
+        api_url: The base URL of the Eros API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        monitored_only: If True, only return monitored items.
+
+    Returns:
+        A list of item objects that need quality upgrades, or None if the request failed.
+    """
+    try:
+        eros_logger.debug(f"Retrieving quality upgrade items...")
+        
+        # In Whisparr V3, we need to use the movie endpoint and filter
+        # Get all movies and filter for ones that have files but also have qualityCutoffNotMet=true
+        endpoint = "movie"
+        
+        response = arr_request(api_url, api_key, api_timeout, endpoint)
+        
+        if response is None:
+            return None
+        
+        # Extract movies that have files but need quality upgrades
+        items = []
+        if isinstance(response, list):
+            # Filter for movies that have files but haven't met quality cutoff
+            items = [item for item in response if item.get("hasFile", False) and item.get("qualityCutoffNotMet", False)]
+        elif isinstance(response, dict) and "records" in response:
+            # Fallback to old format if somehow it returns in this format
+            items = [item for item in response["records"] if item.get("hasFile", False) and item.get("qualityCutoffNotMet", False)]
+        
+        # Filter monitored if needed
+        if monitored_only:
+            items = [item for item in items if item.get("monitored", False)]
+            
+        eros_logger.debug(f"Found {len(items)} quality upgrade items")
+        
+        return items
+        
+    except Exception as e:
+        eros_logger.error(f"Error retrieving quality upgrade items: {str(e)}")
         return None
 
 def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int) -> int:
