@@ -177,28 +177,6 @@
             </div>
         </div>
 
-        <!-- GitHub Sponsors Section -->
-        <div class="card sponsors-card">
-            <div class="card-header">
-                <h3>GitHub Sponsors (Rotated Randomly)</h3>
-                <a href="https://github.com/sponsors/plexguide" target="_blank" class="action-button primary">
-                    <i class="fas fa-heart"></i> Become a Sponsor
-                </a>
-            </div>
-            <div class="sponsors-container">
-                <div id="sponsors-loading" class="sponsors-loading">
-                    <i class="fas fa-spinner fa-spin"></i> Loading sponsors...
-                </div>
-                <div id="sponsors-list" class="sponsors-list">
-                    <!-- Sponsors will be dynamically loaded here -->
-                </div>
-                <div id="sponsors-error" class="sponsors-error" style="display: none;">
-                    <i class="fas fa-exclamation-circle"></i> 
-                    <span>Could not load sponsors</span>
-                </div>
-            </div>
-        </div>
-
     </div>
     
     <!-- Fixed banner at the bottom of the viewport -->
@@ -654,241 +632,6 @@
         text-decoration: underline;
     }
     
-    /* Sponsors section styling */
-    .sponsors-card {
-        width: 100%;
-        background-color: rgba(24, 28, 37, 0.6);
-        border: 1px solid rgba(90, 109, 137, 0.2);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    
-    .sponsors-card .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-        background-color: rgba(32, 38, 50, 0.6);
-        border-bottom: 1px solid rgba(90, 109, 137, 0.2);
-    }
-    
-    .sponsors-card .card-header h3 {
-        margin: 0;
-        color: #e0e6ed;
-        font-size: 18px;
-        font-weight: 600;
-    }
-    
-    .sponsors-container {
-        padding: 20px;
-        background-color: rgba(15, 18, 24, 0.4);
-    }
-    
-    .sponsors-loading, .sponsors-error {
-        text-align: center;
-        padding: 24px;
-        color: #a0a8b8;
-        font-size: 15px;
-    }
-    
-    .sponsors-error {
-        color: #f44336;
-    }
-    
-    .sponsors-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 14px;
-        justify-content: center;
-    }
-    
-    .sponsor-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background: linear-gradient(145deg, rgba(38, 46, 63, 0.7), rgba(28, 34, 46, 0.7));
-        border-radius: 10px;
-        padding: 15px;
-        min-width: 110px;
-        transition: all 0.3s ease;
-        border: 1px solid rgba(120, 140, 180, 0.15);
-        text-decoration: none;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    }
-    
-    .sponsor-item:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 7px 18px rgba(0, 0, 0, 0.25);
-        border-color: rgba(120, 140, 180, 0.3);
-    }
-    
-    .sponsor-avatar {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid transparent;
-        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
-        background-color: #2a3142;
-    }
-    
-    /* Different border colors based on sponsorship tier */
-    .sponsor-item[title*="Gold"] .sponsor-avatar {
-        border-color: #ffd700;
-        box-shadow: 0 0 9px rgba(255, 215, 0, 0.5);
-    }
-    
-    .sponsor-item[title*="Silver"] .sponsor-avatar {
-        border-color: #c0c0c0;
-        box-shadow: 0 0 9px rgba(192, 192, 192, 0.5);
-    }
-    
-    .sponsor-item[title*="Bronze"] .sponsor-avatar {
-        border-color: #cd7f32;
-        box-shadow: 0 0 9px rgba(205, 127, 50, 0.5);
-    }
-    
-    .sponsor-name {
-        margin-top: 10px;
-        font-weight: 600;
-        font-size: 13px;
-        color: #e0e6ed;
-        text-align: center;
-        word-break: break-word;
-    }
-    
-    .sponsor-tier {
-        margin-top: 5px;
-        font-size: 10px;
-        padding: 3px 7px;
-        border-radius: 10px;
-        background-color: rgba(255, 255, 255, 0.1);
-        color: #a0a8b8;
-    }
-    
-    /* Different tier badge styles */
-    .sponsor-item[title*="Gold"] .sponsor-tier {
-        background-color: rgba(255, 215, 0, 0.2);
-        color: #ffd700;
-    }
-    
-    .sponsor-item[title*="Silver"] .sponsor-tier {
-        background-color: rgba(192, 192, 192, 0.2);
-        color: #c0c0c0;
-    }
-    
-    .sponsor-item[title*="Bronze"] .sponsor-tier {
-        background-color: rgba(205, 127, 50, 0.2);
-        color: #cd7f32;
-    }
-    
-    /* Become a sponsor button styling */
-    .sponsors-card .action-button.primary {
-        background: linear-gradient(135deg, #4a8eff, #1a5eff);
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        transition: all 0.2s ease;
-        text-decoration: none;
-        box-shadow: 0 2px 8px rgba(26, 94, 255, 0.3);
-        white-space: nowrap;
-        min-width: 160px;
-        justify-content: center;
-    }
-    
-    .sponsors-card .action-button.primary:hover {
-        background: linear-gradient(135deg, #5a9bff, #2a6fff);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(26, 94, 255, 0.4);
-    }
-    
-    .sponsors-card .action-button.primary i {
-        margin-right: 6px;
-        color: #ff8a8a;
-    }
-    
-    /* Fixed banner footer styling */
-    .fixed-banner-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        text-align: center;
-        padding: 10px 20px;
-        background: linear-gradient(180deg, rgba(24, 28, 37, 0.95), rgba(18, 22, 30, 0.98));
-        box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.2);
-        border-top: 1px solid rgba(90, 109, 137, 0.15);
-        z-index: 1000; /* Ensure it's above other elements */
-        backdrop-filter: blur(5px);
-    }
-    
-    .fixed-banner-footer .footer-content {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-    
-    .fixed-banner-footer .footer-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 14px;
-        color: #e0e6ed;
-        transition: transform 0.2s;
-    }
-    
-    .fixed-banner-footer .footer-item:hover {
-        transform: translateY(-2px);
-    }
-    
-    .fixed-banner-footer .footer-divider {
-        width: 1px;
-        height: 20px;
-        background-color: rgba(120, 140, 180, 0.3);
-    }
-    
-    .fixed-banner-footer a {
-        color: #3498db;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-    
-    .fixed-banner-footer a:hover {
-        text-decoration: none;
-        color: #5dade2;
-    }
-    
-    .fixed-banner-footer .donation-icon {
-        color: #ff6b6b;
-        font-size: 16px;
-    }
-    
-    .fixed-banner-footer .star-icon {
-        color: #ffd700;
-        font-size: 16px;
-    }
-    
-    /* Responsive footer */
-    @media (max-width: 600px) {
-        .fixed-banner-footer .footer-content {
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .fixed-banner-footer .footer-divider {
-            display: none;
-        }
-    }
-    
     /* Community & Resources Hub styling */
     .community-hub-card {
         width: 100%;
@@ -998,6 +741,83 @@
     @media (max-width: 500px) {
         .community-links-grid {
             grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Fixed banner footer styling */
+    .fixed-banner-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        padding: 10px 20px;
+        background: linear-gradient(180deg, rgba(24, 28, 37, 0.95), rgba(18, 22, 30, 0.98));
+        box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(90, 109, 137, 0.15);
+        z-index: 1000; /* Ensure it's above other elements */
+        backdrop-filter: blur(5px);
+    }
+    
+    .fixed-banner-footer .footer-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .fixed-banner-footer .footer-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        color: #e0e6ed;
+        transition: transform 0.2s;
+    }
+    
+    .fixed-banner-footer .footer-item:hover {
+        transform: translateY(-2px);
+    }
+    
+    .fixed-banner-footer .footer-divider {
+        width: 1px;
+        height: 20px;
+        background-color: rgba(120, 140, 180, 0.3);
+    }
+    
+    .fixed-banner-footer a {
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .fixed-banner-footer a:hover {
+        text-decoration: none;
+        color: #5dade2;
+    }
+    
+    .fixed-banner-footer .donation-icon {
+        color: #ff6b6b;
+        font-size: 16px;
+    }
+    
+    .fixed-banner-footer .star-icon {
+        color: #ffd700;
+        font-size: 16px;
+    }
+    
+    /* Responsive footer */
+    @media (max-width: 600px) {
+        .fixed-banner-footer .footer-content {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .fixed-banner-footer .footer-divider {
+            display: none;
         }
     }
 </style>
