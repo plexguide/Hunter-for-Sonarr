@@ -206,13 +206,42 @@ jobs:
       run: |
         VERSION="${{ steps.get-version.outputs.VERSION }}"
         INSTALLER_FILE="Huntarr-Setup-$VERSION.exe"
-        echo "INSTALLER_FILE=$INSTALLER_FILE" >> $GITHUB_OUTPUT
+        ROOT_INSTALLER_PATH="$INSTALLER_FILE"
+        INSTALLER_DIR_PATH="installer/$INSTALLER_FILE"
         
-        # Verify the installer was created
-        if [ -f "$INSTALLER_FILE" ]; then
-          echo "Installer found at: $INSTALLER_FILE"
+        # Check multiple possible locations
+        if [ -f "$ROOT_INSTALLER_PATH" ]; then
+          echo "Installer found at root: $ROOT_INSTALLER_PATH"
+          echo "INSTALLER_FILE=$ROOT_INSTALLER_PATH" >> $GITHUB_OUTPUT
+          exit 0
+        elif [ -f "$INSTALLER_DIR_PATH" ]; then
+          echo "Installer found in installer directory: $INSTALLER_DIR_PATH"
+          # Copy to root for consistency with release
+          cp "$INSTALLER_DIR_PATH" "$ROOT_INSTALLER_PATH"
+          echo "Copied installer to root directory"
+          echo "INSTALLER_FILE=$ROOT_INSTALLER_PATH" >> $GITHUB_OUTPUT
+          exit 0
         else
-          echo "ERROR: Installer not found at expected location: $INSTALLER_FILE"
+          # Find the installer wherever it might be
+          echo "Searching for installer files:"
+          find . -name "Huntarr-Setup-*.exe" -type f | while read file; do
+            echo "Found installer: $file"
+            # Copy the first one we find to the root
+            cp "$file" "$ROOT_INSTALLER_PATH"
+            echo "Copied $file to $ROOT_INSTALLER_PATH"
+            echo "INSTALLER_FILE=$ROOT_INSTALLER_PATH" >> $GITHUB_OUTPUT
+            exit 0
+          done
+          
+          # If we get here, no installer was found
+          echo "ERROR: Installer not found. Checked:"
+          echo "  - $ROOT_INSTALLER_PATH"
+          echo "  - $INSTALLER_DIR_PATH"
+          echo "  - Searched for all Huntarr-Setup-*.exe files"
+          echo "Directory contents:"
+          ls -la
+          echo "Installer directory contents:"
+          ls -la installer/
           exit 1
         fi
     
