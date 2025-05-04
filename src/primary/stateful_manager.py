@@ -28,7 +28,7 @@ except Exception as e:
     stateful_logger.error(f"Error creating stateful directory: {e}")
 
 # Create app directories
-APP_TYPES = ["sonarr", "radarr", "lidarr", "readarr", "whisparr"]
+APP_TYPES = ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros"]
 for app_type in APP_TYPES:
     (STATEFUL_DIR / app_type).mkdir(exist_ok=True)
 

@@ -30,7 +30,7 @@ def get_state_file_path(app_type, state_name):
         The path to the state file
     """
     # Define known app types
-    known_app_types = ["sonarr", "radarr", "lidarr", "readarr", "whisparr"]
+    known_app_types = ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros"]
     
     # If app_type is not in known types, log a warning but don't fail
     if app_type not in known_app_types and app_type != "general":

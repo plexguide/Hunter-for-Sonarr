@@ -173,6 +173,29 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Eros Card -->
+                    <div class="app-stats-card eros">
+                        <div class="status-container">
+                            <span id="erosHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        </div>
+                        <div class="app-content">
+                            <div class="app-icon-wrapper">
+                                <img src="/static/arrs/48-whisparr.png" alt="Eros Logo" class="app-logo">
+                            </div>
+                            <h4>Eros</h4>
+                        </div>
+                        <div class="stats-numbers">
+                            <div class="stat-box">
+                                <span class="stat-number" id="eros-hunted">0</span>
+                                <span class="stat-label">Searches Triggered</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-number" id="eros-upgraded">0</span>
+                                <span class="stat-label">Upgrades Triggered</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -416,6 +439,12 @@
         box-shadow: 0 0 15px rgba(195, 0, 230, 0.4);
     }
     
+    /* Eros gold/amber icon ring */
+    .app-stats-card.eros .app-icon-wrapper {
+        border: 2px solid rgba(255, 193, 7, 0.8);
+        box-shadow: 0 0 15px rgba(255, 193, 7, 0.4);
+    }
+    
     .app-logo {
         width: 40px;
         height: 40px;
@@ -523,6 +552,19 @@
     
     .app-stats-card.whisparr .stat-number {
         background: linear-gradient(to bottom right, #e64dff, #c300e6);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* App-specific accent colors for eros */
+    .app-stats-card.eros .app-icon-wrapper {
+        border-color: rgba(255, 193, 7, 0.5);
+        box-shadow: 0 0 15px rgba(255, 193, 7, 0.2);
+    }
+    
+    .app-stats-card.eros .stat-number {
+        background: linear-gradient(to bottom right, #ffd54f, #ffb300);
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
