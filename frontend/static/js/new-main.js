@@ -1733,7 +1733,7 @@ let huntarrUI = {
     
     updateStatsDisplay: function(stats) {
         // Update each app's statistics
-        const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr'];
+        const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'];
         const statTypes = ['hunted', 'upgraded'];
         
         apps.forEach(app => {
@@ -1780,7 +1780,9 @@ let huntarrUI = {
             'radarr': {'hunted': 0, 'upgraded': 0},
             'lidarr': {'hunted': 0, 'upgraded': 0},
             'readarr': {'hunted': 0, 'upgraded': 0},
-            'whisparr': {'hunted': 0, 'upgraded': 0}
+            'whisparr': {'hunted': 0, 'upgraded': 0},
+            'eros': {'hunted': 0, 'upgraded': 0},
+            'swaparr': {'hunted': 0, 'upgraded': 0}
         };
         
         // Immediately update UI before even showing the confirmation
