@@ -74,16 +74,18 @@ for file_name in ['requirements.txt', 'version.txt']:
 
 # Get icon path
 icon_path = os.path.join(os.getcwd(), 'assets', 'huntarr.ico')
-if not os.path.exists(icon_path):
+icon_exists = os.path.exists(icon_path)
+if not icon_exists:
     print(f"Warning: Icon file not found: {icon_path}")
     # Try to find the icon elsewhere
     for root, dirs, files in os.walk(os.getcwd()):
         for file in files:
             if file == 'huntarr.ico':
                 icon_path = os.path.join(root, file)
+                icon_exists = True
                 print(f"Found icon at alternative location: {icon_path}")
                 break
-        if os.path.exists(icon_path) and icon_path != os.path.join(os.getcwd(), 'assets', 'huntarr.ico'):
+        if icon_exists:
             break
 
 # Combine all datas
@@ -131,7 +133,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=icon_path
+    icon=icon_path if icon_exists else None
 )
 """
     
