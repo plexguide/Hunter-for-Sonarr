@@ -12,17 +12,24 @@ def generate_spec_file(output_path='huntarr.spec'):
     """
     spec_content = """# -*- mode: python ; coding: utf-8 -*-
 
+import os
+from pathlib import Path
+
+# Get the current working directory
+cwd = os.getcwd()
+
+# Ensure paths are correct for the GitHub Actions environment
 a = Analysis(
     ['main.py'],
-    pathex=[],
+    pathex=[cwd],
     binaries=[],
     datas=[
-        ('src', 'src'),
-        ('templates', 'templates'),
-        ('static', 'static'),
-        ('requirements.txt', '.'),
-        ('version.txt', '.'),
-        ('assets', 'assets'),
+        (os.path.join(cwd, 'src'), 'src'),
+        (os.path.join(cwd, 'templates'), 'templates'),
+        (os.path.join(cwd, 'static'), 'static'),
+        (os.path.join(cwd, 'requirements.txt'), '.'),
+        (os.path.join(cwd, 'version.txt'), '.'),
+        (os.path.join(cwd, 'assets'), 'assets'),
     ],
     hiddenimports=[
         'flask', 'waitress', 'requests', 'dateutil', 'pyotp', 'qrcode', 'psutil', 'pytz',
@@ -61,7 +68,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='assets/huntarr.ico'
+    icon=os.path.join(cwd, 'assets', 'huntarr.ico')
 )
 """
     
