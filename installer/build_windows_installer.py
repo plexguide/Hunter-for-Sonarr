@@ -105,7 +105,7 @@ def build_executable():
     
     print("Building executable with PyInstaller...")
     result = subprocess.run(
-        ["pyinstaller", "huntarr.spec"],
+        ["pyinstaller", "huntarr_windows_fixed.spec"],
         cwd=PROJECT_ROOT,
         check=False, 
         capture_output=True,

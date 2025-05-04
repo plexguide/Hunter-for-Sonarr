@@ -49,9 +49,22 @@ from src.primary.routes.history_routes import history_blueprint
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
-# Configure template and static paths to use the frontend directory
-template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'templates'))
-static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'static'))
+# Configure template and static paths depending on how we're running
+# Check if we're running from a PyInstaller bundle
+if getattr(sys, 'frozen', False):
+    # We're running from the bundled package
+    bundle_dir = os.path.dirname(sys.executable)
+    # Override the template and static directories
+    template_dir = os.path.join(bundle_dir, 'templates')
+    static_dir = os.path.join(bundle_dir, 'static')
+    print(f"PyInstaller mode - Using templates dir: {template_dir}")
+    print(f"PyInstaller mode - Using static dir: {static_dir}")
+else:
+    # Normal development mode - use relative paths
+    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'templates'))
+    static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'static'))
+    print(f"Normal mode - Using templates dir: {template_dir}")
+    print(f"Normal mode - Using static dir: {static_dir}")
 
 # Create Flask app
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
@@ -629,7 +642,7 @@ def apply_timezone_setting():
     data = request.json
     timezone = data.get('timezone')
     web_logger = get_logger("web_server")
-    
+
     if not timezone:
         return jsonify({"success": False, "error": "No timezone specified"}), 400
         
