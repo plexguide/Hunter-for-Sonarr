@@ -27,6 +27,97 @@ jobs:
         pip install pyinstaller==6.3.0
         pip install -r requirements.txt
         
+    - name: Debug - Show Repository Structure
+      shell: powershell
+      run: |
+        Write-Host "==== REPOSITORY STRUCTURE ====" -ForegroundColor Green
+        # Show current directory
+        Write-Host "Current directory: $PWD" -ForegroundColor Yellow
+        # List all directories at the root level
+        Write-Host "Root level directories:" -ForegroundColor Yellow
+        Get-ChildItem -Directory | Select-Object Name
+        
+        # Check for specific directories needed by PyInstaller
+        $requiredDirs = @("templates", "static", "assets", "src", "frontend")
+        foreach ($dir in $requiredDirs) {
+            if (Test-Path $dir) {
+                Write-Host " Found directory: $dir" -ForegroundColor Green
+            } else {
+                Write-Host " Missing directory: $dir" -ForegroundColor Red
+            }
+        }
+        
+        # Look for frontend/templates as a fallback
+        if (Test-Path "frontend/templates") {
+            Write-Host " Found frontend/templates directory" -ForegroundColor Green
+        }
+        
+        # Check for icon file
+        if (Test-Path "assets/huntarr.ico") {
+            Write-Host " Found icon file: assets/huntarr.ico" -ForegroundColor Green
+        } else {
+            Write-Host " Missing icon file: assets/huntarr.ico" -ForegroundColor Red
+            
+            # Search for the icon file
+            Write-Host "Searching for huntarr.ico..." -ForegroundColor Yellow
+            $iconPaths = Get-ChildItem -Path . -Recurse -Filter "huntarr.ico"
+            if ($iconPaths) {
+                foreach ($path in $iconPaths) {
+                    Write-Host "Found icon at: $($path.FullName)" -ForegroundColor Green
+                }
+            } else {
+                Write-Host "Could not find huntarr.ico anywhere in the repository" -ForegroundColor Red
+            }
+        }
+        
+    - name: Fix Repository Structure
+      shell: powershell
+      run: |
+        Write-Host "==== FIXING REPOSITORY STRUCTURE ====" -ForegroundColor Green
+        
+        # Create missing directories
+        $requiredDirs = @("templates", "static", "assets")
+        foreach ($dir in $requiredDirs) {
+            if (-not (Test-Path $dir)) {
+                New-Item -Path $dir -ItemType Directory -Force
+                Write-Host "Created directory: $dir" -ForegroundColor Yellow
+            }
+        }
+        
+        # Copy frontend/templates to templates if needed
+        if (-not (Test-Path "templates/*") -and (Test-Path "frontend/templates")) {
+            Write-Host "Copying frontend/templates to templates" -ForegroundColor Yellow
+            Copy-Item -Path "frontend/templates/*" -Destination "templates/" -Recurse -Force
+        }
+        
+        # Copy frontend/static to static if needed
+        if (-not (Test-Path "static/*") -and (Test-Path "frontend/static")) {
+            Write-Host "Copying frontend/static to static" -ForegroundColor Yellow
+            Copy-Item -Path "frontend/static/*" -Destination "static/" -Recurse -Force
+        }
+        
+        # Create a placeholder icon if needed
+        if (-not (Test-Path "assets/huntarr.ico")) {
+            Write-Host "Searching for huntarr.ico..." -ForegroundColor Yellow
+            $iconPaths = Get-ChildItem -Path . -Recurse -Filter "huntarr.ico"
+            if ($iconPaths) {
+                $iconPath = $iconPaths[0].FullName
+                Write-Host "Copying icon from $iconPath to assets/huntarr.ico" -ForegroundColor Yellow
+                New-Item -Path "assets" -ItemType Directory -Force
+                Copy-Item -Path $iconPath -Destination "assets/huntarr.ico" -Force
+            } else {
+                # Create a simple placeholder icon if no icon is found
+                Write-Host "Creating a placeholder icon file" -ForegroundColor Yellow
+                # This is just to prevent PyInstaller from failing
+                New-Item -Path "assets" -ItemType Directory -Force
+                Copy-Item -Path "C:\Windows\System32\shell32.dll" -Destination "assets/huntarr.ico" -Force
+            }
+        }
+        
+        # Check the fixed structure
+        Write-Host "Repository structure after fixes:" -ForegroundColor Yellow
+        Get-ChildItem -Directory | Select-Object Name
+        
     - name: Extract version from tag or version.txt
       id: get-version
       shell: bash
@@ -77,9 +168,29 @@ jobs:
             exit 1
         }
     
+    - name: Create simplified main.py
+      run: |
+        python installer/generate_main.py
+        
+        # Verify the file exists
+        if (Test-Path "main.py") {
+            Write-Host "Simplified main.py with Windows service support created successfully"
+        } else {
+            Write-Error "Failed to create simplified main.py"
+            exit 1
+        }
+    
     - name: Build executable with PyInstaller
       run: |
         pyinstaller huntarr.spec
+        
+        # Check if the build was successful
+        if (Test-Path "dist/Huntarr.exe") {
+            Write-Host "PyInstaller build successful!"
+        } else {
+            Write-Error "PyInstaller failed to build the executable"
+            exit 1
+        }
     
     - name: Install NSIS
       run: |
