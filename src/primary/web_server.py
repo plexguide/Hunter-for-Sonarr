@@ -650,16 +650,21 @@ def apply_timezone_setting():
 @app.route('/api/stats', methods=['GET'])
 def api_get_stats():
     """Get the media statistics for all apps"""
-    # For now, return some sample statistics
-    # In a real implementation, these would be pulled from a database or file
-    stats = {
-        'sonarr': {'hunted': 228, 'upgraded': 15},
-        'radarr': {'hunted': 36, 'upgraded': 15},
-        'lidarr': {'hunted': 40, 'upgraded': 0},
-        'readarr': {'hunted': 4, 'upgraded': 2},
-        'whisparr': {'hunted': 346, 'upgraded': 153}
-    }
-    return jsonify({"success": True, "stats": stats})
+    try:
+        # Import the stats manager to get actual stats
+        from src.primary.stats_manager import get_stats
+        
+        # Get real stats from the stats file
+        stats = get_stats()
+        
+        web_logger = get_logger("web_server")
+        web_logger.info(f"Serving actual stats from file: {stats}")
+        
+        return jsonify({"success": True, "stats": stats})
+    except Exception as e:
+        web_logger = get_logger("web_server")
+        web_logger.error(f"Error fetching statistics: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/stats/reset', methods=['POST'])
 def api_reset_stats():
