@@ -7,7 +7,7 @@ from src.primary.settings_manager import load_settings
 logger = get_logger("app_manager")
 
 # List of supported app types
-SUPPORTED_APP_TYPES = ["sonarr", "radarr", "lidarr", "readarr", "whisparr"]
+SUPPORTED_APP_TYPES = ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros"]
 
 def initialize_apps():
     """Initialize all supported applications"""

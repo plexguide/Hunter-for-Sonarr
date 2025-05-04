@@ -884,7 +884,7 @@ input:checked + .slider:before {
 }
 
 /* Responsive Adjustments */
-@media (max-width: 992px) {
+@media (max-width: 950px) {
     .sidebar {
         width: 70px;
     }
@@ -905,7 +905,9 @@ input:checked + .slider:before {
     .logo {
         margin-right: 0;
     }
-    
+}
+
+@media (max-width: 992px) {
     .settings-group {
         padding: 15px;
     }
@@ -1316,7 +1318,7 @@ input:checked + .slider:before {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     margin-top: 8px;
     border: 1px solid var(--border-color);
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
 }
 
@@ -1386,7 +1388,7 @@ input:checked + .slider:before {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     margin-top: 8px;
     border: 1px solid var(--border-color);
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
 }
 
@@ -1450,7 +1452,7 @@ input:checked + .slider:before {
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     z-index: 1001;
     border-radius: 4px;
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
 }
 

@@ -37,7 +37,7 @@ from src.primary.auth import (
 from src.primary.routes.common import common_bp
 
 # Import blueprints for each app from the centralized blueprints module
-from src.primary.apps.blueprints import sonarr_bp, radarr_bp, lidarr_bp, readarr_bp, whisparr_bp, swaparr_bp
+from src.primary.apps.blueprints import sonarr_bp, radarr_bp, lidarr_bp, readarr_bp, whisparr_bp, swaparr_bp, eros_bp
 
 # Import stateful blueprint
 from src.primary.stateful_routes import stateful_api
@@ -64,6 +64,7 @@ app.register_blueprint(radarr_bp, url_prefix='/api/radarr')
 app.register_blueprint(lidarr_bp, url_prefix='/api/lidarr')
 app.register_blueprint(readarr_bp, url_prefix='/api/readarr')
 app.register_blueprint(whisparr_bp, url_prefix='/api/whisparr')
+app.register_blueprint(eros_bp, url_prefix='/api/eros')
 app.register_blueprint(swaparr_bp, url_prefix='/api/swaparr')
 app.register_blueprint(stateful_api, url_prefix='/api/stateful')
 app.register_blueprint(history_blueprint, url_prefix='/api/history')
@@ -83,6 +84,7 @@ KNOWN_LOG_FILES = {
     "lidarr": APP_LOG_FILES.get("lidarr"),
     "readarr": APP_LOG_FILES.get("readarr"),
     "whisparr": APP_LOG_FILES.get("whisparr"),
+    "eros": APP_LOG_FILES.get("eros"),  # Added Eros to known log files
     "swaparr": APP_LOG_FILES.get("swaparr"),  # Added Swaparr to known log files
     "system": MAIN_LOG_FILE, # Map 'system' to the main huntarr log
 }
@@ -492,7 +494,7 @@ def api_app_status(app_name):
         return jsonify({"configured": False, "connected": False, "error": "Invalid app name"}), 400
     
     try:
-        if app_name in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr']:
+        if app_name in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']:
             # --- Multi-Instance Status Check --- # 
             connected_count = 0
             total_configured = 0

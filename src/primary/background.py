@@ -109,6 +109,13 @@ def app_specific_loop(app_type: str) -> None:
             process_upgrades = getattr(upgrade_module, 'process_cutoff_upgrades')
             hunt_missing_setting = "hunt_missing_items"  # Updated to new name
             hunt_upgrade_setting = "hunt_upgrade_items"  # Updated to new name
+        elif app_type == "eros":
+            missing_module = importlib.import_module('src.primary.apps.eros.missing')
+            upgrade_module = importlib.import_module('src.primary.apps.eros.upgrade')
+            process_missing = getattr(missing_module, 'process_missing_items')
+            process_upgrades = getattr(upgrade_module, 'process_cutoff_upgrades')
+            hunt_missing_setting = "hunt_missing_items"
+            hunt_upgrade_setting = "hunt_upgrade_items"
         else:
             app_logger.error(f"Unsupported app_type: {app_type}")
             return # Exit thread if app type is invalid

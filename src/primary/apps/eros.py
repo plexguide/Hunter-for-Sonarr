@@ -3,18 +3,18 @@ import datetime, os, requests
 from primary import keys_manager
 from src.primary.utils.logger import get_logger
 from src.primary.state import get_state_file_path
-from src.primary.settings_manager import load_settings
+from src.primary.settings_manager import load_settings, settings_manager
 
-whisparr_bp = Blueprint('whisparr', __name__)
-whisparr_logger = get_logger("whisparr")
+eros_bp = Blueprint('eros', __name__)
+eros_logger = get_logger("eros")
 
 # Make sure we're using the correct state files
-PROCESSED_MISSING_FILE = get_state_file_path("whisparr", "processed_missing") 
-PROCESSED_UPGRADES_FILE = get_state_file_path("whisparr", "processed_upgrades")
+PROCESSED_MISSING_FILE = get_state_file_path("eros", "processed_missing") 
+PROCESSED_UPGRADES_FILE = get_state_file_path("eros", "processed_upgrades")
 
-@whisparr_bp.route('/test-connection', methods=['POST'])
+@eros_bp.route('/test-connection', methods=['POST'])
 def test_connection():
-    """Test connection to a Whisparr API instance with comprehensive diagnostics"""
+    """Test connection to an Eros API instance with comprehensive diagnostics"""
     data = request.json
     api_url = data.get('api_url')
     api_key = data.get('api_key')
@@ -24,18 +24,18 @@ def test_connection():
         return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
     
     # Log the test attempt
-    whisparr_logger.info(f"Testing connection to Whisparr V2 API at {api_url}")
+    eros_logger.info(f"Testing connection to Eros API at {api_url}")
     
     # First check if URL is properly formatted
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
         error_msg = "API URL must start with http:// or https://"
-        whisparr_logger.error(error_msg)
+        eros_logger.error(error_msg)
         return jsonify({"success": False, "message": error_msg}), 400
         
-    # Try multiple API path combinations to handle different Whisparr V2 setups
+    # Try multiple API path combinations to handle different Whisparr V3/Eros setups
     api_paths = [
-        "/api/system/status",     # Standard V2 path
-        "/api/v3/system/status",  # Some V2 instances use V3 API
+        "/api/v3/system/status",  # Standard V3 path
+        "/api/system/status",     # Standard V2 path that might still work
         "/system/status"          # Direct path without /api prefix
     ]
     
@@ -46,14 +46,14 @@ def test_connection():
     for api_path in api_paths:
         test_url = f"{api_url.rstrip('/')}{api_path}"
         headers = {'X-Api-Key': api_key}
-        whisparr_logger.debug(f"Trying Whisparr API path: {test_url}")
+        eros_logger.debug(f"Trying Eros API path: {test_url}")
         
         try:
             # Use a connection timeout separate from read timeout
             response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
             
             # Log HTTP status code for diagnostic purposes
-            whisparr_logger.debug(f"Whisparr API status code: {response.status_code} for path {api_path}")
+            eros_logger.debug(f"Eros API status code: {response.status_code} for path {api_path}")
             
             # Check HTTP status code
             if response.status_code == 404:
@@ -65,27 +65,27 @@ def test_connection():
             # Ensure the response is valid JSON
             try:
                 response_data = response.json()
-                whisparr_logger.debug(f"Whisparr API response: {response_data}")
+                eros_logger.debug(f"Eros API response: {response_data}")
                 
-                # Verify this is actually a Whisparr API by checking for version
+                # Verify this is actually an Eros API by checking for version
                 version = response_data.get('version', None)
                 if not version:
                     # No version info, try next path
                     last_error = "API response doesn't contain version information"
                     continue
                 
-                # The version number should start with 2 for Whisparr
-                if version.startswith('2'):
-                    whisparr_logger.info(f"Successfully connected to Whisparr V2 API version {version} using path {api_path}")
+                # The version number should start with 3 for Eros
+                if version.startswith('3'):
+                    eros_logger.info(f"Successfully connected to Eros API version {version} using path {api_path}")
                     success = True
                     break
-                elif version.startswith('3'):
-                    error_msg = f"Connected to Whisparr V3 (version {version}). Use the Eros integration for V3."
-                    whisparr_logger.error(error_msg)
+                elif version.startswith('2'):
+                    error_msg = f"Connected to Whisparr V2 (version {version}). Use the Whisparr integration for V2."
+                    eros_logger.error(error_msg)
                     return jsonify({"success": False, "message": error_msg}), 400
                 else:
                     # Connected to some other version, try next path
-                    last_error = f"Connected to unknown version {version}, but Huntarr requires Whisparr V2"
+                    last_error = f"Connected to unknown version {version}, but Huntarr requires Eros V3"
                     continue
                     
             except ValueError:
@@ -97,7 +97,7 @@ def test_connection():
             continue
             
         except requests.exceptions.ConnectionError:
-            last_error = "Failed to connect. Check that the URL is correct and that Whisparr is running."
+            last_error = "Failed to connect. Check that the URL is correct and that Eros is running."
             continue
             
         except requests.exceptions.HTTPError as e:
@@ -112,20 +112,20 @@ def test_connection():
     if success:
         return jsonify({
             "success": True, 
-            "message": f"Successfully connected to Whisparr V2 (version {response_data.get('version')})",
+            "message": f"Successfully connected to Eros (version {response_data.get('version')})",
             "version": response_data.get('version')
         })
     else:
-        error_msg = last_error or "Failed to connect to Whisparr API. Please check your URL and API key."
-        whisparr_logger.error(error_msg)
+        error_msg = last_error or "Failed to connect to Eros API. Please check your URL and API key."
+        eros_logger.error(error_msg)
         return jsonify({"success": False, "message": error_msg}), 400
 
-# Function to check if Whisparr is configured
+# Function to check if Eros is configured
 def is_configured():
-    """Check if Whisparr API credentials are configured"""
+    """Check if Eros API credentials are configured"""
     try:
-        api_keys = keys_manager.load_api_keys("whisparr")
-        instances = api_keys.get("instances", [])
+        settings = load_settings("eros")
+        instances = settings.get("instances", [])
         
         for instance in instances:
             if instance.get("enabled", True):
@@ -133,15 +133,15 @@ def is_configured():
                 
         return False
     except Exception as e:
-        whisparr_logger.error(f"Error checking if Whisparr is configured: {str(e)}")
+        eros_logger.error(f"Error checking if Eros is configured: {str(e)}")
         return False
 
 # Get all valid instances from settings
 def get_configured_instances():
-    """Get all configured and enabled Whisparr instances"""
+    """Get all configured and enabled Eros instances"""
     try:
-        api_keys = keys_manager.load_api_keys("whisparr")
-        instances = api_keys.get("instances", [])
+        settings = load_settings("eros")
+        instances = settings.get("instances", [])
         
         enabled_instances = []
         for instance in instances:
@@ -167,5 +167,5 @@ def get_configured_instances():
             
         return enabled_instances
     except Exception as e:
-        whisparr_logger.error(f"Error getting configured Whisparr instances: {str(e)}")
+        eros_logger.error(f"Error getting configured Eros instances: {str(e)}")
         return []
