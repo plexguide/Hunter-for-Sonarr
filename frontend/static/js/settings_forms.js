@@ -570,7 +570,7 @@ const SettingsForms = {
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
-                            <button type="button" class="test-connection-btn" data-instance="${index}" id="test-whisparr-button-${index}" style="margin-left: 10px;">
+                            <button type="button" class="test-connection-btn" data-instance="${index}" style="margin-left: 10px;">
                                 <i class="fas fa-plug"></i> Test Connection
                             </button>
                         </div>
@@ -588,124 +588,95 @@ const SettingsForms = {
                         </div>
                         <div class="setting-item">
                             <label for="whisparr-key-${index}">API Key:</label>
-                            <input type="password" id="whisparr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="Your Whisparr API key">
-                            <p class="setting-help">Your Whisparr API key (found in Settings > General)</p>
+                            <input type="text" id="whisparr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr">
+                            <p class="setting-help">API key for Whisparr</p>
                         </div>
                         <div class="setting-item">
-                            <div class="checkbox-wrapper">
+                            <label for="whisparr-enabled-${index}">Enabled:</label>
+                            <label class="toggle-switch">
                                 <input type="checkbox" id="whisparr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <label for="whisparr-enabled-${index}">Enable this instance</label>
-                            </div>
-                            <p class="setting-help">Enable or disable this Whisparr instance</p>
-                        </div>
-                        <div class="connection-info">
-                            <span>Connection Status: </span>
-                            <span class="connection-status pending" id="whisparr-connection-status-${index}">Unknown</span>
-                            <span>Version: </span>
-                            <span id="whisparr-version-${index}">N/A</span>
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                     </div>
                 </div>
             `;
         });
 
-        // Add Add Instance button
         instancesHtml += `
+                </div> <!-- instances-container -->
+                <div class="button-container" style="text-align: center; margin-top: 15px;">
+                    <button type="button" class="add-instance-btn add-whisparr-instance-btn">
+                        <i class="fas fa-plus"></i> Add Whisparr Instance (${settings.instances.length}/9)
+                    </button>
                 </div>
-                <button type="button" class="add-instance-btn" id="add-whisparr-instance">
-                    <i class="fas fa-plus"></i> Add Whisparr Instance
-                </button>
-            </div>
+            </div> <!-- settings-group -->
         `;
 
-        // Create a container for general settings
-        let generalSettingsHtml = `
+        // Search Settings
+        let searchSettingsHtml = `
             <div class="settings-group">
-                <h3>Whisparr Missing Items</h3>
+                <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <div class="radio-group">
-                        <div class="radio-wrapper">
-                            <input type="radio" id="whisparr-hunt-missing-mode-0" name="hunt_missing_items" value="0" ${settings.hunt_missing_items === 0 ? 'checked' : ''}>
-                            <label for="whisparr-hunt-missing-mode-0">Disabled</label>
-                        </div>
-                        <div class="radio-wrapper">
-                            <input type="radio" id="whisparr-hunt-missing-mode-1" name="hunt_missing_items" value="1" ${settings.hunt_missing_items === 1 ? 'checked' : ''}>
-                            <label for="whisparr-hunt-missing-mode-1">Process Individually</label>
-                        </div>
-                        <div class="radio-wrapper">
-                            <input type="radio" id="whisparr-hunt-missing-mode-2" name="hunt_missing_items" value="2" ${settings.hunt_missing_items === 2 ? 'checked' : ''}>
-                            <label for="whisparr-hunt-missing-mode-2">Process All at Once</label>
-                        </div>
-                    </div>
-                    <p class="setting-help">Controls how Huntarr searches for missing items in Whisparr. "Process Individually" searches one by one, while "Process All at Once" uses Whisparr's built-in task.</p>
+                    <label for="whisparr_hunt_missing_items">Missing Items to Search:</label>
+                    <input type="number" id="whisparr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
+                    <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_hunt_upgrade_items">Items to Upgrade:</label>
+                    <input type="number" id="whisparr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
+                    <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_sleep_duration">Sleep Duration:</label>
+                    <input type="number" id="whisparr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                    <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
             </div>
             
             <div class="settings-group">
-                <h3>Whisparr Quality Upgrades</h3>
+                <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <div class="radio-group">
-                        <div class="radio-wrapper">
-                            <input type="radio" id="whisparr-hunt-upgrade-mode-0" name="hunt_upgrade_items" value="0" ${settings.hunt_upgrade_items === 0 ? 'checked' : ''}>
-                            <label for="whisparr-hunt-upgrade-mode-0">Disabled</label>
-                        </div>
-                        <div class="radio-wrapper">
-                            <input type="radio" id="whisparr-hunt-upgrade-mode-1" name="hunt_upgrade_items" value="1" ${settings.hunt_upgrade_items === 1 ? 'checked' : ''}>
-                            <label for="whisparr-hunt-upgrade-mode-1">Process Individually</label>
-                        </div>
-                    </div>
-                    <p class="setting-help">Controls whether Huntarr looks for quality upgrades for existing items in Whisparr.</p>
+                    <label for="whisparr_monitored_only">Monitored Only:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="whisparr_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Only search for monitored items</p>
                 </div>
-            </div>
-            
-            <div class="settings-group">
-                <h3>Advanced Whisparr Settings</h3>
                 <div class="setting-item">
-                    <label for="whisparr-sleep-duration">Sleep Duration (seconds):</label>
-                    <input type="number" id="whisparr-sleep-duration" name="sleep_duration" value="${settings.sleep_duration || 900}" min="60" step="60">
-                    <p class="setting-help">How long to wait between processing cycles (seconds). <span class="duration-display" data-seconds="${settings.sleep_duration || 900}"></span></p>
+                    <label for="whisparr_skip_future_releases">Skip Future Releases:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="whisparr_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip searching for scenes with future release dates</p>
                 </div>
-                
                 <div class="setting-item">
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="whisparr-monitored-only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
-                        <label for="whisparr-monitored-only">Process monitored movies only</label>
-                    </div>
-                    <p class="setting-help">When enabled, only monitored movies will be processed.</p>
+                    <label for="whisparr_skip_series_refresh">Skip Series Refresh:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="whisparr_skip_series_refresh" name="skip_series_refresh" ${settings.skip_series_refresh === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip refreshing series metadata before searching</p>
                 </div>
-                
                 <div class="setting-item">
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="whisparr-skip-series-refresh" name="skip_series_refresh" ${settings.skip_series_refresh !== false ? 'checked' : ''}>
-                        <label for="whisparr-skip-series-refresh">Skip season refresh tasks</label>
-                    </div>
-                    <p class="setting-help">When enabled, Huntarr will not perform season refreshes before processing missing items, potentially saving API calls but potentially working with stale data.</p>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="whisparr-skip-future-releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
-                        <label for="whisparr-skip-future-releases">Skip future releases</label>
-                    </div>
-                    <p class="setting-help">When enabled, movies with future release dates will be skipped during processing.</p>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="whisparr-skip-scene-refresh" name="skip_scene_refresh" ${settings.skip_scene_refresh !== false ? 'checked' : ''}>
-                        <label for="whisparr-skip-scene-refresh">Skip scene info refresh tasks</label>
-                    </div>
-                    <p class="setting-help">When enabled, Huntarr will not perform scene info refreshes, potentially saving API calls but potentially working with stale data.</p>
+                    <label for="whisparr_skip_scene_refresh">Skip Scene Refresh:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="whisparr_skip_scene_refresh" name="skip_scene_refresh" ${settings.skip_scene_refresh === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip refreshing scene info before searching</p>
                 </div>
             </div>
         `;
 
-        // Add all the HTML to the container
-        container.innerHTML = instancesHtml + generalSettingsHtml;
+        // Set the content
+        container.innerHTML = instancesHtml + searchSettingsHtml;
 
-        // Set up instance management (test connection buttons, add/remove instance buttons)
+        // Add event listeners for the instance management
         this.setupInstanceManagement(container, 'whisparr', settings.instances.length);
-
+        
         // Update duration display
         this.updateDurationDisplay();
     },
@@ -740,7 +711,7 @@ const SettingsForms = {
                         <h4>Instance ${index + 1}: ${instance.name || 'Unnamed'}</h4>
                         <div class="instance-actions">
                             ${index > 0 ? '<button type="button" class="remove-instance-btn">Remove</button>' : ''}
-                            <button type="button" class="test-connection-btn" data-instance="${index}" id="test-eros-button-${index}" style="margin-left: 10px;">
+                            <button type="button" class="test-connection-btn" data-instance="${index}" style="margin-left: 10px;">
                                 <i class="fas fa-plug"></i> Test Connection
                             </button>
                         </div>
@@ -758,124 +729,95 @@ const SettingsForms = {
                         </div>
                         <div class="setting-item">
                             <label for="eros-key-${index}">API Key:</label>
-                            <input type="password" id="eros-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="Your Eros API key">
-                            <p class="setting-help">Your Eros API key (found in Settings > General)</p>
+                            <input type="text" id="eros-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Eros">
+                            <p class="setting-help">API key for Eros</p>
                         </div>
                         <div class="setting-item">
-                            <div class="checkbox-wrapper">
+                            <label for="eros-enabled-${index}">Enabled:</label>
+                            <label class="toggle-switch">
                                 <input type="checkbox" id="eros-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <label for="eros-enabled-${index}">Enable this instance</label>
-                            </div>
-                            <p class="setting-help">Enable or disable this Eros instance</p>
-                        </div>
-                        <div class="connection-info">
-                            <span>Connection Status: </span>
-                            <span class="connection-status pending" id="eros-connection-status-${index}">Unknown</span>
-                            <span>Version: </span>
-                            <span id="eros-version-${index}">N/A</span>
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                     </div>
                 </div>
             `;
         });
 
-        // Add Add Instance button
         instancesHtml += `
+                </div> <!-- instances-container -->
+                <div class="button-container" style="text-align: center; margin-top: 15px;">
+                    <button type="button" class="add-instance-btn add-eros-instance-btn">
+                        <i class="fas fa-plus"></i> Add Eros Instance (${settings.instances.length}/9)
+                    </button>
                 </div>
-                <button type="button" class="add-instance-btn" id="add-eros-instance">
-                    <i class="fas fa-plus"></i> Add Eros Instance
-                </button>
-            </div>
+            </div> <!-- settings-group -->
         `;
 
-        // Create a container for general settings
-        let generalSettingsHtml = `
+        // Search Settings
+        let searchSettingsHtml = `
             <div class="settings-group">
-                <h3>Eros Missing Items</h3>
+                <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <div class="radio-group">
-                        <div class="radio-wrapper">
-                            <input type="radio" id="eros-hunt-missing-mode-0" name="hunt_missing_items" value="0" ${settings.hunt_missing_items === 0 ? 'checked' : ''}>
-                            <label for="eros-hunt-missing-mode-0">Disabled</label>
-                        </div>
-                        <div class="radio-wrapper">
-                            <input type="radio" id="eros-hunt-missing-mode-1" name="hunt_missing_items" value="1" ${settings.hunt_missing_items === 1 ? 'checked' : ''}>
-                            <label for="eros-hunt-missing-mode-1">Process Individually</label>
-                        </div>
-                        <div class="radio-wrapper">
-                            <input type="radio" id="eros-hunt-missing-mode-2" name="hunt_missing_items" value="2" ${settings.hunt_missing_items === 2 ? 'checked' : ''}>
-                            <label for="eros-hunt-missing-mode-2">Process All at Once</label>
-                        </div>
-                    </div>
-                    <p class="setting-help">Controls how Huntarr searches for missing items in Eros. "Process Individually" searches one by one, while "Process All at Once" uses Eros's built-in task.</p>
+                    <label for="eros_hunt_missing_items">Missing Items to Search:</label>
+                    <input type="number" id="eros_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
+                    <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="eros_hunt_upgrade_items">Items to Upgrade:</label>
+                    <input type="number" id="eros_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
+                    <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="eros_sleep_duration">Sleep Duration:</label>
+                    <input type="number" id="eros_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                    <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
             </div>
             
             <div class="settings-group">
-                <h3>Eros Quality Upgrades</h3>
+                <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <div class="radio-group">
-                        <div class="radio-wrapper">
-                            <input type="radio" id="eros-hunt-upgrade-mode-0" name="hunt_upgrade_items" value="0" ${settings.hunt_upgrade_items === 0 ? 'checked' : ''}>
-                            <label for="eros-hunt-upgrade-mode-0">Disabled</label>
-                        </div>
-                        <div class="radio-wrapper">
-                            <input type="radio" id="eros-hunt-upgrade-mode-1" name="hunt_upgrade_items" value="1" ${settings.hunt_upgrade_items === 1 ? 'checked' : ''}>
-                            <label for="eros-hunt-upgrade-mode-1">Process Individually</label>
-                        </div>
-                    </div>
-                    <p class="setting-help">Controls whether Huntarr looks for quality upgrades for existing items in Eros.</p>
+                    <label for="eros_monitored_only">Monitored Only:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="eros_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Only search for monitored items</p>
                 </div>
-            </div>
-            
-            <div class="settings-group">
-                <h3>Advanced Eros Settings</h3>
                 <div class="setting-item">
-                    <label for="eros-sleep-duration">Sleep Duration (seconds):</label>
-                    <input type="number" id="eros-sleep-duration" name="sleep_duration" value="${settings.sleep_duration || 900}" min="60" step="60">
-                    <p class="setting-help">How long to wait between processing cycles (seconds). <span class="duration-display" data-seconds="${settings.sleep_duration || 900}"></span></p>
+                    <label for="eros_skip_future_releases">Skip Future Releases:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="eros_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip searching for scenes with future release dates</p>
                 </div>
-                
                 <div class="setting-item">
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="eros-monitored-only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
-                        <label for="eros-monitored-only">Process monitored movies only</label>
-                    </div>
-                    <p class="setting-help">When enabled, only monitored movies will be processed.</p>
+                    <label for="eros_skip_series_refresh">Skip Series Refresh:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="eros_skip_series_refresh" name="skip_series_refresh" ${settings.skip_series_refresh === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip refreshing series metadata before searching</p>
                 </div>
-                
                 <div class="setting-item">
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="eros-skip-series-refresh" name="skip_series_refresh" ${settings.skip_series_refresh !== false ? 'checked' : ''}>
-                        <label for="eros-skip-series-refresh">Skip season refresh tasks</label>
-                    </div>
-                    <p class="setting-help">When enabled, Huntarr will not perform season refreshes before processing missing items, potentially saving API calls but potentially working with stale data.</p>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="eros-skip-future-releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
-                        <label for="eros-skip-future-releases">Skip future releases</label>
-                    </div>
-                    <p class="setting-help">When enabled, movies with future release dates will be skipped during processing.</p>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="eros-skip-scene-refresh" name="skip_scene_refresh" ${settings.skip_scene_refresh !== false ? 'checked' : ''}>
-                        <label for="eros-skip-scene-refresh">Skip scene info refresh tasks</label>
-                    </div>
-                    <p class="setting-help">When enabled, Huntarr will not perform scene info refreshes, potentially saving API calls but potentially working with stale data.</p>
+                    <label for="eros_skip_scene_refresh">Skip Scene Refresh:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="eros_skip_scene_refresh" name="skip_scene_refresh" ${settings.skip_scene_refresh === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Skip refreshing scene info before searching</p>
                 </div>
             </div>
         `;
 
-        // Add all the HTML to the container
-        container.innerHTML = instancesHtml + generalSettingsHtml;
+        // Set the content
+        container.innerHTML = instancesHtml + searchSettingsHtml;
 
-        // Set up instance management (test connection buttons, add/remove instance buttons)
+        // Add event listeners for the instance management
         this.setupInstanceManagement(container, 'eros', settings.instances.length);
-
+        
         // Update duration display
         this.updateDurationDisplay();
     },

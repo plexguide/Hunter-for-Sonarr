@@ -3,7 +3,7 @@ import datetime, os, requests
 from primary import keys_manager
 from src.primary.utils.logger import get_logger
 from src.primary.state import get_state_file_path
-from src.primary.settings_manager import load_settings
+from src.primary.settings_manager import load_settings, settings_manager
 
 eros_bp = Blueprint('eros', __name__)
 eros_logger = get_logger("eros")
@@ -110,8 +110,8 @@ def test_connection():
 def is_configured():
     """Check if Eros API credentials are configured"""
     try:
-        api_keys = keys_manager.load_api_keys("eros")
-        instances = api_keys.get("instances", [])
+        settings = load_settings("eros")
+        instances = settings.get("instances", [])
         
         for instance in instances:
             if instance.get("enabled", True):
@@ -126,8 +126,8 @@ def is_configured():
 def get_configured_instances():
     """Get all configured and enabled Eros instances"""
     try:
-        api_keys = keys_manager.load_api_keys("eros")
-        instances = api_keys.get("instances", [])
+        settings = load_settings("eros")
+        instances = settings.get("instances", [])
         
         enabled_instances = []
         for instance in instances:

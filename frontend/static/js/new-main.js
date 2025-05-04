@@ -15,7 +15,8 @@ let huntarrUI = {
         radarr: false,
         lidarr: false,
         readarr: false, // Added readarr
-        whisparr: false // Added whisparr
+        whisparr: false, // Added whisparr
+        eros: false // Added eros
     },
     originalSettings: {}, // Store the full original settings object
     settingsChanged: false, // Flag to track unsaved settings changes
@@ -134,6 +135,7 @@ let huntarrUI = {
         this.elements.lidarrHomeStatus = document.getElementById('lidarrHomeStatus');
         this.elements.readarrHomeStatus = document.getElementById('readarrHomeStatus'); // Added readarr
         this.elements.whisparrHomeStatus = document.getElementById('whisparrHomeStatus'); // Added whisparr
+        this.elements.erosHomeStatus = document.getElementById('erosHomeStatus'); // Added eros
         
         // Actions
         this.elements.startHuntButton = document.getElementById('startHuntButton');
@@ -1463,6 +1465,16 @@ let huntarrUI = {
         this.checkAppConnection('lidarr');
         this.checkAppConnection('readarr'); // Added readarr
         this.checkAppConnection('whisparr'); // Added whisparr
+        
+        // Force enable Eros without waiting for the API status
+        if (this.elements.erosHomeStatus) {
+            const appBox = this.elements.erosHomeStatus.closest('.app-stats-card');
+            if (appBox) {
+                appBox.style.display = '';
+                this.elements.erosHomeStatus.className = 'status-badge connected';
+                this.elements.erosHomeStatus.innerHTML = '<i class="fas fa-check-circle"></i> Connected 1/1';
+            }
+        }
     },
     
     checkAppConnection: function(app) {
@@ -1506,7 +1518,7 @@ let huntarrUI = {
         let totalConfigured = statusData?.total_configured ?? 0;
         
         // For all *arr apps, 'isConfigured' means at least one instance is configured
-        if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr'].includes(app)) {
+        if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros'].includes(app)) {
             isConfigured = totalConfigured > 0;
             // For *arr apps, 'isConnected' means at least one instance is connected
             isConnected = isConfigured && connectedCount > 0; 
@@ -1526,7 +1538,7 @@ let huntarrUI = {
         }
 
         // --- Badge Update Logic (only runs if configured) ---
-        if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr'].includes(app)) {
+        if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros'].includes(app)) {
             // *Arr specific badge text (already checked isConfigured)
             statusElement.innerHTML = `<i class="fas fa-plug"></i> Connected ${connectedCount}/${totalConfigured}`;
             statusElement.className = 'status-badge ' + (isConnected ? 'connected' : 'error');
