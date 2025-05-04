@@ -55,6 +55,8 @@ def login_route():
 
             # Call verify_user which now returns (auth_success, needs_2fa)
             auth_success, needs_2fa = verify_user(username, password, twoFactorCode)
+            
+            logger.debug(f"Auth result for '{username}': success={auth_success}, needs_2fa={needs_2fa}")
 
             if auth_success:
                 # User is authenticated (password correct, and 2FA if needed was correct)
@@ -68,7 +70,17 @@ def login_route():
                 # Authentication failed *because* 2FA was required (or code was invalid)
                 # The specific reason (missing vs invalid code) is logged in verify_user
                 logger.warning(f"Login failed for '{username}': 2FA required or invalid.")
-                return jsonify({"success": False, "requires_2fa": True, "error": "Invalid or missing 2FA code"}), 401 # Use 401
+                logger.debug(f"Returning 2FA required response: {{\"success\": False, \"requires_2fa\": True, \"requiresTwoFactor\": True, \"error\": \"Invalid or missing 2FA code\"}}")
+                
+                # Use all common variations of the 2FA flag to ensure compatibility
+                return jsonify({
+                    "success": False, 
+                    "requires_2fa": True, 
+                    "requiresTwoFactor": True,
+                    "requires2fa": True,
+                    "requireTwoFactor": True,
+                    "error": "Two-factor authentication code required"
+                }), 401
             else:
                 # Authentication failed for other reasons (e.g., wrong password, user not found)
                 # Specific reason logged in verify_user

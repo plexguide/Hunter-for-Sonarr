@@ -180,11 +180,18 @@ def verify_user(username: str, password: str, otp_code: str = None) -> Tuple[boo
         if user_data.get("username") == username_hash:
             if verify_password(user_data.get("password", ""), password):
                 # Check if 2FA is enabled
-                if user_data.get("2fa_enabled", False):
+                two_fa_enabled = user_data.get("2fa_enabled", False)
+                logger.debug(f"2FA enabled for user '{username}': {two_fa_enabled}")
+                logger.debug(f"2FA secret present: {bool(user_data.get('2fa_secret'))}")
+                logger.debug(f"OTP code provided: {bool(otp_code)}")
+                
+                if two_fa_enabled:
                     # If 2FA code was provided, verify it
                     if otp_code:
                         totp = pyotp.TOTP(user_data.get("2fa_secret"))
-                        if totp.verify(otp_code):
+                        valid_code = totp.verify(otp_code)
+                        logger.debug(f"OTP code validation result: {valid_code}")
+                        if valid_code:
                             logger.info(f"User '{username}' authenticated successfully with 2FA.")
                             return True, False
                         else:
@@ -193,6 +200,7 @@ def verify_user(username: str, password: str, otp_code: str = None) -> Tuple[boo
                     else:
                         # No OTP code provided but 2FA is enabled
                         logger.warning(f"Login attempt failed for user '{username}': 2FA code required but not provided.")
+                        logger.debug("Returning needs_2fa=True to trigger 2FA input display")
                         return False, True
                 else:
                     # 2FA not enabled, password is correct
