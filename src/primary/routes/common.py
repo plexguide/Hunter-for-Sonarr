@@ -47,14 +47,14 @@ def login_route():
             data = request.json
             username = data.get('username')
             password = data.get('password')
-            otp_code = data.get('otp_code') # Matches frontend form name 'otp_code'
+            twoFactorCode = data.get('twoFactorCode') # Changed from 'otp_code' to match frontend form
 
             if not username or not password:
                  logger.warning("Login attempt with missing username or password.")
                  return jsonify({"success": False, "error": "Username and password are required"}), 400
 
             # Call verify_user which now returns (auth_success, needs_2fa)
-            auth_success, needs_2fa = verify_user(username, password, otp_code)
+            auth_success, needs_2fa = verify_user(username, password, twoFactorCode)
 
             if auth_success:
                 # User is authenticated (password correct, and 2FA if needed was correct)
