@@ -73,20 +73,25 @@ for file_name in ['requirements.txt', 'version.txt']:
         print(f"Warning: Could not find file: {full_path}")
 
 # Get icon path
-icon_path = os.path.join(os.getcwd(), 'assets', 'huntarr.ico')
-icon_exists = os.path.exists(icon_path)
-if not icon_exists:
-    print(f"Warning: Icon file not found: {icon_path}")
-    # Try to find the icon elsewhere
-    for root, dirs, files in os.walk(os.getcwd()):
-        for file in files:
-            if file == 'huntarr.ico':
-                icon_path = os.path.join(root, file)
-                icon_exists = True
-                print(f"Found icon at alternative location: {icon_path}")
+icon_path = None  # Default to None to avoid icon issues in GitHub Actions
+if not os.environ.get('CI'):  # Only use icon in local builds, not in CI
+    potential_icon_path = os.path.join(os.getcwd(), 'assets', 'huntarr.ico')
+    if os.path.exists(potential_icon_path):
+        print(f"Found icon file: {potential_icon_path}")
+        icon_path = potential_icon_path
+    else:
+        print(f"Warning: Icon file not found: {potential_icon_path}")
+        # Try to find the icon elsewhere
+        for root, dirs, files in os.walk(os.getcwd()):
+            for file in files:
+                if file == 'huntarr.ico':
+                    icon_path = os.path.join(root, file)
+                    print(f"Found icon at alternative location: {icon_path}")
+                    break
+            if icon_path:
                 break
-        if icon_exists:
-            break
+else:
+    print("Running in CI environment, skipping icon to avoid format issues")
 
 # Combine all datas
 all_datas = data_dirs + data_files
@@ -133,7 +138,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=icon_path if icon_exists else None
+    icon=icon_path
 )
 """
     
