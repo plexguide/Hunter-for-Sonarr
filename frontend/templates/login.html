@@ -237,13 +237,8 @@
                     <input type="password" id="password" name="password" required>
                     <i class="toggle-password fas fa-eye" id="togglePassword"></i>
                 </div>
-                <div class="form-group" id="twoFactorGroup">
-                    <label for="twoFactorCode">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>Two-Factor Code</span>
-                    </label>
-                    <input type="text" id="twoFactorCode" name="twoFactorCode" placeholder="Enter your 6-digit code (if enabled)" maxlength="6">
-                </div>
+                <!-- 2FA field will be inserted here when needed -->
+                <div id="twoFactorContainer"></div>
                 <div class="form-actions">
                     <div class="form-check">
                         <input type="checkbox" id="rememberMe" name="rememberMe">
@@ -261,10 +256,11 @@
         const loginForm = document.getElementById('loginForm');
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
-        const otpInput = document.getElementById('twoFactorCode');
         const errorMessage = document.getElementById('errorMessage');
-        const twoFactorGroup = document.getElementById('twoFactorGroup');
         const togglePassword = document.getElementById('togglePassword');
+        const twoFactorContainer = document.getElementById('twoFactorContainer');
+        let otpInput = null;
+        let twoFactorMode = false;
         
         // Toggle password visibility
         togglePassword.addEventListener('click', function() {
@@ -289,8 +285,8 @@
                 return;
             }
             
-            // If 2FA field is visible, make sure it's filled
-            if (twoFactorGroup.style.display !== 'none') {
+            // Check if we're in 2FA mode and validate the 2FA code
+            if (twoFactorMode && otpInput) {
                 const otpCode = otpInput.value.trim();
                 if (!otpCode) {
                     showError('Please enter your two-factor authentication code.');
@@ -309,41 +305,76 @@
             loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
             loginButton.disabled = true;
             
+            // Prepare login data
+            const loginData = {
+                username: username,
+                password: password,
+                rememberMe: document.getElementById('rememberMe').checked
+            };
+            
+            // Add 2FA code if we're in 2FA mode
+            if (twoFactorMode && otpInput) {
+                loginData.twoFactorCode = otpInput.value.trim();
+            }
+            
             // Submit the form data
             fetch('/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    username: username,
-                    password: password,
-                    twoFactorCode: otpInput.value || '',
-                    rememberMe: document.getElementById('rememberMe').checked
-                })
+                body: JSON.stringify(loginData)
             })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    throw new Error('Network response was not ok');
-                }
-            })
-            .then(data => {
-                if (data.success) {
-                    // Redirect to dashboard or home
-                    window.location.href = data.redirect || '/';
-                } else if (data.requiresTwoFactor) {
-                    // Show 2FA field
-                    twoFactorGroup.style.display = 'block';
-                    otpInput.focus();
+            .then(response => response.json().then(data => ({ status: response.status, body: data })))
+            .then(({ status, body }) => {
+                console.log('Login response:', status, body);
+                
+                // Check for 2FA requirement
+                const requires2FA = body.requires_2fa || body.requiresTwoFactor || body.requires2fa || body.requireTwoFactor || false;
+                
+                if (status === 200 && body.success) {
+                    // Login successful
+                    window.location.href = body.redirect || '/';
+                } else if (status === 401 && requires2FA) {
+                    // 2FA is required
+                    console.log('2FA required, showing 2FA input field');
+                    twoFactorMode = true;
+                    
+                    // Add 2FA field
+                    twoFactorContainer.innerHTML = `
+                    <div class="form-group" id="twoFactorGroup">
+                        <label for="twoFactorCode">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Two-Factor Code</span>
+                        </label>
+                        <input type="text" id="twoFactorCode" name="twoFactorCode" 
+                               placeholder="Enter your 6-digit code" maxlength="6"
+                               style="width: 100%; padding: 12px 15px; border: 1px solid rgba(90, 109, 137, 0.2); 
+                                      border-radius: 8px; background-color: rgba(28, 36, 54, 0.6); 
+                                      color: #fff; font-size: 16px;">
+                    </div>`;
+                    
+                    // Update reference to the new input
+                    otpInput = document.getElementById('twoFactorCode');
+                    if (otpInput) {
+                        otpInput.focus();
+                        
+                        // Add input validation
+                        otpInput.addEventListener('input', function() {
+                            // Only allow digits
+                            this.value = this.value.replace(/[^0-9]/g, '');
+                        });
+                    }
                     
                     // Reset button
                     loginButton.innerHTML = originalText;
                     loginButton.disabled = false;
+                    
+                    // Show message
+                    showError('Please enter your two-factor authentication code.');
                 } else {
-                    // Show error
-                    showError(data.message || 'Invalid username or password.');
+                    // Show error message
+                    showError(body.error || 'Invalid username or password.');
                     
                     // Reset button
                     loginButton.innerHTML = originalText;
@@ -351,7 +382,7 @@
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Login error:', error);
                 showError('An error occurred during login. Please try again.');
                 
                 // Reset button
