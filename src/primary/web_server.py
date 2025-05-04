@@ -650,16 +650,21 @@ def apply_timezone_setting():
 @app.route('/api/stats', methods=['GET'])
 def api_get_stats():
     """Get the media statistics for all apps"""
-    # For now, return some sample statistics
-    # In a real implementation, these would be pulled from a database or file
-    stats = {
-        'sonarr': {'hunted': 228, 'upgraded': 15},
-        'radarr': {'hunted': 36, 'upgraded': 15},
-        'lidarr': {'hunted': 40, 'upgraded': 0},
-        'readarr': {'hunted': 4, 'upgraded': 2},
-        'whisparr': {'hunted': 346, 'upgraded': 153}
-    }
-    return jsonify({"success": True, "stats": stats})
+    try:
+        # Import the stats manager to get actual stats
+        from src.primary.stats_manager import get_stats
+        
+        # Get real stats from the stats file
+        stats = get_stats()
+        
+        web_logger = get_logger("web_server")
+        web_logger.info(f"Serving actual stats from file: {stats}")
+        
+        return jsonify({"success": True, "stats": stats})
+    except Exception as e:
+        web_logger = get_logger("web_server")
+        web_logger.error(f"Error fetching statistics: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/stats/reset', methods=['POST'])
 def api_reset_stats():
@@ -671,20 +676,54 @@ def api_reset_stats():
         # Get logger for logging the reset action
         web_logger = get_logger("web_server")
         
+        # Import the reset_stats function
+        from src.primary.stats_manager import reset_stats
+        
         if app_type:
             web_logger.info(f"Resetting statistics for app: {app_type}")
-            # In a real implementation, you would reset stats just for this app
+            reset_success = reset_stats(app_type)
         else:
             web_logger.info("Resetting all media statistics")
-            # In a real implementation, you would reset all app stats
+            reset_success = reset_stats(None)
         
-        # Return immediate success since this is a visual-only feature for now
-        # In a production environment, this would actually reset stored statistics
-        return jsonify({"success": True, "message": "Statistics reset successfully"})
+        if reset_success:
+            return jsonify({"success": True, "message": "Statistics reset successfully"})
+        else:
+            return jsonify({"success": False, "error": "Failed to reset statistics"}), 500
         
     except Exception as e:
         web_logger = get_logger("web_server")
         web_logger.error(f"Error resetting statistics: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/stats/reset_public', methods=['POST'])
+def api_reset_stats_public():
+    """Reset the media statistics for all apps or a specific app - public endpoint without auth"""
+    try:
+        data = request.json or {}
+        app_type = data.get('app_type')
+        
+        # Get logger for logging the reset action
+        web_logger = get_logger("web_server")
+        
+        # Import the reset_stats function
+        from src.primary.stats_manager import reset_stats
+        
+        if app_type:
+            web_logger.info(f"Resetting statistics for app (public): {app_type}")
+            reset_success = reset_stats(app_type)
+        else:
+            web_logger.info("Resetting all media statistics (public)")
+            reset_success = reset_stats(None)
+        
+        if reset_success:
+            return jsonify({"success": True, "message": "Statistics reset successfully"}), 200
+        else:
+            return jsonify({"success": False, "error": "Failed to reset statistics"}), 500
+        
+    except Exception as e:
+        web_logger = get_logger("web_server")
+        web_logger.error(f"Error resetting statistics (public): {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/version.txt')

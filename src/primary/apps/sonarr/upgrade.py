@@ -182,9 +182,11 @@ def process_upgrade_episodes_mode(
                 processed_any = True # Mark that we did something
                 sonarr_logger.info(f"Successfully processed and searched for {len(episode_ids)} episodes in series {series_id}.")
                 
-                # Increment the upgraded statistics
-                increment_stat("sonarr", "upgraded", len(episode_ids))
-                sonarr_logger.debug(f"Incremented sonarr upgraded statistics by {len(episode_ids)}")
+                # Add stats incrementing right here - this is the code path that's actually being executed
+                for episode_id in episode_ids:
+                    # Increment stat for each episode individually, just like Radarr
+                    increment_stat("sonarr", "upgraded")
+                    sonarr_logger.info(f"*** STATS INCREMENT *** sonarr upgraded by 1 for episode ID {episode_id}")
                 
                 # Mark episodes as processed using stateful management
                 for episode_id in episode_ids:
@@ -340,14 +342,18 @@ def process_upgrade_seasons_mode(
                 processed_any = True
                 sonarr_logger.info(f"Successfully processed {len(episode_ids)} cutoff unmet episodes in {series_title} Season {season_number}")
                 
-                # Increment the upgraded statistics
-                increment_stat("sonarr", "upgraded", len(episode_ids))
-                sonarr_logger.debug(f"Incremented sonarr upgraded statistics by {len(episode_ids)}")
+                # We'll increment stats individually for each episode instead of in batch
+                # increment_stat("sonarr", "upgraded", len(episode_ids))
+                # sonarr_logger.debug(f"Incremented sonarr upgraded statistics by {len(episode_ids)}")
                 
                 # Mark episodes as processed using stateful management
                 for episode_id in episode_ids:
                     add_processed_id("sonarr", instance_name, str(episode_id))
                     sonarr_logger.debug(f"Marked episode ID {episode_id} as processed for upgrades")
+                    
+                    # Increment stats for this episode (consistent with Radarr's approach)
+                    increment_stat("sonarr", "upgraded")
+                    sonarr_logger.debug(f"Incremented sonarr upgraded statistic for episode {episode_id}")
                     
                     # Find the episode information for history logging
                     # We need to get the episode details from the API to include proper info in history
@@ -493,14 +499,18 @@ def process_upgrade_shows_mode(
                 processed_any = True
                 sonarr_logger.info(f"Successfully processed {len(episode_ids)} cutoff unmet episodes in {series_title}")
                 
-                # Increment the upgraded statistics
-                increment_stat("sonarr", "upgraded", len(episode_ids))
-                sonarr_logger.debug(f"Incremented sonarr upgraded statistics by {len(episode_ids)}")
+                # We'll increment stats individually for each episode instead of in batch
+                # increment_stat("sonarr", "upgraded", len(episode_ids))
+                # sonarr_logger.debug(f"Incremented sonarr upgraded statistics by {len(episode_ids)}")
                 
                 # Mark episodes as processed using stateful management
                 for episode_id in episode_ids:
                     add_processed_id("sonarr", instance_name, str(episode_id))
                     sonarr_logger.debug(f"Marked episode ID {episode_id} as processed for upgrades")
+                    
+                    # Increment stats for this episode (consistent with Radarr's approach)
+                    increment_stat("sonarr", "upgraded")
+                    sonarr_logger.debug(f"Incremented sonarr upgraded statistic for episode {episode_id}")
                     
                     # Find the episode information for history logging
                     # We need to get the episode details from the API to include proper info in history

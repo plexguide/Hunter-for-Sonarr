@@ -114,6 +114,8 @@
         margin-top: 5px;
         padding-top: 5px;
         padding-bottom: 5px;
+        max-height: 300px; /* Increased max height */
+        overflow-y: auto; /* Add scrolling if needed */
     }
     
     /* Fix dropdown disappearing when moving to content */
@@ -451,6 +453,16 @@
         
         .logs {
             height: calc(100vh - 280px);
+        }
+    }
+    
+    /* For dropdowns with many items, position upward if near bottom of screen */
+    @media (max-height: 700px) {
+        .log-dropdown-content {
+            bottom: 100%;
+            top: auto;
+            margin-top: 0;
+            margin-bottom: 5px;
         }
     }
 </style>
