@@ -75,13 +75,22 @@ for file_name in ['requirements.txt', 'version.txt']:
 # Get icon path
 icon_path = None  # Default to None to avoid icon issues in GitHub Actions
 if not os.environ.get('CI'):  # Only use icon in local builds, not in CI
-    potential_icon_path = os.path.join(os.getcwd(), 'assets', 'huntarr.ico')
-    if os.path.exists(potential_icon_path):
-        print(f"Found icon file: {potential_icon_path}")
-        icon_path = potential_icon_path
-    else:
-        print(f"Warning: Icon file not found: {potential_icon_path}")
-        # Try to find the icon elsewhere
+    # Check the typical locations for the icon
+    icon_locations = [
+        os.path.join(os.getcwd(), 'assets', 'huntarr.ico'),
+        os.path.join(os.getcwd(), 'frontend', 'static', 'logo', 'huntarr.ico')
+    ]
+    
+    # Try each location
+    for loc in icon_locations:
+        if os.path.exists(loc):
+            print(f"Found icon file: {loc}")
+            icon_path = loc
+            break
+    
+    # If not found in known locations, search recursively
+    if not icon_path:
+        print("Icon not found in known locations, searching recursively...")
         for root, dirs, files in os.walk(os.getcwd()):
             for file in files:
                 if file == 'huntarr.ico':
@@ -92,6 +101,25 @@ if not os.environ.get('CI'):  # Only use icon in local builds, not in CI
                 break
 else:
     print("Running in CI environment, skipping icon to avoid format issues")
+
+# Copy the icon to assets directory if it was found elsewhere
+if icon_path and not os.path.exists(os.path.join(os.getcwd(), 'assets', 'huntarr.ico')):
+    # Make sure assets directory exists
+    assets_dir = os.path.join(os.getcwd(), 'assets')
+    if not os.path.exists(assets_dir):
+        os.makedirs(assets_dir)
+        print(f"Created assets directory: {assets_dir}")
+    
+    # Copy the icon
+    assets_icon = os.path.join(assets_dir, 'huntarr.ico')
+    try:
+        import shutil
+        shutil.copy2(icon_path, assets_icon)
+        print(f"Copied icon from {icon_path} to {assets_icon}")
+        # Use the copied icon
+        icon_path = assets_icon
+    except Exception as e:
+        print(f"Failed to copy icon: {e}")
 
 # Combine all datas
 all_datas = data_dirs + data_files
