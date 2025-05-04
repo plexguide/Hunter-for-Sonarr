@@ -585,9 +585,11 @@ let huntarrUI = {
         
         // Update the current log app text with proper capitalization
         let displayName = app.charAt(0).toUpperCase() + app.slice(1);
-        // Special handling for Whisparr V2
+        // Special handling for app display names
         if (app === 'whisparr') {
             displayName = 'Whisparr V2';
+        } else if (app === 'eros') {
+            displayName = 'Whisparr V3';
         }
         this.elements.currentLogApp.textContent = displayName;
         
@@ -615,6 +617,12 @@ let huntarrUI = {
         
         // Update the current history app text with proper capitalization
         let displayName = app.charAt(0).toUpperCase() + app.slice(1);
+        // Special handling for app display names
+        if (app === 'whisparr') {
+            displayName = 'Whisparr V2';
+        } else if (app === 'eros') {
+            displayName = 'Whisparr V3';
+        }
         this.elements.currentHistoryApp.textContent = displayName;
         
         // Close the dropdown
