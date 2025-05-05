@@ -549,6 +549,8 @@ const appsModule = {
         if (appType === "whisparr") {
             console.log("Saving Whisparr V2 settings");
             apiVersion = "V2";
+        } else if (appType === "eros") {
+            console.log("Saving Eros (Whisparr V3) settings");
         }
         
         let settings;

@@ -1160,6 +1160,16 @@ const SettingsForms = {
                 settings.skip_future_releases = getInputValue('#whisparr_skip_future_releases', true);
                 settings.sleep_duration = getInputValue('#whisparr_sleep_duration', 900);
             }
+            else if (appType === 'eros') {
+                settings.search_mode = getInputValue('#eros_search_mode', 'movie');
+                settings.hunt_missing_items = getInputValue('#eros_hunt_missing_items', 1);
+                settings.hunt_upgrade_items = getInputValue('#eros_hunt_upgrade_items', 0);
+                settings.monitored_only = getInputValue('#eros_monitored_only', true);
+                settings.skip_future_releases = getInputValue('#eros_skip_future_releases', true);
+                settings.skip_series_refresh = getInputValue('#eros_skip_series_refresh', false);
+                settings.skip_scene_refresh = getInputValue('#eros_skip_scene_refresh', false);
+                settings.sleep_duration = getInputValue('#eros_sleep_duration', 900);
+            }
         }
         
         console.log('Collected settings for', appType, settings);
