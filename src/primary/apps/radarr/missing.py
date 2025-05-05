@@ -32,8 +32,14 @@ def process_missing_movies(
     Returns:
         True if any movies were processed, False otherwise.
     """
-    radarr_logger.info("Starting missing movies processing cycle for Radarr.")
     processed_any = False
+    
+    # Get instance name - check for instance_name first, fall back to legacy "name" key if needed
+    instance_name = app_settings.get("instance_name", app_settings.get("name", "Radarr Default"))
+    
+    # Log important settings
+    radarr_logger.info("=== Radarr Missing Movies Settings ===")
+    radarr_logger.info(f"Instance Name: {instance_name}")
     
     # Extract necessary settings
     api_url = app_settings.get("api_url", "").strip()
@@ -45,10 +51,25 @@ def process_missing_movies(
     hunt_missing_movies = app_settings.get("hunt_missing_movies", 0)
     command_wait_delay = get_advanced_setting("command_wait_delay", 5)
     command_wait_attempts = get_advanced_setting("command_wait_attempts", 12)
+    release_type = app_settings.get("release_type", "physical")
     
-    # Get instance name - check for instance_name first, fall back to legacy "name" key if needed
-    instance_name = app_settings.get("instance_name", app_settings.get("name", "Radarr Default"))
-
+    radarr_logger.info(f"Hunt Missing Movies: {hunt_missing_movies}")
+    radarr_logger.info(f"Monitored Only: {monitored_only}")
+    radarr_logger.info(f"Skip Future Releases: {skip_future_releases}")
+    radarr_logger.info(f"Skip Movie Refresh: {skip_movie_refresh}")
+    radarr_logger.info(f"Release Type for Future Status: {release_type}")
+    
+    release_type_field = 'physicalRelease'
+    if release_type == 'digital':
+        release_type_field = 'digitalRelease'
+    elif release_type == 'cinema':
+        release_type_field = 'inCinemas'
+        
+    radarr_logger.info(f"Using {release_type_field} date to determine future releases")
+    radarr_logger.info("=======================================")
+    
+    radarr_logger.info("Starting missing movies processing cycle for Radarr.")
+    
     if not api_url or not api_key:
         radarr_logger.error("API URL or Key not configured in settings. Cannot process missing movies.")
         return False
@@ -86,13 +107,14 @@ def process_missing_movies(
     if skip_future_releases:
         now = datetime.datetime.now(datetime.timezone.utc)
         original_count = len(missing_movies)
+        
         missing_movies = [
             movie for movie in missing_movies
-            if movie.get('physicalRelease') and datetime.datetime.fromisoformat(movie['physicalRelease'].replace('Z', '+00:00')) < now
+            if movie.get(release_type_field) and datetime.datetime.fromisoformat(movie[release_type_field].replace('Z', '+00:00')) < now
         ]
         skipped_count = original_count - len(missing_movies)
         if skipped_count > 0:
-            radarr_logger.info(f"Skipped {skipped_count} future movie releases based on physical release date.")
+            radarr_logger.info(f"Skipped {skipped_count} future movie releases based on {release_type} release date.")
 
     if not missing_movies:
         radarr_logger.info("No missing movies left to process after filtering future releases.")

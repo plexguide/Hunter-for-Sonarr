@@ -235,16 +235,20 @@ def app_specific_loop(app_type: str) -> None:
             hunt_upgrade_enabled = hunt_upgrade_value > 0
 
             # --- Queue Size Check --- # Moved inside loop
-            min_queue_size = app_settings.get("minimum_download_queue_size", -1)
-            if min_queue_size >= 0:
+            # Get maximum_download_queue_size from general settings (still using minimum_download_queue_size key for backward compatibility)
+            general_settings = settings_manager.load_settings('general')
+            max_queue_size = general_settings.get("minimum_download_queue_size", -1)
+            app_logger.info(f"Using maximum download queue size: {max_queue_size} from general settings")
+            
+            if max_queue_size >= 0:
                 try:
                     # Use instance details for queue check
                     current_queue_size = get_queue_size(api_url, api_key, api_timeout)
-                    if current_queue_size >= min_queue_size:
-                        app_logger.info(f"Download queue size ({current_queue_size}) meets or exceeds minimum ({min_queue_size}) for {instance_name}. Skipping cycle for this instance.")
+                    if current_queue_size >= max_queue_size:
+                        app_logger.info(f"Download queue size ({current_queue_size}) meets or exceeds maximum ({max_queue_size}) for {instance_name}. Skipping cycle for this instance.")
                         continue # Skip processing for this instance
                     else:
-                        app_logger.debug(f"Queue size ({current_queue_size}) is below minimum ({min_queue_size}). Proceeding.")
+                        app_logger.info(f"Queue size ({current_queue_size}) is below maximum ({max_queue_size}). Proceeding.")
                 except Exception as e:
                     app_logger.warning(f"Could not get download queue size for {instance_name}. Proceeding anyway. Error: {e}", exc_info=False) # Log less verbosely
             

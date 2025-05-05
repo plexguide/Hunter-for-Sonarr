@@ -258,6 +258,15 @@ const SettingsForms = {
                     </label>
                     <p class="setting-help">Skip searching for movies with future release dates</p>
                 </div>
+                <div class="setting-item" id="future_release_type_container" style="${settings.skip_future_releases !== false ? '' : 'display: none;'}">
+                    <label for="release_type">Release Type for Future Status:</label>
+                    <select id="release_type">
+                        <option value="digital" ${settings.release_type === 'digital' ? 'selected' : ''}>Digital Release</option>
+                        <option value="physical" ${settings.release_type === 'physical' || !settings.release_type ? 'selected' : ''}>Physical Release</option>
+                        <option value="cinema" ${settings.release_type === 'cinema' ? 'selected' : ''}>Cinema Release</option>
+                    </select>
+                    <p class="setting-help">Select which release date type to use when determining if a movie is considered a future release</p>
+                </div>
                 <div class="setting-item">
                     <label for="skip_movie_refresh">Skip Movie Refresh:</label>
                     <label class="toggle-switch">
@@ -268,9 +277,23 @@ const SettingsForms = {
                 </div>
             </div>
         `;
-
+        
         // Add event listeners for the instance management
         SettingsForms.setupInstanceManagement(container, 'radarr', settings.instances.length);
+        
+        // Set up event listeners for the skip_future_releases checkbox
+        const skipFutureCheckbox = container.querySelector('#skip_future_releases');
+        const releaseTypeContainer = container.querySelector('#future_release_type_container');
+        
+        if (skipFutureCheckbox) {
+            skipFutureCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    releaseTypeContainer.style.display = '';
+                } else {
+                    releaseTypeContainer.style.display = 'none';
+                }
+            });
+        }
     },
     
     // Generate Lidarr settings form
@@ -1127,6 +1150,7 @@ const SettingsForms = {
                 settings.skip_future_releases = getInputValue('#skip_future_releases', true);
                 settings.skip_movie_refresh = getInputValue('#skip_movie_refresh', false);
                 settings.sleep_duration = getInputValue('#radarr_sleep_duration', 900);
+                settings.release_type = getInputValue('#release_type', 'physical');
             } 
             else if (appType === 'lidarr') {
                 settings.hunt_missing_items = getInputValue('#lidarr_hunt_missing_items', 1);
@@ -1255,9 +1279,9 @@ const SettingsForms = {
                     <p class="setting-help">Maximum number of attempts to check command status</p>
                 </div>
                 <div class="setting-item">
-                    <label for="minimum_download_queue_size">Minimum Download Queue Size:</label>
+                    <label for="minimum_download_queue_size">Maximum Download Queue Size:</label>
                     <input type="number" id="minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size !== undefined ? settings.minimum_download_queue_size : -1}">
-                    <p class="setting-help">Minimum size of download queue before processing (-1 to disable)</p>
+                    <span class="help-text">If the current download queue for an app instance exceeds this value, downloads will be skipped until the queue reduces. Set to -1 to disable this limit. This setting applies per app instance.</span>
                 </div>
                 <div class="setting-item">
                     <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
