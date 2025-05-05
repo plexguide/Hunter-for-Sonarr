@@ -378,6 +378,12 @@
         border: 1px solid rgba(255, 193, 7, 0.3);
     }
     
+    .operation-status.upgrade {
+        background-color: rgba(0, 123, 255, 0.2);
+        color: #03a9f4;
+        border: 1px solid rgba(0, 123, 255, 0.3);
+    }
+    
     /* Empty state and loading styling */
     .empty-state-message, .loading-indicator {
         text-align: center;
@@ -471,6 +477,7 @@
                     const operationText = cell.textContent.trim();
                     const statusClass = operationText.toLowerCase() === 'success' ? 'success' : 
                                  operationText.toLowerCase() === 'missing' ? 'missing' : 
+                                 operationText.toLowerCase() === 'upgrade' ? 'upgrade' : 
                                  operationText.toLowerCase() === 'warning' ? 'warning' : 'error';
                     
                     cell.innerHTML = `<span class="operation-status ${statusClass}">${operationText}</span>`;
