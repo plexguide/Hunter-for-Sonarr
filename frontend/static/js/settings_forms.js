@@ -1184,6 +1184,14 @@ const SettingsForms = {
                 settings.skip_item_refresh = getInputValue('#eros_skip_item_refresh', false);
                 settings.sleep_duration = getInputValue('#eros_sleep_duration', 900);
             }
+            else if (appType === 'swaparr') {
+                settings.enabled = getInputValue('#swaparr_enabled', false);
+                settings.max_strikes = getInputValue('#swaparr_max_strikes', 3);
+                settings.max_download_time = getInputValue('#swaparr_max_download_time', '2h');
+                settings.ignore_above_size = getInputValue('#swaparr_ignore_above_size', '25GB');
+                settings.remove_from_client = getInputValue('#swaparr_remove_from_client', true);
+                settings.dry_run = getInputValue('#swaparr_dry_run', false);
+            }
         }
         
         console.log('Collected settings for', appType, settings);
