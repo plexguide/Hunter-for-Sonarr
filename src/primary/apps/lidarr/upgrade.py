@@ -6,13 +6,14 @@ Handles albums that do not meet the configured quality cutoff.
 
 import time
 import random
-from typing import Dict, Any, Optional, Callable, List, Union # Added List and Union
+from typing import Dict, Any, Optional, Callable, List, Union, Set # Added List, Union and Set
 from src.primary.utils.logger import get_logger
 from src.primary.apps.lidarr import api as lidarr_api
-from src.primary.stats_manager import increment_stat
-from src.primary.stateful_manager import is_processed, add_processed_id
-from src.primary.state import check_state_reset  # Add the missing import
 from src.primary.utils.history_utils import log_processed_media
+from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.stats_manager import increment_stat
+from src.primary.settings_manager import load_settings
+from src.primary.state import check_state_reset  # Add the missing import
 
 # Get logger for the app
 lidarr_logger = get_logger(__name__) # Use __name__ for correct logger hierarchy
@@ -40,10 +41,16 @@ def process_cutoff_upgrades(
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
 
+    # Load general settings to get centralized timeout
+    general_settings = load_settings('general')
+    
+    # Use the centralized timeout from general settings with app-specific as fallback
+    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 120))
+    lidarr_logger.info(f"Using API timeout of {api_timeout} seconds for Lidarr upgrades")
+
     # General Lidarr settings (also from app_settings)
     hunt_upgrade_items = app_settings.get("hunt_upgrade_items", 0)
     monitored_only = app_settings.get("monitored_only", True)
-    api_timeout = app_settings.get("api_timeout", 120)
     command_wait_delay = app_settings.get("command_wait_delay", 1)
     command_wait_attempts = app_settings.get("command_wait_attempts", 600)
 

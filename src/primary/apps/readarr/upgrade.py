@@ -14,6 +14,7 @@ from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.state import check_state_reset
+from src.primary.settings_manager import load_settings # Import load_settings function
 
 # Get logger for the app
 readarr_logger = get_logger("readarr")
@@ -39,11 +40,20 @@ def process_cutoff_upgrades(
     
     processed_any = False
     
+    # Load general settings to get centralized timeout
+    general_settings = load_settings('general')
+    
+    # Get the API credentials for this instance
+    api_url = app_settings.get('api_url', '')
+    api_key = app_settings.get('api_key', '')
+    
+    # Use the centralized timeout from general settings with app-specific as fallback
+    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 90))  # Use centralized timeout
+    
+    readarr_logger.info(f"Using API timeout of {api_timeout} seconds for Readarr")
+    
     # Extract necessary settings
-    api_url = app_settings.get("api_url")
-    api_key = app_settings.get("api_key")
     instance_name = app_settings.get("instance_name", "Readarr Default")
-    api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_author_refresh = app_settings.get("skip_author_refresh", False)
     hunt_upgrade_books = app_settings.get("hunt_upgrade_books", 0)

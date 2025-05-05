@@ -8,14 +8,14 @@ Supports both v2 (legacy) and v3 (Eros) API versions
 
 import time
 import random
-import datetime
-from typing import List, Dict, Any, Set, Callable
+from typing import Dict, Any, List, Callable
+from datetime import datetime, timedelta
 from src.primary.utils.logger import get_logger
 from src.primary.apps.whisparr import api as whisparr_api
-from src.primary.stats_manager import increment_stat
+from src.primary.settings_manager import load_settings, get_advanced_setting
 from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.stats_manager import increment_stat
 from src.primary.utils.history_utils import log_processed_media
-from src.primary.settings_manager import get_advanced_setting
 from src.primary.state import check_state_reset
 
 # Get logger for the app
@@ -45,7 +45,14 @@ def process_cutoff_upgrades(
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
     instance_name = app_settings.get("instance_name", "Whisparr Default")
-    api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
+    
+    # Load general settings to get centralized timeout
+    general_settings = load_settings('general')
+    
+    # Use the centralized timeout from general settings with app-specific as fallback
+    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 90))
+    whisparr_logger.info(f"Using API timeout of {api_timeout} seconds for Whisparr upgrades")
+    
     monitored_only = app_settings.get("monitored_only", True)
     skip_item_refresh = app_settings.get("skip_item_refresh", False)
     
