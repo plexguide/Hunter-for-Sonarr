@@ -6,7 +6,8 @@ Based on the functionality provided by https://github.com/ThijmenGThN/swaparr
 import os
 import json
 import time
-from datetime import datetime
+import hashlib
+from datetime import datetime, timedelta
 import requests
 
 from src.primary.utils.logger import get_logger
@@ -52,6 +53,38 @@ def save_strike_data(app_name, strike_data):
             json.dump(strike_data, f, indent=2)
     except IOError as e:
         swaparr_logger.error(f"Error saving strike data for {app_name}: {str(e)}")
+
+def load_removed_items(app_name):
+    """Load list of permanently removed items"""
+    app_state_dir = ensure_state_directory(app_name)
+    removed_file = os.path.join(app_state_dir, "removed_items.json")
+    
+    if not os.path.exists(removed_file):
+        return {}
+    
+    try:
+        with open(removed_file, 'r') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        swaparr_logger.error(f"Error loading removed items for {app_name}: {str(e)}")
+        return {}
+
+def save_removed_items(app_name, removed_items):
+    """Save list of permanently removed items"""
+    app_state_dir = ensure_state_directory(app_name)
+    removed_file = os.path.join(app_state_dir, "removed_items.json")
+    
+    try:
+        with open(removed_file, 'w') as f:
+            json.dump(removed_items, f, indent=2)
+    except IOError as e:
+        swaparr_logger.error(f"Error saving removed items for {app_name}: {str(e)}")
+
+def generate_item_hash(item):
+    """Generate a unique hash for an item based on its name and size.
+    This helps track items across restarts even if their queue ID changes."""
+    hash_input = f"{item['name']}_{item['size']}"
+    return hashlib.md5(hash_input.encode('utf-8')).hexdigest()
 
 def parse_time_string_to_seconds(time_string):
     """Parse a time string like '2h', '30m', '1d' to seconds"""
@@ -107,7 +140,7 @@ def parse_size_string_to_bytes(size_string):
         return 25 * 1024 * 1024 * 1024
 
 def get_queue_items(app_name, api_url, api_key, api_timeout=120):
-    """Get download queue items from a Starr app API"""
+    """Get download queue items from a Starr app API with pagination support"""
     api_version_map = {
         "radarr": "v3",
         "sonarr": "v3",
@@ -117,29 +150,58 @@ def get_queue_items(app_name, api_url, api_key, api_timeout=120):
     }
     
     api_version = api_version_map.get(app_name, "v3")
-    queue_url = f"{api_url.rstrip('/')}/api/{api_version}/queue"
-    headers = {'X-Api-Key': api_key}
     
-    try:
-        response = requests.get(queue_url, headers=headers, timeout=api_timeout)
-        response.raise_for_status()
-        queue_data = response.json()
+    # Initialize an empty list to store all records
+    all_records = []
+    
+    # Start with page 1
+    page = 1
+    page_size = 100  # Request a large page size to reduce API calls
+    
+    while True:
+        # Add pagination parameters
+        queue_url = f"{api_url.rstrip('/')}/api/{api_version}/queue?page={page}&pageSize={page_size}"
+        headers = {'X-Api-Key': api_key}
         
-        # Normalize the response based on app type
-        if app_name in ["radarr", "whisparr"]:
-            return parse_queue_items(queue_data["records"], "movie", app_name)
-        elif app_name == "sonarr":
-            return parse_queue_items(queue_data["records"], "series", app_name)
-        elif app_name == "lidarr":
-            return parse_queue_items(queue_data["records"], "album", app_name)
-        elif app_name == "readarr":
-            return parse_queue_items(queue_data["records"], "book", app_name)
-        else:
-            swaparr_logger.error(f"Unknown app type: {app_name}")
-            return []
+        try:
+            response = requests.get(queue_url, headers=headers, timeout=api_timeout)
+            response.raise_for_status()
+            queue_data = response.json()
             
-    except requests.exceptions.RequestException as e:
-        swaparr_logger.error(f"Error fetching queue for {app_name}: {str(e)}")
+            if api_version in ["v3"]:  # Radarr, Sonarr, Whisparr use v3
+                records = queue_data.get("records", [])
+                total_records = queue_data.get("totalRecords", 0)
+            else:  # Lidarr, Readarr use v1
+                records = queue_data
+                total_records = len(records)
+            
+            # Add this page's records to our collection
+            all_records.extend(records)
+            
+            # If we've fetched all records or there are no more, break the loop
+            if len(all_records) >= total_records or len(records) == 0:
+                break
+            
+            # Otherwise, move to the next page
+            page += 1
+            
+        except requests.exceptions.RequestException as e:
+            swaparr_logger.error(f"Error fetching queue for {app_name} (page {page}): {str(e)}")
+            break
+    
+    swaparr_logger.info(f"Fetched {len(all_records)} queue items for {app_name}")
+    
+    # Normalize the response based on app type
+    if app_name in ["radarr", "whisparr"]:
+        return parse_queue_items(all_records, "movie", app_name)
+    elif app_name == "sonarr":
+        return parse_queue_items(all_records, "series", app_name)
+    elif app_name == "lidarr":
+        return parse_queue_items(all_records, "album", app_name)
+    elif app_name == "readarr":
+        return parse_queue_items(all_records, "book", app_name)
+    else:
+        swaparr_logger.error(f"Unknown app type: {app_name}")
         return []
 
 def parse_queue_items(records, item_type, app_name):
@@ -237,6 +299,17 @@ def process_stalled_downloads(app_name, app_settings, swaparr_settings=None):
     # Load existing strike data
     strike_data = load_strike_data(app_name)
     
+    # Load list of permanently removed items
+    removed_items = load_removed_items(app_name)
+    
+    # Clean up expired removed items (older than 30 days)
+    now = datetime.utcnow()
+    for item_hash in list(removed_items.keys()):
+        removed_date = datetime.fromisoformat(removed_items[item_hash]["removed_time"].replace('Z', '+00:00'))
+        if (now - removed_date) > timedelta(days=30):
+            swaparr_logger.debug(f"Removing expired entry from removed items list: {removed_items[item_hash]['name']}")
+            del removed_items[item_hash]
+    
     # Get current queue items
     queue_items = get_queue_items(app_name, api_url, api_key, api_timeout)
     
@@ -257,6 +330,27 @@ def process_stalled_downloads(app_name, app_settings, swaparr_settings=None):
     for item in queue_items:
         item_id = str(item["id"])
         item_state = "Normal"
+        item_hash = generate_item_hash(item)
+        
+        # Check if this item has been previously removed
+        if item_hash in removed_items:
+            last_removed_date = datetime.fromisoformat(removed_items[item_hash]["removed_time"].replace('Z', '+00:00'))
+            days_since_removal = (now - last_removed_date).days
+            
+            # Re-remove it automatically if it's been less than 7 days since last removal
+            if days_since_removal < 7:
+                swaparr_logger.warning(f"Found previously removed download that reappeared: {item['name']} (removed {days_since_removal} days ago)")
+                
+                if not dry_run:
+                    if delete_download(app_name, api_url, api_key, item["id"], remove_from_client, api_timeout):
+                        swaparr_logger.info(f"Re-removed previously removed download: {item['name']}")
+                        # Update the removal time
+                        removed_items[item_hash]["removed_time"] = datetime.utcnow().isoformat()
+                else:
+                    swaparr_logger.info(f"DRY RUN: Would have re-removed previously removed download: {item['name']}")
+                
+                item_state = "Re-removed" if not dry_run else "Would Re-remove (Dry Run)"
+                continue
         
         # Skip large files if configured
         if item["size"] >= ignore_above_size:
@@ -264,26 +358,53 @@ def process_stalled_downloads(app_name, app_settings, swaparr_settings=None):
             item_state = "Ignored (Size)"
             continue
         
-        # Skip queued or delayed items
-        if item["status"] in ["queued", "delay"]:
-            swaparr_logger.debug(f"Ignoring {item['status']} download: {item['name']}")
-            item_state = f"Ignored ({item['status'].capitalize()})"
+        # Handle delayed items - we'll skip these
+        if item["status"] == "delay":
+            swaparr_logger.debug(f"Ignoring delayed download: {item['name']}")
+            item_state = "Ignored (Delayed)"
             continue
+        
+        # Special handling for "queued" status
+        # We only skip truly queued items, not those with metadata issues
+        metadata_issue = "metadata" in item["status"].lower() or "metadata" in item["error_message"].lower()
+        
+        if item["status"] == "queued" and not metadata_issue:
+            # For regular queued items, check how long they've been in strike data
+            if item_id in strike_data and "first_strike_time" in strike_data[item_id]:
+                first_strike = datetime.fromisoformat(strike_data[item_id]["first_strike_time"].replace('Z', '+00:00'))
+                if (now - first_strike) < timedelta(hours=1):
+                    # Skip if it's been less than 1 hour since first seeing it
+                    swaparr_logger.debug(f"Ignoring recently queued download: {item['name']}")
+                    item_state = "Ignored (Recently Queued)"
+                    continue
+            else:
+                # Initialize with first strike time for queued items
+                if item_id not in strike_data:
+                    strike_data[item_id] = {
+                        "strikes": 0,
+                        "name": item["name"],
+                        "first_strike_time": datetime.utcnow().isoformat(),
+                        "last_strike_time": None
+                    }
+                swaparr_logger.debug(f"Monitoring new queued download: {item['name']}")
+                item_state = "Monitoring (Queued)"
+                continue
         
         # Initialize strike count if not already in strike data
         if item_id not in strike_data:
             strike_data[item_id] = {
                 "strikes": 0,
                 "name": item["name"],
-                "first_strike_time": None,
+                "first_strike_time": datetime.utcnow().isoformat(),
                 "last_strike_time": None
             }
         
         # Check if download should be striked
         should_strike = False
+        strike_reason = ""
         
-        # Strike if metadata, eta too long, or no progress (eta = 0 and not queued)
-        if "metadata" in item["status"].lower() or "metadata" in item["error_message"].lower():
+        # Strike if metadata issue, eta too long, or no progress (eta = 0 and not queued)
+        if metadata_issue:
             should_strike = True
             strike_reason = "Metadata"
         elif item["eta"] >= max_download_time:
@@ -311,9 +432,18 @@ def process_stalled_downloads(app_name, app_settings, swaparr_settings=None):
                 if not dry_run:
                     if delete_download(app_name, api_url, api_key, item["id"], remove_from_client, api_timeout):
                         swaparr_logger.info(f"Successfully removed {item['name']} after {max_strikes} strikes")
+                        
                         # Keep the item in strike data for reference but mark as removed
                         strike_data[item_id]["removed"] = True
                         strike_data[item_id]["removed_time"] = datetime.utcnow().isoformat()
+                        
+                        # Add to removed items list for persistent tracking
+                        removed_items[item_hash] = {
+                            "name": item["name"],
+                            "size": item["size"],
+                            "removed_time": datetime.utcnow().isoformat(),
+                            "reason": strike_reason
+                        }
                 else:
                     swaparr_logger.info(f"DRY RUN: Would have removed {item['name']} after {max_strikes} strikes")
                 
@@ -325,5 +455,8 @@ def process_stalled_downloads(app_name, app_settings, swaparr_settings=None):
     
     # Save updated strike data
     save_strike_data(app_name, strike_data)
+    
+    # Save updated removed items list
+    save_removed_items(app_name, removed_items)
     
     swaparr_logger.info(f"Finished processing stalled downloads for {app_name} instance: {app_settings.get('instance_name', 'Unknown')}")
