@@ -12,10 +12,10 @@ import datetime
 from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.eros import api as eros_api
-from src.primary.stats_manager import increment_stat
+from src.primary.settings_manager import load_settings, get_advanced_setting
 from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.stats_manager import increment_stat
 from src.primary.utils.history_utils import log_processed_media
-from src.primary.settings_manager import get_advanced_setting
 from src.primary.state import check_state_reset
 
 # Get logger for the app
@@ -45,7 +45,14 @@ def process_missing_items(
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
     instance_name = app_settings.get("instance_name", "Eros Default")
-    api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
+    
+    # Load general settings to get centralized timeout
+    general_settings = load_settings('general')
+    
+    # Use the centralized timeout from general settings with app-specific as fallback
+    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 90))
+    eros_logger.info(f"Using API timeout of {api_timeout} seconds for Eros")
+    
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_item_refresh = app_settings.get("skip_item_refresh", False)
