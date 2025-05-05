@@ -322,7 +322,7 @@ def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int) -> 
         The command ID if the refresh was triggered successfully, None otherwise
     """
     try:
-        eros_logger.debug(f"Refreshing movie with ID {item_id}")
+        eros_logger.info(f"Explicitly refreshing movie with ID {item_id} via API call")
         
         # In Whisparr V3, we use RefreshMovie command directly with the movieId
         payload = {
@@ -338,14 +338,14 @@ def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int) -> 
         
         if response and "id" in response:
             command_id = response["id"]
-            eros_logger.debug(f"Refresh movie command triggered with ID {command_id}")
+            eros_logger.info(f"Refresh movie command triggered with ID {command_id} for movie {item_id}")
             return command_id
         else:
-            eros_logger.error("Failed to trigger refresh command - no command ID returned")
+            eros_logger.error(f"Failed to trigger refresh command for movie {item_id} - no command ID returned")
             return None
             
     except Exception as e:
-        eros_logger.error(f"Error refreshing movie: {str(e)}")
+        eros_logger.error(f"Error refreshing movie {item_id}: {str(e)}")
         return None
 
 def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int]) -> int:
@@ -370,22 +370,51 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
 
         # Try several possible command formats, as the API might be in flux
         possible_commands = [
-            # Format 1: MoviesSearch with integer IDs (Radarr-like)
+            # Format 1: MoviesSearch with integer IDs (Radarr-like) and no auto-refresh
+            {
+                "name": "MoviesSearch",
+                "movieIds": item_ids,
+                "updateScheduledTask": False,
+                "runRefreshAfterSearch": False,
+                "sendUpdatesToClient": False
+            },
+            # Format 2: MovieSearch with integer IDs and no auto-refresh
+            {
+                "name": "MovieSearch",
+                "movieIds": item_ids,
+                "updateScheduledTask": False,
+                "runRefreshAfterSearch": False,
+                "sendUpdatesToClient": False
+            },
+            # Format 3: MoviesSearch with string IDs and no auto-refresh
+            {
+                "name": "MoviesSearch",
+                "movieIds": [str(id) for id in item_ids],
+                "updateScheduledTask": False,
+                "runRefreshAfterSearch": False,
+                "sendUpdatesToClient": False
+            },
+            # Format 4: MovieSearch with string IDs and no auto-refresh
+            {
+                "name": "MovieSearch",
+                "movieIds": [str(id) for id in item_ids],
+                "updateScheduledTask": False,
+                "runRefreshAfterSearch": False,
+                "sendUpdatesToClient": False
+            },
+            # Fallback to original formats if the above don't work
             {
                 "name": "MoviesSearch",
                 "movieIds": item_ids
             },
-            # Format 2: MovieSearch with integer IDs
             {
                 "name": "MovieSearch",
                 "movieIds": item_ids
             },
-            # Format 3: MoviesSearch with string IDs
             {
                 "name": "MoviesSearch",
                 "movieIds": [str(id) for id in item_ids]
             },
-            # Format 4: MovieSearch with string IDs
             {
                 "name": "MovieSearch",
                 "movieIds": [str(id) for id in item_ids]
