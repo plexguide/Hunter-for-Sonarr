@@ -89,6 +89,7 @@
                     <div class="app-stats-card sonarr">
                         <div class="status-container">
                             <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                            <button class="cycle-reset-button" data-app="sonarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -112,6 +113,7 @@
                     <div class="app-stats-card radarr">
                         <div class="status-container">
                             <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                            <button class="cycle-reset-button" data-app="radarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -135,6 +137,7 @@
                     <div class="app-stats-card lidarr">
                         <div class="status-container">
                             <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                            <button class="cycle-reset-button" data-app="lidarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -158,6 +161,7 @@
                     <div class="app-stats-card readarr">
                         <div class="status-container">
                             <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                            <button class="cycle-reset-button" data-app="readarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -181,6 +185,7 @@
                     <div class="app-stats-card whisparr">
                         <div class="status-container">
                             <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                            <button class="cycle-reset-button" data-app="whisparr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -204,6 +209,7 @@
                     <div class="app-stats-card eros">
                         <div class="status-container">
                             <span id="erosHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                            <button class="cycle-reset-button" data-app="eros"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -386,6 +392,9 @@
         margin-bottom: 15px;
         display: flex;
         justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 5px;
     }
     
     .status-badge {
@@ -896,5 +905,38 @@
     
     .support-link.github .icon-container {
         color: #ffc107;
+    }
+    
+    /* Cycle reset button styles */
+    .cycle-reset-button {
+        margin-left: 10px;
+        padding: 4px 8px;
+        background-color: rgba(52, 152, 219, 0.15);
+        color: #3498db;
+        border: 1px solid rgba(52, 152, 219, 0.3);
+        border-radius: 4px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .cycle-reset-button:hover {
+        background-color: rgba(52, 152, 219, 0.25);
+    }
+    
+    .cycle-reset-button:active {
+        background-color: rgba(52, 152, 219, 0.35);
+    }
+    
+    .cycle-reset-button i {
+        font-size: 0.75rem;
+    }
+    
+    .cycle-reset-button.resetting {
+        opacity: 0.7;
+        pointer-events: none;
     }
 </style>

@@ -32,6 +32,35 @@ let huntarrUI = {
     
     // Initialize the application
     init: function() {
+        // Cache DOM elements
+        this.cacheElements();
+        
+        // Set up event listeners
+        this.setupEventListeners();
+        
+        // Setup logo handling to prevent flashing during navigation
+        this.setupLogoHandling();
+        
+        // Connect to logs if we're on logs page
+        if (window.location.hash === '#logs') {
+            this.connectToLogs();
+        }
+        
+        // Remove setupStatefulResetButton references that are causing errors
+        // this.setupStatefulResetButton();
+        
+        // Initial navigation based on hash
+        this.handleHashNavigation(window.location.hash);
+        
+        // Register unsaved changes handler
+        this.registerGlobalUnsavedChangesHandler();
+        
+        // Load username
+        this.loadUsername();
+        
+        // When all elements are ready, call the method
+        // this.setupStatefulResetButton();
+        
         // Apply any preloaded theme immediately to avoid flashing
         const prefersDarkMode = localStorage.getItem('huntarr-dark-mode') === 'true';
         if (prefersDarkMode) {
@@ -48,14 +77,16 @@ let huntarrUI = {
         // Ensure logo is visible immediately
         this.logoUrl = localStorage.getItem('huntarr-logo-url') || this.logoUrl;
         
-        this.cacheElements();
-        this.setupEventListeners();
-        this.loadUsername();
-        this.checkLocalAccessBypassStatus(); // Add this line
-        this.checkAppConnections();
+        // Load media stats
         this.loadMediaStats(); // Load media statistics
+        
+        // Load current version
         this.loadCurrentVersion(); // Load current version
+        
+        // Load latest version from GitHub
         this.loadLatestVersion(); // Load latest version from GitHub
+        
+        // Load GitHub star count
         this.loadGitHubStarCount(); // Load GitHub star count
         
         // Preload stateful management info so it's ready when needed
@@ -72,12 +103,9 @@ let huntarrUI = {
         // Add global event handler for unsaved changes
         this.registerGlobalUnsavedChangesHandler();
         
-        // Set up the stateful reset button (call immediately and also after a delay)
-        this.setupStatefulResetButton();
-        
         // Also call it again after a delay in case settings are loaded dynamically
         setTimeout(() => {
-            this.setupStatefulResetButton();
+            // this.setupStatefulResetButton();
         }, 1000);
     },
     
@@ -151,8 +179,22 @@ let huntarrUI = {
     // Set up event listeners
     setupEventListeners: function() {
         // Navigation
-        this.elements.navItems.forEach(item => {
-            item.addEventListener('click', (e) => this.handleNavigation(e));
+        document.addEventListener('click', (e) => {
+            // Navigation link handling
+            if (e.target.matches('.nav-link') || e.target.closest('.nav-link')) {
+                const link = e.target.matches('.nav-link') ? e.target : e.target.closest('.nav-link');
+                e.preventDefault();
+                this.handleNavigation(e);
+            }
+            
+            // Handle cycle reset button clicks
+            if (e.target.matches('.cycle-reset-button') || e.target.closest('.cycle-reset-button')) {
+                const button = e.target.matches('.cycle-reset-button') ? e.target : e.target.closest('.cycle-reset-button');
+                const app = button.dataset.app;
+                if (app) {
+                    this.resetAppCycle(app, button);
+                }
+            }
         });
         
         // Log auto-scroll setting
@@ -2475,6 +2517,48 @@ let huntarrUI = {
         const currentJSON = JSON.stringify(currentSettings);
         
         return originalJSON !== currentJSON;
+    },
+    
+    // Add resetAppCycle function to the huntarrUI object
+    resetAppCycle: function(app, button) {
+        // Show spinner and disable button
+        const originalButtonText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+        button.classList.add('resetting');
+        
+        // Make API call to reset the app cycle
+        fetch(`/api/cycle/reset/${app}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Show success notification
+                this.showNotification(`${app.charAt(0).toUpperCase() + app.slice(1)} cycle reset triggered successfully`, 'success');
+            } else {
+                // Show error notification
+                this.showNotification(`Error: ${data.error || 'Failed to reset cycle'}`, 'error');
+            }
+        })
+        .catch(error => {
+            // Show error notification
+            this.showNotification(`Error: ${error.message}`, 'error');
+        })
+        .finally(() => {
+            // Restore button state after 2 seconds for visual feedback
+            setTimeout(() => {
+                button.innerHTML = originalButtonText;
+                button.classList.remove('resetting');
+            }, 2000);
+        });
     },
 };
 

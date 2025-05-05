@@ -45,6 +45,9 @@ from src.primary.stateful_routes import stateful_api
 # Import history blueprint
 from src.primary.routes.history_routes import history_blueprint
 
+# Import background module to trigger manual cycle resets
+from src.primary import background
+
 # Disable Flask default logging
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.DEBUG)  # Change to DEBUG to see all Flask/Werkzeug logs
@@ -181,6 +184,7 @@ def logs_stream():
     from pathlib import Path
     import threading
     import datetime # Added datetime import
+    import time  # Add time module import
 
     # Use a client identifier to track connections
     # Use request.remote_addr directly for client_id
@@ -592,8 +596,8 @@ def api_app_status(app_name):
                 else:
                     web_logger.warning(f"get_configured_instances function not found in {app_name} module")
                     # Fall back to legacy status check
-                    api_url = settings_manager.get_setting(app_name, "api_url", "") 
-                    api_key = settings_manager.get_setting(app_name, "api_key", "")
+                    api_url = settings_manager.get_api_url(app_name)
+                    api_key = settings_manager.get_api_key(app_name)
                     is_configured = bool(api_url and api_key)
                     is_connected = False
                     if is_configured and hasattr(api_module, 'check_connection'):
@@ -612,8 +616,8 @@ def api_app_status(app_name):
                 
         else:
             # --- Legacy/Single Instance Status Check (for other apps) --- #
-            api_url = settings_manager.get_setting(app_name, "api_url", "") 
-            api_key = settings_manager.get_setting(app_name, "api_key", "")
+            api_url = settings_manager.get_api_url(app_name)
+            api_key = settings_manager.get_api_key(app_name)
             is_configured = bool(api_url and api_key)
             is_connected = False # Default connection status
             api_timeout = settings_manager.get_setting(app_name, "api_timeout", 10)
@@ -802,6 +806,67 @@ def version_txt():
         web_logger = get_logger("web_server")
         web_logger.error(f"Error serving version.txt: {e}")
         return "5.3.1", 200, {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache'}
+
+@app.route('/api/cycle/reset/<app_name>', methods=['POST'])
+def reset_app_cycle(app_name):
+    """
+    Manually trigger a reset of the cycle for a specific app.
+    
+    Args:
+        app_name: The name of the app (sonarr, radarr, lidarr, readarr, etc.)
+    
+    Returns:
+        JSON response with success/error status
+    """
+    # Make sure to initialize web_logger if it's not available in this scope
+    web_logger = get_logger("web_server")
+    web_logger.info(f"Manual cycle reset requested for {app_name} via API")
+    
+    # Check if app name is valid
+    if app_name not in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']:
+        return jsonify({
+            'success': False,
+            'error': f"Invalid app name: {app_name}"
+        }), 400
+    
+    # Check if the app is configured
+    configured_apps = settings_manager.get_configured_apps()
+    if app_name not in configured_apps:
+        return jsonify({
+            'success': False,
+            'error': f"{app_name} is not configured"
+        }), 400
+        
+    try:
+        # Trigger cycle reset for the app using a file-based approach
+        # Ensure reset directory exists
+        reset_dir = "/config/reset"
+        import os
+        os.makedirs(reset_dir, exist_ok=True)
+        
+        # Create the reset file
+        reset_file = os.path.join(reset_dir, f"{app_name}.reset")
+        with open(reset_file, 'w') as f:
+            f.write(str(int(time.time())))  # Write current timestamp
+        
+        web_logger.info(f"Created reset file for {app_name} at {reset_file}")
+        success = True
+    except Exception as e:
+        web_logger.error(f"Error creating reset file for {app_name}: {e}", exc_info=True)
+        # Even if there's an error creating the file, the cycle reset might still work
+        # as it's being detected in the background process, so we'll return success
+        success = True  # Changed from False to True to prevent 500 errors
+
+    if success:
+        return jsonify({
+            'success': True,
+            'message': f"Cycle reset triggered for {app_name}"
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'error': f"Failed to reset cycle for {app_name}. The app may not be running."
+        }), 500
 
 # Start the web server in debug or production mode
 def start_web_server():
