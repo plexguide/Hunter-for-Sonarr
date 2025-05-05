@@ -116,7 +116,7 @@ def process_missing_books(
         # Refresh author (optional)
         if not skip_author_refresh:
             readarr_logger.info(f"  - Refreshing author info...")
-            refresh_result = readarr_api.refresh_author(api_url, api_key, author_id, api_timeout) # Assuming this exists
+            refresh_result = readarr_api.refresh_author(author_id, api_url, api_key, api_timeout)
             time.sleep(5) # Basic wait
             if not refresh_result:
                  readarr_logger.warning(f"  - Failed to trigger author refresh. Continuing search anyway.")
