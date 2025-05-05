@@ -47,14 +47,69 @@ from src.primary.routes.history_routes import history_blueprint
 
 # Disable Flask default logging
 log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
+log.setLevel(logging.DEBUG)  # Change to DEBUG to see all Flask/Werkzeug logs
 
-# Configure template and static paths to use the frontend directory
-template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'templates'))
-static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'static'))
+# Configure template and static paths with proper PyInstaller support
+# Check if we're running from a PyInstaller bundle
+print("==== HUNTARR TEMPLATE DEBUG ====")
+print(f"__file__: {__file__}")
+print(f"sys.executable: {sys.executable}")
+print(f"os.getcwd(): {os.getcwd()}")
+print(f"sys.path: {sys.path}")
+print(f"Is frozen: {getattr(sys, 'frozen', False)}")
 
-# Create Flask app
+if getattr(sys, 'frozen', False):
+    # We're running from the bundled package
+    bundle_dir = os.path.dirname(sys.executable)
+    # Override the template and static directories
+    template_dir = os.path.join(bundle_dir, 'templates')
+    static_dir = os.path.join(bundle_dir, 'static')
+    print(f"PyInstaller mode - Using templates dir: {template_dir}")
+    print(f"PyInstaller mode - Using static dir: {static_dir}")
+    print(f"Template dir exists: {os.path.exists(template_dir)}")
+    if os.path.exists(template_dir):
+        print(f"Template dir contents: {os.listdir(template_dir)}")
+else:
+    # Normal development mode - use relative paths
+    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'templates'))
+    static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'static'))
+    print(f"Normal mode - Using templates dir: {template_dir}")
+    print(f"Normal mode - Using static dir: {static_dir}")
+    print(f"Template dir exists: {os.path.exists(template_dir)}")
+    if os.path.exists(template_dir):
+        print(f"Template dir contents: {os.listdir(template_dir)}")
+
+# Create Flask app with additional debug logging
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+print(f"Flask app created with template_folder: {app.template_folder}")
+print(f"Flask app created with static_folder: {app.static_folder}")
+
+# Add debug logging for template rendering
+def debug_template_rendering():
+    """Additional logging for Flask template rendering"""
+    app.jinja_env.auto_reload = True
+    orig_get_source = app.jinja_env.loader.get_source
+    
+    def get_source_wrapper(environment, template):
+        try:
+            result = orig_get_source(environment, template)
+            print(f"Template loaded successfully: {template}")
+            return result
+        except Exception as e:
+            print(f"Error loading template {template}: {e}")
+            print(f"Loader search paths: {environment.loader.searchpath}")
+            # Print all available templates
+            try:
+                all_templates = environment.loader.list_templates()
+                print(f"Available templates: {all_templates}")
+            except:
+                print("Could not list available templates")
+            raise
+    
+    app.jinja_env.loader.get_source = get_source_wrapper
+    
+debug_template_rendering()
+
 app.secret_key = os.environ.get('SECRET_KEY', 'dev_key_for_sessions')
 
 # Register blueprints
