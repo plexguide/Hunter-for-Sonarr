@@ -41,9 +41,23 @@
 </section>
 
 <style>
+    /* Adjust spacing in the apps section */
+    #appsSection {
+        padding: 20px;
+        padding-bottom: 0; /* Remove bottom padding from section */
+    }
+    
     /* Add bottom padding to the app panels to prevent content from being hidden */
     .app-apps-panel {
-        padding-bottom: 50px;
+        padding-bottom: 0; /* Remove bottom padding completely */
+        margin-bottom: 0; /* Ensure no margin */
+    }
+    
+    /* Remove any spacing from the status and container elements */
+    #appsStatus, 
+    #appsContainer {
+        margin-bottom: 0;
+        padding-bottom: 0;
     }
     
     /* Apps dropdown styling */
