@@ -45,7 +45,7 @@
     /* Modern Logs Section Styling */
     #logsSection {
         padding: 20px;
-        padding-bottom: 0;
+        padding-bottom: 60px; /* Extra padding to account for the footer */
     }
     
     .section-header {
@@ -92,19 +92,20 @@
     .log-dropdown-content {
         display: none;
         position: absolute;
-        background: linear-gradient(135deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+        top: 100%;
+        left: 0;
         min-width: 160px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-        border-radius: 8px;
-        border: 1px solid rgba(90, 109, 137, 0.2);
         z-index: 100;
+        background: linear-gradient(135deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+        border-radius: 8px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(90, 109, 137, 0.2);
+        overflow: hidden;
         margin-top: 5px;
         padding-top: 5px;
         padding-bottom: 5px;
         max-height: 300px; /* Increased max height */
         overflow-y: auto; /* Add scrolling if needed */
-        top: 100%;
-        left: 0;
     }
     
     /* Fix dropdown disappearing when moving to content */
