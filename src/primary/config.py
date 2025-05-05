@@ -135,7 +135,7 @@ def log_configuration(app_name: str):
     log.info(f"Sleep Duration: {sleep_duration} seconds")
     log.info(f"State Reset Interval: {state_reset_interval} hours")
     log.info(f"Monitored Only: {monitored_only}")
-    log.info(f"Minimum Download Queue Size: {min_queue_size}")
+    log.info(f"Maximum Download Queue Size: {settings.get('minimum_download_queue_size', -1)}")
 
     # App-specific settings logging
     if app_name == "sonarr":
@@ -156,7 +156,7 @@ def log_configuration(app_name: str):
         log.info(f"Sleep Duration: {settings.get('sleep_duration', 900)} seconds")
         log.info(f"State Reset Interval: {state_reset_interval} hours")
         log.info(f"Monitored Only: {settings.get('monitored_only', True)}")
-        log.info(f"Minimum Download Queue Size: {settings.get('minimum_download_queue_size', -1)}")
+        log.info(f"Maximum Download Queue Size: {settings.get('minimum_download_queue_size', -1)}")
     elif app_name == "readarr":
         log.info(f"Hunt Missing Books: {settings.get('hunt_missing_books', 0)}")
         log.info(f"Hunt Upgrade Books: {settings.get('hunt_upgrade_books', 0)}")

@@ -1255,9 +1255,9 @@ const SettingsForms = {
                     <p class="setting-help">Maximum number of attempts to check command status</p>
                 </div>
                 <div class="setting-item">
-                    <label for="minimum_download_queue_size">Minimum Download Queue Size:</label>
+                    <label for="minimum_download_queue_size">Maximum Download Queue Size:</label>
                     <input type="number" id="minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size !== undefined ? settings.minimum_download_queue_size : -1}">
-                    <p class="setting-help">Minimum size of download queue before processing (-1 to disable)</p>
+                    <span class="help-text">If the current download queue for an app instance exceeds this value, downloads will be skipped until the queue reduces. Set to -1 to disable this limit. This setting applies per app instance.</span>
                 </div>
                 <div class="setting-item">
                     <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
