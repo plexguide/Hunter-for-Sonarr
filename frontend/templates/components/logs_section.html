@@ -338,13 +338,25 @@
         logAppSelector.addEventListener('change', function() {
             const selectedApp = this.value;
             
-            // Filter logs based on selected app
-            // Implementation depends on how logs are currently filtered
-            if (typeof filterLogsByApp === 'function') {
-                filterLogsByApp(selectedApp);
+            // Connect to the existing huntarrUI module
+            if (typeof huntarrUI !== 'undefined') {
+                // First disconnect all existing event sources
+                if (typeof huntarrUI.disconnectAllEventSources === 'function') {
+                    huntarrUI.disconnectAllEventSources();
+                }
+                
+                // Update the current log app in huntarrUI
+                huntarrUI.currentLogApp = selectedApp;
+                
+                // Use the existing module's functionality to connect to logs
+                if (typeof huntarrUI.connectEventSource === 'function') {
+                    huntarrUI.connectEventSource(selectedApp);
+                } else if (typeof huntarrUI.connectToLogs === 'function') {
+                    huntarrUI.connectToLogs();
+                }
             } else {
-                // Basic implementation if the filterLogsByApp function doesn't exist
-                // This would filter log entries that have a data-app attribute matching the selected app
+                // Basic implementation if huntarrUI isn't available
+                // Filter log entries that have a data-app attribute matching the selected app
                 const logEntries = document.querySelectorAll('.log-entry');
                 
                 logEntries.forEach(entry => {
@@ -357,5 +369,36 @@
                 });
             }
         });
+        
+        // On page load, ensure the correct log content is loaded for the default selection
+        if (typeof huntarrUI !== 'undefined') {
+            setTimeout(function() {
+                try {
+                    // Add a global function for the original module to call
+                    window.updateLogAppSelectorValue = function(app) {
+                        if (logAppSelector) {
+                            logAppSelector.value = app;
+                        }
+                    };
+                    
+                    // Initialize with the current selected value
+                    const initialApp = logAppSelector.value;
+                    if (initialApp && huntarrUI.currentLogApp !== initialApp) {
+                        huntarrUI.currentLogApp = initialApp;
+                        
+                        // Connect to logs with the selected app
+                        if (window.location.hash === '#logs') {
+                            if (typeof huntarrUI.connectEventSource === 'function') {
+                                huntarrUI.connectEventSource(initialApp);
+                            } else if (typeof huntarrUI.connectToLogs === 'function') {
+                                huntarrUI.connectToLogs();
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error connecting new logs dropdown to existing module:', e);
+                }
+            }, 100);
+        }
     });
 </script>

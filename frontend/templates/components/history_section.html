@@ -376,32 +376,29 @@
 </style>
 
 <script>
-    // Fixes for formatting the history items
     document.addEventListener('DOMContentLoaded', function() {
-        // Original history rendering functionality preserved
-        if (typeof window.renderHistoryData === 'function') {
-            const originalRender = window.renderHistoryData;
-            window.renderHistoryData = function(data) {
-                // Call the original render function
-                originalRender(data);
-                
-                // Apply any additional formatting or styling to the history items
-                // ...
-            };
-        }
-        
         // History app selector functionality
         const historyAppSelector = document.getElementById('historyAppSelector');
         
         historyAppSelector.addEventListener('change', function() {
             const selectedApp = this.value;
             
-            // Filter history based on selected app
-            // This depends on how history filtering is handled in the existing codebase
-            if (typeof filterHistoryByApp === 'function') {
-                filterHistoryByApp(selectedApp);
+            // Connect to the existing history.js module to properly filter history
+            if (typeof historyModule !== 'undefined') {
+                // Update the module's current app
+                historyModule.currentApp = selectedApp;
+                
+                // Use the existing module's functionality to fetch history
+                historyModule.currentPage = 1; // Reset to first page when changing app
+                historyModule.fetchHistoryData();
+            } else if (typeof huntarrUI !== 'undefined') {
+                // Alternative: Use huntarrUI if it exists
+                huntarrUI.currentHistoryApp = selectedApp;
+                if (typeof huntarrUI.updateHistoryPlaceholder === 'function') {
+                    huntarrUI.updateHistoryPlaceholder(selectedApp);
+                }
             } else {
-                // Basic implementation
+                // Basic implementation if modules aren't available
                 const historyRows = document.querySelectorAll('#historyTableBody tr');
                 
                 historyRows.forEach(row => {
@@ -422,5 +419,28 @@
                 }
             }
         });
+        
+        // On page load, ensure the correct history content is loaded for the default selection
+        if (typeof historyModule !== 'undefined') {
+            setTimeout(function() {
+                try {
+                    // Add a global function for the original history.js to call
+                    window.updateHistoryAppSelectorValue = function(app) {
+                        if (historyAppSelector) {
+                            historyAppSelector.value = app;
+                        }
+                    };
+                    
+                    // Initialize with the current selected value
+                    const initialApp = historyAppSelector.value;
+                    if (initialApp && historyModule.currentApp !== initialApp) {
+                        historyModule.currentApp = initialApp;
+                        historyModule.fetchHistoryData();
+                    }
+                } catch (e) {
+                    console.error('Error connecting new history dropdown to existing module:', e);
+                }
+            }, 100);
+        }
     });
 </script>
