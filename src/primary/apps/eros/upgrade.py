@@ -45,7 +45,14 @@ def process_cutoff_upgrades(
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
     instance_name = app_settings.get("instance_name", "Eros Default")
-    api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
+    
+    # Load general settings to get centralized timeout
+    general_settings = eros_api.load_settings('general')
+    
+    # Use the centralized timeout from general settings with app-specific as fallback
+    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 90))
+    eros_logger.info(f"Using API timeout of {api_timeout} seconds for Eros upgrades")
+    
     monitored_only = app_settings.get("monitored_only", True)
     skip_item_refresh = app_settings.get("skip_item_refresh", False)
     search_mode = app_settings.get("search_mode", "movie")  # Default to movie mode if not specified

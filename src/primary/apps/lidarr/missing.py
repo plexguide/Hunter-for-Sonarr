@@ -42,7 +42,13 @@ def process_missing_albums(
     instance_name = app_settings.get("instance_name", "Default")
     api_url = app_settings.get("api_url", "").strip()
     api_key = app_settings.get("api_key", "").strip()
-    api_timeout = app_settings.get("api_timeout", 90)
+    
+    # Load general settings to get centralized timeout
+    general_settings = lidarr_api.load_settings('general')
+    
+    # Use the centralized timeout from general settings with app-specific as fallback
+    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 90))
+    lidarr_logger.info(f"Using API timeout of {api_timeout} seconds for Lidarr")
     
     # Extract settings
     monitored_only = app_settings.get("monitored_only", True)

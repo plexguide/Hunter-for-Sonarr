@@ -45,7 +45,14 @@ def process_missing_items(
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
     instance_name = app_settings.get("instance_name", "Whisparr Default")
-    api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
+    
+    # Load general settings to get centralized timeout
+    general_settings = whisparr_api.load_settings('general')
+    
+    # Use the centralized timeout from general settings with app-specific as fallback
+    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 90))
+    whisparr_logger.info(f"Using API timeout of {api_timeout} seconds for Whisparr")
+    
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_item_refresh = app_settings.get("skip_item_refresh", False)
