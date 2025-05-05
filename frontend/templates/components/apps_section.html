@@ -1,18 +1,22 @@
 <section id="appsSection" class="content-section">
     <div class="section-header">
-        <div class="log-dropdown">
-            <button class="log-dropdown-btn">
-                <span id="current-apps-app">Sonarr</span>
-                <i class="fas fa-chevron-down"></i>
-            </button>
-            <div class="log-dropdown-content">
-                <a href="#" class="log-option active" data-app="sonarr">Sonarr</a>
-                <a href="#" class="log-option" data-app="radarr">Radarr</a>
-                <a href="#" class="log-option" data-app="lidarr">Lidarr</a>
-                <a href="#" class="log-option" data-app="readarr">Readarr</a>
-                <a href="#" class="log-option" data-app="whisparr">Whisparr V2</a>
-                <a href="#" class="log-option" data-app="eros">Whisparr V3</a>
-                <a href="#" class="log-option" data-app="swaparr">Swaparr</a>
+        <div class="apps-dropdown-container">
+            <div class="apps-dropdown-wrapper">
+                <div class="apps-dropdown">
+                    <button class="apps-dropdown-btn">
+                        <span id="current-apps-app">Sonarr</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="apps-dropdown-content">
+                        <a href="#" class="apps-option active" data-app="sonarr">Sonarr</a>
+                        <a href="#" class="apps-option" data-app="radarr">Radarr</a>
+                        <a href="#" class="apps-option" data-app="lidarr">Lidarr</a>
+                        <a href="#" class="apps-option" data-app="readarr">Readarr</a>
+                        <a href="#" class="apps-option" data-app="whisparr">Whisparr V2</a>
+                        <a href="#" class="apps-option" data-app="eros">Whisparr V3</a>
+                        <a href="#" class="apps-option" data-app="swaparr">Swaparr</a>
+                    </div>
+                </div>
             </div>
         </div>
         <button id="saveAppsButton" class="save-button" disabled>
@@ -37,8 +41,119 @@
 </section>
 
 <style>
+    /* Adjust spacing in the apps section */
+    #appsSection {
+        padding: 20px;
+        padding-bottom: 0; /* Remove bottom padding from section */
+    }
+    
     /* Add bottom padding to the app panels to prevent content from being hidden */
     .app-apps-panel {
-        padding-bottom: 50px;
+        padding-bottom: 0; /* Remove bottom padding completely */
+        margin-bottom: 0; /* Ensure no margin */
+    }
+    
+    /* Remove any spacing from the status and container elements */
+    #appsStatus, 
+    #appsContainer {
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    /* Apps dropdown styling */
+    .apps-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .apps-dropdown-btn {
+        background: linear-gradient(135deg, rgba(28, 36, 54, 0.9), rgba(24, 32, 48, 0.8));
+        color: white;
+        padding: 8px 15px;
+        border: 1px solid rgba(90, 109, 137, 0.3);
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+        min-width: 120px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .apps-dropdown-btn:hover {
+        background: linear-gradient(135deg, rgba(38, 46, 64, 0.9), rgba(34, 42, 58, 0.8));
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .apps-dropdown-btn i {
+        margin-left: auto;
+        transition: transform 0.3s ease;
+    }
+    
+    .apps-dropdown-content {
+        display: none;
+        position: absolute;
+        background: linear-gradient(135deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+        min-width: 160px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        border-radius: 8px;
+        border: 1px solid rgba(90, 109, 137, 0.2);
+        z-index: 100;
+        margin-top: 5px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        /* Use both top and bottom positioning */
+        top: 100%;
+        left: 0;
+    }
+    
+    /* Fix dropdown disappearing when moving to content */
+    .apps-dropdown-wrapper {
+        position: relative;
+        padding-bottom: 5px; /* Create space to safely move to dropdown */
+    }
+    
+    .apps-dropdown-wrapper:after {
+        content: '';
+        position: absolute;
+        height: 10px; /* Invisible bridge between button and content */
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 99;
+    }
+    
+    .apps-dropdown-wrapper:hover .apps-dropdown-content,
+    .apps-dropdown-content:hover {
+        display: block;
+    }
+    
+    .apps-dropdown-wrapper:hover .apps-dropdown-btn i {
+        transform: rotate(180deg);
+    }
+    
+    .apps-option {
+        color: white;
+        padding: 10px 15px;
+        text-decoration: none;
+        display: block;
+        transition: all 0.2s ease;
+        text-align: left;
+        border-bottom: 1px solid rgba(90, 109, 137, 0.1);
+    }
+    
+    .apps-option:last-child {
+        border-bottom: none;
+    }
+    
+    .apps-option:hover {
+        background: rgba(65, 105, 225, 0.2);
+    }
+    
+    .apps-option.active {
+        background: rgba(65, 105, 225, 0.3);
+        font-weight: 500;
     }
 </style>
