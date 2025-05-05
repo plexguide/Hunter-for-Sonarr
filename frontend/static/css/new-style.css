@@ -1566,7 +1566,7 @@ input:checked + .slider:before {
 }
 
 .operation-upgrade {
-    background-color: #2a9d8f;
+    background-color: #1e40af; /* Changed from #2a9d8f to a more vibrant blue */
     color: white;
     padding: 3px 8px;
     border-radius: 4px;
