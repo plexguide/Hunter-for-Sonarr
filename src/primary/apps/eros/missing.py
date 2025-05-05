@@ -56,6 +56,7 @@ def process_missing_items(
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_item_refresh = app_settings.get("skip_item_refresh", False)
+    eros_logger.info(f"Skip item refresh setting: {skip_item_refresh}")
     search_mode = app_settings.get("search_mode", "movie")  # Default to movie mode if not specified
     
     eros_logger.info(f"Using search mode: {search_mode} for missing items")

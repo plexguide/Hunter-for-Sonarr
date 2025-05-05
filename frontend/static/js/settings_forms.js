@@ -802,20 +802,12 @@ const SettingsForms = {
                     <p class="setting-help">Skip searching for scenes with future release dates</p>
                 </div>
                 <div class="setting-item">
-                    <label for="eros_skip_series_refresh">Skip Series Refresh:</label>
+                    <label for="eros_skip_item_refresh">Skip Movie/Scene Refresh:</label>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="eros_skip_series_refresh" name="skip_series_refresh" ${settings.skip_series_refresh === true ? 'checked' : ''}>
+                        <input type="checkbox" id="eros_skip_item_refresh" name="skip_item_refresh" ${settings.skip_item_refresh === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
-                    <p class="setting-help">Skip refreshing series metadata before searching</p>
-                </div>
-                <div class="setting-item">
-                    <label for="eros_skip_scene_refresh">Skip Scene Refresh:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="eros_skip_scene_refresh" name="skip_scene_refresh" ${settings.skip_scene_refresh === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Skip refreshing scene info before searching</p>
+                    <p class="setting-help">Skip refreshing movie metadata before searching (strongly recommended to enable this for Whisparr V3)</p>
                 </div>
             </div>
         `;
@@ -835,7 +827,6 @@ const SettingsForms = {
         // Add data-app-type attribute to container
         container.setAttribute('data-app-type', 'swaparr');
         
-        // Create the HTML for the Swaparr settings form
         container.innerHTML = `
             <div class="settings-group">
                 <h3>Swaparr (Beta) - Only For Torrent Users</h3>
@@ -1166,8 +1157,7 @@ const SettingsForms = {
                 settings.hunt_upgrade_items = getInputValue('#eros_hunt_upgrade_items', 0);
                 settings.monitored_only = getInputValue('#eros_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#eros_skip_future_releases', true);
-                settings.skip_series_refresh = getInputValue('#eros_skip_series_refresh', false);
-                settings.skip_scene_refresh = getInputValue('#eros_skip_scene_refresh', false);
+                settings.skip_item_refresh = getInputValue('#eros_skip_item_refresh', false);
                 settings.sleep_duration = getInputValue('#eros_sleep_duration', 900);
             }
         }
