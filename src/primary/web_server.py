@@ -45,6 +45,9 @@ from src.primary.stateful_routes import stateful_api
 # Import history blueprint
 from src.primary.routes.history_routes import history_blueprint
 
+# Import background module to trigger manual cycle resets
+from src.primary import background
+
 # Disable Flask default logging
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.DEBUG)  # Change to DEBUG to see all Flask/Werkzeug logs
@@ -802,6 +805,50 @@ def version_txt():
         web_logger = get_logger("web_server")
         web_logger.error(f"Error serving version.txt: {e}")
         return "5.3.1", 200, {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache'}
+
+@app.route('/api/cycle/reset/<app_name>', methods=['POST'])
+def reset_app_cycle(app_name):
+    """
+    Manually trigger a reset of the cycle for a specific app.
+    
+    Args:
+        app_name: The name of the app (sonarr, radarr, lidarr, readarr, etc.)
+    
+    Returns:
+        JSON response with success/error status
+    """
+    # Make sure to initialize web_logger if it's not available in this scope
+    web_logger = get_logger("web_server")
+    web_logger.info(f"Manual cycle reset requested for {app_name} via API")
+    
+    # Check if app name is valid
+    if app_name not in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']:
+        return jsonify({
+            'success': False,
+            'error': f"Invalid app name: {app_name}"
+        }), 400
+    
+    # Check if the app is configured
+    configured_apps = settings_manager.get_configured_apps()
+    if app_name not in configured_apps:
+        return jsonify({
+            'success': False,
+            'error': f"{app_name} is not configured"
+        }), 400
+        
+    # Trigger cycle reset for the app
+    success = background.reset_app_cycle(app_name)
+    
+    if success:
+        return jsonify({
+            'success': True,
+            'message': f"Cycle reset triggered for {app_name}"
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'error': f"Failed to reset cycle for {app_name}. The app may not be running."
+        }), 500
 
 # Start the web server in debug or production mode
 def start_web_server():

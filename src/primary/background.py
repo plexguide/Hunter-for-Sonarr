@@ -30,6 +30,8 @@ from src.primary.state import check_state_reset, calculate_reset_time
 # Track active threads and stop flag
 app_threads: Dict[str, threading.Thread] = {}
 stop_event = threading.Event() # Use an event for clearer stop signaling
+# Add cycle reset events for each app
+cycle_reset_events: Dict[str, threading.Event] = {}
 
 # Removed old signal handler and restart_cycles logic
 # Settings changes are now handled by reloading settings within the loop
@@ -124,7 +126,23 @@ def app_specific_loop(app_type: str) -> None:
         app_logger.error(f"Failed to import modules or functions for {app_type}: {e}", exc_info=True)
         return # Exit thread if essential modules fail to load
 
+    # Create app-specific logger using provided function
+    app_logger = logging.getLogger(f"huntarr.{app_type}")
+    
+    # Create a reset event for this app if it doesn't exist
+    if app_type not in cycle_reset_events:
+        cycle_reset_events[app_type] = threading.Event()
+    
+    # Get the reset event for this app
+    reset_event = cycle_reset_events[app_type]
+
     while not stop_event.is_set():
+        # Check if a manual cycle reset has been requested
+        if reset_event.is_set():
+            app_logger.info(f"Manual cycle reset requested for {app_type}")
+            reset_event.clear()
+            # Continue to start a new cycle immediately
+
         # --- Load Settings for this Cycle --- #
         try:
             # Load all settings for this app for the current cycle
@@ -194,7 +212,7 @@ def app_specific_loop(app_type: str) -> None:
             continue
             
         # Process each instance dictionary returned by get_configured_instances
-        cycle_processed_anything = False
+        processed_any_items = False
         for instance_details in instances_to_process:
             if stop_event.is_set():
                 break
@@ -296,7 +314,7 @@ def app_specific_loop(app_type: str) -> None:
                         processed_missing = process_missing(app_settings=combined_settings, stop_check=stop_check_func)
                         
                     if processed_missing:
-                        cycle_processed_anything = True
+                        processed_any_items = True
                 except Exception as e:
                     app_logger.error(f"Error during missing processing for {instance_name}: {e}", exc_info=True)
 
@@ -331,7 +349,7 @@ def app_specific_loop(app_type: str) -> None:
                         processed_upgrades = process_upgrades(app_settings=combined_settings, stop_check=stop_check_func)
                     
                     if processed_upgrades:
-                        cycle_processed_anything = True
+                        processed_any_items = True
                 except Exception as e:
                     app_logger.error(f"Error during upgrade processing for {instance_name}: {e}", exc_info=True)
 
@@ -365,16 +383,66 @@ def app_specific_loop(app_type: str) -> None:
         calculate_reset_time(app_type) # Pass app_type here if needed by the function
 
         # Log cycle completion
-        if cycle_processed_anything:
+        if processed_any_items:
             app_logger.info(f"=== {app_type.upper()} cycle finished. Processed items across instances. ===")
         else:
             app_logger.info(f"=== {app_type.upper()} cycle finished. No items processed in any instance. ===")
-
-        # Sleep until the next cycle, checking stop_event periodically
-        app_logger.info(f"Sleeping for {sleep_duration} seconds before next cycle...")
-        stop_event.wait(sleep_duration) # Use wait() for interruptible sleep
-
+            
+        # Calculate sleep duration (use configured or default value)
+        sleep_seconds = app_settings.get("sleep_duration", 900)  # Default to 15 minutes
+            
+        # Sleep with periodic checks for reset event
+        app_logger.info(f"Sleeping for {sleep_seconds} seconds before next cycle...")
+            
+        # Use shorter sleep intervals and check for reset event
+        wait_interval = 5  # Check every 5 seconds
+        elapsed = 0
+            
+        while elapsed < sleep_seconds:
+            # Check if stop event is set
+            if stop_event.is_set():
+                break
+                    
+            # Check if reset event is set
+            if reset_event.is_set():
+                app_logger.info(f"Manual cycle reset triggered for {app_type}. Starting new cycle immediately.")
+                reset_event.clear()
+                break
+                    
+            # Sleep for a short interval
+            stop_event.wait(wait_interval)
+            elapsed += wait_interval
+                
+            # If we've slept for at least 30 seconds, update the logger message every 30 seconds
+            if elapsed > 0 and elapsed % 30 == 0:
+                app_logger.info(f"Still sleeping, {sleep_seconds - elapsed} seconds remaining before next cycle...")
+                
     app_logger.info(f"=== [{app_type.upper()}] Thread stopped ====")
+
+def reset_app_cycle(app_type: str) -> bool:
+    """
+    Trigger a manual reset of an app's cycle.
+    
+    Args:
+        app_type: The type of Arr application (sonarr, radarr, lidarr, readarr, etc.)
+        
+    Returns:
+        bool: True if the reset was triggered, False if the app is not running
+    """
+    logger.info(f"Manual cycle reset requested for {app_type}")
+    
+    # Always create a reset event for this app (even if the thread isn't running yet)
+    # This ensures the event will be picked up once the thread starts
+    if app_type not in cycle_reset_events:
+        cycle_reset_events[app_type] = threading.Event()
+    
+    # Set the reset event to trigger a cycle restart
+    cycle_reset_events[app_type].set()
+    logger.info(f"Cycle reset triggered for {app_type}")
+    
+    # Even if the thread isn't currently running, the reset will be picked up
+    # when it starts, so return success
+    return True
 
 def start_app_threads():
     """Start threads for all configured and enabled apps."""
