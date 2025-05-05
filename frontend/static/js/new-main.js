@@ -908,6 +908,7 @@ let huntarrUI = {
                 if (data.lidarr) this.populateSettingsForm('lidarr', data.lidarr);
                 if (data.readarr) this.populateSettingsForm('readarr', data.readarr);
                 if (data.whisparr) this.populateSettingsForm('whisparr', data.whisparr);
+                if (data.eros) this.populateSettingsForm('eros', data.eros);
                 if (data.swaparr) this.populateSettingsForm('swaparr', data.swaparr);
                 if (data.general) this.populateSettingsForm('general', data.general);
                 
