@@ -1,26 +1,18 @@
 <section id="logsSection" class="content-section">
     <div class="section-header">
-        <!-- Replace Log Tabs with Dropdown -->
-        <div class="log-dropdown-container">
-            <div class="log-dropdown-wrapper">
-                <div class="log-dropdown">
-                    <button class="log-dropdown-btn">
-                        <span id="current-log-app">All</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="log-dropdown-content">
-                        <a href="#" class="log-option active" data-app="all">All</a>
-                        <a href="#" class="log-option" data-app="sonarr">Sonarr</a>
-                        <a href="#" class="log-option" data-app="radarr">Radarr</a>
-                        <a href="#" class="log-option" data-app="lidarr">Lidarr</a>
-                        <a href="#" class="log-option" data-app="readarr">Readarr</a>
-                        <a href="#" class="log-option" data-app="whisparr">Whisparr V2</a>
-                        <a href="#" class="log-option" data-app="eros">Whisparr V3</a>
-                        <a href="#" class="log-option" data-app="swaparr">Swaparr</a>
-                        <a href="#" class="log-option" data-app="system">System</a>
-                    </div>
-                </div>
-            </div>
+        <!-- Replace custom dropdown with standard HTML select -->
+        <div class="dropdown-container">
+            <select id="logAppSelector" class="standard-dropdown">
+                <option value="all" selected>All</option>
+                <option value="sonarr">Sonarr</option>
+                <option value="radarr">Radarr</option>
+                <option value="lidarr">Lidarr</option>
+                <option value="readarr">Readarr</option>
+                <option value="whisparr">Whisparr V2</option>
+                <option value="eros">Whisparr V3</option>
+                <option value="swaparr">Swaparr</option>
+                <option value="system">System</option>
+            </select>
         </div>
         <div class="log-controls">
             <div class="connection-status">
@@ -57,103 +49,25 @@
         gap: 15px;
     }
     
-    /* Dropdown styling */
-    .log-dropdown {
-        position: relative;
-        display: inline-block;
-    }
-    
-    .log-dropdown-btn {
-        background: linear-gradient(135deg, rgba(28, 36, 54, 0.9), rgba(24, 32, 48, 0.8));
+    /* Simple dropdown styling */
+    .standard-dropdown {
+        background-color: #2c3e50;
         color: white;
-        padding: 8px 15px;
-        border: 1px solid rgba(90, 109, 137, 0.3);
-        border-radius: 8px;
+        padding: 8px 12px;
+        border: 1px solid #34495e;
+        border-radius: 5px;
+        min-width: 150px;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: 500;
-        min-width: 120px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
     }
     
-    .log-dropdown-btn:hover {
-        background: linear-gradient(135deg, rgba(38, 46, 64, 0.9), rgba(34, 42, 58, 0.8));
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    .standard-dropdown:focus {
+        outline: none;
+        border-color: #3498db;
     }
     
-    .log-dropdown-btn i {
-        margin-left: auto;
-        transition: transform 0.3s ease;
-    }
-    
-    .log-dropdown-content {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        min-width: 160px;
-        z-index: 100;
-        background: linear-gradient(135deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
-        border-radius: 8px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-        border: 1px solid rgba(90, 109, 137, 0.2);
-        overflow: hidden;
-        margin-top: 5px;
-        padding-top: 5px;
-        padding-bottom: 5px;
-        max-height: 300px; /* Increased max height */
-        overflow-y: auto; /* Add scrolling if needed */
-    }
-    
-    /* Fix dropdown disappearing when moving to content */
-    .log-dropdown-wrapper {
-        position: relative;
-        padding-bottom: 5px; /* Create space to safely move to dropdown */
-    }
-    
-    .log-dropdown-wrapper:after {
-        content: '';
-        position: absolute;
-        height: 10px; /* Invisible bridge between button and content */
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 99;
-    }
-    
-    .log-dropdown-wrapper:hover .log-dropdown-content,
-    .log-dropdown-content:hover {
-        display: block;
-    }
-    
-    .log-dropdown-wrapper:hover .log-dropdown-btn i {
-        transform: rotate(180deg);
-    }
-    
-    .log-option {
-        color: white;
-        padding: 10px 15px;
-        text-decoration: none;
-        display: block;
-        transition: all 0.2s ease;
-        text-align: left;
-        border-bottom: 1px solid rgba(90, 109, 137, 0.1);
-    }
-    
-    .log-option:last-child {
-        border-bottom: none;
-    }
-    
-    .log-option:hover {
-        background: rgba(65, 105, 225, 0.2);
-    }
-    
-    .log-option.active {
-        background: rgba(65, 105, 225, 0.3);
-        font-weight: 500;
+    /* Dropdown container */
+    .dropdown-container {
+        display: inline-block;
     }
     
     /* Controls styling */
@@ -385,7 +299,7 @@
             align-items: flex-start;
         }
         
-        .log-dropdown-container, .log-controls {
+        .dropdown-container, .log-controls {
             width: 100%;
         }
         
@@ -415,3 +329,33 @@
         }
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Log app selector functionality
+        const logAppSelector = document.getElementById('logAppSelector');
+        
+        logAppSelector.addEventListener('change', function() {
+            const selectedApp = this.value;
+            
+            // Filter logs based on selected app
+            // Implementation depends on how logs are currently filtered
+            if (typeof filterLogsByApp === 'function') {
+                filterLogsByApp(selectedApp);
+            } else {
+                // Basic implementation if the filterLogsByApp function doesn't exist
+                // This would filter log entries that have a data-app attribute matching the selected app
+                const logEntries = document.querySelectorAll('.log-entry');
+                
+                logEntries.forEach(entry => {
+                    const appType = entry.getAttribute('data-app');
+                    if (selectedApp === 'all' || appType === selectedApp) {
+                        entry.style.display = 'block';
+                    } else {
+                        entry.style.display = 'none';
+                    }
+                });
+            }
+        });
+    });
+</script>

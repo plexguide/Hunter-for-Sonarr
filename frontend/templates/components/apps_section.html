@@ -1,19 +1,15 @@
 <section id="appsSection" class="content-section">
     <div class="section-header">
-        <div class="log-dropdown">
-            <button class="log-dropdown-btn">
-                <span id="current-apps-app">Sonarr</span>
-                <i class="fas fa-chevron-down"></i>
-            </button>
-            <div class="log-dropdown-content">
-                <a href="#" class="log-option active" data-app="sonarr">Sonarr</a>
-                <a href="#" class="log-option" data-app="radarr">Radarr</a>
-                <a href="#" class="log-option" data-app="lidarr">Lidarr</a>
-                <a href="#" class="log-option" data-app="readarr">Readarr</a>
-                <a href="#" class="log-option" data-app="whisparr">Whisparr V2</a>
-                <a href="#" class="log-option" data-app="eros">Whisparr V3</a>
-                <a href="#" class="log-option" data-app="swaparr">Swaparr</a>
-            </div>
+        <div class="dropdown-container">
+            <select id="appSelector" class="standard-dropdown">
+                <option value="sonarr" selected>Sonarr</option>
+                <option value="radarr">Radarr</option>
+                <option value="lidarr">Lidarr</option>
+                <option value="readarr">Readarr</option>
+                <option value="whisparr">Whisparr V2</option>
+                <option value="eros">Whisparr V3</option>
+                <option value="swaparr">Swaparr</option>
+            </select>
         </div>
         <button id="saveAppsButton" class="save-button" disabled>
             <i class="fas fa-save"></i> Save
@@ -41,4 +37,82 @@
     .app-apps-panel {
         padding-bottom: 50px;
     }
+    
+    /* Simple dropdown styling */
+    .standard-dropdown {
+        background-color: #2c3e50;
+        color: white;
+        padding: 8px 12px;
+        border: 1px solid #34495e;
+        border-radius: 5px;
+        min-width: 150px;
+        cursor: pointer;
+    }
+    
+    .standard-dropdown:focus {
+        outline: none;
+        border-color: #3498db;
+    }
+    
+    /* Dropdown container */
+    .dropdown-container {
+        display: inline-block;
+    }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // App selector functionality
+        const appSelector = document.getElementById('appSelector');
+        const allAppPanels = document.querySelectorAll('.app-apps-panel');
+        
+        appSelector.addEventListener('change', function() {
+            const selectedApp = this.value;
+            
+            // Connect to the existing apps.js module to properly load app content
+            if (typeof appsModule !== 'undefined' && typeof appsModule.loadAppSettings === 'function') {
+                // Use the existing module's functionality to switch apps
+                appsModule.currentApp = selectedApp;
+                appsModule.showAppPanel(selectedApp);
+                appsModule.loadAppSettings(selectedApp);
+            } else {
+                // Fallback: Simple panel switching if module isn't available
+                allAppPanels.forEach(panel => {
+                    panel.style.display = 'none';
+                    panel.classList.remove('active');
+                });
+                
+                const activePanel = document.getElementById(selectedApp + 'Apps');
+                if (activePanel) {
+                    activePanel.style.display = 'block';
+                    activePanel.classList.add('active');
+                }
+            }
+        });
+        
+        // On page load, ensure the correct app content is loaded for the default selection
+        if (typeof appsModule !== 'undefined') {
+            // Update appsModule's cached DOM elements to use the new dropdown
+            setTimeout(function() {
+                try {
+                    // Add a global function for the original app.js to call
+                    window.updateAppSelectorValue = function(app) {
+                        if (appSelector) {
+                            appSelector.value = app;
+                        }
+                    };
+                    
+                    // Initialize with the current selected value
+                    const initialApp = appSelector.value;
+                    if (initialApp && appsModule.currentApp !== initialApp) {
+                        appsModule.currentApp = initialApp;
+                        appsModule.showAppPanel(initialApp);
+                        appsModule.loadAppSettings(initialApp);
+                    }
+                } catch (e) {
+                    console.error('Error connecting new dropdown to existing module:', e);
+                }
+            }, 100);
+        }
+    });
+</script>
