@@ -376,7 +376,7 @@ def search_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int) 
     """Trigger a search for a specific artist in Lidarr."""
     payload = {
         "name": "ArtistSearch",
-        "artistId": artist_id
+        "artistIds": [artist_id]
     }
     response = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=payload)
 
