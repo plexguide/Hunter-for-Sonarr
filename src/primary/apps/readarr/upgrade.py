@@ -39,11 +39,21 @@ def process_cutoff_upgrades(
     
     processed_any = False
     
+    # Get the settings for the instance
+    app_settings = readarr_api.load_settings('readarr')
+    general_settings = readarr_api.load_settings('general')
+    
+    # Get the API credentials for this instance
+    api_url = app_settings.get('api_url', '')
+    api_key = app_settings.get('api_key', '')
+    
+    # Use the centralized timeout from general settings with app-specific as fallback
+    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 90))  # Use centralized timeout
+    
+    readarr_logger.info(f"Using API timeout of {api_timeout} seconds for Readarr")
+    
     # Extract necessary settings
-    api_url = app_settings.get("api_url")
-    api_key = app_settings.get("api_key")
     instance_name = app_settings.get("instance_name", "Readarr Default")
-    api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
     monitored_only = app_settings.get("monitored_only", True)
     skip_author_refresh = app_settings.get("skip_author_refresh", False)
     hunt_upgrade_books = app_settings.get("hunt_upgrade_books", 0)

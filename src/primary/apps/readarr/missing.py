@@ -37,11 +37,18 @@ def process_missing_books(
     # Reset state files if enough time has passed
     check_state_reset("readarr")
     
+    # Get the settings for the instance
+    general_settings = readarr_api.load_settings('general')
+    
     # Extract necessary settings
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")
     instance_name = app_settings.get("instance_name", "Readarr Default")
-    api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
+    
+    # Use the centralized timeout from general settings with app-specific as fallback
+    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 90))  # Use centralized timeout
+    readarr_logger.info(f"Using API timeout of {api_timeout} seconds for Readarr")
+    
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_author_refresh = app_settings.get("skip_author_refresh", False)
