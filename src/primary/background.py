@@ -12,7 +12,7 @@ import signal
 import importlib
 import logging
 import threading
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Callable, Union, Tuple
 
 # Define the version number
 __version__ = "1.0.0" # Consider updating this based on changes
@@ -30,11 +30,6 @@ from src.primary.state import check_state_reset, calculate_reset_time
 # Track active threads and stop flag
 app_threads: Dict[str, threading.Thread] = {}
 stop_event = threading.Event() # Use an event for clearer stop signaling
-# Add cycle reset events for each app
-cycle_reset_events: Dict[str, threading.Event] = {}
-
-# Removed old signal handler and restart_cycles logic
-# Settings changes are now handled by reloading settings within the loop
 
 def app_specific_loop(app_type: str) -> None:
     """
@@ -129,20 +124,7 @@ def app_specific_loop(app_type: str) -> None:
     # Create app-specific logger using provided function
     app_logger = logging.getLogger(f"huntarr.{app_type}")
     
-    # Create a reset event for this app if it doesn't exist
-    if app_type not in cycle_reset_events:
-        cycle_reset_events[app_type] = threading.Event()
-    
-    # Get the reset event for this app
-    reset_event = cycle_reset_events[app_type]
-
     while not stop_event.is_set():
-        # Check if a manual cycle reset has been requested
-        if reset_event.is_set():
-            app_logger.info(f"Manual cycle reset requested for {app_type}")
-            reset_event.clear()
-            # Continue to start a new cycle immediately
-
         # --- Load Settings for this Cycle --- #
         try:
             # Load all settings for this app for the current cycle
@@ -390,29 +372,46 @@ def app_specific_loop(app_type: str) -> None:
             
         # Calculate sleep duration (use configured or default value)
         sleep_seconds = app_settings.get("sleep_duration", 900)  # Default to 15 minutes
-            
-        # Sleep with periodic checks for reset event
+                
+        # Sleep with periodic checks for reset file
         app_logger.info(f"Sleeping for {sleep_seconds} seconds before next cycle...")
-            
-        # Use shorter sleep intervals and check for reset event
-        wait_interval = 5  # Check every 5 seconds
+                
+        # Use shorter sleep intervals and check for reset file
+        wait_interval = 1  # Check every second to be more responsive
         elapsed = 0
-            
+        reset_file_path = f"/config/reset/{app_type}.reset"
+                
         while elapsed < sleep_seconds:
             # Check if stop event is set
             if stop_event.is_set():
+                app_logger.info("Stop event detected during sleep. Breaking out of sleep cycle.")
                 break
-                    
-            # Check if reset event is set
-            if reset_event.is_set():
-                app_logger.info(f"Manual cycle reset triggered for {app_type}. Starting new cycle immediately.")
-                reset_event.clear()
-                break
-                    
+                        
+            # Check if reset file exists
+            if os.path.exists(reset_file_path):
+                try:
+                    # Read timestamp from the file (if it exists)
+                    with open(reset_file_path, 'r') as f:
+                        timestamp = f.read().strip()
+                    app_logger.info(f"!!! RESET FILE DETECTED !!! Manual cycle reset triggered for {app_type} (timestamp: {timestamp}). Starting new cycle immediately.")
+                        
+                    # Delete the reset file
+                    os.remove(reset_file_path)
+                    app_logger.info(f"Reset file removed for {app_type}. Starting new cycle now.")
+                    break
+                except Exception as e:
+                    app_logger.error(f"Error processing reset file for {app_type}: {e}", exc_info=True)
+                    # Try to remove the file even if reading failed
+                    try:
+                        os.remove(reset_file_path)
+                    except:
+                        pass
+                    break
+                        
             # Sleep for a short interval
             stop_event.wait(wait_interval)
             elapsed += wait_interval
-                
+                    
             # If we've slept for at least 30 seconds, update the logger message every 30 seconds
             if elapsed > 0 and elapsed % 30 == 0:
                 app_logger.info(f"Still sleeping, {sleep_seconds - elapsed} seconds remaining before next cycle...")
@@ -429,20 +428,18 @@ def reset_app_cycle(app_type: str) -> bool:
     Returns:
         bool: True if the reset was triggered, False if the app is not running
     """
-    logger.info(f"Manual cycle reset requested for {app_type}")
+    logger.info(f"Manual cycle reset requested for {app_type} - Creating reset file")
     
-    # Always create a reset event for this app (even if the thread isn't running yet)
-    # This ensures the event will be picked up once the thread starts
-    if app_type not in cycle_reset_events:
-        cycle_reset_events[app_type] = threading.Event()
-    
-    # Set the reset event to trigger a cycle restart
-    cycle_reset_events[app_type].set()
-    logger.info(f"Cycle reset triggered for {app_type}")
-    
-    # Even if the thread isn't currently running, the reset will be picked up
-    # when it starts, so return success
-    return True
+    # Create a reset file for this app
+    reset_file_path = f"/config/reset/{app_type}.reset"
+    try:
+        with open(reset_file_path, 'w') as f:
+            f.write(str(int(time.time())))
+        logger.info(f"Reset file created for {app_type}. Cycle will reset on next check.")
+        return True
+    except Exception as e:
+        logger.error(f"Error creating reset file for {app_type}: {e}", exc_info=True)
+        return False
 
 def start_app_threads():
     """Start threads for all configured and enabled apps."""
