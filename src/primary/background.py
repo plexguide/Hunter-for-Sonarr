@@ -26,10 +26,15 @@ from src.primary import config, settings_manager
 # Removed keys_manager import as settings_manager handles API details
 from src.primary.state import check_state_reset, calculate_reset_time
 # from src.primary.utils.app_utils import get_ip_address # No longer used here
+from src.primary.utils.hunting_manager import HuntingManager
 
 # Track active threads and stop flag
 app_threads: Dict[str, threading.Thread] = {}
 stop_event = threading.Event() # Use an event for clearer stop signaling
+
+# Add global for hunting manager thread
+hunting_manager_thread = None
+hunting_manager_stop_event = threading.Event()
 
 def app_specific_loop(app_type: str) -> None:
     """
@@ -510,9 +515,30 @@ def shutdown_threads():
             logger.warning(f"Thread {thread.name} did not stop gracefully.")
     logger.info("All app threads stopped.")
 
+def hunting_manager_loop():
+    logger = get_logger("hunting")
+    logger.info("[HUNTING] Hunting Manager background thread started.")
+    manager = HuntingManager("/config")
+    logger.info("[HUNTING] Hunting Manager is Ready to Hunt!")
+    while not hunting_manager_stop_event.is_set():
+        logger.info("[HUNTING] === Hunting Manager cycle started ===")
+        # TODO: Add actual hunting logic here
+        # Simulate work
+        hunting_manager_stop_event.wait(10)
+        logger.info("[HUNTING] === Hunting Manager cycle ended ===")
+        hunting_manager_stop_event.wait(20)
+    logger.info("[HUNTING] Hunting Manager background thread stopped.")
+
 def start_huntarr():
     """Main entry point for Huntarr background tasks."""
     logger.info(f"--- Starting Huntarr Background Tasks v{__version__} --- ")
+
+    # Start the Hunting Manager thread
+    global hunting_manager_thread
+    if hunting_manager_thread is None or not hunting_manager_thread.is_alive():
+        logger.info("[HUNTING] Starting Hunting Manager background thread...")
+        hunting_manager_thread = threading.Thread(target=hunting_manager_loop, name="HuntingManager-Loop", daemon=True)
+        hunting_manager_thread.start()
 
     # Perform initial settings migration if specified (e.g., via env var or arg)
     if os.environ.get("HUNTARR_RUN_MIGRATION", "false").lower() == "true":

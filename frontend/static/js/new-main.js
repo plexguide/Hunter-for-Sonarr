@@ -812,8 +812,14 @@ let huntarrUI = {
                         const loggerParts = match[3].split('.');
                         if (loggerParts.length > 1) {
                             const possibleApp = loggerParts[1].toLowerCase();
-                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'].includes(possibleApp)) {
+                            if ([
+                                'sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr', 'hunting'
+                            ].includes(possibleApp)) {
                                 logAppType = possibleApp;
+                            }
+                            // Special: If logger name contains 'hunting', treat as 'hunting'
+                            else if (loggerParts[1].toLowerCase().includes('hunting')) {
+                                logAppType = 'hunting';
                             }
                         }
                     }
@@ -828,7 +834,8 @@ let huntarrUI = {
                             'readarr': ['book', 'author', 'readarr'],
                             'whisparr': ['scene', 'adult', 'whisparr'],
                             'eros': ['eros', 'whisparr v3', 'whisparrv3'],
-                            'swaparr': ['added strike', 'max strikes reached', 'would have removed', 'strikes, removing download', 'processing stalled downloads', 'swaparr']
+                            'swaparr': ['added strike', 'max strikes reached', 'would have removed', 'strikes, removing download', 'processing stalled downloads', 'swaparr'],
+                            'hunting': ['hunting manager', '[hunting]', 'hunt status', 'hunt request', 'huntarr.hunting']
                         };
                         
                         // Check each app's patterns
