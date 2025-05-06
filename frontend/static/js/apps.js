@@ -143,10 +143,12 @@ const appsModule = {
     
     // Set up event listeners
     setupEventListeners: function() {
-        // App selection
-        if (this.elements.appsOptions) {
-            this.elements.appsOptions.forEach(option => {
-                option.addEventListener('click', e => this.handleAppsAppChange(e));
+        // App selection via <select>
+        const appsAppSelect = document.getElementById('appsAppSelect');
+        if (appsAppSelect) {
+            appsAppSelect.addEventListener('change', (e) => {
+                const app = e.target.value;
+                this.handleAppsAppChange(app);
             });
         }
         
@@ -442,51 +444,33 @@ const appsModule = {
     },
     
     // Handle app selection changes
-    handleAppsAppChange: function(e) {
-        e.preventDefault();
-        
-        const selectedApp = e.target.getAttribute('data-app');
+    handleAppsAppChange: function(selectedApp) {
+        // If called with an event, extract the value
+        if (selectedApp && selectedApp.target && typeof selectedApp.target.value === 'string') {
+            selectedApp = selectedApp.target.value;
+        }
         if (!selectedApp || selectedApp === this.currentApp) return;
-        
-        // Check if there are unsaved changes
+        // Check for unsaved changes
         if (this.settingsChanged) {
             const confirmSwitch = confirm('You have unsaved changes. Do you want to continue without saving?');
             if (!confirmSwitch) {
+                // Reset the select to the current app
+                const appsAppSelect = document.getElementById('appsAppSelect');
+                if (appsAppSelect) appsAppSelect.value = this.currentApp;
                 return;
             }
         }
-        
-        // Update UI
-        this.elements.appsOptions.forEach(option => {
-            option.classList.remove('active');
-        });
-        e.target.classList.add('active');
-        
-        // Update the current app text with proper capitalization
-        let displayName = selectedApp.charAt(0).toUpperCase() + selectedApp.slice(1);
-        // Special handling for app display names
-        if (selectedApp === 'whisparr') {
-            displayName = 'Whisparr V2';
-        } else if (selectedApp === 'eros') {
-            displayName = 'Whisparr V3';
-        }
-        this.elements.currentAppsApp.textContent = displayName;
-        
-        // Close the dropdown
-        this.elements.appsDropdownContent.classList.remove('show');
-        
+        // Update the select value
+        const appsAppSelect = document.getElementById('appsAppSelect');
+        if (appsAppSelect) appsAppSelect.value = selectedApp;
         // Show the selected app's panel
         this.showAppPanel(selectedApp);
-        
         this.currentApp = selectedApp;
-        console.log(`[Apps] Switched app to: ${this.currentApp}`);
-        
-        // Reset changed state
-        this.settingsChanged = false;
-        this.elements.saveAppsButton.disabled = true;
-        
         // Load the newly selected app's settings
         this.loadAppSettings(selectedApp);
+        // Reset changed state
+        this.settingsChanged = false;
+        if (this.elements.saveAppsButton) this.elements.saveAppsButton.disabled = true;
     },
     
     // Save apps settings - completely rewritten for reliability

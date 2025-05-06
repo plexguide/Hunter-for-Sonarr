@@ -2,23 +2,15 @@
     <div class="section-header">
         <!-- History App Dropdown -->
         <div class="history-dropdown-container">
-            <div class="history-dropdown-wrapper">
-                <div class="history-dropdown">
-                    <button class="history-dropdown-btn">
-                        <span id="current-history-app">All</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="history-dropdown-content">
-                        <a href="#" class="history-option active" data-app="all">All</a>
-                        <a href="#" class="history-option" data-app="sonarr">Sonarr</a>
-                        <a href="#" class="history-option" data-app="radarr">Radarr</a>
-                        <a href="#" class="history-option" data-app="lidarr">Lidarr</a>
-                        <a href="#" class="history-option" data-app="readarr">Readarr</a>
-                        <a href="#" class="history-option" data-app="whisparr">Whisparr</a>
-                        <a href="#" class="history-option" data-app="eros">Whisparr V3</a>
-                    </div>
-                </div>
-            </div>
+            <select id="historyAppSelect" class="styled-select">
+                <option value="all">All</option>
+                <option value="sonarr">Sonarr</option>
+                <option value="radarr">Radarr</option>
+                <option value="lidarr">Lidarr</option>
+                <option value="readarr">Readarr</option>
+                <option value="whisparr">Whisparr</option>
+                <option value="eros">Whisparr V3</option>
+            </select>
         </div>
         
         <!-- Search and Controls -->
