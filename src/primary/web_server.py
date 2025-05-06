@@ -148,6 +148,7 @@ KNOWN_LOG_FILES = {
     "eros": APP_LOG_FILES.get("eros"),  # Added Eros to known log files
     "swaparr": APP_LOG_FILES.get("swaparr"),  # Added Swaparr to known log files
     "system": MAIN_LOG_FILE, # Map 'system' to the main huntarr log
+    "hunting": MAIN_LOG_FILE, # Map 'hunting' to the main huntarr log too
 }
 # Filter out None values if an app log file doesn't exist
 KNOWN_LOG_FILES = {k: v for k, v in KNOWN_LOG_FILES.items() if v}
