@@ -200,6 +200,92 @@ def get_cutoff_unmet_movies(api_url: str, api_key: str, api_timeout: int, monito
     radarr_logger.debug(f"Found {len(unmet_movies)} cutoff unmet movies (monitored_only={monitored_only}).")
     return unmet_movies
 
+def get_movie_by_id(api_url: str, api_key: str, movie_id: Union[str, int], api_timeout: int) -> Optional[Dict]:
+    """
+    Get detailed information about a specific movie by its ID.
+
+    Args:
+        api_url: The base URL of the Radarr API
+        api_key: The API key for authentication
+        movie_id: The ID of the movie to retrieve
+        api_timeout: Timeout for the API request
+
+    Returns:
+        The movie object, or None if the request failed
+    """
+    endpoint = f"movie/{movie_id}"
+    radarr_logger.debug(f"Fetching movie details for ID: {movie_id}")
+    
+    try:
+        result = arr_request(api_url, api_key, api_timeout, endpoint)
+        if result:
+            radarr_logger.debug(f"Successfully retrieved details for movie ID {movie_id}: {result.get('title', 'Unknown')}")
+        else:
+            radarr_logger.error(f"Failed to retrieve details for movie ID: {movie_id}")
+        return result
+    except Exception as e:
+        radarr_logger.error(f"Error fetching movie details for ID {movie_id}: {e}")
+        return None
+
+def get_movie_file(api_url: str, api_key: str, file_id: Union[str, int], api_timeout: int) -> Optional[Dict]:
+    """
+    Get detailed information about a movie file by its ID.
+
+    Args:
+        api_url: The base URL of the Radarr API
+        api_key: The API key for authentication
+        file_id: The ID of the movie file to retrieve
+        api_timeout: Timeout for the API request
+
+    Returns:
+        The movie file object, or None if the request failed
+    """
+    if not file_id:
+        radarr_logger.error("No file ID provided for get_movie_file")
+        return None
+        
+    endpoint = f"moviefile/{file_id}"
+    radarr_logger.debug(f"Fetching movie file details for ID: {file_id}")
+    
+    try:
+        result = arr_request(api_url, api_key, api_timeout, endpoint)
+        if result:
+            radarr_logger.debug(f"Successfully retrieved movie file details for ID {file_id}")
+        else:
+            radarr_logger.error(f"Failed to retrieve movie file details for ID: {file_id}")
+        return result
+    except Exception as e:
+        radarr_logger.error(f"Error fetching movie file details for ID {file_id}: {e}")
+        return None
+
+def get_download_queue(api_url: str, api_key: str, api_timeout: int) -> Optional[List[Dict]]:
+    """
+    Get the current download queue.
+
+    Args:
+        api_url: The base URL of the Radarr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+
+    Returns:
+        A list of queue items, or None if the request failed
+    """
+    endpoint = "queue?pageSize=100"  # Get a large number of items
+    radarr_logger.debug("Fetching download queue")
+    
+    try:
+        result = arr_request(api_url, api_key, api_timeout, endpoint)
+        if result:
+            queue_items = result.get('records', [])
+            radarr_logger.debug(f"Successfully retrieved download queue: {len(queue_items)} items")
+            return queue_items
+        else:
+            radarr_logger.error("Failed to retrieve download queue")
+            return []
+    except Exception as e:
+        radarr_logger.error(f"Error fetching download queue: {e}")
+        return []
+
 def refresh_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int, 
                  command_wait_delay: int = 1, command_wait_attempts: int = 600) -> Optional[int]:
     """

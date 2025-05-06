@@ -14,6 +14,7 @@ import logging
 import threading
 from typing import Dict, List, Optional, Callable, Union, Tuple
 import json
+from datetime import datetime, timedelta
 
 # Define the version number
 __version__ = "1.0.0" # Consider updating this based on changes
@@ -542,18 +543,79 @@ def hunting_manager_loop():
         try:
             # Example: Scan Radarr processed movies and add to tracking if not already present
             from src.primary.apps.radarr import get_configured_instances
+            from src.primary.apps.radarr.api import get_movie_by_id, get_movie_file, get_download_queue
             from src.primary.utils.history_utils import log_processed_media
+            
             radarr_instances = get_configured_instances()
+            
             for instance in radarr_instances:
                 instance_name = instance.get("instance_name", "Default")
+                api_url = instance.get("api_url")
+                api_key = instance.get("api_key")
+                api_timeout = settings_manager.get_advanced_setting("api_timeout", 120)
+                
+                if not api_url or not api_key:
+                    logger.warning(f"[HUNTING] Missing API URL or key for instance: {instance_name}, skipping")
+                    continue
+                    
                 logger.info(f"[HUNTING] Checking processed IDs for instance: {instance_name}")
+                
                 # Load processed IDs from stateful_manager
                 from src.primary.stateful_manager import get_processed_ids
                 processed_ids = get_processed_ids("radarr", instance_name)
                 logger.info(f"[HUNTING] Found {len(processed_ids)} processed IDs for instance {instance_name}")
+                
+                # Get current download queue to check status
+                try:
+                    queue_items = get_download_queue(api_url, api_key, api_timeout)
+                    logger.info(f"[HUNTING] Current download queue has {len(queue_items)} items for instance {instance_name}")
+                except Exception as e:
+                    logger.error(f"[HUNTING] Error fetching download queue for {instance_name}: {e}")
+                    queue_items = []
+                
                 for movie_id in processed_ids:
                     logger.info(f"[HUNTING] Processing movie ID: {movie_id} for instance {instance_name}")
-                    # Check if already tracked
+                    
+                    # Get detailed movie information from Radarr API
+                    try:
+                        movie_data = get_movie_by_id(api_url, api_key, movie_id, api_timeout)
+                        logger.info(f"[HUNTING] Movie details - Title: {movie_data.get('title', 'Unknown')}, "
+                                   f"Status: {'Downloaded' if movie_data.get('hasFile', False) else 'Missing'}, "
+                                   f"Monitored: {movie_data.get('monitored', False)}, "
+                                   f"Year: {movie_data.get('year', 'Unknown')}")
+                        
+                        # Check if movie has a file
+                        if movie_data.get('hasFile', False):
+                            try:
+                                file_data = get_movie_file(api_url, api_key, movie_data.get('movieFile', {}).get('id'), api_timeout)
+                                quality = file_data.get('quality', {}).get('quality', {}).get('name', 'Unknown')
+                                size_mb = round(file_data.get('size', 0) / (1024 * 1024), 2)
+                                logger.info(f"[HUNTING] Movie file - Quality: {quality}, Size: {size_mb} MB, "
+                                           f"Path: {file_data.get('path', 'Unknown')}")
+                            except Exception as e:
+                                logger.warning(f"[HUNTING] Error fetching movie file details: {e}")
+                        
+                        # Check download queue status for this movie
+                        movie_in_queue = False
+                        for queue_item in queue_items:
+                            if queue_item.get('movieId') == int(movie_id):
+                                movie_in_queue = True
+                                progress = queue_item.get('progress', 0)
+                                status = queue_item.get('status', 'Unknown')
+                                eta = queue_item.get('estimatedCompletionTime', 'Unknown')
+                                protocol = queue_item.get('protocol', 'Unknown')
+                                logger.info(f"[HUNTING] Movie in download queue - Progress: {progress}%, "
+                                           f"Status: {status}, Protocol: {protocol}, ETA: {eta}")
+                                break
+                        
+                        if not movie_in_queue and not movie_data.get('hasFile', False):
+                            logger.info(f"[HUNTING] Movie not in download queue and not downloaded - "
+                                       f"May need to trigger a search")
+                    except Exception as e:
+                        logger.error(f"[HUNTING] Error fetching movie details for ID {movie_id}: {e}")
+                        continue
+                    
+                    # Check if already tracked in hunting system
                     instance_path = manager.get_instance_path("radarr", instance_name)
                     already_tracked = False
                     if os.path.exists(instance_path):
@@ -562,25 +624,68 @@ def hunting_manager_loop():
                         for item in tracking_data.get("tracking", {}).get("items", []):
                             if item["id"] == str(movie_id):
                                 already_tracked = True
-                                logger.info(f"[HUNTING] Movie ID {movie_id} is already tracked for instance {instance_name}")
+                                # Update status based on API data
+                                current_status = "Requested"
+                                debug_info = {}
+                                
+                                if movie_data.get('hasFile', False):
+                                    current_status = "Found"
+                                    quality = movie_data.get('movieFile', {}).get('quality', {}).get('quality', {}).get('name', 'Unknown')
+                                    debug_info = {
+                                        "quality": quality,
+                                        "size_mb": round(movie_data.get('movieFile', {}).get('size', 0) / (1024 * 1024), 2),
+                                        "timestamp": datetime.now().isoformat()
+                                    }
+                                elif movie_in_queue:
+                                    current_status = "Downloading"
+                                    for queue_item in queue_items:
+                                        if queue_item.get('movieId') == int(movie_id):
+                                            debug_info = {
+                                                "progress": queue_item.get('progress', 0),
+                                                "status": queue_item.get('status', 'Unknown'),
+                                                "protocol": queue_item.get('protocol', 'Unknown'),
+                                                "timestamp": datetime.now().isoformat()
+                                            }
+                                            break
+                                elif movie_data.get('monitored', False):
+                                    current_status = "Searching"
+                                    debug_info = {
+                                        "last_check": datetime.now().isoformat(),
+                                        "monitored": True
+                                    }
+                                
+                                if item["status"] != current_status:
+                                    logger.info(f"[HUNTING] Updating status for movie ID {movie_id} from '{item['status']}' to '{current_status}'")
+                                    manager.update_item_status("radarr", instance_name, str(movie_id), current_status, debug_info)
+                                else:
+                                    logger.info(f"[HUNTING] Status unchanged for movie ID {movie_id}: '{current_status}'")
+                                
+                                logger.info(f"[HUNTING] Movie ID {movie_id} is already tracked for instance {instance_name}, status: {current_status}")
                                 break
+                    
                     if not already_tracked:
-                        # Get movie name from history (fallback to ID)
-                        from src.primary.history_manager import get_history
-                        entries = get_history("radarr", instance_name)
-                        movie_name = str(movie_id)
-                        for entry in entries:
-                            if isinstance(entry, dict) and str(entry.get("id", "")) == str(movie_id):
-                                movie_name = entry.get("name", movie_name)
-                                break
+                        # Get movie name from API or fall back to history
+                        movie_name = movie_data.get('title', str(movie_id)) if movie_data else str(movie_id)
+                        
+                        if not movie_data:
+                            # Fallback to history if API call failed
+                            from src.primary.history_manager import get_history
+                            entries = get_history("radarr", instance_name)
+                            for entry in entries:
+                                if isinstance(entry, dict) and str(entry.get("id", "")) == str(movie_id):
+                                    movie_name = entry.get("name", movie_name)
+                                    break
+                        
+                        # Add to tracking
                         manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
                         logger.info(f"[HUNTING] Now tracking: {movie_name} (ID: {movie_id}) for instance {instance_name}")
-                    else:
-                        logger.info(f"[HUNTING] Skipped adding already tracked movie ID: {movie_id} for instance {instance_name}")
+            
         except Exception as e:
             logger.error(f"[HUNTING] Error during hunting logic: {e}", exc_info=True)
+        
         logger.info("[HUNTING] === Hunting Manager cycle ended ===")
-        hunting_manager_stop_event.wait(30)
+        hunting_manager_stop_event.wait(30)  # Check every 30 seconds
+    
     logger.info("[HUNTING] Hunting Manager background thread stopped.")
 
 def start_huntarr():
