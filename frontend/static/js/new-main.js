@@ -415,6 +415,23 @@ let huntarrUI = {
         // Initial setup based on hash or default to home
         const initialHash = window.location.hash || '#home';
         this.handleHashNavigation(initialHash);
+
+        // LOGS: Listen for change on #logAppSelect
+        const logAppSelect = document.getElementById('logAppSelect');
+        if (logAppSelect) {
+            logAppSelect.addEventListener('change', (e) => {
+                const app = e.target.value;
+                this.handleLogOptionChange(app);
+            });
+        }
+        // HISTORY: Listen for change on #historyAppSelect
+        const historyAppSelect = document.getElementById('historyAppSelect');
+        if (historyAppSelect) {
+            historyAppSelect.addEventListener('change', (e) => {
+                const app = e.target.value;
+                this.handleHistoryOptionChange(app);
+            });
+        }
     },
     
     // Setup logo handling to prevent flashing during navigation
@@ -652,66 +669,45 @@ let huntarrUI = {
     },
     
     // Log option dropdown handling
-    handleLogOptionChange: function(e) {
-        e.preventDefault(); // Prevent default anchor behavior
-        
-        const app = e.target.getAttribute('data-app');
-        if (!app || app === this.currentLogApp) return; // Do nothing if same tab clicked
-        
-        // Update active option
-        this.elements.logOptions.forEach(option => {
-            option.classList.remove('active');
-        });
-        e.target.classList.add('active');
-        
+    handleLogOptionChange: function(app) {
+        if (app && app.target && typeof app.target.value === 'string') {
+            app = app.target.value;
+        } else if (app && app.target && typeof app.target.getAttribute === 'function') {
+            app = app.target.getAttribute('data-app');
+        }
+        if (!app || app === this.currentLogApp) return;
+        // Update the select value
+        const logAppSelect = document.getElementById('logAppSelect');
+        if (logAppSelect) logAppSelect.value = app;
         // Update the current log app text with proper capitalization
         let displayName = app.charAt(0).toUpperCase() + app.slice(1);
-        // Special handling for app display names
-        if (app === 'whisparr') {
-            displayName = 'Whisparr V2';
-        } else if (app === 'eros') {
-            displayName = 'Whisparr V3';
-        }
-        this.elements.currentLogApp.textContent = displayName;
-        
-        // Always close the dropdown when option is selected
-        this.elements.logDropdownContent.classList.remove('show');
-        
+        if (app === 'whisparr') displayName = 'Whisparr V2';
+        else if (app === 'eros') displayName = 'Whisparr V3';
+        if (this.elements.currentLogApp) this.elements.currentLogApp.textContent = displayName;
         // Switch to the selected app logs
         this.currentLogApp = app;
-        this.clearLogs(); // Clear existing logs before switching
-        this.connectToLogs(); // Reconnect to the new log source
+        this.clearLogs();
+        this.connectToLogs();
     },
     
     // History option dropdown handling
-    handleHistoryOptionChange: function(e) {
-        e.preventDefault(); // Prevent default anchor behavior
-        
-        const app = e.target.getAttribute('data-app');
-        if (!app || app === this.currentHistoryApp) return; // Do nothing if same tab clicked
-        
-        // Update active option
-        this.elements.historyOptions.forEach(option => {
-            option.classList.remove('active');
-        });
-        e.target.classList.add('active');
-        
+    handleHistoryOptionChange: function(app) {
+        if (app && app.target && typeof app.target.value === 'string') {
+            app = app.target.value;
+        } else if (app && app.target && typeof app.target.getAttribute === 'function') {
+            app = app.target.getAttribute('data-app');
+        }
+        if (!app || app === this.currentHistoryApp) return;
+        // Update the select value
+        const historyAppSelect = document.getElementById('historyAppSelect');
+        if (historyAppSelect) historyAppSelect.value = app;
         // Update the current history app text with proper capitalization
         let displayName = app.charAt(0).toUpperCase() + app.slice(1);
-        // Special handling for app display names
-        if (app === 'whisparr') {
-            displayName = 'Whisparr V2';
-        } else if (app === 'eros') {
-            displayName = 'Whisparr V3';
-        }
-        this.elements.currentHistoryApp.textContent = displayName;
-        
-        // Always close the dropdown when option is selected
-        this.elements.historyDropdownContent.classList.remove('show');
-        
+        if (app === 'whisparr') displayName = 'Whisparr V2';
+        else if (app === 'eros') displayName = 'Whisparr V3';
+        if (this.elements.currentHistoryApp) this.elements.currentHistoryApp.textContent = displayName;
         // Update the placeholder text
         this.updateHistoryPlaceholder(app);
-        
         // Switch to the selected app history
         this.currentHistoryApp = app;
     },

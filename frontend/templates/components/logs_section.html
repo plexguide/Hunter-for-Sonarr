@@ -2,25 +2,17 @@
     <div class="section-header">
         <!-- Replace Log Tabs with Dropdown -->
         <div class="log-dropdown-container">
-            <div class="log-dropdown-wrapper">
-                <div class="log-dropdown">
-                    <button class="log-dropdown-btn">
-                        <span id="current-log-app">All</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="log-dropdown-content">
-                        <a href="#" class="log-option active" data-app="all">All</a>
-                        <a href="#" class="log-option" data-app="sonarr">Sonarr</a>
-                        <a href="#" class="log-option" data-app="radarr">Radarr</a>
-                        <a href="#" class="log-option" data-app="lidarr">Lidarr</a>
-                        <a href="#" class="log-option" data-app="readarr">Readarr</a>
-                        <a href="#" class="log-option" data-app="whisparr">Whisparr V2</a>
-                        <a href="#" class="log-option" data-app="eros">Whisparr V3</a>
-                        <a href="#" class="log-option" data-app="swaparr">Swaparr</a>
-                        <a href="#" class="log-option" data-app="system">System</a>
-                    </div>
-                </div>
-            </div>
+            <select id="logAppSelect" class="styled-select">
+                <option value="all">All</option>
+                <option value="sonarr">Sonarr</option>
+                <option value="radarr">Radarr</option>
+                <option value="lidarr">Lidarr</option>
+                <option value="readarr">Readarr</option>
+                <option value="whisparr">Whisparr V2</option>
+                <option value="eros">Whisparr V3</option>
+                <option value="swaparr">Swaparr</option>
+                <option value="system">System</option>
+            </select>
         </div>
         <div class="log-controls">
             <div class="connection-status">

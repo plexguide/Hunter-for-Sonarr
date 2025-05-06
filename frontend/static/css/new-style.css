@@ -1707,3 +1707,29 @@ input:checked + .slider:before {
         width: calc(100% - 40px);
     }
 }
+
+.styled-select {
+  background: var(--accent-color);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-weight: 500;
+  font-size: 1rem;
+  min-width: 140px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.3s;
+  margin-right: 10px;
+}
+.styled-select:focus, .styled-select:hover {
+  background: var(--accent-hover);
+}
+.styled-select option {
+  color: #222;
+  background: #fff;
+}

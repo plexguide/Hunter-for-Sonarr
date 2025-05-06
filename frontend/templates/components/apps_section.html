@@ -1,19 +1,15 @@
 <section id="appsSection" class="content-section">
     <div class="section-header">
         <div class="log-dropdown">
-            <button class="log-dropdown-btn">
-                <span id="current-apps-app">Sonarr</span>
-                <i class="fas fa-chevron-down"></i>
-            </button>
-            <div class="log-dropdown-content">
-                <a href="#" class="log-option active" data-app="sonarr">Sonarr</a>
-                <a href="#" class="log-option" data-app="radarr">Radarr</a>
-                <a href="#" class="log-option" data-app="lidarr">Lidarr</a>
-                <a href="#" class="log-option" data-app="readarr">Readarr</a>
-                <a href="#" class="log-option" data-app="whisparr">Whisparr V2</a>
-                <a href="#" class="log-option" data-app="eros">Whisparr V3</a>
-                <a href="#" class="log-option" data-app="swaparr">Swaparr</a>
-            </div>
+            <select id="appsAppSelect" class="styled-select">
+                <option value="sonarr">Sonarr</option>
+                <option value="radarr">Radarr</option>
+                <option value="lidarr">Lidarr</option>
+                <option value="readarr">Readarr</option>
+                <option value="whisparr">Whisparr V2</option>
+                <option value="eros">Whisparr V3</option>
+                <option value="swaparr">Swaparr</option>
+            </select>
         </div>
         <button id="saveAppsButton" class="save-button" disabled>
             <i class="fas fa-save"></i> Save
