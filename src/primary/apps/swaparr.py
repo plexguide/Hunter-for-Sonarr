@@ -22,12 +22,19 @@ def get_configured_instances():
     except ImportError:
         whisparr_instances = []
     
+    try:
+        from src.primary.apps.eros import get_configured_instances as get_eros_instances
+        eros_instances = get_eros_instances()
+    except ImportError:
+        eros_instances = []
+    
     instances = {
         "radarr": get_radarr_instances(),
         "sonarr": get_sonarr_instances(),
         "lidarr": get_lidarr_instances(),
         "readarr": get_readarr_instances(),
-        "whisparr": whisparr_instances
+        "whisparr": whisparr_instances,
+        "eros": eros_instances
     }
     
     logger = get_logger("swaparr")

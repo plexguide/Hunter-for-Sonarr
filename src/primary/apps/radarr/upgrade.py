@@ -12,6 +12,7 @@ from src.primary.apps.radarr import api as radarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
+from src.primary.settings_manager import get_advanced_setting
 
 # Get logger for the app
 radarr_logger = get_logger("radarr")
@@ -36,12 +37,14 @@ def process_cutoff_upgrades(
     # Extract necessary settings
     api_url = app_settings.get("api_url", "").strip()
     api_key = app_settings.get("api_key", "").strip()
-    api_timeout = app_settings.get("api_timeout", 90)  # Default timeout
+    api_timeout = get_advanced_setting("api_timeout", 120)  # Use general.json value
     monitored_only = app_settings.get("monitored_only", True)
     skip_movie_refresh = app_settings.get("skip_movie_refresh", False)
     hunt_upgrade_movies = app_settings.get("hunt_upgrade_movies", 0)
-    command_wait_delay = app_settings.get("command_wait_delay", 5)
-    command_wait_attempts = app_settings.get("command_wait_attempts", 12)
+    
+    # Use advanced settings from general.json for command operations
+    command_wait_delay = get_advanced_setting("command_wait_delay", 1)
+    command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
     
     # Get instance name - check for instance_name first, fall back to legacy "name" key if needed
     instance_name = app_settings.get("instance_name", app_settings.get("name", "Radarr Default"))

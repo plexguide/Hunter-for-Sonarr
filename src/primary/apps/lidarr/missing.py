@@ -15,7 +15,7 @@ from src.primary.apps.lidarr import api as lidarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
-from src.primary.settings_manager import load_settings
+from src.primary.settings_manager import load_settings, get_advanced_setting
 from src.primary.state import get_state_file_path, check_state_reset
 import json
 import os
@@ -43,21 +43,13 @@ def process_missing_albums(
     instance_name = app_settings.get("instance_name", "Default")
     api_url = app_settings.get("api_url", "").strip()
     api_key = app_settings.get("api_key", "").strip()
-    
-    # Load general settings to get centralized timeout
-    general_settings = load_settings('general')
-    
-    # Use the centralized timeout from general settings with app-specific as fallback
-    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 90))
-    lidarr_logger.info(f"Using API timeout of {api_timeout} seconds for Lidarr")
-    
-    # Extract settings
+    api_timeout = get_advanced_setting("api_timeout", 120)  # Use general.json value
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", False)
     hunt_missing_items = app_settings.get("hunt_missing_items", 0)
     hunt_missing_mode = app_settings.get("hunt_missing_mode", "album")
-    command_wait_delay = app_settings.get("command_wait_delay", 5)
-    command_wait_attempts = app_settings.get("command_wait_attempts", 12)
+    command_wait_delay = get_advanced_setting("command_wait_delay", 1)
+    command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
     
     # Early exit for disabled features
     if not api_url or not api_key:
