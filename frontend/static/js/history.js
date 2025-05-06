@@ -60,7 +60,14 @@ const historyModule = {
     
     // Set up event listeners
     setupEventListeners: function() {
-        // App selection
+        // App selection (native select)
+        const historyAppSelect = document.getElementById('historyAppSelect');
+        if (historyAppSelect) {
+            historyAppSelect.addEventListener('change', (e) => {
+                this.handleHistoryAppChange(e.target.value);
+            });
+        }
+        // App selection (legacy click)
         this.elements.historyOptions.forEach(option => {
             option.addEventListener('click', e => this.handleHistoryAppChange(e));
         });
@@ -90,28 +97,31 @@ const historyModule = {
     },
     
     // Handle app selection changes
-    handleHistoryAppChange: function(e) {
-        e.preventDefault();
-        
-        const selectedApp = e.target.getAttribute('data-app');
+    handleHistoryAppChange: function(eOrValue) {
+        let selectedApp;
+        if (typeof eOrValue === 'string') {
+            selectedApp = eOrValue;
+        } else if (eOrValue && eOrValue.target) {
+            selectedApp = eOrValue.target.getAttribute('data-app');
+            eOrValue.preventDefault();
+        }
         if (!selectedApp || selectedApp === this.currentApp) return;
-        
-        // Update UI
-        this.elements.historyOptions.forEach(option => {
-            option.classList.remove('active');
-        });
-        e.target.classList.add('active');
-        
-        // Update dropdown text
-        const displayName = selectedApp.charAt(0).toUpperCase() + selectedApp.slice(1);
-        this.elements.currentHistoryApp.textContent = displayName;
-        
-        // Close dropdown
-        this.elements.historyDropdownContent.classList.remove('show');
-        
+        // Update UI (for legacy click)
+        if (this.elements.historyOptions) {
+            this.elements.historyOptions.forEach(option => {
+                option.classList.remove('active');
+                if (option.getAttribute('data-app') === selectedApp) {
+                    option.classList.add('active');
+                }
+            });
+        }
+        // Update dropdown text (if present)
+        if (this.elements.currentHistoryApp) {
+            const displayName = selectedApp.charAt(0).toUpperCase() + selectedApp.slice(1);
+            this.elements.currentHistoryApp.textContent = displayName;
+        }
         // Reset pagination
         this.currentPage = 1;
-        
         // Update state and fetch data
         this.currentApp = selectedApp;
         this.fetchHistoryData();
