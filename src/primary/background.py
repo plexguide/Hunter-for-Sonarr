@@ -569,48 +569,73 @@ def hunting_manager_loop():
                 try:
                     queue_items = get_download_queue(api_url, api_key, api_timeout)
                     logger.info(f"[HUNTING] Current download queue has {len(queue_items)} items for instance {instance_name}")
+                    
+                    # Log some details about items in queue for visibility
+                    if queue_items:
+                        for i, item in enumerate(queue_items[:5]):  # Log first 5 items as examples
+                            movie_id = item.get('movieId', 'Unknown')
+                            title = item.get('title', 'Unknown')
+                            progress = item.get('progress', 0)
+                            status = item.get('status', 'Unknown')
+                            logger.info(f"[HUNTING] Queue item {i+1}: Movie ID: {movie_id}, Title: {title}, Progress: {progress}%, Status: {status}")
+                        if len(queue_items) > 5:
+                            logger.info(f"[HUNTING] ...and {len(queue_items) - 5} more items in queue")
                 except Exception as e:
                     logger.error(f"[HUNTING] Error fetching download queue for {instance_name}: {e}")
                     queue_items = []
                 
+                # Process each movie ID with enhanced logging
+                processed_count = 0
                 for movie_id in processed_ids:
-                    logger.info(f"[HUNTING] Processing movie ID: {movie_id} for instance {instance_name}")
+                    processed_count += 1
+                    logger.info(f"[HUNTING] Processing movie ID: {movie_id} ({processed_count}/{len(processed_ids)}) for instance {instance_name}")
                     
                     # Get detailed movie information from Radarr API
                     try:
                         movie_data = get_movie_by_id(api_url, api_key, movie_id, api_timeout)
-                        logger.info(f"[HUNTING] Movie details - Title: {movie_data.get('title', 'Unknown')}, "
-                                   f"Status: {'Downloaded' if movie_data.get('hasFile', False) else 'Missing'}, "
-                                   f"Monitored: {movie_data.get('monitored', False)}, "
-                                   f"Year: {movie_data.get('year', 'Unknown')}")
-                        
-                        # Check if movie has a file
-                        if movie_data.get('hasFile', False):
-                            try:
-                                file_data = get_movie_file(api_url, api_key, movie_data.get('movieFile', {}).get('id'), api_timeout)
-                                quality = file_data.get('quality', {}).get('quality', {}).get('name', 'Unknown')
-                                size_mb = round(file_data.get('size', 0) / (1024 * 1024), 2)
-                                logger.info(f"[HUNTING] Movie file - Quality: {quality}, Size: {size_mb} MB, "
-                                           f"Path: {file_data.get('path', 'Unknown')}")
-                            except Exception as e:
-                                logger.warning(f"[HUNTING] Error fetching movie file details: {e}")
-                        
-                        # Check download queue status for this movie
-                        movie_in_queue = False
-                        for queue_item in queue_items:
-                            if queue_item.get('movieId') == int(movie_id):
-                                movie_in_queue = True
-                                progress = queue_item.get('progress', 0)
-                                status = queue_item.get('status', 'Unknown')
-                                eta = queue_item.get('estimatedCompletionTime', 'Unknown')
-                                protocol = queue_item.get('protocol', 'Unknown')
-                                logger.info(f"[HUNTING] Movie in download queue - Progress: {progress}%, "
-                                           f"Status: {status}, Protocol: {protocol}, ETA: {eta}")
-                                break
-                        
-                        if not movie_in_queue and not movie_data.get('hasFile', False):
-                            logger.info(f"[HUNTING] Movie not in download queue and not downloaded - "
-                                       f"May need to trigger a search")
+                        if movie_data:
+                            title = movie_data.get('title', 'Unknown')
+                            year = movie_data.get('year', 'Unknown')
+                            has_file = movie_data.get('hasFile', False)
+                            monitored = movie_data.get('monitored', False)
+                            
+                            logger.info(f"[HUNTING] Movie details - ID: {movie_id}, Title: {title}, "
+                                       f"Year: {year}, Status: {'Downloaded' if has_file else 'Missing'}, "
+                                       f"Monitored: {monitored}")
+                            
+                            # Check if movie has a file
+                            if has_file:
+                                try:
+                                    file_id = movie_data.get('movieFile', {}).get('id')
+                                    if file_id:
+                                        file_data = get_movie_file(api_url, api_key, file_id, api_timeout)
+                                        quality = file_data.get('quality', {}).get('quality', {}).get('name', 'Unknown')
+                                        size_mb = round(file_data.get('size', 0) / (1024 * 1024), 2)
+                                        logger.info(f"[HUNTING] Movie file - Quality: {quality}, Size: {size_mb} MB, "
+                                                   f"Path: {file_data.get('path', 'Unknown')}")
+                                    else:
+                                        logger.info(f"[HUNTING] Movie has file but no file ID found")
+                                except Exception as e:
+                                    logger.warning(f"[HUNTING] Error fetching movie file details: {e}")
+                            
+                            # Check download queue status for this movie
+                            movie_in_queue = False
+                            for queue_item in queue_items:
+                                if queue_item.get('movieId') == int(movie_id):
+                                    movie_in_queue = True
+                                    progress = queue_item.get('progress', 0)
+                                    status = queue_item.get('status', 'Unknown')
+                                    eta = queue_item.get('estimatedCompletionTime', 'Unknown')
+                                    protocol = queue_item.get('protocol', 'Unknown')
+                                    logger.info(f"[HUNTING] Movie in download queue - ID: {movie_id}, Title: {title}, "
+                                               f"Progress: {progress}%, Status: {status}, Protocol: {protocol}")
+                                    break
+                            
+                            if not movie_in_queue and not has_file and monitored:
+                                logger.info(f"[HUNTING] Movie not in download queue and not downloaded - "
+                                           f"ID: {movie_id}, Title: {title}, Monitored: {monitored}")
+                        else:
+                            logger.warning(f"[HUNTING] No data returned from API for movie ID {movie_id}")
                     except Exception as e:
                         logger.error(f"[HUNTING] Error fetching movie details for ID {movie_id}: {e}")
                         continue
@@ -628,7 +653,7 @@ def hunting_manager_loop():
                                 current_status = "Requested"
                                 debug_info = {}
                                 
-                                if movie_data.get('hasFile', False):
+                                if movie_data and movie_data.get('hasFile', False):
                                     current_status = "Found"
                                     quality = movie_data.get('movieFile', {}).get('quality', {}).get('quality', {}).get('name', 'Unknown')
                                     debug_info = {
@@ -647,7 +672,7 @@ def hunting_manager_loop():
                                                 "timestamp": datetime.now().isoformat()
                                             }
                                             break
-                                elif movie_data.get('monitored', False):
+                                elif movie_data and movie_data.get('monitored', False):
                                     current_status = "Searching"
                                     debug_info = {
                                         "last_check": datetime.now().isoformat(),
@@ -663,18 +688,22 @@ def hunting_manager_loop():
                                 logger.info(f"[HUNTING] Movie ID {movie_id} is already tracked for instance {instance_name}, status: {current_status}")
                                 break
                     
-                    if not already_tracked:
+                    if not already_tracked and movie_data:
                         # Get movie name from API or fall back to history
-                        movie_name = movie_data.get('title', str(movie_id)) if movie_data else str(movie_id)
+                        movie_name = movie_data.get('title', str(movie_id))
                         
-                        if not movie_data:
-                            # Fallback to history if API call failed
-                            from src.primary.history_manager import get_history
-                            entries = get_history("radarr", instance_name)
-                            for entry in entries:
-                                if isinstance(entry, dict) and str(entry.get("id", "")) == str(movie_id):
-                                    movie_name = entry.get("name", movie_name)
-                                    break
+                        # Add to tracking
+                        manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
+                        logger.info(f"[HUNTING] Now tracking: {movie_name} (ID: {movie_id}) for instance {instance_name}")
+                    elif not already_tracked:
+                        # Fallback to history if API call failed
+                        from src.primary.history_manager import get_history
+                        entries = get_history("radarr", instance_name)
+                        movie_name = str(movie_id)
+                        for entry in entries:
+                            if isinstance(entry, dict) and str(entry.get("id", "")) == str(movie_id):
+                                movie_name = entry.get("name", movie_name)
+                                break
                         
                         # Add to tracking
                         manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
