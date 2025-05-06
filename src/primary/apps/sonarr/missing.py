@@ -20,14 +20,14 @@ def process_missing_episodes(
     api_url: str,
     api_key: str,
     instance_name: str,
-    api_timeout: int = get_advanced_setting("api_timeout", 90),
+    api_timeout: int = get_advanced_setting("api_timeout", 120),
     monitored_only: bool = True,
     skip_future_episodes: bool = True,
     skip_series_refresh: bool = False,
     hunt_missing_items: int = 5,
     hunt_missing_mode: str = "episodes",
-    command_wait_delay: int = get_advanced_setting("command_wait_delay", 5),
-    command_wait_attempts: int = get_advanced_setting("command_wait_attempts", 12),
+    command_wait_delay: int = get_advanced_setting("command_wait_delay", 1),
+    command_wait_attempts: int = get_advanced_setting("command_wait_attempts", 600),
     stop_check: Callable[[], bool] = lambda: False
 ) -> bool:
     """

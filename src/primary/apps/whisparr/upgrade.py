@@ -42,16 +42,14 @@ def process_cutoff_upgrades(
     check_state_reset("whisparr")
     
     # Extract necessary settings
-    api_url = app_settings.get("api_url")
-    api_key = app_settings.get("api_key")
+    api_url = app_settings.get("api_url", "").strip()
+    api_key = app_settings.get("api_key", "").strip()
+    api_timeout = get_advanced_setting("api_timeout", 120)  # Use general.json value
     instance_name = app_settings.get("instance_name", "Whisparr Default")
     
-    # Load general settings to get centralized timeout
-    general_settings = load_settings('general')
-    
-    # Use the centralized timeout from general settings with app-specific as fallback
-    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 90))
-    whisparr_logger.info(f"Using API timeout of {api_timeout} seconds for Whisparr upgrades")
+    # Use advanced settings from general.json for command operations
+    command_wait_delay = get_advanced_setting("command_wait_delay", 1)
+    command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
     
     monitored_only = app_settings.get("monitored_only", True)
     skip_item_refresh = app_settings.get("skip_item_refresh", False)
@@ -59,8 +57,6 @@ def process_cutoff_upgrades(
     # Use the new hunt_upgrade_items parameter name, falling back to hunt_upgrade_scenes for backwards compatibility
     hunt_upgrade_items = app_settings.get("hunt_upgrade_items", app_settings.get("hunt_upgrade_scenes", 0))
     
-    command_wait_delay = app_settings.get("command_wait_delay", 5)
-    command_wait_attempts = app_settings.get("command_wait_attempts", 12)
     state_reset_interval_hours = get_advanced_setting("stateful_management_hours", 168)  
     
     # Log that we're using Whisparr V2 API
