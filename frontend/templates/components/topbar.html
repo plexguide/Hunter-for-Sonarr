@@ -143,6 +143,44 @@
             display: block !important;
         }
     }
+    @media (max-width: 1024px) {
+        /* Sidebar: icons only */
+        .sidebar .nav-item span {
+            display: none !important;
+        }
+        .sidebar {
+            width: 60px !important;
+            min-width: 60px !important;
+            max-width: 60px !important;
+        }
+        .sidebar .logo-container h1 {
+            display: none !important;
+        }
+        .logo-large {
+            display: none !important;
+        }
+        .logo-small {
+            display: block !important;
+            width: 32px !important;
+            height: 32px !important;
+            margin: 0 !important;
+        }
+        /* Top bar: only Version and Latest */
+        .version-item {
+            display: none !important;
+        }
+        .version-item:nth-child(1),
+        .version-item:nth-child(3) {
+            display: flex !important;
+            font-size: 14px !important;
+        }
+        .version-divider {
+            display: none !important;
+        }
+        .version-divider:nth-child(2) {
+            display: block !important;
+        }
+    }
 </style>
 
 <script>
