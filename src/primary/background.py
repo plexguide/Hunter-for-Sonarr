@@ -13,6 +13,7 @@ import importlib
 import logging
 import threading
 from typing import Dict, List, Optional, Callable, Union, Tuple
+import json
 
 # Define the version number
 __version__ = "1.0.0" # Consider updating this based on changes
@@ -520,13 +521,66 @@ def hunting_manager_loop():
     logger.info("[HUNTING] Hunting Manager background thread started.")
     manager = HuntingManager("/config")
     logger.info("[HUNTING] Hunting Manager is Ready to Hunt!")
+
+    # On first run, log all existing tracked items (prior history)
+    for app_name in os.listdir(manager.hunting_dir):
+        app_path = os.path.join(manager.hunting_dir, app_name)
+        if not os.path.isdir(app_path):
+            continue
+        for instance_file in os.listdir(app_path):
+            if not instance_file.endswith('.json'):
+                continue
+            instance_path = os.path.join(app_path, instance_file)
+            with open(instance_path, 'r') as f:
+                tracking_data = json.load(f)
+            for item in tracking_data.get("tracking", {}).get("items", []):
+                logger.info(f"[HUNTING] Prior tracked: {item['name']} (ID: {item['id']}) - Status: {item['status']} - Requested: {item['requested_at']}")
+
     while not hunting_manager_stop_event.is_set():
         logger.info("[HUNTING] === Hunting Manager cycle started ===")
-        # TODO: Add actual hunting logic here
-        # Simulate work
-        hunting_manager_stop_event.wait(10)
+        # --- Actual hunting logic ---
+        try:
+            # Example: Scan Radarr processed movies and add to tracking if not already present
+            from src.primary.apps.radarr import get_configured_instances
+            from src.primary.utils.history_utils import log_processed_media
+            radarr_instances = get_configured_instances()
+            for instance in radarr_instances:
+                instance_name = instance.get("instance_name", "Default")
+                logger.info(f"[HUNTING] Checking processed IDs for instance: {instance_name}")
+                # Load processed IDs from stateful_manager
+                from src.primary.stateful_manager import get_processed_ids
+                processed_ids = get_processed_ids("radarr", instance_name)
+                logger.info(f"[HUNTING] Found {len(processed_ids)} processed IDs for instance {instance_name}")
+                for movie_id in processed_ids:
+                    logger.info(f"[HUNTING] Processing movie ID: {movie_id} for instance {instance_name}")
+                    # Check if already tracked
+                    instance_path = manager.get_instance_path("radarr", instance_name)
+                    already_tracked = False
+                    if os.path.exists(instance_path):
+                        with open(instance_path, 'r') as f:
+                            tracking_data = json.load(f)
+                        for item in tracking_data.get("tracking", {}).get("items", []):
+                            if item["id"] == str(movie_id):
+                                already_tracked = True
+                                logger.info(f"[HUNTING] Movie ID {movie_id} is already tracked for instance {instance_name}")
+                                break
+                    if not already_tracked:
+                        # Get movie name from history (fallback to ID)
+                        from src.primary.history_manager import get_history
+                        entries = get_history("radarr", instance_name)
+                        movie_name = str(movie_id)
+                        for entry in entries:
+                            if isinstance(entry, dict) and str(entry.get("id", "")) == str(movie_id):
+                                movie_name = entry.get("name", movie_name)
+                                break
+                        manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
+                        logger.info(f"[HUNTING] Now tracking: {movie_name} (ID: {movie_id}) for instance {instance_name}")
+                    else:
+                        logger.info(f"[HUNTING] Skipped adding already tracked movie ID: {movie_id} for instance {instance_name}")
+        except Exception as e:
+            logger.error(f"[HUNTING] Error during hunting logic: {e}", exc_info=True)
         logger.info("[HUNTING] === Hunting Manager cycle ended ===")
-        hunting_manager_stop_event.wait(20)
+        hunting_manager_stop_event.wait(30)
     logger.info("[HUNTING] Hunting Manager background thread stopped.")
 
 def start_huntarr():
