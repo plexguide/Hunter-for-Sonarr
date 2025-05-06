@@ -582,17 +582,17 @@ def wait_for_command(
     sonarr_logger.debug(f"Waiting for {command_name} to complete (command ID: {command_id}). Checking every {wait_delay}s for up to {max_attempts} attempts")
     
     # Wait for command completion
-    for attempt in range(1, max_attempts + 1):
+    attempts = 0
+    while attempts < max_attempts:
         if stop_check():
             sonarr_logger.info(f"Stopping wait for {command_name} due to stop request")
             return False
             
-        # Adding a short initial delay before first check
-        time.sleep(wait_delay)
-        
         command_status = sonarr_api.get_command_status(api_url, api_key, api_timeout, command_id)
         if not command_status:
-            sonarr_logger.warning(f"Failed to get status for {command_name} (ID: {command_id}), attempt {attempt}")
+            sonarr_logger.warning(f"Failed to get status for {command_name} (ID: {command_id}), attempt {attempts+1}")
+            attempts += 1
+            time.sleep(wait_delay)
             continue
             
         status = command_status.get('status')
@@ -603,7 +603,10 @@ def wait_for_command(
             sonarr_logger.warning(f"Sonarr {command_name} (ID: {command_id}) {status}")
             return False
         
-        sonarr_logger.debug(f"Sonarr {command_name} (ID: {command_id}) status: {status}, attempt {attempt}/{max_attempts}")
+        sonarr_logger.debug(f"Sonarr {command_name} (ID: {command_id}) status: {status}, attempt {attempts+1}/{max_attempts}")
+        
+        attempts += 1
+        time.sleep(wait_delay)
     
     sonarr_logger.error(f"Sonarr command '{command_name}' (ID: {command_id}) timed out after {max_attempts} attempts.")
     return False
