@@ -178,6 +178,17 @@ let huntarrUI = {
     
     // Set up event listeners
     setupEventListeners: function() {
+        // Global dropdown handling - close all dropdowns when clicking on any option
+        document.addEventListener('click', (e) => {
+            // If the clicked element is a dropdown option (has class 'log-option')
+            if (e.target.classList.contains('log-option')) {
+                // Find all dropdown content elements and close them
+                document.querySelectorAll('.log-dropdown-content').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+            }
+        });
+        
         // Navigation
         document.addEventListener('click', (e) => {
             // Navigation link handling
@@ -223,6 +234,14 @@ let huntarrUI = {
         if (this.elements.logDropdownBtn) {
             this.elements.logDropdownBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation(); // Prevent event bubbling
+                
+                // Close any other open dropdowns first
+                if (this.elements.historyDropdownContent && this.elements.historyDropdownContent.classList.contains('show')) {
+                    this.elements.historyDropdownContent.classList.remove('show');
+                }
+                
+                // Toggle this dropdown
                 this.elements.logDropdownContent.classList.toggle('show');
             });
             
@@ -238,6 +257,14 @@ let huntarrUI = {
         if (this.elements.historyDropdownBtn) {
             this.elements.historyDropdownBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation(); // Prevent event bubbling
+                
+                // Close any other open dropdowns first
+                if (this.elements.logDropdownContent && this.elements.logDropdownContent.classList.contains('show')) {
+                    this.elements.logDropdownContent.classList.remove('show');
+                }
+                
+                // Toggle this dropdown
                 this.elements.historyDropdownContent.classList.toggle('show');
             });
             
@@ -258,6 +285,18 @@ let huntarrUI = {
         if (this.elements.settingsDropdownBtn) {
             this.elements.settingsDropdownBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation(); // Prevent event bubbling
+                
+                // Close any other open dropdowns first
+                if (this.elements.logDropdownContent && this.elements.logDropdownContent.classList.contains('show')) {
+                    this.elements.logDropdownContent.classList.remove('show');
+                }
+                
+                if (this.elements.historyDropdownContent && this.elements.historyDropdownContent.classList.contains('show')) {
+                    this.elements.historyDropdownContent.classList.remove('show');
+                }
+                
+                // Toggle this dropdown
                 this.elements.settingsDropdownContent.classList.toggle('show');
             });
             
@@ -635,7 +674,7 @@ let huntarrUI = {
         }
         this.elements.currentLogApp.textContent = displayName;
         
-        // Close the dropdown
+        // Always close the dropdown when option is selected
         this.elements.logDropdownContent.classList.remove('show');
         
         // Switch to the selected app logs
@@ -667,16 +706,14 @@ let huntarrUI = {
         }
         this.elements.currentHistoryApp.textContent = displayName;
         
-        // Close the dropdown
+        // Always close the dropdown when option is selected
         this.elements.historyDropdownContent.classList.remove('show');
+        
+        // Update the placeholder text
+        this.updateHistoryPlaceholder(app);
         
         // Switch to the selected app history
         this.currentHistoryApp = app;
-        // this.clearHistory(); // Clear existing history before switching
-        // this.connectToHistory(); // Reconnect to the new history source
-        
-        // Update the placeholder text based on the selected app
-        this.updateHistoryPlaceholder(app);
     },
     
     // Update the history placeholder text based on the selected app

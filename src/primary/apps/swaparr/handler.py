@@ -192,7 +192,7 @@ def get_queue_items(app_name, api_url, api_key, api_timeout=120):
     swaparr_logger.info(f"Fetched {len(all_records)} queue items for {app_name}")
     
     # Normalize the response based on app type
-    if app_name in ["radarr", "whisparr"]:
+    if app_name in ["radarr", "whisparr", "eros"]:
         return parse_queue_items(all_records, "movie", app_name)
     elif app_name == "sonarr":
         return parse_queue_items(all_records, "series", app_name)
