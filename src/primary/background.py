@@ -258,6 +258,11 @@ def app_specific_loop(app_type: str) -> None:
             combined_settings = app_settings.copy() # Start with general settings
             combined_settings.update(instance_details) # Add/overwrite with instance specifics (name, url, key)
             
+            # Ensure settings from general.json are consistently used for all apps
+            combined_settings["api_timeout"] = settings_manager.get_advanced_setting("api_timeout", 120)
+            combined_settings["command_wait_delay"] = settings_manager.get_advanced_setting("command_wait_delay", 1)
+            combined_settings["command_wait_attempts"] = settings_manager.get_advanced_setting("command_wait_attempts", 600)
+            
             # Define the stop check function
             stop_check_func = stop_event.is_set
 
@@ -267,14 +272,14 @@ def app_specific_loop(app_type: str) -> None:
                     # Extract settings for direct function calls
                     api_url = combined_settings.get("api_url", "").strip()
                     api_key = combined_settings.get("api_key", "").strip()
-                    api_timeout = combined_settings.get("api_timeout", 90)
+                    api_timeout = combined_settings.get("api_timeout", 120)
                     monitored_only = combined_settings.get("monitored_only", True)
                     skip_future_episodes = combined_settings.get("skip_future_episodes", True)
                     skip_series_refresh = combined_settings.get("skip_series_refresh", False)
                     hunt_missing_items = combined_settings.get("hunt_missing_items", 0)
                     hunt_missing_mode = combined_settings.get("hunt_missing_mode", "episodes")
-                    command_wait_delay = combined_settings.get("command_wait_delay", 5)
-                    command_wait_attempts = combined_settings.get("command_wait_attempts", 12)
+                    command_wait_delay = combined_settings.get("command_wait_delay", 1)
+                    command_wait_attempts = combined_settings.get("command_wait_attempts", 600)
                     
                     if app_type == "sonarr":
                         processed_missing = process_missing(
@@ -307,12 +312,12 @@ def app_specific_loop(app_type: str) -> None:
                     if app_type == "sonarr":
                         api_url = combined_settings.get("api_url", "").strip()
                         api_key = combined_settings.get("api_key", "").strip()
-                        api_timeout = combined_settings.get("api_timeout", 90)
+                        api_timeout = combined_settings.get("api_timeout", 120)
                         monitored_only = combined_settings.get("monitored_only", True)
                         skip_series_refresh = combined_settings.get("skip_series_refresh", False)
                         hunt_upgrade_items = combined_settings.get("hunt_upgrade_items", 0)
-                        command_wait_delay = combined_settings.get("command_wait_delay", 5)
-                        command_wait_attempts = combined_settings.get("command_wait_attempts", 12)
+                        command_wait_delay = combined_settings.get("command_wait_delay", 1)
+                        command_wait_attempts = combined_settings.get("command_wait_attempts", 600)
                         
                         processed_upgrades = process_upgrades(
                             api_url=api_url,

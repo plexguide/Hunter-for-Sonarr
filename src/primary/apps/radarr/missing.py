@@ -44,13 +44,15 @@ def process_missing_movies(
     # Extract necessary settings
     api_url = app_settings.get("api_url", "").strip()
     api_key = app_settings.get("api_key", "").strip()
-    api_timeout = get_advanced_setting("api_timeout", 90)  # Default timeout
+    api_timeout = get_advanced_setting("api_timeout", 120)  # Use general.json value
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
     skip_movie_refresh = app_settings.get("skip_movie_refresh", False)
     hunt_missing_movies = app_settings.get("hunt_missing_movies", 0)
-    command_wait_delay = get_advanced_setting("command_wait_delay", 5)
-    command_wait_attempts = get_advanced_setting("command_wait_attempts", 12)
+    
+    # Use advanced settings from general.json for command operations
+    command_wait_delay = get_advanced_setting("command_wait_delay", 1)
+    command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
     release_type = app_settings.get("release_type", "physical")
     
     radarr_logger.info(f"Hunt Missing Movies: {hunt_missing_movies}")

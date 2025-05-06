@@ -10,7 +10,7 @@ import sys
 import time
 import datetime
 import traceback
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional, Union, Callable
 # Correct the import path
 from src.primary.utils.logger import get_logger
 
@@ -235,7 +235,7 @@ def get_calendar(api_url: str, api_key: str, api_timeout: int, start_date: Optio
         return response
     return []
 
-def command_status(api_url: str, api_key: str, api_timeout: int, command_id: str) -> Dict:
+def command_status(api_url: str, api_key: str, api_timeout: int, command_id: Union[int, str]) -> Dict:
     """
     Get the status of a command by ID.
     
@@ -740,7 +740,7 @@ def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: in
     sonarr_logger.error("All attempts to get missing episodes failed")
     return []
 
-def search_episode(api_url: str, api_key: str, api_timeout: int, episode_ids: List[int]) -> Optional[int]:
+def search_episode(api_url: str, api_key: str, api_timeout: int, episode_ids: List[int]) -> Optional[Union[int, str]]:
     """Trigger a search for specific episodes in Sonarr."""
     if not episode_ids:
         sonarr_logger.warning("No episode IDs provided for search.")
@@ -763,7 +763,7 @@ def search_episode(api_url: str, api_key: str, api_timeout: int, episode_ids: Li
         sonarr_logger.error(f"An unexpected error occurred while triggering Sonarr search: {e}")
         return None
 
-def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id: int) -> Optional[Dict[str, Any]]:
+def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id: Union[int, str]) -> Optional[Dict[str, Any]]:
     """Get the status of a Sonarr command."""
     try:
         endpoint = f"{api_url}/api/v3/command/{command_id}"
@@ -827,7 +827,7 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int
     sonarr_logger.error(f"All {retries+1} attempts to get download queue size failed")
     return -1
 
-def refresh_series(api_url: str, api_key: str, api_timeout: int, series_id: int) -> Optional[int]:
+def refresh_series(api_url: str, api_key: str, api_timeout: int, series_id: int) -> Optional[Union[int, str]]:
     """Trigger a refresh for a specific series in Sonarr."""
     try:
         endpoint = f"{api_url}/api/v3/command"
@@ -863,7 +863,7 @@ def get_series_by_id(api_url: str, api_key: str, api_timeout: int, series_id: in
         sonarr_logger.error(f"An unexpected error occurred while getting Sonarr series details: {e}")
         return None
 
-def search_season(api_url: str, api_key: str, api_timeout: int, series_id: int, season_number: int) -> Optional[int]:
+def search_season(api_url: str, api_key: str, api_timeout: int, series_id: int, season_number: int) -> Optional[Union[int, str]]:
     """Trigger a search for a specific season in Sonarr."""
     try:
         endpoint = f"{api_url}/api/v3/command"

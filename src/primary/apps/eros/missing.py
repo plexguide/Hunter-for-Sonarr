@@ -42,16 +42,13 @@ def process_missing_items(
     check_state_reset("eros")
     
     # Extract necessary settings
-    api_url = app_settings.get("api_url")
-    api_key = app_settings.get("api_key")
+    api_url = app_settings.get("api_url", "").strip()
+    api_key = app_settings.get("api_key", "").strip()
+    api_timeout = get_advanced_setting("api_timeout", 120)  # Use general.json value
     instance_name = app_settings.get("instance_name", "Eros Default")
     
     # Load general settings to get centralized timeout
     general_settings = load_settings('general')
-    
-    # Use the centralized timeout from general settings with app-specific as fallback
-    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 90))
-    eros_logger.info(f"Using API timeout of {api_timeout} seconds for Eros")
     
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
@@ -64,8 +61,9 @@ def process_missing_items(
     # Use the new hunt_missing_items parameter name, falling back to hunt_missing_scenes for backwards compatibility
     hunt_missing_items = app_settings.get("hunt_missing_items", app_settings.get("hunt_missing_scenes", 0))
     
-    command_wait_delay = app_settings.get("command_wait_delay", 5)
-    command_wait_attempts = app_settings.get("command_wait_attempts", 12)
+    # Use advanced settings from general.json for command operations
+    command_wait_delay = get_advanced_setting("command_wait_delay", 1)
+    command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
     
     # Use the centralized advanced setting for stateful management hours
     stateful_management_hours = get_advanced_setting("stateful_management_hours", 168)

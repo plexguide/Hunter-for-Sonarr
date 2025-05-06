@@ -12,7 +12,7 @@ from src.primary.apps.lidarr import api as lidarr_api
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.stats_manager import increment_stat
-from src.primary.settings_manager import load_settings
+from src.primary.settings_manager import load_settings, get_advanced_setting
 from src.primary.state import check_state_reset  # Add the missing import
 
 # Get logger for the app
@@ -38,21 +38,21 @@ def process_cutoff_upgrades(
     # --- Extract Settings --- #
     # Instance details are now part of app_settings passed from background loop
     instance_name = app_settings.get("instance_name", "Lidarr Default")
-    api_url = app_settings.get("api_url")
-    api_key = app_settings.get("api_key")
-
-    # Load general settings to get centralized timeout
-    general_settings = load_settings('general')
     
-    # Use the centralized timeout from general settings with app-specific as fallback
-    api_timeout = general_settings.get("api_timeout", app_settings.get("api_timeout", 120))
-    lidarr_logger.info(f"Using API timeout of {api_timeout} seconds for Lidarr upgrades")
+    # Extract necessary settings
+    api_url = app_settings.get("api_url", "").strip()
+    api_key = app_settings.get("api_key", "").strip()
+    api_timeout = get_advanced_setting("api_timeout", 120)  # Use general.json value
+    
+    # Get command wait settings from general.json
+    command_wait_delay = get_advanced_setting("command_wait_delay", 1)
+    command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
 
     # General Lidarr settings (also from app_settings)
     hunt_upgrade_items = app_settings.get("hunt_upgrade_items", 0)
     monitored_only = app_settings.get("monitored_only", True)
-    command_wait_delay = app_settings.get("command_wait_delay", 1)
-    command_wait_attempts = app_settings.get("command_wait_attempts", 600)
+
+    lidarr_logger.info(f"Using API timeout of {api_timeout} seconds for Lidarr upgrades")
 
     lidarr_logger.debug(f"Processing upgrades for instance: {instance_name}")
     # lidarr_logger.debug(f"Instance Config (extracted): {{ 'api_url': '{api_url}', 'api_key': '***' }}")
