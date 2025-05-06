@@ -246,6 +246,7 @@ const historyModule = {
             row.innerHTML = `
                 <td>${entry.date_time_readable}</td>
                 <td>${this.escapeHtml(entry.processed_info)}</td>
+                <td>${this.formatHuntStatus(entry.hunt_status)}</td>
                 <td>${this.formatOperationType(entry.operation_type)}</td>
                 <td>${this.escapeHtml(entry.id)}</td>
                 <td>${this.escapeHtml(formattedInstance)}</td>
@@ -319,6 +320,27 @@ const historyModule = {
                 return '<span class="operation-upgrade">Upgrade</span>';
             default:
                 return operationType ? this.escapeHtml(operationType.charAt(0).toUpperCase() + operationType.slice(1)) : 'Unknown';
+        }
+    },
+    
+    // Helper function to format hunt status
+    formatHuntStatus: function(huntStatus) {
+        if (!huntStatus) {
+            return '<span class="hunt-status-unknown">Not Tracked</span>';
+        }
+        
+        const statusLower = huntStatus.toLowerCase();
+        switch (statusLower) {
+            case 'searching':
+                return '<span class="hunt-status-searching">Searching</span>';
+            case 'found':
+                return '<span class="hunt-status-found">Found</span>';
+            case 'downloaded':
+                return '<span class="hunt-status-downloaded">Downloaded</span>';
+            case 'failed':
+                return '<span class="hunt-status-failed">Failed</span>';
+            default:
+                return `<span class="hunt-status-unknown">${this.escapeHtml(huntStatus)}</span>`;
         }
     }
 };

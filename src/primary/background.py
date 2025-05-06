@@ -708,6 +708,21 @@ def hunting_manager_loop():
                         # Add to tracking
                         manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
                         logger.info(f"[HUNTING] Now tracking: {movie_name} (ID: {movie_id}) for instance {instance_name}")
+                    
+                    # Update the history entry with the current hunt status
+                    try:
+                        from src.primary.utils.history_utils import add_history_entry
+                        history_entry = {
+                            "name": title,
+                            "instance_name": instance_name,
+                            "id": movie_id,
+                            "operation_type": "missing",
+                            "hunt_status": "Downloaded" if has_file else ("Found" if movie_in_queue else "Searching")
+                        }
+                        add_history_entry("radarr", history_entry)
+                        logger.info(f"[HUNTING] Updated history entry with hunt status for movie ID {movie_id}: {history_entry['hunt_status']}")
+                    except Exception as he:
+                        logger.error(f"[HUNTING] Error updating history entry: {he}")
             
         except Exception as e:
             logger.error(f"[HUNTING] Error during hunting logic: {e}", exc_info=True)
