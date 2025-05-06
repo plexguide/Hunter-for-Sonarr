@@ -824,6 +824,11 @@ let huntarrUI = {
                         }
                     }
                     
+                    // Special case for hunting logs
+                    if (logAppType === 'system' && logString.includes('[HUNTING]')) {
+                        logAppType = 'hunting';
+                    }
+                    
                     // Special case for system logs that may contain app-specific patterns
                     if (logAppType === 'system') {
                         // App-specific patterns that may appear in system logs
