@@ -209,6 +209,11 @@ def parse_queue_items(records, item_type, app_name):
     queue_items = []
     
     for record in records:
+        # Skip non-dictionary records
+        if not isinstance(record, dict):
+            swaparr_logger.warning(f"Skipping non-dictionary record in {app_name} queue: {record}")
+            continue
+            
         # Extract the name based on the item type
         name = None
         if item_type == "movie" and record.get("movie"):
