@@ -92,8 +92,7 @@ def process_cutoff_upgrades(
         # Refresh movie (optional)
         if not skip_movie_refresh:
             radarr_logger.info(f"  - Refreshing movie info...")
-            refresh_result = radarr_api.refresh_movie(api_url, api_key, movie_id, api_timeout)
-            time.sleep(5) # Basic wait
+            refresh_result = radarr_api.refresh_movie(api_url, api_key, api_timeout, movie_id)
             if not refresh_result:
                  radarr_logger.warning(f"  - Failed to trigger movie refresh. Continuing search anyway.")
         else:
