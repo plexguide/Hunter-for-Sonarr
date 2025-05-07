@@ -635,7 +635,7 @@ def hunting_manager_loop():
                                     status = queue_item.get('status', 'Unknown').lower()
                                     eta = queue_item.get('estimatedCompletionTime')
                                     protocol = queue_item.get('protocol', 'Unknown')
-                                    download_client = queue_item.get('downloadClient')
+                                    download_client = queue_item.get('downloadClient', 'Unknown')  # Use default value
                                     added = queue_item.get('added')
                                     download_id = queue_item.get('downloadId')
                                     indexer = queue_item.get('indexer')
@@ -788,6 +788,11 @@ def hunting_manager_loop():
                     
                     # Update both hunting manager tracking and history entry
                     try:
+                        # Initialize variables with defaults to prevent 'referenced before assignment' errors
+                        download_client = 'Unknown'
+                        protocol = 'Unknown'
+                        quality = 'Unknown'
+                        
                         # Determine current status
                         current_status = "Searching"
                         if has_file:
@@ -829,7 +834,7 @@ def hunting_manager_loop():
                                     status = queue_item.get('status', 'Unknown').lower()
                                     eta = queue_item.get('estimatedCompletionTime')
                                     protocol = queue_item.get('protocol', 'Unknown')
-                                    download_client = queue_item.get('downloadClient')
+                                    download_client = queue_item.get('downloadClient', 'Unknown')  # Use default value
                                     error_message = queue_item.get('errorMessage')
                                     
                                     # Get additional info
