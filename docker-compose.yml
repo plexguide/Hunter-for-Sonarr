@@ -4,13 +4,19 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: huntarr
+    restart: unless-stopped
     ports:
       - "9705:9705"
     volumes:
       - huntarr-config:/config
     environment:
       - TZ=America/New_York
-    restart: unless-stopped
+      - DEBUG=true
+    develop:
+      watch:
+        - path: ./
+          action: sync
+          target: /app
 
 volumes:
   huntarr-config:
