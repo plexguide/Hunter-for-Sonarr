@@ -280,9 +280,7 @@ ADVANCED_SETTINGS = [
     "minimum_download_queue_size",
     "log_refresh_interval_seconds",
     "debug_mode",
-    "stateful_management_hours",
-    "declared_item_failure_minutes",
-    "hunter_manager_loop_delay_minutes"
+    "stateful_management_hours"
 ]
 
 def get_advanced_setting(setting_name, default_value=None):

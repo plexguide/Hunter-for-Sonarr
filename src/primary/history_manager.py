@@ -234,7 +234,7 @@ def format_time_ago(seconds):
     else:
         return f"{seconds} {'second' if seconds == 1 else 'seconds'} ago"
 
-def update_history_entry_status(app_type, instance_name, item_id, hunt_status, protocol=None):
+def update_history_entry_status(app_type, instance_name, item_id, hunt_status):
     """
     Update just the hunt status of an existing history entry, preserving the original timestamp
     
@@ -243,7 +243,6 @@ def update_history_entry_status(app_type, instance_name, item_id, hunt_status, p
     - instance_name: str - Name of the instance
     - item_id: str/int - ID of the item to update
     - hunt_status: str - New hunt status to set
-    - protocol: str - Optional protocol information (torrent, usenet, etc.)
     
     Returns:
     - bool - Success or failure
@@ -271,13 +270,8 @@ def update_history_entry_status(app_type, instance_name, item_id, hunt_status, p
             updated = False
             for entry in history_data:
                 if str(entry.get("id", "")) == str(item_id):
-                    # Update the hunt_status field
+                    # Update just the hunt_status field
                     entry["hunt_status"] = hunt_status
-                    
-                    # Add protocol if provided
-                    if protocol:
-                        entry["protocol"] = protocol
-                    
                     updated = True
             
             if updated:
