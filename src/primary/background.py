@@ -630,25 +630,38 @@ def hunting_manager_loop():
                                 if queue_item.get('movieId') == int(movie_id):
                                     movie_in_queue = True
                                     queue_item_data = queue_item
-                                    
-                                    # Extract basic download information
+                                                                       # Extract all download information once (fix the duplication)
                                     progress = queue_item.get('progress', 0)
-                                    status = queue_item.get('status', 'Unknown')
-                                    eta = queue_item.get('estimatedCompletionTime', 'Unknown')
+                                    status = queue_item.get('status', 'Unknown').lower()
+                                    eta = queue_item.get('estimatedCompletionTime')
                                     protocol = queue_item.get('protocol', 'Unknown')
-                                    
-                                    # Extract additional requested information
-                                    quality = None
-                                    if 'quality' in queue_item and 'quality' in queue_item['quality']:
-                                        quality = queue_item['quality']['quality'].get('name')
-                                        
                                     download_client = queue_item.get('downloadClient')
                                     added = queue_item.get('added')
                                     download_id = queue_item.get('downloadId')
                                     indexer = queue_item.get('indexer')
                                     error_message = queue_item.get('errorMessage')
                                     
-                                    # Log the detailed information
+                                    # Get quality information if available
+                                    if 'quality' in queue_item and 'quality' in queue_item['quality']:
+                                        quality = queue_item['quality']['quality'].get('name')
+                                    
+                                    movie_in_queue = True
+                                    
+                                    # Set current status based on what's happening in the queue
+                                    # This should be exactly what Radarr is showing
+                                    if status == 'paused':
+                                        current_status = f"Paused - {progress}%"
+                                    elif status == 'queued':
+                                        current_status = f"Queued in {download_client}"
+                                    elif status == 'downloading':
+                                        current_status = f"Downloading - {progress}%"
+                                    elif status == 'warning' or status == 'failed':
+                                        current_status = f"Warning: {error_message if error_message else 'Unknown error'}"
+                                    elif status == 'completed' and progress < 100:
+                                        current_status = f"Processing - {progress}%"
+                                    elif progress < 100:
+                                        current_status = f"In progress - {progress}%"
+                                    
                                     logger.info(f"[HUNTING] Movie in download queue - ID: {movie_id}, Title: {title}, "
                                                f"Progress: {progress}%, Status: {status}, Protocol: {protocol}")
                                     
@@ -720,7 +733,25 @@ def hunting_manager_loop():
                     
                     if not already_tracked and movie_data:
                         # Get movie name from API or fall back to history
-                        movie_name = movie_data.get('title', str(movie_id))
+                        movie_name = movie_data.get('title', '')
+                        # Make sure we actually have a valid title
+                        if not movie_name or movie_name == str(movie_id) or movie_name == 'Unknown':
+                            # Try again to get the movie name directly from Radarr
+                            try:
+                                from src.primary.apps.radarr.api import get_movie_by_id
+                                # Make a dedicated API call just to get the title
+                                refresh_data = get_movie_by_id(api_url, api_key, movie_id, api_timeout)
+                                if refresh_data and 'title' in refresh_data:
+                                    movie_name = refresh_data['title']
+                                    logger.info(f"[HUNTING] Retrieved movie title on second attempt: {movie_name}")
+                            except Exception as e:
+                                logger.warning(f"[HUNTING] Failed to get movie title on second attempt: {e}")
+                        
+                        # Final fallback if we still don't have a name
+                        if not movie_name or movie_name == 'Unknown':
+                            # Try to get name from Radarr search API or use placeholder
+                            movie_name = f"Movie #{movie_id}"
+                            logger.warning(f"[HUNTING] Using placeholder name for movie ID {movie_id}")
                         
                         # Add to tracking
                         manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
@@ -728,12 +759,28 @@ def hunting_manager_loop():
                     elif not already_tracked:
                         # Fallback to history if API call failed
                         from src.primary.history_manager import get_history
-                        entries = get_history("radarr", instance_name)
-                        movie_name = str(movie_id)
-                        for entry in entries:
-                            if isinstance(entry, dict) and str(entry.get("id", "")) == str(movie_id):
-                                movie_name = entry.get("name", movie_name)
-                                break
+                        
+                        # First, try a direct API call to get the movie title
+                        movie_name = None
+                        try:
+                            from src.primary.apps.radarr.api import get_movie_by_id
+                            movie_data = get_movie_by_id(api_url, api_key, movie_id, api_timeout)
+                            if movie_data and 'title' in movie_data:
+                                movie_name = movie_data['title']
+                                logger.info(f"[HUNTING] Retrieved movie title from API directly: {movie_name}")
+                        except Exception as e:
+                            logger.warning(f"[HUNTING] Failed to get movie title from API: {e}")
+                        
+                        # If API call failed, try getting from history
+                        if not movie_name:
+                            entries = get_history("radarr", instance_name)
+                            movie_name = f"Movie #{movie_id}"  # Better fallback instead of just using the ID
+                            for entry in entries:
+                                if isinstance(entry, dict) and str(entry.get("id", "")) == str(movie_id):
+                                    if entry.get("name") and entry.get("name") != str(movie_id):
+                                        movie_name = entry.get("name")
+                                        logger.info(f"[HUNTING] Found movie title in history: {movie_name}")
+                                        break
                         
                         # Add to tracking
                         manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
@@ -757,10 +804,81 @@ def hunting_manager_loop():
                             "last_checked": datetime.now().isoformat()
                         }
                         
+                        # Check if we need to get more detailed status for an existing download_id
+                        # This helps us get the most up-to-date and accurate status
+                        updated_status = current_status
+                        
+                        # If we have a download ID stored for this item, check its current status directly
+                        tracked_item = manager.get_tracked_item("radarr", instance_name, str(movie_id))
+                        if tracked_item and "download_id" in tracked_item and tracked_item["download_id"]:
+                            stored_download_id = tracked_item["download_id"]
+                            
+                            # If we have a stored download_id but no current one, the item might have
+                            # disappeared from the queue but we can still check its status
+                            if not movie_in_queue or not download_id:
+                                logger.info(f"[HUNTING] Item not found in queue, checking status using stored download_id: {stored_download_id}")
+                                
+                                # Check for the item in the queue by stored download ID
+                                from src.primary.apps.radarr.api import get_queue_item_by_download_id, get_history_by_download_id
+                                queue_item = get_queue_item_by_download_id(api_url, api_key, api_timeout, stored_download_id)
+                                
+                                if queue_item:
+                                    # Found in queue using stored ID, update all information
+                                    download_id = stored_download_id
+                                    progress = queue_item.get('progress', 0)
+                                    status = queue_item.get('status', 'Unknown').lower()
+                                    eta = queue_item.get('estimatedCompletionTime')
+                                    protocol = queue_item.get('protocol', 'Unknown')
+                                    download_client = queue_item.get('downloadClient')
+                                    error_message = queue_item.get('errorMessage')
+                                    
+                                    # Get additional info
+                                    if 'quality' in queue_item and 'quality' in queue_item['quality']:
+                                        quality = queue_item['quality']['quality'].get('name')
+                                    
+                                    # Update status based on queue information - use same format as main queue processing
+                                    if status == 'paused':
+                                        updated_status = f"Paused - {progress}%"
+                                    elif status == 'queued':
+                                        updated_status = f"Queued in {download_client}"
+                                    elif status == 'downloading':
+                                        updated_status = f"Downloading - {progress}%"
+                                    elif status == 'warning' or status == 'failed':
+                                        updated_status = f"Warning: {error_message if error_message else 'Unknown error'}"
+                                    elif status == 'completed' and progress < 100:
+                                        updated_status = f"Processing - {progress}%"
+                                    elif progress < 100:
+                                        updated_status = f"In progress - {progress}%"
+                                    else:
+                                        updated_status = f"Active - {progress}%"
+                                    
+                                    logger.info(f"[HUNTING] Updated status using stored download_id: {updated_status}")
+                                else:
+                                    # Not in queue - check history
+                                    history_items = get_history_by_download_id(api_url, api_key, api_timeout, stored_download_id)
+                                    
+                                    if history_items:
+                                        # Get the most recent history item
+                                        recent_event = history_items[0]
+                                        event_type = recent_event.get('eventType', '')
+                                        
+                                        # Update status based on history event
+                                        if event_type == 'downloadFailed':
+                                            updated_status = "Failed"
+                                            error_message = recent_event.get('data', {}).get('message', 'Download failed')
+                                        elif event_type == 'downloadImported':
+                                            updated_status = "Downloaded"
+                                            # Get quality information from the event
+                                            quality_data = recent_event.get('quality', {})
+                                            if quality_data and 'quality' in quality_data:
+                                                quality = quality_data['quality'].get('name')
+                                        
+                                        logger.info(f"[HUNTING] Updated status from history: {updated_status}")
+                        
                         # Update the hunting manager tracking with detailed information
                         manager.update_item_status(
                             "radarr", instance_name, str(movie_id), 
-                            current_status, debug_info,
+                            updated_status, debug_info,
                             protocol=protocol, progress=progress, eta=eta,
                             quality=quality, download_client=download_client, 
                             added=added, download_id=download_id, 

@@ -183,6 +183,35 @@ class HuntingManager:
         latest_statuses.sort(key=lambda x: x["time_requested"], reverse=True)
         return latest_statuses[:limit]
 
+    def get_tracked_item(self, app_name: str, instance_name: str, item_id: str) -> Optional[Dict]:
+        """Get a specific tracked item by its ID.
+        
+        Args:
+            app_name: Name of the app (radarr, sonarr, etc.)
+            instance_name: Name of the instance
+            item_id: ID of the item to retrieve
+            
+        Returns:
+            The tracked item dictionary if found, or None if not found
+        """
+        instance_path = self.get_instance_path(app_name, instance_name)
+        
+        if not os.path.exists(instance_path):
+            return None
+
+        try:
+            with open(instance_path, 'r') as f:
+                tracking_data = json.load(f)
+                
+            for item in tracking_data.get("tracking", {}).get("items", []):
+                if item.get("id") == item_id:
+                    return item
+            
+            return None
+        except Exception as e:
+            print(f"Error getting tracked item: {e}")
+            return None
+
     def cleanup_old_records(self):
         """Clean up records that have exceeded their time limit."""
         cleanup_time = timedelta(minutes=self.time_config["follow_up_time"] + 10)

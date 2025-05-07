@@ -206,11 +206,30 @@ def get_history(app_type, search_query=None, page=1, page_size=20):
     end_idx = start_idx + page_size
     paginated_entries = result[start_idx:end_idx]
     
-    # Calculate "how long ago" for each entry
+    # Calculate "how long ago" for each entry and sync with hunting manager for any active items
     current_time = int(time.time())
     for entry in paginated_entries:
         seconds_ago = current_time - entry["date_time"]
         entry["how_long_ago"] = format_time_ago(seconds_ago)
+        
+        # For active items, try to sync with hunting manager to get the latest status
+        try:
+            # Only sync items that aren't in a terminal state (Downloaded, Failed)
+            # This ensures we get the most up-to-date status for in-progress items
+            current_status = entry.get("hunt_status", "")
+            if current_status and ("downloaded" not in current_status.lower() 
+                                   and "failed" not in current_status.lower()):
+                app_type = entry.get("app_type")
+                instance_name = entry.get("instance_name")
+                item_id = entry.get("id")
+                
+                if app_type and instance_name and item_id:
+                    # Try to get latest status from hunting manager
+                    latest_status = sync_history_from_hunting_manager(app_type, instance_name, item_id)
+                    logger.debug(f"Synced status for {app_type}-{instance_name} ID {item_id}: {latest_status}")
+        except Exception as e:
+            # Don't let sync errors disrupt the history display
+            logger.warning(f"Error syncing with hunting manager: {e}")
     
     return {
         "entries": paginated_entries,
@@ -233,6 +252,124 @@ def format_time_ago(seconds):
         return f"{minutes} {'minute' if minutes == 1 else 'minutes'} ago"
     else:
         return f"{seconds} {'second' if seconds == 1 else 'seconds'} ago"
+
+def sync_history_from_hunting_manager(app_type, instance_name, item_id):
+    """
+    Retrieve and sync status information from hunting manager for a specific item
+    
+    Parameters:
+    - app_type: str - The app type (sonarr, radarr, etc)
+    - instance_name: str - Name of the instance
+    - item_id: str/int - ID of the item to retrieve status for
+    
+    Returns:
+    - dict - Updated status information or None if not found
+    """
+    try:
+        from src.primary.utils.hunting_manager import HuntingManager
+        from src.primary.settings_manager import get_config_dir
+        
+        # Initialize the hunting manager
+        config_dir = get_config_dir()
+        hunting_manager = HuntingManager(config_dir)
+        
+        # Get the tracked item from hunting manager
+        tracked_item = hunting_manager.get_tracked_item(app_type, instance_name, str(item_id))
+        
+        if tracked_item:
+            # Extract relevant information
+            status_info = {
+                "hunt_status": tracked_item.get("status"),
+                "protocol": tracked_item.get("protocol"),
+                "progress": tracked_item.get("progress"),
+                "eta": tracked_item.get("eta"),
+                "quality": tracked_item.get("quality"),
+                "download_client": tracked_item.get("download_client"),
+                "indexer": tracked_item.get("indexer"),
+                "download_id": tracked_item.get("download_id"),
+                "error_message": tracked_item.get("error_message")
+            }
+            
+            # Update the history entry with this information
+            if status_info["hunt_status"]:
+                # Update the history entry with all the information
+                update_history_with_tracking_info(app_type, instance_name, item_id, status_info)
+            
+            return status_info
+        return None
+    except Exception as e:
+        logger.error(f"Error syncing from hunting manager: {e}")
+        return None
+
+
+def update_history_with_tracking_info(app_type, instance_name, item_id, status_info):
+    """
+    Update a history entry with information from tracking system
+    
+    Parameters:
+    - app_type: str - The app type (sonarr, radarr, etc)
+    - instance_name: str - Name of the instance
+    - item_id: str/int - ID of the item to update
+    - status_info: dict - Status information to update
+    
+    Returns:
+    - bool - Success or failure
+    """
+    if not ensure_history_dir():
+        logger.error("Could not ensure history directory exists")
+        return False
+    
+    if app_type not in history_locks:
+        logger.error(f"Invalid app type: {app_type}")
+        return False
+    
+    history_file = get_history_file_path(app_type, instance_name)
+    if not history_file.exists():
+        logger.warning(f"History file doesn't exist for {app_type}-{instance_name}")
+        return False
+    
+    # Thread-safe file operation
+    with history_locks[app_type]:
+        try:
+            with open(history_file, 'r') as f:
+                history_data = json.load(f)
+            
+            # Find the entry with the matching ID
+            updated = False
+            for entry in history_data:
+                if str(entry.get("id", "")) == str(item_id):
+                    # Update all status fields
+                    entry["hunt_status"] = status_info.get("hunt_status")
+                    
+                    # Add all additional tracking information
+                    if status_info.get("protocol"):
+                        entry["protocol"] = status_info.get("protocol")
+                    if status_info.get("progress") is not None:
+                        entry["progress"] = status_info.get("progress")
+                    if status_info.get("quality"):
+                        entry["quality"] = status_info.get("quality")
+                    if status_info.get("download_client"):
+                        entry["download_client"] = status_info.get("download_client")
+                    if status_info.get("indexer"):
+                        entry["indexer"] = status_info.get("indexer")
+                    if status_info.get("download_id"):
+                        entry["download_id"] = status_info.get("download_id")
+                    
+                    updated = True
+            
+            if updated:
+                # Write back to file
+                with open(history_file, 'w') as f:
+                    json.dump(history_data, f, indent=2)
+                logger.info(f"Updated tracking info for {app_type}-{instance_name} ID {item_id} with latest status")
+                return True
+            else:
+                logger.warning(f"No matching entry found for {app_type}-{instance_name} ID {item_id}")
+                return False
+        except Exception as e:
+            logger.error(f"Error updating history with tracking info: {e}")
+            return False
+
 
 def update_history_entry_status(app_type, instance_name, item_id, hunt_status, protocol=None):
     """
@@ -290,7 +427,7 @@ def update_history_entry_status(app_type, instance_name, item_id, hunt_status, p
                 logger.warning(f"No matching entry found for {app_type}-{instance_name} ID {item_id}")
                 return False
         except Exception as e:
-            logger.error(f"Error updating hunt status: {e}")
+            logger.error(f"Error updating history entry status: {e}")
             return False
 
 def clear_history(app_type):
