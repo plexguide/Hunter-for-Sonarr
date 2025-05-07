@@ -23,6 +23,17 @@ def update_hunt_status(app_type, instance_name, item_id, item_data, queue_status
     Returns:
     - str - The hunt status that was set
     """
+    
+    # First check if there's an existing history entry to preserve the original timestamp
+    from src.primary.history_manager import get_history
+    existing_entries = get_history(app_type)
+    existing_entry = None
+    
+    # Find the existing entry for this item_id if it exists
+    for entry in existing_entries.get("entries", []):
+        if str(entry.get("id", "")) == str(item_id) and entry.get("instance_name") == instance_name:
+            existing_entry = entry
+            break
     try:
         # Common fields across all *arr apps
         item_name = ""
@@ -60,7 +71,7 @@ def update_hunt_status(app_type, instance_name, item_id, item_data, queue_status
         else:
             hunt_status = "Searching"
         
-        # Create history entry with hunt status
+        # Create history entry with hunt status, preserving original timestamp if available
         history_entry = {
             "name": item_name,
             "instance_name": instance_name,
@@ -69,9 +80,17 @@ def update_hunt_status(app_type, instance_name, item_id, item_data, queue_status
             "hunt_status": hunt_status
         }
         
-        # Add to history
-        add_history_entry(app_type, history_entry)
-        logger.info(f"[HUNTING] Updated history entry with hunt status for {app_type} ID {item_id}: {hunt_status}")
+        # If we have an existing entry, use its timestamp and just update the hunt_status
+        if existing_entry:
+            # We're just updating the hunt status, not creating a new history entry
+            # This ensures timestamps remain based on original request time
+            from src.primary.history_manager import update_history_entry_status
+            update_history_entry_status(app_type, instance_name, item_id, hunt_status)
+            logger.info(f"[HUNTING] Updated existing history entry status for {app_type} ID {item_id}: {hunt_status}")
+        else:
+            # No existing entry found, create a new one
+            add_history_entry(app_type, history_entry)
+            logger.info(f"[HUNTING] Created new history entry with hunt status for {app_type} ID {item_id}: {hunt_status}")
         
         return hunt_status
         

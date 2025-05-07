@@ -234,6 +234,59 @@ def format_time_ago(seconds):
     else:
         return f"{seconds} {'second' if seconds == 1 else 'seconds'} ago"
 
+def update_history_entry_status(app_type, instance_name, item_id, hunt_status):
+    """
+    Update just the hunt status of an existing history entry, preserving the original timestamp
+    
+    Parameters:
+    - app_type: str - The app type (sonarr, radarr, etc)
+    - instance_name: str - Name of the instance
+    - item_id: str/int - ID of the item to update
+    - hunt_status: str - New hunt status to set
+    
+    Returns:
+    - bool - Success or failure
+    """
+    if not ensure_history_dir():
+        logger.error("Could not ensure history directory exists")
+        return False
+    
+    if app_type not in history_locks:
+        logger.error(f"Invalid app type: {app_type}")
+        return False
+    
+    history_file = get_history_file_path(app_type, instance_name)
+    if not history_file.exists():
+        logger.warning(f"History file doesn't exist for {app_type}-{instance_name}")
+        return False
+    
+    # Thread-safe file operation
+    with history_locks[app_type]:
+        try:
+            with open(history_file, 'r') as f:
+                history_data = json.load(f)
+            
+            # Find the entry with the matching ID
+            updated = False
+            for entry in history_data:
+                if str(entry.get("id", "")) == str(item_id):
+                    # Update just the hunt_status field
+                    entry["hunt_status"] = hunt_status
+                    updated = True
+            
+            if updated:
+                # Write back to file
+                with open(history_file, 'w') as f:
+                    json.dump(history_data, f, indent=2)
+                logger.info(f"Updated hunt status for {app_type}-{instance_name} ID {item_id} to '{hunt_status}'")
+                return True
+            else:
+                logger.warning(f"No matching entry found for {app_type}-{instance_name} ID {item_id}")
+                return False
+        except Exception as e:
+            logger.error(f"Error updating hunt status: {e}")
+            return False
+
 def clear_history(app_type):
     """
     Clear history for an app

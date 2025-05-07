@@ -709,19 +709,8 @@ def hunting_manager_loop():
                         manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
                         logger.info(f"[HUNTING] Now tracking: {movie_name} (ID: {movie_id}) for instance {instance_name}")
                     
-                    # Update the history entry with the current hunt status
-                    try:
-                        from src.primary.utils.hunt_status import update_hunt_status
-                        update_hunt_status(
-                            app_type="radarr",
-                            instance_name=instance_name,
-                            item_id=movie_id,
-                            item_data=movie_data,
-                            queue_status=movie_in_queue,
-                            operation_type="missing"
-                        )
-                    except Exception as he:
-                        logger.error(f"[HUNTING] Error updating history entry: {he}")
+                    # We're no longer updating history entries to preserve original timestamps
+                    # The status column will still work based on initial hunt_status values set during processing
             
         except Exception as e:
             logger.error(f"[HUNTING] Error during hunting logic: {e}", exc_info=True)
