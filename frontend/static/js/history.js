@@ -248,7 +248,6 @@ const historyModule = {
                 <td>${this.escapeHtml(entry.processed_info)}</td>
                 <td>${this.formatHuntStatus(entry.hunt_status)}</td>
                 <td>${this.formatOperationType(entry.operation_type)}</td>
-                <td style="text-align:center">${this.formatProtocol(entry.protocol)}</td>
                 <td>${this.escapeHtml(entry.id)}</td>
                 <td>${this.escapeHtml(formattedInstance)}</td>
                 <td>${this.escapeHtml(entry.how_long_ago)}</td>
@@ -326,57 +325,23 @@ const historyModule = {
     
     // Helper function to format hunt status
     formatHuntStatus: function(huntStatus) {
-        if (!huntStatus) return '<span class="status-badge status-unknown">Unknown</span>';
-        
-        let statusClass = 'status-unknown';
-        let statusIcon = '';
-        
-        // Apply the right color and icon based on status
-        if (huntStatus.includes('Downloading') || huntStatus.includes('Queued') || huntStatus.includes('In progress')) {
-            statusClass = 'status-downloading';
-            statusIcon = '<i class="fas fa-arrow-down"></i>';
-        } else if (huntStatus === 'Downloaded' || huntStatus === 'Found') {
-            statusClass = 'status-downloaded';
-            statusIcon = '<i class="fas fa-check"></i>';
-        } else if (huntStatus === 'Searching') {
-            statusClass = 'status-searching';
-            statusIcon = '<i class="fas fa-search"></i>';
-        } else if (huntStatus.includes('Failed') || huntStatus.includes('Warning') || huntStatus.includes('Error')) {
-            statusClass = 'status-error';
-            statusIcon = '<i class="fas fa-exclamation-triangle"></i>';
-        } else if (huntStatus.includes('Paused')) {
-            statusClass = 'status-paused';
-            statusIcon = '<i class="fas fa-pause"></i>';
+        if (!huntStatus) {
+            return '<span class="hunt-status-unknown">Not Tracked</span>';
         }
         
-        return `<span class="status-badge ${statusClass}">${statusIcon} ${this.escapeHtml(huntStatus)}</span>`;
-    },
-    
-    // Helper function to format protocol with icons
-    formatProtocol: function(protocol) {
-        if (!protocol || protocol === 'Unknown') {
-            return '<i class="fas fa-question-circle protocol-unknown" title="Unknown"></i>';
+        const statusLower = huntStatus.toLowerCase();
+        switch (statusLower) {
+            case 'searching':
+                return '<span class="hunt-status-searching">Searching</span>';
+            case 'found':
+                return '<span class="hunt-status-found">Found</span>';
+            case 'downloaded':
+                return '<span class="hunt-status-downloaded">Downloaded</span>';
+            case 'failed':
+                return '<span class="hunt-status-failed">Failed</span>';
+            default:
+                return `<span class="hunt-status-unknown">${this.escapeHtml(huntStatus)}</span>`;
         }
-        
-        const lowerProtocol = protocol.toLowerCase();
-        let iconClass = '';
-        let tooltip = '';
-        
-        if (lowerProtocol === 'torrent') {
-            iconClass = 'fa-magnet protocol-torrent';
-            tooltip = 'Torrent';
-        } else if (lowerProtocol === 'usenet') {
-            iconClass = 'fa-newspaper protocol-usenet';
-            tooltip = 'Usenet';
-        } else if (lowerProtocol.includes('http') || lowerProtocol === 'direct') {
-            iconClass = 'fa-download protocol-http';
-            tooltip = 'Direct Download';
-        } else {
-            iconClass = 'fa-exchange-alt protocol-other';
-            tooltip = protocol; // Use original protocol text
-        }
-        
-        return `<i class="fas ${iconClass}" title="${tooltip}"></i>`;
     }
 };
 

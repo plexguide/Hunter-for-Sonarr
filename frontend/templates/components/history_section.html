@@ -50,7 +50,6 @@
                         <th>Processed Information</th>
                         <th>Status</th>
                         <th>Operation</th>
-                        <th>Protocol</th>
                         <th>ID Number</th>
                         <th>Name of Instance</th>
                         <th>How Long Ago</th>
@@ -378,75 +377,50 @@
         border: 1px solid rgba(0, 123, 255, 0.3);
     }
     
-    /* Status badges and colors */
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 8px;
-        border-radius: 4px;
+    /* Status styling */
+    .hunt-status-success {
+        color: #2ecc71;
         font-weight: 500;
-        font-size: 0.85em;
+        padding: 3px 8px;
+        background-color: rgba(46, 204, 113, 0.1);
+        border-radius: 4px;
+        font-size: 0.9em;
     }
     
-    .status-badge i {
-        margin-right: 5px;
-    }
-    
-    .status-searching {
-        background-color: rgba(52, 152, 219, 0.15);
+    .hunt-status-searching {
         color: #3498db;
+        font-weight: 500;
+        padding: 3px 8px;
+        background-color: rgba(52, 152, 219, 0.1);
+        border-radius: 4px;
+        font-size: 0.9em;
     }
     
-    .status-downloaded {
-        background-color: rgba(46, 204, 113, 0.15);
-        color: #2ecc71;
-    }
-    
-    .status-downloading {
-        background-color: rgba(241, 196, 15, 0.15);
+    .hunt-status-found {
         color: #f39c12;
+        font-weight: 500;
+        padding: 3px 8px;
+        background-color: rgba(243, 156, 18, 0.1);
+        border-radius: 4px;
+        font-size: 0.9em;
     }
     
-    .status-error {
-        background-color: rgba(231, 76, 60, 0.15);
+    .hunt-status-downloaded {
+        color: #2ecc71;
+        font-weight: 500;
+        padding: 3px 8px;
+        background-color: rgba(46, 204, 113, 0.1);
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+    
+    .hunt-status-failed {
         color: #e74c3c;
-    }
-    
-    .status-paused {
-        background-color: rgba(149, 165, 166, 0.15);
-        color: #7f8c8d;
-    }
-    
-    .status-unknown {
-        background-color: rgba(149, 165, 166, 0.15);
-        color: #95a5a6;
-        font-style: italic;
-    }
-    
-    /* Protocol icons */
-    .protocol-torrent, .protocol-usenet, .protocol-http, .protocol-unknown, .protocol-other {
-        font-size: 1.2em;
-        cursor: help;
-    }
-    
-    .protocol-torrent {
-        color: #3498db;
-    }
-    
-    .protocol-usenet {
-        color: #9b59b6;
-    }
-    
-    .protocol-http {
-        color: #2ecc71;
-    }
-    
-    .protocol-unknown {
-        color: #95a5a6;
-    }
-    
-    .protocol-other {
-        color: #f39c12;
+        font-weight: 500;
+        padding: 3px 8px;
+        background-color: rgba(231, 76, 60, 0.1);
+        border-radius: 4px;
+        font-size: 0.9em;
     }
     
     /* Empty state and loading styling */
