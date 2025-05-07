@@ -620,15 +620,45 @@ def hunting_manager_loop():
                             
                             # Check download queue status for this movie
                             movie_in_queue = False
+                            queue_item_data = None
+                            progress = None
+                            status = None
+                            eta = None
+                            protocol = None
+                            
                             for queue_item in queue_items:
                                 if queue_item.get('movieId') == int(movie_id):
                                     movie_in_queue = True
+                                    queue_item_data = queue_item
+                                    
+                                    # Extract basic download information
                                     progress = queue_item.get('progress', 0)
                                     status = queue_item.get('status', 'Unknown')
                                     eta = queue_item.get('estimatedCompletionTime', 'Unknown')
                                     protocol = queue_item.get('protocol', 'Unknown')
+                                    
+                                    # Extract additional requested information
+                                    quality = None
+                                    if 'quality' in queue_item and 'quality' in queue_item['quality']:
+                                        quality = queue_item['quality']['quality'].get('name')
+                                        
+                                    download_client = queue_item.get('downloadClient')
+                                    added = queue_item.get('added')
+                                    download_id = queue_item.get('downloadId')
+                                    indexer = queue_item.get('indexer')
+                                    error_message = queue_item.get('errorMessage')
+                                    
+                                    # Log the detailed information
                                     logger.info(f"[HUNTING] Movie in download queue - ID: {movie_id}, Title: {title}, "
                                                f"Progress: {progress}%, Status: {status}, Protocol: {protocol}")
+                                    
+                                    if quality or download_client or indexer:
+                                        logger.debug(f"[HUNTING] Additional details - Quality: {quality}, "
+                                                   f"Client: {download_client}, Indexer: {indexer}")
+                                    
+                                    if error_message:
+                                        logger.warning(f"[HUNTING] Download error: {error_message}")
+                                        
                                     break
                             
                             if not movie_in_queue and not has_file and monitored:
@@ -709,19 +739,43 @@ def hunting_manager_loop():
                         manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
                         logger.info(f"[HUNTING] Now tracking: {movie_name} (ID: {movie_id}) for instance {instance_name}")
                     
-                    # Update ONLY the status field in history without changing timestamps
+                    # Update both hunting manager tracking and history entry
                     try:
                         # Determine current status
                         current_status = "Searching"
                         if has_file:
                             current_status = "Downloaded"
                         elif movie_in_queue:
-                            current_status = "Found"
+                            if status and status.lower() == 'paused':
+                                current_status = f"Paused - {progress}%"
+                            else:
+                                current_status = f"Downloading - {progress}%" if progress is not None else "Found"
                         
-                        # Update ONLY the status field, preserving original timestamp
+                        # First update the hunting manager tracking with detailed information
+                        debug_info = {
+                            "queue_status": status,
+                            "last_checked": datetime.now().isoformat()
+                        }
+                        
+                        # Update the hunting manager tracking with detailed information
+                        manager.update_item_status(
+                            "radarr", instance_name, str(movie_id), 
+                            current_status, debug_info,
+                            protocol=protocol, progress=progress, eta=eta,
+                            quality=quality, download_client=download_client, 
+                            added=added, download_id=download_id, 
+                            indexer=indexer, error_message=error_message
+                        )
+                        
+                        # Then update history entry status, preserving original timestamp
                         from src.primary.history_manager import update_history_entry_status
                         update_history_entry_status("radarr", instance_name, movie_id, current_status)
-                        logger.info(f"[HUNTING] Updated history entry status for movie ID {movie_id}: {current_status}")
+                        logger.info(f"[HUNTING] Updated tracking and history status for movie ID {movie_id}: {current_status}")
+                        
+                        # Log additional details if available
+                        if protocol:
+                            logger.debug(f"[HUNTING] Protocol: {protocol}, Progress: {progress}%, ETA: {eta}")
+
                     except Exception as he:
                         logger.error(f"[HUNTING] Error updating history entry: {he}")
             

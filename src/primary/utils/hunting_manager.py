@@ -79,8 +79,33 @@ class HuntingManager:
             json.dump(tracking_data, f, indent=2)
 
     def update_item_status(self, app_name: str, instance_name: str, item_id: str, 
-                          new_status: str, debug_info: Optional[Dict] = None):
-        """Update the status of a tracked item."""
+                           new_status: str, debug_info: Optional[Dict] = None,
+                           protocol: Optional[str] = None, progress: Optional[float] = None,
+                           eta: Optional[str] = None, quality: Optional[str] = None,
+                           download_client: Optional[str] = None, added: Optional[str] = None,
+                           download_id: Optional[str] = None, indexer: Optional[str] = None,
+                           error_message: Optional[str] = None):
+        """Update the status of a tracked item.
+        
+        Args:
+            app_name: Name of the app (radarr, sonarr, etc.)
+            instance_name: Name of the instance
+            item_id: ID of the item to update
+            new_status: New status to set
+            debug_info: Optional debug information to include
+            protocol: Optional download protocol (torrent, usenet, etc.)
+            progress: Optional download progress (0-100)
+            eta: Optional estimated time of arrival/completion
+            quality: Optional quality profile name (e.g., "1080p", "4K")
+            download_client: Optional download client name (e.g., "qBittorrent")
+            added: Optional timestamp when the download was added to queue
+            download_id: Optional ID used by the download client
+            indexer: Optional name of the indexer that provided the release
+            error_message: Optional error message if download is failing
+        
+        Returns:
+            bool: True if the update was successful, False otherwise
+        """
         instance_path = self.get_instance_path(app_name, instance_name)
         
         if not os.path.exists(instance_path):
@@ -93,6 +118,27 @@ class HuntingManager:
             if item["id"] == item_id:
                 item["status"] = new_status
                 item["last_checked"] = datetime.now().isoformat()
+                
+                # Store download details if provided
+                if protocol is not None:
+                    item["protocol"] = protocol
+                if progress is not None:
+                    item["progress"] = progress
+                if eta is not None:
+                    item["eta"] = eta
+                if quality is not None:
+                    item["quality"] = quality
+                if download_client is not None:
+                    item["download_client"] = download_client
+                if added is not None:
+                    item["added_to_queue"] = added
+                if download_id is not None:
+                    item["download_id"] = download_id
+                if indexer is not None:
+                    item["indexer"] = indexer
+                if error_message is not None:
+                    item["error_message"] = error_message
+                    
                 if debug_info:
                     item["debug_info"].update(debug_info)
                 item["debug_info"]["last_status_change"] = datetime.now().isoformat()
