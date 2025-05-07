@@ -519,8 +519,9 @@ def shutdown_threads():
 
 def process_radarr_hunting(manager, hunting_manager_stop_event):
     """
-    Process Radarr-specific hunting logic.
-    This is extracted from the main hunting_manager_loop for better modularity.
+    Process Radarr-specific hunting logic using the unified field handling approach.
+    This completely eliminates any translation between API responses and history entries,
+    with the field_mapper handling all the JSON structure creation consistently.
     
     Args:
         manager: The HuntingManager instance
@@ -529,11 +530,20 @@ def process_radarr_hunting(manager, hunting_manager_stop_event):
     logger = get_logger("hunting")
     
     try:
-        # Import Radarr-specific modules
+        # Import necessary modules
         from src.primary.apps.radarr import get_configured_instances
         from src.primary.apps.radarr.api import get_movie_by_id, get_movie_file, get_download_queue
-        from src.primary.utils.history_utils import log_processed_media
+        from src.primary.history_manager import get_history, update_history_entry_status, add_history_entry
+        from src.primary.stateful_manager import get_processed_ids
+        from src.primary.utils.field_mapper import determine_hunt_status, get_nested_value, APP_CONFIG, create_history_entry, fetch_api_data_for_item
         
+        # Check if Radarr is configured
+        radarr_config = APP_CONFIG.get("radarr")
+        if not radarr_config:
+            logger.error("[HUNTING] No configuration found for Radarr, cannot process hunting")
+            return
+        
+        # Get all configured Radarr instances
         radarr_instances = get_configured_instances()
         
         for instance in radarr_instances:
@@ -553,30 +563,29 @@ def process_radarr_hunting(manager, hunting_manager_stop_event):
             logger.info(f"[HUNTING] Checking processed IDs for instance: {instance_name}")
             
             # Load processed IDs from stateful_manager
-            from src.primary.stateful_manager import get_processed_ids
             processed_ids = get_processed_ids("radarr", instance_name)
             logger.info(f"[HUNTING] Found {len(processed_ids)} processed IDs for instance {instance_name}")
             
-            # Get current download queue to check status
+            # Load history entries to check for existing entries
+            history_data = get_history("radarr", instance_name)
+            
+            # Create a dictionary of API handlers for easier access
+            api_handlers = {
+                "get_movie_by_id": lambda id: get_movie_by_id(api_url, api_key, id, api_timeout),
+                "get_movie_file": lambda id: get_movie_file(api_url, api_key, id, api_timeout),
+                "get_download_queue": lambda: get_download_queue(api_url, api_key, api_timeout)
+            }
+            
+            # Get queue data once for all movies to avoid multiple API calls
+            queue_data = None
             try:
-                queue_items = get_download_queue(api_url, api_key, api_timeout)
-                logger.info(f"[HUNTING] Current download queue has {len(queue_items)} items for instance {instance_name}")
-                
-                # Log some details about items in queue for visibility
-                if queue_items:
-                    for i, item in enumerate(queue_items[:5]):  # Log first 5 items as examples
-                        movie_id = item.get('movieId', 'Unknown')
-                        title = item.get('title', 'Unknown')
-                        progress = item.get('progress', 0)
-                        status = item.get('status', 'Unknown')
-                        logger.info(f"[HUNTING] Queue item {i+1}: Movie ID: {movie_id}, Title: {title}, Progress: {progress}%, Status: {status}")
-                    if len(queue_items) > 5:
-                        logger.info(f"[HUNTING] ...and {len(queue_items) - 5} more items in queue")
+                queue_data = api_handlers["get_download_queue"]()
+                logger.info(f"[HUNTING] Current download queue has {len(queue_data)} items for instance {instance_name}")
             except Exception as e:
                 logger.error(f"[HUNTING] Error fetching download queue for {instance_name}: {e}")
-                queue_items = []
+                queue_data = []
             
-            # Process each movie ID with enhanced logging
+            # Process each movie ID
             processed_count = 0
             for movie_id in processed_ids:
                 # Skip processing if stop event is set
@@ -586,143 +595,984 @@ def process_radarr_hunting(manager, hunting_manager_stop_event):
                 processed_count += 1
                 logger.info(f"[HUNTING] Processing movie ID: {movie_id} ({processed_count}/{len(processed_ids)}) for instance {instance_name}")
                 
-                # Get detailed movie information from Radarr API
                 try:
-                    movie_data = get_movie_by_id(api_url, api_key, movie_id, api_timeout)
-                    if movie_data:
-                        title = movie_data.get('title', 'Unknown')
-                        year = movie_data.get('year', 'Unknown')
-                        has_file = movie_data.get('hasFile', False)
-                        monitored = movie_data.get('monitored', False)
-                        
-                        logger.info(f"[HUNTING] Movie details - ID: {movie_id}, Title: {title}, "
-                                   f"Year: {year}, Status: {'Downloaded' if has_file else 'Missing'}, "
-                                   f"Monitored: {monitored}")
-                        
-                        # Check if movie has a file
-                        if has_file:
-                            try:
-                                file_id = movie_data.get('movieFile', {}).get('id')
-                                if file_id:
-                                    file_data = get_movie_file(api_url, api_key, file_id, api_timeout)
-                                    quality = file_data.get('quality', {}).get('quality', {}).get('name', 'Unknown')
-                                    size_mb = round(file_data.get('size', 0) / (1024 * 1024), 2)
-                                    logger.info(f"[HUNTING] Movie file - Quality: {quality}, Size: {size_mb} MB, "
-                                               f"Path: {file_data.get('path', 'Unknown')}")
-                                else:
-                                    logger.info(f"[HUNTING] Movie has file but no file ID found")
-                            except Exception as e:
-                                logger.warning(f"[HUNTING] Error fetching movie file details: {e}")
-                        
-                        # Check download queue status for this movie
-                        movie_in_queue = False
-                        for queue_item in queue_items:
+                    # Use the unified field handler to fetch all needed data
+                    primary_data, file_data, _ = fetch_api_data_for_item("radarr", movie_id, api_handlers)
+                    
+                    if not primary_data:
+                        logger.warning(f"[HUNTING] No data returned from API for movie ID {movie_id}, skipping")
+                        continue
+                    
+                    # Log basic details
+                    title = primary_data.get('title', 'Unknown')
+                    year = primary_data.get('year', 'Unknown')
+                    has_file = primary_data.get('hasFile', False)
+                    monitored = primary_data.get('monitored', False)
+                    
+                    logger.info(f"[HUNTING] Movie details - ID: {movie_id}, Title: {title}, "
+                               f"Year: {year}, Status: {'Downloaded' if has_file else 'Missing'}, "
+                               f"Monitored: {monitored}")
+                    
+                    # Log file details if available
+                    if file_data:
+                        quality = get_nested_value(file_data, "quality.quality.name")
+                        size_mb = round(file_data.get('size', 0) / (1024 * 1024), 2)
+                        logger.info(f"[HUNTING] Movie file - Quality: {quality or 'Unknown'}, Size: {size_mb} MB")
+                    
+                    # Check if movie is in queue
+                    movie_in_queue = False
+                    queue_item_data = None
+                    if queue_data:
+                        for queue_item in queue_data:
                             if queue_item.get('movieId') == int(movie_id):
                                 movie_in_queue = True
+                                queue_item_data = queue_item
                                 progress = queue_item.get('progress', 0)
                                 status = queue_item.get('status', 'Unknown')
-                                eta = queue_item.get('estimatedCompletionTime', 'Unknown')
                                 protocol = queue_item.get('protocol', 'Unknown')
                                 logger.info(f"[HUNTING] Movie in download queue - ID: {movie_id}, Title: {title}, "
                                            f"Progress: {progress}%, Status: {status}, Protocol: {protocol}")
                                 break
+                    
+                    if not movie_in_queue and not has_file and monitored:
+                        logger.info(f"[HUNTING] Movie not in download queue and not downloaded - "
+                                   f"ID: {movie_id}, Title: {title}, Monitored: {monitored}")
+                    
+                    # Determine hunt status
+                    hunt_status = determine_hunt_status("radarr", primary_data, queue_data)
+                    
+                    # Check if this movie is already in history
+                    existing_entry = None
+                    if history_data.get("entries"):
+                        existing_entry = next((entry for entry in history_data["entries"] 
+                                              if str(entry.get("id", "")) == str(movie_id)), None)
+                    
+                    # Update or create history entry
+                    if existing_entry:
+                        # Just update the status if it exists
+                        update_history_entry_status("radarr", instance_name, movie_id, hunt_status)
                         
-                        if not movie_in_queue and not has_file and monitored:
-                            logger.info(f"[HUNTING] Movie not in download queue and not downloaded - "
-                                       f"ID: {movie_id}, Title: {title}, Monitored: {monitored}")
+                        # Log status changes
+                        previous_status = existing_entry.get("hunt_status", "Not Tracked")
+                        if previous_status != hunt_status:
+                            logger.info(f"[HUNTING] Updating status for movie ID {movie_id} from '{previous_status}' to '{hunt_status}'")
+                        else:
+                            logger.info(f"[HUNTING] Status unchanged for movie ID {movie_id}: '{hunt_status}'")
                     else:
-                        logger.warning(f"[HUNTING] No data returned from API for movie ID {movie_id}")
+                        # Create a new history entry with the unified approach
+                        entry_data = create_history_entry("radarr", instance_name, movie_id, 
+                                                         primary_data, file_data, queue_data)
+                        
+                        # Add required name field for history_manager
+                        entry_data["name"] = f"{title} ({year})"
+                        
+                        # Add the entry to history
+                        add_history_entry("radarr", entry_data)
+                        logger.info(f"[HUNTING] Created new history entry for movie ID {movie_id}: {hunt_status}")
+                    
+                    # Track movie in memory
+                    movie_info = {
+                        "id": movie_id,
+                        "title": title,
+                        "year": year,
+                        "status": hunt_status,
+                        "instance_name": instance_name
+                    }
+                    
+                    # Add to tracking or update
+                    manager.track_movie(movie_id, instance_name, movie_info)
+                    logger.info(f"[HUNTING] Movie ID {movie_id} is already tracked for instance {instance_name}, status: {hunt_status}")
+                    
                 except Exception as e:
-                    logger.error(f"[HUNTING] Error fetching movie details for ID {movie_id}: {e}")
+                    logger.error(f"[HUNTING] Error processing movie ID {movie_id}: {e}")
                     continue
-                
-                # Check if already tracked in hunting system
-                instance_path = manager.get_instance_path("radarr", instance_name)
-                already_tracked = False
-                if os.path.exists(instance_path):
-                    with open(instance_path, 'r') as f:
-                        tracking_data = json.load(f)
-                    for item in tracking_data.get("tracking", {}).get("items", []):
-                        if item["id"] == str(movie_id):
-                            already_tracked = True
-                            # Update status based on API data
-                            current_status = "Requested"
-                            debug_info = {}
-                            
-                            if movie_data and movie_data.get('hasFile', False):
-                                current_status = "Found"
-                                quality = movie_data.get('movieFile', {}).get('quality', {}).get('quality', {}).get('name', 'Unknown')
-                                debug_info = {
-                                    "quality": quality,
-                                    "size_mb": round(movie_data.get('movieFile', {}).get('size', 0) / (1024 * 1024), 2),
-                                    "timestamp": datetime.now().isoformat()
-                                }
-                            elif movie_in_queue:
-                                current_status = "Downloading"
-                                for queue_item in queue_items:
-                                    if queue_item.get('movieId') == int(movie_id):
-                                        debug_info = {
-                                            "progress": queue_item.get('progress', 0),
-                                            "status": queue_item.get('status', 'Unknown'),
-                                            "protocol": queue_item.get('protocol', 'Unknown'),
-                                            "timestamp": datetime.now().isoformat()
-                                        }
-                                        break
-                            elif movie_data and movie_data.get('monitored', False):
-                                current_status = "Searching"
-                                debug_info = {
-                                    "last_check": datetime.now().isoformat(),
-                                    "monitored": True
-                                }
-                            
-                            if item["status"] != current_status:
-                                logger.info(f"[HUNTING] Updating status for movie ID {movie_id} from '{item['status']}' to '{current_status}'")
-                                manager.update_item_status("radarr", instance_name, str(movie_id), current_status, debug_info)
-                            else:
-                                logger.info(f"[HUNTING] Status unchanged for movie ID {movie_id}: '{current_status}'")
-                            
-                            logger.info(f"[HUNTING] Movie ID {movie_id} is already tracked for instance {instance_name}, status: {current_status}")
-                            break
-                
-                if not already_tracked and movie_data:
-                    # Get movie name from API or fall back to history
-                    movie_name = movie_data.get('title', str(movie_id))
-                    
-                    # Add to tracking
-                    manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
-                    logger.info(f"[HUNTING] Now tracking: {movie_name} (ID: {movie_id}) for instance {instance_name}")
-                elif not already_tracked:
-                    # Fallback to history if API call failed
-                    from src.primary.history_manager import get_history
-                    entries = get_history("radarr", instance_name)
-                    movie_name = str(movie_id)
-                    for entry in entries:
-                        if isinstance(entry, dict) and str(entry.get("id", "")) == str(movie_id):
-                            movie_name = entry.get("name", movie_name)
-                            break
-                    
-                    # Add to tracking
-                    manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
-                    logger.info(f"[HUNTING] Now tracking: {movie_name} (ID: {movie_id}) for instance {instance_name}")
-                
-                # Update ONLY the status field in history without changing timestamps
-                try:
-                    # Determine current status
-                    current_status = "Searching"
-                    if has_file:
-                        current_status = "Downloaded"
-                    elif movie_in_queue:
-                        current_status = "Found"
-                    
-                    # Update ONLY the status field, preserving original timestamp
-                    from src.primary.history_manager import update_history_entry_status
-                    update_history_entry_status("radarr", instance_name, movie_id, current_status)
-                    logger.info(f"[HUNTING] Updated history entry status for movie ID {movie_id}: {current_status}")
-                except Exception as he:
-                    logger.error(f"[HUNTING] Error updating history entry: {he}")
-    
+            
+            logger.info(f"[HUNTING] Processed {processed_count} items for {instance_name}")
+        
+        logger.info(f"[HUNTING] === Radarr hunting cycle completed ====")
     except Exception as e:
-        logger.error(f"[HUNTING] Error during Radarr hunting logic: {e}", exc_info=True)
+        logger.error(f"[HUNTING] Error in Radarr hunting process: {str(e)}")
+
+def process_sonarr_hunting(manager, hunting_manager_stop_event):
+    """
+    Process Sonarr-specific hunting logic using the unified field handling approach.
+    This completely eliminates any translation between API responses and history entries,
+    with the field_mapper handling all the JSON structure creation consistently.
+    
+    Args:
+        manager: The HuntingManager instance
+        hunting_manager_stop_event: Event to check if hunting should stop
+    """
+    logger = get_logger("hunting")
+    
+    try:
+        # Import necessary modules
+        from src.primary.apps.sonarr import get_configured_instances
+        from src.primary.apps.sonarr.api import get_series_by_id, get_episode, get_queue
+        from src.primary.history_manager import get_history, update_history_entry_status, add_history_entry
+        from src.primary.stateful_manager import get_processed_ids
+        from src.primary.utils.field_mapper import determine_hunt_status, get_nested_value, APP_CONFIG, create_history_entry, fetch_api_data_for_item
+        
+        # Check if Sonarr is configured
+        sonarr_config = APP_CONFIG.get("sonarr")
+        if not sonarr_config:
+            logger.error("[HUNTING] No configuration found for Sonarr, cannot process hunting")
+            return
+        
+        # Get all configured Sonarr instances
+        sonarr_instances = get_configured_instances()
+        
+        for instance in sonarr_instances:
+            # Skip processing if stop event is set
+            if hunting_manager_stop_event.is_set():
+                return
+                
+            instance_name = instance.get("instance_name", "Default")
+            api_url = instance.get("api_url")
+            api_key = instance.get("api_key")
+            api_timeout = settings_manager.get_advanced_setting("api_timeout", 120)
+            
+            if not api_url or not api_key:
+                logger.warning(f"[HUNTING] Missing API URL or key for instance: {instance_name}, skipping")
+                continue
+                
+            logger.info(f"[HUNTING] Checking processed IDs for instance: {instance_name}")
+            
+            # Load processed IDs from stateful_manager
+            processed_ids = get_processed_ids("sonarr", instance_name)
+            logger.info(f"[HUNTING] Found {len(processed_ids)} processed IDs for instance {instance_name}")
+            
+            # Load history entries to check for existing entries
+            history_data = get_history("sonarr", instance_name)
+            
+            # Create a dictionary of API handlers for easier access
+            api_handlers = {
+                "get_series_by_id": lambda id: get_series_by_id(api_url, api_key, api_timeout, id),
+                "get_episode": lambda id: get_episode(api_url, api_key, api_timeout, id),
+                "get_queue": lambda: get_queue(api_url, api_key, api_timeout)
+            }
+            
+            # Get queue data once for all series to avoid multiple API calls
+            queue_data = None
+            try:
+                queue_data = api_handlers["get_queue"]()
+                logger.info(f"[HUNTING] Current download queue has {len(queue_data)} items for instance {instance_name}")
+            except Exception as e:
+                logger.error(f"[HUNTING] Error fetching download queue for {instance_name}: {e}")
+                queue_data = []
+            
+            # Process each series ID
+            processed_count = 0
+            for series_id in processed_ids:
+                # Skip processing if stop event is set
+                if hunting_manager_stop_event.is_set():
+                    return
+                    
+                processed_count += 1
+                logger.info(f"[HUNTING] Processing series ID: {series_id} ({processed_count}/{len(processed_ids)}) for instance {instance_name}")
+                
+                try:
+                    # Use the unified field handler to fetch all needed data
+                    # Note: Episode data (if needed) would be handled separately as it's multiple items per series
+                    primary_data, _, _ = fetch_api_data_for_item("sonarr", series_id, api_handlers)
+                    
+                    if not primary_data:
+                        logger.warning(f"[HUNTING] No data returned from API for series ID {series_id}, skipping")
+                        continue
+                    
+                    # Log basic details
+                    title = primary_data.get('title', 'Unknown')
+                    monitored = primary_data.get('monitored', False)
+                    status = primary_data.get('status', 'Unknown')
+                    
+                    # Get statistics if available
+                    episode_count = get_nested_value(primary_data, "statistics.episodeCount", 0)
+                    episode_file_count = get_nested_value(primary_data, "statistics.episodeFileCount", 0)
+                    
+                    logger.info(f"[HUNTING] Series details - ID: {series_id}, Title: {title}, "
+                               f"Status: {status}, Monitored: {monitored}, "
+                               f"Episodes: {episode_count}, Available: {episode_file_count}")
+                    
+                    # Check if series has episodes in queue
+                    series_in_queue = False
+                    queue_item_data = None
+                    if queue_data:
+                        for queue_item in queue_data:
+                            if queue_item.get('seriesId') == int(series_id):
+                                series_in_queue = True
+                                queue_item_data = queue_item
+                                progress = queue_item.get('progress', 0)
+                                status = queue_item.get('status', 'Unknown')
+                                protocol = queue_item.get('protocol', 'Unknown')
+                                episode_title = get_nested_value(queue_item, "episode.title", "Unknown Episode")
+                                logger.info(f"[HUNTING] Series has episode in download queue - ID: {series_id}, "
+                                           f"Title: {title}, Episode: {episode_title}, "
+                                           f"Progress: {progress}%, Status: {status}, Protocol: {protocol}")
+                                break
+                    
+                    # Determine hunt status
+                    hunt_status = determine_hunt_status("sonarr", primary_data, queue_data)
+                    
+                    # Check if this series is already in history
+                    existing_entry = None
+                    if history_data.get("entries"):
+                        existing_entry = next((entry for entry in history_data["entries"] 
+                                              if str(entry.get("id", "")) == str(series_id)), None)
+                    
+                    # Update or create history entry
+                    if existing_entry:
+                        # Just update the status if it exists
+                        update_history_entry_status("sonarr", instance_name, series_id, hunt_status)
+                        
+                        # Log status changes
+                        previous_status = existing_entry.get("hunt_status", "Not Tracked")
+                        if previous_status != hunt_status:
+                            logger.info(f"[HUNTING] Updating status for series ID {series_id} from '{previous_status}' to '{hunt_status}'")
+                        else:
+                            logger.info(f"[HUNTING] Status unchanged for series ID {series_id}: '{hunt_status}'")
+                    else:
+                        # Create a new history entry with the unified approach
+                        entry_data = create_history_entry("sonarr", instance_name, series_id, 
+                                                         primary_data, None, queue_data)
+                        
+                        # Add required name field for history_manager
+                        entry_data["name"] = title
+                        
+                        # Add the entry to history
+                        add_history_entry("sonarr", entry_data)
+                        logger.info(f"[HUNTING] Created new history entry for series ID {series_id}: {hunt_status}")
+                    
+                    # Track series in memory
+                    series_info = {
+                        "id": series_id,
+                        "title": title,
+                        "status": hunt_status,
+                        "instance_name": instance_name
+                    }
+                    
+                    # Add to tracking or update
+                    # Note: Using track_movie method for now, could be renamed to track_item in the future for clarity
+                    manager.track_movie(series_id, instance_name, series_info)
+                    logger.info(f"[HUNTING] Series ID {series_id} is now tracked for instance {instance_name}, status: {hunt_status}")
+                    
+                except Exception as e:
+                    logger.error(f"[HUNTING] Error processing series ID {series_id}: {e}")
+    except Exception as e:
+        logger.error(f"[HUNTING] Error in Sonarr hunting process: {e}")
+        logger.error(traceback.format_exc())
+
+
+def process_lidarr_hunting(manager, hunting_manager_stop_event):
+    """
+    Process Lidarr-specific hunting logic using the unified field handling approach.
+    This completely eliminates any translation between API responses and history entries,
+    with the field_mapper handling all the JSON structure creation consistently.
+    
+    Args:
+        manager: The HuntingManager instance
+        hunting_manager_stop_event: Event to check if hunting should stop
+    """
+    logger = get_logger("hunting")
+    
+    try:
+        # Import necessary modules
+        from src.primary.apps.lidarr import get_configured_instances
+        from src.primary.apps.lidarr.api import get_artist_by_id, get_queue, get_album_by_artist_id
+        from src.primary.history_manager import get_history, update_history_entry_status, add_history_entry
+        from src.primary.stateful_manager import get_processed_ids
+        from src.primary.utils.field_mapper import determine_hunt_status, get_nested_value, APP_CONFIG, create_history_entry, fetch_api_data_for_item
+        
+        # Check if Lidarr is configured
+        lidarr_config = APP_CONFIG.get("lidarr")
+        if not lidarr_config:
+            logger.error("[HUNTING] No configuration found for Lidarr, cannot process hunting")
+            return
+        
+        # Get all configured Lidarr instances
+        lidarr_instances = get_configured_instances()
+        
+        for instance in lidarr_instances:
+            # Skip processing if stop event is set
+            if hunting_manager_stop_event.is_set():
+                return
+                
+            instance_name = instance.get("instance_name", "Default")
+            api_url = instance.get("api_url")
+            api_key = instance.get("api_key")
+            api_timeout = settings_manager.get_advanced_setting("api_timeout", 120)
+            
+            if not api_url or not api_key:
+                logger.warning(f"[HUNTING] Missing API URL or key for instance: {instance_name}, skipping")
+                continue
+                
+            logger.info(f"[HUNTING] Checking processed IDs for instance: {instance_name}")
+            
+            # Load processed IDs from stateful_manager
+            processed_ids = get_processed_ids("lidarr", instance_name)
+            logger.info(f"[HUNTING] Found {len(processed_ids)} processed IDs for instance {instance_name}")
+            
+            # Load history entries to check for existing entries
+            history_data = get_history("lidarr", instance_name)
+            
+            # Create a dictionary of API handlers for easier access
+            api_handlers = {
+                "get_artist_by_id": lambda id: get_artist_by_id(api_url, api_key, api_timeout, id),
+                "get_album_by_artist_id": lambda id: get_album_by_artist_id(api_url, api_key, api_timeout, id),
+                "get_queue": lambda: get_queue(api_url, api_key, api_timeout)
+            }
+            
+            # Get queue data once for all artists to avoid multiple API calls
+            queue_data = None
+            try:
+                queue_data = api_handlers["get_queue"]()
+                logger.info(f"[HUNTING] Current download queue has {len(queue_data)} items for instance {instance_name}")
+            except Exception as e:
+                logger.error(f"[HUNTING] Error fetching download queue for {instance_name}: {e}")
+                queue_data = []
+            
+            # Process each artist ID
+            processed_count = 0
+            for artist_id in processed_ids:
+                # Skip processing if stop event is set
+                if hunting_manager_stop_event.is_set():
+                    return
+                    
+                processed_count += 1
+                logger.info(f"[HUNTING] Processing artist ID: {artist_id} ({processed_count}/{len(processed_ids)}) for instance {instance_name}")
+                
+                try:
+                    # Use the unified field handler to fetch all needed data
+                    primary_data, _, _ = fetch_api_data_for_item("lidarr", artist_id, api_handlers)
+                    
+                    if not primary_data:
+                        logger.warning(f"[HUNTING] No data returned from API for artist ID {artist_id}, skipping")
+                        continue
+                    
+                    # Log basic details
+                    artist_name = primary_data.get('artistName', 'Unknown')
+                    monitored = primary_data.get('monitored', False)
+                    status = primary_data.get('status', 'Unknown')
+                    
+                    # Get statistics if available
+                    album_count = get_nested_value(primary_data, "statistics.albumCount", 0)
+                    track_count = get_nested_value(primary_data, "statistics.trackCount", 0)
+                    track_file_count = get_nested_value(primary_data, "statistics.trackFileCount", 0)
+                    
+                    logger.info(f"[HUNTING] Artist details - ID: {artist_id}, Artist: {artist_name}, "
+                               f"Status: {status}, Monitored: {monitored}, "
+                               f"Albums: {album_count}, Tracks: {track_count}, Available: {track_file_count}")
+                    
+                    # Check if artist has albums in queue
+                    artist_in_queue = False
+                    queue_item_data = None
+                    if queue_data:
+                        for queue_item in queue_data:
+                            if queue_item.get('artistId') == int(artist_id):
+                                artist_in_queue = True
+                                queue_item_data = queue_item
+                                progress = queue_item.get('progress', 0)
+                                status = queue_item.get('status', 'Unknown')
+                                protocol = queue_item.get('protocol', 'Unknown')
+                                album_title = get_nested_value(queue_item, "album.title", "Unknown Album")
+                                logger.info(f"[HUNTING] Artist has album in download queue - ID: {artist_id}, "
+                                           f"Artist: {artist_name}, Album: {album_title}, "
+                                           f"Progress: {progress}%, Status: {status}, Protocol: {protocol}")
+                                break
+                    
+                    # Determine hunt status
+                    hunt_status = determine_hunt_status("lidarr", primary_data, queue_data)
+                    
+                    # Check if this artist is already in history
+                    existing_entry = None
+                    if history_data.get("entries"):
+                        existing_entry = next((entry for entry in history_data["entries"] 
+                                              if str(entry.get("id", "")) == str(artist_id)), None)
+                    
+                    # Update or create history entry
+                    if existing_entry:
+                        # Just update the status if it exists
+                        update_history_entry_status("lidarr", instance_name, artist_id, hunt_status)
+                        
+                        # Log status changes
+                        previous_status = existing_entry.get("hunt_status", "Not Tracked")
+                        if previous_status != hunt_status:
+                            logger.info(f"[HUNTING] Updating status for artist ID {artist_id} from '{previous_status}' to '{hunt_status}'")
+                        else:
+                            logger.info(f"[HUNTING] Status unchanged for artist ID {artist_id}: '{hunt_status}'")
+                    else:
+                        # Create a new history entry with the unified approach
+                        entry_data = create_history_entry("lidarr", instance_name, artist_id, 
+                                                         primary_data, None, queue_data)
+                        
+                        # Add required name field for history_manager
+                        entry_data["name"] = artist_name
+                        
+                        # Add the entry to history
+                        add_history_entry("lidarr", entry_data)
+                        logger.info(f"[HUNTING] Created new history entry for artist ID {artist_id}: {hunt_status}")
+                    
+                    # Track artist in memory
+                    artist_info = {
+                        "id": artist_id,
+                        "title": artist_name,  # Using title key for consistency with other app types
+                        "status": hunt_status,
+                        "instance_name": instance_name
+                    }
+                    
+                    # Add to tracking or update
+                    # Note: Using track_movie method for now, could be renamed to track_item in the future for clarity
+                    manager.track_movie(artist_id, instance_name, artist_info)
+                    logger.info(f"[HUNTING] Artist ID {artist_id} is now tracked for instance {instance_name}, status: {hunt_status}")
+                    
+                except Exception as e:
+                    logger.error(f"[HUNTING] Error processing artist ID {artist_id}: {e}")
+                    
+            logger.info(f"[HUNTING] Processed {processed_count} artists for {instance_name}")
+    except Exception as e:
+        logger.error(f"[HUNTING] Error in Lidarr hunting process: {e}")
+        logger.error(traceback.format_exc())
+
+
+def process_readarr_hunting(manager, hunting_manager_stop_event):
+    """
+    Process Readarr-specific hunting logic using the unified field handling approach.
+    This completely eliminates any translation between API responses and history entries,
+    with the field_mapper handling all the JSON structure creation consistently.
+    
+    Args:
+        manager: The HuntingManager instance
+        hunting_manager_stop_event: Event to check if hunting should stop
+    """
+    logger = get_logger("hunting")
+    
+    try:
+        # Import necessary modules
+        from src.primary.apps.readarr import get_configured_instances
+        from src.primary.apps.readarr.api import get_author_by_id, get_queue, get_books_by_author_id
+        from src.primary.history_manager import get_history, update_history_entry_status, add_history_entry
+        from src.primary.stateful_manager import get_processed_ids
+        from src.primary.utils.field_mapper import determine_hunt_status, get_nested_value, APP_CONFIG, create_history_entry, fetch_api_data_for_item
+        
+        # Check if Readarr is configured
+        readarr_config = APP_CONFIG.get("readarr")
+        if not readarr_config:
+            logger.error("[HUNTING] No configuration found for Readarr, cannot process hunting")
+            return
+        
+        # Get all configured Readarr instances
+        readarr_instances = get_configured_instances()
+        
+        for instance in readarr_instances:
+            # Skip processing if stop event is set
+            if hunting_manager_stop_event.is_set():
+                return
+                
+            instance_name = instance.get("instance_name", "Default")
+            api_url = instance.get("api_url")
+            api_key = instance.get("api_key")
+            api_timeout = settings_manager.get_advanced_setting("api_timeout", 120)
+            
+            if not api_url or not api_key:
+                logger.warning(f"[HUNTING] Missing API URL or key for instance: {instance_name}, skipping")
+                continue
+                
+            logger.info(f"[HUNTING] Checking processed IDs for instance: {instance_name}")
+            
+            # Load processed IDs from stateful_manager
+            processed_ids = get_processed_ids("readarr", instance_name)
+            logger.info(f"[HUNTING] Found {len(processed_ids)} processed IDs for instance {instance_name}")
+            
+            # Load history entries to check for existing entries
+            history_data = get_history("readarr", instance_name)
+            
+            # Create a dictionary of API handlers for easier access
+            api_handlers = {
+                "get_author_by_id": lambda id: get_author_by_id(api_url, api_key, api_timeout, id),
+                "get_books_by_author_id": lambda id: get_books_by_author_id(api_url, api_key, api_timeout, id),
+                "get_queue": lambda: get_queue(api_url, api_key, api_timeout)
+            }
+            
+            # Get queue data once for all authors to avoid multiple API calls
+            queue_data = None
+            try:
+                queue_data = api_handlers["get_queue"]()
+                logger.info(f"[HUNTING] Current download queue has {len(queue_data)} items for instance {instance_name}")
+            except Exception as e:
+                logger.error(f"[HUNTING] Error fetching download queue for {instance_name}: {e}")
+                queue_data = []
+            
+            # Process each author ID
+            processed_count = 0
+            for author_id in processed_ids:
+                # Skip processing if stop event is set
+                if hunting_manager_stop_event.is_set():
+                    return
+                    
+                processed_count += 1
+                logger.info(f"[HUNTING] Processing author ID: {author_id} ({processed_count}/{len(processed_ids)}) for instance {instance_name}")
+                
+                try:
+                    # Use the unified field handler to fetch all needed data
+                    primary_data, _, _ = fetch_api_data_for_item("readarr", author_id, api_handlers)
+                    
+                    if not primary_data:
+                        logger.warning(f"[HUNTING] No data returned from API for author ID {author_id}, skipping")
+                        continue
+                    
+                    # Log basic details
+                    author_name = primary_data.get('authorName', 'Unknown')
+                    monitored = primary_data.get('monitored', False)
+                    status = primary_data.get('status', 'Unknown')
+                    
+                    # Get statistics if available
+                    book_count = get_nested_value(primary_data, "statistics.bookCount", 0)
+                    book_file_count = get_nested_value(primary_data, "statistics.bookFileCount", 0)
+                    
+                    logger.info(f"[HUNTING] Author details - ID: {author_id}, Name: {author_name}, "
+                               f"Status: {status}, Monitored: {monitored}, "
+                               f"Books: {book_count}, Available: {book_file_count}")
+                    
+                    # Check if author has books in queue
+                    author_in_queue = False
+                    queue_item_data = None
+                    if queue_data:
+                        for queue_item in queue_data:
+                            if queue_item.get('authorId') == int(author_id):
+                                author_in_queue = True
+                                queue_item_data = queue_item
+                                progress = queue_item.get('progress', 0)
+                                status = queue_item.get('status', 'Unknown')
+                                protocol = queue_item.get('protocol', 'Unknown')
+                                book_title = get_nested_value(queue_item, "book.title", "Unknown Book")
+                                logger.info(f"[HUNTING] Author has book in download queue - ID: {author_id}, "
+                                           f"Author: {author_name}, Book: {book_title}, "
+                                           f"Progress: {progress}%, Status: {status}, Protocol: {protocol}")
+                                break
+                    
+                    # Determine hunt status
+                    hunt_status = determine_hunt_status("readarr", primary_data, queue_data)
+                    
+                    # Check if this author is already in history
+                    existing_entry = None
+                    if history_data.get("entries"):
+                        existing_entry = next((entry for entry in history_data["entries"] 
+                                              if str(entry.get("id", "")) == str(author_id)), None)
+                    
+                    # Update or create history entry
+                    if existing_entry:
+                        # Just update the status if it exists
+                        update_history_entry_status("readarr", instance_name, author_id, hunt_status)
+                        
+                        # Log status changes
+                        previous_status = existing_entry.get("hunt_status", "Not Tracked")
+                        if previous_status != hunt_status:
+                            logger.info(f"[HUNTING] Updating status for author ID {author_id} from '{previous_status}' to '{hunt_status}'")
+                        else:
+                            logger.info(f"[HUNTING] Status unchanged for author ID {author_id}: '{hunt_status}'")
+                    else:
+                        # Create a new history entry with the unified approach
+                        entry_data = create_history_entry("readarr", instance_name, author_id, 
+                                                         primary_data, None, queue_data)
+                        
+                        # Add required name field for history_manager
+                        entry_data["name"] = author_name
+                        
+                        # Add the entry to history
+                        add_history_entry("readarr", entry_data)
+                        logger.info(f"[HUNTING] Created new history entry for author ID {author_id}: {hunt_status}")
+                    
+                    # Track author in memory
+                    author_info = {
+                        "id": author_id,
+                        "title": author_name,  # Using title key for consistency with other app types
+                        "status": hunt_status,
+                        "instance_name": instance_name
+                    }
+                    
+                    # Add to tracking or update
+                    manager.track_movie(author_id, instance_name, author_info)
+                    logger.info(f"[HUNTING] Author ID {author_id} is now tracked for instance {instance_name}, status: {hunt_status}")
+                    
+                except Exception as e:
+                    logger.error(f"[HUNTING] Error processing author ID {author_id}: {e}")
+                    
+            logger.info(f"[HUNTING] Processed {processed_count} authors for {instance_name}")
+    except Exception as e:
+        logger.error(f"[HUNTING] Error in Readarr hunting process: {e}")
+        logger.error(traceback.format_exc())
+
+
+def process_whisparr_hunting(manager, hunting_manager_stop_event):
+    """
+    Process Whisparr-specific hunting logic using the unified field handling approach.
+    This completely eliminates any translation between API responses and history entries,
+    with the field_mapper handling all the JSON structure creation consistently.
+    
+    Args:
+        manager: The HuntingManager instance
+        hunting_manager_stop_event: Event to check if hunting should stop
+    """
+    logger = get_logger("hunting")
+    
+    try:
+        # Import necessary modules
+        from src.primary.apps.whisparr import get_configured_instances
+        from src.primary.apps.whisparr.api import get_movie_by_id, get_movie_file, get_download_queue
+        from src.primary.history_manager import get_history, update_history_entry_status, add_history_entry
+        from src.primary.stateful_manager import get_processed_ids
+        from src.primary.utils.field_mapper import determine_hunt_status, get_nested_value, APP_CONFIG, create_history_entry, fetch_api_data_for_item
+        
+        # Check if Whisparr is configured
+        whisparr_config = APP_CONFIG.get("whisparr")
+        if not whisparr_config:
+            logger.error("[HUNTING] No configuration found for Whisparr, cannot process hunting")
+            return
+        
+        # Get all configured Whisparr instances
+        whisparr_instances = get_configured_instances()
+        
+        for instance in whisparr_instances:
+            # Skip processing if stop event is set
+            if hunting_manager_stop_event.is_set():
+                return
+                
+            instance_name = instance.get("instance_name", "Default")
+            api_url = instance.get("api_url")
+            api_key = instance.get("api_key")
+            api_timeout = settings_manager.get_advanced_setting("api_timeout", 120)
+            
+            if not api_url or not api_key:
+                logger.warning(f"[HUNTING] Missing API URL or key for instance: {instance_name}, skipping")
+                continue
+                
+            logger.info(f"[HUNTING] Checking processed IDs for instance: {instance_name}")
+            
+            # Load processed IDs from stateful_manager
+            processed_ids = get_processed_ids("whisparr", instance_name)
+            logger.info(f"[HUNTING] Found {len(processed_ids)} processed IDs for instance {instance_name}")
+            
+            # Load history entries to check for existing entries
+            history_data = get_history("whisparr", instance_name)
+            
+            # Create a dictionary of API handlers for easier access
+            api_handlers = {
+                "get_movie_by_id": lambda id: get_movie_by_id(api_url, api_key, api_timeout, id),
+                "get_movie_file": lambda id: get_movie_file(api_url, api_key, api_timeout, id),
+                "get_download_queue": lambda: get_download_queue(api_url, api_key, api_timeout)
+            }
+            
+            # Get queue data once for all movies to avoid multiple API calls
+            queue_data = None
+            try:
+                queue_data = api_handlers["get_download_queue"]()
+                logger.info(f"[HUNTING] Current download queue has {len(queue_data)} items for instance {instance_name}")
+            except Exception as e:
+                logger.error(f"[HUNTING] Error fetching download queue for {instance_name}: {e}")
+                queue_data = []
+            
+            # Process each movie ID
+            processed_count = 0
+            for movie_id in processed_ids:
+                # Skip processing if stop event is set
+                if hunting_manager_stop_event.is_set():
+                    return
+                    
+                processed_count += 1
+                logger.info(f"[HUNTING] Processing scene ID: {movie_id} ({processed_count}/{len(processed_ids)}) for instance {instance_name}")
+                
+                try:
+                    # Use the unified field handler to fetch all needed data
+                    primary_data, file_data, _ = fetch_api_data_for_item("whisparr", movie_id, api_handlers)
+                    
+                    if not primary_data:
+                        logger.warning(f"[HUNTING] No data returned from API for scene ID {movie_id}, skipping")
+                        continue
+                    
+                    # Log basic details
+                    title = primary_data.get('title', 'Unknown')
+                    has_file = primary_data.get('hasFile', False)
+                    monitored = primary_data.get('monitored', False)
+                    studio = primary_data.get('studio', 'Unknown')
+                    
+                    logger.info(f"[HUNTING] Scene details - ID: {movie_id}, Title: {title}, "
+                               f"Studio: {studio}, Status: {'Downloaded' if has_file else 'Missing'}, "
+                               f"Monitored: {monitored}")
+                    
+                    # Log file details if available
+                    if file_data:
+                        quality = get_nested_value(file_data, "quality.quality.name", "Unknown")
+                        size_mb = round(file_data.get('size', 0) / (1024 * 1024), 2)
+                        logger.info(f"[HUNTING] Scene file - Quality: {quality}, Size: {size_mb} MB")
+                    
+                    # Check if movie is in queue
+                    movie_in_queue = False
+                    queue_item_data = None
+                    if queue_data:
+                        for queue_item in queue_data:
+                            if queue_item.get('movieId') == int(movie_id):
+                                movie_in_queue = True
+                                queue_item_data = queue_item
+                                progress = queue_item.get('progress', 0)
+                                status = queue_item.get('status', 'Unknown')
+                                protocol = queue_item.get('protocol', 'Unknown')
+                                logger.info(f"[HUNTING] Scene in download queue - ID: {movie_id}, Title: {title}, "
+                                           f"Progress: {progress}%, Status: {status}, Protocol: {protocol}")
+                                break
+                    
+                    # Determine hunt status
+                    hunt_status = determine_hunt_status("whisparr", primary_data, queue_data)
+                    
+                    # Check if this movie is already in history
+                    existing_entry = None
+                    if history_data.get("entries"):
+                        existing_entry = next((entry for entry in history_data["entries"] 
+                                              if str(entry.get("id", "")) == str(movie_id)), None)
+                    
+                    # Update or create history entry
+                    if existing_entry:
+                        # Just update the status if it exists
+                        update_history_entry_status("whisparr", instance_name, movie_id, hunt_status)
+                        
+                        # Log status changes
+                        previous_status = existing_entry.get("hunt_status", "Not Tracked")
+                        if previous_status != hunt_status:
+                            logger.info(f"[HUNTING] Updating status for scene ID {movie_id} from '{previous_status}' to '{hunt_status}'")
+                        else:
+                            logger.info(f"[HUNTING] Status unchanged for scene ID {movie_id}: '{hunt_status}'")
+                    else:
+                        # Create a new history entry with the unified approach
+                        entry_data = create_history_entry("whisparr", instance_name, movie_id, 
+                                                         primary_data, file_data, queue_data)
+                        
+                        # Add required name field for history_manager
+                        entry_data["name"] = title
+                        
+                        # Add the entry to history
+                        add_history_entry("whisparr", entry_data)
+                        logger.info(f"[HUNTING] Created new history entry for scene ID {movie_id}: {hunt_status}")
+                    
+                    # Track movie in memory
+                    movie_info = {
+                        "id": movie_id,
+                        "title": title,
+                        "status": hunt_status,
+                        "instance_name": instance_name
+                    }
+                    
+                    # Add to tracking or update
+                    manager.track_movie(movie_id, instance_name, movie_info)
+                    logger.info(f"[HUNTING] Scene ID {movie_id} is now tracked for instance {instance_name}, status: {hunt_status}")
+                    
+                except Exception as e:
+                    logger.error(f"[HUNTING] Error processing scene ID {movie_id}: {e}")
+                    
+            logger.info(f"[HUNTING] Processed {processed_count} scenes for {instance_name}")
+    except Exception as e:
+        logger.error(f"[HUNTING] Error in Whisparr hunting process: {e}")
+        logger.error(traceback.format_exc())
+
+
+def process_eros_hunting(manager, hunting_manager_stop_event):
+    """
+    Process Eros-specific hunting logic using the unified field handling approach.
+    This completely eliminates any translation between API responses and history entries,
+    with the field_mapper handling all the JSON structure creation consistently.
+    
+    Eros uses the WhisparrV3 API structure but with enhanced fields.
+    
+    Args:
+        manager: The HuntingManager instance
+        hunting_manager_stop_event: Event to check if hunting should stop
+    """
+    logger = get_logger("hunting")
+    
+    try:
+        # Import necessary modules
+        from src.primary.apps.eros import get_configured_instances
+        from src.primary.apps.eros.api import get_movie_by_id, get_movie_file, get_download_queue
+        from src.primary.history_manager import get_history, update_history_entry_status, add_history_entry
+        from src.primary.stateful_manager import get_processed_ids
+        from src.primary.utils.field_mapper import determine_hunt_status, get_nested_value, APP_CONFIG, create_history_entry, fetch_api_data_for_item
+        
+        # Check if Eros is configured
+        eros_config = APP_CONFIG.get("eros")
+        if not eros_config:
+            logger.error("[HUNTING] No configuration found for Eros, cannot process hunting")
+            return
+        
+        # Get all configured Eros instances
+        eros_instances = get_configured_instances()
+        
+        for instance in eros_instances:
+            # Skip processing if stop event is set
+            if hunting_manager_stop_event.is_set():
+                return
+                
+            instance_name = instance.get("instance_name", "Default")
+            api_url = instance.get("api_url")
+            api_key = instance.get("api_key")
+            api_timeout = settings_manager.get_advanced_setting("api_timeout", 120)
+            
+            if not api_url or not api_key:
+                logger.warning(f"[HUNTING] Missing API URL or key for instance: {instance_name}, skipping")
+                continue
+                
+            logger.info(f"[HUNTING] Checking processed IDs for instance: {instance_name}")
+            
+            # Load processed IDs from stateful_manager
+            processed_ids = get_processed_ids("eros", instance_name)
+            logger.info(f"[HUNTING] Found {len(processed_ids)} processed IDs for instance {instance_name}")
+            
+            # Load history entries to check for existing entries
+            history_data = get_history("eros", instance_name)
+            
+            # Create a dictionary of API handlers for easier access
+            api_handlers = {
+                "get_movie_by_id": lambda id: get_movie_by_id(api_url, api_key, api_timeout, id),
+                "get_movie_file": lambda id: get_movie_file(api_url, api_key, api_timeout, id),
+                "get_download_queue": lambda: get_download_queue(api_url, api_key, api_timeout)
+            }
+            
+            # Get queue data once for all movies to avoid multiple API calls
+            queue_data = None
+            try:
+                queue_data = api_handlers["get_download_queue"]()
+                logger.info(f"[HUNTING] Current download queue has {len(queue_data)} items for instance {instance_name}")
+            except Exception as e:
+                logger.error(f"[HUNTING] Error fetching download queue for {instance_name}: {e}")
+                queue_data = []
+            
+            # Process each movie ID
+            processed_count = 0
+            for movie_id in processed_ids:
+                # Skip processing if stop event is set
+                if hunting_manager_stop_event.is_set():
+                    return
+                    
+                processed_count += 1
+                logger.info(f"[HUNTING] Processing scene ID: {movie_id} ({processed_count}/{len(processed_ids)}) for instance {instance_name}")
+                
+                try:
+                    # Use the unified field handler to fetch all needed data
+                    primary_data, file_data, _ = fetch_api_data_for_item("eros", movie_id, api_handlers)
+                    
+                    if not primary_data:
+                        logger.warning(f"[HUNTING] No data returned from API for scene ID {movie_id}, skipping")
+                        continue
+                    
+                    # Log basic details
+                    title = primary_data.get('title', 'Unknown')
+                    has_file = primary_data.get('hasFile', False)
+                    monitored = primary_data.get('monitored', False)
+                    studio = primary_data.get('studio', 'Unknown')
+                    
+                    # Get collection info if available
+                    collection = primary_data.get('collection', {})
+                    collection_name = collection.get('name', 'None') if collection else 'None'
+                    
+                    logger.info(f"[HUNTING] Scene details - ID: {movie_id}, Title: {title}, "
+                               f"Studio: {studio}, Collection: {collection_name}, "
+                               f"Status: {'Downloaded' if has_file else 'Missing'}, "
+                               f"Monitored: {monitored}")
+                    
+                    # Log file details if available
+                    if file_data:
+                        quality = get_nested_value(file_data, "quality.quality.name", "Unknown")
+                        size_mb = round(file_data.get('size', 0) / (1024 * 1024), 2)
+                        resolution = file_data.get('resolution', 'Unknown')
+                        logger.info(f"[HUNTING] Scene file - Quality: {quality}, Resolution: {resolution}, Size: {size_mb} MB")
+                    
+                    # Check if movie is in queue
+                    movie_in_queue = False
+                    queue_item_data = None
+                    if queue_data:
+                        for queue_item in queue_data:
+                            if queue_item.get('movieId') == int(movie_id):
+                                movie_in_queue = True
+                                queue_item_data = queue_item
+                                progress = queue_item.get('progress', 0)
+                                status = queue_item.get('status', 'Unknown')
+                                protocol = queue_item.get('protocol', 'Unknown')
+                                size_mb = round(queue_item.get('size', 0) / (1024 * 1024), 2) if queue_item.get('size') else 0
+                                remaining_mb = round(queue_item.get('sizeleft', 0) / (1024 * 1024), 2) if queue_item.get('sizeleft') else 0
+                                logger.info(f"[HUNTING] Scene in download queue - ID: {movie_id}, Title: {title}, "
+                                           f"Progress: {progress}%, Status: {status}, Protocol: {protocol}, "
+                                           f"Size: {size_mb} MB, Remaining: {remaining_mb} MB")
+                                break
+                    
+                    # Determine hunt status
+                    hunt_status = determine_hunt_status("eros", primary_data, queue_data)
+                    
+                    # Check if this movie is already in history
+                    existing_entry = None
+                    if history_data.get("entries"):
+                        existing_entry = next((entry for entry in history_data["entries"] 
+                                              if str(entry.get("id", "")) == str(movie_id)), None)
+                    
+                    # Update or create history entry
+                    if existing_entry:
+                        # Just update the status if it exists
+                        update_history_entry_status("eros", instance_name, movie_id, hunt_status)
+                        
+                        # Log status changes
+                        previous_status = existing_entry.get("hunt_status", "Not Tracked")
+                        if previous_status != hunt_status:
+                            logger.info(f"[HUNTING] Updating status for scene ID {movie_id} from '{previous_status}' to '{hunt_status}'")
+                        else:
+                            logger.info(f"[HUNTING] Status unchanged for scene ID {movie_id}: '{hunt_status}'")
+                    else:
+                        # Create a new history entry with the unified approach
+                        entry_data = create_history_entry("eros", instance_name, movie_id, 
+                                                         primary_data, file_data, queue_data)
+                        
+                        # Add required name field for history_manager
+                        entry_data["name"] = title
+                        
+                        # Add the entry to history
+                        add_history_entry("eros", entry_data)
+                        logger.info(f"[HUNTING] Created new history entry for scene ID {movie_id}: {hunt_status}")
+                    
+                    # Track movie in memory
+                    movie_info = {
+                        "id": movie_id,
+                        "title": title,
+                        "status": hunt_status,
+                        "instance_name": instance_name,
+                        "studio": studio
+                    }
+                    
+                    # Add to tracking or update
+                    manager.track_movie(movie_id, instance_name, movie_info)
+                    logger.info(f"[HUNTING] Scene ID {movie_id} is now tracked for instance {instance_name}, status: {hunt_status}")
+                    
+                except Exception as e:
+                    logger.error(f"[HUNTING] Error processing scene ID {movie_id}: {e}")
+                    
+            logger.info(f"[HUNTING] Processed {processed_count} scenes for {instance_name}")
+    except Exception as e:
+        logger.error(f"[HUNTING] Error in Eros hunting process: {e}")
+        logger.error(traceback.format_exc())
+
+
+def process_whisparrv2_hunting(manager, hunting_manager_stop_event):
+    """
+    Process WhisparrV2-specific hunting logic using the unified field handling approach.
+    This function is included for completeness, but it is recommended to use the Eros handler
+    for Whisparr V2, as it uses the V3 API.
+    
+    Args:
+        manager: The HuntingManager instance
+        hunting_manager_stop_event: Event to check if hunting should stop
+    """
+    logger = get_logger("hunting")
+    
+    try:
+        # Simply redirect to Eros processing as recommended approach
+        logger.info("[HUNTING] WhisparrV2 hunting redirected to Eros implementation since they share API structure")
+        process_eros_hunting(manager, hunting_manager_stop_event)
+    except Exception as e:
+        logger.error(f"[HUNTING] Error in WhisparrV2 hunting process: {e}")
+        logger.error(traceback.format_exc())
 
 def hunting_manager_loop():
     """
@@ -755,7 +1605,12 @@ def hunting_manager_loop():
         process_radarr_hunting(manager, hunting_manager_stop_event)
         
         # In the future, add other app-specific hunting functions here
-        # process_sonarr_hunting(manager, hunting_manager_stop_event)
+        process_sonarr_hunting(manager, hunting_manager_stop_event)
+        process_lidarr_hunting(manager, hunting_manager_stop_event)
+        process_readarr_hunting(manager, hunting_manager_stop_event)
+        process_whisparr_hunting(manager, hunting_manager_stop_event)
+        process_eros_hunting(manager, hunting_manager_stop_event)
+        process_whisparrv2_hunting(manager, hunting_manager_stop_event)
         # process_lidarr_hunting(manager, hunting_manager_stop_event)
         # process_readarr_hunting(manager, hunting_manager_stop_event)
         # process_whisparr_hunting(manager, hunting_manager_stop_event)
