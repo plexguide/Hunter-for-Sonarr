@@ -250,7 +250,6 @@ const historyModule = {
             row.dataset.fullJson = JSON.stringify(entry);
             
             row.innerHTML = `
-                <td>${entry.date_time_readable}</td>
                 <td>
                     <div class="title-with-info">
                         ${this.escapeHtml(entry.processed_info)}
@@ -259,7 +258,6 @@ const historyModule = {
                 </td>
                 <td>${this.formatHuntStatus(entry.hunt_status)}</td>
                 <td>${this.formatOperationType(entry.operation_type)}</td>
-                <td>${this.escapeHtml(entry.id)}</td>
                 <td>${this.escapeHtml(formattedInstance)}</td>
                 <td>${this.escapeHtml(entry.how_long_ago)}</td>
             `;
