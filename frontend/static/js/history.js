@@ -247,8 +247,8 @@ const historyModule = {
                 <td>${entry.date_time_readable}</td>
                 <td>${this.escapeHtml(entry.processed_info)}</td>
                 <td>${this.formatHuntStatus(entry.hunt_status)}</td>
-                <td>${this.formatProtocol(entry.protocol)}</td>
                 <td>${this.formatOperationType(entry.operation_type)}</td>
+                <td style="text-align:center">${this.formatProtocol(entry.protocol)}</td>
                 <td>${this.escapeHtml(entry.id)}</td>
                 <td>${this.escapeHtml(formattedInstance)}</td>
                 <td>${this.escapeHtml(entry.how_long_ago)}</td>
@@ -355,33 +355,28 @@ const historyModule = {
     // Helper function to format protocol with icons
     formatProtocol: function(protocol) {
         if (!protocol || protocol === 'Unknown') {
-            return '<span class="protocol-badge protocol-unknown"><i class="fas fa-question-circle"></i></span>';
+            return '<i class="fas fa-question-circle protocol-unknown" title="Unknown"></i>';
         }
         
         const lowerProtocol = protocol.toLowerCase();
-        let protocolClass = '';
-        let protocolIcon = '';
+        let iconClass = '';
         let tooltip = '';
         
         if (lowerProtocol === 'torrent') {
-            protocolClass = 'protocol-torrent';
-            protocolIcon = '<i class="fas fa-magnet"></i>';
+            iconClass = 'fa-magnet protocol-torrent';
             tooltip = 'Torrent';
         } else if (lowerProtocol === 'usenet') {
-            protocolClass = 'protocol-usenet';
-            protocolIcon = '<i class="fas fa-newspaper"></i>';
+            iconClass = 'fa-newspaper protocol-usenet';
             tooltip = 'Usenet';
         } else if (lowerProtocol.includes('http') || lowerProtocol === 'direct') {
-            protocolClass = 'protocol-http';
-            protocolIcon = '<i class="fas fa-download"></i>';
+            iconClass = 'fa-download protocol-http';
             tooltip = 'Direct Download';
         } else {
-            protocolClass = 'protocol-other';
-            protocolIcon = '<i class="fas fa-exchange-alt"></i>';
+            iconClass = 'fa-exchange-alt protocol-other';
             tooltip = protocol; // Use original protocol text
         }
         
-        return `<span class="protocol-badge ${protocolClass}" title="${tooltip}">${protocolIcon}</span>`;
+        return `<i class="fas ${iconClass}" title="${tooltip}"></i>`;
     }
 };
 
