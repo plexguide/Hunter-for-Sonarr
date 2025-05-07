@@ -1,166 +1,115 @@
 import json
 import os
 import time
+import pathlib
+import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
+# Create logger
+logger = logging.getLogger("hunting_manager")
+
 class HuntingManager:
+    """The modernized HuntingManager that acts as a facade to the history and stateful management systems.
+    
+    This class no longer maintains its own state files or tracking directories.
+    Instead, it dynamically pulls data from /config/history via the history_manager
+    and integrates with the stateful_manager to check which IDs have been processed.
+    
+    The field_mapper.py handles the actual data processing and structure.
+    """
     def __init__(self, config_dir: str):
+        """Initialize the HuntingManager with minimal configuration.
+        
+        Args:
+            config_dir: Base configuration directory (mostly for compatibility)
+        """
         self.config_dir = config_dir
-        self.hunting_dir = os.path.join(config_dir, "hunting")
-        self.time_config_path = os.path.join(self.hunting_dir, "time.json")
-        self._ensure_directories()
-        self._load_time_config()
+        self.history_dir = os.path.join(config_dir, "history")
+        logger.info(f"HuntingManager initialized using history data from {self.history_dir}")
 
-    def _ensure_directories(self):
-        """Ensure all required directories exist."""
-        os.makedirs(self.hunting_dir, exist_ok=True)
-        os.makedirs(os.path.join(self.hunting_dir, "radarr"), exist_ok=True)
-
-    def _load_time_config(self):
-        """Load or create the time configuration."""
-        if not os.path.exists(self.time_config_path):
-            default_config = {
-                "follow_up_time": 60,
-                "max_time": 1440,
-                "min_time": 5
-            }
-            with open(self.time_config_path, 'w') as f:
-                json.dump(default_config, f, indent=2)
-            self.time_config = default_config
-        else:
-            with open(self.time_config_path, 'r') as f:
-                self.time_config = json.load(f)
-
-    def update_time_config(self, follow_up_time: int):
-        """Update the follow-up time configuration."""
-        if not (self.time_config["min_time"] <= follow_up_time <= self.time_config["max_time"]):
-            raise ValueError(f"Follow-up time must be between {self.time_config['min_time']} and {self.time_config['max_time']} minutes")
+    def track_movie(self, item_id: str, instance_name: str, movie_info: Dict):
+        """Track an item via the history manager.
         
-        self.time_config["follow_up_time"] = follow_up_time
-        with open(self.time_config_path, 'w') as f:
-            json.dump(self.time_config, f, indent=2)
-
-    def get_instance_path(self, app_name: str, instance_name: str) -> str:
-        """Get the path for an instance's tracking file."""
-        return os.path.join(self.hunting_dir, app_name.lower(), f"{instance_name}.json")
-
-    def add_tracking_item(self, app_name: str, instance_name: str, item_id: str, 
-                         name: str, radarr_id: Optional[str] = None):
-        """Add a new item to track."""
-        instance_path = self.get_instance_path(app_name, instance_name)
+        This is a no-op method since tracking is handled through history_manager
+        and processed_ids through stateful_manager.
         
-        # Load or create instance tracking file
-        if os.path.exists(instance_path):
-            with open(instance_path, 'r') as f:
-                tracking_data = json.load(f)
-        else:
-            tracking_data = {"tracking": {"items": []}}
-
-        # Add new item
-        new_item = {
-            "id": item_id,
-            "name": name,
-            "status": "Requested",
-            "requested_at": datetime.now().isoformat(),
-            "last_checked": datetime.now().isoformat(),
-            "radarr_id": radarr_id,
-            "debug_info": {
-                "added_by": "hunting_manager",
-                "version": "1.0",
-                "last_status_change": datetime.now().isoformat()
-            }
-        }
-        
-        tracking_data["tracking"]["items"].append(new_item)
-        
-        # Save updated tracking data
-        with open(instance_path, 'w') as f:
-            json.dump(tracking_data, f, indent=2)
+        Args:
+            item_id: ID of the item to track
+            instance_name: Name of the app instance
+            movie_info: Dictionary of item information
+        """
+        # This is now a no-op method - all tracking is done via 
+        # history_manager (create_history_entry) and stateful_manager (add_processed_id)
+        pass
 
     def update_item_status(self, app_name: str, instance_name: str, item_id: str, 
                           new_status: str, debug_info: Optional[Dict] = None):
-        """Update the status of a tracked item."""
-        instance_path = self.get_instance_path(app_name, instance_name)
+        """Update the status of a tracked item via history_manager.
         
-        if not os.path.exists(instance_path):
-            return False
-
-        with open(instance_path, 'r') as f:
-            tracking_data = json.load(f)
-
-        for item in tracking_data["tracking"]["items"]:
-            if item["id"] == item_id:
-                item["status"] = new_status
-                item["last_checked"] = datetime.now().isoformat()
-                if debug_info:
-                    item["debug_info"].update(debug_info)
-                item["debug_info"]["last_status_change"] = datetime.now().isoformat()
-                
-                with open(instance_path, 'w') as f:
-                    json.dump(tracking_data, f, indent=2)
-                return True
+        This is a no-op method since status updates are handled through
+        the history_manager's update_history_entry_status method.
         
-        return False
+        Args:
+            app_name: Type of app
+            instance_name: Name of the app instance
+            item_id: ID of the item
+            new_status: New status value
+            debug_info: Optional debug information
+        """
+        # This is now a no-op method - status updates are handled via 
+        # history_manager (update_history_entry_status)
+        pass
 
     def get_latest_statuses(self, limit: int = 5) -> List[Dict]:
-        """Get the latest hunt statuses across all apps and instances."""
-        latest_statuses = []
+        """Get the latest hunt statuses directly from history files.
         
-        # Walk through all app directories
-        for app_name in os.listdir(self.hunting_dir):
-            app_path = os.path.join(self.hunting_dir, app_name)
-            if not os.path.isdir(app_path) or app_name == "radarr":
-                continue
-                
-            # Check each instance file
-            for instance_file in os.listdir(app_path):
-                if not instance_file.endswith('.json'):
-                    continue
-                    
-                instance_path = os.path.join(app_path, instance_file)
-                with open(instance_path, 'r') as f:
-                    tracking_data = json.load(f)
-                
-                # Add all items from this instance
-                for item in tracking_data["tracking"]["items"]:
-                    latest_statuses.append({
-                        "app_name": app_name,
-                        "instance_name": instance_file[:-5],  # Remove .json
-                        "media_name": item["name"],
-                        "status": item["status"],
-                        "id": item["id"],
-                        "time_requested": item["requested_at"]
-                    })
+        This now directly reads from the history directory to get the latest statuses.
         
-        # Sort by requested_at and get latest
-        latest_statuses.sort(key=lambda x: x["time_requested"], reverse=True)
-        return latest_statuses[:limit]
+        Args:
+            limit: Maximum number of items to return
+            
+        Returns:
+            List of dictionaries with status information
+        """
+        # Import in method to avoid circular imports
+        from src.primary.history_manager import get_history
+        
+        # Get history entries for all app types
+        app_types = ['radarr', 'sonarr', 'lidarr', 'readarr', 'whisparr', 'eros']
+        all_history = []
+        
+        for app_type in app_types:
+            try:
+                # Get most recent entries for this app type
+                history = get_history(app_type, page=1, page_size=limit)
+                if history and 'items' in history:
+                    all_history.extend(history['items'])
+            except Exception as e:
+                print(f"Error getting history for {app_type}: {e}")
+        
+        # Sort by timestamp, most recent first
+        all_history.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+        
+        # Format for the expected output format
+        result = []
+        for entry in all_history[:limit]:
+            result.append({
+                "app_type": entry.get("app_type", "unknown"),
+                "instance": entry.get("instance_name", "unknown"),
+                "id": entry.get("item_id", "unknown"),
+                "name": entry.get("name", entry.get("title", "Unknown")),
+                "status": entry.get("hunt_status", "Unknown"),
+                "last_updated": entry.get("timestamp", ""),
+                "requested_at": entry.get("timestamp", "")
+            })
+            
+        return result
 
     def cleanup_old_records(self):
-        """Clean up records that have exceeded their time limit."""
-        cleanup_time = timedelta(minutes=self.time_config["follow_up_time"] + 10)
+        """Cleanup is no longer needed as the history_manager handles record retention.
         
-        for app_name in os.listdir(self.hunting_dir):
-            app_path = os.path.join(self.hunting_dir, app_name)
-            if not os.path.isdir(app_path):
-                continue
-                
-            for instance_file in os.listdir(app_path):
-                if not instance_file.endswith('.json'):
-                    continue
-                    
-                instance_path = os.path.join(app_path, instance_file)
-                with open(instance_path, 'r') as f:
-                    tracking_data = json.load(f)
-                
-                # Filter out old items
-                current_time = datetime.now()
-                tracking_data["tracking"]["items"] = [
-                    item for item in tracking_data["tracking"]["items"]
-                    if (current_time - datetime.fromisoformat(item["requested_at"])) <= cleanup_time
-                ]
-                
-                # Save updated tracking data
-                with open(instance_path, 'w') as f:
-                    json.dump(tracking_data, f, indent=2) 
+        This is maintained as a no-op method for compatibility.
+        """
+        # No longer needed - history retention is handled by history_manager
+        pass

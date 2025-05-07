@@ -1577,26 +1577,19 @@ def process_whisparrv2_hunting(manager, hunting_manager_stop_event):
 def hunting_manager_loop():
     """
     Main hunting manager loop that coordinates hunting across different app types.
-    Currently focuses on Radarr but structured to allow easy addition of other apps.
+    Uses the stateful_manager for tracking processed IDs and history_manager for
+    maintaining status information.
     """
     logger = get_logger("hunting")
     logger.info("[HUNTING] Hunting Manager background thread started.")
+    
+    # Initialize HuntingManager using the updated version that uses stateful directory
     manager = HuntingManager("/config")
-    logger.info("[HUNTING] Hunting Manager is Ready to Hunt!")
-
-    # On first run, log all existing tracked items (prior history)
-    for app_name in os.listdir(manager.hunting_dir):
-        app_path = os.path.join(manager.hunting_dir, app_name)
-        if not os.path.isdir(app_path):
-            continue
-        for instance_file in os.listdir(app_path):
-            if not instance_file.endswith('.json'):
-                continue
-            instance_path = os.path.join(app_path, instance_file)
-            with open(instance_path, 'r') as f:
-                tracking_data = json.load(f)
-            for item in tracking_data.get("tracking", {}).get("items", []):
-                logger.info(f"[HUNTING] Prior tracked: {item['name']} (ID: {item['id']}) - Status: {item['status']} - Requested: {item['requested_at']}")
+    logger.info("[HUNTING] Hunting Manager initialized with stateful directory")
+    
+    # Initialize the stateful system if needed
+    from src.primary.stateful_manager import initialize_stateful_system
+    initialize_stateful_system()
 
     while not hunting_manager_stop_event.is_set():
         logger.info("[HUNTING] === Hunting Manager cycle started ===")
