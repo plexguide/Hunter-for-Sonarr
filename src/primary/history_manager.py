@@ -88,7 +88,8 @@ def add_history_entry(app_type, entry_data):
         "instance_name": instance_name,  # Use the instance_name we extracted above
         "operation_type": entry_data.get("operation_type", "missing"),  # Default to "missing" if not specified
         "app_type": app_type,  # Include app_type in the entry for display in UI
-        "hunt_status": entry_data.get("hunt_status", "Not Tracked")  # Add hunt status field
+        "hunt_status": entry_data.get("hunt_status", "Not Tracked"),  # Add hunt status field
+        "protocol": entry_data.get("protocol", "Unknown")  # Add protocol information
     }
     
     history_file = get_history_file_path(app_type, instance_name)

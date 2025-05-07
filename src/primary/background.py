@@ -892,8 +892,8 @@ def hunting_manager_loop():
                         
                         # Then update history entry status, preserving original timestamp
                         from src.primary.history_manager import update_history_entry_status
-                        update_history_entry_status("radarr", instance_name, movie_id, current_status)
-                        logger.info(f"[HUNTING] Updated tracking and history status for movie ID {movie_id}: {current_status}")
+                        update_history_entry_status("radarr", instance_name, movie_id, current_status, protocol=protocol)
+                        logger.info(f"[HUNTING] Updated tracking and history status for movie ID {movie_id}: {current_status}, Protocol: {protocol}")
                         
                         # Log additional details if available
                         if protocol:

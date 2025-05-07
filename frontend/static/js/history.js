@@ -247,6 +247,7 @@ const historyModule = {
                 <td>${entry.date_time_readable}</td>
                 <td>${this.escapeHtml(entry.processed_info)}</td>
                 <td>${this.formatHuntStatus(entry.hunt_status)}</td>
+                <td>${this.formatProtocol(entry.protocol)}</td>
                 <td>${this.formatOperationType(entry.operation_type)}</td>
                 <td>${this.escapeHtml(entry.id)}</td>
                 <td>${this.escapeHtml(formattedInstance)}</td>
@@ -325,23 +326,62 @@ const historyModule = {
     
     // Helper function to format hunt status
     formatHuntStatus: function(huntStatus) {
-        if (!huntStatus) {
-            return '<span class="hunt-status-unknown">Not Tracked</span>';
+        if (!huntStatus) return '<span class="status-badge status-unknown">Unknown</span>';
+        
+        let statusClass = 'status-unknown';
+        let statusIcon = '';
+        
+        // Apply the right color and icon based on status
+        if (huntStatus.includes('Downloading') || huntStatus.includes('Queued') || huntStatus.includes('In progress')) {
+            statusClass = 'status-downloading';
+            statusIcon = '<i class="fas fa-arrow-down"></i>';
+        } else if (huntStatus === 'Downloaded' || huntStatus === 'Found') {
+            statusClass = 'status-downloaded';
+            statusIcon = '<i class="fas fa-check"></i>';
+        } else if (huntStatus === 'Searching') {
+            statusClass = 'status-searching';
+            statusIcon = '<i class="fas fa-search"></i>';
+        } else if (huntStatus.includes('Failed') || huntStatus.includes('Warning') || huntStatus.includes('Error')) {
+            statusClass = 'status-error';
+            statusIcon = '<i class="fas fa-exclamation-triangle"></i>';
+        } else if (huntStatus.includes('Paused')) {
+            statusClass = 'status-paused';
+            statusIcon = '<i class="fas fa-pause"></i>';
         }
         
-        const statusLower = huntStatus.toLowerCase();
-        switch (statusLower) {
-            case 'searching':
-                return '<span class="hunt-status-searching">Searching</span>';
-            case 'found':
-                return '<span class="hunt-status-found">Found</span>';
-            case 'downloaded':
-                return '<span class="hunt-status-downloaded">Downloaded</span>';
-            case 'failed':
-                return '<span class="hunt-status-failed">Failed</span>';
-            default:
-                return `<span class="hunt-status-unknown">${this.escapeHtml(huntStatus)}</span>`;
+        return `<span class="status-badge ${statusClass}">${statusIcon} ${this.escapeHtml(huntStatus)}</span>`;
+    },
+    
+    // Helper function to format protocol with icons
+    formatProtocol: function(protocol) {
+        if (!protocol || protocol === 'Unknown') {
+            return '<span class="protocol-badge protocol-unknown"><i class="fas fa-question-circle"></i></span>';
         }
+        
+        const lowerProtocol = protocol.toLowerCase();
+        let protocolClass = '';
+        let protocolIcon = '';
+        let tooltip = '';
+        
+        if (lowerProtocol === 'torrent') {
+            protocolClass = 'protocol-torrent';
+            protocolIcon = '<i class="fas fa-magnet"></i>';
+            tooltip = 'Torrent';
+        } else if (lowerProtocol === 'usenet') {
+            protocolClass = 'protocol-usenet';
+            protocolIcon = '<i class="fas fa-newspaper"></i>';
+            tooltip = 'Usenet';
+        } else if (lowerProtocol.includes('http') || lowerProtocol === 'direct') {
+            protocolClass = 'protocol-http';
+            protocolIcon = '<i class="fas fa-download"></i>';
+            tooltip = 'Direct Download';
+        } else {
+            protocolClass = 'protocol-other';
+            protocolIcon = '<i class="fas fa-exchange-alt"></i>';
+            tooltip = protocol; // Use original protocol text
+        }
+        
+        return `<span class="protocol-badge ${protocolClass}" title="${tooltip}">${protocolIcon}</span>`;
     }
 };
 
