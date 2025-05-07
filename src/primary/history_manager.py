@@ -81,6 +81,7 @@ def add_history_entry(app_type, entry_data):
     # Create the entry with timestamp
     timestamp = int(time.time())
     entry = {
+        # Base required fields
         "date_time": timestamp,
         "date_time_readable": datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S'),
         "processed_info": entry_data["name"],
@@ -88,7 +89,23 @@ def add_history_entry(app_type, entry_data):
         "instance_name": instance_name,  # Use the instance_name we extracted above
         "operation_type": entry_data.get("operation_type", "missing"),  # Default to "missing" if not specified
         "app_type": app_type,  # Include app_type in the entry for display in UI
-        "hunt_status": entry_data.get("hunt_status", "Not Tracked")  # Add hunt status field
+        "hunt_status": entry_data.get("hunt_status", "Not Tracked"),  # Add hunt status field
+        
+        # Additional metadata fields with default values
+        "quality": entry_data.get("quality", None),
+        "size_mb": entry_data.get("size_mb", None),
+        "protocol": entry_data.get("protocol", None),
+        "indexer": entry_data.get("indexer", None),
+        "release_group": entry_data.get("release_group", None),
+        "year": entry_data.get("year", None),
+        "imdb_id": entry_data.get("imdb_id", None),
+        "tmdb_id": entry_data.get("tmdb_id", None),
+        "tvdb_id": entry_data.get("tvdb_id", None),
+        "genres": entry_data.get("genres", []),
+        "monitored": entry_data.get("monitored", None),
+        "last_check": entry_data.get("last_check", None),
+        "attempts": entry_data.get("attempts", 0),
+        "notes": entry_data.get("notes", None)
     }
     
     history_file = get_history_file_path(app_type, instance_name)
