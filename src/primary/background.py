@@ -711,16 +711,15 @@ def hunting_manager_loop():
                     
                     # Update the history entry with the current hunt status
                     try:
-                        from src.primary.utils.history_utils import add_history_entry
-                        history_entry = {
-                            "name": title,
-                            "instance_name": instance_name,
-                            "id": movie_id,
-                            "operation_type": "missing",
-                            "hunt_status": "Downloaded" if has_file else ("Found" if movie_in_queue else "Searching")
-                        }
-                        add_history_entry("radarr", history_entry)
-                        logger.info(f"[HUNTING] Updated history entry with hunt status for movie ID {movie_id}: {history_entry['hunt_status']}")
+                        from src.primary.utils.hunt_status import update_hunt_status
+                        update_hunt_status(
+                            app_type="radarr",
+                            instance_name=instance_name,
+                            item_id=movie_id,
+                            item_data=movie_data,
+                            queue_status=movie_in_queue,
+                            operation_type="missing"
+                        )
                     except Exception as he:
                         logger.error(f"[HUNTING] Error updating history entry: {he}")
             
