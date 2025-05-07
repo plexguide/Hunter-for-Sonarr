@@ -709,8 +709,21 @@ def hunting_manager_loop():
                         manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
                         logger.info(f"[HUNTING] Now tracking: {movie_name} (ID: {movie_id}) for instance {instance_name}")
                     
-                    # We're no longer updating history entries to preserve original timestamps
-                    # The status column will still work based on initial hunt_status values set during processing
+                    # Update ONLY the status field in history without changing timestamps
+                    try:
+                        # Determine current status
+                        current_status = "Searching"
+                        if has_file:
+                            current_status = "Downloaded"
+                        elif movie_in_queue:
+                            current_status = "Found"
+                        
+                        # Update ONLY the status field, preserving original timestamp
+                        from src.primary.history_manager import update_history_entry_status
+                        update_history_entry_status("radarr", instance_name, movie_id, current_status)
+                        logger.info(f"[HUNTING] Updated history entry status for movie ID {movie_id}: {current_status}")
+                    except Exception as he:
+                        logger.error(f"[HUNTING] Error updating history entry: {he}")
             
         except Exception as e:
             logger.error(f"[HUNTING] Error during hunting logic: {e}", exc_info=True)
