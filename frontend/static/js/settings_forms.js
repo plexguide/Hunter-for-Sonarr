@@ -1073,33 +1073,15 @@ const SettingsForms = {
             settings.saveColumnSortState = getInputValue('#saveColumnSortState', true);
             settings.disableAnimation = getInputValue('#disableAnimation', false);
             settings.useCompactLayout = getInputValue('#useCompactLayout', false);
-            settings.disableAllowListPopup = getInputValue('#disableAllowListPopup', false);
-            settings.maxHistoryItems = getInputValue('#maxHistoryItems', 100);
-            settings.maxLogItems = getInputValue('#maxLogItems', 200);
-            settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);
-            settings.autoLoginWithoutPassword = getInputValue('#autoLoginWithoutPassword', false);
+            settings.declared_item_failure_minutes = parseInt(document.getElementById('declared_item_failure_minutes')?.value || 15, 10);
+            settings.hunter_manager_loop_delay_minutes = parseInt(document.getElementById('hunter_manager_loop_delay_minutes')?.value || 0, 10);
             
-            // Add collection of advanced settings
-            settings.api_timeout = getInputValue('#api_timeout', 120);
-            settings.command_wait_delay = getInputValue('#command_wait_delay', 1);
-            settings.command_wait_attempts = getInputValue('#command_wait_attempts', 600);
-            settings.minimum_download_queue_size = getInputValue('#minimum_download_queue_size', -1);
-            settings.log_refresh_interval_seconds = getInputValue('#log_refresh_interval_seconds', 30);
-        }
-        
-        // For other app types, collect settings
-        else {
-            // Handle instances differently
-            const instances = [];
-            // Find instance containers with both old and new class names
-            const instanceContainers = container.querySelectorAll('.instance-item, .instance-panel');
-            
-            // Collect instance data with improved error handling
-            instanceContainers.forEach((instance, index) => {
-                const nameInput = instance.querySelector('input[name="name"]');
-                const urlInput = instance.querySelector('input[name="api_url"]');
-                const keyInput = instance.querySelector('input[name="api_key"]');
-                const enabledInput = instance.querySelector('input[name="enabled"]');
+            // Process instance settings
+            settings.instances.forEach((instance, index) => {
+                const nameInput = document.querySelector(`#${appType}-name-${index}`);
+                const urlInput = document.querySelector(`#${appType}-url-${index}`);
+                const keyInput = document.querySelector(`#${appType}-key-${index}`);
+                const enabledInput = document.querySelector(`#${appType}-enabled-${index}`);
                 
                 const name = nameInput ? nameInput.value : null;
                 const url = urlInput ? urlInput.value : null;
@@ -1230,6 +1212,21 @@ const SettingsForms = {
             </div>
             
             <div class="settings-group">
+                <h3>Hunter Manager Settings</h3>
+                <div class="setting-item">
+                    <label for="declared_item_failure_minutes">Declared Item Failure:</label>
+                    <input type="number" id="declared_item_failure_minutes" min="10" max="1440" value="${settings.declared_item_failure_minutes || 15}">
+                    <p class="setting-help">Time in minutes after which items that never appear in queue are marked as failed</p>
+                </div>
+                <div class="setting-item">
+                    <label for="hunter_manager_loop_delay_minutes">Hunter Manager Loop Delay:</label>
+                    <input type="number" id="hunter_manager_loop_delay_minutes" min="0" max="30" value="${settings.hunter_manager_loop_delay_minutes || 0}">
+                    <p class="setting-help">Optional delay in minutes between hunter manager processing cycles (0 = continuous processing)</p>
+                    <p class="setting-help" id="loop_delay_validation" style="color: var(--error-color); display: none;">Loop delay cannot exceed 50% of Declared Item Failure time</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
                 <div class="stateful-header-row">
                     <h3>Stateful Management</h3>
                     <!-- Original reset button removed, now using emergency button -->
@@ -1309,6 +1306,40 @@ const SettingsForms = {
                 const days = (hours / 24).toFixed(1);
                 statefulDaysSpan.textContent = `${days} days`;
             });
+        }
+        
+        // Add validation for Hunter Manager settings
+        const declaredFailureInput = document.getElementById('declared_item_failure_minutes');
+        const loopDelayInput = document.getElementById('hunter_manager_loop_delay_minutes');
+        const loopDelayValidation = document.getElementById('loop_delay_validation');
+        
+        if (declaredFailureInput && loopDelayInput && loopDelayValidation) {
+            const validateLoopDelay = () => {
+                const failureTime = parseInt(declaredFailureInput.value, 10) || 15;
+                const loopDelay = parseInt(loopDelayInput.value, 10) || 0;
+                
+                // Loop delay should not exceed 50% of declared failure time
+                const maxLoopDelay = Math.floor(failureTime * 0.5);
+                
+                if (loopDelay > maxLoopDelay) {
+                    loopDelayValidation.style.display = 'block';
+                    loopDelayInput.setCustomValidity(`Loop delay must be ${maxLoopDelay} minutes or less`);
+                } else {
+                    loopDelayValidation.style.display = 'none';
+                    loopDelayInput.setCustomValidity('');
+                }
+            };
+
+            // Add event listeners
+            declaredFailureInput.addEventListener('input', validateLoopDelay);
+            loopDelayInput.addEventListener('input', validateLoopDelay);
+            
+            // Initial validation
+            try {
+                validateLoopDelay();
+            } catch (e) {
+                console.error('Error during Hunter Manager settings validation:', e);
+            }
         }
         
         // Load stateful management info

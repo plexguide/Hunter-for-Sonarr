@@ -522,6 +522,11 @@ def hunting_manager_loop():
     logger.info("[HUNTING] Hunting Manager background thread started.")
     manager = HuntingManager("/config")
     logger.info("[HUNTING] Hunting Manager is Ready to Hunt!")
+    
+    # Load settings
+    from src.primary.settings_manager import get_advanced_setting
+    loop_delay_minutes = get_advanced_setting("hunter_manager_loop_delay_minutes", 0)
+    failure_minutes = get_advanced_setting("declared_item_failure_minutes", 15)
 
     # On first run, log all existing tracked items (prior history)
     for app_name in os.listdir(manager.hunting_dir):
@@ -545,6 +550,10 @@ def hunting_manager_loop():
             from src.primary.apps.radarr import get_configured_instances
             from src.primary.apps.radarr.api import get_movie_by_id, get_movie_file, get_download_queue
             from src.primary.utils.history_utils import log_processed_media
+            from src.primary.utils.hunt_status import update_hunt_status, clear_stale_status_tracking
+            
+            # Periodically clean up stale status tracking entries
+            clear_stale_status_tracking()
             
             radarr_instances = get_configured_instances()
             
@@ -620,9 +629,11 @@ def hunting_manager_loop():
                             
                             # Check download queue status for this movie
                             movie_in_queue = False
+                            queue_item_data = None
                             for queue_item in queue_items:
                                 if queue_item.get('movieId') == int(movie_id):
                                     movie_in_queue = True
+                                    queue_item_data = queue_item
                                     progress = queue_item.get('progress', 0)
                                     status = queue_item.get('status', 'Unknown')
                                     eta = queue_item.get('estimatedCompletionTime', 'Unknown')
@@ -709,27 +720,43 @@ def hunting_manager_loop():
                         manager.add_tracking_item("radarr", instance_name, str(movie_id), movie_name, radarr_id=movie_id)
                         logger.info(f"[HUNTING] Now tracking: {movie_name} (ID: {movie_id}) for instance {instance_name}")
                     
-                    # Update ONLY the status field in history without changing timestamps
+                    # Update status with detailed queue information
                     try:
-                        # Determine current status
-                        current_status = "Searching"
-                        if has_file:
-                            current_status = "Downloaded"
-                        elif movie_in_queue:
-                            current_status = "Found"
+                        # Now use the enhanced hunt status tracking system
+                        from src.primary.utils.hunt_status import update_hunt_status
                         
-                        # Update ONLY the status field, preserving original timestamp
-                        from src.primary.history_manager import update_history_entry_status
-                        update_history_entry_status("radarr", instance_name, movie_id, current_status)
-                        logger.info(f"[HUNTING] Updated history entry status for movie ID {movie_id}: {current_status}")
+                        # Loop delay setting
+                        loop_delay_minutes = get_advanced_setting("hunter_manager_loop_delay_minutes", 0)
+                        
+                        # Determine operation type (missing or upgrade)
+                        operation_type = "upgrade" if has_file else "missing"
+                        
+                        # Update the hunt status for this item
+                        hunt_status, status_info = update_hunt_status(
+                            "radarr", instance_name, movie_id, movie_data, 
+                            queue_data=queue_item_data, operation_type=operation_type
+                        )
+                        
+                        logger.info(f"[HUNTING] Updated hunt status for movie ID {movie_id}: {hunt_status}")
+                        if status_info.get("protocol"):
+                            logger.info(f"[HUNTING] Protocol: {status_info['protocol']}, Progress: {status_info['progress']}%")
                     except Exception as he:
-                        logger.error(f"[HUNTING] Error updating history entry: {he}")
+                        logger.error(f"[HUNTING] Error updating hunt status: {he}")
             
         except Exception as e:
             logger.error(f"[HUNTING] Error during hunting logic: {e}", exc_info=True)
         
         logger.info("[HUNTING] === Hunting Manager cycle ended ===")
-        hunting_manager_stop_event.wait(30)  # Check every 30 seconds
+        
+        # Calculate delay based on settings (in seconds)
+        delay_seconds = loop_delay_minutes * 60 if loop_delay_minutes > 0 else 30
+        
+        # Log the wait period if it's not the default
+        if loop_delay_minutes > 0:
+            logger.info(f"[HUNTING] Waiting {loop_delay_minutes} minutes until next cycle")
+            
+        # Wait for the configured delay or until stop event is set
+        hunting_manager_stop_event.wait(delay_seconds)
     
     logger.info("[HUNTING] Hunting Manager background thread stopped.")
 

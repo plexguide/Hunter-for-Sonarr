@@ -423,6 +423,56 @@
         font-size: 0.9em;
     }
     
+    .hunt-status-downloading {
+        color: #9b59b6;
+        font-weight: 500;
+        padding: 3px 8px;
+        background-color: rgba(155, 89, 182, 0.1);
+        border-radius: 4px;
+        font-size: 0.9em;
+        display: inline-block;
+    }
+    
+    .hunt-status-paused {
+        color: #f39c12;
+        font-weight: 500;
+        padding: 3px 8px;
+        background-color: rgba(243, 156, 18, 0.1);
+        border-radius: 4px;
+        font-size: 0.9em;
+        display: inline-block;
+    }
+    
+    /* Progress bar styling */
+    .progress-container {
+        height: 4px;
+        width: 100%;
+        background-color: rgba(155, 89, 182, 0.1);
+        border-radius: 2px;
+        margin-top: 3px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background-color: #9b59b6;
+        border-radius: 2px;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-bar-paused {
+        background-color: #f39c12;
+        background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+        background-size: 1rem 1rem;
+    }
+    
+    /* Protocol icon styling */
+    .protocol-icon {
+        margin-right: 5px;
+        font-size: 0.85em;
+        opacity: 0.8;
+    }
+    
     /* Empty state and loading styling */
     .empty-state-message, .loading-indicator {
         text-align: center;

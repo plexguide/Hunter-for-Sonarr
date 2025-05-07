@@ -246,7 +246,7 @@ const historyModule = {
             row.innerHTML = `
                 <td>${entry.date_time_readable}</td>
                 <td>${this.escapeHtml(entry.processed_info)}</td>
-                <td>${this.formatHuntStatus(entry.hunt_status)}</td>
+                <td>${this.formatHuntStatus(entry.hunt_status, entry.protocol)}</td>
                 <td>${this.formatOperationType(entry.operation_type)}</td>
                 <td>${this.escapeHtml(entry.id)}</td>
                 <td>${this.escapeHtml(formattedInstance)}</td>
@@ -324,24 +324,89 @@ const historyModule = {
     },
     
     // Helper function to format hunt status
-    formatHuntStatus: function(huntStatus) {
+    formatHuntStatus: function(huntStatus, protocol) {
         if (!huntStatus) {
             return '<span class="hunt-status-unknown">Not Tracked</span>';
         }
         
+        // Get protocol icon if available
+        const protocolIcon = this.getProtocolIcon(protocol);
+        
+        // Check for downloading or paused status with percentage
         const statusLower = huntStatus.toLowerCase();
+        
+        // Handle paused downloads
+        if (statusLower.includes('paused')) {
+            // Extract percentage if present
+            const match = huntStatus.match(/\b(\d+)%/) || huntStatus.match(/Paused\s*-\s*(\d+)%/);
+            const percentage = match ? match[1] : '0';
+            
+            // Create a visual progress indicator with paused styling
+            const progressBar = `<div class="progress-container">
+                <div class="progress-bar progress-bar-paused" style="width: ${percentage}%"></div>
+            </div>`;
+            
+            return `<span class="hunt-status-paused">
+                ${protocolIcon}
+                Paused - ${percentage}%
+                ${progressBar}
+            </span>`;
+        }
+        
+        // Handle active downloads
+        else if (statusLower.includes('downloading')) {
+            // Extract percentage if present
+            const match = huntStatus.match(/\b(\d+)%/) || huntStatus.match(/Downloading\s*-\s*(\d+)%/);
+            const percentage = match ? match[1] : '0';
+            
+            // Create a visual progress indicator
+            const progressBar = `<div class="progress-container">
+                <div class="progress-bar" style="width: ${percentage}%"></div>
+            </div>`;
+            
+            return `<span class="hunt-status-downloading">
+                ${protocolIcon}
+                Downloading - ${percentage}%
+                ${progressBar}
+            </span>`;
+        }
+        
+        // Handle other statuses
         switch (statusLower) {
             case 'searching':
-                return '<span class="hunt-status-searching">Searching</span>';
+                return `<span class="hunt-status-searching">${protocolIcon}Searching</span>`;
             case 'found':
-                return '<span class="hunt-status-found">Found</span>';
+                return `<span class="hunt-status-found">${protocolIcon}Found</span>`;
             case 'downloaded':
-                return '<span class="hunt-status-downloaded">Downloaded</span>';
+                return `<span class="hunt-status-downloaded">${protocolIcon}Downloaded</span>`;
             case 'failed':
-                return '<span class="hunt-status-failed">Failed</span>';
+                return `<span class="hunt-status-failed">${protocolIcon}Failed</span>`;
             default:
-                return `<span class="hunt-status-unknown">${this.escapeHtml(huntStatus)}</span>`;
+                return `<span class="hunt-status-unknown">${protocolIcon}${this.escapeHtml(huntStatus)}</span>`;
         }
+    },
+    
+    // Helper function to get protocol icon
+    getProtocolIcon: function(protocol) {
+        if (!protocol) return '';
+        
+        const protocolLower = protocol.toLowerCase();
+        let iconClass = 'fas ';
+        let tooltip = protocol;
+        
+        switch (protocolLower) {
+            case 'torrent':
+                iconClass += 'fa-magnet'; // Magnet icon for torrent
+                break;
+            case 'usenet':
+                iconClass += 'fa-newspaper'; // Newspaper icon for usenet
+                break;
+            default:
+                iconClass += 'fa-download'; // Generic download icon
+                break;
+        }
+        
+        return `<i class="${iconClass} protocol-icon" title="${tooltip}"></i> `;
     }
 };
 
