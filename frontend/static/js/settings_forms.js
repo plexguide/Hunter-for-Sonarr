@@ -15,7 +15,7 @@ const SettingsForms = {
                 name: "Default",
                 api_url: settings.api_url || "", // Legacy support
                 api_key: settings.api_key || "", // Legacy support
-                enabled: true
+                enabled: false
             }];
         }
 
@@ -58,7 +58,7 @@ const SettingsForms = {
                         <div class="setting-item">
                             <label for="sonarr-enabled-${index}">Enabled:</label>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="sonarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <input type="checkbox" id="sonarr-enabled-${index}" name="enabled" ${instance.enabled === true ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -154,7 +154,7 @@ const SettingsForms = {
                 name: "Default",
                 api_url: settings.api_url || "",
                 api_key: settings.api_key || "",
-                enabled: true
+                enabled: false
             }];
         }
         
@@ -197,7 +197,7 @@ const SettingsForms = {
                         <div class="setting-item">
                             <label for="radarr-enabled-${index}">Enabled:</label>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="radarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <input type="checkbox" id="radarr-enabled-${index}" name="enabled" ${instance.enabled === true ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -307,7 +307,7 @@ const SettingsForms = {
                 name: "Default",
                 api_url: settings.api_url || "", // Legacy support
                 api_key: settings.api_key || "", // Legacy support
-                enabled: true
+                enabled: false
             }];
         }
         
@@ -350,7 +350,7 @@ const SettingsForms = {
                         <div class="setting-item">
                             <label for="lidarr-enabled-${index}">Enabled:</label>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="lidarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <input type="checkbox" id="lidarr-enabled-${index}" name="enabled" ${instance.enabled === true ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -445,7 +445,7 @@ const SettingsForms = {
                 name: "Default",
                 api_url: settings.api_url || "", // Legacy support
                 api_key: settings.api_key || "", // Legacy support
-                enabled: true
+                enabled: false
             }];
         }
         
@@ -488,7 +488,7 @@ const SettingsForms = {
                         <div class="setting-item">
                             <label for="readarr-enabled-${index}">Enabled:</label>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="readarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <input type="checkbox" id="readarr-enabled-${index}" name="enabled" ${instance.enabled === true ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -574,7 +574,7 @@ const SettingsForms = {
                 name: "Default",
                 api_url: "",
                 api_key: "",
-                enabled: true
+                enabled: false
             }];
         }
 
@@ -617,7 +617,7 @@ const SettingsForms = {
                         <div class="setting-item">
                             <label for="whisparr-enabled-${index}">Enabled:</label>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="whisparr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <input type="checkbox" id="whisparr-enabled-${index}" name="enabled" ${instance.enabled === true ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -715,7 +715,7 @@ const SettingsForms = {
                 name: "Default",
                 api_url: "",
                 api_key: "",
-                enabled: true
+                enabled: false
             }];
         }
 
@@ -758,7 +758,7 @@ const SettingsForms = {
                         <div class="setting-item">
                             <label for="eros-enabled-${index}">Enabled:</label>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="eros-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <input type="checkbox" id="eros-enabled-${index}" name="enabled" ${instance.enabled === true ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
