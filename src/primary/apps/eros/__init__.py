@@ -21,18 +21,21 @@ def get_configured_instances():
     """Get all configured and enabled Eros instances"""
     settings = load_settings("eros")
     instances = []
-    eros_logger.info(f"Loaded Eros settings for instance check: {settings}") 
+    # Use debug level to avoid log spam on new installations
+    eros_logger.debug(f"Loaded Eros settings for instance check: {settings}")
 
     if not settings:
         eros_logger.debug("No settings found for Eros")
         return instances
 
     # Always use Eros V3 API
-    eros_logger.info("Using Eros API v3 exclusively")
+    # Use debug level to avoid log spam on new installations
+    eros_logger.debug("Using Eros API v3 exclusively")
 
     # Check if instances are configured
     if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
-        eros_logger.info(f"Found 'instances' list with {len(settings['instances'])} items. Processing...")
+        # Use debug level to avoid log spam on new installations
+        eros_logger.debug(f"Found 'instances' list with {len(settings['instances'])} items. Processing...")
         for idx, instance in enumerate(settings["instances"]):
             eros_logger.debug(f"Checking instance #{idx}: {instance}")
             # Enhanced validation
@@ -67,18 +70,26 @@ def get_configured_instances():
                 if "api_timeout" not in instance_settings:
                     instance_settings["api_timeout"] = 30
                 
-                eros_logger.info(f"Adding configured Eros instance: {instance_name}")
+                # Use debug level to prevent log spam
+                eros_logger.debug(f"Adding configured Eros instance: {instance_name}")
                 instances.append(instance_settings)
             else:
                 name = instance.get("name", "Unnamed")
                 if not is_enabled:
                     eros_logger.debug(f"Skipping disabled instance: {name}")
                 else:
-                    eros_logger.warning(f"Skipping instance {name} due to missing API URL or API Key")
+                    # For brand new installations, don't spam logs with warnings about default instances
+                    if name == 'Default':
+                        # Use debug level for default instances to avoid log spam on new installations
+                        eros_logger.debug(f"Skipping instance {name} due to missing API URL or API Key")
+                    else:
+                        # Still log warnings for non-default instances
+                        eros_logger.warning(f"Skipping instance {name} due to missing API URL or API Key")
     else:
         eros_logger.debug("No instances array found in settings or it's empty")
     
-    eros_logger.info(f"Found {len(instances)} configured and enabled Eros instances")
+    # Use debug level to avoid spamming logs, especially with 0 instances
+    eros_logger.debug(f"Found {len(instances)} configured and enabled Eros instances")
     return instances
 
 __all__ = ["process_missing_items", "process_missing_scenes", "process_cutoff_upgrades", "get_configured_instances"]
