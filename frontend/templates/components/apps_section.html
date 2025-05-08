@@ -38,30 +38,31 @@
 </section>
 
 <style>
-    /* Apps Section Layout */
+    /* Apps Section Layout - Complete Redesign */
     #appsSection {
         display: none;
         width: 100%;
-        height: 100%;
+        height: auto;
         overflow: hidden; /* Prevent double scrollbar */
-        max-height: calc(100vh - 60px);
+        padding-bottom: 60px; /* Clear space at the bottom */
     }
     
     #appsSection.active {
-        display: flex;
-        flex-direction: column;
+        display: block;
     }
     
     /* Single scroll container - ONLY this element should scroll */
     .single-scroll-container {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
+        display: block;
+        width: 100%;
         overflow-y: auto; 
         overflow-x: hidden;
-        padding-bottom: 20px;
-        height: calc(100vh - 120px); /* Adjust for header */
+        padding-bottom: 100px; /* Significant padding to avoid content being cut off */
+        min-height: 100%;
+        height: auto;
+        max-height: unset; /* Remove any max-height restriction */
         scrollbar-width: thin; /* Firefox */
+        position: relative;
     }
     
     /* Force-hide scrollbars on all other elements */
@@ -76,8 +77,26 @@
     /* Proper table positioning at bottom */
     .app-panels-container {
         margin-top: auto;
-        padding: 10px 0;
+        padding: 10px 0 0;
         width: 100%;
+    }
+    
+    /* Ensure Additional Options section is fully visible */
+    #sonarrApps, #radarrApps, #lidarrApps, #readarrApps, #whisparrApps, #erosApps, #swaparrApps {
+        padding-bottom: 150px; /* Extra padding to ensure bottom content is visible */
+        margin-bottom: 50px;
+    }
+    
+    /* Add explicit styling for the Additional Options section */
+    .additional-options-section, .additional-options {
+        margin-bottom: 100px;
+        padding-bottom: 100px;
+    }
+    
+    /* Ensure Skip Series Refresh is visible */
+    .skip-series-refresh {
+        margin-bottom: 50px;
+        padding-bottom: 50px;
     }
     
     /* Panel styling */
@@ -148,10 +167,54 @@
         height: 0 !important;
     }
     
-    /* Mobile optimizations */
+    /* Complete overhaul for mobile and desktop visibility */
     @media (max-width: 768px) {
-        .apps-content-wrapper {
-            height: calc(100vh - 100px);
+        /* Full display mode for mobile */
+        #appsSection, #appsSection.active {
+            display: block;
+            height: auto;
+            overflow-y: visible;
+            overflow-x: hidden;
+            padding-bottom: 150px;
+        }
+        
+        /* Completely redesign scroll container for mobile */
+        .single-scroll-container {
+            display: block;
+            position: relative;
+            overflow-y: visible;
+            height: auto;
+            min-height: 100%;
+            padding-bottom: 200px;
+        }
+        
+        /* Reset all constraints */
+        body, html, .main-content, .content-section {
+            overflow-y: auto !important;
+            height: auto !important;
+        }
+        
+        /* Extra space for bottom content */
+        .app-panels-container {
+            margin-bottom: 100px;
+        }
+        
+        /* Force bottom option visibility */
+        .additional-options, .skip-series-refresh {
+            margin-bottom: 150px !important;
+            padding-bottom: 150px !important;
+        }
+    }
+    
+    /* Desktop padding adjustments */
+    @media (min-width: 769px) {
+        .single-scroll-container {
+            padding-bottom: 200px;
+        }
+        
+        .additional-options, .skip-series-refresh {
+            margin-bottom: 150px;
+            padding-bottom: 150px;
         }
     }
 </style>
