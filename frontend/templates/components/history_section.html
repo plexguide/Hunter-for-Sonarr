@@ -82,9 +82,24 @@
 </section>
 
 <style>
+    /* Forcefully remove all scrollbars except the table one */
+    html, body, #app, .main-content, .content-section, .history-container {
+        overflow: hidden !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    
+    /* Hide WebKit scrollbar */
+    html::-webkit-scrollbar, body::-webkit-scrollbar, #app::-webkit-scrollbar, 
+    .main-content::-webkit-scrollbar, .content-section::-webkit-scrollbar, 
+    .history-container::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    
     /* Main container styling */
     .content-section {
-        overflow: hidden;
         max-width: 100%;
     }
     
@@ -308,7 +323,8 @@
         background: linear-gradient(180deg, rgba(22, 26, 34, 0.8), rgba(18, 22, 30, 0.75));
         border: 1px solid rgba(90, 109, 137, 0.15);
         max-width: 100%;
-        height: 65vh;
+        /* Dynamic height calculation */
+        height: calc(100vh - 170px);
     }
     
     .modern-table, .history-table {
@@ -476,10 +492,30 @@
 <script>
     // Fixes for formatting the history items
     document.addEventListener('DOMContentLoaded', function() {
-        // Disable outer scrolling when history page is active
+        // Force single scrollbar when in history section
         const fixHistoryScrolling = function() {
-            // First, find outer containers that might have scrollbars
-            const outerContainers = document.querySelectorAll('#app, .main-content, body');
+            // Apply global CSS to forcefully remove all scrollbars
+            const style = document.createElement('style');
+            style.id = 'history-scrollbar-fix';
+            style.innerHTML = `
+                html, body, #app, .main-content, #main, .content-section, .main-content > .inner, .section-content, .history-container {
+                    overflow: hidden !important;
+                    scrollbar-width: none !important;
+                    -ms-overflow-style: none !important;
+                }
+                html::-webkit-scrollbar, body::-webkit-scrollbar, #app::-webkit-scrollbar, 
+                .main-content::-webkit-scrollbar, #main::-webkit-scrollbar, .content-section::-webkit-scrollbar, 
+                .main-content > .inner::-webkit-scrollbar, .section-content::-webkit-scrollbar,
+                .history-container::-webkit-scrollbar {
+                    display: none !important;
+                    width: 0px !important;
+                    height: 0px !important;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Also apply inline styles to containers that might have scrollbars
+            const outerContainers = document.querySelectorAll('#app, .main-content, body, #main, .main-content > .inner, .section-content');
             outerContainers.forEach(container => {
                 if (container) {
                     container.style.overflow = 'hidden';
@@ -491,6 +527,24 @@
             if (tableWrapper) {
                 tableWrapper.style.overflowY = 'scroll';
                 tableWrapper.style.overflowX = 'auto';
+                
+                // Calculate and set dynamic height
+                const updateTableHeight = function() {
+                    const headerHeight = document.querySelector('.section-header').offsetHeight || 0;
+                    const paginationHeight = document.querySelector('.pagination-controls').offsetHeight || 0;
+                    const windowHeight = window.innerHeight;
+                    const padding = 80; // Account for margins and paddings
+                    
+                    // Dynamic calculation based on available space
+                    const availableHeight = windowHeight - headerHeight - paginationHeight - padding;
+                    tableWrapper.style.height = availableHeight + 'px';
+                };
+                
+                // Initial calculation
+                updateTableHeight();
+                
+                // Update on window resize
+                window.addEventListener('resize', updateTableHeight);
             }
         };
         
@@ -505,7 +559,13 @@
                 setTimeout(fixHistoryScrolling, 100);
             } else {
                 // Restore normal scrolling when leaving history page
-                document.querySelectorAll('#app, .main-content, body').forEach(container => {
+                const styleElement = document.getElementById('history-scrollbar-fix');
+                if (styleElement) {
+                    styleElement.remove();
+                }
+                
+                // Also clear inline styles
+                document.querySelectorAll('#app, .main-content, body, #main, .main-content > .inner, .section-content').forEach(container => {
                     if (container) {
                         container.style.overflow = '';
                     }
