@@ -46,7 +46,8 @@ def get_configured_instances():
             settings["instance_name"] = "Default"
             instances.append(settings)
     
-    radarr_logger.info(f"Found {len(instances)} configured and enabled Radarr instances")
+    # Use debug level to avoid spamming logs, especially with 0 instances
+    radarr_logger.debug(f"Found {len(instances)} configured and enabled Radarr instances")
     return instances
 
 __all__ = ["process_missing_movies", "process_cutoff_upgrades", "get_configured_instances"]
