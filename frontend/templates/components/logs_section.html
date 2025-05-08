@@ -39,9 +39,14 @@
         padding: 20px;
         padding-bottom: 60px; /* Extra padding to account for the footer */
         overflow: hidden; /* Prevent outer scrolling */
+        display: none; /* Hide by default */
+        width: 100%;
+    }
+    
+    /* Only show when active */
+    #logsSection.active {
         display: flex;
         flex-direction: column;
-        height: 100vh;
     }
     
     .section-header {

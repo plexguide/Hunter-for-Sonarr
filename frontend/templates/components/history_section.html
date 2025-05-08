@@ -82,11 +82,19 @@
 </section>
 
 <style>
-    /* Forcefully remove all scrollbars except the table one */
-    html, body, #app, .main-content, .content-section, .history-container {
+    /* Scope all styles to this section only */
+    #historySection {
+        width: 100%;
+        display: none;
+    }
+    
+    #historySection.active {
+        display: block;
+    }
+    
+    /* Scrollbar handling for only this section */
+    #historySection .history-container {
         overflow: hidden !important;
-        scrollbar-width: none !important;
-        -ms-overflow-style: none !important;
     }
     
     /* Hide WebKit scrollbar */
