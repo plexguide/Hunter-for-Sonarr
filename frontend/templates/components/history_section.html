@@ -74,7 +74,7 @@
     </div>
     
     <!-- Pagination controls -->
-    <div class="pagination-controls">
+    <div class="pagination-controls mobile-sticky">
         <button id="historyPrevPage" class="pagination-button"><i class="fas fa-chevron-left"></i> Previous</button>
         <span id="historyPageInfo">Page <span id="historyCurrentPage">1</span> of <span id="historyTotalPages">1</span></span>
         <button id="historyNextPage" class="pagination-button">Next <i class="fas fa-chevron-right"></i></button>
@@ -96,6 +96,11 @@
         display: none !important;
         width: 0 !important;
         height: 0 !important;
+    }
+    
+    /* Make space for the fixed pagination on mobile */
+    .history-container {
+        padding-bottom: 60px;
     }
     
     /* Main container styling */
@@ -439,6 +444,28 @@
         align-items: center;
         gap: 15px;
         margin-top: 20px;
+        padding: 10px;
+        background: rgba(22, 26, 34, 0.9);
+        z-index: 1000;
+    }
+    
+    .mobile-sticky {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+        border-top: 1px solid rgba(90, 109, 137, 0.3);
+    }
+    
+    @media (min-width: 769px) {
+        .mobile-sticky {
+            position: static;
+            box-shadow: none;
+            border-top: none;
+            background: transparent;
+        }
     }
     
     .pagination-button {
@@ -486,12 +513,12 @@
         
         .pagination-controls {
             flex-wrap: wrap;
-            position: static !important;
-            margin-bottom: 20px;
-            margin-top: 20px;
+            margin: 0;
             display: flex;
             justify-content: space-between;
             width: 100%;
+            padding: 10px;
+            z-index: 1000;
         }
         
         .pagination-button {
@@ -508,6 +535,17 @@
         /* Ensure the table wrapper doesn't overflow in mobile */
         .modern-table-wrapper {
             max-height: calc(100vh - 300px);
+            padding-bottom: 60px; /* Add padding to ensure content isn't hidden under pagination */
+        }
+        
+        /* Fix for small screen height */
+        @media (max-height: 700px) {
+            .pagination-controls {
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+            }
         }
     }
 </style>
