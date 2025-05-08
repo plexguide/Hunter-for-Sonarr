@@ -46,12 +46,12 @@
             <table class="modern-table history-table">
                 <thead>
                     <tr>
-                        <th>Date and Time</th>
-                        <th>Processed Information</th>
-                        <th>Operation</th>
-                        <th>ID Number</th>
-                        <th>Name of Instance</th>
-                        <th>How Long Ago</th>
+                        <th style="min-width: 140px; width: 15%;">Date and Time</th>
+                        <th style="min-width: 250px; width: 35%;">Processed Information</th>
+                        <th style="min-width: 100px; width: 10%;">Operation</th>
+                        <th style="min-width: 100px; width: 10%;">ID Number</th>
+                        <th style="min-width: 120px; width: 15%;">Name of Instance</th>
+                        <th style="min-width: 120px; width: 15%;">How Long Ago</th>
                     </tr>
                 </thead>
                 <tbody id="historyTableBody">
@@ -74,7 +74,7 @@
     </div>
     
     <!-- Pagination controls -->
-    <div class="pagination-controls">
+    <div class="pagination-controls mobile-sticky">
         <button id="historyPrevPage" class="pagination-button"><i class="fas fa-chevron-left"></i> Previous</button>
         <span id="historyPageInfo">Page <span id="historyCurrentPage">1</span> of <span id="historyTotalPages">1</span></span>
         <button id="historyNextPage" class="pagination-button">Next <i class="fas fa-chevron-right"></i></button>
@@ -82,10 +82,44 @@
 </section>
 
 <style>
+    /* Scope all styles to this section only */
+    #historySection {
+        width: 100%;
+        display: none;
+    }
+    
+    #historySection.active {
+        display: block;
+    }
+    
+    /* Scrollbar handling for only this section */
+    #historySection .history-container {
+        overflow: hidden !important;
+    }
+    
+    /* Hide WebKit scrollbar */
+    html::-webkit-scrollbar, body::-webkit-scrollbar, #app::-webkit-scrollbar, 
+    .main-content::-webkit-scrollbar, .content-section::-webkit-scrollbar, 
+    .history-container::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    
+    /* Make space for the fixed pagination on mobile */
+    .history-container {
+        padding-bottom: 60px;
+    }
+    
+    /* Main container styling */
+    .content-section {
+        max-width: 100%;
+    }
+    
     /* Modern History Section Styling */
     #historySection {
         padding: 20px;
-        padding-bottom: 60px;
+        max-width: 100%;
     }
     
     .section-header {
@@ -95,6 +129,11 @@
         margin-bottom: 20px;
         flex-wrap: wrap;
         gap: 15px;
+    }
+    
+    .history-container {
+        width: 100%;
+        margin-bottom: 20px;
     }
     
     /* Dropdown styling */
@@ -290,19 +329,28 @@
     
     /* Table styling */
     .modern-table-wrapper {
+        width: 100%;
         overflow-x: auto;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-        background: linear-gradient(180deg, rgba(22, 26, 34, 0.8), rgba(18, 22, 30, 0.75));
-        border: 1px solid rgba(90, 109, 137, 0.15);
+        scrollbar-width: thin;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Make Processed Information column text wrap for very long content */
+    .history-table td:nth-child(2) {
+        white-space: normal;
+        word-wrap: break-word;
+        word-break: break-word;
+        max-width: 400px;
     }
     
     .modern-table, .history-table {
         width: 100%;
+        min-width: 830px; /* Sum of all min-widths */
         border-collapse: collapse;
         text-align: left;
         color: white;
-        min-width: 800px;
+        table-layout: fixed;
     }
     
     .modern-table thead, .history-table thead {
@@ -327,6 +375,9 @@
         border-bottom: 1px solid rgba(90, 109, 137, 0.1);
         font-size: 14px;
         transition: background-color 0.2s ease;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .modern-table tbody tr, .history-table tbody tr {
@@ -382,6 +433,11 @@
         padding: 50px 20px;
         color: rgba(255, 255, 255, 0.7);
         display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
     }
     
     .empty-state-message i, .loading-indicator i {
@@ -398,8 +454,30 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-top: 20px;
         gap: 15px;
+        margin-top: 20px;
+        padding: 10px;
+        background: rgba(22, 26, 34, 0.9);
+        z-index: 1000;
+    }
+    
+    .mobile-sticky {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+        border-top: 1px solid rgba(90, 109, 137, 0.3);
+    }
+    
+    @media (min-width: 769px) {
+        .mobile-sticky {
+            position: static;
+            box-shadow: none;
+            border-top: none;
+            background: transparent;
+        }
     }
     
     .pagination-button {
@@ -430,8 +508,22 @@
         font-size: 14px;
     }
     
-    /* Responsive adjustments */
+    /* Mobile Table Adjustments */
     @media (max-width: 768px) {
+        /* Keep all columns at their natural width */
+        .modern-table, .history-table {
+            table-layout: fixed;
+            min-width: 830px; /* Sum of all min-widths */
+            width: auto;
+        }
+        
+        /* Ensure the wrapper allows horizontal scrolling */
+        .modern-table-wrapper {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* General responsive styling */
         .section-header {
             flex-direction: column;
             align-items: flex-start;
@@ -447,6 +539,39 @@
         
         .pagination-controls {
             flex-wrap: wrap;
+            margin: 0;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px;
+            z-index: 1000;
+        }
+        
+        .pagination-button {
+            padding: 8px 12px;
+            font-size: 14px;
+            min-width: 85px;
+        }
+        
+        #historyPageInfo {
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        /* Ensure the table wrapper doesn't overflow in mobile */
+        .modern-table-wrapper {
+            max-height: calc(100vh - 300px);
+            padding-bottom: 60px; /* Add padding to ensure content isn't hidden under pagination */
+        }
+        
+        /* Fix for small screen height */
+        @media (max-height: 700px) {
+            .pagination-controls {
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+            }
         }
     }
 </style>
@@ -454,6 +579,99 @@
 <script>
     // Fixes for formatting the history items
     document.addEventListener('DOMContentLoaded', function() {
+        // Force single scrollbar when in history section
+        const fixHistoryScrolling = function() {
+            // Apply global CSS to forcefully remove all scrollbars
+            const style = document.createElement('style');
+            style.id = 'history-scrollbar-fix';
+            style.innerHTML = `
+                html, body, #app, .main-content, #main, .content-section, .main-content > .inner, .section-content, .history-container {
+                    overflow: hidden !important;
+                    scrollbar-width: none !important;
+                    -ms-overflow-style: none !important;
+                }
+                html::-webkit-scrollbar, body::-webkit-scrollbar, #app::-webkit-scrollbar, 
+                .main-content::-webkit-scrollbar, #main::-webkit-scrollbar, .content-section::-webkit-scrollbar, 
+                .main-content > .inner::-webkit-scrollbar, .section-content::-webkit-scrollbar,
+                .history-container::-webkit-scrollbar {
+                    display: none !important;
+                    width: 0px !important;
+                    height: 0px !important;
+                }
+                /* Ensure table wrapper can scroll horizontally and vertically */
+                .modern-table-wrapper {
+                    overflow-y: scroll !important;
+                    overflow-x: auto !important;
+                }
+                
+                /* Prevent text from wrapping in table cells */
+                .modern-table td, .history-table td {
+                    white-space: nowrap !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Also apply inline styles to containers that might have scrollbars
+            const outerContainers = document.querySelectorAll('#app, .main-content, body, #main, .main-content > .inner, .section-content');
+            outerContainers.forEach(container => {
+                if (container) {
+                    container.style.overflow = 'hidden';
+                }
+            });
+            
+            // Force scrollbar to only appear on the table wrapper
+            const tableWrapper = document.querySelector('.modern-table-wrapper');
+            if (tableWrapper) {
+                tableWrapper.style.overflowY = 'scroll';
+                tableWrapper.style.overflowX = 'auto';
+                
+                // Calculate and set dynamic height
+                const updateTableHeight = function() {
+                    const headerHeight = document.querySelector('.section-header').offsetHeight || 0;
+                    const paginationHeight = document.querySelector('.pagination-controls').offsetHeight || 0;
+                    const windowHeight = window.innerHeight;
+                    const padding = 80; // Account for margins and paddings
+                    
+                    // Dynamic calculation based on available space
+                    const availableHeight = windowHeight - headerHeight - paginationHeight - padding;
+                    tableWrapper.style.height = availableHeight + 'px';
+                };
+                
+                // Initial calculation
+                updateTableHeight();
+                
+                // Update on window resize
+                window.addEventListener('resize', updateTableHeight);
+            }
+        };
+        
+        // Run immediately for history page
+        if (huntarrUI && huntarrUI.currentSection === 'history') {
+            setTimeout(fixHistoryScrolling, 100);
+        }
+        
+        // Add event listener for section changes
+        document.addEventListener('sectionChanged', function(e) {
+            if (e.detail.section === 'history') {
+                setTimeout(fixHistoryScrolling, 100);
+            } else {
+                // Restore normal scrolling when leaving history page
+                const styleElement = document.getElementById('history-scrollbar-fix');
+                if (styleElement) {
+                    styleElement.remove();
+                }
+                
+                // Also clear inline styles
+                document.querySelectorAll('#app, .main-content, body, #main, .main-content > .inner, .section-content').forEach(container => {
+                    if (container) {
+                        container.style.overflow = '';
+                    }
+                });
+            }
+        });
+        
         // Original function exists in history.js
         const originalRenderHistoryData = historyModule.renderHistoryData;
         

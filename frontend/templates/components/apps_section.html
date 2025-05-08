@@ -16,26 +16,94 @@
         </button>
     </div>
     
-    <!-- App panels - use direct children without nested containers -->
-    <div id="sonarrApps" class="app-apps-panel app-content-panel active" style="display: block;"></div>
-    <div id="radarrApps" class="app-apps-panel app-content-panel"></div>
-    <div id="lidarrApps" class="app-apps-panel app-content-panel"></div>
-    <div id="readarrApps" class="app-apps-panel app-content-panel"></div>
-    <div id="whisparrApps" class="app-apps-panel app-content-panel"></div>
-    <div id="erosApps" class="app-apps-panel app-content-panel"></div>
-    <div id="swaparrApps" class="app-apps-panel app-content-panel"></div>
-    
-    <div id="appsStatus" class="apps-status"></div>
-    
-    <div id="appsContainer" class="apps-container">
-        <!-- Apps panels will be shown here -->
+    <!-- Single scrollable container for all content -->
+    <div class="single-scroll-container">
+        <div id="appsContainer" class="apps-container">
+            <!-- Settings content will be shown here -->
+        </div>
+        
+        <div id="appsStatus" class="apps-status"></div>
+        
+        <!-- App panels at the bottom -->
+        <div class="app-panels-container">
+            <div id="sonarrApps" class="app-apps-panel app-content-panel active" style="display: block;"></div>
+            <div id="radarrApps" class="app-apps-panel app-content-panel"></div>
+            <div id="lidarrApps" class="app-apps-panel app-content-panel"></div>
+            <div id="readarrApps" class="app-apps-panel app-content-panel"></div>
+            <div id="whisparrApps" class="app-apps-panel app-content-panel"></div>
+            <div id="erosApps" class="app-apps-panel app-content-panel"></div>
+            <div id="swaparrApps" class="app-apps-panel app-content-panel"></div>
+        </div>
     </div>
 </section>
 
 <style>
-    /* Add bottom padding to the app panels to prevent content from being hidden */
-    .app-apps-panel {
+    /* Apps Section Layout - Complete Redesign */
+    #appsSection {
+        display: none;
+        width: 100%;
+        height: auto;
+        overflow: hidden; /* Prevent double scrollbar */
+        padding-bottom: 60px; /* Clear space at the bottom */
+    }
+    
+    #appsSection.active {
+        display: block;
+    }
+    
+    /* Single scroll container - ONLY this element should scroll */
+    .single-scroll-container {
+        display: block;
+        width: 100%;
+        overflow-y: auto; 
+        overflow-x: hidden;
+        padding-bottom: 100px; /* Significant padding to avoid content being cut off */
+        min-height: 100%;
+        height: auto;
+        max-height: unset; /* Remove any max-height restriction */
+        scrollbar-width: thin; /* Firefox */
+        position: relative;
+    }
+    
+    /* Force-hide scrollbars on all other elements */
+    body, html, .main-content, .content-section, 
+    .app-apps-panel, .app-content-panel, #appsContainer,
+    .app-panels-container, #appsStatus {
+        overflow: hidden !important;
+        scrollbar-width: none !important; /* Firefox */
+        -ms-overflow-style: none !important; /* IE/Edge */
+    }
+    
+    /* Proper table positioning at bottom */
+    .app-panels-container {
+        margin-top: auto;
+        padding: 10px 0 0;
+        width: 100%;
+    }
+    
+    /* Ensure Additional Options section is fully visible */
+    #sonarrApps, #radarrApps, #lidarrApps, #readarrApps, #whisparrApps, #erosApps, #swaparrApps {
+        padding-bottom: 150px; /* Extra padding to ensure bottom content is visible */
+        margin-bottom: 50px;
+    }
+    
+    /* Add explicit styling for the Additional Options section */
+    .additional-options-section, .additional-options {
+        margin-bottom: 100px;
+        padding-bottom: 100px;
+    }
+    
+    /* Ensure Skip Series Refresh is visible */
+    .skip-series-refresh {
+        margin-bottom: 50px;
         padding-bottom: 50px;
+    }
+    
+    /* Panel styling */
+    .app-apps-panel {
+        padding-bottom: 10px;
+        min-height: 0;
+        height: auto;
     }
     
     /* Fix dropdown positioning for apps section */
@@ -54,5 +122,110 @@
         transform: translateY(0);
         max-height: 300px;
         overflow-y: auto;
+    }
+    
+    /* Apps container styling */
+    #appsContainer {
+        height: auto;
+        flex: 1;
+        overflow: visible;
+    }
+    
+    /* Prevent scrollbars on all table elements */
+    table, tbody, tr, td {
+        overflow: visible !important;
+    }
+    
+    /* Hide scrollbars except the main content wrapper */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    /* Hide all scrollbars except on .single-scroll-container */
+    body::-webkit-scrollbar,
+    html::-webkit-scrollbar,
+    .main-content::-webkit-scrollbar,
+    .content-section::-webkit-scrollbar,
+    #appsSection::-webkit-scrollbar,
+    #appsContainer::-webkit-scrollbar,
+    .app-panels-container::-webkit-scrollbar,
+    .app-content-panel::-webkit-scrollbar,
+    .app-apps-panel::-webkit-scrollbar,
+    #sonarrApps::-webkit-scrollbar,
+    #radarrApps::-webkit-scrollbar,
+    #lidarrApps::-webkit-scrollbar,
+    #readarrApps::-webkit-scrollbar,
+    #whisparrApps::-webkit-scrollbar,
+    #erosApps::-webkit-scrollbar,
+    #swaparrApps::-webkit-scrollbar,
+    table::-webkit-scrollbar,
+    tr::-webkit-scrollbar,
+    td::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    
+    /* Complete overhaul for mobile and desktop visibility */
+    @media (max-width: 768px) {
+        /* Full display mode for mobile */
+        #appsSection, #appsSection.active {
+            display: block;
+            height: auto;
+            overflow-y: visible;
+            overflow-x: hidden;
+            padding-bottom: 150px;
+        }
+        
+        /* Completely redesign scroll container for mobile */
+        .single-scroll-container {
+            display: block;
+            position: relative;
+            overflow-y: visible;
+            height: auto;
+            min-height: 100%;
+            padding-bottom: 200px;
+        }
+        
+        /* Ensure proper section isolation */
+        body, html, .main-content {
+            overflow-y: auto !important;
+            height: auto !important;
+        }
+        
+        /* Prevent other sections from showing */
+        .content-section:not(.active) {
+            display: none !important;
+            height: 0 !important;
+            visibility: hidden !important;
+            position: absolute !important;
+            z-index: -999 !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+        }
+        
+        /* Extra space for bottom content */
+        .app-panels-container {
+            margin-bottom: 100px;
+        }
+        
+        /* Force bottom option visibility */
+        .additional-options, .skip-series-refresh {
+            margin-bottom: 150px !important;
+            padding-bottom: 150px !important;
+        }
+    }
+    
+    /* Desktop padding adjustments */
+    @media (min-width: 769px) {
+        .single-scroll-container {
+            padding-bottom: 200px;
+        }
+        
+        .additional-options, .skip-series-refresh {
+            margin-bottom: 150px;
+            padding-bottom: 150px;
+        }
     }
 </style>
