@@ -81,31 +81,13 @@ def add_history_entry(app_type, entry_data):
     # Create the entry with timestamp
     timestamp = int(time.time())
     entry = {
-        # Base required fields
         "date_time": timestamp,
         "date_time_readable": datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S'),
         "processed_info": entry_data["name"],
         "id": entry_data["id"],
         "instance_name": instance_name,  # Use the instance_name we extracted above
         "operation_type": entry_data.get("operation_type", "missing"),  # Default to "missing" if not specified
-        "app_type": app_type,  # Include app_type in the entry for display in UI
-        "hunt_status": entry_data.get("hunt_status", "Not Tracked"),  # Add hunt status field
-        
-        # Additional metadata fields with default values
-        "quality": entry_data.get("quality", None),
-        "size_mb": entry_data.get("size_mb", None),
-        "protocol": entry_data.get("protocol", None),
-        "indexer": entry_data.get("indexer", None),
-        "release_group": entry_data.get("release_group", None),
-        "year": entry_data.get("year", None),
-        "imdb_id": entry_data.get("imdb_id", None),
-        "tmdb_id": entry_data.get("tmdb_id", None),
-        "tvdb_id": entry_data.get("tvdb_id", None),
-        "genres": entry_data.get("genres", []),
-        "monitored": entry_data.get("monitored", None),
-        "last_check": entry_data.get("last_check", None),
-        "attempts": entry_data.get("attempts", 0),
-        "notes": entry_data.get("notes", None)
+        "app_type": app_type  # Include app_type in the entry for display in UI
     }
     
     history_file = get_history_file_path(app_type, instance_name)
@@ -250,59 +232,6 @@ def format_time_ago(seconds):
         return f"{minutes} {'minute' if minutes == 1 else 'minutes'} ago"
     else:
         return f"{seconds} {'second' if seconds == 1 else 'seconds'} ago"
-
-def update_history_entry_status(app_type, instance_name, item_id, hunt_status):
-    """
-    Update just the hunt status of an existing history entry, preserving the original timestamp
-    
-    Parameters:
-    - app_type: str - The app type (sonarr, radarr, etc)
-    - instance_name: str - Name of the instance
-    - item_id: str/int - ID of the item to update
-    - hunt_status: str - New hunt status to set
-    
-    Returns:
-    - bool - Success or failure
-    """
-    if not ensure_history_dir():
-        logger.error("Could not ensure history directory exists")
-        return False
-    
-    if app_type not in history_locks:
-        logger.error(f"Invalid app type: {app_type}")
-        return False
-    
-    history_file = get_history_file_path(app_type, instance_name)
-    if not history_file.exists():
-        logger.warning(f"History file doesn't exist for {app_type}-{instance_name}")
-        return False
-    
-    # Thread-safe file operation
-    with history_locks[app_type]:
-        try:
-            with open(history_file, 'r') as f:
-                history_data = json.load(f)
-            
-            # Find the entry with the matching ID
-            updated = False
-            for entry in history_data:
-                if str(entry.get("id", "")) == str(item_id):
-                    # Update just the hunt_status field
-                    entry["hunt_status"] = hunt_status
-                    updated = True
-            
-            if updated:
-                # Write back to file
-                with open(history_file, 'w') as f:
-                    json.dump(history_data, f, indent=2)
-                logger.info(f"Updated hunt status for {app_type}-{instance_name} ID {item_id} to '{hunt_status}'")
-                return True
-            else:
-                logger.warning(f"No matching entry found for {app_type}-{instance_name} ID {item_id}")
-                return False
-        except Exception as e:
-            logger.error(f"Error updating hunt status: {e}")
-            return False
 
 def clear_history(app_type):
     """

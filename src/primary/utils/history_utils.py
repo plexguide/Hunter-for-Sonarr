@@ -26,8 +26,7 @@ def log_processed_media(app_type, media_name, media_id, instance_name, operation
             "name": media_name,
             "id": str(media_id),
             "instance_name": instance_name,
-            "operation_type": operation_type,
-            "hunt_status": "Searching"  # Set initial hunt status to Searching
+            "operation_type": operation_type
         }
         
         result = add_history_entry(app_type, entry_data)
