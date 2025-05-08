@@ -6,6 +6,7 @@ Provides a web interface to view logs in real-time, manage settings, and include
 
 import os
 import datetime
+import time
 from threading import Lock
 from primary.utils.logger import LOG_DIR, APP_LOG_FILES, MAIN_LOG_FILE # Import log constants
 from primary import settings_manager # Import settings_manager
