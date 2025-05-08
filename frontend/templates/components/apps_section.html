@@ -188,10 +188,21 @@
             padding-bottom: 200px;
         }
         
-        /* Reset all constraints */
-        body, html, .main-content, .content-section {
+        /* Ensure proper section isolation */
+        body, html, .main-content {
             overflow-y: auto !important;
             height: auto !important;
+        }
+        
+        /* Prevent other sections from showing */
+        .content-section:not(.active) {
+            display: none !important;
+            height: 0 !important;
+            visibility: hidden !important;
+            position: absolute !important;
+            z-index: -999 !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
         }
         
         /* Extra space for bottom content */

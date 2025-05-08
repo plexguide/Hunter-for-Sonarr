@@ -329,15 +329,19 @@
     
     /* Table styling */
     .modern-table-wrapper {
-        overflow-y: scroll;
+        width: 100%;
         overflow-x: auto;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-        background: linear-gradient(180deg, rgba(22, 26, 34, 0.8), rgba(18, 22, 30, 0.75));
-        border: 1px solid rgba(90, 109, 137, 0.15);
-        max-width: 100%;
-        /* Dynamic height calculation */
-        height: calc(100vh - 170px);
+        scrollbar-width: thin;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Make Processed Information column text wrap for very long content */
+    .history-table td:nth-child(2) {
+        white-space: normal;
+        word-wrap: break-word;
+        word-break: break-word;
+        max-width: 400px;
     }
     
     .modern-table, .history-table {

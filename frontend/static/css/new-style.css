@@ -360,16 +360,28 @@ input:checked + .slider:before {
     color: var(--error-color);
 }
 
-/* Content Sections */
+/* Content Sections - Strict section isolation */
 .content-section {
-    display: none;
-    height: calc(100vh - 60px);
-    overflow-y: auto;
-    padding: 20px;
+    display: none !important;
+    visibility: hidden;
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    z-index: -1;
 }
 
 .content-section.active {
-    display: block;
+    display: block !important;
+    visibility: visible;
+    position: relative;
+    height: auto;
+    overflow: visible;
+    opacity: 1;
+    z-index: 1;
+    padding: 20px;
 }
 
 /* Cards */
