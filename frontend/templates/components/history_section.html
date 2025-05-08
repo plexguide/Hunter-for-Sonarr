@@ -486,6 +486,28 @@
         
         .pagination-controls {
             flex-wrap: wrap;
+            position: static !important;
+            margin-bottom: 20px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+        
+        .pagination-button {
+            padding: 8px 12px;
+            font-size: 14px;
+            min-width: 85px;
+        }
+        
+        #historyPageInfo {
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        /* Ensure the table wrapper doesn't overflow in mobile */
+        .modern-table-wrapper {
+            max-height: calc(100vh - 300px);
         }
     }
 </style>
