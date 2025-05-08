@@ -38,6 +38,10 @@
     #logsSection {
         padding: 20px;
         padding-bottom: 60px; /* Extra padding to account for the footer */
+        overflow: hidden; /* Prevent outer scrolling */
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
     }
     
     .section-header {
@@ -255,6 +259,8 @@
         line-height: 1.5;
         font-size: 13px;
         color: rgba(255, 255, 255, 0.9);
+        -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+        padding-bottom: 70px; /* Extra padding at bottom to ensure content isn't cut off */
     }
     
     .logs::-webkit-scrollbar {
@@ -390,8 +396,16 @@
             justify-content: space-between;
         }
         
+        /* Mobile specific log container styling */
         .logs {
-            height: calc(100vh - 280px);
+            height: calc(100vh - 240px); /* Adjusted height for mobile */
+            padding-bottom: 120px; /* Extra padding to ensure no content is hidden */
+            margin-bottom: 60px; /* Space for mobile browser UI */
+        }
+        
+        /* Make space for fixed elements at bottom on mobile */
+        #logsSection {
+            padding-bottom: 80px;
         }
     }
     
