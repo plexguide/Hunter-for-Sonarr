@@ -69,6 +69,17 @@
 }
 
 /* Base Styles */
+body, html {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100%;
+    width: 100%;
+    overflow: hidden !important; /* Prevent scrollbars on body and html */
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -76,13 +87,68 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
     line-height: 1.6;
     transition: background-color 0.3s, color 0.3s;
     height: 100vh;
-    overflow: hidden;
+}
+
+/* Global scrollbar management */
+.content-section {
+    overflow: hidden !important;
+}
+
+/* Styling for scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #262a36;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3d4353;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4d5569;
+}
+
+/* Prevent double scrollbars globally */
+body, html, .main-content, .section-wrapper {
+    overflow: hidden !important;
+    scrollbar-width: none !important;
+}
+
+/* Only allow scrollbars on specific elements */
+.single-scroll-container {
+    scrollbar-width: thin !important;
+    overflow-y: auto !important;
+}
+
+/* Hide scrollbars on all table elements */
+table, tbody, tr, td, th {
+    overflow: visible !important;
+}
+
+/* Hide all WebKit scrollbars except on allowed containers */
+body::-webkit-scrollbar,
+html::-webkit-scrollbar,
+.content-section::-webkit-scrollbar,
+.main-content::-webkit-scrollbar,
+.section-wrapper::-webkit-scrollbar,
+table::-webkit-scrollbar,
+tr::-webkit-scrollbar,
+tbody::-webkit-scrollbar,
+th::-webkit-scrollbar,
+td::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    display: none !important;
 }
 
 a {
