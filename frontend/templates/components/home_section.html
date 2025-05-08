@@ -232,39 +232,6 @@
             </div>
         </div>
 
-        <!-- Hunt Status Section -->
-        <div class="card hunt-status-card">
-            <div class="card-header">
-                <h3>Latest Hunt Statuses</h3>
-            </div>
-            <div class="hunt-status-container">
-                {% if latest_hunt_statuses %}
-                    <div class="hunt-status-list">
-                        {% for status in latest_hunt_statuses %}
-                            <div class="hunt-status-item">
-                                <div class="hunt-status-header">
-                                    <span class="hunt-app-name">{{ status.app_name|title }}</span>
-                                    <span class="hunt-instance-name">{{ status.instance_name }}</span>
-                                </div>
-                                <div class="hunt-status-content">
-                                    <div class="hunt-media-name">{{ status.media_name }}</div>
-                                    <div class="hunt-status-badge {{ status.status|lower }}">{{ status.status }}</div>
-                                </div>
-                                <div class="hunt-status-footer">
-                                    <span class="hunt-time">Requested: {{ status.time_requested }}</span>
-                                    <span class="hunt-id">ID: {{ status.id }}</span>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="no-hunt-status">
-                        <p>No hunt statuses available</p>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-
     </div>
 </section>
 
