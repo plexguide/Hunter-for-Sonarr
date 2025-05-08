@@ -48,6 +48,9 @@ from src.primary.routes.history_routes import history_blueprint
 # Import background module to trigger manual cycle resets
 from src.primary import background
 
+from src.primary.utils.hunting_manager import HuntingManager
+from src.primary.utils.radarr_hunting_manager import RadarrHuntingManager
+
 # Disable Flask default logging
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.DEBUG)  # Change to DEBUG to see all Flask/Werkzeug logs
@@ -145,15 +148,22 @@ KNOWN_LOG_FILES = {
     "eros": APP_LOG_FILES.get("eros"),  # Added Eros to known log files
     "swaparr": APP_LOG_FILES.get("swaparr"),  # Added Swaparr to known log files
     "system": MAIN_LOG_FILE, # Map 'system' to the main huntarr log
+    "hunting": MAIN_LOG_FILE, # Map 'hunting' to the main huntarr log too
 }
 # Filter out None values if an app log file doesn't exist
 KNOWN_LOG_FILES = {k: v for k, v in KNOWN_LOG_FILES.items() if v}
 
 ALL_APP_LOG_FILES = list(KNOWN_LOG_FILES.values()) # List of all individual log file paths
 
+# Initialize hunting managers
+hunting_manager = HuntingManager("/config")
+radarr_hunting_manager = RadarrHuntingManager(hunting_manager)
+
 @app.route('/')
 def home():
-    return render_template('index.html')
+    # Get latest hunt statuses
+    latest_statuses = hunting_manager.get_latest_statuses(limit=5)
+    return render_template('index.html', latest_hunt_statuses=latest_statuses)
 
 @app.route('/user')
 def user():
@@ -867,6 +877,64 @@ def reset_app_cycle(app_name):
             'success': False,
             'error': f"Failed to reset cycle for {app_name}. The app may not be running."
         }), 500
+
+@app.route('/api/hunt/status', methods=['GET'])
+def api_hunt_status():
+    """Get the latest hunt statuses."""
+    try:
+        latest_statuses = hunting_manager.get_latest_statuses(limit=5)
+        return jsonify({
+            "status": "success",
+            "data": latest_statuses
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+@app.route('/api/hunt/settings', methods=['GET', 'POST'])
+def api_hunt_settings():
+    """Get or update hunt settings."""
+    if request.method == 'GET':
+        try:
+            return jsonify({
+                "status": "success",
+                "data": {
+                    "follow_up_time": hunting_manager.time_config["follow_up_time"],
+                    "max_time": hunting_manager.time_config["max_time"],
+                    "min_time": hunting_manager.time_config["min_time"]
+                }
+            })
+        except Exception as e:
+            return jsonify({
+                "status": "error",
+                "message": str(e)
+            }), 500
+    else:  # POST
+        try:
+            data = request.get_json()
+            if "follow_up_time" not in data:
+                return jsonify({
+                    "status": "error",
+                    "message": "follow_up_time is required"
+                }), 400
+            
+            hunting_manager.update_time_config(data["follow_up_time"])
+            return jsonify({
+                "status": "success",
+                "message": "Settings updated successfully"
+            })
+        except ValueError as e:
+            return jsonify({
+                "status": "error",
+                "message": str(e)
+            }), 400
+        except Exception as e:
+            return jsonify({
+                "status": "error",
+                "message": str(e)
+            }), 500
 
 # Start the web server in debug or production mode
 def start_web_server():

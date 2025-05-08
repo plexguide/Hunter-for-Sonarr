@@ -46,10 +46,9 @@
             <table class="modern-table history-table">
                 <thead>
                     <tr>
-                        <th>Date and Time</th>
-                        <th>Processed Information</th>
+                        <th>Name</th>
+                        <th>Status</th>
                         <th>Operation</th>
-                        <th>ID Number</th>
                         <th>Name of Instance</th>
                         <th>How Long Ago</th>
                     </tr>
@@ -376,6 +375,52 @@
         border: 1px solid rgba(0, 123, 255, 0.3);
     }
     
+    /* Status styling */
+    .hunt-status-success {
+        color: #2ecc71;
+        font-weight: 500;
+        padding: 3px 8px;
+        background-color: rgba(46, 204, 113, 0.1);
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+    
+    .hunt-status-searching {
+        color: #3498db;
+        font-weight: 500;
+        padding: 3px 8px;
+        background-color: rgba(52, 152, 219, 0.1);
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+    
+    .hunt-status-found {
+        color: #f39c12;
+        font-weight: 500;
+        padding: 3px 8px;
+        background-color: rgba(243, 156, 18, 0.1);
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+    
+    .hunt-status-downloaded {
+        color: #2ecc71;
+        font-weight: 500;
+        padding: 3px 8px;
+        background-color: rgba(46, 204, 113, 0.1);
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+    
+    .hunt-status-failed {
+        color: #e74c3c;
+        font-weight: 500;
+        padding: 3px 8px;
+        background-color: rgba(231, 76, 60, 0.1);
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+    
     /* Empty state and loading styling */
     .empty-state-message, .loading-indicator {
         text-align: center;
@@ -464,7 +509,7 @@
                 originalRenderHistoryData.call(this, data);
                 
                 // After the data is rendered, format the operation status columns
-                const operationCells = document.querySelectorAll('#historyTableBody tr td:nth-child(3)');
+                const operationCells = document.querySelectorAll('#historyTableBody tr td:nth-child(4)');
                 operationCells.forEach(cell => {
                     const operationText = cell.textContent.trim();
                     const statusClass = operationText.toLowerCase() === 'success' ? 'success' : 

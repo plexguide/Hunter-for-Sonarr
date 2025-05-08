@@ -235,6 +235,9 @@ const historyModule = {
         this.elements.historyEmptyState.style.display = 'none';
         this.elements.historyTable.style.display = 'table';
         
+        // Make sure we have the tooltip container
+        this.ensureTooltipContainer();
+        
         // Render rows
         data.entries.forEach(entry => {
             const row = document.createElement('tr');
@@ -243,16 +246,34 @@ const historyModule = {
             const appType = entry.app_type ? entry.app_type.charAt(0).toUpperCase() + entry.app_type.slice(1) : '';
             const formattedInstance = appType ? `${appType} - ${entry.instance_name}` : entry.instance_name;
             
+            // Store the full JSON data as a data attribute
+            row.dataset.fullJson = JSON.stringify(entry);
+            
             row.innerHTML = `
-                <td>${entry.date_time_readable}</td>
-                <td>${this.escapeHtml(entry.processed_info)}</td>
+                <td>
+                    <div class="title-with-info">
+                        ${this.escapeHtml(entry.processed_info)}
+                        <span class="info-badge" title="View full details">info</span>
+                    </div>
+                </td>
+                <td>${this.formatHuntStatus(entry.hunt_status)}</td>
                 <td>${this.formatOperationType(entry.operation_type)}</td>
-                <td>${this.escapeHtml(entry.id)}</td>
                 <td>${this.escapeHtml(formattedInstance)}</td>
                 <td>${this.escapeHtml(entry.how_long_ago)}</td>
             `;
             
             tableBody.appendChild(row);
+            
+            // Add hover events to the info badge
+            const infoBadge = row.querySelector('.info-badge');
+            if (infoBadge) {
+                infoBadge.addEventListener('mouseover', (e) => this.showJsonTooltip(e, row));
+                infoBadge.addEventListener('mouseout', () => this.hideJsonTooltip());
+                infoBadge.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggleJsonTooltip(e, row);
+                });
+            }
         });
     },
     
@@ -320,6 +341,192 @@ const historyModule = {
             default:
                 return operationType ? this.escapeHtml(operationType.charAt(0).toUpperCase() + operationType.slice(1)) : 'Unknown';
         }
+    },
+    
+    // Helper function to format hunt status
+    formatHuntStatus: function(huntStatus) {
+        if (!huntStatus) return '<span class="status-badge status-unknown">Unknown</span>';
+        
+        let badgeClass = 'status-unknown';
+        let displayText = huntStatus;
+        
+        // Format based on status
+        switch(huntStatus.toLowerCase()) {
+            case 'searching':
+                badgeClass = 'status-searching';
+                break;
+            case 'downloaded':
+                badgeClass = 'status-downloaded';
+                break;
+            case 'downloading':
+                badgeClass = 'status-downloading';
+                break;
+            case 'error':
+                badgeClass = 'status-error';
+                break;
+        }
+        
+        return `<span class="status-badge ${badgeClass}">${displayText}</span>`;
+    },
+    
+    // Ensure tooltip container exists
+    ensureTooltipContainer: function() {
+        // Check if container already exists
+        if (document.getElementById('json-tooltip')) return;
+        
+        // Create tooltip container
+        const tooltipContainer = document.createElement('div');
+        tooltipContainer.id = 'json-tooltip';
+        tooltipContainer.className = 'json-tooltip';
+        tooltipContainer.style.display = 'none';
+        document.body.appendChild(tooltipContainer);
+        
+        // Add styles for the tooltip
+        if (!document.getElementById('tooltip-styles')) {
+            const styleEl = document.createElement('style');
+            styleEl.id = 'tooltip-styles';
+            styleEl.textContent = `
+                .json-tooltip {
+                    position: absolute;
+                    z-index: 1000;
+                    max-width: 600px;
+                    max-height: 400px;
+                    overflow: auto;
+                    background: rgba(30, 38, 55, 0.95);
+                    color: #fff;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                    padding: 15px;
+                    font-family: monospace;
+                    white-space: pre-wrap;
+                    font-size: 12px;
+                    border: 1px solid rgba(90, 109, 137, 0.4);
+                    backdrop-filter: blur(5px);
+                }
+                .title-with-info {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                .info-badge {
+                    display: inline-block;
+                    background-color: #4b6bff;
+                    color: white;
+                    border-radius: 4px;
+                    padding: 2px 6px;
+                    font-size: 11px;
+                    cursor: pointer;
+                    text-transform: uppercase;
+                    font-weight: bold;
+                    letter-spacing: 0.5px;
+                    opacity: 0.8;
+                    transition: all 0.2s ease;
+                }
+                .info-badge:hover {
+                    opacity: 1;
+                    transform: scale(1.05);
+                    background-color: #5f7dff;
+                }
+                .json-key {
+                    color: #9cdcfe;
+                }
+                .json-string {
+                    color: #ce9178;
+                }
+                .json-number {
+                    color: #b5cea8;
+                }
+                .json-boolean {
+                    color: #569cd6;
+                }
+                .json-null {
+                    color: #569cd6;
+                }
+            `;
+            document.head.appendChild(styleEl);
+        }
+    },
+    
+    // Show JSON tooltip
+    showJsonTooltip: function(event, row) {
+        const tooltip = document.getElementById('json-tooltip');
+        if (!tooltip || !row.dataset.fullJson) return;
+        
+        try {
+            // Parse JSON data
+            const jsonData = JSON.parse(row.dataset.fullJson);
+            
+            // Format JSON with syntax highlighting
+            const formattedJson = this.formatJsonForDisplay(jsonData);
+            
+            // Set tooltip content
+            tooltip.innerHTML = formattedJson;
+            
+            // Position tooltip near cursor
+            const x = event.clientX + 15;
+            let y = event.clientY + 15;
+            
+            // Check if tooltip would go off screen and adjust accordingly
+            const rightEdge = x + tooltip.offsetWidth;
+            const bottomEdge = y + tooltip.offsetHeight;
+            
+            if (rightEdge > window.innerWidth) {
+                tooltip.style.left = (x - tooltip.offsetWidth) + 'px';
+            } else {
+                tooltip.style.left = x + 'px';
+            }
+            
+            if (bottomEdge > window.innerHeight) {
+                tooltip.style.top = (y - tooltip.offsetHeight) + 'px';
+            } else {
+                tooltip.style.top = y + 'px';
+            }
+            
+            // Show tooltip
+            tooltip.style.display = 'block';
+        } catch (error) {
+            console.error('Error parsing JSON for tooltip:', error);
+        }
+    },
+    
+    // Hide JSON tooltip
+    hideJsonTooltip: function() {
+        const tooltip = document.getElementById('json-tooltip');
+        if (tooltip) {
+            tooltip.style.display = 'none';
+        }
+    },
+    
+    // Toggle JSON tooltip on click
+    toggleJsonTooltip: function(event, row) {
+        const tooltip = document.getElementById('json-tooltip');
+        if (!tooltip || !row.dataset.fullJson) return;
+        
+        // If tooltip is already visible, hide it
+        if (tooltip.style.display === 'block') {
+            this.hideJsonTooltip();
+            return;
+        }
+        
+        // Otherwise show it (reuse the show method)
+        this.showJsonTooltip(event, row);
+    },
+    
+    // Format JSON with syntax highlighting
+    formatJsonForDisplay: function(obj) {
+        // Convert to formatted string with 2-space indentation
+        const jsonString = JSON.stringify(obj, null, 2);
+        
+        // Add syntax highlighting by replacing with HTML
+        return jsonString
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:') // Keys
+            .replace(/: "([^"]+)"/g, ': <span class="json-string">"$1"</span>') // String values
+            .replace(/: ([0-9]+)/g, ': <span class="json-number">$1</span>') // Number values
+            .replace(/: (true|false)/g, ': <span class="json-boolean">$1</span>') // Boolean values
+            .replace(/: null/g, ': <span class="json-null">null</span>'); // Null values
     }
 };
 
