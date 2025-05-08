@@ -52,8 +52,14 @@ def get_configured_instances():
             elif not is_enabled:
                 readarr_logger.debug(f"Skipping disabled instance: {instance.get('name', 'Unnamed')}")
             else:
-                # Log specifically why it's skipped (missing URL/Key but enabled)
-                readarr_logger.warning(f"Skipping instance '{instance.get('name', 'Unnamed')}' due to missing API URL or key (URL: '{api_url}', Key Set: {bool(api_key)}) ")
+                # For brand new installations, don't spam logs with warnings about default instances
+                instance_name = instance.get('name', 'Unnamed')
+                if instance_name == 'Default':
+                    # Use debug level for default instances to avoid log spam on new installations
+                    readarr_logger.debug(f"Skipping instance '{instance_name}' due to missing API URL or key (URL: '{api_url}', Key Set: {bool(api_key)})")
+                else:
+                    # Still log warnings for non-default instances
+                    readarr_logger.warning(f"Skipping instance '{instance_name}' due to missing API URL or key (URL: '{api_url}', Key Set: {bool(api_key)})")
     else:
         # readarr_logger.info("No 'instances' list found or list is empty. Checking legacy config.") # Removed verbose log
         # Fallback to legacy single-instance config
@@ -78,7 +84,8 @@ def get_configured_instances():
         else:
             readarr_logger.warning("No API URL or key found in legacy configuration")
 
-    readarr_logger.info(f"Found {len(instances)} configured and enabled Readarr instances") # Changed log message
+    # Use debug level to avoid spamming logs, especially with 0 instances
+    readarr_logger.debug(f"Found {len(instances)} configured and enabled Readarr instances")
     return instances
 
 __all__ = ["process_missing_books", "process_cutoff_upgrades", "get_configured_instances"]
