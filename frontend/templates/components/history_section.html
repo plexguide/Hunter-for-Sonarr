@@ -46,12 +46,12 @@
             <table class="modern-table history-table">
                 <thead>
                     <tr>
-                        <th style="width: 15%;">Date and Time</th>
-                        <th style="width: 35%;">Processed Information</th>
-                        <th style="width: 10%;">Operation</th>
-                        <th style="width: 10%;">ID Number</th>
-                        <th style="width: 15%;">Name of Instance</th>
-                        <th style="width: 15%;">How Long Ago</th>
+                        <th style="min-width: 140px; width: 15%;">Date and Time</th>
+                        <th style="min-width: 250px; width: 35%;">Processed Information</th>
+                        <th style="min-width: 100px; width: 10%;">Operation</th>
+                        <th style="min-width: 100px; width: 10%;">ID Number</th>
+                        <th style="min-width: 120px; width: 15%;">Name of Instance</th>
+                        <th style="min-width: 120px; width: 15%;">How Long Ago</th>
                     </tr>
                 </thead>
                 <tbody id="historyTableBody">
@@ -329,6 +329,7 @@
     
     .modern-table, .history-table {
         width: 100%;
+        min-width: 830px; /* Sum of all min-widths */
         border-collapse: collapse;
         text-align: left;
         color: white;
@@ -510,6 +511,18 @@
                     display: none !important;
                     width: 0px !important;
                     height: 0px !important;
+                }
+                /* Ensure table wrapper can scroll horizontally and vertically */
+                .modern-table-wrapper {
+                    overflow-y: scroll !important;
+                    overflow-x: auto !important;
+                }
+                
+                /* Prevent text from wrapping in table cells */
+                .modern-table td, .history-table td {
+                    white-space: nowrap !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
                 }
             `;
             document.head.appendChild(style);
