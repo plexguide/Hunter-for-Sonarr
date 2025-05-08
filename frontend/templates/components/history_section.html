@@ -496,8 +496,22 @@
         font-size: 14px;
     }
     
-    /* Responsive adjustments */
+    /* Mobile Table Adjustments */
     @media (max-width: 768px) {
+        /* Keep all columns at their natural width */
+        .modern-table, .history-table {
+            table-layout: fixed;
+            min-width: 830px; /* Sum of all min-widths */
+            width: auto;
+        }
+        
+        /* Ensure the wrapper allows horizontal scrolling */
+        .modern-table-wrapper {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* General responsive styling */
         .section-header {
             flex-direction: column;
             align-items: flex-start;
