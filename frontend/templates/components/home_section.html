@@ -1,5 +1,5 @@
 <section id="homeSection" class="content-section">
-    <div class="dashboard-grid stack-layout">
+    <div class="dashboard-grid stack-layout mobile-scrollable">
         <!-- Support Links: Header removed, integrated directly into the layout -->
         <div class="card support-links-card">
             <div class="support-links-container">
@@ -802,6 +802,23 @@
     @media (max-width: 500px) {
         .community-links-grid {
             grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Mobile scrolling fix */
+    .mobile-scrollable {
+        padding-bottom: 100px;
+    }
+    
+    @media (max-width: 768px) {
+        #homeSection {
+            overflow-y: auto !important;
+            height: auto !important;
+            min-height: 100%;
+        }
+        
+        .mobile-scrollable {
+            padding-bottom: 150px;
         }
     }
     
