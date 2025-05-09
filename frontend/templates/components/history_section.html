@@ -42,7 +42,7 @@
     </div>
     
     <div class="history-container">
-        <div class="modern-table-wrapper">
+        <div class="modern-table-wrapper force-scrollbar">
             <table class="modern-table history-table">
                 <thead>
                     <tr>
@@ -94,16 +94,34 @@
     
     /* Scrollbar handling for only this section */
     #historySection .history-container {
-        overflow: hidden !important;
+        overflow: visible !important;
     }
     
-    /* Hide WebKit scrollbar */
+    /* Hide WebKit scrollbar for main elements */
     html::-webkit-scrollbar, body::-webkit-scrollbar, #app::-webkit-scrollbar, 
-    .main-content::-webkit-scrollbar, .content-section::-webkit-scrollbar, 
-    .history-container::-webkit-scrollbar {
+    .main-content::-webkit-scrollbar, .content-section::-webkit-scrollbar {
         display: none !important;
         width: 0 !important;
         height: 0 !important;
+    }
+    
+    /* Table scrollbar styling - same as logs section */
+    .modern-table-wrapper::-webkit-scrollbar {
+        width: 10px;
+    }
+    
+    .modern-table-wrapper::-webkit-scrollbar-track {
+        background: rgba(18, 22, 30, 0.5);
+        border-radius: 0 10px 10px 0;
+    }
+    
+    .modern-table-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(90, 109, 137, 0.5);
+        border-radius: 5px;
+    }
+    
+    .modern-table-wrapper::-webkit-scrollbar-thumb:hover {
+        background: rgba(90, 109, 137, 0.8);
     }
     
     /* Make space for the fixed pagination on mobile */
@@ -327,20 +345,26 @@
         box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
     }
     
-    /* Table styling */
+    /* Modern-table-wrapper for scrollable tables - using the same approach as logs */
     .modern-table-wrapper {
         width: 100%;
+        height: calc(100vh - 200px); /* Same method used in logs section */
+        overflow-y: auto;
         overflow-x: auto;
-        scrollbar-width: thin;
+        position: relative;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding-right: 5px;
     }
+    
+    /* We don't need this class anymore since we're using a simpler approach */
     
     /* Make Processed Information column text wrap for very long content */
     .history-table td:nth-child(2) {
         white-space: normal;
         word-wrap: break-word;
         word-break: break-word;
+        overflow-wrap: break-word;
         max-width: 400px;
     }
     
@@ -579,33 +603,26 @@
 <script>
     // Fixes for formatting the history items
     document.addEventListener('DOMContentLoaded', function() {
-        // Force single scrollbar when in history section
+        // Simplified scrollbar setup for history section - matches logs approach
         const fixHistoryScrolling = function() {
-            // Apply global CSS to forcefully remove all scrollbars
+            // Apply minimal CSS needed for proper table scrolling
             const style = document.createElement('style');
             style.id = 'history-scrollbar-fix';
             style.innerHTML = `
-                html, body, #app, .main-content, #main, .content-section, .main-content > .inner, .section-content, .history-container {
-                    overflow: hidden !important;
-                    scrollbar-width: none !important;
-                    -ms-overflow-style: none !important;
+                /* Ensure the history container allows proper scrolling */
+                .history-container {
+                    overflow: visible !important;
                 }
-                html::-webkit-scrollbar, body::-webkit-scrollbar, #app::-webkit-scrollbar, 
-                .main-content::-webkit-scrollbar, #main::-webkit-scrollbar, .content-section::-webkit-scrollbar, 
-                .main-content > .inner::-webkit-scrollbar, .section-content::-webkit-scrollbar,
-                .history-container::-webkit-scrollbar {
-                    display: none !important;
-                    width: 0px !important;
-                    height: 0px !important;
-                }
-                /* Ensure table wrapper can scroll horizontally and vertically */
+                
+                /* Ensure the table wrapper has proper scrolling */
                 .modern-table-wrapper {
-                    overflow-y: scroll !important;
+                    height: calc(100vh - 200px) !important;
+                    overflow-y: auto !important;
                     overflow-x: auto !important;
                 }
                 
-                /* Prevent text from wrapping in table cells */
-                .modern-table td, .history-table td {
+                /* Prevent text from wrapping in table cells except for the second column */
+                .modern-table td:not(:nth-child(2)), .history-table td:not(:nth-child(2)) {
                     white-space: nowrap !important;
                     overflow: hidden !important;
                     text-overflow: ellipsis !important;
@@ -613,37 +630,18 @@
             `;
             document.head.appendChild(style);
             
-            // Also apply inline styles to containers that might have scrollbars
-            const outerContainers = document.querySelectorAll('#app, .main-content, body, #main, .main-content > .inner, .section-content');
-            outerContainers.forEach(container => {
-                if (container) {
-                    container.style.overflow = 'hidden';
-                }
-            });
-            
-            // Force scrollbar to only appear on the table wrapper
+            // Keep the table wrapper reference for potential future use
             const tableWrapper = document.querySelector('.modern-table-wrapper');
             if (tableWrapper) {
-                tableWrapper.style.overflowY = 'scroll';
-                tableWrapper.style.overflowX = 'auto';
+                // Remove any inline styles that could be interfering
+                tableWrapper.style.removeProperty('overflow-y');
+                tableWrapper.style.removeProperty('overflow-x');
+                tableWrapper.style.removeProperty('height');
+                tableWrapper.style.removeProperty('max-height');
+                tableWrapper.style.removeProperty('min-height');
                 
-                // Calculate and set dynamic height
-                const updateTableHeight = function() {
-                    const headerHeight = document.querySelector('.section-header').offsetHeight || 0;
-                    const paginationHeight = document.querySelector('.pagination-controls').offsetHeight || 0;
-                    const windowHeight = window.innerHeight;
-                    const padding = 80; // Account for margins and paddings
-                    
-                    // Dynamic calculation based on available space
-                    const availableHeight = windowHeight - headerHeight - paginationHeight - padding;
-                    tableWrapper.style.height = availableHeight + 'px';
-                };
-                
-                // Initial calculation
-                updateTableHeight();
-                
-                // Update on window resize
-                window.addEventListener('resize', updateTableHeight);
+                // Let the CSS handle the scrollbar
+                tableWrapper.classList.remove('force-scrollbar');
             }
         };
         
@@ -657,10 +655,17 @@
             if (e.detail.section === 'history') {
                 setTimeout(fixHistoryScrolling, 100);
             } else {
-                // Restore normal scrolling when leaving history page
-                const styleElement = document.getElementById('history-scrollbar-fix');
-                if (styleElement) {
-                    styleElement.remove();
+                // Remove existing style if it exists
+                const existingStyle = document.getElementById('history-scrollbar-fix');
+                if (existingStyle) {
+                    existingStyle.remove();
+                }
+                
+                // Force the table wrapper to have a fixed height to ensure scrollbar appears
+                const tableWrapper = document.querySelector('.modern-table-wrapper');
+                if (tableWrapper) {
+                    // Add a class to force scrollbars to be visible
+                    tableWrapper.classList.add('force-scrollbar');
                 }
                 
                 // Also clear inline styles
