@@ -450,6 +450,27 @@ const appsModule = {
             selectedApp = selectedApp.target.value;
         }
         if (!selectedApp || selectedApp === this.currentApp) return;
+        
+        // Special case for Cleanuparr - it's an information page, not a settings page
+        if (selectedApp === 'cleanuparr') {
+            // Hide apps section and show Cleanuparr section
+            document.getElementById('appsSection').classList.remove('active');
+            document.getElementById('cleanuparrSection').classList.add('active');
+            
+            // Update the page title
+            if (huntarrUI && typeof huntarrUI.switchSection === 'function') {
+                huntarrUI.currentSection = 'cleanuparr';
+                // We're not calling the full switchSection as that would alter navigation
+                // Just update the title
+                const pageTitleElement = document.getElementById('currentPageTitle');
+                if (pageTitleElement) {
+                    pageTitleElement.textContent = 'Cleanuparr';
+                }
+            }
+            
+            return;
+        }
+        
         // Check for unsaved changes
         if (this.settingsChanged) {
             const confirmSwitch = confirm('You have unsaved changes. Do you want to continue without saving?');

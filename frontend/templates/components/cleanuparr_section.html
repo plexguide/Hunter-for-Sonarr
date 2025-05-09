@@ -1,0 +1,330 @@
+<section id="cleanuparrSection" class="content-section">
+    <div class="section-header">
+        <div class="header-buttons">
+            <button id="backToAppsButton" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to Apps
+            </button>
+        </div>
+        <h2>Cleanuparr</h2>
+    </div>
+    
+    <div class="cleanuparr-container">
+        <div class="cleanuparr-info-box">
+            <div class="cleanuparr-header">
+                <div class="cleanuparr-logo">
+                    <img src="https://raw.githubusercontent.com/flmorg/cleanuperr/main/assets/images/banner.png" alt="Cleanuparr Logo">
+                </div>
+                <div class="cleanuparr-title">
+                    <h3>Cleanuparr by <a href="https://github.com/Flaminel" target="_blank">Flaminel</a></h3>
+                    <a href="https://github.com/flmorg/cleanuperr" class="github-link" target="_blank">
+                        <i class="fab fa-github"></i> View on GitHub
+                    </a>
+                </div>
+            </div>
+
+            <div class="cleanuparr-description">
+                <p>Cleanuparr is a powerful CLI tool designed to automatically clean up and organize your media libraries for Sonarr, Radarr, and other *arr applications.</p>
+                
+                <h4>Key Features:</h4>
+                <ul>
+                    <li>Automatically removes duplicate files based on quality preferences</li>
+                    <li>Cleans up orphaned files that aren't tracked by your media server</li>
+                    <li>Identifies and manages sample videos</li>
+                    <li>Helps manage subtitle files efficiently</li>
+                    <li>User-friendly command-line interface with clear options</li>
+                </ul>
+                
+                <div class="author-section">
+                    <div class="author-info">
+                        <img src="https://avatars.githubusercontent.com/u/11522375" alt="Flaminel" class="author-avatar">
+                        <div class="author-details">
+                            <h4>About the Author</h4>
+                            <p>Cleanuparr is developed by <a href="https://github.com/Flaminel" target="_blank">Flaminel</a>, a passionate developer focused on creating tools that enhance the media server experience.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collaboration-note">
+                    <p>Huntarr is proud to feature Cleanuparr as part of our commitment to helping other projects grow. We believe in collaboration across the media server community to create better tools for everyone.</p>
+                </div>
+                
+                <div class="cleanuparr-cta">
+                    <a href="https://github.com/flmorg/cleanuperr" class="button primary-button" target="_blank">
+                        Check Out Cleanuparr
+                    </a>
+                    <a href="https://github.com/flmorg/cleanuperr#installation" class="button secondary-button" target="_blank">
+                        Installation Guide
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    #cleanuparrSection {
+        padding: 20px;
+        max-width: 100%;
+        display: none;
+    }
+    
+    #cleanuparrSection.active {
+        display: block;
+    }
+    
+    .cleanuparr-container {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    .cleanuparr-info-box {
+        background: linear-gradient(135deg, rgba(28, 36, 54, 0.9), rgba(24, 32, 48, 0.8));
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        margin-bottom: 20px;
+        border: 1px solid rgba(90, 109, 137, 0.2);
+    }
+    
+    .cleanuparr-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .cleanuparr-logo {
+        max-width: 100%;
+        flex: 1;
+    }
+    
+    .cleanuparr-logo img {
+        max-width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .cleanuparr-title {
+        flex: 2;
+    }
+    
+    .cleanuparr-title h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-size: 24px;
+        color: #e0e6ed;
+    }
+    
+    .github-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: linear-gradient(135deg, #2c3e50, #1a2632);
+        border-radius: 6px;
+        color: #e0e6ed;
+        text-decoration: none;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(90, 109, 137, 0.3);
+    }
+    
+    .github-link:hover {
+        background: linear-gradient(135deg, #34495e, #2c3e50);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .cleanuparr-description {
+        color: #e0e6ed;
+        line-height: 1.6;
+    }
+    
+    .cleanuparr-description h4 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        color: #3498db;
+    }
+    
+    .cleanuparr-description ul {
+        margin-left: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .cleanuparr-description li {
+        margin-bottom: 8px;
+    }
+    
+    .author-section {
+        margin: 30px 0;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        border: 1px solid rgba(90, 109, 137, 0.2);
+    }
+    
+    .author-info {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .author-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 3px solid #3498db;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .author-details {
+        flex: 1;
+    }
+    
+    .author-details h4 {
+        margin-top: 0;
+        color: #3498db;
+    }
+    
+    .collaboration-note {
+        margin: 30px 0;
+        padding: 15px;
+        background: rgba(52, 152, 219, 0.1);
+        border-left: 4px solid #3498db;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .cleanuparr-cta {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .button, .back-button {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .back-button {
+        background: linear-gradient(135deg, #34495e, #2c3e50);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .back-button:hover {
+        background: linear-gradient(135deg, #3a536b, #34495e);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    }
+    
+    .header-buttons {
+        margin-right: 20px;
+    }
+    
+    .primary-button {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        border: none;
+    }
+    
+    .primary-button:hover {
+        background: linear-gradient(135deg, #2980b9, #2471a3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+    }
+    
+    .secondary-button {
+        background: transparent;
+        color: #3498db;
+        border: 1px solid #3498db;
+    }
+    
+    .secondary-button:hover {
+        background: rgba(52, 152, 219, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(52, 152, 219, 0.2);
+    }
+    
+    @media (max-width: 768px) {
+        .cleanuparr-header {
+            flex-direction: column;
+        }
+        
+        .cleanuparr-logo {
+            width: 100%;
+        }
+        
+        .author-info {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .cleanuparr-cta {
+            flex-direction: column;
+        }
+        
+        .button {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    // Add event listener to the back button to return to Apps section
+    document.addEventListener('DOMContentLoaded', function() {
+        const backToAppsButton = document.getElementById('backToAppsButton');
+        if (backToAppsButton) {
+            backToAppsButton.addEventListener('click', function() {
+                // Hide Cleanuparr section
+                document.getElementById('cleanuparrSection').classList.remove('active');
+                
+                // Show Apps section
+                document.getElementById('appsSection').classList.add('active');
+                
+                // Update the current section in the main UI
+                if (huntarrUI) {
+                    huntarrUI.currentSection = 'apps';
+                    
+                    // Update the page title
+                    const pageTitleElement = document.getElementById('currentPageTitle');
+                    if (pageTitleElement) {
+                        pageTitleElement.textContent = 'Apps';
+                    }
+                    
+                    // Update the selected menu item
+                    const menuItems = document.querySelectorAll('.nav-item');
+                    menuItems.forEach(item => {
+                        item.classList.remove('active');
+                        if (item.getAttribute('data-section') === 'apps') {
+                            item.classList.add('active');
+                        }
+                    });
+                    
+                    // Reset the app selector to a default app (not Cleanuparr)
+                    const appsAppSelect = document.getElementById('appsAppSelect');
+                    if (appsAppSelect) {
+                        // Set to the first option that isn't Cleanuparr
+                        for (let i = 0; i < appsAppSelect.options.length; i++) {
+                            if (appsAppSelect.options[i].value !== 'cleanuparr') {
+                                appsAppSelect.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
