@@ -86,6 +86,9 @@ let huntarrUI = {
         // Load latest version from GitHub
         this.loadLatestVersion(); // Load latest version from GitHub
         
+        // Load latest beta version from GitHub
+        this.loadBetaVersion(); // Load latest beta version from GitHub
+        
         // Load GitHub star count
         this.loadGitHubStarCount(); // Load GitHub star count
         
@@ -2001,6 +2004,54 @@ let huntarrUI = {
                 const latestVersionElement = document.getElementById('latest-version-value');
                 if (latestVersionElement) {
                     latestVersionElement.textContent = error.message === 'Rate limited' ? 'Rate Limited' : 'Error';
+                }
+            });
+    },
+    
+    // Load latest beta version from GitHub tags
+    loadBetaVersion: function() {
+        HuntarrUtils.fetchWithTimeout('https://api.github.com/repos/plexguide/Huntarr.io/tags?per_page=100')
+            .then(response => {
+                if (!response.ok) {
+                    // Handle rate limiting or other errors
+                    if (response.status === 403) {
+                        console.warn('GitHub API rate limit likely exceeded.');
+                        throw new Error('Rate limited');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const betaVersionElement = document.getElementById('beta-version-value');
+                
+                if (betaVersionElement && data && Array.isArray(data) && data.length > 0) {
+                    // Find the first tag that starts with B (case insensitive)
+                    const betaTag = data.find(tag => tag.name.toUpperCase().startsWith('B'));
+                    
+                    if (betaTag) {
+                        betaVersionElement.textContent = betaTag.name;
+                        // Store in localStorage for future reference
+                        try {
+                            const versionInfo = localStorage.getItem('huntarr-version-info') || '{}';
+                            const parsedInfo = JSON.parse(versionInfo);
+                            parsedInfo.betaVersion = betaTag.name;
+                            localStorage.setItem('huntarr-version-info', JSON.stringify(parsedInfo));
+                        } catch (e) {
+                            console.error('Error saving beta version to localStorage:', e);
+                        }
+                    } else {
+                        betaVersionElement.textContent = 'None';
+                    }
+                } else if (betaVersionElement) {
+                    betaVersionElement.textContent = 'N/A';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading beta version from GitHub:', error);
+                const betaVersionElement = document.getElementById('beta-version-value');
+                if (betaVersionElement) {
+                    betaVersionElement.textContent = error.message === 'Rate limited' ? 'Rate Limited' : 'Error';
                 }
             });
     },
