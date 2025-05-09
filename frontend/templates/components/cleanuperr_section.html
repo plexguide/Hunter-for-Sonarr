@@ -1,56 +1,70 @@
-<section id="cleanuparrSection" class="content-section">
+<section id="cleanuperrSection" class="content-section">
     <div class="section-header">
         <div class="header-buttons">
             <button id="backToAppsButton" class="back-button">
                 <i class="fas fa-arrow-left"></i> Back to Apps
             </button>
         </div>
-        <h2>Cleanuparr</h2>
+        <h2>Cleanuperr</h2>
     </div>
     
-    <div class="cleanuparr-container">
-        <div class="cleanuparr-info-box">
-            <div class="cleanuparr-header">
-                <div class="cleanuparr-logo">
-                    <img src="https://raw.githubusercontent.com/flmorg/cleanuperr/main/assets/images/banner.png" alt="Cleanuparr Logo">
+    <div class="cleanuperr-container">
+        <div class="cleanuperr-info-box">
+            <div class="cleanuperr-header">
+                <div class="cleanuperr-logo">
+                    <img src="/static/logo/apps/cleanuperr.png" alt="Cleanuperr Logo" class="app-logo">
                 </div>
-                <div class="cleanuparr-title">
-                    <h3>Cleanuparr by <a href="https://github.com/Flaminel" target="_blank">Flaminel</a></h3>
-                    <a href="https://github.com/flmorg/cleanuperr" class="github-link" target="_blank">
-                        <i class="fab fa-github"></i> View on GitHub
-                    </a>
+                <div class="cleanuperr-title">
+                    <h3>Cleanuperr by <a href="https://github.com/Flaminel" target="_blank">Flaminel</a></h3>
+                </div>
+            </div>
+            
+            <div class="github-info-container">
+                <a href="https://github.com/flmorg/cleanuperr" class="github-link" target="_blank">
+                    <i class="fab fa-github"></i> View on GitHub
+                </a>
+                <div class="github-stars">
+                    <i class="fas fa-star star-icon"></i>
+                    <span id="cleanuperr-stars-count">Loading...</span>
                 </div>
             </div>
 
-            <div class="cleanuparr-description">
-                <p>Cleanuparr is a powerful CLI tool designed to automatically clean up and organize your media libraries for Sonarr, Radarr, and other *arr applications.</p>
+            <div class="cleanuperr-description">
+                <p>Cleanuperr is a tool for automating the cleanup of unwanted or blocked files in Sonarr, Radarr, and supported download clients like qBittorrent. It removes incomplete or blocked downloads, updates queues, and enforces blacklists or whitelists to manage file selection. After removing blocked content, Cleanuperr can also trigger a search to replace the deleted shows/movies.</p>
                 
                 <h4>Key Features:</h4>
                 <ul>
-                    <li>Automatically removes duplicate files based on quality preferences</li>
-                    <li>Cleans up orphaned files that aren't tracked by your media server</li>
-                    <li>Identifies and manages sample videos</li>
-                    <li>Helps manage subtitle files efficiently</li>
-                    <li>User-friendly command-line interface with clear options</li>
+                    <li>Strike system to mark stalled or downloads stuck in metadata downloading</li>
+                    <li>Remove and block downloads that reached a maximum number of strikes</li>
+                    <li>Remove and block downloads that have a low download speed or high estimated completion time</li>
+                    <li>Remove downloads blocked by qBittorrent or by Cleanuperr's content blocker</li>
+                    <li>Trigger a search for downloads removed from the *arrs</li>
+                    <li>Clean up downloads that have been seeding for a certain amount of time</li>
+                    <li>Notify on strike or download removal</li>
+                    <li>Ignore certain torrent hashes, categories, tags or trackers from being processed</li>
                 </ul>
+                
+                <div class="origin-section">
+                    <p>Cleanuperr was created primarily to address malicious files, such as *.lnk or *.zipx, that were getting stuck in Sonarr/Radarr and required manual intervention. It supports both qBittorrent's built-in exclusion features and its own blocklist-based system.</p>
+                </div>
                 
                 <div class="author-section">
                     <div class="author-info">
-                        <img src="https://avatars.githubusercontent.com/u/11522375" alt="Flaminel" class="author-avatar">
+                        <img src="https://avatars.githubusercontent.com/u/6135377?v=4" alt="Flaminel" class="author-avatar">
                         <div class="author-details">
                             <h4>About the Author</h4>
-                            <p>Cleanuparr is developed by <a href="https://github.com/Flaminel" target="_blank">Flaminel</a>, a passionate developer focused on creating tools that enhance the media server experience.</p>
+                            <p>Cleanuperr is developed by <a href="https://github.com/Flaminel" target="_blank">Flaminel</a>, a passionate developer focused on creating tools that enhance the media server experience.</p>
                         </div>
                     </div>
                 </div>
                 
                 <div class="collaboration-note">
-                    <p>Huntarr is proud to feature Cleanuparr as part of our commitment to helping other projects grow. We believe in collaboration across the media server community to create better tools for everyone.</p>
+                    <p>Huntarr is proud to feature Cleanuperr as part of our commitment to helping other projects grow. We believe in collaboration across the media server community to create better tools for everyone.</p>
                 </div>
                 
-                <div class="cleanuparr-cta">
+                <div class="cleanuperr-cta">
                     <a href="https://github.com/flmorg/cleanuperr" class="button primary-button" target="_blank">
-                        Check Out Cleanuparr
+                        Check Out Cleanuperr
                     </a>
                     <a href="https://github.com/flmorg/cleanuperr#installation" class="button secondary-button" target="_blank">
                         Installation Guide
@@ -62,22 +76,22 @@
 </section>
 
 <style>
-    #cleanuparrSection {
+    #cleanuperrSection {
         padding: 20px;
         max-width: 100%;
         display: none;
     }
     
-    #cleanuparrSection.active {
+    #cleanuperrSection.active {
         display: block;
     }
     
-    .cleanuparr-container {
+    .cleanuperr-container {
         width: 100%;
         margin-bottom: 20px;
     }
     
-    .cleanuparr-info-box {
+    .cleanuperr-info-box {
         background: linear-gradient(135deg, rgba(28, 36, 54, 0.9), rgba(24, 32, 48, 0.8));
         border-radius: 10px;
         padding: 20px;
@@ -86,7 +100,7 @@
         border: 1px solid rgba(90, 109, 137, 0.2);
     }
     
-    .cleanuparr-header {
+    .cleanuperr-header {
         display: flex;
         align-items: center;
         margin-bottom: 20px;
@@ -94,22 +108,47 @@
         gap: 20px;
     }
     
-    .cleanuparr-logo {
-        max-width: 100%;
-        flex: 1;
+    .cleanuperr-logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
-    .cleanuparr-logo img {
-        max-width: 100%;
+    .app-logo {
+        width: 64px;
+        height: 64px;
         border-radius: 8px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
     
-    .cleanuparr-title {
+    .github-info-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        margin: 15px 0;
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        border: 1px solid rgba(90, 109, 137, 0.2);
+    }
+    
+    .github-stars {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 16px;
+    }
+    
+    .star-icon {
+        color: #f1c40f;
+    }
+    
+    .cleanuperr-title {
         flex: 2;
     }
     
-    .cleanuparr-title h3 {
+    .cleanuperr-title h3 {
         margin-top: 0;
         margin-bottom: 10px;
         font-size: 24px;
@@ -136,23 +175,23 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
     
-    .cleanuparr-description {
+    .cleanuperr-description {
         color: #e0e6ed;
         line-height: 1.6;
     }
     
-    .cleanuparr-description h4 {
+    .cleanuperr-description h4 {
         margin-top: 20px;
         margin-bottom: 10px;
         color: #3498db;
     }
     
-    .cleanuparr-description ul {
+    .cleanuperr-description ul {
         margin-left: 20px;
         margin-bottom: 20px;
     }
     
-    .cleanuparr-description li {
+    .cleanuperr-description li {
         margin-bottom: 8px;
     }
     
@@ -188,6 +227,14 @@
         color: #3498db;
     }
     
+    .origin-section {
+        margin: 25px 0;
+        padding: 15px;
+        background: rgba(41, 128, 185, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(41, 128, 185, 0.2);
+    }
+    
     .collaboration-note {
         margin: 30px 0;
         padding: 15px;
@@ -196,7 +243,7 @@
         border-radius: 0 8px 8px 0;
     }
     
-    .cleanuparr-cta {
+    .cleanuperr-cta {
         display: flex;
         gap: 15px;
         margin-top: 30px;
@@ -258,11 +305,11 @@
     }
     
     @media (max-width: 768px) {
-        .cleanuparr-header {
+        .cleanuperr-header {
             flex-direction: column;
         }
         
-        .cleanuparr-logo {
+        .cleanuperr-logo {
             width: 100%;
         }
         
@@ -271,7 +318,7 @@
             text-align: center;
         }
         
-        .cleanuparr-cta {
+        .cleanuperr-cta {
             flex-direction: column;
         }
         
@@ -287,8 +334,8 @@
         const backToAppsButton = document.getElementById('backToAppsButton');
         if (backToAppsButton) {
             backToAppsButton.addEventListener('click', function() {
-                // Hide Cleanuparr section
-                document.getElementById('cleanuparrSection').classList.remove('active');
+                // Hide Cleanuperr section
+                document.getElementById('cleanuperrSection').classList.remove('active');
                 
                 // Show Apps section
                 document.getElementById('appsSection').classList.add('active');
@@ -312,12 +359,12 @@
                         }
                     });
                     
-                    // Reset the app selector to a default app (not Cleanuparr)
+                    // Reset the app selector to a default app (not Cleanuperr)
                     const appsAppSelect = document.getElementById('appsAppSelect');
                     if (appsAppSelect) {
-                        // Set to the first option that isn't Cleanuparr
+                        // Set to the first option that isn't Cleanuperr
                         for (let i = 0; i < appsAppSelect.options.length; i++) {
-                            if (appsAppSelect.options[i].value !== 'cleanuparr') {
+                            if (appsAppSelect.options[i].value !== 'cleanuperr') {
                                 appsAppSelect.selectedIndex = i;
                                 break;
                             }
@@ -327,4 +374,38 @@
             });
         }
     });
+    
+    // Load GitHub star count for Cleanuperr
+    function loadCleanuperrStarCount() {
+        fetch('https://api.github.com/repos/flmorg/cleanuperr')
+            .then(response => {
+                if (!response.ok) {
+                    // Handle rate limiting or other errors
+                    if (response.status === 403) {
+                        console.warn('GitHub API rate limit likely exceeded.');
+                        throw new Error('Rate limited');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const starsElement = document.getElementById('cleanuperr-stars-count');
+                if (starsElement && data && data.stargazers_count !== undefined) {
+                    starsElement.textContent = data.stargazers_count;
+                } else if (starsElement) {
+                    starsElement.textContent = 'N/A';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading Cleanuperr star count from GitHub:', error);
+                const starsElement = document.getElementById('cleanuperr-stars-count');
+                if (starsElement) {
+                    starsElement.textContent = error.message === 'Rate limited' ? 'Rate Limited' : 'Error';
+                }
+            });
+    }
+    
+    // Load star count when the page is loaded
+    loadCleanuperrStarCount();
 </script>

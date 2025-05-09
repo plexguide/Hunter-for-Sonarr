@@ -451,11 +451,11 @@ const appsModule = {
         }
         if (!selectedApp || selectedApp === this.currentApp) return;
         
-        // Special case for Cleanuparr - it's an information page, not a settings page
-        if (selectedApp === 'cleanuparr') {
-            // Hide apps section and show Cleanuparr section
+        // Special case for Cleanuperr - it's an information page, not a settings page
+        if (selectedApp === 'cleanuperr') {
+            // Hide apps section and show Cleanuperr section
             document.getElementById('appsSection').classList.remove('active');
-            document.getElementById('cleanuparrSection').classList.add('active');
+            document.getElementById('cleanuperrSection').classList.add('active');
             
             // Update the page title
             if (huntarrUI && typeof huntarrUI.switchSection === 'function') {
@@ -464,7 +464,7 @@ const appsModule = {
                 // Just update the title
                 const pageTitleElement = document.getElementById('currentPageTitle');
                 if (pageTitleElement) {
-                    pageTitleElement.textContent = 'Cleanuparr';
+                    pageTitleElement.textContent = 'Cleanuperr';
                 }
             }
             
