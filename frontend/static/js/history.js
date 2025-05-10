@@ -252,9 +252,12 @@ const historyModule = {
             // Ensure the icon has the right content and is centered
             infoIcon.style.textAlign = 'center';
             
-            // Create a span for the title
+            // Create a span for the title with wrapping enabled
             const titleSpan = document.createElement('span');
             titleSpan.className = 'processed-title';
+            titleSpan.style.wordBreak = 'break-word'; // Enable word breaking
+            titleSpan.style.whiteSpace = 'normal'; // Allow normal wrapping
+            titleSpan.style.overflow = 'visible'; // Ensure text is not cut off
             titleSpan.innerHTML = this.escapeHtml(entry.processed_info);
             
             // Create tooltip element for JSON data

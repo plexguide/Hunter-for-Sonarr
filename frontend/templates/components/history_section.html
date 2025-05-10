@@ -581,6 +581,13 @@
         box-shadow: 0 0 5px rgb(52, 152, 219);
     }
     
+    /* Hide info icons on mobile devices */
+    @media screen and (max-width: 768px) {
+        .info-hover-icon {
+            display: none;
+        }
+    }
+    
     .info-hover-icon:hover {
         color: rgb(255, 255, 255); /* Bright white on hover */
         background-color: rgb(52, 152, 219); /* Blue background on hover */
@@ -675,6 +682,19 @@
     /* Processed title styling */
     .processed-title {
         font-weight: 500;
+        word-break: break-word;
+        white-space: normal;
+        overflow: visible;
+        display: inline-block;
+        max-width: 100%;
+    }
+    
+    /* Ensure the first column allows wrapping */
+    .modern-table td:first-child, .history-table td:first-child {
+        white-space: normal;
+        word-break: break-word;
+        max-width: 300px;
+        overflow: visible;
     }
     
     /* Empty state and loading styling */
