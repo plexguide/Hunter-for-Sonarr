@@ -35,7 +35,7 @@
             <div class="community-resources-container">
                 <div class="community-links-grid">
                     <a href="https://discord.gg/VQbZCGzQsn" target="_blank" class="community-link discord">
-                        <div class="icon-container">
+                        <div class="icon-container discord-icon">
                             <i class="fab fa-discord"></i>
                         </div>
                         <div class="link-details">
@@ -43,15 +43,15 @@
                         </div>
                     </a>
                     <a href="https://www.reddit.com/r/huntarr/" target="_blank" class="community-link reddit">
-                        <div class="icon-container">
+                        <div class="icon-container reddit-icon">
                             <i class="fab fa-reddit"></i>
                         </div>
                         <div class="link-details">
                             <span class="link-title">Reddit</span>
                         </div>
                     </a>
-                    <a href="https://plex.one/categories/developers-corner.22/" target="_blank" class="community-link github">
-                        <div class="icon-container">
+                    <a href="https://plex.one/categories/developers-corner.22/" target="_blank" class="community-link issues">
+                        <div class="icon-container issues-icon">
                             <i class="fas fa-bug"></i>
                         </div>
                         <div class="link-details">
@@ -59,7 +59,7 @@
                         </div>
                     </a>
                     <a href="https://github.com/plexguide/Huntarr/wiki" target="_blank" class="community-link wiki">
-                        <div class="icon-container">
+                        <div class="icon-container wiki-icon">
                             <i class="fas fa-book"></i>
                         </div>
                         <div class="link-details">
@@ -67,7 +67,7 @@
                         </div>
                     </a>
                     <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank" class="community-link changelog">
-                        <div class="icon-container">
+                        <div class="icon-container changelog-icon">
                             <i class="fas fa-history"></i>
                         </div>
                         <div class="link-details">
@@ -955,77 +955,115 @@
         font-weight: 600;
     }
     
+    /* Enhanced Community Hub Card with Glass Effect */
+    .community-hub-card {
+        margin-bottom: 20px;
+        background: rgba(15, 20, 30, 0.5);
+        border: 1px solid rgba(79, 93, 115, 0.2);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+    }
+    
     .community-resources-container {
-        padding: 20px;
-        background-color: rgba(15, 18, 24, 0.4);
+        padding: 15px;
     }
     
     .community-links-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
     }
     
     .community-link {
         display: flex;
         align-items: center;
-        background: rgba(28, 34, 46, 0.7);
-        border-radius: 8px;
-        padding: 10px 12px;
-        transition: all 0.2s ease;
+        background: linear-gradient(145deg, rgba(25, 30, 40, 0.4), rgba(20, 25, 35, 0.7));
+        border-radius: 10px;
+        padding: 15px;
+        transition: all 0.3s ease;
         text-decoration: none;
-        color: #e1e6ef;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(70, 90, 120, 0.15);
+        z-index: 1;
+    }
+    
+    .community-link::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+        z-index: -1;
+        opacity: 0.3;
+        transition: opacity 0.3s ease;
     }
     
     .community-link:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        background: rgba(38, 46, 63, 0.8);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     }
     
-    .icon-container {
-        width: 36px;
-        height: 36px;
+    .community-link:hover::before {
+        opacity: 0.5;
+    }
+    
+    .community-link .icon-container {
+        width: 42px;
+        height: 42px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 8px;
-        margin-right: 12px;
+        border-radius: 50%;
+        margin-right: 15px;
         flex-shrink: 0;
-        font-size: 18px;
+        font-size: 20px;
         color: white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        position: relative;
     }
     
-    .link-details {
+    .community-link .link-details {
         display: flex;
         flex-direction: column;
     }
     
-    .link-title {
+    .community-link .link-title {
         font-weight: 600;
-        font-size: 14px;
-        color: #e0e6ed;
+        font-size: 15px;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
     
-    /* Icon styles for each link type */
-    .community-link.discord .icon-container {
-        background: linear-gradient(135deg, #7289DA, #5865F2);
+    /* Icon styles for each link type with glass effect */
+    .icon-container.discord-icon {
+        background: linear-gradient(135deg, #5865F2, #404EED);
+        box-shadow: 0 0 10px rgba(88, 101, 242, 0.5);
     }
     
-    .community-link.reddit .icon-container {
+    .icon-container.reddit-icon {
         background: linear-gradient(135deg, #FF4500, #FF6A33);
+        box-shadow: 0 0 10px rgba(255, 69, 0, 0.5);
     }
     
-    .community-link.github .icon-container {
-        background: linear-gradient(135deg, #24292E, #404448);
+    .icon-container.issues-icon {
+        background: linear-gradient(135deg, #2D3436, #636E72);
+        box-shadow: 0 0 10px rgba(45, 52, 54, 0.5);
     }
     
-    .community-link.wiki .icon-container {
-        background: linear-gradient(135deg, #1ABC9C, #16A085);
+    .icon-container.wiki-icon {
+        background: linear-gradient(135deg, #00B894, #00A087);
+        box-shadow: 0 0 10px rgba(0, 184, 148, 0.5);
     }
     
-    .community-link.changelog .icon-container {
-        background: linear-gradient(135deg, #3498DB, #2980B9);
+    .icon-container.changelog-icon {
+        background: linear-gradient(135deg, #0984E3, #0570C2);
+        box-shadow: 0 0 10px rgba(9, 132, 227, 0.5);
     }
     
     /* Media queries for responsiveness */
