@@ -685,8 +685,23 @@
         word-break: break-word;
         white-space: normal;
         overflow: visible;
-        display: inline-block;
-        max-width: 100%;
+        display: inline;
+        width: auto;
+        flex: 1;
+    }
+    
+    /* Style for the line container that holds icon and title */
+    .title-line-container {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: nowrap;
+        width: 100%;
+    }
+    
+    /* Style for the info icon to keep it at the top when title wraps */
+    .title-line-container .info-hover-icon {
+        flex-shrink: 0;
+        margin-top: 2px; /* Align with the first line of text */
     }
     
     /* Ensure the first column allows wrapping */

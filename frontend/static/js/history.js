@@ -355,10 +355,20 @@ const historyModule = {
                 }, 0);
             });
             
-            // Append icon and title to the cell with proper spacing
-            processedInfoCell.appendChild(infoIcon);
-            processedInfoCell.appendChild(document.createTextNode(' ')); // Add space
-            processedInfoCell.appendChild(titleSpan);
+            // Create a container div to hold both icon and title on the same line
+            const lineContainer = document.createElement('div');
+            lineContainer.className = 'title-line-container';
+            // Additional inline styles to ensure proper alignment
+            lineContainer.style.display = 'flex';
+            lineContainer.style.alignItems = 'flex-start';
+            
+            // Append icon and title to the container
+            lineContainer.appendChild(infoIcon);
+            lineContainer.appendChild(document.createTextNode(' ')); // Add space
+            lineContainer.appendChild(titleSpan);
+            
+            // Add the container to the cell
+            processedInfoCell.appendChild(lineContainer);
             
             const operationTypeCell = document.createElement('td');
             operationTypeCell.innerHTML = this.formatOperationType(entry.operation_type);
