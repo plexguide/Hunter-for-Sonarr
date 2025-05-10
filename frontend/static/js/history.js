@@ -245,7 +245,51 @@ const historyModule = {
             
             // Build the row content piece by piece to ensure ID has no wrapping elements
             const processedInfoCell = document.createElement('td');
-            processedInfoCell.innerHTML = this.escapeHtml(entry.processed_info);
+            
+            // Create info icon with hover tooltip functionality
+            const infoIcon = document.createElement('i');
+            infoIcon.className = 'fas fa-info-circle info-hover-icon';
+            
+            // Create a span for the title
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'processed-title';
+            titleSpan.innerHTML = this.escapeHtml(entry.processed_info);
+            
+            // Create tooltip element for JSON data
+            const tooltip = document.createElement('div');
+            tooltip.className = 'json-tooltip';
+            
+            // Format the JSON data for display
+            let jsonData = {};
+            try {
+                // Extract available fields from the entry for the tooltip
+                jsonData = {
+                    title: entry.processed_info,
+                    id: entry.id,
+                    app: entry.app_type || 'Unknown',
+                    instance: entry.instance_name || 'Default',
+                    date: entry.date_time_readable,
+                    operation: entry.operation_type,
+                    // Add any additional fields that might be useful
+                    details: entry.details || {}
+                };
+            } catch (e) {
+                jsonData = { error: 'Could not parse JSON data', title: entry.processed_info };
+            }
+            
+            // Create formatted JSON content
+            const pre = document.createElement('pre');
+            pre.className = 'json-content';
+            pre.textContent = JSON.stringify(jsonData, null, 2);
+            tooltip.appendChild(pre);
+            
+            // Add the tooltip to the icon
+            infoIcon.appendChild(tooltip);
+            
+            // Append icon and title to the cell with proper spacing
+            processedInfoCell.appendChild(infoIcon);
+            processedInfoCell.appendChild(document.createTextNode(' ')); // Add space
+            processedInfoCell.appendChild(titleSpan);
             
             const operationTypeCell = document.createElement('td');
             operationTypeCell.innerHTML = this.formatOperationType(entry.operation_type);
