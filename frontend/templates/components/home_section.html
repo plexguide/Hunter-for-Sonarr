@@ -484,6 +484,7 @@
         margin: 10px 0 5px 0;
     }
     
+    /* App icon wrapper base styling */
     .app-icon-wrapper {
         width: 70px;
         height: 70px;
@@ -493,44 +494,109 @@
         border-radius: 50%;
         background: rgba(28, 34, 46, 0.8);
         margin-bottom: 12px;
+        position: relative;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        border: 2px solid rgba(120, 140, 180, 0.2);
     }
     
-    /* Sonarr blue icon ring */
-    .app-stats-card.sonarr .app-icon-wrapper {
-        border: 2px solid rgba(0, 174, 240, 0.8);
-        box-shadow: 0 0 15px rgba(0, 174, 240, 0.4);
+    /* Glowing ring animations */
+    @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
     }
     
-    /* Radarr yellow icon ring */
-    .app-stats-card.radarr .app-icon-wrapper {
-        border: 2px solid rgba(253, 203, 43, 0.8);
-        box-shadow: 0 0 15px rgba(253, 203, 43, 0.4);
+    @keyframes rotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
     
-    /* Lidarr green icon ring */
-    .app-stats-card.lidarr .app-icon-wrapper {
-        border: 2px solid rgba(49, 197, 56, 0.8);
-        box-shadow: 0 0 15px rgba(49, 197, 56, 0.4);
+    /* Common styles for app icon wrappers */
+    .app-stats-card .app-icon-wrapper::before,
+    .app-stats-card .app-icon-wrapper::after {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        animation: pulse 2s infinite ease-in-out, rotate 20s infinite linear;
     }
     
-    /* Readarr red icon ring */
-    .app-stats-card.readarr .app-icon-wrapper {
-        border: 2px solid rgba(192, 45, 40, 0.8);
-        box-shadow: 0 0 15px rgba(192, 45, 40, 0.4);
+    .app-stats-card .app-icon-wrapper::after {
+        top: -8px;
+        left: -8px;
+        right: -8px;
+        bottom: -8px;
+        opacity: 0.5;
+        animation: pulse 3s infinite ease-in-out, rotate 30s infinite linear reverse;
     }
     
-    /* Whisparr purple icon ring */
-    .app-stats-card.whisparr .app-icon-wrapper {
-        border: 2px solid rgba(195, 0, 230, 0.8);
-        box-shadow: 0 0 15px rgba(195, 0, 230, 0.4);
+    /* Sonarr blue glowing rings */
+    .app-stats-card.sonarr .app-icon-wrapper::before {
+        border-color: rgba(0, 174, 240, 0.8);
+        box-shadow: 0 0 15px rgba(0, 174, 240, 0.6);
     }
     
-    /* Eros purple icon ring */
-    .app-stats-card.eros .app-icon-wrapper {
-        border: 2px solid rgba(195, 0, 230, 0.8);
-        box-shadow: 0 0 15px rgba(195, 0, 230, 0.4);
+    .app-stats-card.sonarr .app-icon-wrapper::after {
+        border-color: rgba(0, 174, 240, 0.4);
+        box-shadow: 0 0 20px rgba(0, 174, 240, 0.3);
+    }
+    
+    /* Radarr yellow glowing rings */
+    .app-stats-card.radarr .app-icon-wrapper::before {
+        border-color: rgba(253, 203, 43, 0.8);
+        box-shadow: 0 0 15px rgba(253, 203, 43, 0.6);
+    }
+    
+    .app-stats-card.radarr .app-icon-wrapper::after {
+        border-color: rgba(253, 203, 43, 0.4);
+        box-shadow: 0 0 20px rgba(253, 203, 43, 0.3);
+    }
+    
+    /* Lidarr green glowing rings */
+    .app-stats-card.lidarr .app-icon-wrapper::before {
+        border-color: rgba(49, 197, 56, 0.8);
+        box-shadow: 0 0 15px rgba(49, 197, 56, 0.6);
+    }
+    
+    .app-stats-card.lidarr .app-icon-wrapper::after {
+        border-color: rgba(49, 197, 56, 0.4);
+        box-shadow: 0 0 20px rgba(49, 197, 56, 0.3);
+    }
+    
+    /* Readarr red glowing rings */
+    .app-stats-card.readarr .app-icon-wrapper::before {
+        border-color: rgba(192, 45, 40, 0.8);
+        box-shadow: 0 0 15px rgba(192, 45, 40, 0.6);
+    }
+    
+    .app-stats-card.readarr .app-icon-wrapper::after {
+        border-color: rgba(192, 45, 40, 0.4);
+        box-shadow: 0 0 20px rgba(192, 45, 40, 0.3);
+    }
+    
+    /* Whisparr purple glowing rings */
+    .app-stats-card.whisparr .app-icon-wrapper::before {
+        border-color: rgba(195, 0, 230, 0.8);
+        box-shadow: 0 0 15px rgba(195, 0, 230, 0.6);
+    }
+    
+    .app-stats-card.whisparr .app-icon-wrapper::after {
+        border-color: rgba(195, 0, 230, 0.4);
+        box-shadow: 0 0 20px rgba(195, 0, 230, 0.3);
+    }
+    
+    /* Eros purple glowing rings (same as Whisparr) */
+    .app-stats-card.eros .app-icon-wrapper::before {
+        border-color: rgba(195, 0, 230, 0.8);
+        box-shadow: 0 0 15px rgba(195, 0, 230, 0.6);
+    }
+    
+    .app-stats-card.eros .app-icon-wrapper::after {
+        border-color: rgba(195, 0, 230, 0.4);
+        box-shadow: 0 0 20px rgba(195, 0, 230, 0.3);
     }
     
     .app-logo {
