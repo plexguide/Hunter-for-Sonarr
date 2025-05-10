@@ -443,10 +443,17 @@
         font-weight: 500;
     }
     
-    /* Clean, standard styling for ID column - no special formatting */
+    /* Completely plain styling for ID column - override all inherited styles */
     .modern-table td:nth-child(3), .history-table td:nth-child(3) {
-        /* No special styling for ID column */
         font-family: inherit;
+        font-weight: normal;
+        text-shadow: none;
+        color: rgba(255, 255, 255, 0.85);
+        transition: none;
+        background: none;
+        border: none;
+        box-shadow: none;
+        letter-spacing: normal;
     }
     
     .modern-table tbody tr, .history-table tbody tr {
