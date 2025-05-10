@@ -89,7 +89,6 @@
                     <div class="app-stats-card sonarr">
                         <div class="status-container">
                             <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                            <button class="cycle-reset-button" data-app="sonarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                         <div class="hourly-cap-container">
                             <div class="hourly-cap-status" id="sonarr-hourly-cap">
@@ -113,13 +112,15 @@
                                 <div class="stat-label">Upgrades Triggered</div>
                             </div>
                         </div>
+                        <div class="reset-button-container">
+                            <button class="cycle-reset-button" data-app="sonarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
                     </div>
                     
                     <!-- Radarr Card -->
                     <div class="app-stats-card radarr">
                         <div class="status-container">
                             <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                            <button class="cycle-reset-button" data-app="radarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                         <div class="hourly-cap-container">
                             <div class="hourly-cap-status" id="radarr-hourly-cap">
@@ -143,13 +144,15 @@
                                 <span class="stat-label">Upgrades Triggered</span>
                             </div>
                         </div>
+                        <div class="reset-button-container">
+                            <button class="cycle-reset-button" data-app="radarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
                     </div>
                     
                     <!-- Lidarr Card -->
                     <div class="app-stats-card lidarr">
                         <div class="status-container">
                             <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                            <button class="cycle-reset-button" data-app="lidarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                         <div class="hourly-cap-container">
                             <div class="hourly-cap-status" id="lidarr-hourly-cap">
@@ -173,13 +176,15 @@
                                 <span class="stat-label">Upgrades Triggered</span>
                             </div>
                         </div>
+                        <div class="reset-button-container">
+                            <button class="cycle-reset-button" data-app="lidarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
                     </div>
                     
                     <!-- Readarr Card -->
                     <div class="app-stats-card readarr">
                         <div class="status-container">
                             <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                            <button class="cycle-reset-button" data-app="readarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                         <div class="hourly-cap-container">
                             <div class="hourly-cap-status" id="readarr-hourly-cap">
@@ -203,13 +208,15 @@
                                 <span class="stat-label">Upgrades Triggered</span>
                             </div>
                         </div>
+                        <div class="reset-button-container">
+                            <button class="cycle-reset-button" data-app="readarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
                     </div>
                     
                     <!-- Whisparr Card -->
                     <div class="app-stats-card whisparr">
                         <div class="status-container">
                             <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                            <button class="cycle-reset-button" data-app="whisparr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                         <div class="hourly-cap-container">
                             <div class="hourly-cap-status" id="whisparr-hourly-cap">
@@ -233,13 +240,15 @@
                                 <span class="stat-label">Upgrades Triggered</span>
                             </div>
                         </div>
+                        <div class="reset-button-container">
+                            <button class="cycle-reset-button" data-app="whisparr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
                     </div>
                     
                     <!-- Eros Card -->
                     <div class="app-stats-card eros">
                         <div class="status-container">
                             <span id="erosHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                            <button class="cycle-reset-button" data-app="eros"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                         <div class="hourly-cap-container">
                             <div class="hourly-cap-status" id="eros-hourly-cap">
@@ -262,6 +271,9 @@
                                 <span class="stat-number" id="eros-upgraded">0</span>
                                 <span class="stat-label">Upgrades Triggered</span>
                             </div>
+                        </div>
+                        <div class="reset-button-container">
+                            <button class="cycle-reset-button" data-app="eros"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                     </div>
                 </div>
@@ -1020,10 +1032,21 @@
         color: #ffc107;
     }
     
+    /* Reset button container */
+    .reset-button-container {
+        margin-top: 10px;
+        padding: 8px 0;
+        background-color: rgba(20, 26, 35, 0.4);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0 0 12px 12px;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+    
     /* Cycle reset button styles */
     .cycle-reset-button {
-        margin-left: 10px;
-        padding: 4px 8px;
+        padding: 6px 12px;
         background-color: rgba(52, 152, 219, 0.15);
         color: #3498db;
         border: 1px solid rgba(52, 152, 219, 0.3);
