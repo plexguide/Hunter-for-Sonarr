@@ -1747,6 +1747,8 @@ let huntarrUI = {
             // Hide user nav in sidebar
             if (userNav) {
                 userNav.style.display = 'none';
+                // Add !important inline style to ensure mobile view respects this
+                userNav.style.setProperty('display', 'none', 'important');
                 console.log("  • Hidden userNav");
             } else {
                 console.warn("  ⚠ userNav not found");
