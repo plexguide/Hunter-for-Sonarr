@@ -1511,9 +1511,24 @@ label .info-icon ~ text {
 #appsSection .settings-group {
     margin-top: 20px;
     margin-bottom: 30px;
-    background-color: var(--bg-secondary, #252525);
-    border-radius: 4px;
+    background: linear-gradient(135deg, rgba(30, 39, 56, 0.95) 0%, rgba(14, 20, 32, 0.95) 50%, rgba(16, 24, 36, 0.95) 100%);
+    border-radius: 8px;
     padding: 20px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    position: relative;
+    border: 1px solid rgba(90, 109, 137, 0.1);
+    overflow: hidden;
+}
+
+#appsSection .settings-group::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3)); /* Sonarr blue to Whisparr purple */
+    opacity: 0.7;
 }
 
 #appsSection .settings-group-header {
