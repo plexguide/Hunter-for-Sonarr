@@ -244,7 +244,6 @@ const historyModule = {
             const formattedInstance = appType ? `${appType} - ${entry.instance_name}` : entry.instance_name;
             
             row.innerHTML = `
-                <td>${entry.date_time_readable}</td>
                 <td>${this.escapeHtml(entry.processed_info)}</td>
                 <td>${this.formatOperationType(entry.operation_type)}</td>
                 <td>${this.escapeHtml(entry.id)}</td>
