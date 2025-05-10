@@ -1270,6 +1270,26 @@ input:checked + .toggle-slider:before {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* Information Icon Styling */
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+    color: var(--accent-color);
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.info-icon:hover {
+    color: var(--accent-hover);
+    transform: scale(1.1);
+}
+
+.info-icon i {
+    font-size: 14px;
+}
+
 /* Fix for trash icon positioning */
 .fa-trash-alt {
     display: inline-block;
