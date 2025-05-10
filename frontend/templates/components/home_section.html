@@ -91,6 +91,12 @@
                             <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                             <button class="cycle-reset-button" data-app="sonarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
+                        <div class="hourly-cap-container">
+                            <div class="hourly-cap-status" id="sonarr-hourly-cap">
+                                <span class="hourly-cap-icon" id="sonarr-cap-icon"></span>
+                                <span class="hourly-cap-text">API: <span id="sonarr-api-count">0</span> / <span id="sonarr-api-limit">20</span></span>
+                            </div>
+                        </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
                                 <img src="/static/arrs/48-sonarr.png" alt="Sonarr Logo" class="app-logo">
@@ -114,6 +120,12 @@
                         <div class="status-container">
                             <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                             <button class="cycle-reset-button" data-app="radarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
+                        <div class="hourly-cap-container">
+                            <div class="hourly-cap-status" id="radarr-hourly-cap">
+                                <span class="hourly-cap-icon" id="radarr-cap-icon"></span>
+                                <span class="hourly-cap-text">API: <span id="radarr-api-count">0</span> / <span id="radarr-api-limit">20</span></span>
+                            </div>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -139,6 +151,12 @@
                             <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                             <button class="cycle-reset-button" data-app="lidarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
+                        <div class="hourly-cap-container">
+                            <div class="hourly-cap-status" id="lidarr-hourly-cap">
+                                <span class="hourly-cap-icon" id="lidarr-cap-icon"></span>
+                                <span class="hourly-cap-text">API: <span id="lidarr-api-count">0</span> / <span id="lidarr-api-limit">20</span></span>
+                            </div>
+                        </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
                                 <img src="/static/arrs/48-lidarr.png" alt="Lidarr Logo" class="app-logo">
@@ -162,6 +180,12 @@
                         <div class="status-container">
                             <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                             <button class="cycle-reset-button" data-app="readarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
+                        <div class="hourly-cap-container">
+                            <div class="hourly-cap-status" id="readarr-hourly-cap">
+                                <span class="hourly-cap-icon" id="readarr-cap-icon"></span>
+                                <span class="hourly-cap-text">API: <span id="readarr-api-count">0</span> / <span id="readarr-api-limit">20</span></span>
+                            </div>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -187,6 +211,12 @@
                             <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                             <button class="cycle-reset-button" data-app="whisparr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
+                        <div class="hourly-cap-container">
+                            <div class="hourly-cap-status" id="whisparr-hourly-cap">
+                                <span class="hourly-cap-icon" id="whisparr-cap-icon"></span>
+                                <span class="hourly-cap-text">API: <span id="whisparr-api-count">0</span> / <span id="whisparr-api-limit">20</span></span>
+                            </div>
+                        </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
                                 <img src="/static/arrs/48-whisparr.png" alt="Whisparr V2 Logo" class="app-logo">
@@ -210,6 +240,12 @@
                         <div class="status-container">
                             <span id="erosHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                             <button class="cycle-reset-button" data-app="eros"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
+                        <div class="hourly-cap-container">
+                            <div class="hourly-cap-status" id="eros-hourly-cap">
+                                <span class="hourly-cap-icon" id="eros-cap-icon"></span>
+                                <span class="hourly-cap-text">API: <span id="eros-api-count">0</span> / <span id="eros-api-limit">20</span></span>
+                            </div>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -601,6 +637,66 @@
         background-color: rgba(243, 156, 18, 0.15);
         color: #f39c12;
         border: 1px solid rgba(243, 156, 18, 0.3);
+    }
+    
+    /* Hourly API Cap Styling */
+    .hourly-cap-container {
+        padding: 0 10px;
+        margin-bottom: 5px;
+    }
+    
+    .hourly-cap-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        background-color: rgba(52, 73, 94, 0.1);
+    }
+    
+    .hourly-cap-icon {
+        margin-right: 5px;
+        font-size: 0.9rem;
+    }
+    
+    .hourly-cap-text {
+        color: #34495e;
+        font-weight: 500;
+    }
+    
+    /* API Cap Status Colors */
+    .hourly-cap-status.good {
+        background-color: rgba(46, 204, 113, 0.1);
+    }
+    
+    .hourly-cap-status.warning {
+        background-color: rgba(243, 156, 18, 0.1);
+    }
+    
+    .hourly-cap-status.danger {
+        background-color: rgba(231, 76, 60, 0.1);
+    }
+    
+    .hourly-cap-status.good .hourly-cap-icon:before {
+        content: "\f058"; /* fa-check-circle */
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        color: #2ecc71;
+    }
+    
+    .hourly-cap-status.warning .hourly-cap-icon:before {
+        content: "\f06a"; /* fa-exclamation-circle */
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        color: #f39c12;
+    }
+    
+    .hourly-cap-status.danger .hourly-cap-icon:before {
+        content: "\f071"; /* fa-exclamation-triangle */
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        color: #e74c3c;
     }
     
     .status-badge.not-connected {
