@@ -309,13 +309,19 @@ const historyModule = {
         return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
     },
     
-    // Helper function to format operation type
+    // Helper function to format operation type with gradient styling
     formatOperationType: function(operationType) {
         switch (operationType) {
             case 'missing':
-                return '<span class="operation-missing">Missing</span>';
+                return '<span class="operation-status missing">Missing</span>';
             case 'upgrade':
-                return '<span class="operation-upgrade">Upgrade</span>';
+                return '<span class="operation-status upgrade">Upgrade</span>';
+            case 'warning':
+                return '<span class="operation-status warning">Warning</span>';
+            case 'error':
+                return '<span class="operation-status error">Error</span>';
+            case 'success':
+                return '<span class="operation-status success">Success</span>';
             default:
                 return operationType ? this.escapeHtml(operationType.charAt(0).toUpperCase() + operationType.slice(1)) : 'Unknown';
         }
