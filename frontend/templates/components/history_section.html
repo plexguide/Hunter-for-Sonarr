@@ -581,21 +581,44 @@
         position: absolute;
         left: 0;
         top: 100%;
-        background: linear-gradient(135deg, rgba(30, 39, 56, 0.98) 0%, rgba(14, 20, 32, 0.98) 100%);
-        border: 1px solid rgba(52, 152, 219, 0.5);
+        background: linear-gradient(135deg, rgb(22, 31, 48) 0%, rgb(10, 15, 25) 100%); /* Fully opaque dark background */
+        border: 1px solid rgb(52, 152, 219);
         border-radius: 6px;
         padding: 10px;
         width: 350px;
         max-height: 300px;
         overflow-y: auto;
         z-index: 1000;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         font-family: monospace;
         font-size: 12px;
-        color: rgba(255, 255, 255, 0.9);
+        color: rgb(255, 255, 255); /* Fully opaque text */
         text-align: left;
         white-space: pre-wrap;
-        backdrop-filter: blur(5px);
+        /* Glow effect like the Huntarr logo */
+        box-shadow: 
+            0 0 10px 1px rgb(52, 152, 219), /* Blue glow */
+            0 0 15px 2px rgba(52, 152, 219, 0.5), /* Outer blue glow */
+            0 6px 15px rgba(0, 0, 0, 0.8), /* Shadow for depth */
+            inset 0 0 10px rgba(0, 0, 0, 0.8); /* Inner shadow for depth */
+        animation: borderGlow 2s ease-in-out infinite alternate;
+    }
+    
+    /* Glowing border animation */
+    @keyframes borderGlow {
+        0% {
+            box-shadow: 
+                0 0 8px 1px rgb(52, 152, 219),
+                0 0 12px 2px rgba(52, 152, 219, 0.5),
+                0 6px 15px rgba(0, 0, 0, 0.8),
+                inset 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+        100% {
+            box-shadow: 
+                0 0 12px 2px rgb(155, 89, 182),
+                0 0 18px 3px rgba(155, 89, 182, 0.5),
+                0 6px 15px rgba(0, 0, 0, 0.8),
+                inset 0 0 10px rgba(0, 0, 0, 0.8);
+        }
     }
     
     /* Style the JSON content */

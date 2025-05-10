@@ -286,6 +286,38 @@ const historyModule = {
             // Add the tooltip to the icon
             infoIcon.appendChild(tooltip);
             
+            // Add positioning logic to prevent the tooltip from being cut off
+            infoIcon.addEventListener('mouseenter', () => {
+                setTimeout(() => {
+                    // Get positions
+                    const iconRect = infoIcon.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+                    const viewportWidth = window.innerWidth;
+                    
+                    // Default position is at left: 0 and top: 100%
+                    let leftPos = 0;
+                    let topPos = '100%';
+                    
+                    // If tooltip would go off the right edge
+                    if (iconRect.left + tooltipRect.width > viewportWidth) {
+                        // Move it to the left so it stays within the viewport
+                        const overflow = iconRect.left + tooltipRect.width - viewportWidth;
+                        leftPos = -overflow - 20; // 20px padding from edge
+                    }
+                    
+                    // Check if tooltip would go off the bottom edge
+                    const viewportHeight = window.innerHeight;
+                    if (iconRect.bottom + tooltipRect.height > viewportHeight) {
+                        // Position above the icon instead
+                        topPos = `-${tooltipRect.height}px`;
+                    }
+                    
+                    // Apply the calculated positions
+                    tooltip.style.left = `${leftPos}px`;
+                    tooltip.style.top = topPos;
+                }, 0);
+            });
+            
             // Append icon and title to the cell with proper spacing
             processedInfoCell.appendChild(infoIcon);
             processedInfoCell.appendChild(document.createTextNode(' ')); // Add space
