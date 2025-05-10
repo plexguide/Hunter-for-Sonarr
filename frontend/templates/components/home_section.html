@@ -670,12 +670,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 6px 16px;
-        border-radius: 20px;
+        padding: 5px 10px;
+        border-radius: 6px;
         font-size: 12px;
         font-weight: 600;
-        background-color: rgba(52, 73, 94, 0.25);
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        background-color: rgba(20, 25, 35, 0.5);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        border-left: 3px solid rgba(255, 255, 255, 0.2);
     }
     
     .hourly-cap-icon {
@@ -685,39 +686,42 @@
     
     .hourly-cap-text {
         color: rgba(255, 255, 255, 0.9);
-        font-weight: 600;
+        font-weight: 500;
         letter-spacing: 0.3px;
     }
     
     /* API Cap Status Colors */
     .hourly-cap-status.good {
-        background-color: rgba(46, 204, 113, 0.3);
+        background-color: rgba(20, 25, 35, 0.5);
+        border-left: 3px solid rgba(46, 204, 113, 0.9);
     }
     
     .hourly-cap-status.warning {
-        background-color: rgba(243, 156, 18, 0.3);
+        background-color: rgba(20, 25, 35, 0.5);
+        border-left: 3px solid rgba(243, 156, 18, 0.9);
     }
     
     .hourly-cap-status.danger {
-        background-color: rgba(231, 76, 60, 0.3);
+        background-color: rgba(20, 25, 35, 0.5);
+        border-left: 3px solid rgba(231, 76, 60, 0.9);
     }
     
     .hourly-cap-status.good .hourly-cap-icon:before {
-        content: "\f058"; /* fa-check-circle */
+        content: "\f201"; /* fa-chart-line */
         font-family: "Font Awesome 5 Free";
         font-weight: 900;
         color: #2ecc71;
     }
     
     .hourly-cap-status.warning .hourly-cap-icon:before {
-        content: "\f06a"; /* fa-exclamation-circle */
+        content: "\f252"; /* fa-hourglass-half */
         font-family: "Font Awesome 5 Free";
         font-weight: 900;
         color: #f39c12;
     }
     
     .hourly-cap-status.danger .hourly-cap-icon:before {
-        content: "\f071"; /* fa-exclamation-triangle */
+        content: "\f056"; /* fa-minus-circle */
         font-family: "Font Awesome 5 Free";
         font-weight: 900;
         color: #e74c3c;
