@@ -259,7 +259,7 @@ const SettingsForms = {
                     <p class="setting-help">Skip searching for movies with future release dates</p>
                 </div>
                 <div class="setting-item" id="future_release_type_container" style="${settings.skip_future_releases !== false ? '' : 'display: none;'}">
-                    <label for="release_type">Release Type for Future Status:</label>
+                    <label for="release_type"><a href="https://plex.one" class="info-icon" title="Learn more about release type options" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Release Type for Future Status:</label>
                     <select id="release_type">
                         <option value="digital" ${settings.release_type === 'digital' ? 'selected' : ''}>Digital Release</option>
                         <option value="physical" ${settings.release_type === 'physical' || !settings.release_type ? 'selected' : ''}>Physical Release</option>
@@ -268,7 +268,7 @@ const SettingsForms = {
                     <p class="setting-help">Select which release date type to use when determining if a movie is considered a future release</p>
                 </div>
                 <div class="setting-item">
-                    <label for="skip_movie_refresh">Skip Movie Refresh:</label>
+                    <label for="skip_movie_refresh"><a href="https://plex.one" class="info-icon" title="Learn more about skipping movie refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Movie Refresh:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="skip_movie_refresh" ${settings.skip_movie_refresh === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -420,7 +420,7 @@ const SettingsForms = {
                     <p class="setting-help">Skip searching for albums with future release dates</p>
                 </div>
                 <div class="setting-item">
-                    <label for="skip_artist_refresh">Skip Artist Refresh:</label>
+                    <label for="skip_artist_refresh"><a href="https://plex.one" class="info-icon" title="Learn more about skipping artist refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Artist Refresh:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="skip_artist_refresh" ${settings.skip_artist_refresh === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -549,7 +549,7 @@ const SettingsForms = {
                     <p class="setting-help">Skip searching for books with future release dates</p>
                 </div>
                 <div class="setting-item">
-                    <label for="skip_author_refresh">Skip Author Refresh:</label>
+                    <label for="skip_author_refresh"><a href="https://plex.one" class="info-icon" title="Learn more about skipping author refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Author Refresh:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="skip_author_refresh" ${settings.skip_author_refresh === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -684,7 +684,7 @@ const SettingsForms = {
                     <p class="setting-help">Skip refreshing series metadata before searching</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_skip_scene_refresh">Skip Scene Refresh:</label>
+                    <label for="whisparr_skip_scene_refresh"><a href="https://plex.one" class="info-icon" title="Learn more about skipping scene refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Scene Refresh:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="whisparr_skip_scene_refresh" name="skip_scene_refresh" ${settings.skip_scene_refresh === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -861,7 +861,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Swaparr Settings</h3>
                 <div class="setting-item">
-                    <label for="swaparr_enabled">Enable Swaparr:</label>
+                    <label for="swaparr_enabled"><a href="https://plex.one" class="info-icon" title="Learn more about Swaparr's functionality" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enable Swaparr:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="swaparr_enabled" ${settings.enabled ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -869,22 +869,22 @@ const SettingsForms = {
                     <p class="setting-help">Enable automatic handling of stalled downloads</p>
                 </div>
                 <div class="setting-item">
-                    <label for="swaparr_max_strikes">Maximum Strikes:</label>
+                    <label for="swaparr_max_strikes"><a href="https://plex.one" class="info-icon" title="Learn more about strike system for stalled downloads" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Maximum Strikes:</label>
                     <input type="number" id="swaparr_max_strikes" min="1" max="10" value="${settings.max_strikes || 3}">
                     <p class="setting-help">Number of strikes before removing a stalled download</p>
                 </div>
                 <div class="setting-item">
-                    <label for="swaparr_max_download_time">Max Download Time:</label>
+                    <label for="swaparr_max_download_time"><a href="https://plex.one" class="info-icon" title="Learn more about maximum download time setting" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Max Download Time:</label>
                     <input type="text" id="swaparr_max_download_time" value="${settings.max_download_time || '2h'}">
                     <p class="setting-help">Maximum time a download can be stalled (e.g., 30m, 2h, 1d)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="swaparr_ignore_above_size">Ignore Above Size:</label>
+                    <label for="swaparr_ignore_above_size"><a href="https://plex.one" class="info-icon" title="Learn more about size threshold settings" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Ignore Above Size:</label>
                     <input type="text" id="swaparr_ignore_above_size" value="${settings.ignore_above_size || '25GB'}">
                     <p class="setting-help">Ignore files larger than this size (e.g., 1GB, 25GB, 1TB)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="swaparr_remove_from_client">Remove From Client:</label>
+                    <label for="swaparr_remove_from_client"><a href="https://plex.one" class="info-icon" title="Learn more about client removal options" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Remove From Client:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="swaparr_remove_from_client" ${settings.remove_from_client !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -892,7 +892,7 @@ const SettingsForms = {
                     <p class="setting-help">Remove the download from the torrent/usenet client when removed</p>
                 </div>
                 <div class="setting-item">
-                    <label for="swaparr_dry_run">Dry Run Mode:</label>
+                    <label for="swaparr_dry_run"><a href="https://plex.one" class="info-icon" title="Learn more about dry run testing mode" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Dry Run Mode:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="swaparr_dry_run" ${settings.dry_run === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
