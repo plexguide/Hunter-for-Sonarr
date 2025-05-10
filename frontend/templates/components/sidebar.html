@@ -95,10 +95,23 @@
         border-bottom: 1px solid rgba(90, 109, 137, 0.15);
     }
     
+    /* Define logo glowing animation */
+    @keyframes logo-glow {
+        0% { box-shadow: 0 0 15px #3498db, 0 0 5px rgba(52, 152, 219, 0.4); } /* Sonarr blue */
+        20% { box-shadow: 0 0 15px #f1c40f, 0 0 5px rgba(241, 196, 15, 0.4); } /* Radarr yellow */
+        40% { box-shadow: 0 0 15px #2ecc71, 0 0 5px rgba(46, 204, 113, 0.4); } /* Lidarr green */
+        60% { box-shadow: 0 0 15px #e74c3c, 0 0 5px rgba(231, 76, 60, 0.4); } /* Readarr red */
+        80% { box-shadow: 0 0 15px #9b59b6, 0 0 5px rgba(155, 89, 182, 0.4); } /* Whisparr purple */
+        100% { box-shadow: 0 0 15px #3498db, 0 0 5px rgba(52, 152, 219, 0.4); } /* Back to Sonarr blue */
+    }
+    
     .logo {
-        width: 40px;
-        height: 40px;
-        margin-right: 10px;
+        width: 60px; /* 50% bigger than original 40px */
+        height: 60px;
+        margin-right: 15px;
+        border-radius: 50%;
+        animation: logo-glow 10s infinite ease-in-out;
+        transition: all 0.3s ease;
     }
     
     .logo-small {
