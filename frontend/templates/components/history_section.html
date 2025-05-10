@@ -563,61 +563,94 @@
     
     /* Info icon and JSON tooltip styling */
     .info-hover-icon {
-        color: rgba(52, 152, 219, 0.8);
+        color: rgb(52, 152, 219); /* Fully opaque - no transparency */
         margin-right: 8px;
         cursor: pointer;
         transition: all 0.3s ease;
         position: relative;
+        /* Make sure the icon is fully opaque with background */
+        background-color: rgb(14, 22, 33); /* Match the table background */
+        border-radius: 50%;
+        padding: 2px;
+        height: 14px;
+        width: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        /* Add subtle glow effect matching the tooltip */
+        box-shadow: 0 0 5px rgb(52, 152, 219);
     }
     
     .info-hover-icon:hover {
-        color: rgba(52, 152, 219, 1);
+        color: rgb(255, 255, 255); /* Bright white on hover */
+        background-color: rgb(52, 152, 219); /* Blue background on hover */
         transform: scale(1.2);
+        box-shadow: 0 0 8px rgb(52, 152, 219);
     }
     
     /* Hide the tooltip by default */
     .json-tooltip {
         display: none;
         position: absolute;
-        left: 0;
+        left: 35px; /* Move the tooltip to the right by default */
         top: 100%;
-        background: linear-gradient(135deg, rgb(22, 31, 48) 0%, rgb(10, 15, 25) 100%); /* Fully opaque dark background */
-        border: 1px solid rgb(52, 152, 219);
-        border-radius: 6px;
+        /* Extra thick solid background with absolutely no transparency */
+        background-color: #121824;
+        /* Add a thick dark background behind content */
+        background-image: 
+            linear-gradient(to bottom, 
+                #121824 0%, 
+                #0c111d 100%);
+        /* Double border for better definition */
+        border: 3px solid #2185d0;
+        border-radius: 8px;
         padding: 10px;
         width: 350px;
         max-height: 300px;
         overflow-y: auto;
-        z-index: 1000;
+        z-index: 999999; /* Super high z-index */
         font-family: monospace;
         font-size: 12px;
-        color: rgb(255, 255, 255); /* Fully opaque text */
+        color: #ffffff; /* Pure white text */
         text-align: left;
         white-space: pre-wrap;
-        /* Glow effect like the Huntarr logo */
+        /* Force complete opacity */
+        opacity: 1 !important;
+        /* Strong glow effect similar to Huntarr logo */
         box-shadow: 
-            0 0 10px 1px rgb(52, 152, 219), /* Blue glow */
-            0 0 15px 2px rgba(52, 152, 219, 0.5), /* Outer blue glow */
-            0 6px 15px rgba(0, 0, 0, 0.8), /* Shadow for depth */
-            inset 0 0 10px rgba(0, 0, 0, 0.8); /* Inner shadow for depth */
-        animation: borderGlow 2s ease-in-out infinite alternate;
+            0 0 0 4px #121824, /* Thick barrier */
+            0 0 0 5px #2185d0, /* Border highlight */
+            0 0 15px 2px #2185d0, /* Blue glow */
+            0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
+        /* Animation for the glow effect */
+        animation: tooltipGlow 3s ease-in-out infinite alternate;
     }
     
     /* Glowing border animation */
-    @keyframes borderGlow {
+    @keyframes tooltipGlow {
         0% {
             box-shadow: 
-                0 0 8px 1px rgb(52, 152, 219),
-                0 0 12px 2px rgba(52, 152, 219, 0.5),
-                0 6px 15px rgba(0, 0, 0, 0.8),
-                inset 0 0 10px rgba(0, 0, 0, 0.8);
+                0 0 0 4px #121824, /* Solid barrier */
+                0 0 0 5px #2185d0, /* Blue border */
+                0 0 15px 2px #2185d0, /* Blue glow */
+                0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
+            border-color: #2185d0;
+        }
+        50% {
+            box-shadow: 
+                0 0 0 4px #121824, /* Solid barrier */
+                0 0 0 5px #8e44ad, /* Purple border */
+                0 0 15px 3px #8e44ad, /* Purple glow */
+                0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
+            border-color: #8e44ad;
         }
         100% {
             box-shadow: 
-                0 0 12px 2px rgb(155, 89, 182),
-                0 0 18px 3px rgba(155, 89, 182, 0.5),
-                0 6px 15px rgba(0, 0, 0, 0.8),
-                inset 0 0 10px rgba(0, 0, 0, 0.8);
+                0 0 0 4px #121824, /* Solid barrier */
+                0 0 0 5px #2185d0, /* Blue border */
+                0 0 15px 2px #2185d0, /* Blue glow */
+                0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
+            border-color: #2185d0;
         }
     }
     

@@ -249,6 +249,8 @@ const historyModule = {
             // Create info icon with hover tooltip functionality
             const infoIcon = document.createElement('i');
             infoIcon.className = 'fas fa-info-circle info-hover-icon';
+            // Ensure the icon has the right content and is centered
+            infoIcon.style.textAlign = 'center';
             
             // Create a span for the title
             const titleSpan = document.createElement('span');
@@ -258,6 +260,38 @@ const historyModule = {
             // Create tooltip element for JSON data
             const tooltip = document.createElement('div');
             tooltip.className = 'json-tooltip';
+            
+            // Add a solid background backing div to ensure no transparency
+            const solidBackground = document.createElement('div');
+            solidBackground.style.position = 'absolute';
+            solidBackground.style.top = '0';
+            solidBackground.style.left = '0';
+            solidBackground.style.width = '100%';
+            solidBackground.style.height = '100%';
+            solidBackground.style.backgroundColor = '#121824'; // Solid dark background
+            solidBackground.style.zIndex = '1';
+            solidBackground.style.borderRadius = '5px';
+            tooltip.appendChild(solidBackground);
+            
+            // Add another solid layer for extra opacity
+            const extraLayer = document.createElement('div');
+            extraLayer.style.position = 'absolute';
+            extraLayer.style.top = '0';
+            extraLayer.style.left = '0';
+            extraLayer.style.width = '100%';
+            extraLayer.style.height = '100%';
+            extraLayer.style.backgroundColor = '#0c111d';
+            extraLayer.style.opacity = '0.9';
+            extraLayer.style.zIndex = '2';
+            extraLayer.style.borderRadius = '5px';
+            tooltip.appendChild(extraLayer);
+            
+            // Create a container for content that sits above the background
+            const contentContainer = document.createElement('div');
+            contentContainer.style.position = 'relative';
+            contentContainer.style.zIndex = '5'; // Higher z-index to ensure content is on top
+            contentContainer.style.pointerEvents = 'auto';
+            tooltip.appendChild(contentContainer);
             
             // Format the JSON data for display
             let jsonData = {};
@@ -281,7 +315,7 @@ const historyModule = {
             const pre = document.createElement('pre');
             pre.className = 'json-content';
             pre.textContent = JSON.stringify(jsonData, null, 2);
-            tooltip.appendChild(pre);
+            contentContainer.appendChild(pre);
             
             // Add the tooltip to the icon
             infoIcon.appendChild(tooltip);
@@ -294,8 +328,8 @@ const historyModule = {
                     const tooltipRect = tooltip.getBoundingClientRect();
                     const viewportWidth = window.innerWidth;
                     
-                    // Default position is at left: 0 and top: 100%
-                    let leftPos = 0;
+                    // Position the tooltip to the right of the icon by default
+                    let leftPos = 35; // Start with offset to the right
                     let topPos = '100%';
                     
                     // If tooltip would go off the right edge
