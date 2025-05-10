@@ -82,7 +82,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="sonarr-hunt-missing-mode"><a href="https://plex.one" class="info-icon" title="Learn more about missing search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Missing Search Mode:</label>
+                    <label for="sonarr-hunt-missing-mode"><a href="https://plex.one/threads/sonarr-missing-search-mode.16/" class="info-icon" title="Learn more about missing search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Missing Search Mode:</label>
                     <select id="sonarr-hunt-missing-mode" name="hunt_missing_mode">
                         <option value="episodes" ${settings.hunt_missing_mode === 'episodes' ? 'selected' : ''}>Episodes</option>
                         <option value="seasons_packs" ${settings.hunt_missing_mode === 'seasons_packs' ? 'selected' : ''}>Season Packs</option>
