@@ -1272,22 +1272,31 @@ input:checked + .toggle-slider:before {
 
 /* Information Icon Styling */
 .info-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 10px;
-    color: var(--accent-color);
-    transition: all 0.2s ease;
-    text-decoration: none;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-right: 30px !important;
+    margin-left: 0 !important;
+    padding-right: 10px !important;
+    color: var(--accent-color) !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+    position: relative !important;
 }
 
 .info-icon:hover {
-    color: var(--accent-hover);
-    transform: scale(1.1);
+    color: var(--accent-hover) !important;
+    transform: scale(1.1) !important;
 }
 
 .info-icon i {
-    font-size: 14px;
+    font-size: 14px !important;
+}
+
+/* Add spacing on labels with info icons */
+label .info-icon + span,
+label .info-icon ~ text {
+    margin-left: 5px !important;
 }
 
 /* Fix for trash icon positioning */
