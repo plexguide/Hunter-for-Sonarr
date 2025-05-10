@@ -27,6 +27,7 @@ logger = setup_main_logger()
 from src.primary import config, settings_manager
 # Removed keys_manager import as settings_manager handles API details
 from src.primary.state import check_state_reset, calculate_reset_time
+from src.primary.stats_manager import check_hourly_cap_exceeded
 # from src.primary.utils.app_utils import get_ip_address # No longer used here
 
 # Global state for managing app threads and their status
@@ -229,6 +230,19 @@ def app_specific_loop(app_type: str) -> None:
             except Exception as e:
                 app_logger.error(f"Error connecting to {app_type} instance '{instance_name}': {e}", exc_info=True)
                 continue # Skip this instance if connection fails
+                
+            # --- API Cap Check --- #
+            try:
+                # Check if hourly API cap is exceeded
+                if check_hourly_cap_exceeded(app_type):
+                    # Get the current cap status for logging
+                    from src.primary.stats_manager import get_hourly_cap_status
+                    cap_status = get_hourly_cap_status(app_type)
+                    app_logger.warning(f"{app_type.upper()} hourly cap reached {cap_status['current_usage']} of {cap_status['limit']}. Skipping cycle!")
+                    continue # Skip this instance if API cap is exceeded
+            except Exception as e:
+                app_logger.error(f"Error checking hourly API cap for {app_type}: {e}", exc_info=True)
+                # Continue with the cycle even if cap check fails - safer than skipping
 
             # --- Check if Hunt Modes are Enabled --- #
             # These checks use the hunt_missing_setting/hunt_upgrade_setting defined earlier
