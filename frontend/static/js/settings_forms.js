@@ -1227,6 +1227,7 @@ const SettingsForms = {
                     <label for="hourly_cap"><a href="https://plex.one/threads/api-caps-hourly.3/" class="info-icon" title="Learn more about API rate limits" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Cap - Hourly:</label>
                     <input type="number" id="hourly_cap" class="short-number-input" min="1" value="${settings.hourly_cap || 20}">
                     <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
+                    <p class="setting-help" style="color: #ff0000; font-weight: bold;">Setting this too high will risk you being banned! You have been warned!</p>
                 </div>
             </div>
             
