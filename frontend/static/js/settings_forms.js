@@ -180,22 +180,22 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="radarr-name-${index}">Name:</label>
+                            <label for="radarr-name-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about naming your Radarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Name:</label>
                             <input type="text" id="radarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Radarr instance">
                             <p class="setting-help">Friendly name for this Radarr instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="radarr-url-${index}">URL:</label>
+                            <label for="radarr-url-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about Radarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;URL:</label>
                             <input type="text" id="radarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Radarr (e.g., http://localhost:7878)">
                             <p class="setting-help">Base URL for Radarr (e.g., http://localhost:7878)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="radarr-key-${index}">API Key:</label>
+                            <label for="radarr-key-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about finding your Radarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Key:</label>
                             <input type="text" id="radarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Radarr">
                             <p class="setting-help">API key for Radarr</p>
                         </div>
                         <div class="setting-item">
-                            <label for="radarr-enabled-${index}">Enabled:</label>
+                            <label for="radarr-enabled-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enabled:</label>
                             <label class="toggle-switch">
                                 <input type="checkbox" id="radarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
@@ -333,22 +333,22 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="lidarr-name-${index}">Name:</label>
+                            <label for="lidarr-name-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about naming your Lidarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Name:</label>
                             <input type="text" id="lidarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Lidarr instance">
                             <p class="setting-help">Friendly name for this Lidarr instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="lidarr-url-${index}">URL:</label>
+                            <label for="lidarr-url-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about Lidarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;URL:</label>
                             <input type="text" id="lidarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Lidarr (e.g., http://localhost:8686)">
                             <p class="setting-help">Base URL for Lidarr (e.g., http://localhost:8686)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="lidarr-key-${index}">API Key:</label>
+                            <label for="lidarr-key-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about finding your Lidarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Key:</label>
                             <input type="text" id="lidarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Lidarr">
                             <p class="setting-help">API key for Lidarr</p>
                         </div>
                         <div class="setting-item">
-                            <label for="lidarr-enabled-${index}">Enabled:</label>
+                            <label for="lidarr-enabled-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enabled:</label>
                             <label class="toggle-switch">
                                 <input type="checkbox" id="lidarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
@@ -471,22 +471,22 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="readarr-name-${index}">Name:</label>
+                            <label for="readarr-name-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about naming your Readarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Name:</label>
                             <input type="text" id="readarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Readarr instance">
                             <p class="setting-help">Friendly name for this Readarr instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="readarr-url-${index}">URL:</label>
+                            <label for="readarr-url-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about Readarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;URL:</label>
                             <input type="text" id="readarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Readarr (e.g., http://localhost:8787)">
                             <p class="setting-help">Base URL for Readarr (e.g., http://localhost:8787)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="readarr-key-${index}">API Key:</label>
+                            <label for="readarr-key-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about finding your Readarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Key:</label>
                             <input type="text" id="readarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Readarr">
                             <p class="setting-help">API key for Readarr</p>
                         </div>
                         <div class="setting-item">
-                            <label for="readarr-enabled-${index}">Enabled:</label>
+                            <label for="readarr-enabled-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enabled:</label>
                             <label class="toggle-switch">
                                 <input type="checkbox" id="readarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
@@ -600,22 +600,22 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="whisparr-name-${index}">Name:</label>
+                            <label for="whisparr-name-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about naming your Whisparr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Name:</label>
                             <input type="text" id="whisparr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Whisparr V2 instance">
                             <p class="setting-help">Friendly name for this Whisparr V2 instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="whisparr-url-${index}">URL:</label>
+                            <label for="whisparr-url-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about Whisparr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;URL:</label>
                             <input type="text" id="whisparr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Whisparr V2 (e.g., http://localhost:6969)">
                             <p class="setting-help">Base URL for Whisparr V2 (e.g., http://localhost:6969)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="whisparr-key-${index}">API Key:</label>
+                            <label for="whisparr-key-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about finding your Whisparr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Key:</label>
                             <input type="text" id="whisparr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr V2">
                             <p class="setting-help">API key for Whisparr V2</p>
                         </div>
                         <div class="setting-item">
-                            <label for="whisparr-enabled-${index}">Enabled:</label>
+                            <label for="whisparr-enabled-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enabled:</label>
                             <label class="toggle-switch">
                                 <input type="checkbox" id="whisparr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
@@ -741,22 +741,22 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="eros-name-${index}">Name:</label>
+                            <label for="eros-name-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about naming your Whisparr V3 instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Name:</label>
                             <input type="text" id="eros-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Whisparr V3 instance">
                             <p class="setting-help">Friendly name for this Whisparr V3 instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="eros-url-${index}">URL:</label>
+                            <label for="eros-url-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about Whisparr V3 URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;URL:</label>
                             <input type="text" id="eros-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Whisparr V3 (e.g., http://localhost:6969)">
                             <p class="setting-help">Base URL for Whisparr V3 (e.g., http://localhost:6969)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="eros-key-${index}">API Key:</label>
+                            <label for="eros-key-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about finding your Whisparr V3 API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Key:</label>
                             <input type="text" id="eros-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr V3">
                             <p class="setting-help">API key for Whisparr V3</p>
                         </div>
                         <div class="setting-item">
-                            <label for="eros-enabled-${index}">Enabled:</label>
+                            <label for="eros-enabled-${index}"><a href="https://plex.one" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enabled:</label>
                             <label class="toggle-switch">
                                 <input type="checkbox" id="eros-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider"></span>
