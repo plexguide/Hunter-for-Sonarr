@@ -224,17 +224,17 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="radarr_hunt_missing_movies">Missing Movies to Search:</label>
+                    <label for="radarr_hunt_missing_movies"><a href="https://plex.one" class="info-icon" title="Learn more about missing movies search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Missing Movies to Search:</label>
                     <input type="number" id="radarr_hunt_missing_movies" name="hunt_missing_movies" min="0" value="${settings.hunt_missing_movies !== undefined ? (settings.hunt_missing_movies === 0 ? 0 : settings.hunt_missing_movies) : 1}">
                     <p class="setting-help">Number of missing movies to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="radarr_hunt_upgrade_movies">Movies to Upgrade:</label>
+                    <label for="radarr_hunt_upgrade_movies"><a href="https://plex.one" class="info-icon" title="Learn more about upgrading movies" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Movies to Upgrade:</label>
                     <input type="number" id="radarr_hunt_upgrade_movies" name="hunt_upgrade_movies" min="0" value="${settings.hunt_upgrade_movies !== undefined ? (settings.hunt_upgrade_movies === 0 ? 0 : settings.hunt_upgrade_movies) : 0}">
                     <p class="setting-help">Number of movies to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="radarr_sleep_duration">Sleep Duration:</label>
+                    <label for="radarr_sleep_duration"><a href="https://plex.one" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="radarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -243,7 +243,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="radarr_monitored_only">Monitored Only:</label>
+                    <label for="radarr_monitored_only"><a href="https://plex.one" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="radarr_monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -251,7 +251,7 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="skip_future_releases">Skip Future Releases:</label>
+                    <label for="skip_future_releases"><a href="https://plex.one" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Future Releases:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -376,7 +376,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="lidarr_hunt_missing_mode">Missing Search Mode:</label>
+                    <label for="lidarr_hunt_missing_mode"><a href="https://plex.one" class="info-icon" title="Learn more about missing search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Missing Search Mode:</label>
                     <select id="lidarr_hunt_missing_mode" name="hunt_missing_mode">
                         <option value="artist" ${settings.hunt_missing_mode === 'artist' ? 'selected' : ''}>Artist</option>
                         <option value="album" ${settings.hunt_missing_mode === 'album' ? 'selected' : ''}>Album</option>
@@ -384,18 +384,18 @@ const SettingsForms = {
                     <p class="setting-help">Whether to search by artist (all missing albums for artist) or individual albums</p>
                 </div>
                 <div class="setting-item">
-                    <label for="lidarr_hunt_missing_items">Missing Items to Search:</label>
+                    <label for="lidarr_hunt_missing_items"><a href="https://plex.one" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Missing Items to Search:</label>
                     <input type="number" id="lidarr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of artists with missing albums to search per cycle (0 to disable)</p>
                 </div>
                 
                 <div class="setting-item">
-                    <label for="lidarr_hunt_upgrade_items">Items to Upgrade:</label>
+                    <label for="lidarr_hunt_upgrade_items"><a href="https://plex.one" class="info-icon" title="Learn more about upgrading items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Items to Upgrade:</label>
                     <input type="number" id="lidarr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
                     <p class="setting-help">Number of albums to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="lidarr_sleep_duration">Sleep Duration:</label>
+                    <label for="lidarr_sleep_duration"><a href="https://plex.one" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="lidarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -404,7 +404,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="lidarr_monitored_only">Monitored Only:</label>
+                    <label for="lidarr_monitored_only"><a href="https://plex.one" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="lidarr_monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -412,7 +412,7 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="lidarr_skip_future_releases">Skip Future Releases:</label>
+                    <label for="lidarr_skip_future_releases"><a href="https://plex.one" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Future Releases:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="lidarr_skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -514,17 +514,17 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="readarr_hunt_missing_books">Missing Books to Search:</label>
+                    <label for="readarr_hunt_missing_books"><a href="https://plex.one" class="info-icon" title="Learn more about missing books search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Missing Books to Search:</label>
                     <input type="number" id="readarr_hunt_missing_books" name="hunt_missing_books" min="0" value="${settings.hunt_missing_books !== undefined ? settings.hunt_missing_books : 1}">
                     <p class="setting-help">Number of missing books to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="readarr_hunt_upgrade_books">Books to Upgrade:</label>
+                    <label for="readarr_hunt_upgrade_books"><a href="https://plex.one" class="info-icon" title="Learn more about upgrading books" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Books to Upgrade:</label>
                     <input type="number" id="readarr_hunt_upgrade_books" name="hunt_upgrade_books" min="0" value="${settings.hunt_upgrade_books !== undefined ? settings.hunt_upgrade_books : 0}">
                     <p class="setting-help">Number of books to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="readarr_sleep_duration">Sleep Duration:</label>
+                    <label for="readarr_sleep_duration"><a href="https://plex.one" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="readarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -533,7 +533,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="readarr_monitored_only">Monitored Only:</label>
+                    <label for="readarr_monitored_only"><a href="https://plex.one" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="readarr_monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -541,7 +541,7 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="readarr_skip_future_releases">Skip Future Releases:</label>
+                    <label for="readarr_skip_future_releases"><a href="https://plex.one" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Future Releases:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="readarr_skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -641,17 +641,17 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="whisparr_hunt_missing_items">Missing Items to Search:</label>
+                    <label for="whisparr_hunt_missing_items"><a href="https://plex.one" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Missing Items to Search:</label>
                     <input type="number" id="whisparr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_hunt_upgrade_items">Items to Upgrade:</label>
+                    <label for="whisparr_hunt_upgrade_items"><a href="https://plex.one" class="info-icon" title="Learn more about upgrading items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Items to Upgrade:</label>
                     <input type="number" id="whisparr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
                     <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_sleep_duration">Sleep Duration:</label>
+                    <label for="whisparr_sleep_duration"><a href="https://plex.one" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="whisparr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -660,7 +660,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="whisparr_monitored_only">Monitored Only:</label>
+                    <label for="whisparr_monitored_only"><a href="https://plex.one" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="whisparr_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -668,7 +668,7 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_skip_future_releases">Skip Future Releases:</label>
+                    <label for="whisparr_skip_future_releases"><a href="https://plex.one" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Future Releases:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="whisparr_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -676,7 +676,7 @@ const SettingsForms = {
                     <p class="setting-help">Skip searching for scenes with future release dates</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_skip_series_refresh">Skip Series Refresh:</label>
+                    <label for="whisparr_skip_series_refresh"><a href="https://plex.one" class="info-icon" title="Learn more about skipping series refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Series Refresh:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="whisparr_skip_series_refresh" name="skip_series_refresh" ${settings.skip_series_refresh === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -782,7 +782,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="eros_search_mode">Search Mode:</label>
+                    <label for="eros_search_mode"><a href="https://plex.one" class="info-icon" title="Learn more about search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Search Mode:</label>
                     <select id="eros_search_mode" name="search_mode">
                         <option value="movie" ${settings.search_mode === 'movie' || !settings.search_mode ? 'selected' : ''}>Movie</option>
                         <option value="scene" ${settings.search_mode === 'scene' ? 'selected' : ''}>Scene</option>
@@ -790,17 +790,17 @@ const SettingsForms = {
                     <p class="setting-help">How to search for missing and upgradable Whisparr V3 content (Movie-based or Scene-based)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="eros_hunt_missing_items">Missing Items to Search:</label>
+                    <label for="eros_hunt_missing_items"><a href="https://plex.one" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Missing Items to Search:</label>
                     <input type="number" id="eros_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="eros_hunt_upgrade_items">Items to Upgrade:</label>
+                    <label for="eros_hunt_upgrade_items"><a href="https://plex.one" class="info-icon" title="Learn more about upgrading items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Items to Upgrade:</label>
                     <input type="number" id="eros_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
                     <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="eros_sleep_duration">Sleep Duration:</label>
+                    <label for="eros_sleep_duration"><a href="https://plex.one" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="eros_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -809,7 +809,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="eros_monitored_only">Monitored Only:</label>
+                    <label for="eros_monitored_only"><a href="https://plex.one" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="eros_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -817,7 +817,7 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="eros_skip_future_releases">Skip Future Releases:</label>
+                    <label for="eros_skip_future_releases"><a href="https://plex.one" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Future Releases:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="eros_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -825,7 +825,7 @@ const SettingsForms = {
                     <p class="setting-help">Skip searching for scenes with future release dates</p>
                 </div>
                 <div class="setting-item">
-                    <label for="eros_skip_item_refresh">Skip Movie/Scene Refresh:</label>
+                    <label for="eros_skip_item_refresh"><a href="https://plex.one" class="info-icon" title="Learn more about skipping item refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Movie/Scene Refresh:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="eros_skip_item_refresh" name="skip_item_refresh" ${settings.skip_item_refresh === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
