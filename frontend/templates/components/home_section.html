@@ -1,21 +1,22 @@
 <section id="homeSection" class="content-section">
     <div class="dashboard-grid stack-layout mobile-scrollable">
-        <!-- Support Links: Header removed, integrated directly into the layout -->
+        <!-- Enhanced Support Links with Modern Design -->
         <div class="card support-links-card">
             <div class="support-links-container">
                 <div class="support-links-grid">
                     <a href="https://github.com/plexguide/huntarr" target="_blank" class="support-link github">
-                        <div class="icon-container">
-                            <i class="fas fa-star star-icon"></i>
+                        <div class="icon-container github-icon">
+                            <i class="fab fa-github"></i>
+                            <i class="fas fa-star star-inner-icon"></i>
                         </div>
                         <div class="link-details">
                             <span class="link-title">Star on GitHub</span>
-                            <span class="link-description">Helps the project!</span>
+                            <span class="link-description">Support development &amp; features</span>
                         </div>
                     </a>
                     <a href="https://donate.plex.one" target="_blank" class="support-link donate">
-                        <div class="icon-container">
-                            <i class="fas fa-heart donation-icon"></i>
+                        <div class="icon-container donate-icon">
+                            <i class="fas fa-heart"></i>
                         </div>
                         <div class="link-details">
                             <span class="link-title">Donate</span>
@@ -1057,7 +1058,14 @@
         }
     }
     
-    /* Support Links styling */
+    /* Modern Support Links styling with glass effect */
+    .support-links-card {
+        overflow: hidden;
+        background: rgba(15, 20, 30, 0.5);
+        border: 1px solid rgba(79, 93, 115, 0.2);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+    
     .support-links-container {
         padding: 4px;
     }
@@ -1071,51 +1079,108 @@
     .support-link {
         display: flex;
         align-items: center;
-        padding: 15px;
-        background: linear-gradient(145deg, rgba(32, 37, 49, 0.7), rgba(27, 32, 43, 0.7));
-        border: 1px solid rgba(90, 109, 137, 0.1);
-        border-radius: 10px;
+        padding: 20px;
+        background: linear-gradient(145deg, rgba(25, 30, 40, 0.4), rgba(20, 25, 35, 0.8));
+        border-radius: 12px;
         transition: all 0.3s ease;
         text-decoration: none;
-        color: #e1e6ef;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(70, 90, 120, 0.15);
+        z-index: 1;
+    }
+    
+    .support-link::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+        z-index: -1;
+        opacity: 0.4;
+        transition: opacity 0.3s ease;
     }
     
     .support-link:hover {
         transform: translateY(-3px);
-        box-shadow: 0 7px 15px rgba(0, 0, 0, 0.2);
-        border-color: rgba(90, 109, 137, 0.3);
-        background: linear-gradient(145deg, rgba(37, 42, 54, 0.8), rgba(32, 37, 48, 0.8));
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .support-link:hover::before {
+        opacity: 0.6;
     }
     
     .support-link .icon-container {
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 45px;
-        height: 45px;
-        font-size: 1.4rem;
-        margin-right: 15px;
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+        margin-right: 20px;
         flex-shrink: 0;
+        border-radius: 50%;
+        position: relative;
+    }
+    
+    /* GitHub icon styling */
+    .support-link .icon-container.github-icon {
+        background: linear-gradient(135deg, #24292e, #1a202c);
+        color: #ffffff;
+        box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+        animation: pulse-github 2s infinite alternate;
+    }
+    
+    .support-link .icon-container.github-icon .star-inner-icon {
+        position: absolute;
+        font-size: 0.9em;
+        margin-left: 10px;
+        margin-top: -10px;
+        color: #ffc107;
+        filter: drop-shadow(0 0 5px rgba(255, 193, 7, 0.8));
+    }
+    
+    /* Donation icon styling */
+    .support-link .icon-container.donate-icon {
+        background: linear-gradient(135deg, #d63031, #e84393);
+        color: #ffffff;
+        box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+        animation: pulse-donate 2s infinite alternate;
+    }
+    
+    @keyframes pulse-github {
+        0% { box-shadow: 0 0 10px rgba(255, 193, 7, 0.4); }
+        100% { box-shadow: 0 0 20px rgba(255, 193, 7, 0.7); }
+    }
+    
+    @keyframes pulse-donate {
+        0% { box-shadow: 0 0 10px rgba(255, 107, 107, 0.4); }
+        100% { box-shadow: 0 0 20px rgba(255, 107, 107, 0.7); }
     }
     
     .support-link .link-details {
         display: flex;
         flex-direction: column;
-        min-width: 0;
     }
     
     .support-link .link-title {
         font-weight: 700;
-        font-size: 0.95rem;
-        margin-bottom: 3px;
-        white-space: nowrap;
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
     .support-link .link-description {
-        font-size: 0.8rem;
-        color: rgba(225, 230, 239, 0.7);
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.8);
         white-space: normal;
         word-wrap: break-word;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     /* Mobile optimizations for support links */
@@ -1125,18 +1190,18 @@
         }
         
         .support-link {
-            padding: 12px;
+            padding: 15px;
         }
         
         .support-link .icon-container {
-            width: 36px;
-            height: 36px;
-            font-size: 1.2rem;
-            margin-right: 10px;
+            width: 42px;
+            height: 42px;
+            font-size: 1.3rem;
+            margin-right: 12px;
         }
         
         .support-link .link-title {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
         
         .support-link .link-description {
@@ -1149,14 +1214,6 @@
         .support-links-grid {
             grid-template-columns: 1fr;
         }
-    }
-    
-    .support-link.donate .icon-container {
-        color: #ff6b6b;
-    }
-    
-    .support-link.github .icon-container {
-        color: #ffc107;
     }
     
     /* Reset button container */
