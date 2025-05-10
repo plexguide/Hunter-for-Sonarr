@@ -331,13 +331,27 @@ input:checked + .slider:before {
 /* Top Bar */
 .top-bar {
     height: 60px;
-    background-color: var(--topbar-bg);
+    background: linear-gradient(135deg, #1e2738 0%, #0e1420 50%, #101824 75%, rgba(18, 25, 38, 0.95) 100%);
+    background-size: 100% 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
-    border-bottom: 1px solid var(--border-color);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(90, 109, 137, 0.15);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    position: relative;
+}
+
+/* Add subtle highlight to the bottom of the topbar */
+.top-bar::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3)); /* Sonarr blue to Whisparr purple */
+    z-index: 1;
 }
 
 .page-title {
@@ -397,10 +411,25 @@ input:checked + .slider:before {
 }
 
 .card {
-    background-color: var(--card-bg);
+    background: linear-gradient(135deg, rgba(30, 39, 56, 0.95) 0%, rgba(14, 20, 32, 0.95) 50%, rgba(16, 24, 36, 0.95) 100%);
     border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
     padding: 20px;
+    position: relative;
+    border: 1px solid rgba(90, 109, 137, 0.1);
+    overflow: hidden;
+}
+
+/* Add subtle glow accent to cards */
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3)); /* Sonarr blue to Whisparr purple */
+    opacity: 0.7;
 }
 
 .card h2, .card h3 {
