@@ -1275,7 +1275,7 @@ input:checked + .toggle-slider:before {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-right: 6px;
+    margin-right: 10px;
     color: var(--accent-color);
     transition: all 0.2s ease;
     text-decoration: none;

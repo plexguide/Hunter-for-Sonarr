@@ -1251,7 +1251,7 @@ const SettingsForms = {
                     </div>
                 </div>
                 <div class="setting-item">
-                    <label for="stateful_management_hours">State Reset Interval (Hours):</label>
+                    <label for="stateful_management_hours"><a href="/docs/state-reset" class="info-icon" title="Learn more about state reset intervals"><i class="fas fa-info-circle"></i></a> State Reset Interval (Hours):</label>
                     <input type="number" id="stateful_management_hours" min="1" value="${settings.stateful_management_hours || 168}">
                     <p class="setting-help">Hours before resetting processed media state (<span id="stateful_management_days">${((settings.stateful_management_hours || 168) / 24).toFixed(1)} days</span>)</p>
                     <p class="setting-help reset-help">Reset clears all processed media IDs to allow reprocessing</p>
@@ -1261,7 +1261,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Security</h3>
                 <div class="setting-item">
-                    <label for="local_access_bypass">Local Network Auth Bypass:</label>
+                    <label for="local_access_bypass"><a href="/docs/security" class="info-icon" title="Learn more about local network authentication bypass"><i class="fas fa-info-circle"></i></a> Local Network Auth Bypass:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="local_access_bypass" ${settings.local_access_bypass === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
