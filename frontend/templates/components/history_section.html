@@ -616,14 +616,14 @@
         white-space: pre-wrap;
         /* Force complete opacity */
         opacity: 1 !important;
-        /* Strong glow effect similar to Huntarr logo */
+        /* Strong glow effect similar to Huntarr logo - more pronounced */
         box-shadow: 
             0 0 0 4px #121824, /* Thick barrier */
             0 0 0 5px #2185d0, /* Border highlight */
-            0 0 15px 2px #2185d0, /* Blue glow */
+            0 0 20px 5px #2185d0, /* Much stronger blue glow */
             0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
-        /* Animation for the glow effect */
-        animation: tooltipGlow 3s ease-in-out infinite alternate;
+        /* Animation for the glow effect - faster to be more noticeable */
+        animation: tooltipGlow 2s ease-in-out infinite alternate;
     }
     
     /* Glowing border animation */
@@ -632,23 +632,23 @@
             box-shadow: 
                 0 0 0 4px #121824, /* Solid barrier */
                 0 0 0 5px #2185d0, /* Blue border */
-                0 0 15px 2px #2185d0, /* Blue glow */
+                0 0 25px 8px #2185d0, /* Much stronger blue glow */
                 0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
             border-color: #2185d0;
         }
         50% {
             box-shadow: 
                 0 0 0 4px #121824, /* Solid barrier */
-                0 0 0 5px #8e44ad, /* Purple border */
-                0 0 15px 3px #8e44ad, /* Purple glow */
+                0 0 0 5px #9b59b6, /* Brighter purple border */
+                0 0 25px 8px #9b59b6, /* Much stronger purple glow */
                 0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
-            border-color: #8e44ad;
+            border-color: #9b59b6;
         }
         100% {
             box-shadow: 
                 0 0 0 4px #121824, /* Solid barrier */
                 0 0 0 5px #2185d0, /* Blue border */
-                0 0 15px 2px #2185d0, /* Blue glow */
+                0 0 25px 8px #2185d0, /* Much stronger blue glow */
                 0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
             border-color: #2185d0;
         }
