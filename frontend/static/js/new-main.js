@@ -156,6 +156,11 @@ let huntarrUI = {
         this.elements.autoScrollCheckbox = document.getElementById('autoScrollCheckbox');
         this.elements.clearLogsButton = document.getElementById('clearLogsButton');
         this.elements.logConnectionStatus = document.getElementById('logConnectionStatus');
+        // Log search elements
+        this.elements.logSearchInput = document.getElementById('logSearchInput');
+        this.elements.logSearchButton = document.getElementById('logSearchButton');
+        this.elements.clearSearchButton = document.getElementById('clearSearchButton');
+        this.elements.logSearchResults = document.getElementById('logSearchResults');
         
         // Settings
         this.elements.saveSettingsButton = document.getElementById('saveSettingsButton'); // Corrected ID
@@ -221,6 +226,31 @@ let huntarrUI = {
         // Clear logs button
         if (this.elements.clearLogsButton) {
             this.elements.clearLogsButton.addEventListener('click', () => this.clearLogs());
+        }
+        
+        // Log search functionality
+        if (this.elements.logSearchButton) {
+            this.elements.logSearchButton.addEventListener('click', () => this.searchLogs());
+        }
+        
+        if (this.elements.logSearchInput) {
+            this.elements.logSearchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.searchLogs();
+                }
+            });
+            
+            // Clear search when input is emptied
+            this.elements.logSearchInput.addEventListener('input', (e) => {
+                if (e.target.value.trim() === '') {
+                    this.clearLogSearch();
+                }
+            });
+        }
+        
+        // Clear search button
+        if (this.elements.clearSearchButton) {
+            this.elements.clearSearchButton.addEventListener('click', () => this.clearLogSearch());
         }
         
         // App tabs in logs section
@@ -962,6 +992,139 @@ let huntarrUI = {
     clearLogs: function() {
         if (this.elements.logsContainer) {
             this.elements.logsContainer.innerHTML = '';
+        }
+    },
+    
+    // Search logs functionality with performance optimization
+    searchLogs: function() {
+        if (!this.elements.logsContainer || !this.elements.logSearchInput) return;
+        
+        const searchText = this.elements.logSearchInput.value.trim().toLowerCase();
+        
+        // If empty search, reset everything
+        if (!searchText) {
+            this.clearLogSearch();
+            return;
+        }
+        
+        // Show clear search button when searching
+        if (this.elements.clearSearchButton) {
+            this.elements.clearSearchButton.style.display = 'block';
+        }
+        
+        // Filter log entries based on search text - with performance optimization
+        const logEntries = Array.from(this.elements.logsContainer.querySelectorAll('.log-entry'));
+        let matchCount = 0;
+        
+        // Set a limit for highlighting to prevent browser lockup
+        const MAX_ENTRIES_TO_PROCESS = 300;
+        const processedLogEntries = logEntries.slice(0, MAX_ENTRIES_TO_PROCESS);
+        const remainingCount = Math.max(0, logEntries.length - MAX_ENTRIES_TO_PROCESS);
+        
+        // Process in batches to prevent UI lockup
+        processedLogEntries.forEach((entry, index) => {
+            const entryText = entry.textContent.toLowerCase();
+            
+            // Show/hide based on search match
+            if (entryText.includes(searchText)) {
+                entry.style.display = '';
+                matchCount++;
+                
+                // Simple highlight by replacing HTML - much more performant
+                this.simpleHighlightMatch(entry, searchText);
+            } else {
+                entry.style.display = 'none';
+            }
+        });
+        
+        // Handle any remaining entries - only for visibility, don't highlight
+        if (remainingCount > 0) {
+            logEntries.slice(MAX_ENTRIES_TO_PROCESS).forEach(entry => {
+                const entryText = entry.textContent.toLowerCase();
+                if (entryText.includes(searchText)) {
+                    entry.style.display = '';
+                    matchCount++;
+                } else {
+                    entry.style.display = 'none';
+                }
+            });
+        }
+        
+        // Update search results info
+        if (this.elements.logSearchResults) {
+            let resultsText = `Found ${matchCount} matching log entries`;
+            if (remainingCount > 0) {
+                resultsText += ` (highlighting limited to first ${MAX_ENTRIES_TO_PROCESS})`;
+            }
+            this.elements.logSearchResults.textContent = resultsText;
+            this.elements.logSearchResults.style.display = 'block';
+        }
+        
+        // Disable auto-scroll when searching
+        if (this.elements.autoScrollCheckbox && this.elements.autoScrollCheckbox.checked) {
+            // Save auto-scroll state to restore later if needed
+            this.autoScrollWasEnabled = true;
+            this.elements.autoScrollCheckbox.checked = false;
+        }
+    },
+    
+    // New simplified highlighting method that's much more performant
+    simpleHighlightMatch: function(logEntry, searchText) {
+        // Only proceed if the search text is meaningful
+        if (searchText.length < 2) return;
+        
+        // Store original HTML if not already stored
+        if (!logEntry.hasAttribute('data-original-html')) {
+            logEntry.setAttribute('data-original-html', logEntry.innerHTML);
+        }
+        
+        const html = logEntry.getAttribute('data-original-html');
+        const escapedSearchText = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape regex special chars
+        
+        // Simple case-insensitive replace with highlight span (using a more efficient regex approach)
+        const regex = new RegExp(`(${escapedSearchText})`, 'gi');
+        const newHtml = html.replace(regex, '<span class="search-highlight">$1</span>');
+        
+        logEntry.innerHTML = newHtml;
+    },
+    
+    // Clear log search and reset to default view
+    clearLogSearch: function() {
+        if (!this.elements.logsContainer) return;
+        
+        // Clear search input
+        if (this.elements.logSearchInput) {
+            this.elements.logSearchInput.value = '';
+        }
+        
+        // Hide clear search button
+        if (this.elements.clearSearchButton) {
+            this.elements.clearSearchButton.style.display = 'none';
+        }
+        
+        // Hide search results info
+        if (this.elements.logSearchResults) {
+            this.elements.logSearchResults.style.display = 'none';
+        }
+        
+        // Show all log entries - use a more efficient approach
+        const allLogEntries = this.elements.logsContainer.querySelectorAll('.log-entry');
+        
+        // Process in batches for better performance
+        Array.from(allLogEntries).forEach(entry => {
+            // Display all entries
+            entry.style.display = '';
+            
+            // Restore original HTML if it exists
+            if (entry.hasAttribute('data-original-html')) {
+                entry.innerHTML = entry.getAttribute('data-original-html');
+            }
+        });
+        
+        // Restore auto-scroll if it was enabled
+        if (this.autoScrollWasEnabled && this.elements.autoScrollCheckbox) {
+            this.elements.autoScrollCheckbox.checked = true;
+            this.autoScrollWasEnabled = false;
         }
     },
     

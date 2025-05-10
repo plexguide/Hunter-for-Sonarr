@@ -15,9 +15,22 @@
             </select>
         </div>
         <div class="log-controls">
+            <!-- Add search functionality -->  
+            <div class="log-search">
+                <div class="search-results-info" id="logSearchResults"></div>
+                <input type="text" id="logSearchInput" placeholder="Search logs...">
+                <button id="logSearchButton">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button id="clearSearchButton" class="clear-search-button" style="display: none;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
             <div class="connection-status">
                 Status: <span id="logConnectionStatus" class="status-disconnected">Disconnected</span>
             </div>
+            
             <div class="log-options">
                 <label class="auto-scroll">
                     <input type="checkbox" id="autoScrollCheckbox" checked>
@@ -163,6 +176,79 @@
         flex-wrap: wrap;
     }
     
+    /* Log search styling */
+    .log-search {
+        display: flex;
+        align-items: center;
+        border-radius: 8px;
+        overflow: hidden;
+        background: linear-gradient(135deg, rgba(30, 39, 56, 0.7) 0%, rgba(14, 20, 32, 0.7) 100%);
+        border: 1px solid rgba(90, 109, 137, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        position: relative;
+    }
+    
+    /* Container for search results info */
+    .search-results-info {
+        display: none; /* Hidden by default, shown when search is active */
+        position: absolute;
+        top: -25px;
+        left: 0;
+        right: 0;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        padding: 2px 0;
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(155, 89, 182, 0.2));
+        border-radius: 4px;
+        backdrop-filter: blur(3px);
+    }
+    
+    .log-search::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(52, 152, 219, 0.4), rgba(155, 89, 182, 0.4));
+    }
+    
+    .log-search input {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.9);
+        padding: 8px 12px;
+        font-size: 14px;
+        width: 200px;
+        outline: none;
+    }
+    
+    .log-search input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .log-search button {
+        background: rgba(52, 152, 219, 0.2);
+        border: none;
+        color: rgba(255, 255, 255, 0.8);
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .log-search button:hover {
+        background: rgba(52, 152, 219, 0.4);
+    }
+    
+    .clear-search-button {
+        background: rgba(231, 76, 60, 0.2) !important;
+    }
+    
+    .clear-search-button:hover {
+        background: rgba(231, 76, 60, 0.4) !important;
+    }
+    
     .connection-status {
         display: flex;
         align-items: center;
@@ -171,8 +257,9 @@
         color: rgba(255, 255, 255, 0.9);
         padding: 5px 10px;
         border-radius: 8px;
-        background: rgba(28, 36, 54, 0.6);
+        background: linear-gradient(135deg, rgba(30, 39, 56, 0.6) 0%, rgba(14, 20, 32, 0.6) 100%);
         border: 1px solid rgba(90, 109, 137, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     
     #logConnectionStatus {
@@ -398,6 +485,28 @@
         color: #27ae60;
         background: linear-gradient(135deg, rgba(39, 174, 96, 0.1) 0%, rgba(39, 174, 96, 0.2) 100%);
         border: 1px solid rgba(39, 174, 96, 0.3);
+    }
+    
+    /* Search highlight styling */
+    .search-highlight {
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.3) 0%, rgba(155, 89, 182, 0.3) 100%);
+        padding: 0 2px;
+        border-radius: 3px;
+        color: #fff;
+        font-weight: bold;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
+        animation: glow 1.5s infinite alternate;
+        display: inline-block;
+    }
+    
+    @keyframes glow {
+        0% {
+            box-shadow: 0 0 3px rgba(52, 152, 219, 0.5);
+        }
+        100% {
+            box-shadow: 0 0 8px rgba(155, 89, 182, 0.8), 0 0 12px rgba(52, 152, 219, 0.6);
+        }
     }
     
     .log-logger {
