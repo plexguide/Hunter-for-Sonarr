@@ -243,13 +243,31 @@ const historyModule = {
             const appType = entry.app_type ? entry.app_type.charAt(0).toUpperCase() + entry.app_type.slice(1) : '';
             const formattedInstance = appType ? `${appType} - ${entry.instance_name}` : entry.instance_name;
             
-            row.innerHTML = `
-                <td>${this.escapeHtml(entry.processed_info)}</td>
-                <td>${this.formatOperationType(entry.operation_type)}</td>
-                <td>${this.escapeHtml(entry.id)}</td>
-                <td>${this.escapeHtml(formattedInstance)}</td>
-                <td>${this.escapeHtml(entry.how_long_ago)}</td>
-            `;
+            // Build the row content piece by piece to ensure ID has no wrapping elements
+            const processedInfoCell = document.createElement('td');
+            processedInfoCell.innerHTML = this.escapeHtml(entry.processed_info);
+            
+            const operationTypeCell = document.createElement('td');
+            operationTypeCell.innerHTML = this.formatOperationType(entry.operation_type);
+            
+            // Create a plain text ID cell with no styling
+            const idCell = document.createElement('td');
+            idCell.className = 'plain-id';
+            idCell.textContent = entry.id; // Use textContent to ensure no HTML parsing
+            
+            const instanceCell = document.createElement('td');
+            instanceCell.innerHTML = this.escapeHtml(formattedInstance);
+            
+            const timeAgoCell = document.createElement('td');
+            timeAgoCell.innerHTML = this.escapeHtml(entry.how_long_ago);
+            
+            // Clear any existing content and append the cells
+            row.innerHTML = '';
+            row.appendChild(processedInfoCell);
+            row.appendChild(operationTypeCell);
+            row.appendChild(idCell);
+            row.appendChild(instanceCell);
+            row.appendChild(timeAgoCell);
             
             tableBody.appendChild(row);
         });

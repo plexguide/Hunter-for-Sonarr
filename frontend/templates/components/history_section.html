@@ -443,17 +443,50 @@
         font-weight: 500;
     }
     
-    /* Completely plain styling for ID column - override all inherited styles */
+    /* Reset all styling for the ID column */
     .modern-table td:nth-child(3), .history-table td:nth-child(3) {
-        font-family: inherit;
-        font-weight: normal;
-        text-shadow: none;
-        color: rgba(255, 255, 255, 0.85);
-        transition: none;
-        background: none;
-        border: none;
-        box-shadow: none;
-        letter-spacing: normal;
+        all: initial; /* This resets all properties */
+        display: table-cell; /* Restore table-cell display */
+        font-family: inherit !important;
+        font-size: 14px !important;
+        font-weight: normal !important;
+        text-shadow: none !important;
+        color: rgba(255, 255, 255, 0.85) !important;
+        background: transparent !important; 
+        border: none !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+        letter-spacing: normal !important;
+        padding: 12px 15px !important;
+        text-align: left !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Extra specificity to ensure IDs have absolutely no styling */
+    .modern-table td.plain-id, .history-table td.plain-id {
+        background: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 12px 15px !important;
+        margin: 0 !important;
+        border: none !important;
+        color: rgba(255, 255, 255, 0.85) !important;
+    }
+    
+    /* Ensure no child elements inside ID cell have styling */
+    .modern-table td.plain-id *, .history-table td.plain-id * {
+        background: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        color: inherit !important;
     }
     
     .modern-table tbody tr, .history-table tbody tr {
