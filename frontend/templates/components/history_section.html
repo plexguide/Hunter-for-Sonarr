@@ -353,8 +353,24 @@
         overflow-x: auto;
         position: relative;
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
         padding-right: 5px;
+        background: linear-gradient(135deg, rgba(30, 39, 56, 0.95) 0%, rgba(14, 20, 32, 0.95) 50%, rgba(16, 24, 36, 0.95) 100%);
+        border: 1px solid rgba(90, 109, 137, 0.15);
+        /* Add gradient glow border effect */
+        position: relative;
+    }
+    
+    /* Add subtle colored accent to the table wrapper */
+    .modern-table-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(52, 152, 219, 0.5), rgba(155, 89, 182, 0.5)); /* Sonarr blue to Whisparr purple */
+        z-index: 1;
     }
     
     /* We don't need this class anymore since we're using a simpler approach */
@@ -378,12 +394,14 @@
     }
     
     .modern-table thead, .history-table thead {
-        background: linear-gradient(90deg, rgba(18, 22, 30, 0.95), rgba(24, 28, 37, 0.9));
+        background: linear-gradient(135deg, #1e2738 0%, #0e1420 50%, #101824 100%);
         position: sticky;
         top: 0;
         z-index: 10;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
     }
     
+    /* Table headers with improved styling */
     .modern-table th, .history-table th {
         padding: 14px 15px;
         font-weight: 600;
@@ -392,24 +410,66 @@
         border-bottom: 1px solid rgba(90, 109, 137, 0.25);
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        position: relative;
+    }
+    
+    /* Add subtle colored accent to first table header */
+    .modern-table thead th:first-child::before, .history-table thead th:first-child::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(52, 152, 219, 0.7), rgba(155, 89, 182, 0.3));
     }
     
     .modern-table td, .history-table td {
         padding: 12px 15px;
         border-bottom: 1px solid rgba(90, 109, 137, 0.1);
         font-size: 14px;
-        transition: background-color 0.2s ease;
+        transition: all 0.3s ease;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        color: rgba(255, 255, 255, 0.85);
+        /* Subtle text shadow for better readability */
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Highlight important info in Date Time column */
+    .modern-table td:first-child, .history-table td:first-child {
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 500;
+    }
+    
+    /* Highlight important info in ID column */
+    .modern-table td:nth-child(4), .history-table td:nth-child(4) {
+        font-family: monospace;
+        letter-spacing: 0.5px;
     }
     
     .modern-table tbody tr, .history-table tbody tr {
-        transition: background-color 0.2s ease;
+        transition: all 0.3s ease;
+        background: rgba(16, 20, 30, 0.3);
+        border-left: 2px solid transparent;
+    }
+    
+    /* Alternating row styling with subtle gradients */
+    .modern-table tbody tr:nth-child(odd), .history-table tbody tr:nth-child(odd) {
+        background: linear-gradient(90deg, rgba(24, 32, 48, 0.4) 0%, rgba(16, 22, 38, 0.3) 100%);
+    }
+    
+    .modern-table tbody tr:nth-child(even), .history-table tbody tr:nth-child(even) {
+        background: linear-gradient(90deg, rgba(20, 28, 44, 0.3) 0%, rgba(16, 20, 34, 0.2) 100%);
     }
     
     .modern-table tbody tr:hover, .history-table tbody tr:hover {
-        background-color: rgba(65, 105, 225, 0.1);
+        background: linear-gradient(90deg, rgba(65, 105, 225, 0.15), rgba(52, 152, 219, 0.1));
+        border-left: 2px solid rgba(52, 152, 219, 0.4);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
     }
     
     .modern-table tbody tr:last-child td, .history-table tbody tr:last-child td {
@@ -433,22 +493,33 @@
         border: 1px solid rgba(40, 167, 69, 0.3);
     }
     
-    .operation-status.error, .operation-status.missing {
-        background-color: rgba(220, 53, 69, 0.2);
+    /* Operation status badges with gradient styling */
+    .operation-status.error {
+        background: linear-gradient(135deg, rgba(220, 53, 69, 0.2) 0%, rgba(220, 53, 69, 0.3) 100%);
         color: #ff6b6b;
         border: 1px solid rgba(220, 53, 69, 0.3);
-    }
-    
-    .operation-status.warning {
-        background-color: rgba(255, 193, 7, 0.2);
-        color: #ffc107;
-        border: 1px solid rgba(255, 193, 7, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     
     .operation-status.upgrade {
-        background-color: rgba(0, 123, 255, 0.2);
-        color: #03a9f4;
-        border: 1px solid rgba(0, 123, 255, 0.3);
+        background: linear-gradient(135deg, rgba(25, 118, 210, 0.2) 0%, rgba(33, 150, 243, 0.3) 100%);
+        color: #42a5f5;
+        border: 1px solid rgba(25, 118, 210, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .operation-status.missing {
+        background: linear-gradient(135deg, rgba(211, 47, 47, 0.2) 0%, rgba(244, 67, 54, 0.3) 100%);
+        color: #ef5350;
+        border: 1px solid rgba(211, 47, 47, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .operation-status.warning {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.3) 100%);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     
     /* Empty state and loading styling */
