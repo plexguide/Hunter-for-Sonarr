@@ -61,15 +61,31 @@
     .sidebar {
         width: 250px;
         height: 100vh;
-        background: linear-gradient(180deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+        background: linear-gradient(135deg, #1e2738 0%, #0e1420 50%, #101824 75%, rgba(18, 25, 38, 0.95) 100%);
+        background-size: 100% 100%;
         border-right: 1px solid rgba(90, 109, 137, 0.15);
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+        box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3);
         display: flex;
         flex-direction: column;
         z-index: 1000;
         flex-shrink: 0;
         overflow-y: auto;
         position: relative;
+        transition: all 0.3s ease;
+        /* Add subtle texture overlay */
+        position: relative;
+    }
+    
+    /* Add subtle highlight to the top of the sidebar */
+    .sidebar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3)); /* Sonarr blue to Whisparr purple */
+        z-index: 1;
     }
     
     .logo-container {
