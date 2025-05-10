@@ -413,7 +413,7 @@
     .app-stats-card {
         background: rgba(24, 28, 37, 0.8);
         border-radius: 12px;
-        padding: 20px 20px 0 20px;
+        padding: 0 20px 0 20px;
         text-align: center;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         transition: all 0.3s ease;
@@ -438,12 +438,19 @@
     /* Status container styling */
     .status-container {
         width: 100%;
-        margin-bottom: 15px;
+        margin: 0 0 20px 0;
+        padding: 15px 0;
         display: flex;
         justify-content: center;
         align-items: center;
         flex-wrap: wrap;
         gap: 5px;
+        background: rgba(20, 26, 35, 0.6);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px 12px 0 0;
+        margin-left: -20px;
+        margin-right: -20px;
+        width: calc(100% + 40px);
     }
     
     .status-badge {
@@ -462,7 +469,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-bottom: 15px;
+        margin: 20px 0 5px 0;
     }
     
     .app-icon-wrapper {
