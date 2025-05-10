@@ -1291,7 +1291,7 @@ const SettingsForms = {
                 <div class="setting-item">
                     <label for="minimum_download_queue_size"><a href="/docs/queue-size" class="info-icon" title="Learn more about download queue management" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Maximum Download Queue Size:</label>
                     <input type="number" id="minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size !== undefined ? settings.minimum_download_queue_size : -1}">
-                    <span class="help-text">If the current download queue for an app instance exceeds this value, downloads will be skipped until the queue reduces. Set to -1 to disable this limit. This setting applies per app instance.</span>
+                    <p class="setting-help">If the current download queue for an app instance exceeds this value, downloads will be skipped until the queue reduces. Set to -1 to disable this limit.</span>
                 </div>
                 <div class="setting-item">
                     <label for="log_refresh_interval_seconds"><a href="/docs/logs" class="info-icon" title="Learn more about log settings" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Log Refresh Interval:</label>
