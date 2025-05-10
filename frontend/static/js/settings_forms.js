@@ -1085,6 +1085,7 @@ const SettingsForms = {
             settings.command_wait_attempts = getInputValue('#command_wait_attempts', 600);
             settings.minimum_download_queue_size = getInputValue('#minimum_download_queue_size', -1);
             settings.log_refresh_interval_seconds = getInputValue('#log_refresh_interval_seconds', 30);
+            settings.hourly_cap = getInputValue('#hourly_cap', 20);
         }
         
         // For other app types, collect settings
@@ -1223,9 +1224,9 @@ const SettingsForms = {
                     <p class="setting-help">Enable verbose logging for troubleshooting (applies to all apps)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="log_refresh_interval_seconds">Log Refresh Interval:</label>
-                    <input type="number" id="log_refresh_interval_seconds" class="short-number-input" min="1" value="${settings.log_refresh_interval_seconds || 30}">
-                    <p class="setting-help">Interval in seconds to refresh log display (applies to all apps)</p>
+                    <label for="hourly_cap">API Cap - Hourly:</label>
+                    <input type="number" id="hourly_cap" class="short-number-input" min="1" value="${settings.hourly_cap || 20}">
+                    <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
                 </div>
             </div>
             
