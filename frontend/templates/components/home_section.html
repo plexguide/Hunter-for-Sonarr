@@ -656,17 +656,18 @@
     /* Hourly API Cap Styling */
     .hourly-cap-container {
         padding: 0 10px;
-        margin-bottom: 5px;
+        margin: 10px 0;
     }
     
     .hourly-cap-status {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        background-color: rgba(52, 73, 94, 0.1);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        background-color: rgba(52, 73, 94, 0.25);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .hourly-cap-icon {
@@ -675,21 +676,22 @@
     }
     
     .hourly-cap-text {
-        color: #34495e;
-        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
+        letter-spacing: 0.5px;
     }
     
     /* API Cap Status Colors */
     .hourly-cap-status.good {
-        background-color: rgba(46, 204, 113, 0.1);
+        background-color: rgba(46, 204, 113, 0.3);
     }
     
     .hourly-cap-status.warning {
-        background-color: rgba(243, 156, 18, 0.1);
+        background-color: rgba(243, 156, 18, 0.3);
     }
     
     .hourly-cap-status.danger {
-        background-color: rgba(231, 76, 60, 0.1);
+        background-color: rgba(231, 76, 60, 0.3);
     }
     
     .hourly-cap-status.good .hourly-cap-icon:before {
