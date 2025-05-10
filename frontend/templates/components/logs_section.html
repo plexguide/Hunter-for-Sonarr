@@ -184,20 +184,26 @@
     
     #logConnectionStatus.status-connected {
         color: #2ecc71;
-        background: rgba(46, 204, 113, 0.1);
+        background: linear-gradient(135deg, rgba(46, 204, 113, 0.1) 0%, rgba(46, 204, 113, 0.2) 100%);
         border: 1px solid rgba(46, 204, 113, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
     }
     
     #logConnectionStatus.status-disconnected {
         color: #95a5a6;
-        background: rgba(149, 165, 166, 0.1);
+        background: linear-gradient(135deg, rgba(149, 165, 166, 0.1) 0%, rgba(149, 165, 166, 0.2) 100%);
         border: 1px solid rgba(149, 165, 166, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
     }
     
     #logConnectionStatus.status-error {
         color: #ff6b6b;
-        background: rgba(231, 76, 60, 0.1);
+        background: linear-gradient(135deg, rgba(231, 76, 60, 0.1) 0%, rgba(231, 76, 60, 0.2) 100%);
         border: 1px solid rgba(231, 76, 60, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
     }
     
     .log-options {
@@ -213,16 +219,20 @@
         cursor: pointer;
         padding: 5px 10px;
         border-radius: 8px;
-        background: rgba(28, 36, 54, 0.6);
+        background: linear-gradient(135deg, rgba(30, 39, 56, 0.6) 0%, rgba(14, 20, 32, 0.6) 100%);
         border: 1px solid rgba(90, 109, 137, 0.3);
         color: rgba(255, 255, 255, 0.9);
         font-size: 14px;
         user-select: none;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     
     .auto-scroll:hover {
-        background: rgba(38, 46, 64, 0.7);
+        background: linear-gradient(135deg, rgba(40, 49, 66, 0.7) 0%, rgba(24, 30, 42, 0.7) 100%);
+        border-color: rgba(90, 109, 137, 0.5);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
     }
     
     .auto-scroll input {
@@ -251,57 +261,95 @@
         box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
     }
     
-    /* Logs container styling */
+    /* Logs container styling with modern gradient */
     .logs {
         height: calc(100vh - 200px);
         overflow-y: auto;
-        background: linear-gradient(180deg, rgba(22, 26, 34, 0.8), rgba(18, 22, 30, 0.75));
+        background: linear-gradient(135deg, rgba(30, 39, 56, 0.95) 0%, rgba(14, 20, 32, 0.95) 50%, rgba(16, 24, 36, 0.95) 100%);
         border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
         border: 1px solid rgba(90, 109, 137, 0.15);
         padding: 15px;
-        font-family: 'Courier New', monospace;
+        font-family: 'Fira Code', 'Courier New', monospace;
         line-height: 1.5;
         font-size: 13px;
         color: rgba(255, 255, 255, 0.9);
         -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
         padding-bottom: 70px; /* Extra padding at bottom to ensure content isn't cut off */
+        position: relative; /* For accent line positioning */
     }
     
     .logs::-webkit-scrollbar {
         width: 10px;
     }
     
+    /* Add subtle colored accent to the logs container */
+    .logs::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(52, 152, 219, 0.5), rgba(155, 89, 182, 0.5)); /* Sonarr blue to Whisparr purple */
+        z-index: 1;
+    }
+    
     .logs::-webkit-scrollbar-track {
         background: rgba(18, 22, 30, 0.5);
-        border-radius: 0 10px 10px 0;
+        border-radius: 0 8px 8px 0;
     }
     
     .logs::-webkit-scrollbar-thumb {
-        background: rgba(90, 109, 137, 0.5);
+        background: linear-gradient(180deg, rgba(52, 152, 219, 0.4), rgba(155, 89, 182, 0.4));
         border-radius: 5px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
     }
     
     .logs::-webkit-scrollbar-thumb:hover {
-        background: rgba(90, 109, 137, 0.8);
+        background: linear-gradient(180deg, rgba(52, 152, 219, 0.6), rgba(155, 89, 182, 0.6));
     }
     
-    /* Log entry styling */
+    /* Log entry styling with modern look */
     .log-entry {
-        padding: 4px 0;
-        margin-bottom: 2px;
-        border-radius: 4px;
+        padding: 6px 8px;
+        margin-bottom: 3px;
+        border-radius: 6px;
         display: flex;
         flex-wrap: wrap;
         align-items: flex-start;
         gap: 8px;
         line-height: 1.4;
+        transition: all 0.3s ease;
+        background: rgba(16, 20, 30, 0.3);
+        border-left: 2px solid transparent;
+    }
+    
+    /* Alternating log entry styling with subtle gradients */
+    .log-entry:nth-child(odd) {
+        background: linear-gradient(90deg, rgba(24, 32, 48, 0.4) 0%, rgba(16, 22, 38, 0.3) 100%);
+    }
+    
+    .log-entry:nth-child(even) {
+        background: linear-gradient(90deg, rgba(20, 28, 44, 0.3) 0%, rgba(16, 20, 34, 0.2) 100%);
+    }
+    
+    .log-entry:hover {
+        background: linear-gradient(90deg, rgba(40, 58, 90, 0.15), rgba(30, 40, 65, 0.1));
+        border-left: 2px solid rgba(52, 152, 219, 0.4);
+        transform: translateX(2px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
     }
     
     .log-timestamp {
-        color: #95a5a6;
+        color: rgba(149, 165, 166, 0.9);
         font-weight: 600;
         min-width: 65px;
+        font-family: 'Fira Code', monospace;
+        padding: 1px 5px;
+        border-radius: 3px;
+        background: rgba(0, 0, 0, 0.2);
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
     }
     
     .log-app {
@@ -309,42 +357,47 @@
         font-weight: 700;
         padding: 1px 5px;
         border-radius: 3px;
-        background: rgba(52, 152, 219, 0.1);
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.15) 0%, rgba(52, 152, 219, 0.25) 100%);
         border: 1px solid rgba(52, 152, 219, 0.3);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
     }
     
     .log-level {
-        padding: 1px 5px;
-        border-radius: 3px;
+        padding: 2px 6px;
+        border-radius: 4px;
         font-weight: 700;
         font-size: 11px;
         text-transform: uppercase;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
         min-width: 50px;
         text-align: center;
     }
     
-    .log-level-debug {
-        color: #95a5a6;
-        background: rgba(149, 165, 166, 0.1);
-        border: 1px solid rgba(149, 165, 166, 0.3);
-    }
-    
-    .log-level-info {
+    /* Log level styles with consistent class naming and gradient backgrounds */
+    .log-level-info, .log-level.info {
         color: #3498db;
-        background: rgba(52, 152, 219, 0.1);
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(52, 152, 219, 0.2) 100%);
         border: 1px solid rgba(52, 152, 219, 0.3);
     }
     
-    .log-level-warning, .log-level-warn {
+    .log-level-warning, .log-level-warn, .log-level.warning {
         color: #f39c12;
-        background: rgba(243, 156, 18, 0.1);
+        background: linear-gradient(135deg, rgba(243, 156, 18, 0.1) 0%, rgba(243, 156, 18, 0.2) 100%);
         border: 1px solid rgba(243, 156, 18, 0.3);
     }
     
-    .log-level-error {
+    .log-level-error, .log-level.error {
         color: #e74c3c;
-        background: rgba(231, 76, 60, 0.1);
+        background: linear-gradient(135deg, rgba(231, 76, 60, 0.1) 0%, rgba(231, 76, 60, 0.2) 100%);
         border: 1px solid rgba(231, 76, 60, 0.3);
+    }
+    
+    .log-level-debug, .log-level.debug {
+        color: #27ae60;
+        background: linear-gradient(135deg, rgba(39, 174, 96, 0.1) 0%, rgba(39, 174, 96, 0.2) 100%);
+        border: 1px solid rgba(39, 174, 96, 0.3);
     }
     
     .log-logger {
