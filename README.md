@@ -112,7 +112,7 @@ Huntarr's live homepage will provide you statics about how many hunts have been 
 Huntarr includes a real-time log viewer and settings management web interface that allows you to monitor and configure its operation directly from your browser.
 
 <p align="center">
-  <img width="100%" alt="image" src="https://github.com/user-attachments/assets/438e2013-2a54-4cf2-8418-63b0c6124730" />
+  <img width="100%" alt="image" src="https://github.com/user-attachments/assets/93c1a5d3-e82a-416a-8d41-0379ea221d7a" />
   <br>
   <em>Logger UI</em>
 </p>
