@@ -6,6 +6,12 @@ on:
       - 'v*.*.*'  # This will trigger on version tags like v1.1.1
   workflow_dispatch:  # Allow manual triggering
 
+# Define permissions needed for release creation
+permissions:
+  contents: write
+  packages: write
+  releases: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
