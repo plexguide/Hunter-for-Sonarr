@@ -445,70 +445,40 @@ jobs:
             Write-Error "Error preparing release files: $_"
           }
       
-            # Upload files to downloads branch
-      - name: Push to Downloads Branch
+            # Create GitHub Release with proper permissions
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "./dist/Huntarr.exe,./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip"
+          artifactContentType: application/zip
+          body: |
+            # Huntarr Windows Build v${{ steps.get_version.outputs.VERSION }}
+            
+            Windows standalone executable for Huntarr.io
+            
+            ## New in this Build
+            - Improved API handling with consistent timeout settings
+            - Modern UI with animated app icons
+            - GitHub community integrations
+            - Windows path handling to prevent configuration errors
+            
+            ## Files
+            - **Huntarr.exe**: Standalone executable
+            - **Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip**: Complete package with launcher and configuration
+          draft: false
+          prerelease: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: v${{ steps.get_version.outputs.VERSION }}
+          name: Huntarr Windows v${{ steps.get_version.outputs.VERSION }}
+      
+      # Provide download information
+      - name: Build Summary
         run: |
-          # Configure Git
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          
-          # Create a dedicated branch for downloads
-          $version = "${{ steps.get_version.outputs.VERSION }}"
-          $downloadBranch = "windows-downloads"
-          
-          # Try to fetch and checkout the downloads branch if it exists
-          git fetch origin $downloadBranch || true
-          
-          if (git branch -a | Select-String -Pattern "remotes/origin/$downloadBranch") {
-            echo "Downloads branch exists, checking it out"
-            git checkout $downloadBranch
-          } else {
-            echo "Creating new downloads branch"
-            git checkout -b $downloadBranch
-          }
-          
-          # Create downloads directory if it doesn't exist
-          $downloadDir = "windows-builds"
-          if (-not (Test-Path $downloadDir)) {
-            New-Item -Path $downloadDir -ItemType Directory -Force | Out-Null
-          }
-          
-          # Copy build files to downloads directory
-          $versionDir = "$downloadDir/v$version"
-          New-Item -Path $versionDir -ItemType Directory -Force | Out-Null
-          
-          # Copy the executable and zip package
-          Copy-Item -Path ./dist/Huntarr.exe -Destination "$versionDir/Huntarr.exe" -Force
-          Copy-Item -Path ./Huntarr-Windows-v$version.zip -Destination "$versionDir/Huntarr-Windows-v$version.zip" -Force
-          
-          # Create README in the downloads directory
-          $readmeContent = @"
-          # Huntarr Windows Downloads
-          
-          This branch contains Windows builds of Huntarr.
-          
-          ## Latest Version: v$version
-          
-          ### Direct Download Links:
-          - [Standalone Executable (v$version)](https://raw.githubusercontent.com/Admin9705/Huntarr.io/$downloadBranch/$versionDir/Huntarr.exe)
-          - [Complete Package (v$version)](https://raw.githubusercontent.com/Admin9705/Huntarr.io/$downloadBranch/$versionDir/Huntarr-Windows-v$version.zip)
-          
-          Last updated: $(Get-Date -Format "yyyy-MM-dd HH:mm")
-          "@
-          
-          Set-Content -Path "$downloadDir/README.md" -Value $readmeContent
-          
-          # Commit and push changes
-          git add $downloadDir
-          git commit -m "Upload Windows build v$version"
-          git push origin $downloadBranch
-          
           echo "========================================"
-          echo "Windows build uploaded to downloads branch!"
-          echo "Version: v$version"
+          echo "Windows build completed successfully!"
+          echo "Version: v${{ steps.get_version.outputs.VERSION }}"
           echo "========================================"
-          echo "Download links:"
-          echo "Standalone EXE: https://raw.githubusercontent.com/Admin9705/Huntarr.io/$downloadBranch/$versionDir/Huntarr.exe"
-          echo "Complete Package: https://raw.githubusercontent.com/Admin9705/Huntarr.io/$downloadBranch/$versionDir/Huntarr-Windows-v$version.zip"
+          echo "Download from GitHub Releases:"
+          echo "https://github.com/Admin9705/Huntarr.io/releases/tag/v${{ steps.get_version.outputs.VERSION }}"
           echo "========================================"
         shell: pwsh
