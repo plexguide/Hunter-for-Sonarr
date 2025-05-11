@@ -225,7 +225,9 @@ def process_upgrade_episodes_mode(
                                 
                             # Record the upgrade in history with quality upgrade identifier
                             media_name = f"{series_title} - {season_episode} - {episode_title}"
-                            log_processed_media("sonarr", media_name, episode_id, instance_name, "upgrade")
+                            # Skip logging individual episodes since we log the season pack
+                            if not skip_episode_history:
+                                log_processed_media("sonarr", media_name, episode_id, instance_name, "upgrade")
                             sonarr_logger.debug(f"Logged quality upgrade to history for episode ID {episode_id}")
                     except Exception as e:
                         sonarr_logger.error(f"Failed to log history for episode ID {episode_id}: {str(e)}")
@@ -278,6 +280,9 @@ def process_upgrade_seasons_mode(
 ) -> bool:
     """Process upgrades in season mode - groups episodes by season."""
     processed_any = False
+    
+    # Flag to skip individual episode history logging since we log the whole season pack
+    skip_episode_history = True
     
     # Use the efficient random page selection method to get a sample of cutoff unmet episodes
     sonarr_logger.debug(f"Using random page selection for cutoff unmet episodes")
@@ -422,7 +427,9 @@ def process_upgrade_seasons_mode(
                                 
                             # Record the upgrade in history with quality upgrade identifier
                             media_name = f"{series_title} - {season_episode} - {episode_title}"
-                            log_processed_media("sonarr", media_name, episode_id, instance_name, "upgrade")
+                            # Skip logging individual episodes since we log the season pack
+                            if not skip_episode_history:
+                                log_processed_media("sonarr", media_name, episode_id, instance_name, "upgrade")
                             sonarr_logger.debug(f"Logged quality upgrade to history for episode ID {episode_id}")
                     except Exception as e:
                         sonarr_logger.error(f"Failed to log history for episode ID {episode_id}: {str(e)}")
@@ -603,7 +610,9 @@ def process_upgrade_shows_mode(
                                 
                             # Record the upgrade in history with quality upgrade identifier
                             media_name = f"{series_title} - {season_episode} - {episode_title}"
-                            log_processed_media("sonarr", media_name, episode_id, instance_name, "upgrade")
+                            # Skip logging individual episodes since we log the season pack
+                            if not skip_episode_history:
+                                log_processed_media("sonarr", media_name, episode_id, instance_name, "upgrade")
                             sonarr_logger.debug(f"Logged quality upgrade to history for episode ID {episode_id}")
                     except Exception as e:
                         sonarr_logger.error(f"Failed to log history for episode ID {episode_id}: {str(e)}")
