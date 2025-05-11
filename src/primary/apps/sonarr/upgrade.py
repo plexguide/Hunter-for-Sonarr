@@ -252,9 +252,14 @@ def process_upgrade_seasons_mode(
     """Process upgrades in season mode - groups episodes by season."""
     processed_any = False
     
-    # Get all cutoff unmet episodes
-    cutoff_unmet_episodes = sonarr_api.get_cutoff_unmet_episodes(api_url, api_key, api_timeout, monitored_only)
-    sonarr_logger.info(f"Received {len(cutoff_unmet_episodes)} cutoff unmet episodes from Sonarr API (before filtering).")
+    # Use the efficient random page selection method to get a sample of cutoff unmet episodes
+    sonarr_logger.debug(f"Using random page selection for cutoff unmet episodes")
+    # Request slightly more episodes than needed to ensure we have enough for a few seasons
+    sample_size = hunt_upgrade_items * 10
+    cutoff_unmet_episodes = sonarr_api.get_cutoff_unmet_episodes_random_page(
+        api_url, api_key, api_timeout, monitored_only, sample_size)
+    
+    sonarr_logger.info(f"Received {len(cutoff_unmet_episodes)} cutoff unmet episodes from random page (before filtering).")
     
     if not cutoff_unmet_episodes:
         sonarr_logger.info("No cutoff unmet episodes found in Sonarr.")

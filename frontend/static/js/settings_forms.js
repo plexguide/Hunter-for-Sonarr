@@ -1146,6 +1146,7 @@ const SettingsForms = {
             // Add app-specific settings
             if (appType === 'sonarr') {
                 settings.hunt_missing_mode = getInputValue('#sonarr-hunt-missing-mode', 'episodes');
+                settings.upgrade_mode = getInputValue('#sonarr-upgrade-mode', 'episodes');
                 settings.hunt_missing_items = getInputValue('#sonarr-hunt-missing-items', 1);
                 settings.hunt_upgrade_items = getInputValue('#sonarr-hunt-upgrade-items', 0);
                 settings.sleep_duration = getInputValue('#sonarr_sleep_duration', 900);
