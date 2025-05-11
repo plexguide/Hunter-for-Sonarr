@@ -101,7 +101,7 @@ const SettingsForms = {
                     <p class="setting-help">Number of episodes to upgrade per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr_sleep_duration"><a href="https://plex.one" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
+                    <label for="sonarr_sleep_duration"><a href="https://plex.one/threads/sleep-duration.22/" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="sonarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -110,7 +110,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="sonarr_monitored_only"><a href="https://plex.one" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
+                    <label for="sonarr_monitored_only"><a href="https://plex.one/threads/monitored-only.23/" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="sonarr_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -234,7 +234,7 @@ const SettingsForms = {
                     <p class="setting-help">Number of movies to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="radarr_sleep_duration"><a href="https://plex.one" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
+                    <label for="radarr_sleep_duration"><a href="https://plex.one/threads/sleep-duration.22/" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="radarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -243,7 +243,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="radarr_monitored_only"><a href="https://plex.one" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
+                    <label for="radarr_monitored_only"><a href="https://plex.one/threads/monitored-only.23/" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="radarr_monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -395,7 +395,7 @@ const SettingsForms = {
                     <p class="setting-help">Number of albums to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="lidarr_sleep_duration"><a href="https://plex.one" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
+                    <label for="lidarr_sleep_duration"><a href="https://plex.one/threads/sleep-duration.22/" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="lidarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -404,7 +404,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="lidarr_monitored_only"><a href="https://plex.one" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
+                    <label for="lidarr_monitored_only"><a href="https://plex.one/threads/monitored-only.23/" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="lidarr_monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -524,7 +524,7 @@ const SettingsForms = {
                     <p class="setting-help">Number of books to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="readarr_sleep_duration"><a href="https://plex.one" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
+                    <label for="readarr_sleep_duration"><a href="https://plex.one/threads/sleep-duration.22/" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="readarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -533,7 +533,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="readarr_monitored_only"><a href="https://plex.one" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
+                    <label for="readarr_monitored_only"><a href="https://plex.one/threads/monitored-only.23/" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="readarr_monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -651,7 +651,7 @@ const SettingsForms = {
                     <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_sleep_duration"><a href="https://plex.one" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
+                    <label for="whisparr_sleep_duration"><a href="https://plex.one/threads/sleep-duration.22/" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="whisparr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -660,7 +660,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="whisparr_monitored_only"><a href="https://plex.one" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
+                    <label for="whisparr_monitored_only"><a href="https://plex.one/threads/monitored-only.23/" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="whisparr_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
@@ -800,7 +800,7 @@ const SettingsForms = {
                     <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="eros_sleep_duration"><a href="https://plex.one" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
+                    <label for="eros_sleep_duration"><a href="https://plex.one/threads/sleep-duration.22/" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="eros_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -809,7 +809,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="eros_monitored_only"><a href="https://plex.one" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
+                    <label for="eros_monitored_only"><a href="https://plex.one/threads/monitored-only.23/" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Monitored Only:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="eros_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
