@@ -95,7 +95,6 @@ const SettingsForms = {
                     <select id="sonarr-upgrade-mode" name="upgrade_mode">
                         <option value="episodes" ${settings.upgrade_mode === 'episodes' || !settings.upgrade_mode ? 'selected' : ''}>Episodes</option>
                         <option value="seasons_packs" ${settings.upgrade_mode === 'seasons_packs' ? 'selected' : ''}>Season Packs</option>
-                        <option value="shows" ${settings.upgrade_mode === 'shows' ? 'selected' : ''}>Shows</option>
                     </select>
                     <p class="setting-help">How to search for Sonarr upgrades (Seasons/Shows modes upgrade entire seasons or shows at once)</p>
                 </div>
@@ -1146,6 +1145,7 @@ const SettingsForms = {
             // Add app-specific settings
             if (appType === 'sonarr') {
                 settings.hunt_missing_mode = getInputValue('#sonarr-hunt-missing-mode', 'episodes');
+                settings.upgrade_mode = getInputValue('#sonarr-upgrade-mode', 'episodes');
                 settings.hunt_missing_items = getInputValue('#sonarr-hunt-missing-items', 1);
                 settings.hunt_upgrade_items = getInputValue('#sonarr-hunt-upgrade-items', 0);
                 settings.sleep_duration = getInputValue('#sonarr_sleep_duration', 900);
