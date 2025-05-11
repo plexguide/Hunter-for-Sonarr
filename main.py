@@ -9,6 +9,7 @@ import threading
 import sys
 import signal
 import logging # Use standard logging for initial setup
+import webbrowser
 
 # Ensure the 'src' directory is in the Python path
 # This allows importing modules from 'src.primary' etc.
@@ -111,14 +112,18 @@ def run_background_tasks():
     finally:
         bg_logger.info("Huntarr background tasks stopped.")
 
-def run_web_server():
+def run_web_server(auto_open_browser=False):
     """Runs the Flask web server using Waitress in production."""
-    web_logger = get_logger("WebServer") # Use app's logger
+    web_logger = get_logger("HuntarrWeb") # Use app's logger
     debug_mode = os.environ.get('DEBUG', 'false').lower() == 'true'
     host = os.environ.get('FLASK_HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 9705)) # Use PORT for consistency
 
     web_logger.info(f"Starting web server on {host}:{port} (Debug: {debug_mode})...")
+    if auto_open_browser and sys.platform == 'win32':
+        url = f"http://{host}:{port}"
+        web_logger.info(f"Opening browser window at {url}...")
+        webbrowser.open(url)
 
     if debug_mode:
         # Use Flask's development server for debugging (less efficient, auto-reloads)
@@ -187,7 +192,8 @@ if __name__ == '__main__':
 
         # Start the web server in the main thread (blocking)
         # This will run until the server is stopped (e.g., by Ctrl+C)
-        run_web_server()
+        # Auto-open browser on Windows for better user experience
+        run_web_server(auto_open_browser=True if sys.platform == 'win32' else False)
 
     except KeyboardInterrupt:
         huntarr_logger.info("KeyboardInterrupt received in main thread. Shutting down...")

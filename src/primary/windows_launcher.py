@@ -45,7 +45,7 @@ except ImportError as e:
 class HuntarrLauncher:
     """Windows GUI launcher for Huntarr"""
     
-    def __init__(self):
+    def __init__(self, auto_start=True):
         self.logger = get_logger("HuntarrLauncher")
         self.is_running = False
         self.host = '127.0.0.1'
@@ -76,6 +76,10 @@ class HuntarrLauncher:
         # Setup signal handlers
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
+        
+        # Auto-start if requested
+        if auto_start:
+            self.root.after(1000, self.start_server)
         
     def setup_ui(self):
         """Set up the user interface"""
@@ -264,8 +268,8 @@ def main():
     logger = get_logger("WindowsLauncher")
     logger.info("Starting Huntarr Windows Launcher")
     
-    # Start the launcher
-    launcher = HuntarrLauncher()
+    # Start the launcher with auto-start enabled
+    launcher = HuntarrLauncher(auto_start=True)
     launcher.run()
     
 if __name__ == "__main__":
