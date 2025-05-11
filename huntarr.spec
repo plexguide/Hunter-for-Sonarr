@@ -63,7 +63,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='frontend/static/img/logo.ico',
+    # icon='frontend/static/img/logo.ico',  # Commented out as it may not exist in all branches
     version='file_version_info.txt',
     # Embed version info directly
     file_version=version,
