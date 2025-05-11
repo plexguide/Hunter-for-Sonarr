@@ -42,13 +42,7 @@ def process_cutoff_upgrades(
     sonarr_logger.info(f"Using {upgrade_mode.upper()} mode for quality upgrades")
 
     # Use the selected upgrade_mode
-    if upgrade_mode == "shows":
-        return process_upgrade_shows_mode(
-            api_url, api_key, instance_name, api_timeout, monitored_only, 
-            skip_series_refresh, hunt_upgrade_items, 
-            command_wait_delay, command_wait_attempts, stop_check
-        )
-    elif upgrade_mode == "seasons_packs":
+    if upgrade_mode == "seasons_packs":
         return process_upgrade_seasons_mode(
             api_url, api_key, instance_name, api_timeout, monitored_only, 
             skip_series_refresh, hunt_upgrade_items, 
