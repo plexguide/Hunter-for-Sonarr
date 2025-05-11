@@ -38,23 +38,64 @@ jobs:
       run: |
         pyinstaller huntarr.spec
     
-    - name: Create zip archive
+    - name: Prepare release files
       run: |
-        Compress-Archive -Path dist/Huntarr/* -DestinationPath Huntarr-windows.zip
+        # Create a folder to hold our release files
+        mkdir release-files
+        # Copy the standalone executables
+        Copy-Item -Path dist/Huntarr.exe -Destination release-files/
+        Copy-Item -Path dist/HuntarrService.exe -Destination release-files/
+        # Add a simple README
+        Set-Content -Path release-files/README.txt -Value "Huntarr Windows Build ${{ github.ref_name }}\n\nContents:\n- Huntarr.exe - Main application\n- HuntarrService.exe - Windows service installer\n\nUsage:\n1. Run Huntarr.exe to start the application\n2. Or run 'HuntarrService.exe --install-service' as administrator to install as a Windows service"
+        # Create zip archive
+        Compress-Archive -Path release-files/* -DestinationPath Huntarr-windows.zip
     
-    - name: Upload artifact
+    - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         name: Huntarr-Windows
-        path: Huntarr-windows.zip
+        path: |
+          dist/Huntarr.exe
+          dist/HuntarrService.exe
+          Huntarr-windows.zip
     
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
-        files: Huntarr-windows.zip
-        name: Huntarr ${{ github.ref_name }}
+        files: |
+          dist/Huntarr.exe
+          dist/HuntarrService.exe
+          Huntarr-windows.zip
+        name: Huntarr ${{ github.ref_name }} Windows Build
         draft: false
-        prerelease: false
+        prerelease: ${{ startsWith(github.ref, 'refs/tags/v1.') }}
+        generate_release_notes: true
+        append_body: |
+          ## Windows Build
+          This release includes Windows executables that can be run directly or installed as a Windows service.
+          
+          ### Standalone Executables:
+          - **Huntarr.exe** - Main application executable
+          - **HuntarrService.exe** - Windows service installer
+          - **Huntarr-windows.zip** - Complete package with both executables
+          
+          ### Installation Options:
+          
+          #### Option 1: Using the standalone executables
+          1. Download the Huntarr.exe file
+          2. Run it directly
+          
+          #### Option 2: Installing as a Windows service
+          1. Download HuntarrService.exe
+          2. Open an Administrator Command Prompt in the download folder
+          3. Run: `HuntarrService.exe --install-service`
+          
+          #### Option 3: Complete installation from ZIP
+          1. Download the Huntarr-windows.zip file
+          2. Extract to your preferred location
+          3. Follow either Option 1 or 2 above
+          
+          ${{ startsWith(github.ref, 'refs/tags/v1.') && '### Note: This is a Windows-specific pre-release and should not be used for production deployments unless you specifically need the Windows version.' || '' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
