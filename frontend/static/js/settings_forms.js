@@ -259,7 +259,7 @@ const SettingsForms = {
                     <p class="setting-help">Skip searching for movies with future release dates</p>
                 </div>
                 <div class="setting-item" id="future_release_type_container" style="${settings.skip_future_releases !== false ? '' : 'display: none;'}">
-                    <label for="release_type"><a href="https://plex.one" class="info-icon" title="Learn more about release type options" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Release Type for Future Status:</label>
+                    <label for="release_type"><a href="https://plex.one/threads/radarr-release-type.24/" class="info-icon" title="Learn more about release type options" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Release Type for Future Status:</label>
                     <select id="release_type">
                         <option value="digital" ${settings.release_type === 'digital' ? 'selected' : ''}>Digital Release</option>
                         <option value="physical" ${settings.release_type === 'physical' || !settings.release_type ? 'selected' : ''}>Physical Release</option>
