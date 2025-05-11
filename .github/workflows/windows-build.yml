@@ -43,11 +43,70 @@ jobs:
             echo "BUILD_VERSION=$version" >> $env:GITHUB_ENV
           }
       
-      # Create Windows-specific patch for config paths
-      - name: Create Windows config path patch
+      # Verify Windows config file exists
+      - name: Verify Windows config file
         run: |
-          # Copy windows_config.py from the repo
-          Copy-Item -Path src/primary/windows_config.py -Destination src/primary/windows_config.py.bak -Force
+          # Verify windows_config.py exists
+          if (Test-Path src/primary/windows_config.py) {
+            echo "Windows config file exists."
+          } else {
+            echo "ERROR: windows_config.py not found. Creating emergency version..."
+            
+            $windowsConfigContent = @"
+          # Windows patch for config paths
+          import os
+          import sys
+          import pathlib
+          import logging
+          import shutil
+          
+          # Setup a logger for this module
+          logger = logging.getLogger("windows_config")
+          
+          # Patch function to ensure config path works on Windows
+          def get_config_dir():
+              """
+              Get the appropriate config directory for Windows.
+              When running as an executable, this will be next to the exe.
+              When running as a script, this will be in the project root.
+              """
+              if getattr(sys, 'frozen', False):
+                  # Running as compiled exe
+                  base_dir = os.path.dirname(sys.executable)
+                  logger.info(f"Running as frozen application from {base_dir}")
+              else:
+                  # Running as script
+                  base_dir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+                  logger.info(f"Running as script from {base_dir}")
+              
+              config_dir = os.path.join(base_dir, 'config')
+              os.makedirs(config_dir, exist_ok=True)
+              logger.info(f"Using config directory: {config_dir}")
+              return config_dir
+              
+          # Create directories for config
+          def ensure_config_dirs():
+              """
+              Ensure all required config directories exist.
+              Returns the base config directory path.
+              """
+              config_dir = get_config_dir()
+              data_dir = os.path.join(config_dir, 'data')
+              logs_dir = os.path.join(config_dir, 'logs')
+              settings_dir = os.path.join(config_dir, 'settings')
+              
+              # Create each directory
+              os.makedirs(data_dir, exist_ok=True)
+              os.makedirs(logs_dir, exist_ok=True)
+              os.makedirs(settings_dir, exist_ok=True)
+              
+              return config_dir
+          "@
+            
+            New-Item -Path src/primary -Name windows_config.py -ItemType File -Force
+            Set-Content -Path src/primary/windows_config.py -Value $windowsConfigContent
+            echo "Created emergency windows_config.py file."
+          }
       
       # Patch the settings_manager.py file to handle Windows paths
       - name: Patch settings_manager for Windows
