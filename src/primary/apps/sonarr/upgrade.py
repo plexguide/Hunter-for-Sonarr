@@ -70,6 +70,9 @@ def process_upgrade_episodes_mode(
     """Process upgrades in episode mode (original implementation)."""
     processed_any = False
     
+    # For episodes mode, we want individual episode history entries
+    skip_episode_history = False
+    
     # Always use the efficient random page selection method
     sonarr_logger.debug(f"Using random selection for cutoff unmet episodes")
     episodes_to_search = sonarr_api.get_cutoff_unmet_episodes_random_page(
@@ -449,6 +452,9 @@ def process_upgrade_shows_mode(
 ) -> bool:
     """Process upgrades in show mode - gets all cutoff unmet episodes for entire shows."""
     processed_any = False
+    
+    # For shows mode, we want individual episode history entries
+    skip_episode_history = False
     
     # Use the efficient random page selection method to get a sample of cutoff unmet episodes
     sonarr_logger.debug(f"Using random page selection for cutoff unmet episodes in shows mode")
