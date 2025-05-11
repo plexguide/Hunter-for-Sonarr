@@ -1,0 +1,43 @@
+# .dockerignore for Huntarr.io
+
+# Git / Version Control
+.git
+.gitignore
+
+# IDE / Editor specific
+.vscode/
+.idea/
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.env
+env/
+venv/
+ENV/
+
+# Installer files
+*.exe
+*.nsi
+
+# Local logs or databases (if any)
+*.log
+*.db
+*.sqlite3
+instance/
+
+# Test files (if not needed in production image)
+# tests/
+# pytest.ini
+# .coverage
+
+# Node.js specific (if you have any frontend build steps locally that aren't part of the python app)
+# node_modules/
+
+# OS-specific
+.DS_Store
+Thumbs.db
