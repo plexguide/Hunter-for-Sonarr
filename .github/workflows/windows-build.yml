@@ -184,7 +184,6 @@ jobs:
           echo Access the web interface at: http://localhost:9705
           echo.
           echo New features in this version:
-          echo * Bazarr subtitle management integration
           echo * Improved API handling with consistent timeout settings
           echo * Modern UI with animated app icons
           echo * Enhanced community links via GitHub

@@ -21,8 +21,6 @@ a = Analysis(
         'win32con',
         'win32service',
         'win32serviceutil',
-        'src.primary.apps.bazarr',
-        'src.primary.apps.bazarr.api',
         'src.primary.windows_config'
     ],
     hookspath=[],
