@@ -46,10 +46,9 @@
             <table class="modern-table history-table">
                 <thead>
                     <tr>
-                        <th style="min-width: 140px; width: 15%;">Date and Time</th>
-                        <th style="min-width: 250px; width: 35%;">Processed Information</th>
-                        <th style="min-width: 100px; width: 10%;">Operation</th>
-                        <th style="min-width: 100px; width: 10%;">ID Number</th>
+                        <th style="min-width: 280px; width: 40%;">Processed Information</th>
+                        <th style="min-width: 100px; width: 15%;">Operation</th>
+                        <th style="min-width: 100px; width: 15%;">ID Number</th>
                         <th style="min-width: 120px; width: 15%;">Name of Instance</th>
                         <th style="min-width: 120px; width: 15%;">How Long Ago</th>
                     </tr>
@@ -353,8 +352,24 @@
         overflow-x: auto;
         position: relative;
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
         padding-right: 5px;
+        background: linear-gradient(135deg, rgba(30, 39, 56, 0.95) 0%, rgba(14, 20, 32, 0.95) 50%, rgba(16, 24, 36, 0.95) 100%);
+        border: 1px solid rgba(90, 109, 137, 0.15);
+        /* Add gradient glow border effect */
+        position: relative;
+    }
+    
+    /* Add subtle colored accent to the table wrapper */
+    .modern-table-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(52, 152, 219, 0.5), rgba(155, 89, 182, 0.5)); /* Sonarr blue to Whisparr purple */
+        z-index: 1;
     }
     
     /* We don't need this class anymore since we're using a simpler approach */
@@ -378,12 +393,14 @@
     }
     
     .modern-table thead, .history-table thead {
-        background: linear-gradient(90deg, rgba(18, 22, 30, 0.95), rgba(24, 28, 37, 0.9));
+        background: linear-gradient(135deg, #1e2738 0%, #0e1420 50%, #101824 100%);
         position: sticky;
         top: 0;
         z-index: 10;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
     }
     
+    /* Table headers with improved styling */
     .modern-table th, .history-table th {
         padding: 14px 15px;
         font-weight: 600;
@@ -392,24 +409,106 @@
         border-bottom: 1px solid rgba(90, 109, 137, 0.25);
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        position: relative;
+    }
+    
+    /* Add subtle colored accent to first table header */
+    .modern-table thead th:first-child::before, .history-table thead th:first-child::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(52, 152, 219, 0.7), rgba(155, 89, 182, 0.3));
     }
     
     .modern-table td, .history-table td {
         padding: 12px 15px;
         border-bottom: 1px solid rgba(90, 109, 137, 0.1);
         font-size: 14px;
-        transition: background-color 0.2s ease;
+        transition: all 0.3s ease;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        color: rgba(255, 255, 255, 0.85);
+        /* Subtle text shadow for better readability */
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Highlight important info in Date Time column */
+    .modern-table td:first-child, .history-table td:first-child {
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 500;
+    }
+    
+    /* Reset all styling for the ID column */
+    .modern-table td:nth-child(3), .history-table td:nth-child(3) {
+        all: initial; /* This resets all properties */
+        display: table-cell; /* Restore table-cell display */
+        font-family: inherit !important;
+        font-size: 14px !important;
+        font-weight: normal !important;
+        text-shadow: none !important;
+        color: rgba(255, 255, 255, 0.85) !important;
+        background: transparent !important; 
+        border: none !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+        letter-spacing: normal !important;
+        padding: 12px 15px !important;
+        text-align: left !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Extra specificity to ensure IDs have absolutely no styling */
+    .modern-table td.plain-id, .history-table td.plain-id {
+        background: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 12px 15px !important;
+        margin: 0 !important;
+        border: none !important;
+        color: rgba(255, 255, 255, 0.85) !important;
+    }
+    
+    /* Ensure no child elements inside ID cell have styling */
+    .modern-table td.plain-id *, .history-table td.plain-id * {
+        background: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        color: inherit !important;
     }
     
     .modern-table tbody tr, .history-table tbody tr {
-        transition: background-color 0.2s ease;
+        transition: all 0.3s ease;
+        background: rgba(16, 20, 30, 0.3);
+        border-left: 2px solid transparent;
+    }
+    
+    /* Alternating row styling with subtle gradients */
+    .modern-table tbody tr:nth-child(odd), .history-table tbody tr:nth-child(odd) {
+        background: linear-gradient(90deg, rgba(24, 32, 48, 0.4) 0%, rgba(16, 22, 38, 0.3) 100%);
+    }
+    
+    .modern-table tbody tr:nth-child(even), .history-table tbody tr:nth-child(even) {
+        background: linear-gradient(90deg, rgba(20, 28, 44, 0.3) 0%, rgba(16, 20, 34, 0.2) 100%);
     }
     
     .modern-table tbody tr:hover, .history-table tbody tr:hover {
-        background-color: rgba(65, 105, 225, 0.1);
+        background: linear-gradient(90deg, rgba(65, 105, 225, 0.15), rgba(52, 152, 219, 0.1));
+        border-left: 2px solid rgba(52, 152, 219, 0.4);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
     }
     
     .modern-table tbody tr:last-child td, .history-table tbody tr:last-child td {
@@ -433,22 +532,184 @@
         border: 1px solid rgba(40, 167, 69, 0.3);
     }
     
-    .operation-status.error, .operation-status.missing {
-        background-color: rgba(220, 53, 69, 0.2);
+    /* Operation status badges with gradient styling */
+    .operation-status.error {
+        background: linear-gradient(135deg, rgba(220, 53, 69, 0.2) 0%, rgba(220, 53, 69, 0.3) 100%);
         color: #ff6b6b;
         border: 1px solid rgba(220, 53, 69, 0.3);
-    }
-    
-    .operation-status.warning {
-        background-color: rgba(255, 193, 7, 0.2);
-        color: #ffc107;
-        border: 1px solid rgba(255, 193, 7, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     
     .operation-status.upgrade {
-        background-color: rgba(0, 123, 255, 0.2);
-        color: #03a9f4;
-        border: 1px solid rgba(0, 123, 255, 0.3);
+        background: linear-gradient(135deg, rgba(25, 118, 210, 0.2) 0%, rgba(33, 150, 243, 0.3) 100%);
+        color: #42a5f5;
+        border: 1px solid rgba(25, 118, 210, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .operation-status.missing {
+        background: linear-gradient(135deg, rgba(211, 47, 47, 0.2) 0%, rgba(244, 67, 54, 0.3) 100%);
+        color: #ef5350;
+        border: 1px solid rgba(211, 47, 47, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .operation-status.warning {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.3) 100%);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Info icon and JSON tooltip styling */
+    .info-hover-icon {
+        color: rgb(52, 152, 219); /* Fully opaque - no transparency */
+        margin-right: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        /* Make sure the icon is fully opaque with background */
+        background-color: rgb(14, 22, 33); /* Match the table background */
+        border-radius: 50%;
+        padding: 2px;
+        height: 14px;
+        width: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        /* Add subtle glow effect matching the tooltip */
+        box-shadow: 0 0 5px rgb(52, 152, 219);
+    }
+    
+    /* Hide info icons on mobile devices */
+    @media screen and (max-width: 768px) {
+        .info-hover-icon {
+            display: none;
+        }
+    }
+    
+    .info-hover-icon:hover {
+        color: rgb(255, 255, 255); /* Bright white on hover */
+        background-color: rgb(52, 152, 219); /* Blue background on hover */
+        transform: scale(1.2);
+        box-shadow: 0 0 8px rgb(52, 152, 219);
+    }
+    
+    /* Hide the tooltip by default */
+    .json-tooltip {
+        display: none;
+        position: absolute;
+        left: 35px; /* Move the tooltip to the right by default */
+        top: 100%;
+        /* Extra thick solid background with absolutely no transparency */
+        background-color: #121824;
+        /* Add a thick dark background behind content */
+        background-image: 
+            linear-gradient(to bottom, 
+                #121824 0%, 
+                #0c111d 100%);
+        /* Double border for better definition */
+        border: 3px solid #2185d0;
+        border-radius: 8px;
+        padding: 10px;
+        width: 350px;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 999999; /* Super high z-index */
+        font-family: monospace;
+        font-size: 12px;
+        color: #ffffff; /* Pure white text */
+        text-align: left;
+        white-space: pre-wrap;
+        /* Force complete opacity */
+        opacity: 1 !important;
+        /* Strong glow effect similar to Huntarr logo - more pronounced */
+        box-shadow: 
+            0 0 0 4px #121824, /* Thick barrier */
+            0 0 0 5px #2185d0, /* Border highlight */
+            0 0 20px 5px #2185d0, /* Much stronger blue glow */
+            0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
+        /* Animation for the glow effect - faster to be more noticeable */
+        animation: tooltipGlow 2s ease-in-out infinite alternate;
+    }
+    
+    /* Glowing border animation */
+    @keyframes tooltipGlow {
+        0% {
+            box-shadow: 
+                0 0 0 4px #121824, /* Solid barrier */
+                0 0 0 5px #2185d0, /* Blue border */
+                0 0 25px 8px #2185d0, /* Much stronger blue glow */
+                0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
+            border-color: #2185d0;
+        }
+        50% {
+            box-shadow: 
+                0 0 0 4px #121824, /* Solid barrier */
+                0 0 0 5px #9b59b6, /* Brighter purple border */
+                0 0 25px 8px #9b59b6, /* Much stronger purple glow */
+                0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
+            border-color: #9b59b6;
+        }
+        100% {
+            box-shadow: 
+                0 0 0 4px #121824, /* Solid barrier */
+                0 0 0 5px #2185d0, /* Blue border */
+                0 0 25px 8px #2185d0, /* Much stronger blue glow */
+                0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
+            border-color: #2185d0;
+        }
+    }
+    
+    /* Style the JSON content */
+    .json-content {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    
+    /* Show tooltip on hover */
+    .info-hover-icon:hover .json-tooltip {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Processed title styling */
+    .processed-title {
+        font-weight: 500;
+        word-break: break-word;
+        white-space: normal;
+        overflow: visible;
+        display: inline;
+        width: auto;
+        flex: 1;
+    }
+    
+    /* Style for the line container that holds icon and title */
+    .title-line-container {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: nowrap;
+        width: 100%;
+    }
+    
+    /* Style for the info icon to keep it at the top when title wraps */
+    .title-line-container .info-hover-icon {
+        flex-shrink: 0;
+        margin-top: 2px; /* Align with the first line of text */
+    }
+    
+    /* Ensure the first column allows wrapping */
+    .modern-table td:first-child, .history-table td:first-child {
+        white-space: normal;
+        word-break: break-word;
+        max-width: 300px;
+        overflow: visible;
     }
     
     /* Empty state and loading styling */
@@ -565,9 +826,9 @@
             flex-wrap: wrap;
             margin: 0;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             width: 100%;
-            padding: 10px;
+            padding: 10px 30px; /* Add horizontal padding to move buttons inward */
             z-index: 1000;
         }
         

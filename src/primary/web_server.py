@@ -758,6 +758,39 @@ def api_reset_stats():
         web_logger.error(f"Error resetting statistics: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/api/hourly-caps', methods=['GET'])
+def api_get_hourly_caps():
+    """Get hourly API usage caps for each app"""
+    try:
+        # Import necessary functions
+        from src.primary.stats_manager import load_hourly_caps
+        from src.primary.settings_manager import load_settings
+        
+        # Get the logger
+        web_logger = get_logger("web_server")
+        
+        # Load the current hourly caps
+        caps = load_hourly_caps()
+        
+        # Get the hourly cap limit from general settings
+        settings = load_settings('general')
+        hourly_limit = settings.get('hourly_cap', 20)  # Default to 20 if not set
+        
+        web_logger.info(f"Serving hourly caps data with limit {hourly_limit}")
+        
+        return jsonify({
+            "success": True,
+            "caps": caps,
+            "limit": hourly_limit
+        })
+    except Exception as e:
+        web_logger = get_logger("web_server")
+        web_logger.error(f"Error retrieving hourly API caps: {e}")
+        return jsonify({
+            "success": False,
+            "message": "Error retrieving hourly API caps."
+        }), 500
+
 @app.route('/api/stats/reset_public', methods=['POST'])
 def api_reset_stats_public():
     """Reset the media statistics for all apps or a specific app - public endpoint without auth"""

@@ -188,6 +188,21 @@ button {
 .nav-item.active {
     background-color: var(--sidebar-item-active);
     font-weight: 600;
+    position: relative;
+    box-shadow: 0 0 8px 2px rgba(52, 152, 219, 0.5);
+    z-index: 1;
+    outline: none;
+    border-radius: 4px;
+    animation: glowPulse 1.5s infinite alternate;
+}
+
+@keyframes glowPulse {
+    from {
+        box-shadow: 0 0 8px 2px rgba(52, 152, 219, 0.5);
+    }
+    to {
+        box-shadow: 0 0 15px 4px rgba(52, 152, 219, 0.7);
+    }
 }
 
 /* Theme Switch */
@@ -1270,6 +1285,35 @@ input:checked + .toggle-slider:before {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* Information Icon Styling */
+.info-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-right: 30px !important;
+    margin-left: 0 !important;
+    padding-right: 10px !important;
+    color: var(--accent-color) !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+    position: relative !important;
+}
+
+.info-icon:hover {
+    color: var(--accent-hover) !important;
+    transform: scale(1.1) !important;
+}
+
+.info-icon i {
+    font-size: 14px !important;
+}
+
+/* Add spacing on labels with info icons */
+label .info-icon + span,
+label .info-icon ~ text {
+    margin-left: 5px !important;
+}
+
 /* Fix for trash icon positioning */
 .fa-trash-alt {
     display: inline-block;
@@ -1482,9 +1526,24 @@ input:checked + .toggle-slider:before {
 #appsSection .settings-group {
     margin-top: 20px;
     margin-bottom: 30px;
-    background-color: var(--bg-secondary, #252525);
-    border-radius: 4px;
+    background: linear-gradient(135deg, rgba(30, 39, 56, 0.95) 0%, rgba(14, 20, 32, 0.95) 50%, rgba(16, 24, 36, 0.95) 100%);
+    border-radius: 8px;
     padding: 20px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    position: relative;
+    border: 1px solid rgba(90, 109, 137, 0.1);
+    overflow: hidden;
+}
+
+#appsSection .settings-group::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3)); /* Sonarr blue to Whisparr purple */
+    opacity: 0.7;
 }
 
 #appsSection .settings-group-header {

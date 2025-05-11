@@ -13,6 +13,8 @@ import importlib
 import logging
 import threading
 from typing import Dict, List, Optional, Callable, Union, Tuple
+import datetime
+import traceback
 
 # Define the version number
 __version__ = "1.0.0" # Consider updating this based on changes
@@ -25,11 +27,15 @@ logger = setup_main_logger()
 from src.primary import config, settings_manager
 # Removed keys_manager import as settings_manager handles API details
 from src.primary.state import check_state_reset, calculate_reset_time
+from src.primary.stats_manager import check_hourly_cap_exceeded
 # from src.primary.utils.app_utils import get_ip_address # No longer used here
 
-# Track active threads and stop flag
+# Global state for managing app threads and their status
 app_threads: Dict[str, threading.Thread] = {}
 stop_event = threading.Event() # Use an event for clearer stop signaling
+
+# Hourly cap scheduler thread
+hourly_cap_scheduler_thread = None
 
 def app_specific_loop(app_type: str) -> None:
     """
@@ -224,6 +230,19 @@ def app_specific_loop(app_type: str) -> None:
             except Exception as e:
                 app_logger.error(f"Error connecting to {app_type} instance '{instance_name}': {e}", exc_info=True)
                 continue # Skip this instance if connection fails
+                
+            # --- API Cap Check --- #
+            try:
+                # Check if hourly API cap is exceeded
+                if check_hourly_cap_exceeded(app_type):
+                    # Get the current cap status for logging
+                    from src.primary.stats_manager import get_hourly_cap_status
+                    cap_status = get_hourly_cap_status(app_type)
+                    app_logger.warning(f"{app_type.upper()} hourly cap reached {cap_status['current_usage']} of {cap_status['limit']}. Skipping cycle!")
+                    continue # Skip this instance if API cap is exceeded
+            except Exception as e:
+                app_logger.error(f"Error checking hourly API cap for {app_type}: {e}", exc_info=True)
+                # Continue with the cycle even if cap check fails - safer than skipping
 
             # --- Check if Hunt Modes are Enabled --- #
             # These checks use the hunt_missing_setting/hunt_upgrade_setting defined earlier
@@ -502,22 +521,106 @@ def shutdown_handler(signum, frame):
 
 def shutdown_threads():
     """Wait for all threads to finish."""
-    logger.info("Waiting for app threads to finish...")
-    active_thread_list = list(app_threads.values())
-    for thread in active_thread_list:
-        thread.join(timeout=15) # Wait up to 15 seconds per thread
+    logger.info("Waiting for all app threads to stop...")
+    
+    # Stop the hourly API cap scheduler
+    global hourly_cap_scheduler_thread
+    if hourly_cap_scheduler_thread and hourly_cap_scheduler_thread.is_alive():
+        # The thread should exit naturally due to the stop_event being set
+        logger.info("Waiting for hourly API cap scheduler to stop...")
+        hourly_cap_scheduler_thread.join(timeout=5.0)
+        if hourly_cap_scheduler_thread.is_alive():
+            logger.warning("Hourly API cap scheduler did not stop gracefully")
+        else:
+            logger.info("Hourly API cap scheduler stopped")
+    
+    # Wait for all threads to terminate
+    for thread in app_threads.values():
         if thread.is_alive():
-            logger.warning(f"Thread {thread.name} did not stop gracefully.")
+            thread.join(timeout=10.0)
+    
     logger.info("All app threads stopped.")
+
+def hourly_cap_scheduler_loop():
+    """Main loop for the hourly API cap scheduler thread
+    Checks time every 30 seconds and resets caps if needed at the top of the hour
+    """
+    logger.info("Starting hourly API cap scheduler loop")
+    
+    try:
+        from src.primary.stats_manager import reset_hourly_caps
+        
+        # Initial check in case we're starting right at the top of an hour
+        current_time = datetime.datetime.now()
+        if current_time.minute == 0:
+            logger.info(f"Initial hourly reset triggered at {current_time.hour}:00")
+            reset_hourly_caps()
+        
+        # Main monitoring loop
+        while not stop_event.is_set():
+            try:
+                # Sleep for 30 seconds between checks
+                # This ensures we won't miss the top of the hour
+                stop_event.wait(30)
+                
+                if stop_event.is_set():
+                    break
+                    
+                # Check if it's the top of the hour (00 minute mark)
+                current_time = datetime.datetime.now()
+                if current_time.minute == 0:
+                    logger.info(f"Hourly reset triggered at {current_time.hour}:00")
+                    success = reset_hourly_caps()
+                    if success:
+                        logger.info(f"Successfully reset hourly API caps at {current_time.hour}:00")
+                    else:
+                        logger.error(f"Failed to reset hourly API caps at {current_time.hour}:00")
+                
+            except Exception as e:
+                logger.error(f"Error in hourly cap scheduler: {e}")
+                logger.error(traceback.format_exc())
+                # Sleep briefly to avoid spinning in case of repeated errors
+                time.sleep(5)
+                
+    except Exception as e:
+        logger.error(f"Fatal error in hourly cap scheduler: {e}")
+        logger.error(traceback.format_exc())
+    
+    logger.info("Hourly API cap scheduler stopped")
+
+def start_hourly_cap_scheduler():
+    """Start the hourly API cap scheduler thread"""
+    global hourly_cap_scheduler_thread
+    
+    if hourly_cap_scheduler_thread and hourly_cap_scheduler_thread.is_alive():
+        logger.info("Hourly API cap scheduler already running")
+        return
+    
+    # Create and start the scheduler thread
+    hourly_cap_scheduler_thread = threading.Thread(
+        target=hourly_cap_scheduler_loop, 
+        name="HourlyCapScheduler", 
+        daemon=True
+    )
+    hourly_cap_scheduler_thread.start()
+    
+    logger.info(f"Hourly API cap scheduler started. Thread is alive: {hourly_cap_scheduler_thread.is_alive()}")
 
 def start_huntarr():
     """Main entry point for Huntarr background tasks."""
     logger.info(f"--- Starting Huntarr Background Tasks v{__version__} --- ")
-
+    
     # Perform initial settings migration if specified (e.g., via env var or arg)
     if os.environ.get("HUNTARR_RUN_MIGRATION", "false").lower() == "true":
         logger.info("Running settings migration from huntarr.json (if found)...")
         settings_manager.migrate_from_huntarr_json()
+        
+    # Start the hourly API cap scheduler
+    try:
+        start_hourly_cap_scheduler()
+        logger.info("Hourly API cap scheduler started successfully")
+    except Exception as e:
+        logger.error(f"Failed to start hourly API cap scheduler: {e}")
 
     # Log initial configuration for all known apps
     for app_name in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name

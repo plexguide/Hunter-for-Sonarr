@@ -48,11 +48,15 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
     # Make sure URL is properly formed
     full_url = f"{api_url.rstrip('/')}/api/v1/{endpoint.lstrip('/')}"
         
-    # Set up headers
+    # Set up headers with User-Agent to identify Huntarr
     headers = {
         "X-Api-Key": api_key,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
     }
+    
+    lidarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
+    
         
     lidarr_logger.debug(f"Lidarr API Request: {method} {full_url} Params: {params} Data: {data}")
 

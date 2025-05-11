@@ -40,7 +40,14 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         base_url = api_url.rstrip('/')
         full_url = f"{base_url}/api/v1/system/status"
         
-        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout)
+        # Add User-Agent header to identify Huntarr
+        headers = {
+            "X-Api-Key": api_key,
+            "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
+        }
+        logger.debug(f"Using User-Agent: {headers['User-Agent']}")
+        
+        response = requests.get(full_url, headers=headers, timeout=api_timeout)
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         logger.info("Successfully connected to Readarr.")
         return True
@@ -238,7 +245,13 @@ def get_wanted_missing_books(api_url: str, api_key: str, api_timeout: int, monit
         return []
     base_url = api_url.rstrip('/')
     url = f"{base_url}/api/v1/{endpoint.lstrip('/')}"
-    headers = {"X-Api-Key": api_key}
+    # Add User-Agent header to identify Huntarr
+    headers = {
+        "X-Api-Key": api_key,
+        "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)",
+        "Content-Type": "application/json"
+    }
+    logger.debug(f"Using User-Agent: {headers['User-Agent']}")
 
     while True:
         params = {

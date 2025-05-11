@@ -45,11 +45,16 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
     # Full URL - ensure no double slashes
     url = f"{api_url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
     
-    # Headers
+    # Headers with User-Agent to identify Huntarr
     headers = {
         "X-Api-Key": api_key,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
     }
+    
+    # Log the User-Agent for debugging
+    radarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
+    
     
     try:
         if method == "GET":
