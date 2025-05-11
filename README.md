@@ -104,7 +104,7 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 Huntarr's live homepage will provide you statics about how many hunts have been pursed regarding missing media and upgrade searches! Note: Numbers reflected are but all required for testing. 
 
 <p align="center">
-  <img width="100%" alt="image" src="https://github.com/user-attachments/assets/db725ad6-3009-4835-ab44-289dda80d385" />
+  <img width="100%" alt="image" src="https://github.com/user-attachments/assets/1ffeb7f1-7dec-484c-9073-02d460953f99" />
   <br>
   <em>Homepage</em>
 </p>
