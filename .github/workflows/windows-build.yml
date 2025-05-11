@@ -25,7 +25,23 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-          cache: 'pip'
+          
+      # Install NSIS
+      - name: Install NSIS
+        run: |
+          # Download and install NSIS silently
+          Invoke-WebRequest -Uri "https://nsis.sourceforge.io/mediawiki/images/d/d7/Nsis-3.08-setup.exe" -OutFile "nsis-setup.exe"
+          Start-Process -FilePath "nsis-setup.exe" -ArgumentList "/S" -Wait
+          Write-Output "NSIS installed successfully"
+          
+          # Check if NSIS is installed
+          if (Test-Path "C:\Program Files (x86)\NSIS\makensis.exe") {
+              Write-Output "NSIS is available at C:\Program Files (x86)\NSIS\makensis.exe"
+          } else {
+              Write-Error "NSIS installation failed!"
+              exit 1
+          }
+        shell: pwsh
       
       # Install dependencies
       - name: Install dependencies
@@ -380,17 +396,40 @@ jobs:
           pyinstaller Huntarr.spec
       
       # Create Windows package
-      - name: Create Windows package
+      - name: Create package zip
         run: |
           # Get version from previous step
           $version = "${{ steps.get_version.outputs.VERSION }}"
           
-          # Copy additional files to dist directory
-          Copy-Item -Path launcher.bat -Destination dist\
-          Copy-Item -Path Huntarr-Windows-README.md -Destination dist\
+          # Create a zip package with everything needed
+          Compress-Archive -Path "./dist/Huntarr.exe", "./Huntarr-Windows-README.md", "./launcher.bat" -DestinationPath "./Huntarr-Windows-v$version.zip"
           
-          # Create a zip file of the dist directory with version in name
-          Compress-Archive -Path dist\* -DestinationPath "Huntarr-Windows-v$version.zip" -Force
+          # List files in the ZIP
+          Write-Output "\nCreated package: Huntarr-Windows-v$version.zip"
+          Write-Output "ZIP contents:"
+          Get-ChildItem "./Huntarr-Windows-v$version.zip" | Select-Object Name, Length
+        shell: pwsh
+        
+      # Create Windows installer with NSIS
+      - name: Create Windows installer
+        run: |
+          # Get version from previous step
+          $version = "${{ steps.get_version.outputs.VERSION }}"
+          
+          # Update version in installer script
+          (Get-Content -Path installer.nsi) -replace '!define PRODUCT_VERSION ".*"', "!define PRODUCT_VERSION `"$version`"" | Set-Content -Path installer.nsi
+          
+          # Run NSIS to create installer
+          & "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
+          
+          # Verify installer was created
+          if (Test-Path -Path "Huntarr-Setup-$version.exe") {
+              Write-Output "Successfully created installer: Huntarr-Setup-$version.exe"
+          } else {
+              Write-Error "Failed to create installer"
+              exit 1
+          }
+        shell: pwsh
       
       # Test the executable
       - name: Test executable setup
@@ -453,22 +492,35 @@ jobs:
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "./dist/Huntarr.exe,./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip"
+          artifacts: "./dist/Huntarr.exe,./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip,./Huntarr-Setup-${{ steps.get_version.outputs.VERSION }}.exe"
           artifactContentType: application/zip
           body: |
             # Huntarr Windows Build v${{ steps.get_version.outputs.VERSION }}
             
-            Windows standalone executable for Huntarr.io
+            Windows standalone executable and installer for Huntarr.io
             
             ## New in this Build
             - Improved API handling with consistent timeout settings
             - Modern UI with animated app icons
             - GitHub community integrations
             - Windows path handling to prevent configuration errors
+            - New professional installer with setup wizard
             
-            ## Files
-            - **Huntarr.exe**: Standalone executable
-            - **Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip**: Complete package with launcher and configuration
+            ## Installation Options
+            
+            ### Option 1: Windows Installer (Recommended)
+            - Download and run **Huntarr-Setup-${{ steps.get_version.outputs.VERSION }}.exe**
+            - Follows standard Windows installation flow
+            - Creates desktop and start menu shortcuts
+            - Can be uninstalled from Control Panel
+            
+            ### Option 2: Standalone Executable
+            - Download **Huntarr.exe** for a portable version
+            - No installation required
+            
+            ### Option 3: Complete Package
+            - Download **Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip**
+            - Contains the executable and additional files
           draft: false
           prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
