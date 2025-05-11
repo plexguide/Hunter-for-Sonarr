@@ -9,8 +9,6 @@ on:
 # Define permissions needed for release creation
 permissions:
   contents: write
-  packages: write
-  releases: write
 
 jobs:
   build-windows:
