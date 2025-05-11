@@ -394,12 +394,19 @@ jobs:
           echo "Verifying build artifacts"
           dir dist
       
-      # Since upload-artifact is having issues, let's skip it and focus on the build
+      # List and upload build artifacts
       - name: List build artifacts
         run: |
           echo "Build completed. Here are the artifacts:"
           dir
           echo "Windows build available at: ./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip"
+      
+      # Upload the executable as a build artifact using a different action
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: Huntarr-Windows
+          path: ./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip
       
       # Simplified completion message instead of GitHub release
       - name: Build Summary
