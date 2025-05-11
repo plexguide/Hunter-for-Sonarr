@@ -91,6 +91,15 @@ const SettingsForms = {
                     <p class="setting-help">How to search for missing Sonarr content (Season Packs recommended for torrent users)</p>
                 </div>
                 <div class="setting-item">
+                    <label for="sonarr-upgrade-mode"><a href="https://huntarr.io" class="info-icon" title="Learn more about upgrade modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Upgrade Mode:</label>
+                    <select id="sonarr-upgrade-mode" name="upgrade_mode">
+                        <option value="episodes" ${settings.upgrade_mode === 'episodes' || !settings.upgrade_mode ? 'selected' : ''}>Episodes</option>
+                        <option value="seasons_packs" ${settings.upgrade_mode === 'seasons_packs' ? 'selected' : ''}>Season Packs</option>
+                        <option value="shows" ${settings.upgrade_mode === 'shows' ? 'selected' : ''}>Shows</option>
+                    </select>
+                    <p class="setting-help">How to search for Sonarr upgrades (Seasons/Shows modes upgrade entire seasons or shows at once)</p>
+                </div>
+                <div class="setting-item">
                     <label for="sonarr-hunt-missing-items"><a href="https://huntarr.io" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Missing Items to Search:</label>
                     <input type="number" id="sonarr-hunt-missing-items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
