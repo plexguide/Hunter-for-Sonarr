@@ -29,7 +29,14 @@ a = Analysis(
         'win32con',
         'win32service',
         'win32serviceutil',
-        'src.primary.windows_config'
+        'src.primary.windows_config',
+        'src.primary.windows_launcher',
+        'PIL',
+        'PIL.Image',
+        'PIL.ImageTk',
+        'tkinter',
+        'webbrowser',
+        'requests'
     ],
     hookspath=[],
     hooksconfig={},

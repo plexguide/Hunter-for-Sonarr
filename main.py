@@ -162,6 +162,17 @@ def main_shutdown_handler(signum, frame):
     # The rest of the cleanup happens after run_web_server() returns or in the finally block.
 
 if __name__ == '__main__':
+    # On Windows, check if we should use the GUI launcher when not running as a service
+    if sys.platform == 'win32' and '--service' not in sys.argv and getattr(sys, 'frozen', False):
+        try:
+            from primary.windows_launcher import main as launch_gui
+            # Run the Windows GUI launcher
+            launch_gui()
+            sys.exit(0)
+        except Exception as e:
+            huntarr_logger.exception(f"Failed to launch Windows GUI: {e}")
+            # Fall back to console mode if GUI launcher fails
+            
     # Register signal handlers for graceful shutdown in the main process
     signal.signal(signal.SIGINT, main_shutdown_handler)
     signal.signal(signal.SIGTERM, main_shutdown_handler)
