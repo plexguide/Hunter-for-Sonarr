@@ -50,11 +50,16 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         
         sonarr_logger.debug(f"Making {method} request to: {full_url}")
         
-        # Set up headers
+        # Set up headers with User-Agent to identify Huntarr
         headers = {
             "X-Api-Key": api_key,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
         }
+        
+        # Log the User-Agent for debugging
+        sonarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
+        
         
         try:
             if method.upper() == "GET":

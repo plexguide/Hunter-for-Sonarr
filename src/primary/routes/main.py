@@ -1,16 +1,18 @@
 from flask import Blueprint, request, jsonify
-from src.primary.stats_manager import get_stats, reset_stats
+from src.primary.stats_manager import get_stats, reset_stats, load_hourly_caps, get_default_hourly_caps
+from src.primary.settings_manager import get_general_settings
+import logging
+from flask_jwt_extended import jwt_required
+from src.primary.auth_utils import admin_required
+
+logger = logging.getLogger(__name__)
 
 main_blueprint = Blueprint('main', __name__)
 
 @main_blueprint.route('/')
 def index():
-    # ...existing code...
-    
-    # Remove or comment out any logging of the web interface URL here
-    # logger.info(f"Web interface available at http://{request.host}")
-    
-    # ...existing code...
+    # Return the index page
+    return "Huntarr API"
 
 # Add new route for getting media statistics
 @main_blueprint.route('/api/stats', methods=['GET'])
@@ -51,4 +53,29 @@ def api_reset_stats():
         return jsonify({
             "success": False,
             "message": "Error resetting media statistics."
+        }), 500
+
+# Add route for getting hourly API caps
+@main_blueprint.route('/api/hourly-caps', methods=['GET'])
+@jwt_required()
+def api_get_hourly_caps():
+    """Get hourly API usage caps for each app"""
+    try:
+        # Load the current hourly caps
+        caps = load_hourly_caps()
+        
+        # Get the hourly cap limit from general settings
+        settings = get_general_settings()
+        hourly_limit = settings.get('hourly_cap', 20)  # Default to 20 if not set
+        
+        return jsonify({
+            "success": True,
+            "caps": caps,
+            "limit": hourly_limit
+        })
+    except Exception as e:
+        logger.error(f"Error retrieving hourly API caps: {e}")
+        return jsonify({
+            "success": False,
+            "message": "Error retrieving hourly API caps."
         }), 500
