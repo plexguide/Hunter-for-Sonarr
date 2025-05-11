@@ -419,24 +419,29 @@ def process_upgrade_shows_mode(
     """Process upgrades in show mode - gets all cutoff unmet episodes for entire shows."""
     processed_any = False
     
-    # Get all cutoff unmet episodes
-    cutoff_unmet_episodes = sonarr_api.get_cutoff_unmet_episodes(api_url, api_key, api_timeout, monitored_only)
-    sonarr_logger.info(f"Received {len(cutoff_unmet_episodes)} cutoff unmet episodes from Sonarr API (before filtering).")
+    # Use the efficient random page selection method to get a sample of cutoff unmet episodes
+    sonarr_logger.debug(f"Using random page selection for cutoff unmet episodes in shows mode")
+    # Request slightly more episodes than needed to ensure we have enough for a few shows
+    sample_size = hunt_upgrade_items * 20  # Use a larger multiplier for shows mode
+    cutoff_unmet_sample = sonarr_api.get_cutoff_unmet_episodes_random_page(
+        api_url, api_key, api_timeout, monitored_only, sample_size)
     
-    if not cutoff_unmet_episodes:
+    sonarr_logger.info(f"Received {len(cutoff_unmet_sample)} cutoff unmet episodes from random page (before filtering).")
+    
+    if not cutoff_unmet_sample:
         sonarr_logger.info("No cutoff unmet episodes found in Sonarr.")
         return False
         
     # Filter out future episodes if configured
     if skip_series_refresh:
         now_unix = time.time()
-        original_count = len(cutoff_unmet_episodes)
+        original_count = len(cutoff_unmet_sample)
         # Ensure airDateUtc exists and is not None before parsing
-        cutoff_unmet_episodes = [
-            ep for ep in cutoff_unmet_episodes
+        cutoff_unmet_sample = [
+            ep for ep in cutoff_unmet_sample
             if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
         ]
-        skipped_count = original_count - len(cutoff_unmet_episodes)
+        skipped_count = original_count - len(cutoff_unmet_sample)
         if skipped_count > 0:
             sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date for upgrades.")
     
@@ -444,37 +449,37 @@ def process_upgrade_shows_mode(
         sonarr_logger.info("Stop requested during upgrade processing.")
         return processed_any
     
-    # Group episodes by series
-    series_episodes: Dict[int, List[Dict]] = {}
-    series_titles: Dict[int, str] = {}  # Keep track of series titles
+    # Group episodes by series to identify candidate shows
+    series_info: Dict[int, Dict] = {}  # Store series ID -> {title, sample_count}
     
-    for episode in cutoff_unmet_episodes:
+    for episode in cutoff_unmet_sample:
         series_id = episode.get('seriesId')
         if series_id is not None:
-            if series_id not in series_episodes:
-                series_episodes[series_id] = []
-                # Store series title when first encountering the series ID
-                series_titles[series_id] = episode.get('series', {}).get('title', f"Series ID {series_id}")
-            
-            series_episodes[series_id].append(episode)
+            if series_id not in series_info:
+                series_info[series_id] = {
+                    'title': episode.get('series', {}).get('title', f"Series ID {series_id}"),
+                    'sample_count': 0
+                }
+            series_info[series_id]['sample_count'] += 1
+
+    # Get list of candidate series from the sample
+    series_candidates = []
+    for series_id, info in series_info.items():
+        series_candidates.append((series_id, info['sample_count'], info['title']))
     
-    # Create a list of (series_id, episode_count, series_title) tuples for selection
-    available_series = [(series_id, len(episodes), series_titles[series_id]) 
-                         for series_id, episodes in series_episodes.items()]
-    
-    if not available_series:
-        sonarr_logger.info("No series with cutoff unmet episodes found.")
+    if not series_candidates:
+        sonarr_logger.info("No valid series with cutoff unmet episodes found in sample.")
         return False
-    
-    # Select series to process - always randomly
-    random.shuffle(available_series)
-    series_to_process = available_series[:hunt_upgrade_items]
+        
+    # Randomly select up to hunt_upgrade_items series to process
+    random.shuffle(series_candidates)
+    series_to_process = series_candidates[:hunt_upgrade_items]
     
     sonarr_logger.info(f"Selected {len(series_to_process)} series with cutoff unmet episodes to process")
     
-    # Log selected series
-    for idx, (series_id, episode_count, series_title) in enumerate(series_to_process):
-        sonarr_logger.info(f" {idx+1}. {series_title} - {episode_count} cutoff unmet episodes")
+    # Log selected series from sample
+    for idx, (series_id, sample_count, series_title) in enumerate(series_to_process):
+        sonarr_logger.info(f" {idx+1}. {series_title} - {sample_count} cutoff unmet episodes found in sample")
     
     # Process each selected series
     for series_id, _, series_title in series_to_process:
@@ -482,9 +487,28 @@ def process_upgrade_shows_mode(
             sonarr_logger.info("Stop requested before processing next series.")
             break
             
-        episodes = series_episodes[series_id]
-        episode_ids = [episode["id"] for episode in episodes]
+        # Get ALL cutoff unmet episodes for this series (not just the ones in the sample)
+        all_series_episodes = sonarr_api.get_cutoff_unmet_episodes_for_series(
+            api_url, api_key, api_timeout, series_id, monitored_only)
         
+        # Filter future episodes if needed
+        if skip_series_refresh:
+            now_unix = time.time()
+            original_count = len(all_series_episodes)
+            all_series_episodes = [
+                ep for ep in all_series_episodes
+                if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
+            ]
+            filtered_count = original_count - len(all_series_episodes)
+            if filtered_count > 0:
+                sonarr_logger.info(f"Filtered {filtered_count} future episodes from {series_title}")
+        
+        episode_ids = [episode["id"] for episode in all_series_episodes]
+        
+        if not episode_ids:
+            sonarr_logger.warning(f"No valid episodes found for {series_title} after filtering")
+            continue
+            
         sonarr_logger.info(f"Processing {series_title} with {len(episode_ids)} cutoff unmet episodes")
         
         # Refresh series metadata if not skipped
