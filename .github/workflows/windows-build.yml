@@ -396,7 +396,7 @@ jobs:
       
       # Upload build artifacts
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}
           path: ./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip
