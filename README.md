@@ -37,7 +37,12 @@ Keep in mind this is very early in program development. If you have a very speci
   - [Docker Run](#docker-run)
   - [Docker Compose](#docker-compose)
   - [Unraid Users](#unraid-users)
+- [The Perfect Pair: Huntarr & Cleanuperr](#the-perfect-pair-huntarr--cleanuperr)
 - [Tips](#tips)
+- [Windows Installation](#windows-installation)
+  - [Running as a Windows Application](#running-as-a-windows-application)
+  - [Installing as a Windows Service](#installing-as-a-windows-service)
+  - [Building from Source](#building-from-source)
 - [Troubleshooting](#troubleshooting)
 - [Change Log](#change-log)
 
@@ -239,6 +244,35 @@ Learn more about **Cleanuperr** at [https://github.com/flmorg/cleanuperr](https:
 - **API Rate Limits**: Configure hourly API caps to prevent rate limiting by your indexers
 - **Universal Timeouts**: All apps use consistent 120s timeouts for reliable command completion
 - **Monitored Only**: Filter searches to focus only on content you've marked as monitored
+
+## Windows Installation
+
+Huntarr can be run as a native Windows application or service. Prebuilt binaries are available in the [Releases](https://github.com/plexguide/Huntarr.io/releases) section.
+
+### Running as a Windows Application
+
+1. Download the latest Windows release from the [Releases](https://github.com/plexguide/Huntarr.io/releases) page
+2. Extract the ZIP file to your preferred location
+3. Run `Huntarr.exe` to start the application
+4. Access the web interface at `http://localhost:9705`
+
+### Installing as a Windows Service
+
+1. Extract the ZIP file to a permanent location (e.g., `C:\Program Files\Huntarr`)
+2. Open Command Prompt as Administrator
+3. Navigate to the Huntarr directory
+4. Run: `HuntarrService.exe --install-service`
+5. The service will be installed and set to start automatically
+6. You can now manage the service through Windows Services
+
+### Building from Source
+
+To build Huntarr from source on Windows:
+
+1. Clone the repository
+2. Install Python 3.9+ and pip
+3. Run the `build_windows.bat` script
+4. The executable will be created in the `dist\Huntarr` directory
 
 ## Troubleshooting
 

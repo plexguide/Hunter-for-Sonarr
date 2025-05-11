@@ -1,0 +1,60 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install -r requirements.txt
+    
+    - name: Create required directories
+      run: |
+        mkdir -p config/logs
+        mkdir -p config/db
+        mkdir -p config/settings
+    
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller huntarr.spec
+    
+    - name: Create zip archive
+      run: |
+        Compress-Archive -Path dist/Huntarr/* -DestinationPath Huntarr-windows.zip
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Huntarr-Windows
+        path: Huntarr-windows.zip
+    
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: Huntarr-windows.zip
+        name: Huntarr ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
