@@ -132,7 +132,7 @@ The URL will be displayed in the logs when Huntarr starts, using the same hostna
 The web interface allows you to configure all of Huntarr's settings:
 
 <p align="center">
-  <img width="930" alt="image" src="https://github.com/user-attachments/assets/06003622-0af3-4398-a46d-0fa4fb1f455b" />
+  <img width="930" alt="image" src="https://github.com/user-attachments/assets/e87867f8-0a8c-48d8-b6ef-234caa33e41f" />
   <br>
   <em>Settings UI</em>
 </p>
