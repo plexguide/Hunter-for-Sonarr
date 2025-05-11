@@ -30,9 +30,19 @@ RUN mkdir -p /config/settings \
     && chmod -R 755 /config
 
 # Create a proper entrypoint script to handle initialization
-RUN echo '#!/bin/sh\n\
-# Ensure config permissions are correct on container restart\nif [ ! -f /config/.initialized ]; then\n  echo "Initializing Huntarr config directory..."\n  chown -R 1000:1000 /config\n  chmod -R 755 /config\n  touch /config/.initialized\nfi\n\n# Run the main application\nexec python3 /app/main.py\n' > /app/entrypoint.sh \
-    && chmod +x /app/entrypoint.sh
+RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
+    echo '' >> /app/entrypoint.sh && \
+    echo '# Ensure config permissions are correct on container restart' >> /app/entrypoint.sh && \
+    echo 'if [ ! -f /config/.initialized ]; then' >> /app/entrypoint.sh && \
+    echo '  echo "Initializing Huntarr config directory..."' >> /app/entrypoint.sh && \
+    echo '  chown -R 1000:1000 /config' >> /app/entrypoint.sh && \
+    echo '  chmod -R 755 /config' >> /app/entrypoint.sh && \
+    echo '  touch /config/.initialized' >> /app/entrypoint.sh && \
+    echo 'fi' >> /app/entrypoint.sh && \
+    echo '' >> /app/entrypoint.sh && \
+    echo '# Run the main application' >> /app/entrypoint.sh && \
+    echo 'exec python3 /app/main.py' >> /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
 
 # Set environment variables
 ENV PYTHONPATH=/app
