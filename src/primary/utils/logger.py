@@ -10,8 +10,12 @@ import os
 import pathlib
 from typing import Dict, Optional
 
+# Import the new path helper
+from src.primary.utils.paths import get_app_data_dir
+
 # Create log directory
-LOG_DIR = pathlib.Path("/config/logs") # Changed path
+app_data_dir = get_app_data_dir()
+LOG_DIR = pathlib.Path(app_data_dir) / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 # Default log file for general messages

@@ -16,6 +16,7 @@ datas = []
 data_directories_to_bundle = [
     ('frontend/static', 'frontend/static'),
     ('frontend/templates', 'frontend/templates'),
+    ('src/primary/default_configs', 'src/primary/default_configs'), # Added default configs
     # Add other directories like 'config_examples' if needed:
     # ('config_examples', 'config_examples')
 ]

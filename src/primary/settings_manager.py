@@ -14,16 +14,19 @@ import subprocess
 import time
 from typing import Dict, Any, Optional, List
 
+# Import the new path helpers
+from src.primary.utils.paths import get_app_data_dir, resource_path
+
 # Create a simple logger for settings_manager
 logging.basicConfig(level=logging.INFO)
 settings_logger = logging.getLogger("settings_manager")
 
 # Settings directory setup - Root config directory
-SETTINGS_DIR = pathlib.Path("/config")
+SETTINGS_DIR = pathlib.Path(get_app_data_dir()) # Use user-specific app data directory
 SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Default configs location remains the same
-DEFAULT_CONFIGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'default_configs'))
+# Default configs location - must be found when bundled
+DEFAULT_CONFIGS_DIR = resource_path(os.path.join('src', 'primary', 'default_configs')) # Path relative to project root
 
 # Update or add this as a class attribute or constant
 KNOWN_APP_TYPES = ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros", "general", "swaparr"]

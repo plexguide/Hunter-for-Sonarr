@@ -25,6 +25,10 @@ import logging
 import threading
 import importlib # Added import
 from flask import Flask, render_template, request, jsonify, Response, send_from_directory, redirect, url_for, session, stream_with_context # Added stream_with_context
+
+# Import resource_path helper
+from src.primary.utils.paths import resource_path
+
 # from src.primary.config import API_URL # No longer needed directly
 # Use only settings_manager
 from src.primary import settings_manager
@@ -54,34 +58,36 @@ log = logging.getLogger('werkzeug')
 log.setLevel(logging.DEBUG)  # Change to DEBUG to see all Flask/Werkzeug logs
 
 # Configure template and static paths with proper PyInstaller support
-# Check if we're running from a PyInstaller bundle
-print("==== HUNTARR TEMPLATE DEBUG ====")
-print(f"__file__: {__file__}")
-print(f"sys.executable: {sys.executable}")
-print(f"os.getcwd(): {os.getcwd()}")
-print(f"sys.path: {sys.path}")
-print(f"Is frozen: {getattr(sys, 'frozen', False)}")
+print("==== HUNTARR TEMPLATE/STATIC PATH DEBUG ====")
+# OLD if/else block for template_dir and static_dir starts around here
+# if getattr(sys, 'frozen', False):
+#    ...
+# else:
+#    ...
 
-if getattr(sys, 'frozen', False):
-    # We're running from the bundled package
-    bundle_dir = os.path.dirname(sys.executable)
-    # Override the template and static directories
-    template_dir = os.path.join(bundle_dir, 'templates')
-    static_dir = os.path.join(bundle_dir, 'static')
-    print(f"PyInstaller mode - Using templates dir: {template_dir}")
-    print(f"PyInstaller mode - Using static dir: {static_dir}")
-    print(f"Template dir exists: {os.path.exists(template_dir)}")
-    if os.path.exists(template_dir):
+# Use resource_path, which handles both frozen and development modes.
+# Assumes 'frontend/templates' and 'frontend/static' are relative to the project root.
+frontend_templates_rel_path = os.path.join('frontend', 'templates')
+frontend_static_rel_path = os.path.join('frontend', 'static')
+
+template_dir = resource_path(frontend_templates_rel_path)
+static_dir = resource_path(frontend_static_rel_path)
+
+print(f"Resolved template_dir: {template_dir}")
+print(f"Template dir exists: {os.path.exists(template_dir)}")
+if os.path.exists(template_dir):
+    try:
         print(f"Template dir contents: {os.listdir(template_dir)}")
-else:
-    # Normal development mode - use relative paths
-    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'templates'))
-    static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'static'))
-    print(f"Normal mode - Using templates dir: {template_dir}")
-    print(f"Normal mode - Using static dir: {static_dir}")
-    print(f"Template dir exists: {os.path.exists(template_dir)}")
-    if os.path.exists(template_dir):
-        print(f"Template dir contents: {os.listdir(template_dir)}")
+    except Exception as e:
+        print(f"Could not list template_dir contents: {e}")
+
+print(f"Resolved static_dir: {static_dir}")
+print(f"Static dir exists: {os.path.exists(static_dir)}")
+if os.path.exists(static_dir):
+    try:
+        print(f"Static dir contents: {os.listdir(static_dir)}")
+    except Exception as e:
+        print(f"Could not list static_dir contents: {e}")
 
 # Create Flask app with additional debug logging
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
