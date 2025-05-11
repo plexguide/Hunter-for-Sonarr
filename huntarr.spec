@@ -63,7 +63,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='frontend/static/img/logo/huntarr.ico',  # Updated to correct path
+    icon='frontend/static/img/logo.ico',  # Using path expected by PyInstaller
     version='file_version_info.txt',
     # Embed version info directly
     file_version=version,

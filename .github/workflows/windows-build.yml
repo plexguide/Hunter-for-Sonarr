@@ -43,13 +43,38 @@ jobs:
             echo "BUILD_VERSION=$version" >> $env:GITHUB_ENV
           }
       
-      # Create necessary directories
-      - name: Create required directories
+      # Create necessary directories and prepare icon
+      - name: Create required directories and copy icon
         run: |
           # Create static directory if it doesn't exist
           if (-not (Test-Path "static")) {
             New-Item -Path "static" -ItemType Directory -Force
             echo "Created static directory"
+          }
+          
+          # Create target directory for icon if it doesn't exist
+          if (-not (Test-Path "frontend/static/img")) {
+            New-Item -Path "frontend/static/img" -ItemType Directory -Force
+            echo "Created frontend/static/img directory"
+          }
+          
+          # Check if we have the icon and copy it to the expected location
+          if (Test-Path "frontend/static/img/logo/huntarr.ico") {
+            Copy-Item -Path "frontend/static/img/logo/huntarr.ico" -Destination "frontend/static/img/logo.ico" -Force
+            echo "Copied huntarr.ico to the expected location"
+          } else {
+            echo "WARNING: Could not find huntarr.ico at expected location. Creating a placeholder."
+            # Create a minimal ICO file as placeholder
+            $minimumIconPath = "frontend/static/img/logo.ico"
+            if (-not (Test-Path $minimumIconPath)) {
+              # Download a generic icon if we can
+              try {
+                Invoke-WebRequest -Uri "https://www.google.com/favicon.ico" -OutFile $minimumIconPath
+                echo "Downloaded a placeholder icon"
+              } catch {
+                echo "Could not download placeholder icon. Build may fail."
+              }
+            }
           }
       
       # Verify Windows config file exists
