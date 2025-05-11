@@ -251,14 +251,15 @@ def log_season_pack_upgrade(api_url: str, api_key: str, api_timeout: int, series
             except (ValueError, TypeError):
                 season_id = f"S{season_number}"
             
-            # Create a unique ID for this season pack upgrade
-            pack_id = f"season_{series_id}_{season_number}"
+            # Use the season ID directly - format as series_id + season number
+            # This matches how Sonarr would identify a season
+            season_id_num = f"{series_id}_{season_number}"
             
             # Create a descriptive name for the history entry
             media_name = f"{series_title} - {season_id} - COMPLETE SEASON PACK"
             
-            # Log the season pack upgrade to history
-            log_processed_media("sonarr", media_name, pack_id, instance_name, "season_pack_upgrade")
+            # Log the season pack upgrade to history with normal 'upgrade' operation type
+            log_processed_media("sonarr", media_name, season_id_num, instance_name, "upgrade")
             sonarr_logger.debug(f"Logged season pack upgrade to history for {series_title} Season {season_number}")
     except Exception as e:
         sonarr_logger.error(f"Failed to log season pack upgrade to history: {str(e)}")
