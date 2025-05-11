@@ -67,7 +67,7 @@
                             <span class="link-title">Issues | Requests</span>
                         </div>
                     </a>
-                    <a href="https://plex.one/forums/information-wiki.15/" target="_blank" class="community-link wiki">
+                    <a href="https://github.com/plexguide/Huntarr.io/wiki" target="_blank" class="community-link wiki">
                         <div class="icon-container wiki-icon">
                             <i class="fas fa-book"></i>
                         </div>
@@ -101,12 +101,10 @@
                             <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="hourly-cap-container">
-                            <a href="https://plex.one/threads/api-cap-hourly.3/" target="_blank" rel="noopener" class="api-link" title="Learn more about API caps">
-                                <div class="hourly-cap-status" id="sonarr-hourly-cap">
+                            <div class="hourly-cap-status" id="sonarr-hourly-cap">
                                     <span class="hourly-cap-icon" id="sonarr-cap-icon"></span>
                                     <span class="hourly-cap-text">API: <span id="sonarr-api-count">0</span> / <span id="sonarr-api-limit">20</span></span>
                                 </div>
-                            </a>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -135,12 +133,10 @@
                             <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="hourly-cap-container">
-                            <a href="https://plex.one/threads/api-cap-hourly.3/" target="_blank" rel="noopener" class="api-link" title="Learn more about API caps">
-                                <div class="hourly-cap-status" id="radarr-hourly-cap">
+                            <div class="hourly-cap-status" id="radarr-hourly-cap">
                                     <span class="hourly-cap-icon" id="radarr-cap-icon"></span>
                                     <span class="hourly-cap-text">API: <span id="radarr-api-count">0</span> / <span id="radarr-api-limit">20</span></span>
                                 </div>
-                            </a>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -169,12 +165,10 @@
                             <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="hourly-cap-container">
-                            <a href="https://plex.one/threads/api-cap-hourly.3/" target="_blank" rel="noopener" class="api-link" title="Learn more about API caps">
-                                <div class="hourly-cap-status" id="lidarr-hourly-cap">
+                            <div class="hourly-cap-status" id="lidarr-hourly-cap">
                                     <span class="hourly-cap-icon" id="lidarr-cap-icon"></span>
                                     <span class="hourly-cap-text">API: <span id="lidarr-api-count">0</span> / <span id="lidarr-api-limit">20</span></span>
                                 </div>
-                            </a>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -203,12 +197,10 @@
                             <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="hourly-cap-container">
-                            <a href="https://plex.one/threads/api-cap-hourly.3/" target="_blank" rel="noopener" class="api-link" title="Learn more about API caps">
-                                <div class="hourly-cap-status" id="readarr-hourly-cap">
+                            <div class="hourly-cap-status" id="readarr-hourly-cap">
                                     <span class="hourly-cap-icon" id="readarr-cap-icon"></span>
                                     <span class="hourly-cap-text">API: <span id="readarr-api-count">0</span> / <span id="readarr-api-limit">20</span></span>
                                 </div>
-                            </a>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -237,12 +229,10 @@
                             <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="hourly-cap-container">
-                            <a href="https://plex.one/threads/api-cap-hourly.3/" target="_blank" rel="noopener" class="api-link" title="Learn more about API caps">
-                                <div class="hourly-cap-status" id="whisparr-hourly-cap">
+                            <div class="hourly-cap-status" id="whisparr-hourly-cap">
                                     <span class="hourly-cap-icon" id="whisparr-cap-icon"></span>
                                     <span class="hourly-cap-text">API: <span id="whisparr-api-count">0</span> / <span id="whisparr-api-limit">20</span></span>
                                 </div>
-                            </a>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -271,12 +261,10 @@
                             <span id="erosHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                         </div>
                         <div class="hourly-cap-container">
-                            <a href="https://plex.one/threads/api-cap-hourly.3/" target="_blank" rel="noopener" class="api-link" title="Learn more about API caps">
-                                <div class="hourly-cap-status" id="eros-hourly-cap">
+                            <div class="hourly-cap-status" id="eros-hourly-cap">
                                     <span class="hourly-cap-icon" id="eros-cap-icon"></span>
                                     <span class="hourly-cap-text">API: <span id="eros-api-count">0</span> / <span id="eros-api-limit">20</span></span>
                                 </div>
-                            </a>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -1326,55 +1314,8 @@
 </style>
 
 <script>
-    // Make app cards clickable after the DOM is loaded
+    // DOM loaded event listener - removed card clickability
     document.addEventListener('DOMContentLoaded', function() {
-        // App forum URLs
-        const appUrls = {
-            'sonarr': 'https://plex.one/forums/sonarr.16/',
-            'radarr': 'https://plex.one/forums/radarr.17/',
-            'lidarr': 'https://plex.one/forums/lidarr.19/',
-            'readarr': 'https://plex.one/forums/readarr.20/',
-            'whisparr': 'https://plex.one/forums/whisparr.21/',
-            'eros': 'https://plex.one/forums/whisparr.21/'
-        };
-        
-        // Make each app card clickable
-        document.querySelectorAll('.app-stats-card').forEach(function(card) {
-            // Determine which app this card represents
-            let appType = '';
-            for (const appClass in appUrls) {
-                if (card.classList.contains(appClass)) {
-                    appType = appClass;
-                    break;
-                }
-            }
-            
-            if (appType && appUrls[appType]) {
-                // Make the card clickable
-                card.style.cursor = 'pointer';
-                
-                // Add hover effect
-                card.addEventListener('mouseenter', function() {
-                    card.querySelector('h4').style.color = '#ffffff';
-                    card.querySelector('h4').style.textShadow = '0 0 8px rgba(255, 255, 255, 0.5)';
-                });
-                
-                card.addEventListener('mouseleave', function() {
-                    card.querySelector('h4').style.color = '#e0e6ed';
-                    card.querySelector('h4').style.textShadow = 'none';
-                });
-                
-                // Add click handler
-                card.addEventListener('click', function(e) {
-                    // Don't trigger if clicking on buttons or other interactive elements
-                    if (e.target.closest('.reset-button-container') || e.target.closest('.hourly-cap-container') || e.target.closest('.status-container')) {
-                        return;
-                    }
-                    
-                    // Open the forum URL in a new tab
-                    window.open(appUrls[appType], '_blank', 'noopener');
-                });
-            }
-        });
+        // App cards are no longer clickable
     });
 </script>
