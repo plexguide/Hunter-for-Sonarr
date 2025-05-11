@@ -257,8 +257,6 @@ jobs:
                   'win32con',
                   'win32service',
                   'win32serviceutil',
-                  'src.primary.apps.bazarr',
-                  'src.primary.apps.bazarr.api'
               ],
               hookspath=[],
               hooksconfig={},
@@ -340,8 +338,8 @@ jobs:
           
           Set-Content -Path file_version_info.txt -Value $versionInfo
           
-          # Build with the spec file
-          pyinstaller Huntarr.spec --version-file=file_version_info.txt
+          # Build with the spec file - can't use --version-file with a spec file
+          pyinstaller Huntarr.spec
       
       # Create Windows package
       - name: Create Windows package

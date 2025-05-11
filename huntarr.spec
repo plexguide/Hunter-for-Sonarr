@@ -1,4 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
+import sys
+
+# Version info for Windows executable
+version = os.environ.get('BUILD_VERSION', '1.1.2')
+version_tuple = tuple(map(int, version.split('.'))) + (0,) * (4 - len(version.split('.')))
 
 block_cipher = None
 
@@ -56,4 +62,8 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon='frontend/static/img/logo.ico',
+    version='file_version_info.txt',
+    # Embed version info directly
+    file_version=version,
+    product_version=version,
 )
