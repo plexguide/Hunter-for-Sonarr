@@ -26,13 +26,18 @@ jobs:
         with:
           python-version: '3.9'
           
-      # Install NSIS
+      # Install NSIS using Chocolatey (more reliable)
       - name: Install NSIS
         run: |
-          # Download and install NSIS silently
-          Invoke-WebRequest -Uri "https://nsis.sourceforge.io/mediawiki/images/d/d7/Nsis-3.08-setup.exe" -OutFile "nsis-setup.exe"
-          Start-Process -FilePath "nsis-setup.exe" -ArgumentList "/S" -Wait
-          Write-Output "NSIS installed successfully"
+          # Install Chocolatey if not already installed
+          if (!(Test-Path "C:\ProgramData\chocolatey\choco.exe")) {
+            Set-ExecutionPolicy Bypass -Scope Process -Force
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+            Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+          }
+          
+          # Install NSIS using Chocolatey
+          choco install nsis -y --no-progress
           
           # Check if NSIS is installed
           if (Test-Path "C:\Program Files (x86)\NSIS\makensis.exe") {
