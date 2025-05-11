@@ -401,12 +401,19 @@ jobs:
           dir
           echo "Windows build available at: ./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip"
       
-      # Upload the executable as a build artifact using a different action
-      - name: Upload Artifact
+      # Upload the complete package as a build artifact
+      - name: Upload Package Artifact
         uses: actions/upload-artifact@v1
         with:
-          name: Huntarr-Windows
+          name: Huntarr-Windows-Package
           path: ./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip
+      
+      # Upload the standalone executable as a separate artifact
+      - name: Upload Standalone Executable
+        uses: actions/upload-artifact@v1
+        with:
+          name: Huntarr-Executable
+          path: ./dist/Huntarr.exe
       
       # Simplified completion message instead of GitHub release
       - name: Build Summary
