@@ -1,6 +1,6 @@
-# GitHub Actions Workflow for Huntarr.io: Build Docker Image and Windows Installer
+# GitHub Actions Workflow for Huntarr.io: Build Standalone Windows Executable with PyInstaller and NSIS
 
-name: Build and Release
+name: Build and Release Windows Executable
 
 on:
   push:
@@ -8,84 +8,60 @@ on:
       - 'v*.*.*' # Trigger on tags like v1.0.0, v0.5.2, etc.
 
 jobs:
-  build-docker-image:
-    name: Build and Push Docker Image
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write # Required to push to GitHub Packages (GHCR)
+  build-windows-executable:
+    name: Build Windows Executable with PyInstaller and NSIS
+    runs-on: windows-latest # PyInstaller for Windows and NSIS run on Windows
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          python-version: '3.9' # Match the version used in your Dockerfile/development
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/huntarr # Use repository_owner for username/org
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
-            
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  build-windows-installer:
-    name: Build Windows Installer
-    needs: build-docker-image # Run after Docker image is built
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Install project dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Install PyInstaller and UPX
+        run: |
+          pip install pyinstaller==5.13.2 # Pin PyInstaller version for stability, or use latest
+          choco install upx --version=4.2.4 # Pin UPX version, check for Chocolatey package updates
+        shell: powershell
 
       - name: Get the version from the tag
         id: get_version
-        run: echo "APP_VERSION=${GITHUB_REF#refs/tags/}" >> $env:GITHUB_ENV
-        shell: bash
-
-      - name: Set Docker image name for NSIS
-        id: set_image_name
-        # Ensure this matches the image name used in the 'build-docker-image' job
-        run: echo "DOCKER_IMAGE=ghcr.io/${{ github.repository_owner }}/huntarr:${{ env.APP_VERSION }}" >> $env:GITHUB_ENV 
-        shell: bash
-        
-      - name: Debug: Print versions
-        run: |
-          echo "App Version for NSIS: ${{ env.APP_VERSION }}"
-          echo "Docker Image for NSIS: ${{ env.DOCKER_IMAGE }}"
-        shell: bash
-
-      - name: Install NSIS
-        run: choco install nsis --version=3.09 -y # Pinning version for stability, check for latest if needed
+        run: echo "APP_VERSION=${GITHUB_REF#refs/tags/}" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         shell: powershell
 
-      - name: Update installer.nsi with correct version and image name
+      - name: Build Executable with PyInstaller
+        run: pyinstaller Huntarr.spec --noconfirm
+        env:
+          # PyInstaller might need this if it includes libraries that check for it
+          PYTHONUTF8: 1 
+
+      - name: Verify PyInstaller output directory
+        run: |
+          if (-not (Test-Path dist/Huntarr/Huntarr.exe)) {
+            Write-Error "PyInstaller output Huntarr.exe not found in dist/Huntarr/"
+            Get-ChildItem dist -Recurse
+            exit 1
+          }
+          Write-Host "PyInstaller output verified."
+        shell: powershell
+
+      - name: Install NSIS
+        run: choco install nsis --version=3.09 -y # Pinning version for stability
+        shell: powershell
+
+      - name: Update installer.nsi with correct version
         run: |
           (Get-Content installer.nsi) | 
           ForEach-Object { $_ -replace '^!define APP_VERSION .*', '!define APP_VERSION "${{ env.APP_VERSION }}"' } | 
-          ForEach-Object { $_ -replace '^!define DOCKER_IMAGE_NAME .*', '!define DOCKER_IMAGE_NAME "${{ env.DOCKER_IMAGE }}"' } | 
-          Set-Content installer.nsi
+          Set-Content installer.nsi -Encoding Ascii # NSIS scripts often prefer ASCII/ANSI
         shell: powershell
 
       - name: Compile NSIS Installer
@@ -93,37 +69,46 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }} # Ensure it runs where installer.nsi is
 
-      - name: Upload Installer Artifact
+      - name: Archive Installer for upload
         uses: actions/upload-artifact@v4
         with:
-          name: huntarr-installer-${{ env.APP_VERSION }}
-          path: Huntarr-Installer-${{ env.APP_VERSION }}.exe # NSIS OutFile is Huntarr-Installer-${APP_VERSION}.exe
-  
+          name: huntarr-installer-exe-${{ env.APP_VERSION }}
+          path: Huntarr-Installer-${{ env.APP_VERSION }}.exe # From OutFile in installer.nsi
+
   create-release:
     name: Create GitHub Release
-    needs: [build-docker-image, build-windows-installer]
-    runs-on: ubuntu-latest
+    needs: [build-windows-executable]
+    runs-on: ubuntu-latest # Release creation can run on ubuntu
     permissions:
       contents: write # Required to create releases
 
     steps:
-      - name: Get the version from the tag
+      - name: Get the version from the tag (passed from needs or re-derived)
         id: get_version
+        # This step is needed because env variables are not directly passed between jobs without outputs
+        # A simpler way if only APP_VERSION is needed is to use github.ref_name in the release step
         run: echo "APP_VERSION=${GITHUB_REF#refs/tags/}" >> $env:GITHUB_ENV
         shell: bash
 
       - name: Download installer artifact
         uses: actions/download-artifact@v4
         with:
-          name: huntarr-installer-${{ env.APP_VERSION }}
+          name: huntarr-installer-exe-${{ env.APP_VERSION }}
+          # No path specified, defaults to workflow's working directory
       
+      - name: List files after download (for debugging)
+        run: ls -R
+        shell: bash
+
       - name: Create Release and Upload Asset
         uses: softprops/action-gh-release@v2
         with:
           files: Huntarr-Installer-${{ env.APP_VERSION }}.exe
-          tag_name: ${{ env.APP_VERSION }}
+          # tag_name: ${{ env.APP_VERSION }} # Uses GITHUB_REF_NAME by default which is the tag
           name: Release ${{ env.APP_VERSION }}
-          body: "Huntarr.io ${{ env.APP_VERSION }} release. Installer for Windows."
+          body: |
+            Huntarr.io Standalone Windows Release ${{ env.APP_VERSION }}.
+            Installer for Huntarr, packaged with PyInstaller.
           draft: false
           prerelease: contains(env.APP_VERSION, '-beta') || contains(env.APP_VERSION, '-alpha')
         env:
