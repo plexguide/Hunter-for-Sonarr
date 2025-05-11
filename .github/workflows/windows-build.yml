@@ -1,0 +1,380 @@
+name: Build Huntarr Windows Standalone Application
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # This will trigger on version tags like v1.1.0
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      # Checkout code with full depth
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      # Set up Python environment
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller pywin32
+      
+      # Create Windows-specific patch for config paths
+      - name: Create Windows config path patch
+        run: |
+          # Create windows_config_patch.py to handle Windows paths
+          $patchContent = @"
+          # Windows patch for config paths
+          import os
+          import sys
+          import pathlib
+          
+          # Patch function to ensure config path works on Windows
+          def get_config_dir():
+              if getattr(sys, 'frozen', False):
+                  # Running as compiled exe
+                  base_dir = os.path.dirname(sys.executable)
+              else:
+                  # Running as script
+                  base_dir = os.path.dirname(os.path.abspath(__file__))
+              
+              config_dir = os.path.join(base_dir, 'config')
+              os.makedirs(config_dir, exist_ok=True)
+              return config_dir
+              
+          # Create directories for config
+          def ensure_config_dirs():
+              config_dir = get_config_dir()
+              os.makedirs(os.path.join(config_dir, 'data'), exist_ok=True)
+              os.makedirs(os.path.join(config_dir, 'logs'), exist_ok=True)
+              os.makedirs(os.path.join(config_dir, 'settings'), exist_ok=True)
+              return config_dir
+          "@
+          
+          Set-Content -Path src/primary/windows_config.py -Value $patchContent
+      
+      # Patch the settings_manager.py file to handle Windows paths
+      - name: Patch settings_manager for Windows
+        run: |
+          # Create a patch file
+          $patchContent = @"
+          # Path patch for settings_manager.py
+          import re
+          import os
+          
+          # Read the file
+          with open('src/primary/settings_manager.py', 'r') as f:
+              content = f.read()
+          
+          # Create the replacement for the SETTINGS_DIR declaration
+          pathPatch = '''
+          # Settings directory setup - Dynamically determine based on environment
+          import os
+          import sys
+          
+          # Import Windows-specific config handling for the executable
+          try:
+              from primary.windows_config import get_config_dir, ensure_config_dirs
+              # On Windows executable, use the special config directory
+              if sys.platform == 'win32' and getattr(sys, 'frozen', False):
+                  config_dir = ensure_config_dirs()
+                  SETTINGS_DIR = pathlib.Path(os.path.join(config_dir, 'settings'))
+                  settings_logger.info(f"Windows executable mode: Using config at {SETTINGS_DIR}")
+              else:
+                  # Default Docker/Linux behavior
+                  SETTINGS_DIR = pathlib.Path("/config")
+          except ImportError:
+              # Fallback to default behavior
+              SETTINGS_DIR = pathlib.Path("/config")
+          
+          SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
+          '''
+          
+          # Define the pattern to replace
+          pattern = r'# Settings directory setup.*?SETTINGS_DIR\.mkdir\(parents=True, exist_ok=True\)'
+          # Replace using regex with DOTALL flag to match across multiple lines
+          newContent = re.sub(pattern, pathPatch, content, flags=re.DOTALL)
+          
+          # Write the modified content back
+          with open('src/primary/settings_manager.py', 'w') as f:
+              f.write(newContent)
+              
+          print("Successfully patched settings_manager.py for Windows compatibility")
+          "@
+          
+          Set-Content -Path patch_settings_manager.py -Value $patchContent
+          
+          # Run the patch script
+          python patch_settings_manager.py
+      
+      # Create config directory and default settings
+      - name: Set up default config structure
+        run: |
+          # Create config directory structure
+          mkdir -p config\data
+          mkdir -p config\logs
+          mkdir -p config\settings
+          
+          # Copy default configs to the settings directory
+          Copy-Item -Path src\primary\default_configs\*.json -Destination config\settings\ -Force
+          
+          # Create a launcher.bat file for better user experience
+          $launcherContent = @"
+          @echo off
+          echo ======================================
+          echo   Welcome to Huntarr v1.1.0
+          echo ======================================
+          echo Starting Huntarr server...
+          echo.
+          echo Access the web interface at: http://localhost:9705
+          echo.
+          echo New features in v1.1.0:
+          echo * Bazarr subtitle management integration
+          echo * Improved API handling with consistent timeout settings
+          echo * Modern UI with animated app icons
+          echo * Enhanced community links via GitHub
+          echo.
+          echo Press Ctrl+C in the Huntarr console window to quit
+          echo.
+          start http://localhost:9705
+          start Huntarr.exe
+          "@
+          
+          Set-Content -Path launcher.bat -Value $launcherContent
+      
+      # Create a Windows-specific README
+      - name: Create Windows README
+        run: |
+          $readmeContent = @"
+          # Huntarr for Windows v1.1.0
+          
+          ## Quick Start
+          1. Double-click on the `launcher.bat` file to start Huntarr
+          2. Your default browser will open to http://localhost:9705
+          3. Configure your Arr applications in the Settings page
+          
+          ## New Features in v1.1.0
+          - **Bazarr Integration**: Manage your subtitle needs directly from Huntarr
+          - **Improved API Handling**: Consistent API timeouts and User-Agent (Huntarr/1.0) across all apps
+          - **Enhanced UI**: Modern interface with animated app icons and improved tooltips
+          - **GitHub Community**: All community links now point to GitHub resources instead of plex.one
+          
+          ## Configuration
+          - All configuration files are stored in the `config` folder next to the executable
+          - Logs are stored in the `config/logs` folder
+          - App settings are in `config/settings`
+          - Default API timeout is 120 seconds (configurable in general.json)
+          
+          ## Troubleshooting
+          - If you encounter Error 500, check the logs in the `config/logs` folder
+          - Ensure you have proper permissions on the `config` directory
+          - For support, visit our [GitHub Discussions](https://github.com/Admin9705/Huntarr.io/discussions)
+          - Report bugs at [GitHub Issues](https://github.com/Admin9705/Huntarr.io/issues)
+          - Join our community on [Discord](https://discord.com/invite/PGJJjR5Cww)
+          "@
+          
+          Set-Content -Path Huntarr-Windows-README.md -Value $readmeContent
+      
+      # Create PyInstaller spec file
+      - name: Create PyInstaller spec file
+        run: |
+          $specContent = @"
+          # -*- mode: python ; coding: utf-8 -*-
+
+          block_cipher = None
+
+          a = Analysis(
+              ['main.py'],
+              pathex=[],
+              binaries=[],
+              datas=[
+                  ('frontend', 'frontend'),
+                  ('config', 'config'),
+                  ('src/primary/default_configs', 'src/primary/default_configs'),
+                  ('static', 'static'),
+                  ('Huntarr-Windows-README.md', '.'),
+                  ('launcher.bat', '.'),
+              ],
+              hiddenimports=[
+                  'win32timezone', 
+                  'waitress',
+                  'src.primary.windows_config',
+                  'win32api',
+                  'win32con',
+                  'win32service',
+                  'win32serviceutil',
+                  'src.primary.apps.bazarr',
+                  'src.primary.apps.bazarr.api'
+              ],
+              hookspath=[],
+              hooksconfig={},
+              runtime_hooks=[],
+              excludes=[],
+              win_no_prefer_redirects=False,
+              win_private_assemblies=False,
+              cipher=block_cipher,
+              noarchive=False,
+          )
+          
+          pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+          
+          exe = EXE(
+              pyz,
+              a.scripts,
+              a.binaries,
+              a.zipfiles,
+              a.datas,
+              [],
+              name='Huntarr',
+              debug=False,
+              bootloader_ignore_signals=False,
+              strip=False,
+              upx=True,
+              upx_exclude=[],
+              runtime_tmpdir=None,
+              console=False,
+              disable_windowed_traceback=False,
+              argv_emulation=False,
+              target_arch=None,
+              codesign_identity=None,
+              entitlements_file=None,
+              icon='frontend/static/img/logo.ico',
+          )
+          "@
+          
+          Set-Content -Path Huntarr.spec -Value $specContent
+      
+      # Get version from tag or set to v1.1.0 if not available
+      - name: Extract version
+        id: get_version
+        run: |
+          if ("${{ github.ref }}" -like "refs/tags/v*") {
+            $version = "${{ github.ref }}".Substring(11)
+            echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          } else {
+            $version = "1.1.0"
+            echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+            echo "BUILD_VERSION=$version" >> $env:GITHUB_ENV
+          }
+      
+      # Build executable with version information
+      - name: Build executable with version information
+        run: |
+          # Get version from previous step
+          $version = "${{ steps.get_version.outputs.VERSION }}"
+          
+          # Add version info to executable
+          $versionInfo = @"
+          VSVersionInfo(
+            ffi=FixedFileInfo(
+              filevers=($version.Split('.') + @(0) * 4)[0..3],
+              prodvers=($version.Split('.') + @(0) * 4)[0..3],
+              mask=0x3f,
+              flags=0x0,
+              OS=0x40004,
+              fileType=0x1,
+              subtype=0x0,
+              date=(0, 0)
+            ),
+            kids=[
+              StringFileInfo(
+                [
+                  StringTable(
+                    '040904B0',
+                    [StringStruct('CompanyName', 'Huntarr.io'),
+                    StringStruct('FileDescription', 'Huntarr - Arr App Manager'),
+                    StringStruct('FileVersion', '$version'),
+                    StringStruct('InternalName', 'Huntarr'),
+                    StringStruct('LegalCopyright', 'Copyright (c) 2025'),
+                    StringStruct('OriginalFilename', 'Huntarr.exe'),
+                    StringStruct('ProductName', 'Huntarr'),
+                    StringStruct('ProductVersion', '$version')]
+                  )
+                ]
+              ),
+              VarFileInfo([VarStruct('Translation', [1033, 1200])])
+            ]
+          )
+          "@
+          
+          Set-Content -Path file_version_info.txt -Value $versionInfo
+          
+          # Build with the spec file
+          pyinstaller Huntarr.spec --version-file=file_version_info.txt
+      
+      # Create Windows package
+      - name: Create Windows package
+        run: |
+          # Get version from previous step
+          $version = "${{ steps.get_version.outputs.VERSION }}"
+          
+          # Copy additional files to dist directory
+          Copy-Item -Path launcher.bat -Destination dist\
+          Copy-Item -Path Huntarr-Windows-README.md -Destination dist\
+          
+          # Create a zip file of the dist directory with version in name
+          Compress-Archive -Path dist\* -DestinationPath "Huntarr-Windows-v$version.zip" -Force
+      
+      # Test the executable
+      - name: Test executable setup
+        run: |
+          echo "Verifying build artifacts"
+          dir dist
+      
+      # Get version from tag or set to v1.1.0 if not available
+      - name: Extract version
+        id: get_version
+        run: |
+          if ("${{ github.ref }}" -like "refs/tags/v*") {
+            $version = "${{ github.ref }}".Substring(11)
+            echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "VERSION=v1.1.0" >> $env:GITHUB_OUTPUT
+          }
+      
+      # Create GitHub release as pre-release
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          name: Huntarr Windows Build ${{ steps.get_version.outputs.VERSION }}
+          body: |
+            # Huntarr Windows Build ${{ steps.get_version.outputs.VERSION }}
+            
+            This is a Windows executable build of Huntarr.io v${{ steps.get_version.outputs.VERSION }}.
+            
+            ## New Features
+            - **Bazarr Integration**: Manage your subtitle needs directly from Huntarr
+            - **Improved API Handling**: Consistent API timeouts and User-Agent across all apps
+            - **Enhanced UI**: Modern interface with animated app icons
+            - **GitHub Community**: All community links now point to GitHub resources
+            
+            ## Installation
+            1. Download the zip file and extract all contents to a folder
+            2. Run the `launcher.bat` file to start Huntarr
+            3. Your browser will open automatically to http://localhost:9705
+            
+            ## Notes
+            - This is a pre-release version for testing
+            - Configuration is stored in the `config` folder next to the executable
+            - If you encounter issues, please report them on GitHub
+            - Never mark this as the latest release (pre-release only)
+          draft: false
+          prerelease: true  # Mark as pre-release
+          files: |
+            ./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip
+            dist/Huntarr.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
