@@ -9,6 +9,7 @@
   ],
   "hunt_missing_items": 1,
   "hunt_upgrade_items": 0,
+  "upgrade_mode": "episodes",
   "hunt_missing_mode": "episodes",
   "sleep_duration": 900,
   "monitored_only": true,

@@ -24,13 +24,14 @@ def process_cutoff_upgrades(
     monitored_only: bool = True,
     skip_series_refresh: bool = False,
     hunt_upgrade_items: int = 5,
+    upgrade_mode: str = "episodes",
     command_wait_delay: int = get_advanced_setting("command_wait_delay", 1),
     command_wait_attempts: int = get_advanced_setting("command_wait_attempts", 600),
     stop_check: Callable[[], bool] = lambda: False
 ) -> bool:
     """
     Process quality cutoff upgrades for Sonarr.
-    This function only uses the episode mode for upgrades regardless of hunt_missing_mode.
+    This can use either episodes mode or shows mode for upgrades based on the upgrade_mode setting.
     """
     if hunt_upgrade_items <= 0:
         sonarr_logger.info("'hunt_upgrade_items' setting is 0 or less. Skipping upgrade processing.")
@@ -38,14 +39,27 @@ def process_cutoff_upgrades(
         
     sonarr_logger.info(f"Checking for {hunt_upgrade_items} quality upgrades...")
     
-    sonarr_logger.info("Using RANDOM selection mode for quality upgrades")
+    sonarr_logger.info(f"Using {upgrade_mode.upper()} mode for quality upgrades")
 
-    # Always use episode mode for upgrades, regardless of the hunt_missing_mode setting
-    return process_upgrade_episodes_mode(
-        api_url, api_key, instance_name, api_timeout, monitored_only, 
-        skip_series_refresh, hunt_upgrade_items, 
-        command_wait_delay, command_wait_attempts, stop_check
-    )
+    # Use the selected upgrade_mode
+    if upgrade_mode == "shows":
+        return process_upgrade_shows_mode(
+            api_url, api_key, instance_name, api_timeout, monitored_only, 
+            skip_series_refresh, hunt_upgrade_items, 
+            command_wait_delay, command_wait_attempts, stop_check
+        )
+    elif upgrade_mode == "seasons_packs":
+        return process_upgrade_seasons_mode(
+            api_url, api_key, instance_name, api_timeout, monitored_only, 
+            skip_series_refresh, hunt_upgrade_items, 
+            command_wait_delay, command_wait_attempts, stop_check
+        )
+    else:  # Default to episodes mode
+        return process_upgrade_episodes_mode(
+            api_url, api_key, instance_name, api_timeout, monitored_only, 
+            skip_series_refresh, hunt_upgrade_items, 
+            command_wait_delay, command_wait_attempts, stop_check
+        )
 
 def process_upgrade_episodes_mode(
     api_url: str,
