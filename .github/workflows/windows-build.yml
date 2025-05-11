@@ -43,6 +43,15 @@ jobs:
             echo "BUILD_VERSION=$version" >> $env:GITHUB_ENV
           }
       
+      # Create necessary directories
+      - name: Create required directories
+        run: |
+          # Create static directory if it doesn't exist
+          if (-not (Test-Path "static")) {
+            New-Item -Path "static" -ItemType Directory -Force
+            echo "Created static directory"
+          }
+      
       # Verify Windows config file exists
       - name: Verify Windows config file
         run: |

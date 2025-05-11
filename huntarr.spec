@@ -16,9 +16,11 @@ a = Analysis(
         ('frontend', 'frontend'),
         ('config', 'config'),
         ('src/primary/default_configs', 'src/primary/default_configs'),
-        ('static', 'static'),
-        ('Huntarr-Windows-README.md', '.'),
-        ('launcher.bat', '.'),
+        # Check if static directory exists before including it
+        # ('static', 'static'),  # Commented out as it may not exist in all branches
+        # These files will be created during the build process
+        # ('Huntarr-Windows-README.md', '.'),
+        # ('launcher.bat', '.'),
     ],
     hiddenimports=[
         'win32timezone', 
