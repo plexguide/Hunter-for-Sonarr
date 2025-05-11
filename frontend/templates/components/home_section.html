@@ -1,21 +1,31 @@
 <section id="homeSection" class="content-section">
     <div class="dashboard-grid stack-layout mobile-scrollable">
-        <!-- Support Links: Header removed, integrated directly into the layout -->
+        <!-- Enhanced Support Links with Modern Design -->
         <div class="card support-links-card">
             <div class="support-links-container">
                 <div class="support-links-grid">
                     <a href="https://github.com/plexguide/huntarr" target="_blank" class="support-link github">
-                        <div class="icon-container">
-                            <i class="fas fa-star star-icon"></i>
+                        <div class="icon-container github-icon">
+                            <i class="fab fa-github"></i>
+                            <i class="fas fa-star star-inner-icon"></i>
                         </div>
                         <div class="link-details">
                             <span class="link-title">Star on GitHub</span>
-                            <span class="link-description">Helps the project!</span>
+                            <span class="link-description">Support development &amp; features</span>
+                        </div>
+                    </a>
+                    <a href="https://plex.one" target="_blank" class="support-link forum">
+                        <div class="icon-container forum-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="link-details">
+                            <span class="link-title">Huntarr Forum</span>
+                            <span class="link-description">Visit us on PLEX.one</span>
                         </div>
                     </a>
                     <a href="https://donate.plex.one" target="_blank" class="support-link donate">
-                        <div class="icon-container">
-                            <i class="fas fa-heart donation-icon"></i>
+                        <div class="icon-container donate-icon">
+                            <i class="fas fa-heart"></i>
                         </div>
                         <div class="link-details">
                             <span class="link-title">Donate</span>
@@ -33,8 +43,8 @@
             </div>
             <div class="community-resources-container">
                 <div class="community-links-grid">
-                    <a href="https://discord.gg/VQbZCGzQsn" target="_blank" class="community-link discord">
-                        <div class="icon-container">
+                    <a href="https://plex.one/threads/discord.5/" target="_blank" class="community-link discord">
+                        <div class="icon-container discord-icon">
                             <i class="fab fa-discord"></i>
                         </div>
                         <div class="link-details">
@@ -42,23 +52,23 @@
                         </div>
                     </a>
                     <a href="https://www.reddit.com/r/huntarr/" target="_blank" class="community-link reddit">
-                        <div class="icon-container">
+                        <div class="icon-container reddit-icon">
                             <i class="fab fa-reddit"></i>
                         </div>
                         <div class="link-details">
                             <span class="link-title">Reddit</span>
                         </div>
                     </a>
-                    <a href="https://github.com/plexguide/Huntarr/issues" target="_blank" class="community-link github">
-                        <div class="icon-container">
+                    <a href="https://plex.one/categories/developers-corner.22/" target="_blank" class="community-link issues">
+                        <div class="icon-container issues-icon">
                             <i class="fas fa-bug"></i>
                         </div>
                         <div class="link-details">
-                            <span class="link-title">Issues</span>
+                            <span class="link-title">Issues | Requests</span>
                         </div>
                     </a>
-                    <a href="https://github.com/plexguide/Huntarr/wiki" target="_blank" class="community-link wiki">
-                        <div class="icon-container">
+                    <a href="https://plex.one/forums/information-wiki.15/" target="_blank" class="community-link wiki">
+                        <div class="icon-container wiki-icon">
                             <i class="fas fa-book"></i>
                         </div>
                         <div class="link-details">
@@ -66,7 +76,7 @@
                         </div>
                     </a>
                     <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank" class="community-link changelog">
-                        <div class="icon-container">
+                        <div class="icon-container changelog-icon">
                             <i class="fas fa-history"></i>
                         </div>
                         <div class="link-details">
@@ -89,7 +99,14 @@
                     <div class="app-stats-card sonarr">
                         <div class="status-container">
                             <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                            <button class="cycle-reset-button" data-app="sonarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
+                        <div class="hourly-cap-container">
+                            <a href="https://plex.one/threads/api-cap-hourly.3/" target="_blank" rel="noopener" class="api-link" title="Learn more about API caps">
+                                <div class="hourly-cap-status" id="sonarr-hourly-cap">
+                                    <span class="hourly-cap-icon" id="sonarr-cap-icon"></span>
+                                    <span class="hourly-cap-text">API: <span id="sonarr-api-count">0</span> / <span id="sonarr-api-limit">20</span></span>
+                                </div>
+                            </a>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -107,13 +124,23 @@
                                 <div class="stat-label">Upgrades Triggered</div>
                             </div>
                         </div>
+                        <div class="reset-button-container">
+                            <button class="cycle-reset-button" data-app="sonarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
                     </div>
                     
                     <!-- Radarr Card -->
                     <div class="app-stats-card radarr">
                         <div class="status-container">
                             <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                            <button class="cycle-reset-button" data-app="radarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
+                        <div class="hourly-cap-container">
+                            <a href="https://plex.one/threads/api-cap-hourly.3/" target="_blank" rel="noopener" class="api-link" title="Learn more about API caps">
+                                <div class="hourly-cap-status" id="radarr-hourly-cap">
+                                    <span class="hourly-cap-icon" id="radarr-cap-icon"></span>
+                                    <span class="hourly-cap-text">API: <span id="radarr-api-count">0</span> / <span id="radarr-api-limit">20</span></span>
+                                </div>
+                            </a>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -131,13 +158,23 @@
                                 <span class="stat-label">Upgrades Triggered</span>
                             </div>
                         </div>
+                        <div class="reset-button-container">
+                            <button class="cycle-reset-button" data-app="radarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
                     </div>
                     
                     <!-- Lidarr Card -->
                     <div class="app-stats-card lidarr">
                         <div class="status-container">
                             <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                            <button class="cycle-reset-button" data-app="lidarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
+                        <div class="hourly-cap-container">
+                            <a href="https://plex.one/threads/api-cap-hourly.3/" target="_blank" rel="noopener" class="api-link" title="Learn more about API caps">
+                                <div class="hourly-cap-status" id="lidarr-hourly-cap">
+                                    <span class="hourly-cap-icon" id="lidarr-cap-icon"></span>
+                                    <span class="hourly-cap-text">API: <span id="lidarr-api-count">0</span> / <span id="lidarr-api-limit">20</span></span>
+                                </div>
+                            </a>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -155,13 +192,23 @@
                                 <span class="stat-label">Upgrades Triggered</span>
                             </div>
                         </div>
+                        <div class="reset-button-container">
+                            <button class="cycle-reset-button" data-app="lidarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
                     </div>
                     
                     <!-- Readarr Card -->
                     <div class="app-stats-card readarr">
                         <div class="status-container">
                             <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                            <button class="cycle-reset-button" data-app="readarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
+                        <div class="hourly-cap-container">
+                            <a href="https://plex.one/threads/api-cap-hourly.3/" target="_blank" rel="noopener" class="api-link" title="Learn more about API caps">
+                                <div class="hourly-cap-status" id="readarr-hourly-cap">
+                                    <span class="hourly-cap-icon" id="readarr-cap-icon"></span>
+                                    <span class="hourly-cap-text">API: <span id="readarr-api-count">0</span> / <span id="readarr-api-limit">20</span></span>
+                                </div>
+                            </a>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -179,13 +226,23 @@
                                 <span class="stat-label">Upgrades Triggered</span>
                             </div>
                         </div>
+                        <div class="reset-button-container">
+                            <button class="cycle-reset-button" data-app="readarr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
                     </div>
                     
                     <!-- Whisparr Card -->
                     <div class="app-stats-card whisparr">
                         <div class="status-container">
                             <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                            <button class="cycle-reset-button" data-app="whisparr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
+                        <div class="hourly-cap-container">
+                            <a href="https://plex.one/threads/api-cap-hourly.3/" target="_blank" rel="noopener" class="api-link" title="Learn more about API caps">
+                                <div class="hourly-cap-status" id="whisparr-hourly-cap">
+                                    <span class="hourly-cap-icon" id="whisparr-cap-icon"></span>
+                                    <span class="hourly-cap-text">API: <span id="whisparr-api-count">0</span> / <span id="whisparr-api-limit">20</span></span>
+                                </div>
+                            </a>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -203,13 +260,23 @@
                                 <span class="stat-label">Upgrades Triggered</span>
                             </div>
                         </div>
+                        <div class="reset-button-container">
+                            <button class="cycle-reset-button" data-app="whisparr"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
                     </div>
                     
                     <!-- Eros Card -->
                     <div class="app-stats-card eros">
                         <div class="status-container">
                             <span id="erosHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
-                            <button class="cycle-reset-button" data-app="eros"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                        </div>
+                        <div class="hourly-cap-container">
+                            <a href="https://plex.one/threads/api-cap-hourly.3/" target="_blank" rel="noopener" class="api-link" title="Learn more about API caps">
+                                <div class="hourly-cap-status" id="eros-hourly-cap">
+                                    <span class="hourly-cap-icon" id="eros-cap-icon"></span>
+                                    <span class="hourly-cap-text">API: <span id="eros-api-count">0</span> / <span id="eros-api-limit">20</span></span>
+                                </div>
+                            </a>
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
@@ -226,6 +293,9 @@
                                 <span class="stat-number" id="eros-upgraded">0</span>
                                 <span class="stat-label">Upgrades Triggered</span>
                             </div>
+                        </div>
+                        <div class="reset-button-container">
+                            <button class="cycle-reset-button" data-app="eros"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
                         </div>
                     </div>
                 </div>
@@ -365,7 +435,7 @@
     .app-stats-card {
         background: rgba(24, 28, 37, 0.8);
         border-radius: 12px;
-        padding: 20px;
+        padding: 0 20px 0 20px;
         text-align: center;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         transition: all 0.3s ease;
@@ -374,8 +444,9 @@
         flex-direction: column;
         align-items: center;
         min-height: 200px;
-        justify-content: space-between;
+        justify-content: flex-start;
         border: 1px solid rgba(120, 140, 180, 0.15);
+        overflow: hidden;
     }
     
     /* Removing card-level border styles since we only want rings around the icons */
@@ -389,12 +460,19 @@
     /* Status container styling */
     .status-container {
         width: 100%;
-        margin-bottom: 15px;
+        margin: 0 0 20px 0;
+        padding: 15px 0;
         display: flex;
         justify-content: center;
         align-items: center;
         flex-wrap: wrap;
         gap: 5px;
+        background: rgba(20, 26, 35, 0.6);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px 12px 0 0;
+        margin-left: -20px;
+        margin-right: -20px;
+        width: calc(100% + 40px);
     }
     
     .status-badge {
@@ -413,9 +491,10 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-bottom: 15px;
+        margin: 10px 0 5px 0;
     }
     
+    /* App icon wrapper base styling */
     .app-icon-wrapper {
         width: 70px;
         height: 70px;
@@ -425,44 +504,109 @@
         border-radius: 50%;
         background: rgba(28, 34, 46, 0.8);
         margin-bottom: 12px;
+        position: relative;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        border: 2px solid rgba(120, 140, 180, 0.2);
     }
     
-    /* Sonarr blue icon ring */
-    .app-stats-card.sonarr .app-icon-wrapper {
-        border: 2px solid rgba(0, 174, 240, 0.8);
-        box-shadow: 0 0 15px rgba(0, 174, 240, 0.4);
+    /* Glowing ring animations */
+    @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
     }
     
-    /* Radarr yellow icon ring */
-    .app-stats-card.radarr .app-icon-wrapper {
-        border: 2px solid rgba(253, 203, 43, 0.8);
-        box-shadow: 0 0 15px rgba(253, 203, 43, 0.4);
+    @keyframes rotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
     
-    /* Lidarr green icon ring */
-    .app-stats-card.lidarr .app-icon-wrapper {
-        border: 2px solid rgba(49, 197, 56, 0.8);
-        box-shadow: 0 0 15px rgba(49, 197, 56, 0.4);
+    /* Common styles for app icon wrappers */
+    .app-stats-card .app-icon-wrapper::before,
+    .app-stats-card .app-icon-wrapper::after {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        animation: pulse 2s infinite ease-in-out, rotate 20s infinite linear;
     }
     
-    /* Readarr red icon ring */
-    .app-stats-card.readarr .app-icon-wrapper {
-        border: 2px solid rgba(192, 45, 40, 0.8);
-        box-shadow: 0 0 15px rgba(192, 45, 40, 0.4);
+    .app-stats-card .app-icon-wrapper::after {
+        top: -8px;
+        left: -8px;
+        right: -8px;
+        bottom: -8px;
+        opacity: 0.5;
+        animation: pulse 3s infinite ease-in-out, rotate 30s infinite linear reverse;
     }
     
-    /* Whisparr purple icon ring */
-    .app-stats-card.whisparr .app-icon-wrapper {
-        border: 2px solid rgba(195, 0, 230, 0.8);
-        box-shadow: 0 0 15px rgba(195, 0, 230, 0.4);
+    /* Sonarr blue glowing rings */
+    .app-stats-card.sonarr .app-icon-wrapper::before {
+        border-color: rgba(0, 174, 240, 0.8);
+        box-shadow: 0 0 15px rgba(0, 174, 240, 0.6);
     }
     
-    /* Eros purple icon ring */
-    .app-stats-card.eros .app-icon-wrapper {
-        border: 2px solid rgba(195, 0, 230, 0.8);
-        box-shadow: 0 0 15px rgba(195, 0, 230, 0.4);
+    .app-stats-card.sonarr .app-icon-wrapper::after {
+        border-color: rgba(0, 174, 240, 0.4);
+        box-shadow: 0 0 20px rgba(0, 174, 240, 0.3);
+    }
+    
+    /* Radarr yellow glowing rings */
+    .app-stats-card.radarr .app-icon-wrapper::before {
+        border-color: rgba(253, 203, 43, 0.8);
+        box-shadow: 0 0 15px rgba(253, 203, 43, 0.6);
+    }
+    
+    .app-stats-card.radarr .app-icon-wrapper::after {
+        border-color: rgba(253, 203, 43, 0.4);
+        box-shadow: 0 0 20px rgba(253, 203, 43, 0.3);
+    }
+    
+    /* Lidarr green glowing rings */
+    .app-stats-card.lidarr .app-icon-wrapper::before {
+        border-color: rgba(49, 197, 56, 0.8);
+        box-shadow: 0 0 15px rgba(49, 197, 56, 0.6);
+    }
+    
+    .app-stats-card.lidarr .app-icon-wrapper::after {
+        border-color: rgba(49, 197, 56, 0.4);
+        box-shadow: 0 0 20px rgba(49, 197, 56, 0.3);
+    }
+    
+    /* Readarr red glowing rings */
+    .app-stats-card.readarr .app-icon-wrapper::before {
+        border-color: rgba(192, 45, 40, 0.8);
+        box-shadow: 0 0 15px rgba(192, 45, 40, 0.6);
+    }
+    
+    .app-stats-card.readarr .app-icon-wrapper::after {
+        border-color: rgba(192, 45, 40, 0.4);
+        box-shadow: 0 0 20px rgba(192, 45, 40, 0.3);
+    }
+    
+    /* Whisparr purple glowing rings */
+    .app-stats-card.whisparr .app-icon-wrapper::before {
+        border-color: rgba(195, 0, 230, 0.8);
+        box-shadow: 0 0 15px rgba(195, 0, 230, 0.6);
+    }
+    
+    .app-stats-card.whisparr .app-icon-wrapper::after {
+        border-color: rgba(195, 0, 230, 0.4);
+        box-shadow: 0 0 20px rgba(195, 0, 230, 0.3);
+    }
+    
+    /* Eros purple glowing rings (same as Whisparr) */
+    .app-stats-card.eros .app-icon-wrapper::before {
+        border-color: rgba(195, 0, 230, 0.8);
+        box-shadow: 0 0 15px rgba(195, 0, 230, 0.6);
+    }
+    
+    .app-stats-card.eros .app-icon-wrapper::after {
+        border-color: rgba(195, 0, 230, 0.4);
+        box-shadow: 0 0 20px rgba(195, 0, 230, 0.3);
     }
     
     .app-logo {
@@ -481,10 +625,11 @@
     /* Stats display styling */
     .stats-numbers {
         display: flex;
-        gap: 15px;
+        justify-content: space-around;
         width: 100%;
-        padding-top: 15px;
+        padding: 15px 0;
         margin-top: auto;
+        margin-bottom: 0;
         border-top: 1px solid rgba(120, 140, 180, 0.15);
     }
 
@@ -603,6 +748,106 @@
         border: 1px solid rgba(243, 156, 18, 0.3);
     }
     
+    /* Hourly API Cap Styling */
+    .hourly-cap-container {
+        padding: 0 10px;
+        margin: 5px 0 5px 0;
+    }
+    
+    .api-link {
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .api-link:hover .hourly-cap-status {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        transform: translateY(-1px);
+        cursor: pointer;
+    }
+    
+    .api-link:active .hourly-cap-status {
+        transform: translateY(0);
+        transition: transform 0.1s;
+    }
+    
+    .hourly-cap-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        background-color: rgba(20, 25, 35, 0.5);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        border-left: 3px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    
+    .hourly-cap-status:after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.5);
+        transition: width 0.2s ease;
+    }
+    
+    .api-link:hover .hourly-cap-status:after {
+        width: 100%;
+    }
+    
+    .hourly-cap-icon {
+        margin-right: 5px;
+        font-size: 0.9rem;
+    }
+    
+    .hourly-cap-text {
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+        letter-spacing: 0.3px;
+    }
+    
+    /* API Cap Status Colors */
+    .hourly-cap-status.good {
+        background-color: rgba(20, 25, 35, 0.5);
+        border-left: 3px solid rgba(46, 204, 113, 0.9);
+    }
+    
+    .hourly-cap-status.warning {
+        background-color: rgba(20, 25, 35, 0.5);
+        border-left: 3px solid rgba(243, 156, 18, 0.9);
+    }
+    
+    .hourly-cap-status.danger {
+        background-color: rgba(20, 25, 35, 0.5);
+        border-left: 3px solid rgba(231, 76, 60, 0.9);
+    }
+    
+    .hourly-cap-status.good .hourly-cap-icon:before {
+        content: "\f201"; /* fa-chart-line */
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        color: #2ecc71;
+    }
+    
+    .hourly-cap-status.warning .hourly-cap-icon:before {
+        content: "\f252"; /* fa-hourglass-half */
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        color: #f39c12;
+    }
+    
+    .hourly-cap-status.danger .hourly-cap-icon:before {
+        content: "\f056"; /* fa-minus-circle */
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        color: #e74c3c;
+    }
+    
     .status-badge.not-connected {
         background-color: rgba(231, 76, 60, 0.15);
         color: #e74c3c;
@@ -719,77 +964,115 @@
         font-weight: 600;
     }
     
+    /* Enhanced Community Hub Card with Glass Effect */
+    .community-hub-card {
+        margin-bottom: 20px;
+        background: rgba(15, 20, 30, 0.5);
+        border: 1px solid rgba(79, 93, 115, 0.2);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+    }
+    
     .community-resources-container {
-        padding: 20px;
-        background-color: rgba(15, 18, 24, 0.4);
+        padding: 15px;
     }
     
     .community-links-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
     }
     
     .community-link {
         display: flex;
         align-items: center;
-        background: rgba(28, 34, 46, 0.7);
-        border-radius: 8px;
-        padding: 10px 12px;
-        transition: all 0.2s ease;
+        background: linear-gradient(145deg, rgba(25, 30, 40, 0.4), rgba(20, 25, 35, 0.7));
+        border-radius: 10px;
+        padding: 15px;
+        transition: all 0.3s ease;
         text-decoration: none;
-        color: #e1e6ef;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(70, 90, 120, 0.15);
+        z-index: 1;
+    }
+    
+    .community-link::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+        z-index: -1;
+        opacity: 0.3;
+        transition: opacity 0.3s ease;
     }
     
     .community-link:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        background: rgba(38, 46, 63, 0.8);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     }
     
-    .icon-container {
-        width: 36px;
-        height: 36px;
+    .community-link:hover::before {
+        opacity: 0.5;
+    }
+    
+    .community-link .icon-container {
+        width: 42px;
+        height: 42px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 8px;
-        margin-right: 12px;
+        border-radius: 50%;
+        margin-right: 15px;
         flex-shrink: 0;
-        font-size: 18px;
+        font-size: 20px;
         color: white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        position: relative;
     }
     
-    .link-details {
+    .community-link .link-details {
         display: flex;
         flex-direction: column;
     }
     
-    .link-title {
+    .community-link .link-title {
         font-weight: 600;
-        font-size: 14px;
-        color: #e0e6ed;
+        font-size: 15px;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
     
-    /* Icon styles for each link type */
-    .community-link.discord .icon-container {
-        background: linear-gradient(135deg, #7289DA, #5865F2);
+    /* Icon styles for each link type with glass effect */
+    .icon-container.discord-icon {
+        background: linear-gradient(135deg, #5865F2, #404EED);
+        box-shadow: 0 0 10px rgba(88, 101, 242, 0.5);
     }
     
-    .community-link.reddit .icon-container {
+    .icon-container.reddit-icon {
         background: linear-gradient(135deg, #FF4500, #FF6A33);
+        box-shadow: 0 0 10px rgba(255, 69, 0, 0.5);
     }
     
-    .community-link.github .icon-container {
-        background: linear-gradient(135deg, #24292E, #404448);
+    .icon-container.issues-icon {
+        background: linear-gradient(135deg, #2D3436, #636E72);
+        box-shadow: 0 0 10px rgba(45, 52, 54, 0.5);
     }
     
-    .community-link.wiki .icon-container {
-        background: linear-gradient(135deg, #1ABC9C, #16A085);
+    .icon-container.wiki-icon {
+        background: linear-gradient(135deg, #00B894, #00A087);
+        box-shadow: 0 0 10px rgba(0, 184, 148, 0.5);
     }
     
-    .community-link.changelog .icon-container {
-        background: linear-gradient(135deg, #3498DB, #2980B9);
+    .icon-container.changelog-icon {
+        background: linear-gradient(135deg, #0984E3, #0570C2);
+        box-shadow: 0 0 10px rgba(9, 132, 227, 0.5);
     }
     
     /* Media queries for responsiveness */
@@ -820,67 +1103,141 @@
         .mobile-scrollable {
             padding-bottom: 150px;
         }
+        
+
     }
     
-    /* Support Links styling */
+    /* Modern Support Links styling with glass effect */
+    .support-links-card {
+        overflow: hidden;
+        background: rgba(15, 20, 30, 0.5);
+        border: 1px solid rgba(79, 93, 115, 0.2);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+    
     .support-links-container {
         padding: 4px;
     }
     
     .support-links-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
     }
     
     .support-link {
         display: flex;
         align-items: center;
-        padding: 15px;
-        background: linear-gradient(145deg, rgba(32, 37, 49, 0.7), rgba(27, 32, 43, 0.7));
-        border: 1px solid rgba(90, 109, 137, 0.1);
-        border-radius: 10px;
+        padding: 20px;
+        background: linear-gradient(145deg, rgba(25, 30, 40, 0.4), rgba(20, 25, 35, 0.8));
+        border-radius: 12px;
         transition: all 0.3s ease;
         text-decoration: none;
-        color: #e1e6ef;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(70, 90, 120, 0.15);
+        z-index: 1;
+    }
+    
+    .support-link::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+        z-index: -1;
+        opacity: 0.4;
+        transition: opacity 0.3s ease;
     }
     
     .support-link:hover {
         transform: translateY(-3px);
-        box-shadow: 0 7px 15px rgba(0, 0, 0, 0.2);
-        border-color: rgba(90, 109, 137, 0.3);
-        background: linear-gradient(145deg, rgba(37, 42, 54, 0.8), rgba(32, 37, 48, 0.8));
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .support-link:hover::before {
+        opacity: 0.6;
     }
     
     .support-link .icon-container {
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 45px;
-        height: 45px;
-        font-size: 1.4rem;
-        margin-right: 15px;
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+        margin-right: 20px;
         flex-shrink: 0;
+        border-radius: 50%;
+        position: relative;
+    }
+    
+    /* GitHub icon styling */
+    .support-link .icon-container.github-icon {
+        background: linear-gradient(135deg, #24292e, #1a202c);
+        color: #ffffff;
+        box-shadow: 0 0 15px rgba(255, 193, 7, 0.6);
+        /* Animation removed, static glow instead */
+    }
+    
+    .support-link .icon-container.github-icon .star-inner-icon {
+        position: absolute;
+        font-size: 0.9em;
+        margin-left: 10px;
+        margin-top: -10px;
+        color: #ffc107;
+        filter: drop-shadow(0 0 5px rgba(255, 193, 7, 0.8));
+    }
+    
+    /* Forum icon styling */
+    .support-link .icon-container.forum-icon {
+        background: linear-gradient(135deg, #0473BB, #1E3A8A);
+        color: #ffffff;
+        box-shadow: 0 0 15px rgba(4, 115, 187, 0.6);
+        /* No animation, static glow */
+    }
+    
+    /* Donation icon styling */
+    .support-link .icon-container.donate-icon {
+        background: linear-gradient(135deg, #d63031, #e84393);
+        color: #ffffff;
+        box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+        animation: pulse-donate 2s infinite alternate;
+    }
+    
+    @keyframes pulse-github {
+        0% { box-shadow: 0 0 10px rgba(255, 193, 7, 0.4); }
+        100% { box-shadow: 0 0 20px rgba(255, 193, 7, 0.7); }
+    }
+    
+    @keyframes pulse-donate {
+        0% { box-shadow: 0 0 10px rgba(255, 107, 107, 0.4); }
+        100% { box-shadow: 0 0 20px rgba(255, 107, 107, 0.7); }
     }
     
     .support-link .link-details {
         display: flex;
         flex-direction: column;
-        min-width: 0;
     }
     
     .support-link .link-title {
         font-weight: 700;
-        font-size: 0.95rem;
-        margin-bottom: 3px;
-        white-space: nowrap;
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
     .support-link .link-description {
-        font-size: 0.8rem;
-        color: rgba(225, 230, 239, 0.7);
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.8);
         white-space: normal;
         word-wrap: break-word;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     /* Mobile optimizations for support links */
@@ -890,18 +1247,18 @@
         }
         
         .support-link {
-            padding: 12px;
+            padding: 15px;
         }
         
         .support-link .icon-container {
-            width: 36px;
-            height: 36px;
-            font-size: 1.2rem;
-            margin-right: 10px;
+            width: 42px;
+            height: 42px;
+            font-size: 1.3rem;
+            margin-right: 12px;
         }
         
         .support-link .link-title {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
         
         .support-link .link-description {
@@ -916,28 +1273,38 @@
         }
     }
     
-    .support-link.donate .icon-container {
-        color: #ff6b6b;
-    }
-    
-    .support-link.github .icon-container {
-        color: #ffc107;
+    /* Reset button container */
+    .reset-button-container {
+        margin-top: auto;
+        padding: 15px 0;
+        background: rgba(23, 30, 42, 0.8);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 0 0 12px 12px;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        min-height: 45px;
+        margin-left: -20px;
+        margin-right: -20px;
+        padding-left: 20px;
+        padding-right: 20px;
+        width: calc(100% + 40px);
     }
     
     /* Cycle reset button styles */
     .cycle-reset-button {
-        margin-left: 10px;
-        padding: 4px 8px;
+        padding: 7px 16px;
         background-color: rgba(52, 152, 219, 0.15);
         color: #3498db;
         border: 1px solid rgba(52, 152, 219, 0.3);
         border-radius: 4px;
-        font-size: 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
     }
     
     .cycle-reset-button:hover {
@@ -957,3 +1324,57 @@
         pointer-events: none;
     }
 </style>
+
+<script>
+    // Make app cards clickable after the DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // App forum URLs
+        const appUrls = {
+            'sonarr': 'https://plex.one/forums/sonarr.16/',
+            'radarr': 'https://plex.one/forums/radarr.17/',
+            'lidarr': 'https://plex.one/forums/lidarr.19/',
+            'readarr': 'https://plex.one/forums/readarr.20/',
+            'whisparr': 'https://plex.one/forums/whisparr.21/',
+            'eros': 'https://plex.one/forums/whisparr.21/'
+        };
+        
+        // Make each app card clickable
+        document.querySelectorAll('.app-stats-card').forEach(function(card) {
+            // Determine which app this card represents
+            let appType = '';
+            for (const appClass in appUrls) {
+                if (card.classList.contains(appClass)) {
+                    appType = appClass;
+                    break;
+                }
+            }
+            
+            if (appType && appUrls[appType]) {
+                // Make the card clickable
+                card.style.cursor = 'pointer';
+                
+                // Add hover effect
+                card.addEventListener('mouseenter', function() {
+                    card.querySelector('h4').style.color = '#ffffff';
+                    card.querySelector('h4').style.textShadow = '0 0 8px rgba(255, 255, 255, 0.5)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    card.querySelector('h4').style.color = '#e0e6ed';
+                    card.querySelector('h4').style.textShadow = 'none';
+                });
+                
+                // Add click handler
+                card.addEventListener('click', function(e) {
+                    // Don't trigger if clicking on buttons or other interactive elements
+                    if (e.target.closest('.reset-button-container') || e.target.closest('.hourly-cap-container') || e.target.closest('.status-container')) {
+                        return;
+                    }
+                    
+                    // Open the forum URL in a new tab
+                    window.open(appUrls[appType], '_blank', 'noopener');
+                });
+            }
+        });
+    });
+</script>
