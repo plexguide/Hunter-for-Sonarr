@@ -45,7 +45,7 @@ Keep in mind this is very early in program development. If you have a very speci
 
 This application continually searches your media libraries for missing content and items that need quality upgrades. It automatically triggers searches for both missing items and those below your quality cutoff. It's designed to run continuously while being gentle on your indexers, helping you gradually complete your media collection with the best available quality.
 
-For detailed documentation, please visit our [Wiki](https://github.com/plexguide/Huntarr/wiki).
+For detailed documentation, please visit our [Wiki](https://github.com/plexguide/Huntarr.io/wiki).
 
 ## Other Projects
 
@@ -76,31 +76,32 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 ### 🔄 Continuous Automation Cycle
 
 #### 1️⃣ Connect & Analyze
-Huntarr connects to your Sonarr/Radarr/Lidarr/Readarr instance and analyzes your media library to identify both missing content and potential quality upgrades.
+🔌 Huntarr connects to your Sonarr/Radarr/Lidarr/Readarr/Whisparr/Eros instances and analyzes your media libraries to identify both missing content and potential quality upgrades.
 
 #### 2️⃣ Hunt Missing Content
-- 📊 **Smart Selection:** Choose between random or sequential processing
-- 🔍 **Efficient Refreshing:** Optionally skip metadata refresh to reduce disk I/O
+- 🔍 **Efficient Refreshing:** Skip metadata refresh to reduce disk I/O and database load
 - 🔮 **Future-Aware:** Automatically skip content with future release dates
-- 🎯 **Precise Control:** Set exactly how many items to process per cycle
+- 🎯 **Precise Control:** Configure exactly how many items to process per cycle
+- 👀 **Monitored Only:** Focus only on content you've marked as monitored
 
 #### 3️⃣ Hunt Quality Upgrades
 - ⬆️ **Quality Improvement:** Find content below your quality cutoff settings
-- 📦 **Batch Processing:** Configure exactly how many upgrades to process at once
-- 📚 **Large Library Support:** Smart pagination handles even massive libraries
-- 🔀 **Flexible Modes:** Choose between random or sequential processing
+- 📦 **Batch Processing:** Set specific numbers of upgrades to process per cycle
+- 🚦 **Queue Management:** Automatically pauses when download queue exceeds your threshold
+- ⏱️ **Command Monitoring:** Waits for commands to complete with consistent timeouts
 
-#### 4️⃣ State Management
-- 📝 **History Tracking:** Remembers which items have been processed
-- 💾 **Persistent Storage:** State data is saved in the `/config` directory
-- ⏱️ **Automatic Reset:** State is cleared after your configured time period (default: 7 days)
+#### 4️⃣ API Management
+- 🛡️ **Rate Protection:** Hourly caps prevent overloading your indexers
+- ⏲️ **Universal Timeouts:** Consistent API timeouts (120s) across all applications
+- 🔄 **Consistent Headers:** Identifies as Huntarr to all Arr applications
+- 📊 **Intelligent Monitoring:** Visual indicators show API usage limits
 
 #### 5️⃣ Repeat & Rest
-Huntarr waits for your configured interval (adjustable in settings) before starting the next cycle. This ensures your indexers aren't overloaded while maintaining continuous improvement of your library.
+💤 Huntarr waits for your configured interval (adjustable in settings) before starting the next cycle, ensuring your indexers aren't overloaded while maintaining continuous improvement of your library.
 
 ## Web Interface
 
-Huntarr's live homepage will provide you statics about how many hunts have been pursed regarding missing media and upgrade searches! Note: Numbers reflected are but all required for testing... damn you Whisparr!
+Huntarr's live homepage will provide you statics about how many hunts have been pursed regarding missing media and upgrade searches! Note: Numbers reflected are but all required for testing. 
 
 <p align="center">
   <img width="100%" alt="image" src="https://github.com/user-attachments/assets/db725ad6-3009-4835-ab44-289dda80d385" />
@@ -192,7 +193,9 @@ docker-compose up -d huntarr
 
 ### Unraid Users
 
-Run this from Command Line in Unraid:
+You can install Huntarr using the Unraid App Store.
+
+If not, you can run this from Command Line in Unraid:
 
 ```bash
 docker run -d --name huntarr \
@@ -202,29 +205,57 @@ docker run -d --name huntarr \
   -e TZ=America/New_York \
   huntarr/huntarr:latest
 ```
+
+## The Perfect Pair: Huntarr & Cleanuperr
+
+<p align="center">
+  <img src="https://github.com/plexguide/Huntarr.io/blob/main/frontend/static/logo/128.png?raw=true" alt="Huntarr" width="64" height="64">
+  <span style="font-size: 32px; margin: 0 15px;">+</span>
+  <img src="https://github.com/flmorg/cleanuperr/blob/main/Logo/128.png?raw=true" alt="Cleanuperr" width="64" height="64">
+</p>
+
+**Huntarr** is the compulsive librarian who finds missing media and upgrades your existing content. It fills in the blanks and improves what you already have.
+
+**Cleanuperr** ([![GitHub stars](https://img.shields.io/github/stars/flmorg/cleanuperr?style=social)](https://github.com/flmorg/cleanuperr/stargazers)) is the janitor of your server; it keeps your download queue spotless, removes clutter, and blocks malicious files.
+
+When combined, these tools create a powerful, self-sufficient media automation stack:
+
+- **Huntarr** hunts for content to add to your library
+- **Cleanuperr** ensures only clean downloads get through
+- Together, they create a reliable, hands-off media management system
+
+Learn more about **Cleanuperr** at [https://github.com/flmorg/cleanuperr](https://github.com/flmorg/cleanuperr)
+
 ## Tips
 
 - **First-Time Setup**: Navigate to the web interface after installation to create your admin account with 2FA option
 - **API Connections**: Configure connections to your *Arr applications through the dedicated settings pages
-- **Search Frequency**: Adjust Sleep Duration (default: 900 seconds) based on your indexer's rate limits.
+- **Search Frequency**: Adjust Sleep Duration (default: 900 seconds) based on your indexer's rate limits
 - **Batch Processing**: Set Hunt Missing and Upgrade values to control how many items are processed per cycle
 - **Queue Management**: Use Minimum Download Queue Size to pause searching when downloads are backed up
-- **Skip Processing**: Enable Skip Series/Movie Refresh to significantly reduce disk I/O and database load
+- **Skip Processing**: Enable Skip Series/Movie/Artist Refresh to significantly reduce disk I/O and database load
 - **Future Content**: Keep Skip Future Items enabled to avoid searching for unreleased content
 - **Authentication**: Enable two-factor authentication for additional security on your Huntarr instance
+- **API Rate Limits**: Configure hourly API caps to prevent rate limiting by your indexers
+- **Universal Timeouts**: All apps use consistent 120s timeouts for reliable command completion
+- **Monitored Only**: Filter searches to focus only on content you've marked as monitored
 
 ## Troubleshooting
 
 - **API Connection Issues**: Verify your API key and URL in the Settings page (check for missing http:// or https://)
-- **Config URLs**: It is best practice to omit the trailing slash (/) at the end of the URL for each service.  i.e. For Sonarr, instead of http://10.10.10.1:8989/ use http://10.10.10.1:8989.  This is the most common cause of errors seen in the log each time a cycle runs.
+- **Config URLs**: It is best practice to omit the trailing slash (/) at the end of the URL for each service. For Sonarr, use http://10.10.10.1:8989 instead of http://10.10.10.1:8989/
 - **Authentication Problems**: If you forget your password, delete `/config/user/credentials.json` and restart
 - **Two-Factor Authentication**: If locked out of 2FA, remove credentials file to reset your account
 - **Web Interface Not Loading**: Confirm port 9705 is correctly mapped and not blocked by firewalls
 - **Logs Not Showing**: Check permissions on the `/config/logs/` directory inside your container
 - **Missing State Data**: State files in `/config/stateful/` track processed items; verify permissions
 - **Docker Volume Issues**: Ensure your volume mount for `/config` has correct permissions and ownership
-- **Command Timeouts**: Adjust command_wait_attempts and command_wait_delay in advanced settings
+- **Command Timeouts**: Default values are now command_wait_delay=1s and command_wait_attempts=600
 - **Debug Information**: Enable Debug Mode temporarily to see detailed API responses in the logs
+- **API Timeout Errors**: All apps now use universal timeout settings (120s) from general.json
+- **Consistent Log Filtering**: If app-specific logs show mixed content, reduce historical data from 5KB to 1KB
+- **Swaparr Issues**: Ensure proper handling of non-dictionary records in queue data
+- **App-Specific Problems**: Check GitHub Issues for known problems and solutions
 
 ## Change Log
-Visit: https://github.com/plexguide/Huntarr/releases/
+Visit: https://github.com/plexguide/Huntarr.io/releases/
