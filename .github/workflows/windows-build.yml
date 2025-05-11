@@ -394,35 +394,56 @@ jobs:
           echo "Verifying build artifacts"
           dir dist
       
-      # Create GitHub release
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      # Upload build artifacts
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
         with:
-          tag_name: v${{ steps.get_version.outputs.VERSION }}
-          name: Huntarr Windows Build v${{ steps.get_version.outputs.VERSION }}
-          body: |
-            # Huntarr Windows Build v${{ steps.get_version.outputs.VERSION }}
-            
-            This is a Windows executable build of Huntarr.io v${{ steps.get_version.outputs.VERSION }}.
-            
-            ## New Features
-            - **Bazarr Integration**: Manage your subtitle needs directly from Huntarr
-            - **Improved API Handling**: Consistent API timeouts and User-Agent across all apps
-            - **Enhanced UI**: Modern interface with animated app icons
-            - **GitHub Community**: All community links now point to GitHub resources
-            
-            ## Installation
-            1. Download the zip file and extract all contents to a folder
-            2. Run the `launcher.bat` file to start Huntarr
-            3. Your browser will open automatically to http://localhost:9705
-            
-            ## Notes
-            - Configuration is stored in the `config` folder next to the executable
-            - If you encounter issues, please report them on GitHub
-          draft: false
-          prerelease: true  # Mark as pre-release
-          files: |
-            ./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip
+          name: Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}
+          path: ./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip
+          retention-days: 90
+      
+      # Create GitHub release using different approach
+      - name: Create GitHub release
+        id: create_release
+        # We're using the GitHub CLI instead of the release action to avoid permission issues
+        run: |
+          echo "Creating release for v${{ steps.get_version.outputs.VERSION }}..."
+          echo "This will create a GitHub release with the Windows build artifact."
+          echo "You can manually create a release on GitHub if this step fails."
+          
+          # Create a temp file with release notes
+          $releaseNotes = @"
+          # Huntarr Windows Build v${{ steps.get_version.outputs.VERSION }}
+          
+          This is a Windows executable build of Huntarr.io v${{ steps.get_version.outputs.VERSION }}.
+          
+          ## New Features
+          - **Improved API Handling**: Consistent API timeouts and User-Agent across all apps
+          - **Enhanced UI**: Modern interface with animated app icons
+          - **GitHub Community**: All community links now point to GitHub resources
+          
+          ## Installation
+          1. Download the zip file and extract all contents to a folder
+          2. Run the `launcher.bat` file to start Huntarr
+          3. Your browser will open automatically to http://localhost:9705
+          
+          ## Notes
+          - Configuration is stored in the `config` folder next to the executable
+          - If you encounter issues, please report them on GitHub
+          "@
+          
+          Set-Content -Path release-notes.md -Value $releaseNotes
+          
+          # Try to create a release using the GitHub CLI if available
+          try {
+            # Use command line to create release - this approach is more likely to work with restricted tokens
+            # Only try this if we're not already on a release run
+            gh release create "v${{ steps.get_version.outputs.VERSION }}" "./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip" --title "Huntarr Windows Build v${{ steps.get_version.outputs.VERSION }}" --notes-file release-notes.md --prerelease
+            echo "Release created successfully!"
+          } catch {
+            echo "::warning::Could not create GitHub release automatically. The build artifact has been uploaded as a workflow artifact."
+            echo "::warning::You can manually create a release on GitHub using the uploaded artifact."
+          }
+        shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
