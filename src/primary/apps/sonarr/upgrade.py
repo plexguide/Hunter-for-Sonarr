@@ -237,6 +237,32 @@ def process_upgrade_episodes_mode(
     sonarr_logger.info("Finished quality cutoff upgrades processing cycle for Sonarr.")
     return processed_any
 
+def log_season_pack_upgrade(api_url: str, api_key: str, api_timeout: int, series_id: int, season_number: int, instance_name: str):
+    """Log a season pack upgrade to the history."""
+    try:
+        # Get series details for better history logging
+        series_details = sonarr_api.get_series(api_url, api_key, api_timeout, series_id)
+        if series_details:
+            series_title = series_details.get('title', f"Series ID {series_id}")
+            
+            # Format season number for display
+            try:
+                season_id = f"S{season_number:02d}" if isinstance(season_number, int) else f"S{season_number}"
+            except (ValueError, TypeError):
+                season_id = f"S{season_number}"
+            
+            # Create a unique ID for this season pack upgrade
+            pack_id = f"season_{series_id}_{season_number}"
+            
+            # Create a descriptive name for the history entry
+            media_name = f"{series_title} - {season_id} - COMPLETE SEASON PACK"
+            
+            # Log the season pack upgrade to history
+            log_processed_media("sonarr", media_name, pack_id, instance_name, "season_pack_upgrade")
+            sonarr_logger.debug(f"Logged season pack upgrade to history for {series_title} Season {season_number}")
+    except Exception as e:
+        sonarr_logger.error(f"Failed to log season pack upgrade to history: {str(e)}")
+
 def process_upgrade_seasons_mode(
     api_url: str,
     api_key: str,
@@ -348,9 +374,9 @@ def process_upgrade_seasons_mode(
             sonarr_logger.info("Stop requested after series refresh attempt.")
             break
             
-        # Trigger search for the selected episodes in this season
-        sonarr_logger.debug(f"Attempting to search for {len(episode_ids)} episodes in {series_title} Season {season_number} for upgrades")
-        search_command_id = sonarr_api.search_episode(api_url, api_key, api_timeout, episode_ids)
+        # Trigger search for the entire season instead of individual episodes
+        sonarr_logger.debug(f"Attempting to search for entire Season {season_number} of {series_title} for upgrades")
+        search_command_id = sonarr_api.search_season(api_url, api_key, api_timeout, series_id, season_number)
         
         if search_command_id:
             # Wait for search command to complete
@@ -360,7 +386,10 @@ def process_upgrade_seasons_mode(
             ):
                 # Mark as processed if search command completed successfully
                 processed_any = True
-                sonarr_logger.info(f"Successfully processed {len(episode_ids)} cutoff unmet episodes in {series_title} Season {season_number}")
+                sonarr_logger.info(f"Successfully triggered season pack search for {series_title} Season {season_number} with {len(episode_ids)} cutoff unmet episodes")
+                
+                # Log this as a season pack upgrade in the history
+                log_season_pack_upgrade(api_url, api_key, api_timeout, series_id, season_number, instance_name)
                 
                 # We'll increment stats individually for each episode instead of in batch
                 # increment_stat("sonarr", "upgraded", len(episode_ids))
@@ -397,9 +426,9 @@ def process_upgrade_seasons_mode(
                     except Exception as e:
                         sonarr_logger.error(f"Failed to log history for episode ID {episode_id}: {str(e)}")
             else:
-                sonarr_logger.warning(f"Episode upgrade search command for {series_title} Season {season_number} did not complete successfully")
+                sonarr_logger.warning(f"Season pack search command for {series_title} Season {season_number} did not complete successfully")
         else:
-            sonarr_logger.error(f"Failed to trigger upgrade search command for {series_title} Season {season_number}")
+            sonarr_logger.error(f"Failed to trigger season pack search command for {series_title} Season {season_number}")
     
     sonarr_logger.info("Finished quality cutoff upgrades processing cycle (season mode) for Sonarr.")
     return processed_any
