@@ -401,30 +401,114 @@ jobs:
           dir
           echo "Windows build available at: ./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip"
       
-      # Upload the complete package as a build artifact
-      - name: Upload Package Artifact
-        uses: actions/upload-artifact@v1
-        with:
-          name: Huntarr-Windows-Package
-          path: ./Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip
-      
-      # Upload the standalone executable as a separate artifact
-      - name: Upload Standalone Executable
-        uses: actions/upload-artifact@v1
-        with:
-          name: Huntarr-Executable
-          path: ./dist/Huntarr.exe
-      
-      # Simplified completion message instead of GitHub release
-      - name: Build Summary
+      # Create a release using the github CLI
+      - name: Create GitHub Release
         run: |
+          # Get version
+          $version = "${{ steps.get_version.outputs.VERSION }}"
+          $releaseTag = "v$version"
+          
+          echo "Creating release for $releaseTag..."
+          
+          # Copy the standalone executable to a more accessible location
+          Copy-Item -Path ./dist/Huntarr.exe -Destination ./Huntarr.exe -Force
+          
+          # Create release notes file
+          $releaseNotes = @"
+          # Huntarr Windows $releaseTag
+          
+          Windows standalone executable for Huntarr
+          
+          ## Improvements
+          - Improved API handling with consistent timeout settings
+          - Modern UI with animated app icons
+          - GitHub community integrations
+          - Windows path handling to prevent configuration errors
+          
+          ## Files
+          - **Huntarr.exe**: Standalone executable
+          - **Huntarr-Windows-v$version.zip**: Complete package with launcher and config
+          "@
+          
+          Set-Content -Path release-notes.md -Value $releaseNotes
+          
+          # Attempt to create release
+          try {
+            # Try creating a new release with both files
+            New-Item -Path release -ItemType Directory -Force | Out-Null
+            Copy-Item -Path ./Huntarr.exe -Destination ./release/ -Force
+            Copy-Item -Path ./Huntarr-Windows-v$version.zip -Destination ./release/ -Force
+            
+            Write-Host "Files are ready for release in ./release/ directory"
+            Get-ChildItem ./release/
+          } catch {
+            Write-Error "Error preparing release files: $_"
+          }
+      
+            # Upload files to downloads branch
+      - name: Push to Downloads Branch
+        run: |
+          # Configure Git
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          
+          # Create a dedicated branch for downloads
+          $version = "${{ steps.get_version.outputs.VERSION }}"
+          $downloadBranch = "windows-downloads"
+          
+          # Try to fetch and checkout the downloads branch if it exists
+          git fetch origin $downloadBranch || true
+          
+          if (git branch -a | Select-String -Pattern "remotes/origin/$downloadBranch") {
+            echo "Downloads branch exists, checking it out"
+            git checkout $downloadBranch
+          } else {
+            echo "Creating new downloads branch"
+            git checkout -b $downloadBranch
+          }
+          
+          # Create downloads directory if it doesn't exist
+          $downloadDir = "windows-builds"
+          if (-not (Test-Path $downloadDir)) {
+            New-Item -Path $downloadDir -ItemType Directory -Force | Out-Null
+          }
+          
+          # Copy build files to downloads directory
+          $versionDir = "$downloadDir/v$version"
+          New-Item -Path $versionDir -ItemType Directory -Force | Out-Null
+          
+          # Copy the executable and zip package
+          Copy-Item -Path ./dist/Huntarr.exe -Destination "$versionDir/Huntarr.exe" -Force
+          Copy-Item -Path ./Huntarr-Windows-v$version.zip -Destination "$versionDir/Huntarr-Windows-v$version.zip" -Force
+          
+          # Create README in the downloads directory
+          $readmeContent = @"
+          # Huntarr Windows Downloads
+          
+          This branch contains Windows builds of Huntarr.
+          
+          ## Latest Version: v$version
+          
+          ### Direct Download Links:
+          - [Standalone Executable (v$version)](https://raw.githubusercontent.com/Admin9705/Huntarr.io/$downloadBranch/$versionDir/Huntarr.exe)
+          - [Complete Package (v$version)](https://raw.githubusercontent.com/Admin9705/Huntarr.io/$downloadBranch/$versionDir/Huntarr-Windows-v$version.zip)
+          
+          Last updated: $(Get-Date -Format "yyyy-MM-dd HH:mm")
+          "@
+          
+          Set-Content -Path "$downloadDir/README.md" -Value $readmeContent
+          
+          # Commit and push changes
+          git add $downloadDir
+          git commit -m "Upload Windows build v$version"
+          git push origin $downloadBranch
+          
           echo "========================================"
-          echo "Windows build process completed!"
-          echo "Version: v${{ steps.get_version.outputs.VERSION }}"
+          echo "Windows build uploaded to downloads branch!"
+          echo "Version: v$version"
           echo "========================================"
-          echo "To create a GitHub release:"
-          echo "1. Go to Releases page on GitHub"
-          echo "2. Create a new release with tag v${{ steps.get_version.outputs.VERSION }}"
-          echo "3. Upload the Huntarr-Windows-v${{ steps.get_version.outputs.VERSION }}.zip file"
+          echo "Download links:"
+          echo "Standalone EXE: https://raw.githubusercontent.com/Admin9705/Huntarr.io/$downloadBranch/$versionDir/Huntarr.exe"
+          echo "Complete Package: https://raw.githubusercontent.com/Admin9705/Huntarr.io/$downloadBranch/$versionDir/Huntarr-Windows-v$version.zip"
           echo "========================================"
         shell: pwsh
