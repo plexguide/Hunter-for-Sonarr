@@ -343,6 +343,19 @@ input:checked + .slider:before {
     overflow: auto; /* Changed from hidden to auto to allow scrolling */
 }
 
+/* Scheduling specific styles */
+#schedulingSection, #schedulingPage, section[id*="scheduling"], div[id*="scheduling"] {
+    padding: 0 20px !important;
+    margin-left: 20px !important;
+    margin-right: 20px !important;
+}
+
+.scheduler-container {
+    margin-left: 15px !important;
+    margin-right: 15px !important;
+    width: calc(100% - 30px) !important;
+}
+
 /* Top Bar */
 .top-bar {
     height: 60px;
