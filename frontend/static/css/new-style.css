@@ -350,6 +350,48 @@ input:checked + .slider:before {
     margin-right: 20px !important;
 }
 
+/* Scheduling minimalist header */
+.scheduling-minimalist-header {
+    padding: 15px 0;
+    margin-bottom: 15px;
+}
+
+.scheduling-minimalist-header h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+/* Force hide all descriptions and redundant headers in scheduling sections */
+.section-header p,
+.settings-header p,
+div[class*="header"] p,
+#schedulingSection p:not(.no-schedules-message p),
+#schedulingPage p:not(.no-schedules-message p),
+section[id*="scheduling"] p:not(.no-schedules-message p),
+div[id*="scheduling"] p:not(.no-schedules-message p),
+#schedulingPage .scheduling-minimalist-header,
+#schedulingSection .scheduling-minimalist-header {
+    display: none !important;
+}
+
+/* Ensure color-shift-dividers are visible */
+.color-shift-divider {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 0.7 !important;
+}
+
+/* Special highlighted dividers that need to be more prominent */
+.highlight-divider {
+    height: 2px !important;
+    opacity: 1 !important;
+    margin: 20px 0 !important;
+    background-size: 300% 100% !important;
+    animation: gradientShift 15s ease infinite !important;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.2) !important;
+}
+
 /* Make dropdown selects in scheduling section fit content */
 #schedulingSection select.form-control,
 #schedulingPage select.form-control,
@@ -368,6 +410,23 @@ section[id*="scheduling"] select.form-control,
     margin-left: 15px !important;
     margin-right: 15px !important;
     width: calc(100% - 30px) !important;
+}
+
+/* Color-shifting divider line */
+.color-shift-divider {
+    height: 1px;
+    background: linear-gradient(to right, #3498db, #9b59b6, #2ecc71, #f1c40f, #e74c3c);
+    background-size: 500% 100%;
+    animation: gradientShift 30s ease infinite;
+    margin: 15px 0;
+    border: none;
+    opacity: 0.7;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 /* Top Bar */
