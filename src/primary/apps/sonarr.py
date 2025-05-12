@@ -56,7 +56,7 @@ def test_connection():
             # Save keys if connection is successful - Not saving here anymore since we use instances
             # keys_manager.save_api_keys("sonarr", api_url, api_key)
             
-            sonarr_logger.info(f"Successfully connected to Sonarr API version: {response_data.get('version', 'unknown')}")
+            sonarr_logger.debug(f"Successfully connected to Sonarr API version: {response_data.get('version', 'unknown')}")
 
             # Return success with some useful information
             return jsonify({

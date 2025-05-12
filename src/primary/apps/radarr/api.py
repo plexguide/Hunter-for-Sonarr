@@ -301,7 +301,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         
         response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout)
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
-        radarr_logger.info("Successfully connected to Radarr.")
+        radarr_logger.debug("Successfully connected to Radarr.")
         return True
     except requests.exceptions.RequestException as e:
         radarr_logger.error(f"Error connecting to Radarr: {e}")
