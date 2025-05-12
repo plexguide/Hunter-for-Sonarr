@@ -400,7 +400,11 @@ def app_specific_loop(app_type: str) -> None:
         sleep_seconds = app_settings.get("sleep_duration", 900)  # Default to 15 minutes
                 
         # Sleep with periodic checks for reset file
-        app_logger.info(f"Sleeping for {sleep_seconds} seconds before next cycle...")
+        # Calculate and format the time when the next cycle will begin
+        next_cycle_time = datetime.datetime.now() + datetime.timedelta(seconds=sleep_seconds)
+        next_cycle_time_str = next_cycle_time.strftime("%Y-%m-%d %H:%M:%S")
+        app_logger.info(f"Next {app_type.upper()} cycle will begin at {next_cycle_time_str}")
+        app_logger.debug(f"Sleeping for {sleep_seconds} seconds before next cycle...")
                 
         # Use shorter sleep intervals and check for reset file
         wait_interval = 1  # Check every second to be more responsive
@@ -440,7 +444,7 @@ def app_specific_loop(app_type: str) -> None:
                     
             # If we've slept for at least 30 seconds, update the logger message every 30 seconds
             if elapsed > 0 and elapsed % 30 == 0:
-                app_logger.info(f"Still sleeping, {sleep_seconds - elapsed} seconds remaining before next cycle...")
+                app_logger.debug(f"Still sleeping, {sleep_seconds - elapsed} seconds remaining before next cycle...")
                 
     app_logger.info(f"=== [{app_type.upper()}] Thread stopped ====")
 
