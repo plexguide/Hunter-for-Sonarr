@@ -1,17 +1,19 @@
 <section id="appsSection" class="content-section">
     <div class="section-header">
-        <div class="log-dropdown" style="position: relative;">
-            <select id="appsAppSelect" class="styled-select">
-                <option value="sonarr">Sonarr</option>
-                <option value="radarr">Radarr</option>
-                <option value="lidarr">Lidarr</option>
-                <option value="readarr">Readarr</option>
-                <option value="whisparr">Whisparr V2</option>
-                <option value="eros">Whisparr V3</option>
-                <option value="swaparr">Swaparr</option>
-                <option value="cleanuperr">Cleanuperr</option>
-            </select>
-            <span class="dropdown-helper"><i class="fas fa-info-circle"></i> Click to change application</span>
+        <div class="section-header-dropdown-container">
+            <div class="log-dropdown" style="position: relative;">
+                <select id="appsAppSelect" class="styled-select">
+                    <option value="sonarr">Sonarr</option>
+                    <option value="radarr">Radarr</option>
+                    <option value="lidarr">Lidarr</option>
+                    <option value="readarr">Readarr</option>
+                    <option value="whisparr">Whisparr V2</option>
+                    <option value="eros">Whisparr V3</option>
+                    <option value="swaparr">Swaparr</option>
+                    <option value="cleanuperr">Cleanuperr</option>
+                </select>
+            </div>
+
         </div>
         <button id="saveAppsButton" class="save-button" disabled>
             <i class="fas fa-save"></i> Save
@@ -42,6 +44,19 @@
 
 <style>
     /* Apps Section Layout - Complete Redesign */
+    .section-header-dropdown-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .dropdown-helper {
+        display: inline-block;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+    
     #appsSection {
         display: none;
         width: 100%;
