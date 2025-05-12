@@ -49,7 +49,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         
         response = requests.get(full_url, headers=headers, timeout=api_timeout)
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
-        logger.info("Successfully connected to Readarr.")
+        logger.debug("Successfully connected to Readarr.")
         return True
     except requests.exceptions.RequestException as e:
         logger.error(f"Error connecting to Readarr: {e}")

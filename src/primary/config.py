@@ -128,8 +128,6 @@ def log_configuration(app_name: str):
     min_queue_size = settings.get("minimum_download_queue_size", -1)
 
     log.info(f"--- Configuration for {app_name} ---")
-    log.info(f"API URL: {api_url}")
-    log.info(f"API Key: {'[REDACTED]' if api_key else 'Not Set'}")
     log.info(f"Debug Mode: {debug_mode}")
     log.info(f"Hunt Mode: {determine_hunt_mode(app_name)}")
     log.info(f"Sleep Duration: {sleep_duration} seconds")

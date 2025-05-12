@@ -506,7 +506,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
             # Simply check if we received a valid response - Whisparr V3 is in development
             # so the version number might be in various formats
             if version and isinstance(version, str):
-                eros_logger.info(f"Successfully connected to Whisparr V3 API, reported version: {version}")
+                eros_logger.debug(f"Successfully connected to Whisparr V3 API, reported version: {version}")
                 return True
             else:
                 eros_logger.warning(f"Connected to server but found unexpected version format: {version}")
