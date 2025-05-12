@@ -405,11 +405,13 @@ div[id*="scheduling"] p:not(.no-schedules-message p),
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 100% !important;
+    width: auto !important;
     text-align: center !important;
     height: 40px !important;
     box-shadow: none !important;
     cursor: pointer !important;
+    min-width: 150px !important;
+    max-width: 180px !important;
 }
 
 .schedule-button:hover {
@@ -439,6 +441,7 @@ button.action-button {
     width: 100% !important;
     margin-top: 30px !important;
     padding: 0 !important;
+    justify-content: flex-start !important;
 }
 
 .panel-content {
