@@ -464,7 +464,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
             
             # Check if this is a v2.x version
             if version and version.startswith('2'):
-                whisparr_logger.info(f"Successfully connected to Whisparr V2 API version: {version}")
+                whisparr_logger.debug(f"Successfully connected to Whisparr V2 API version: {version}")
                 return True
             else:
                 whisparr_logger.warning(f"Connected to Whisparr but found unexpected version: {version}, expected 2.x")

@@ -66,7 +66,7 @@ def process_cutoff_upgrades(
     state_reset_interval_hours = get_advanced_setting("stateful_management_hours", 168)  
     
     # Log that we're using Eros API v3
-    eros_logger.info(f"Using Eros API v3 for instance: {instance_name}")
+    eros_logger.debug(f"Using Eros API v3 for instance: {instance_name}")
 
     # Skip if hunt_upgrade_items is set to 0
     if hunt_upgrade_items <= 0:

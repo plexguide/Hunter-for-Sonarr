@@ -62,7 +62,7 @@ def process_missing_items(
     command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
     
     # Log that we're using Whisparr V2 API
-    whisparr_logger.info(f"Using Whisparr V2 API for instance: {instance_name}")
+    whisparr_logger.debug(f"Using Whisparr V2 API for instance: {instance_name}")
 
     # Skip if hunt_missing_items is set to 0
     if hunt_missing_items <= 0:
