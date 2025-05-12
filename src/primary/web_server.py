@@ -471,6 +471,18 @@ def handle_app_settings(app_name):
         data = request.json
         web_logger.debug(f"Received {app_name} settings save request: {data}")
         
+        # Clean URLs in the data before saving
+        if 'instances' in data and isinstance(data['instances'], list):
+            for instance in data['instances']:
+                if 'api_url' in instance and instance['api_url']:
+                    # Remove trailing slashes and special characters
+                    instance['api_url'] = instance['api_url'].strip().rstrip('/').rstrip('\\')
+        elif 'api_url' in data and data['api_url']:
+            # For apps that don't use instances array
+            data['api_url'] = data['api_url'].strip().rstrip('/').rstrip('\\')
+        
+        web_logger.debug(f"Cleaned {app_name} settings before saving: {data}")
+        
         # Save the app settings
         success = settings_manager.save_settings(app_name, data)
         

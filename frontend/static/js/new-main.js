@@ -1347,6 +1347,21 @@ let huntarrUI = {
         }
     },
 
+    // Clean URL by removing special characters from the end
+    cleanUrlString: function(url) {
+        if (!url) return "";
+        
+        // Trim whitespace first
+        let cleanUrl = url.trim();
+        
+        // First remove any trailing slashes
+        cleanUrl = cleanUrl.replace(/[\/\\]+$/g, '');
+        
+        // Then remove any other trailing special characters
+        // This regex will match any special character at the end that is not alphanumeric, hyphen, period, or underscore
+        return cleanUrl.replace(/[^a-zA-Z0-9\-\._]$/g, '');
+    },
+    
     // Get settings from the form, updated to handle instances consistently
     getFormSettings: function(app) {
         const settings = {};
@@ -1401,8 +1416,7 @@ let huntarrUI = {
                     settings.instances.push({
                         // Use nameInput value if available, otherwise generate a default
                         name: nameInput && nameInput.value.trim() !== '' ? nameInput.value.trim() : `Instance ${index + 1}`,
-                        api_url: urlInput.value.trim(),
-                        api_key: keyInput.value.trim(),
+                        api_url: this.cleanUrlString(urlInput.value),
                         // Default to true if toggle doesn't exist or is checked
                         enabled: enabledInput ? enabledInput.checked : true
                     });
@@ -1422,7 +1436,7 @@ let huntarrUI = {
             if (urlInput && urlInput.value.trim() && keyInput && keyInput.value.trim()) {
                  settings.instances.push({
                      name: nameInput && nameInput.value.trim() !== '' ? nameInput.value.trim() : `${app} Instance 1`, // Default name
-                     api_url: urlInput.value.trim(),
+                     api_url: this.cleanUrlString(urlInput.value),
                      api_key: keyInput.value.trim(),
                      // Default to true if toggle doesn't exist or is checked
                      enabled: enabledInput ? enabledInput.checked : true
@@ -1614,15 +1628,8 @@ let huntarrUI = {
             return;
         }
         
-        // Check for trailing slashes in URL
-        if (url.endsWith('/') || url.endsWith('\\')) {
-            statusSpan.textContent = 'Remove trailing slash from URL (/ or \\)';
-            statusSpan.className = 'status-error';
-            return;
-        }
-        
-        // Clean up the URL by removing trailing slashes (redundant but kept for safety)
-        url = url.trim().replace(/[/\\]+$/, '');
+        // Clean the URL (remove special characters from the end)
+        url = this.cleanUrlString(url);
         
         // Make the API request to test the connection
         HuntarrUtils.fetchWithTimeout(`/api/${appName}/test-connection`, {
@@ -2607,7 +2614,10 @@ let huntarrUI = {
             expiresDateEl.textContent = 'Updating...';
         }
         
-        HuntarrUtils.fetchWithTimeout('/api/stateful/update-expiration', {
+        const url = '/api/stateful/update-expiration';
+        const cleanedUrl = this.cleanUrlString(url);
+        
+        HuntarrUtils.fetchWithTimeout(cleanedUrl, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
