@@ -93,11 +93,11 @@ function setupEventListeners() {
 }
 
 /**
- * Fetch app instances from either API endpoints or configuration files
+ * Dynamically fetch app instances from the Docker container's config files
  * @returns {Promise<Object>} - Object containing app instances
  */
 async function fetchAppInstances() {
-    console.log('Fetching app instances for scheduler dropdown');
+    console.log('Dynamically fetching app instances for scheduler dropdown');
     
     // Define the app types we support
     const appTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr'];
@@ -108,79 +108,69 @@ async function fetchAppInstances() {
         instances[appType] = [];
     });
     
-    // Try multiple methods to get the app instances
-    try {
-        // Method 1: Try the API endpoint that returns all app configs
+    // Try to load each app's config directly from the Docker container
+    for (const appType of appTypes) {
+        // Add a cache-busting parameter to ensure we get fresh data
+        const cacheBuster = new Date().getTime();
+        const configUrl = `/${appType}/config.json?nocache=${cacheBuster}`;
+        
         try {
-            const apiResponse = await fetch('/api/v1/config/apps');
-            if (apiResponse.ok) {
-                const apiData = await apiResponse.json();
-                console.log('API response:', apiData);
+            console.log(`Attempting to load ${appType} config from ${configUrl}`);
+            const response = await fetch(configUrl);
+            
+            if (response.ok) {
+                const config = await response.json();
+                console.log(`Successfully loaded ${appType} config:`, config);
                 
-                if (apiData && typeof apiData === 'object') {
-                    for (const appType of appTypes) {
-                        if (apiData[appType]) {
-                            const appConfig = apiData[appType];
-                            if (appConfig.instances && Array.isArray(appConfig.instances)) {
-                                appConfig.instances.forEach((instance, index) => {
-                                    instances[appType].push({
-                                        id: instance.id || index.toString(),
-                                        name: instance.name || `${capitalizeFirst(appType)} Instance ${index + 1}`
-                                    });
-                                });
-                                console.log(`Added ${instances[appType].length} ${appType} instances from API`);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (apiError) {
-            console.warn('Error fetching from central API:', apiError);
-        }
-        
-        // Method 2: Try individual app config endpoints
-        for (const appType of appTypes) {
-            if (instances[appType] && instances[appType].length > 0) {
-                // Skip apps we already have data for
-                continue;
-            }
-            
-            try {
-                // Try app-specific config endpoint
-                const appResponse = await fetch(`/api/v1/config/${appType}`);
-                if (appResponse.ok) {
-                    const appConfig = await appResponse.json();
-                    console.log(`${appType} config from API:`, appConfig);
-                    
-                    if (appConfig && appConfig.instances && Array.isArray(appConfig.instances)) {
-                        appConfig.instances.forEach((instance, index) => {
-                            instances[appType].push({
-                                id: instance.id || index.toString(),
-                                name: instance.name || `${capitalizeFirst(appType)} Instance ${index + 1}`
-                            });
+                // Check if we have an instances array in the config
+                if (config && config.instances && Array.isArray(config.instances)) {
+                    // Add each instance to our instances object
+                    config.instances.forEach((instance, index) => {
+                        instances[appType].push({
+                            id: index.toString(),
+                            name: instance.name || `${capitalizeFirst(appType)} Instance ${index + 1}`
                         });
-                        console.log(`Added ${instances[appType].length} ${appType} instances from app endpoint`);
-                    }
+                    });
+                    console.log(`Added ${instances[appType].length} ${appType} instances`);
+                    continue; // Skip the remaining attempts for this app type
                 }
-            } catch (appError) {
-                console.warn(`Error fetching ${appType} config:`, appError);
             }
+        } catch (error) {
+            console.warn(`Error fetching ${appType} config from app endpoint:`, error);
         }
         
-        // Method 3: Use hard-coded fallback data from config files we know exist
-        // This represents actual configs we've seen in the container
-        if (Object.values(instances).every(arr => arr.length === 0)) {
-            console.log('Using fallback hardcoded instance data from config files');
+        // Second attempt: Try to access the config file directly
+        try {
+            const directUrl = `/config/${appType}.json?nocache=${cacheBuster}`;
+            console.log(`Trying direct access for ${appType} config:`, directUrl);
             
-            // We know these instances exist based on examining the config files
-            instances.sonarr = [{ id: '1', name: 'Default' }];
-            instances.radarr = [{ id: '1', name: 'Default' }];
-            instances.lidarr = [{ id: '1', name: 'Default' }];
-            instances.readarr = [{ id: '1', name: 'Default' }];
-            instances.whisparr = [{ id: '1', name: 'Default' }];
+            const directResponse = await fetch(directUrl);
+            if (directResponse.ok) {
+                const directConfig = await directResponse.json();
+                console.log(`Successfully loaded ${appType} config directly:`, directConfig);
+                
+                if (directConfig && directConfig.instances && Array.isArray(directConfig.instances)) {
+                    directConfig.instances.forEach((instance, index) => {
+                        instances[appType].push({
+                            id: index.toString(),
+                            name: instance.name || `${capitalizeFirst(appType)} Instance ${index + 1}`
+                        });
+                    });
+                    console.log(`Added ${instances[appType].length} ${appType} instances from direct access`);
+                    continue;
+                }
+            }
+        } catch (directError) {
+            console.warn(`Error with direct access to ${appType} config:`, directError);
         }
-    } catch (error) {
-        console.error('Error fetching app instances:', error);
+        
+        // If we still couldn't get instances, add a fallback
+        if (!instances[appType] || instances[appType].length === 0) {
+            console.warn(`No ${appType} instances found, adding default fallback`);
+            instances[appType] = [
+                { id: '0', name: `${capitalizeFirst(appType)} Default` }
+            ];
+        }
     }
     
     console.log('Final instances object:', instances);
