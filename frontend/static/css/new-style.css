@@ -350,7 +350,21 @@ input:checked + .slider:before {
     margin-right: 20px !important;
 }
 
+/* Make dropdown selects in scheduling section fit content */
+#schedulingSection select.form-control,
+#schedulingPage select.form-control,
+section[id*="scheduling"] select.form-control,
+.scheduler-container select.form-control {
+    width: auto !important;
+    min-width: 160px !important;
+    max-width: 300px !important;
+}
+
+/* Scheduler Container - Changed to vertical layout as per user preference */
 .scheduler-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
     margin-left: 15px !important;
     margin-right: 15px !important;
     width: calc(100% - 30px) !important;
