@@ -69,7 +69,7 @@ def process_missing_items(
     stateful_management_hours = get_advanced_setting("stateful_management_hours", 168)
     
     # Log that we're using Eros v3 API
-    eros_logger.info(f"Using Eros API v3 for instance: {instance_name}")
+    eros_logger.debug(f"Using Eros API v3 for instance: {instance_name}")
 
     # Skip if hunt_missing_items is set to a negative value or 0
     if hunt_missing_items <= 0:

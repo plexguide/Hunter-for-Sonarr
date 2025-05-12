@@ -39,7 +39,7 @@ def process_missing_movies(
     
     # Log important settings
     radarr_logger.info("=== Radarr Missing Movies Settings ===")
-    radarr_logger.info(f"Instance Name: {instance_name}")
+    radarr_logger.debug(f"Instance Name: {instance_name}")
     
     # Extract necessary settings
     api_url = app_settings.get("api_url", "").strip()

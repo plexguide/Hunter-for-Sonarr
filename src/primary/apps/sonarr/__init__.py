@@ -42,7 +42,7 @@ def get_configured_instances():
             if is_enabled and api_url and api_key:
                 # Get the exact instance name as configured in the UI
                 instance_name = instance.get("name", "Default") 
-                sonarr_logger.info(f"Using configured instance name: '{instance_name}' for Sonarr instance")
+                sonarr_logger.debug(f"Using configured instance name: '{instance_name}' for Sonarr instance")
                 
                 # Return only essential instance details
                 instance_data = {
