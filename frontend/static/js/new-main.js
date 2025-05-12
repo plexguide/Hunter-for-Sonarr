@@ -567,7 +567,13 @@ let huntarrUI = {
         // Update active section
         this.elements.sections.forEach(s => {
             s.classList.remove('active');
+            s.style.display = 'none';
         });
+        
+        // Additionally, make sure scheduling section is completely hidden
+        if (section !== 'scheduling' && this.elements.schedulingSection) {
+            this.elements.schedulingSection.style.display = 'none';
+        }
         
         // Update navigation
         this.elements.navItems.forEach(item => {
@@ -581,6 +587,7 @@ let huntarrUI = {
 
         if (section === 'home' && this.elements.homeSection) {
             this.elements.homeSection.classList.add('active');
+            this.elements.homeSection.style.display = 'block';
             if (this.elements.homeNav) this.elements.homeNav.classList.add('active');
             newTitle = 'Home';
             this.currentSection = 'home';
@@ -592,12 +599,14 @@ let huntarrUI = {
             this.loadMediaStats();
         } else if (section === 'logs' && this.elements.logsSection) {
             this.elements.logsSection.classList.add('active');
+            this.elements.logsSection.style.display = 'block';
             if (this.elements.logsNav) this.elements.logsNav.classList.add('active');
             newTitle = 'Logs';
             this.currentSection = 'logs';
             this.connectToLogs();
         } else if (section === 'history' && this.elements.historySection) {
             this.elements.historySection.classList.add('active');
+            this.elements.historySection.style.display = 'block';
             if (this.elements.historyNav) this.elements.historyNav.classList.add('active');
             newTitle = 'History';
             this.currentSection = 'history';
@@ -605,6 +614,7 @@ let huntarrUI = {
             this.disconnectAllEventSources(); 
         } else if (section === 'apps' && document.getElementById('appsSection')) {
             document.getElementById('appsSection').classList.add('active');
+            document.getElementById('appsSection').style.display = 'block';
             if (document.getElementById('appsNav')) document.getElementById('appsNav').classList.add('active');
             newTitle = 'Apps';
             this.currentSection = 'apps';
@@ -617,6 +627,7 @@ let huntarrUI = {
             }
         } else if (section === 'settings' && this.elements.settingsSection) {
             this.elements.settingsSection.classList.add('active');
+            this.elements.settingsSection.style.display = 'block';
             if (this.elements.settingsNav) this.elements.settingsNav.classList.add('active');
             newTitle = 'Settings';
             this.currentSection = 'settings';
@@ -657,6 +668,7 @@ let huntarrUI = {
             this.disconnectAllEventSources(); 
         } else if (section === 'sponsors' && sponsorsSection) { // ADDED sponsors case
             sponsorsSection.classList.add('active');
+            sponsorsSection.style.display = 'block';
             if (sponsorsNav) sponsorsNav.classList.add('active');
             newTitle = 'Project Sponsors';
             this.currentSection = 'sponsors';
@@ -668,10 +680,17 @@ let huntarrUI = {
             // Disconnect logs if switching away from logs
             this.disconnectAllEventSources();
         } else if (section === 'scheduling' && this.elements.schedulingSection) {
-            // Hide all sections first
+            // Hide all sections
             this.elements.sections.forEach(s => {
                 s.style.display = 'none';
+                s.classList.remove('active');
             });
+            
+            // Make sure apps section is explicitly hidden
+            if (document.getElementById('appsSection')) {
+                document.getElementById('appsSection').style.display = 'none';
+                document.getElementById('appsSection').classList.remove('active');
+            }
             
             // Show scheduling section with important flag
             this.elements.schedulingSection.style.cssText = 'display: block !important';
@@ -690,7 +709,10 @@ let huntarrUI = {
             console.debug('Scheduling section activated');
         } else {
             // Default to home if section is unknown or element missing
-            if (this.elements.homeSection) this.elements.homeSection.classList.add('active');
+            if (this.elements.homeSection) {
+                this.elements.homeSection.classList.add('active');
+                this.elements.homeSection.style.display = 'block';
+            }
             if (this.elements.homeNav) this.elements.homeNav.classList.add('active');
             newTitle = 'Home';
             this.currentSection = 'home';
