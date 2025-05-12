@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include 'components/head.html' %}
+    <title>Huntarr - Scheduling</title>
+</head>
+<body>
+    <div class="app-container mobile-optimized">
+        {% include 'components/sidebar.html' %}
+        
+        <div class="main-content">
+            {% include 'components/topbar.html' %}
+            
+            <!-- Scheduling Content -->
+            <section class="content-section">
+                <div class="section-header">
+                    <h2>Scheduling Options</h2>
+                    
+                    <div class="settings-actions">
+                        <button id="saveScheduleButton" class="save-button" disabled>
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label for="yesNoDropdown">Yes or No</label>
+                        <select id="yesNoDropdown" class="form-control">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-divider"></div>
+                    
+                    <div class="form-group">
+                        <label for="scheduleEnabled">Enable Scheduling</label>
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="scheduleEnabled">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="scheduleSettings" class="conditional-section" style="display: none;">
+                        <div class="form-group">
+                            <label for="scheduleInterval">Run Interval</label>
+                            <select id="scheduleInterval" class="form-control">
+                                <option value="hourly">Hourly</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="dailyTimeGroup">
+                            <label for="scheduleTime">Time to Run</label>
+                            <input type="time" id="scheduleTime" class="form-control" value="03:00">
+                        </div>
+                        
+                        <div class="form-group" id="weeklyDayGroup" style="display: none;">
+                            <label for="scheduleDay">Day of Week</label>
+                            <select id="scheduleDay" class="form-control">
+                                <option value="0">Sunday</option>
+                                <option value="1">Monday</option>
+                                <option value="2">Tuesday</option>
+                                <option value="3">Wednesday</option>
+                                <option value="4">Thursday</option>
+                                <option value="5">Friday</option>
+                                <option value="6">Saturday</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+        </div>
+    </div>
+    
+    {% include 'components/footer.html' %}
+    
+    {% include 'components/scripts.html' %}
+    
+    <style>
+        /* Toggle switch styling */
+        .toggle-switch-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin-right: 10px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--accent-color, #3b82f6);
+        }
+        
+        input:focus + .toggle-slider {
+            box-shadow: 0 0 1px var(--accent-color, #3b82f6);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Form divider */
+        .form-divider {
+            height: 1px;
+            background-color: var(--border-color, rgba(90, 109, 137, 0.15));
+            margin: 24px 0;
+        }
+        
+        /* Conditional section styling */
+        .conditional-section {
+            margin-top: 15px;
+            padding-left: 15px;
+            border-left: 3px solid var(--accent-color, #3b82f6);
+        }
+        
+        /* Save button styling */
+        .settings-actions {
+            display: flex;
+            align-items: center;
+        }
+        
+        .save-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            font-size: 14px;
+            color: #fff;
+            background-color: var(--accent-color, #3b82f6);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .save-button:hover {
+            background-color: var(--accent-hover, #2563eb);
+        }
+        
+        .save-button:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+        }
+        
+        .save-button i {
+            margin-right: 8px;
+        }
+    </style>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listener for the Yes/No dropdown
+            const yesNoDropdown = document.getElementById('yesNoDropdown');
+            if (yesNoDropdown) {
+                yesNoDropdown.addEventListener('change', function() {
+                    console.debug(`Selected option: ${this.value}`); // Keep at DEBUG level per user preference
+                    toggleSaveButton(true);
+                });
+            }
+            
+            // Add event listener for the Enable Scheduling toggle
+            const scheduleEnabled = document.getElementById('scheduleEnabled');
+            const scheduleSettings = document.getElementById('scheduleSettings');
+            
+            if (scheduleEnabled && scheduleSettings) {
+                scheduleEnabled.addEventListener('change', function() {
+                    // Toggle visibility of schedule settings
+                    scheduleSettings.style.display = this.checked ? 'block' : 'none';
+                    console.debug(`Schedule enabled: ${this.checked}`); // DEBUG level log
+                    toggleSaveButton(true);
+                });
+            }
+            
+            // Add event listener for schedule interval selection
+            const scheduleInterval = document.getElementById('scheduleInterval');
+            const dailyTimeGroup = document.getElementById('dailyTimeGroup');
+            const weeklyDayGroup = document.getElementById('weeklyDayGroup');
+            
+            if (scheduleInterval && dailyTimeGroup && weeklyDayGroup) {
+                scheduleInterval.addEventListener('change', function() {
+                    const selectedInterval = this.value;
+                    console.debug(`Selected interval: ${selectedInterval}`); // DEBUG level log
+                    
+                    // Show/hide appropriate time selectors based on interval
+                    if (selectedInterval === 'hourly') {
+                        dailyTimeGroup.style.display = 'none';
+                        weeklyDayGroup.style.display = 'none';
+                    } else if (selectedInterval === 'daily') {
+                        dailyTimeGroup.style.display = 'block';
+                        weeklyDayGroup.style.display = 'none';
+                    } else if (selectedInterval === 'weekly') {
+                        dailyTimeGroup.style.display = 'block';
+                        weeklyDayGroup.style.display = 'block';
+                    }
+                    
+                    toggleSaveButton(true);
+                });
+            }
+            
+            // Add event listeners for other time inputs
+            const scheduleTime = document.getElementById('scheduleTime');
+            const scheduleDay = document.getElementById('scheduleDay');
+            
+            if (scheduleTime) {
+                scheduleTime.addEventListener('change', function() {
+                    console.debug(`Selected time: ${this.value}`); // DEBUG level log
+                    toggleSaveButton(true);
+                });
+            }
+            
+            if (scheduleDay) {
+                scheduleDay.addEventListener('change', function() {
+                    console.debug(`Selected day: ${this.value}`); // DEBUG level log
+                    toggleSaveButton(true);
+                });
+            }
+            
+            // Add event listener for save button
+            const saveButton = document.getElementById('saveScheduleButton');
+            if (saveButton) {
+                saveButton.addEventListener('click', saveScheduleSettings);
+            }
+            
+            // Make sure the navigation link is active
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const schedulingNav = document.getElementById('schedulingNav');
+            if (schedulingNav) schedulingNav.classList.add('active');
+        });
+        
+        function toggleSaveButton(enabled) {
+            const saveButton = document.getElementById('saveScheduleButton');
+            if (saveButton) {
+                saveButton.disabled = !enabled;
+            }
+        }
+        
+        function saveScheduleSettings() {
+            // Collect all settings
+            const yesNoValue = document.getElementById('yesNoDropdown').value;
+            const isEnabled = document.getElementById('scheduleEnabled').checked;
+            const interval = document.getElementById('scheduleInterval').value;
+            const time = document.getElementById('scheduleTime').value;
+            const day = document.getElementById('scheduleDay').value;
+            
+            const settings = {
+                yesNo: yesNoValue,
+                enabled: isEnabled,
+                interval: interval,
+                time: time,
+                day: day
+            };
+            
+            // TODO: In the future, this would send data to an API endpoint
+            console.debug('Saving schedule settings:', settings); // DEBUG level log
+            
+            // Simulate successful save
+            alert('Settings saved successfully!');
+            toggleSaveButton(false);
+        }
+    </script>
+</body>
+</html>

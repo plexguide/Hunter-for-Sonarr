@@ -1,0 +1,66 @@
+<section id="schedulingSection" class="content-section">
+    <div class="section-header">
+        <h2>Test</h2>
+    </div>
+    
+    <div class="settings-form">
+        <div class="form-group">
+            <label for="yesNoDropdown">Yes or No</label>
+            <select id="yesNoDropdown" class="form-control">
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+            </select>
+        </div>
+    </div>
+</section>
+
+<style>
+    #schedulingSection .settings-form {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    #schedulingSection .form-group {
+        margin-bottom: 20px;
+    }
+    
+    #schedulingSection label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+    
+    #schedulingSection .form-control {
+        width: 100%;
+        max-width: 300px;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-input);
+        color: var(--text-primary);
+        font-size: 14px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    
+    #schedulingSection .form-control:focus {
+        border-color: var(--accent-color);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add event listener for the Yes/No dropdown
+        const yesNoDropdown = document.getElementById('yesNoDropdown');
+        if (yesNoDropdown) {
+            yesNoDropdown.addEventListener('change', function() {
+                console.debug('Selected option: ' + this.value); // Keep at DEBUG level per user preference
+            });
+        }
+    });
+</script>

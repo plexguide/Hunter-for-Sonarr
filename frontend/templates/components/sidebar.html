@@ -36,6 +36,12 @@
             </div>
             <span>Settings</span>
         </a>
+        <a href="/#scheduling" class="nav-item" id="schedulingNav">
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <span>Scheduling</span>
+        </a>
         <a href="/user" class="nav-item" id="userNav">
             <div class="nav-icon-wrapper">
                 <i class="fas fa-user"></i>
@@ -248,7 +254,7 @@
 <script>
     // Function to set active nav item based on the current hash
     function setActiveNavItem() {
-        // Get all nav items
+        // Get all navigation items
         const navItems = document.querySelectorAll('.nav-item');
         
         // Remove active class from all items
@@ -256,11 +262,22 @@
             item.classList.remove('active');
         });
         
-        // Get current hash, default to home if none
-        const currentHash = window.location.hash || '#home';
+        // Get current hash, or default to home if no hash
+        let currentHash = window.location.hash;
+        if (!currentHash) {
+            currentHash = '#home';
+        }
         
-        // Find nav item with matching href and add active class
-        const activeItem = document.querySelector(`.nav-item[href="${currentHash}"]`);
+        // Set the appropriate nav item as active
+        const selector = currentHash === '#home' ? '#homeNav' : 
+                         currentHash === '#history' ? '#historyNav' :
+                         currentHash === '#logs' ? '#logsNav' :
+                         currentHash === '#apps' ? '#appsNav' :
+                         currentHash === '#cleanuperr' ? '#appsNav' : // Cleanuperr uses the apps nav
+                         currentHash === '#settings' ? '#settingsNav' :
+                         currentHash === '#scheduling' ? '#schedulingNav' : '#homeNav';
+        
+        const activeItem = document.querySelector(selector);
         if (activeItem) {
             activeItem.classList.add('active');
         }

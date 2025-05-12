@@ -128,6 +128,7 @@ let huntarrUI = {
         this.elements.logsSection = document.getElementById('logsSection');
         this.elements.historySection = document.getElementById('historySection');
         this.elements.settingsSection = document.getElementById('settingsSection');
+        this.elements.schedulingSection = document.getElementById('schedulingSection');
         
         // App tabs & Settings Tabs
         this.elements.appTabs = document.querySelectorAll('.app-tab'); // For logs section
@@ -666,6 +667,27 @@ let huntarrUI = {
             }
             // Disconnect logs if switching away from logs
             this.disconnectAllEventSources();
+        } else if (section === 'scheduling' && this.elements.schedulingSection) {
+            // Hide all sections first
+            this.elements.sections.forEach(s => {
+                s.style.display = 'none';
+            });
+            
+            // Show scheduling section with important flag
+            this.elements.schedulingSection.style.cssText = 'display: block !important';
+            this.elements.schedulingSection.classList.add('active');
+            
+            // Update navigation
+            const schedulingNav = document.getElementById('schedulingNav');
+            if (schedulingNav) schedulingNav.classList.add('active');
+            
+            newTitle = 'Scheduling';
+            this.currentSection = 'scheduling';
+            
+            // Disconnect logs if switching away from logs
+            this.disconnectAllEventSources();
+            
+            console.debug('Scheduling section activated');
         } else {
             // Default to home if section is unknown or element missing
             if (this.elements.homeSection) this.elements.homeSection.classList.add('active');
