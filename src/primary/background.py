@@ -30,16 +30,12 @@ from src.primary.state import check_state_reset, calculate_reset_time
 from src.primary.stats_manager import check_hourly_cap_exceeded
 # from src.primary.utils.app_utils import get_ip_address # No longer used here
 
-# Import stateful expiration check for issue #407
-from src.primary.stateful_manager import check_expiration
-
 # Global state for managing app threads and their status
 app_threads: Dict[str, threading.Thread] = {}
 stop_event = threading.Event() # Use an event for clearer stop signaling
 
-# Background threads
+# Hourly cap scheduler thread
 hourly_cap_scheduler_thread = None
-stateful_check_thread = None
 
 def app_specific_loop(app_type: str) -> None:
     """
@@ -527,39 +523,29 @@ def check_and_restart_threads():
 def shutdown_handler(signum, frame):
     """Handle termination signals (SIGINT, SIGTERM)."""
     logger.info(f"Received signal {signum}. Initiating shutdown...")
-    stop_event.set()  # Signal all threads to stop
+    stop_event.set() # Signal all threads to stop
 
 def shutdown_threads():
     """Wait for all threads to finish."""
-    global hourly_cap_scheduler_thread, stateful_check_thread
+    logger.info("Waiting for all app threads to stop...")
     
-    logger.info("Gracefully shutting down threads...")
-    
-    # Signal all threads to stop
-    stop_event.set()
-    
-    # Wait for hourly cap scheduler to terminate
+    # Stop the hourly API cap scheduler
+    global hourly_cap_scheduler_thread
     if hourly_cap_scheduler_thread and hourly_cap_scheduler_thread.is_alive():
-        logger.info("Waiting for hourly cap scheduler to stop...")
-        hourly_cap_scheduler_thread.join(timeout=10.0)
+        # The thread should exit naturally due to the stop_event being set
+        logger.info("Waiting for hourly API cap scheduler to stop...")
+        hourly_cap_scheduler_thread.join(timeout=5.0)
         if hourly_cap_scheduler_thread.is_alive():
             logger.warning("Hourly API cap scheduler did not stop gracefully")
         else:
             logger.info("Hourly API cap scheduler stopped")
-            
-    # Wait for stateful check thread to terminate
-    if stateful_check_thread and stateful_check_thread.is_alive():
-        logger.info("Waiting for stateful check thread to stop...")
-        stateful_check_thread.join(timeout=10.0)
-        if stateful_check_thread.is_alive():
-            logger.warning("Stateful check thread did not stop gracefully")
-        else:
-            logger.info("Stateful check thread stopped")
     
     # Wait for all threads to terminate
     for thread in app_threads.values():
         if thread.is_alive():
             thread.join(timeout=10.0)
+    
+    logger.info("All app threads stopped.")
 
 def hourly_cap_scheduler_loop():
     """Main loop for the hourly API cap scheduler thread
@@ -588,7 +574,6 @@ def hourly_cap_scheduler_loop():
                     
                 # Check if it's the top of the hour (00 minute mark)
                 current_time = datetime.datetime.now()
-                
                 if current_time.minute == 0:
                     logger.info(f"Hourly reset triggered at {current_time.hour}:00")
                     success = reset_hourly_caps()
@@ -627,99 +612,38 @@ def start_hourly_cap_scheduler():
     
     logger.info(f"Hourly API cap scheduler started. Thread is alive: {hourly_cap_scheduler_thread.is_alive()}")
 
-def stateful_check_loop():
-    """Background thread for checking stateful management expiration (issue #407).
-    Runs checks every 5 minutes and resets state if needed.
-    """
-    stateful_logger = get_logger("stateful")
-    stateful_logger.info("Starting stateful management check thread")
-    
-    # Initialize time for next check (check right away on first run)
-    next_check_time = time.time()
-    
-    try:
-        # Main monitoring loop
-        while not stop_event.is_set():
-            try:
-                current_time = time.time()
-                
-                # Check if it's time for stateful expiration check
-                if current_time >= next_check_time:
-                    # Check if stateful management has expired
-                    stateful_logger.debug("Checking stateful management expiration")
-                    if check_expiration():
-                        stateful_logger.info("Stateful management expiration detected - reset completed successfully")
-                    
-                    # Set next check time (every 5 minutes)
-                    next_check_time = current_time + 300
-                
-                # Sleep briefly to avoid consuming too much CPU
-                time.sleep(1)
-                
-            except Exception as e:
-                stateful_logger.error(f"Error in stateful check loop: {e}")
-                stateful_logger.error(traceback.format_exc())
-                # Sleep briefly to avoid spinning in case of repeated errors
-                time.sleep(5)
-    
-    except Exception as e:
-        stateful_logger.error(f"Fatal error in stateful check loop: {e}")
-        stateful_logger.error(traceback.format_exc())
-    
-    stateful_logger.info("Stateful management check thread stopped")
-
-def start_stateful_check():
-    """Start the stateful management check thread"""
-    global stateful_check_thread
-    
-    if stateful_check_thread and stateful_check_thread.is_alive():
-        logger.info("Stateful management check thread already running")
-        return
-    
-    # Create and start the thread
-    stateful_check_thread = threading.Thread(
-        target=stateful_check_loop, 
-        name="StatefulCheck", 
-        daemon=True
-    )
-    stateful_check_thread.start()
-    
-    logger.info(f"Stateful management check thread started")
-
 def start_huntarr():
     """Main entry point for Huntarr background tasks."""
     logger.info(f"--- Starting Huntarr Background Tasks v{__version__} --- ")
     
-    # Register signal handlers for graceful shutdown
-    signal.signal(signal.SIGINT, shutdown_handler)
-    signal.signal(signal.SIGTERM, shutdown_handler)
-    
+    # Perform initial settings migration if specified (e.g., via env var or arg)
+    if os.environ.get("HUNTARR_RUN_MIGRATION", "false").lower() == "true":
+        logger.info("Running settings migration from huntarr.json (if found)...")
+        settings_manager.migrate_from_huntarr_json()
+        
+    # Start the hourly API cap scheduler
     try:
-        # Start Arr app threads
-        start_app_threads()
-        
-        # Start hourly cap scheduler
         start_hourly_cap_scheduler()
-        
-        # Start stateful management check thread (issue #407)
-        start_stateful_check()
-        
-        # Log initial configuration for all known apps
-        for app_name in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
-            try:
-                config.log_configuration(app_name)
-            except Exception as e:
-                logger.error(f"Error logging initial configuration for {app_name}: {e}")
-        
+        logger.info("Hourly API cap scheduler started successfully")
+    except Exception as e:
+        logger.error(f"Failed to start hourly API cap scheduler: {e}")
+
+    # Log initial configuration for all known apps
+    for app_name in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
+        try:
+            config.log_configuration(app_name)
+        except Exception as e:
+            logger.error(f"Error logging initial configuration for {app_name}: {e}")
+
+    try:
         # Main loop: Start and monitor app threads
         while not stop_event.is_set():
             start_app_threads() # Start/Restart threads for configured apps
             # check_and_restart_threads() # This is implicitly handled by start_app_threads checking is_alive
             stop_event.wait(15) # Check for stop signal every 15 seconds
-    
+
     except Exception as e:
-        logger.error(f"Failed to start Huntarr background tasks: {e}")
-        logger.error(traceback.format_exc())
+        logger.exception(f"Unexpected error in main monitoring loop: {e}")
     finally:
         logger.info("Background task main loop exited. Shutting down threads...")
         if not stop_event.is_set():
