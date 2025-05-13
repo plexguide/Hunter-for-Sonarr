@@ -465,12 +465,37 @@ function renderSchedules() {
         if (schedule.app === 'global') {
             appText = 'All Apps';
         } else {
-            // Format app name nicely (e.g., 'Sonarr Instance 1')
-            const [app, instance] = schedule.app.split('-');
-            if (instance === 'all') {
-                appText = `All ${app.charAt(0).toUpperCase() + app.slice(1)} Instances`;
+            // Format app name nicely using the actual instance name
+            const [app, instanceId] = schedule.app.split('-');
+            if (instanceId === 'all') {
+                appText = `All ${capitalizeFirst(app)} Instances`;
             } else {
-                appText = `${app.charAt(0).toUpperCase() + app.slice(1)} Instance ${instance}`;
+                // Try to find the actual instance name from app_instances.json
+                const listUrl = `/static/data/app_instances.json?nocache=${new Date().getTime()}`;
+                
+                // Default fallback format in case we can't get instance data
+                let instanceName = `Instance ${instanceId}`;
+                
+                // Get the app instance data synchronously to ensure we have it for rendering
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', listUrl, false); // Synchronous request
+                try {
+                    xhr.send();
+                    if (xhr.status === 200) {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data[app] && Array.isArray(data[app])) {
+                            // Find the instance with matching id
+                            const instance = data[app].find(inst => inst.id === instanceId);
+                            if (instance && instance.name) {
+                                instanceName = instance.name;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`Could not get instance name for ${app}-${instanceId}:`, error);
+                }
+                
+                appText = `${capitalizeFirst(app)} ${instanceName}`;
             }
         }
         
