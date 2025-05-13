@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from src.primary.stats_manager import get_stats, reset_stats, load_hourly_caps, get_default_hourly_caps
-from src.primary.settings_manager import get_general_settings, get_app_settings
+from src.primary.settings_manager import get_general_settings, load_settings
 import logging
 from flask_jwt_extended import jwt_required
 from src.primary.auth_utils import admin_required
@@ -68,7 +68,7 @@ def api_get_hourly_caps():
         app_limits = {}
         apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']
         for app in apps:
-            app_settings = get_app_settings(app)
+            app_settings = load_settings(app)
             app_limits[app] = app_settings.get('hourly_cap', 20)  # Default to 20 if not set
         
         return jsonify({
