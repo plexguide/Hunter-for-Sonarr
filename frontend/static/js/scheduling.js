@@ -3,18 +3,9 @@
  * Implements a SABnzbd-style scheduler for controlling Arr application behavior
  */
 
-/**
- * Capitalize the first letter of a string
- * @param {string} string - The string to capitalize
- * @returns {string} - The capitalized string
- */
-function capitalizeFirst(string) {
-    if (!string) return '';
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-// Store schedules in memory (will be saved to JSON files via API)
-let schedules = {
+// Define the schedules object in the global window scope to prevent redeclaration errors
+// This ensures the variable is only declared once no matter how many times the script loads
+window.huntarrSchedules = window.huntarrSchedules || {
     global: [],
     sonarr: [],
     radarr: [],
@@ -22,20 +13,35 @@ let schedules = {
     readarr: []
 };
 
-// Initialize scheduler when document is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the scheduler
-    initScheduler();
+// Use an immediately invoked function expression to create a new scope
+(function() {
+    // Reference the global schedules object
+    const schedules = window.huntarrSchedules;
     
-    // Load existing schedules
-    loadSchedules();
+    /**
+     * Capitalize the first letter of a string
+     * @param {string} string - The string to capitalize
+     * @returns {string} - The capitalized string
+     */
+    function capitalizeFirst(string) {
+        if (!string) return '';
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
     
-    // Set up event listeners
-    setupEventListeners();
-    
-    // Load app instances dynamically
-    loadAppInstances();
-});
+    // Initialize when document is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the scheduler
+        initScheduler();
+        
+        // Load existing schedules
+        loadSchedules();
+        
+        // Set up event listeners
+        setupEventListeners();
+        
+        // Load app instances dynamically
+        loadAppInstances();
+    });
 
 /**
  * Initialize the scheduler functionality
@@ -248,8 +254,16 @@ function loadAppInstances() {
             // Success - populate from the received data
             console.debug('Successfully loaded app instances from app_instances.json:', data);
             
-            // Remove loading indicator
-            scheduleApp.removeChild(loadingOption);
+            // Remove loading indicator with safety check
+            try {
+                if (loadingOption && loadingOption.parentNode === scheduleApp) {
+                    scheduleApp.removeChild(loadingOption);
+                }
+                // Clear the reference to prevent future errors
+                loadingOption = null;
+            } catch (e) {
+                console.warn('Error removing loading option:', e);
+            }
             
             // Manually define the exact order we want
             const manualOrder = ['sonarr', 'radarr', 'readarr', 'lidarr', 'whisparr', 'eros'];
@@ -284,8 +298,16 @@ function loadAppInstances() {
         .catch(error => {
             console.error('Error loading app instances:', error);
             console.debug('Attempting fallback to fetchAppInstances()');
-            // Remove loading indicator
-            scheduleApp.removeChild(loadingOption);
+            // Remove loading indicator with safety check
+            try {
+                if (loadingOption && loadingOption.parentNode === scheduleApp) {
+                    scheduleApp.removeChild(loadingOption);
+                }
+            } catch (e) {
+                console.warn('Error removing loading option:', e);
+                // Clear any reference to the option to prevent future errors
+                loadingOption = null;
+            }
             
             // Fall back to fetchAppInstances for backwards compatibility
             return fetchAppInstances().then(instances => {
@@ -972,3 +994,6 @@ function resetDayCheckboxes() {
     document.getElementById('day-saturday').checked = false;
     document.getElementById('day-sunday').checked = false;
 }
+
+// Close the IIFE that wraps the script
+})();
