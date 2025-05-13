@@ -30,6 +30,9 @@ from src.primary.state import check_state_reset, calculate_reset_time
 from src.primary.stats_manager import check_hourly_cap_exceeded
 # from src.primary.utils.app_utils import get_ip_address # No longer used here
 
+# Import stateful expiration check for issue #407
+from src.primary.stateful_manager import check_expiration
+
 # Global state for managing app threads and their status
 app_threads: Dict[str, threading.Thread] = {}
 stop_event = threading.Event() # Use an event for clearer stop signaling
@@ -550,8 +553,12 @@ def shutdown_threads():
 def hourly_cap_scheduler_loop():
     """Main loop for the hourly API cap scheduler thread
     Checks time every 30 seconds and resets caps if needed at the top of the hour
+    Also handles global stateful management expiration checks (issue #407)
     """
     logger.info("Starting hourly API cap scheduler loop")
+    
+    # Initialize time for next stateful check
+    next_stateful_check_time = time.time() + 60  # First check after 60 seconds of startup
     
     try:
         from src.primary.stats_manager import reset_hourly_caps
@@ -574,6 +581,8 @@ def hourly_cap_scheduler_loop():
                     
                 # Check if it's the top of the hour (00 minute mark)
                 current_time = datetime.datetime.now()
+                current_time_epoch = time.time()
+                
                 if current_time.minute == 0:
                     logger.info(f"Hourly reset triggered at {current_time.hour}:00")
                     success = reset_hourly_caps()
@@ -581,6 +590,19 @@ def hourly_cap_scheduler_loop():
                         logger.info(f"Successfully reset hourly API caps at {current_time.hour}:00")
                     else:
                         logger.error(f"Failed to reset hourly API caps at {current_time.hour}:00")
+                
+                # Check if it's time to check stateful expiration (every 5 minutes)
+                if current_time_epoch >= next_stateful_check_time:
+                    try:
+                        # Check if stateful management has expired
+                        logger.debug("Checking stateful management expiration")
+                        if check_expiration():
+                            logger.info("Stateful management expiration detected - reset completed successfully")
+                    except Exception as e:
+                        logger.error(f"Error checking stateful expiration: {e}", exc_info=True)
+                    
+                    # Set next stateful check time (every 5 minutes)
+                    next_stateful_check_time = current_time_epoch + 300
                 
             except Exception as e:
                 logger.error(f"Error in hourly cap scheduler: {e}")
