@@ -403,10 +403,37 @@ function loadSchedules() {
         })
         .then(data => {
             console.debug('Loaded schedules from server:', data);
-            // Update schedules object without reassigning the reference
+            
+            // Process the data to ensure it's in the correct format
             Object.keys(schedules).forEach(key => {
-                schedules[key] = data[key] || [];
+                if (Array.isArray(data[key])) {
+                    // Process each schedule to ensure correct format
+                    schedules[key] = data[key].map(schedule => {
+                        // Make sure we have a proper time object
+                        let timeObj = schedule.time;
+                        if (typeof schedule.time === 'string') {
+                            // Convert string time (HH:MM) to time object {hour: HH, minute: MM}
+                            const [hour, minute] = schedule.time.split(':').map(Number);
+                            timeObj = { hour, minute };
+                        } else if (!schedule.time) {
+                            timeObj = { hour: 0, minute: 0 };
+                        }
+                        
+                        return {
+                            id: schedule.id || String(Date.now() + Math.random() * 1000),
+                            time: timeObj,
+                            days: Array.isArray(schedule.days) ? schedule.days : [],
+                            action: schedule.action || 'pause',
+                            app: schedule.app || 'global',
+                            enabled: schedule.enabled !== false
+                        };
+                    });
+                } else {
+                    schedules[key] = [];
+                }
             });
+            
+            console.debug('Processed schedules for rendering:', schedules);
             renderSchedules();
         })
         .catch(error => {
@@ -460,55 +487,105 @@ function parseDays(daysData) {
  * Save schedules to server via API
  */
 function saveSchedules() {
-    console.debug('Saving schedules to server...'); // DEBUG level per user preference
+    console.debug('Saving schedules to server');
     
     try {
-        // Save to server via API
+        // Before saving, ensure that schedules include appType information
+        // This ensures consistent data structure between saves and loads
+        const schedulesCopy = {};
+        
+        // Initialize with empty arrays for each app type
+        Object.keys(schedules).forEach(key => {
+            schedulesCopy[key] = [];
+        });
+        
+        // Process each schedule and ensure proper formatting before saving
+        Object.entries(schedules).forEach(([appType, appSchedules]) => {
+            if (Array.isArray(appSchedules)) {
+                schedulesCopy[appType] = appSchedules.map(schedule => {
+                    // Clean up the schedule object to ensure it has all required fields
+                    return {
+                        id: schedule.id,
+                        time: schedule.time,
+                        days: schedule.days,
+                        action: schedule.action,
+                        app: schedule.app || 'global',
+                        enabled: schedule.enabled !== false,
+                        appType: appType // Store appType as a property for reference when loading
+                    };
+                });
+            }
+        });
+        
+        console.debug('Saving processed schedules:', schedulesCopy);
+        
+        // Make API call to save schedules
         fetch('/api/scheduler/save', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(schedules)
+            body: JSON.stringify(schedulesCopy)
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to save schedules');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.debug('Successfully saved schedules to server');
-            
-            // Show success message
-            const saveMessage = document.createElement('div');
-            saveMessage.classList.add('save-success-message');
-            saveMessage.textContent = 'Schedules saved successfully!';
-            document.querySelector('.scheduler-container').appendChild(saveMessage);
-            
-            // Remove message after 3 seconds
-            setTimeout(() => {
-                if (saveMessage.parentNode) {
-                    saveMessage.parentNode.removeChild(saveMessage);
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to save schedules');
                 }
-            }, 3000);
-        })
-        .catch(error => {
-            console.error('Error saving schedules:', error);
-            
-            // Show error message
-            const errorMessage = document.createElement('div');
-            errorMessage.classList.add('save-error-message');
-            errorMessage.textContent = 'Failed to save schedules!';
-            document.querySelector('.scheduler-container').appendChild(errorMessage);
-            
-            // Remove message after 3 seconds
-            setTimeout(() => {
-                if (errorMessage.parentNode) {
-                    errorMessage.parentNode.removeChild(errorMessage);
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    console.debug('Schedules saved successfully');
+                    // Show success message
+                    const saveMessage = document.createElement('div');
+                    saveMessage.classList.add('save-success-message');
+                    saveMessage.textContent = 'Schedules saved successfully!';
+                    document.querySelector('.scheduler-container').appendChild(saveMessage);
+                    
+                    // Remove message after 3 seconds
+                    setTimeout(() => {
+                        if (saveMessage.parentNode) {
+                            saveMessage.parentNode.removeChild(saveMessage);
+                        }
+                    }, 3000);
+                    
+                    // Update our schedules object with the cleaned version
+                    Object.keys(schedules).forEach(key => {
+                        schedules[key] = schedulesCopy[key];
+                    });
+                } else {
+                    console.error('Failed to save schedules:', data.message);
+                    
+                    // Show error message
+                    const errorMessage = document.createElement('div');
+                    errorMessage.classList.add('save-error-message');
+                    errorMessage.textContent = `Failed to save: ${data.message}`;
+                    document.querySelector('.scheduler-container').appendChild(errorMessage);
+                    
+                    // Remove message after 3 seconds
+                    setTimeout(() => {
+                        if (errorMessage.parentNode) {
+                            errorMessage.parentNode.removeChild(errorMessage);
+                        }
+                    }, 3000);
                 }
-            }, 3000);
-        });
+            })
+            .catch(error => {
+                console.error('Error saving schedules:', error);
+                
+                // Show error message
+                const errorMessage = document.createElement('div');
+                errorMessage.classList.add('save-error-message');
+                errorMessage.textContent = 'Failed to save schedules!';
+                document.querySelector('.scheduler-container').appendChild(errorMessage);
+                
+                // Remove message after 3 seconds
+                setTimeout(() => {
+                    if (errorMessage.parentNode) {
+                        errorMessage.parentNode.removeChild(errorMessage);
+                    }
+                }, 3000);
+            });
     } catch (error) {
         console.error('Error in save function:', error);
     }
@@ -525,14 +602,16 @@ function getFormattedSchedules() {
     Object.entries(schedules).forEach(([appType, appSchedules]) => {
         if (Array.isArray(appSchedules)) {
             appSchedules.forEach(schedule => {
+                // Ensure we have the correct appType for UI operations
                 formattedSchedules.push({
                     ...schedule,
-                    appType // Add the app type for reference
+                    appType: schedule.appType || appType // Use existing appType if present, otherwise use the key
                 });
             });
         }
     });
     
+    console.debug('Formatted schedules for display:', formattedSchedules);
     return formattedSchedules;
 }
 
