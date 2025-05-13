@@ -14,7 +14,8 @@ function capitalizeFirst(string) {
 }
 
 // Store schedules by app type
-const schedules = {
+// Using let instead of const to avoid issues with reassignment
+let schedules = {
     global: [],
     sonarr: [],
     radarr: [],
@@ -23,28 +24,49 @@ const schedules = {
     whisparr: [], // WhisparrV2
     eros: []      // WhisparrV3
 };
-const appInstances = [];
+let appInstances = [];
 
 // Initialize scheduler when document is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the scheduler
-    initScheduler();
+    console.log('Initializing scheduler');
     
-    // Load existing schedules
+    // Check if we're on a page with scheduler components
+    const hasSchedulerComponents = document.getElementById('scheduleApp') || 
+                                 document.getElementById('scheduleList') ||
+                                 document.querySelector('.scheduler-container');
+    
+    if (!hasSchedulerComponents) {
+        console.debug('No scheduler components found on this page, skipping initialization');
+        return; // Exit early if we're not on a relevant page
+    }
+    
+    // Start by loading app instances
+    loadAppInstances();
+    
+    // Then load schedules
     loadSchedules();
     
-    // Set up event listeners
-    setupEventListeners();
+    // Initialize scheduler components
+    initScheduler();
     
-    // Load app instances dynamically
-    loadAppInstances();
+    // Set up event listeners for the scheduler UI
+    setupEventListeners();
 });
 
 /**
- * Set up all event listeners for the scheduler interface
+ * Initialize the scheduler components and UI
+ */
+function initScheduler() {
+    console.debug('Initializing scheduler components');
+    // This function is kept for compatibility and called by the main initialization
+    // The functionality has been moved to separate functions for better organization
+}
+
+/**
+ * Set up event listeners for the scheduler UI
  */
 function setupEventListeners() {
-    console.debug('Setting up scheduler event listeners');
+    console.debug('Setting up event listeners for scheduling UI');
     
     // Add schedule button event listener
     document.getElementById('addScheduleBtn')?.addEventListener('click', function() {
@@ -106,6 +128,8 @@ function initScheduler() {
  * Load app instances from available app types
  */
 function loadAppInstances() {
+    console.debug('Loading app instances');  // DEBUG level per user preference
+    
     const appTypes = [
         { id: 'sonarr', name: 'Sonarr' },
         { id: 'radarr', name: 'Radarr' },
@@ -115,8 +139,9 @@ function loadAppInstances() {
         { id: 'eros', name: 'WhisparrV3' }
     ];
     
-    // Use the app types directly
-    appInstances = appTypes;
+    // Clear the array instead of reassigning to avoid const errors
+    appInstances.length = 0;
+    appTypes.forEach(app => appInstances.push(app));
     
     // Also update the dropdown in the UI
     const scheduleApp = document.getElementById('scheduleApp');
@@ -236,9 +261,12 @@ function saveSchedules() {
  * Render the list of schedules
  */
 function renderSchedules() {
-    const scheduleList = document.getElementById('schedule-list');
+    console.debug('Rendering schedules'); // DEBUG level per user preference
+    
+    // Get container for the schedule list
+    const scheduleList = document.getElementById('scheduleList');
     if (!scheduleList) {
-        console.error('Schedule list element not found!');
+        console.debug('Schedule list element not found - this is normal if viewing the settings page component');
         return;
     }
     
@@ -523,11 +551,11 @@ function resetDayCheckboxes() {
  * @param {string} appType - The selected app type ('global', 'sonarr', etc.)
  */
 function updateInstanceDropdown(appType) {
-    console.debug(`Updating instance dropdown for app type: ${appType}`);
+    console.debug(`Updating instance dropdown for app type: ${appType}`);  // DEBUG level per user preference
     
     const instanceDropdown = document.getElementById('scheduleInstance');
     if (!instanceDropdown) {
-        console.debug('Warning: Instance dropdown not found');
+        console.debug('Warning: Instance dropdown not found - this is expected if viewing specific pages');  // DEBUG level per user preference
         return;
     }
     
