@@ -31,8 +31,18 @@ def generate_instance_list():
     # Order: Sonarr, Radarr, Readarr, Lidarr, WhisparrV2, WhisparrV3
     app_types = ['sonarr', 'radarr', 'readarr', 'lidarr', 'whisparr', 'eros']
     
+    # Map order numbers for strict ordering
+    app_order = {
+        'sonarr': 1,
+        'radarr': 2,
+        'readarr': 3,
+        'lidarr': 4,
+        'whisparr': 5,
+        'eros': 6
+    }
+    
     # Ensure consistent order for data structure when returning results
-    instances_ordered = {}
+    instances_ordered = {'order': app_types}
     for app_type in app_types:
         instances_ordered[app_type] = []
     
@@ -76,7 +86,8 @@ def generate_instance_list():
                     instances[app_type].append({
                         "id": str(index),
                         "name": instance_name,
-                        "display_name": app_display_names.get(app_type, capitalize_first(app_type))
+                        "display_name": app_display_names.get(app_type, capitalize_first(app_type)),
+                        "order": app_order.get(app_type, 999)  # Use the map for strict ordering
                     })
                 logger.debug(f"Added {len(instances[app_type])} {app_type} instances")
             else:
@@ -86,7 +97,8 @@ def generate_instance_list():
                     {
                         "id": "0", 
                         "name": f"{capitalize_first(app_type)} Default",
-                        "display_name": app_display_names.get(app_type, capitalize_first(app_type))
+                        "display_name": app_display_names.get(app_type, capitalize_first(app_type)),
+                        "order": app_order.get(app_type, 999)  # Use the map for strict ordering
                     }
                 ]
         except Exception as e:
@@ -96,7 +108,8 @@ def generate_instance_list():
                 {
                     "id": "0", 
                     "name": f"{capitalize_first(app_type)} Default",
-                    "display_name": app_display_names.get(app_type, capitalize_first(app_type))
+                    "display_name": app_display_names.get(app_type, capitalize_first(app_type)),
+                    "order": app_order.get(app_type, 999)  # Use the map for strict ordering
                 }
             ]
     

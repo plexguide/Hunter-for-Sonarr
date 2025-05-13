@@ -210,8 +210,14 @@ function loadAppInstances() {
             // Remove loading indicator
             scheduleApp.removeChild(loadingOption);
             
-            // Sort apps alphabetically
-            const sortedAppTypes = Object.keys(data).sort();
+            // Manually define the exact order we want
+            const manualOrder = ['sonarr', 'radarr', 'readarr', 'lidarr', 'whisparr', 'eros'];
+            console.debug('Using hardcoded app order for consistent display');
+            
+            // Filter to only include app types that actually exist in our data
+            const sortedAppTypes = manualOrder.filter(appType => {
+                return data[appType] && Array.isArray(data[appType]) && data[appType].length > 0;
+            });
             
             // Create optgroups for each app type
             sortedAppTypes.forEach(appType => {
@@ -242,8 +248,14 @@ function loadAppInstances() {
             
             // Fall back to fetchAppInstances for backwards compatibility
             return fetchAppInstances().then(instances => {
-                // Sort apps alphabetically
-                const sortedAppTypes = Object.keys(instances).sort();
+                // Manually define the exact order we want
+                const manualOrder = ['sonarr', 'radarr', 'readarr', 'lidarr', 'whisparr', 'eros'];
+                console.debug('Using hardcoded app order for consistent display (fallback mode)');
+                
+                // Filter to only include app types that actually exist in our data
+                const sortedAppTypes = manualOrder.filter(appType => {
+                    return instances[appType] && Array.isArray(instances[appType]) && instances[appType].length > 0;
+                });
                 
                 // Create optgroups for each app type
                 sortedAppTypes.forEach(appType => {
@@ -340,26 +352,22 @@ function formatAppInstances(data) {
 function loadSchedules() {
     console.debug('Loading schedules from storage'); // DEBUG level per user preference
     
-    // In a real implementation, this would load from API/localStorage
-    // For now, we'll use some example schedules
-    schedules = [
-        {
-            id: '1',
-            time: { hour: 10, minute: 0 },
-            days: { monday: true, wednesday: true, friday: true },
-            action: 'resume',
-            app: 'global',
-            enabled: true
-        },
-        {
-            id: '2',
-            time: { hour: 22, minute: 0 },
-            days: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true, sunday: true },
-            action: 'api-30',
-            app: 'sonarr-1',
-            enabled: true
+    // Try to load from localStorage if available
+    try {
+        const storedSchedules = localStorage.getItem('huntarr-schedules');
+        if (storedSchedules) {
+            schedules = JSON.parse(storedSchedules);
+            console.debug(`Loaded ${schedules.length} schedules from localStorage`);
+        } else {
+            // Start with empty schedules array
+            schedules = [];
+            console.debug('No saved schedules found, starting with empty list');
         }
-    ];
+    } catch (error) {
+        // If any error occurs, start with an empty array
+        console.warn('Error loading schedules from storage:', error);
+        schedules = [];
+    }
     
     // Update UI with loaded schedules
     renderSchedules();
@@ -369,13 +377,31 @@ function loadSchedules() {
  * Save schedules to storage
  */
 function saveSchedules() {
-    console.debug('Saving schedules to storage:', schedules); // DEBUG level per user preference
+    console.debug('Saving schedules to storage...'); // DEBUG level per user preference
     
-    // In a real implementation, this would save to API/localStorage
-    // For now, we'll just show a success message
+    try {
+        // Save to localStorage
+        localStorage.setItem('huntarr-schedules', JSON.stringify(schedules));
+        console.debug(`Successfully saved ${schedules.length} schedules to localStorage`);
+        
+        // Show success message
+        const saveMessage = document.createElement('div');
+        saveMessage.classList.add('save-success-message');
+        saveMessage.textContent = 'Schedules saved successfully!';
+        document.querySelector('.scheduler-container').appendChild(saveMessage);
+        
+        // Remove message after 3 seconds
+        setTimeout(() => {
+            if (saveMessage.parentNode) {
+                saveMessage.parentNode.removeChild(saveMessage);
+            }
+        }, 3000);
+    } catch (error) {
+        console.error('Error saving schedules:', error);
+    }
     
-    // Show success message
-    alert('Schedules saved successfully!');
+    // Re-render the list
+    renderSchedules();
 }
 
 /**
@@ -431,7 +457,7 @@ function renderSchedules() {
             actionText = 'Pause';
         } else if (schedule.action.startsWith('api-')) {
             const limit = schedule.action.split('-')[1];
-            actionText = `API Limit: ${limit}`;
+            actionText = `API Limits ${limit}`;
         }
         
         // Format app name
