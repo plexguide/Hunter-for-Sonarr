@@ -748,12 +748,9 @@ function renderSchedules() {
             }
         }
         
-        // Build the schedule item HTML
+        // Build the schedule item HTML (checkbox removed but layout preserved)
         scheduleItem.innerHTML = `
-            <div class="schedule-item-checkbox">
-                <input type="checkbox" id="schedule-${schedule.id}" ${schedule.enabled !== false ? 'checked' : ''}>
-                <label for="schedule-${schedule.id}"></label>
-            </div>
+            <div class="schedule-item-checkbox"></div>
             <div class="schedule-item-time">${formattedTime}</div>
             <div class="schedule-item-days">${daysText}</div>
             <div class="schedule-item-action">${actionText}</div>
@@ -763,13 +760,7 @@ function renderSchedules() {
             </div>
         `;
         
-        // Add event listener for enable/disable checkbox
-        const checkbox = scheduleItem.querySelector(`#schedule-${schedule.id}`);
-        if (checkbox) {
-            checkbox.addEventListener('change', function() {
-                toggleScheduleEnabled(schedule.id, schedule.appType, this.checked);
-            });
-        }
+        // Checkbox removed but empty div kept for layout preservation
         
         // Add event listeners for edit and delete buttons
         const editButton = scheduleItem.querySelector('.edit-schedule');
@@ -941,25 +932,12 @@ function deleteSchedule(scheduleId, appType = 'global') {
 }
 
 /**
- * Toggle a schedule's enabled state
+ * Toggle schedule functionality removed
+ * This function is kept as a stub in case other code references it
  */
 function toggleScheduleEnabled(scheduleId, appType = 'global', enabled) {
-    // Ensure the app type array exists
-    if (!schedules[appType]) {
-        schedules[appType] = [];
-        return;
-    }
-    
-    // Find and update the schedule
-    const scheduleIndex = schedules[appType].findIndex(s => s.id === scheduleId);
-    if (scheduleIndex !== -1) {
-        schedules[appType][scheduleIndex].enabled = enabled;
-        
-        // Auto-save schedules after toggling enabled state
-        saveSchedules();
-        
-        console.debug(`Schedule ${scheduleId} ${enabled ? 'enabled' : 'disabled'}`); // DEBUG level per user preference
-    }
+    // Function kept as a stub but functionality removed
+    console.debug('Toggle schedule enabled called, but functionality removed');
 }
 
 /**
