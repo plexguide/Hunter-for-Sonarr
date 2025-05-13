@@ -175,16 +175,42 @@ def check_expiration() -> bool:
     
     # If expires_at is None, update it based on settings
     if expires_at is None:
+        stateful_logger.warning("No expiration time found, updating based on current settings")
         update_lock_expiration()
         lock_info = get_lock_info()
         expires_at = lock_info.get("expires_at")
     
     current_time = int(time.time())
     
+    # Get time remaining for debug logging
+    time_remaining_seconds = expires_at - current_time
+    time_remaining_hours = time_remaining_seconds / 3600
+    
+    # Enhanced logging with timezone-aware timestamps
+    current_datetime = datetime.datetime.now()
+    expires_datetime = datetime.datetime.fromtimestamp(expires_at)
+    
+    # Log at DEBUG level for routine checks (per user preference)
+    stateful_logger.debug(f"Stateful expiration check: Current: {current_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    stateful_logger.debug(f"Stateful expires at: {expires_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    stateful_logger.debug(f"Time remaining: {time_remaining_hours:.1f} hours") 
+    
+    # Check if current time is past the expiration time
     if current_time >= expires_at:
+        # Log important state changes at INFO level
         stateful_logger.info("Stateful management has expired, resetting...")
-        reset_stateful_management()
-        return True
+        stateful_logger.info(f"Current time: {current_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+        stateful_logger.info(f"Expiration time: {expires_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        # Reset the stateful management system
+        reset_success = reset_stateful_management()
+        
+        if reset_success:
+            stateful_logger.info("Stateful management reset completed successfully")
+        else:
+            stateful_logger.error("Failed to reset stateful management")
+            
+        return reset_success
     
     return False
 
