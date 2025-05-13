@@ -343,6 +343,213 @@ input:checked + .slider:before {
     overflow: auto; /* Changed from hidden to auto to allow scrolling */
 }
 
+/* Scheduling specific styles */
+#schedulingSection, #schedulingPage, section[id*="scheduling"], div[id*="scheduling"] {
+    padding: 0 20px !important;
+    margin-left: 20px !important;
+    margin-right: 20px !important;
+}
+
+/* Scheduling minimalist header */
+.scheduling-minimalist-header {
+    padding: 15px 0;
+    margin-bottom: 15px;
+}
+
+.scheduling-minimalist-header h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+/* Force hide all descriptions and redundant headers in scheduling sections */
+.section-header p,
+.settings-header p,
+div[class*="header"] p,
+#schedulingSection p:not(.no-schedules-message p),
+#schedulingPage p:not(.no-schedules-message p),
+section[id*="scheduling"] p:not(.no-schedules-message p),
+div[id*="scheduling"] p:not(.no-schedules-message p),
+#schedulingPage .scheduling-minimalist-header,
+#schedulingSection .scheduling-minimalist-header {
+    display: none !important;
+}
+
+/* Ensure color-shift-dividers are visible */
+.color-shift-divider {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 0.7 !important;
+}
+
+/* Special highlighted dividers that need to be more prominent */
+.highlight-divider {
+    height: 2px !important;
+    opacity: 1 !important;
+    margin: 20px 0 !important;
+    background-size: 300% 100% !important;
+    animation: gradientShift 15s ease infinite !important;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Schedule button styling to match exactly the screenshots */
+.schedule-button {
+    background-color: #3498db !important;
+    border: none !important;
+    padding: 10px 15px !important;
+    border-radius: 6px !important;
+    color: white !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    transition: background-color 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    text-align: center !important;
+    height: 40px !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    min-width: 150px !important;
+    max-width: 180px !important;
+}
+
+.schedule-button:hover {
+    background-color: #2980b9 !important;
+}
+
+.schedule-button i {
+    margin-right: 8px !important;
+    font-size: 16px !important;
+}
+
+/* Keep old class references for backward compatibility */
+#addScheduleButton, 
+#saveSchedulesButton, 
+button.save-button, 
+button.action-button {
+    background-color: #3498db !important;
+    border: none !important;
+    padding: 10px 15px !important;
+    border-radius: 6px !important;
+    color: white !important;
+}
+
+/* Form area enhancements */
+.form-actions {
+    display: flex !important;
+    width: 100% !important;
+    margin-top: 30px !important;
+    padding: 0 !important;
+    justify-content: flex-start !important;
+}
+
+.panel-content {
+    padding: 20px !important;
+    border-radius: 0 0 8px 8px !important;
+}
+
+/* Enhanced form field styling */
+.scheduler-panel .form-control,
+#schedulingSection .form-control,
+#schedulingPage .form-control {
+    background-color: rgba(30, 39, 56, 0.8) !important;
+    border: 1px solid rgba(52, 152, 219, 0.3) !important;
+    border-radius: 5px !important;
+    color: #ffffff !important;
+    font-size: 14px !important;
+    height: 38px !important;
+    padding: 8px 12px !important;
+    transition: all 0.3s ease !important;
+}
+
+.scheduler-panel .form-control:focus,
+#schedulingSection .form-control:focus,
+#schedulingPage .form-control:focus {
+    border-color: rgba(52, 152, 219, 0.8) !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+    outline: none !important;
+}
+
+/* Checkbox styling enhancements */
+.day-checkbox input[type='checkbox'] {
+    position: relative !important;
+    cursor: pointer !important;
+    margin-right: 5px !important;
+    width: 18px !important;
+    height: 18px !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    outline: none !important;
+    background-color: rgba(30, 39, 56, 0.8) !important;
+    border: 1px solid rgba(52, 152, 219, 0.3) !important;
+    border-radius: 3px !important;
+    vertical-align: middle !important;
+}
+
+.day-checkbox input[type='checkbox']:checked {
+    background-color: #3498db !important;
+    border-color: #3498db !important;
+}
+
+.day-checkbox input[type='checkbox']:checked:after {
+    content: '\2714' !important;
+    font-size: 12px !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 4px !important;
+    color: white !important;
+}
+
+/* Label styling */
+.scheduler-panel label,
+#schedulingSection label,
+#schedulingPage label {
+    font-weight: 500 !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+    font-size: 14px !important;
+}
+
+/* Make dropdown selects in scheduling section fit content */
+#schedulingSection select.form-control,
+#schedulingPage select.form-control,
+section[id*="scheduling"] select.form-control,
+.scheduler-container select.form-control {
+    width: auto !important;
+    min-width: 160px !important;
+    max-width: 300px !important;
+}
+
+/* Scheduler Container - Changed to vertical layout as per user preference */
+.scheduler-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    margin-left: 15px !important;
+    margin-right: 15px !important;
+    width: calc(100% - 30px) !important;
+}
+
+/* Color-shifting divider line */
+.color-shift-divider {
+    height: 1px;
+    background: linear-gradient(to right, #3498db, #9b59b6, #2ecc71, #f1c40f, #e74c3c);
+    background-size: 500% 100%;
+    animation: gradientShift 30s ease infinite;
+    margin: 15px 0;
+    border: none;
+    opacity: 0.7;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
 /* Top Bar */
 .top-bar {
     height: 60px;
@@ -869,11 +1076,17 @@ input:checked + .slider:before {
     position: relative;
 }
 
+.panel-header {
+    background: linear-gradient(to right, rgba(52, 152, 219, 0.2), rgba(155, 89, 182, 0.2));
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(90, 109, 137, 0.3);
+    border-radius: 8px 8px 0 0;
+}
+
 .settings-group h3 {
     margin-bottom: 15px;
     padding: 10px 15px;
     font-size: 1.1rem;
-    background: linear-gradient(135deg, rgba(41, 128, 185, 0.9), rgba(52, 152, 219, 0.7));
     color: white;
     border-radius: 6px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -1813,6 +2026,49 @@ input:checked + .slider:before {
     .history-table {
         font-size: 13px;
     }
+
+/* Header Consistency Styles */
+/* Update all section headers to match scheduling's minimalist style */
+.section-header h2,
+.settings-section-header h2,
+.stateful-header h2,
+#generalSettings h3,
+#securitySettings h3,
+#serviceSettings h3,
+#appSection h2 {
+    /* Remove background color for a cleaner look */
+    background-color: transparent !important;
+    /* Add an icon and proper spacing */
+    padding: 10px 0 !important;
+    margin-bottom: 10px !important;
+    /* Ensure text is readable */
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+}
+
+/* Add the gradient line under headers (matches scheduling) */
+.section-header h2::after,
+.settings-section-header h2::after,
+.stateful-header h2::after,
+#generalSettings h3::after,
+#securitySettings h3::after,
+#serviceSettings h3::after,
+#appSection h2::after {
+    content: '';
+    display: block;
+    height: 2px;
+    background: linear-gradient(to right, #3498db, #2ecc71);
+    margin-top: 10px;
+    border-radius: 2px;
+}
+
+/* Adjust app instances headers for consistency */
+.app-instance-header {
+    background-color: transparent !important;
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
     
     .history-table th, .history-table td {
         padding: 8px 10px;

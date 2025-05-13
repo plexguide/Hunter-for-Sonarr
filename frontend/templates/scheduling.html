@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include 'components/head.html' %}
+    <title>Huntarr - Scheduling</title>
+    <link rel="stylesheet" href="/static/css/scheduling.css">
+</head>
+<body>
+    <div class="app-container mobile-optimized">
+        {% include 'components/sidebar.html' %}
+        
+        <div class="main-content">
+            {% include 'components/topbar.html' %}
+            
+            <!-- Scheduling Section -->
+            <section id="schedulingPage" class="content-section active" style="margin: 0 15px;">
+                <!-- Minimalistic header with gradient line -->
+                <div class="scheduling-minimalist-header">
+                    <h2><i class="fas fa-calendar-alt"></i> Scheduling</h2>
+                    <hr class="color-shift-divider">
+                </div>
+                
+                <div class="scheduler-container">
+                    <!-- Add Schedule Panel -->
+                    <div class="scheduler-panel">
+                        <div class="panel-header">
+                            <h3>Add New Schedule <span style="color: red; font-size: 0.8em; font-weight: normal">(NOT WORKING YET)</span></h3>
+                        </div>
+                        <div class="panel-content">
+                            <!-- Time Selection -->
+                            <div class="form-group">
+                                <label for="scheduleHour">Time</label>
+                                <div class="time-selection">
+                                    <select id="scheduleHour" class="form-control">
+                                        {% for h in range(0, 24) %}
+                                            <option value="{{ h }}">{{ '%02d' % h }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="time-separator">:</span>
+                                    <select id="scheduleMinute" class="form-control">
+                                        {% for m in range(0, 60, 5) %}
+                                            <option value="{{ m }}">{{ '%02d' % m }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <hr class="color-shift-divider highlight-divider">
+                            
+                            <!-- Frequency/Days -->
+                            <div class="form-group">
+                                <label>Days of the Week</label>
+                                <div class="days-selection">
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="day-monday" class="day-input">
+                                        <label for="day-monday">Monday</label>
+                                    </div>
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="day-tuesday" class="day-input">
+                                        <label for="day-tuesday">Tuesday</label>
+                                    </div>
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="day-wednesday" class="day-input">
+                                        <label for="day-wednesday">Wednesday</label>
+                                    </div>
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="day-thursday" class="day-input">
+                                        <label for="day-thursday">Thursday</label>
+                                    </div>
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="day-friday" class="day-input">
+                                        <label for="day-friday">Friday</label>
+                                    </div>
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="day-saturday" class="day-input">
+                                        <label for="day-saturday">Saturday</label>
+                                    </div>
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" id="day-sunday" class="day-input">
+                                        <label for="day-sunday">Sunday</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr class="color-shift-divider highlight-divider">
+                            
+                            <!-- Action Selection -->
+                            <div class="form-group">
+                                <label for="scheduleAction">Action</label>
+                                <select id="scheduleAction" class="form-control">
+                                    <optgroup label="Activity Control">
+                                        <option value="resume">Resume Activity</option>
+                                        <option value="pause">Pause Activity</option>
+                                    </optgroup>
+                                    <optgroup label="API Limits">
+                                        <option value="api-5">API Limits 5</option>
+                                        <option value="api-10">API Limits 10</option>
+                                        <option value="api-20">API Limits 20</option>
+                                        <option value="api-30">API Limits 30</option>
+                                        <option value="api-50">API Limits 50</option>
+                                        <option value="api-100">API Limits 100</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            
+                            <hr class="color-shift-divider">
+                            
+                            <!-- App Selection -->
+                            <div class="form-group">
+                                <label for="scheduleApp">Apply to</label>
+                                <select id="scheduleApp" class="form-control">
+                                    <option value="global">All Apps (Global)</option>
+                                    <option value="sonarr">Sonarr</option>
+                                    <option value="radarr">Radarr</option>
+                                    <option value="readarr">Readarr</option>
+                                    <option value="lidarr">Lidarr</option>
+                                    <option value="whisparr">WhisparrV2</option>
+                                    <option value="eros">WhisparrV3</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Add Button -->
+                            <div class="form-actions">
+                                <button id="addScheduleButton" class="schedule-button">
+                                    <i class="fas fa-plus"></i> Add Schedule
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Schedules Panel -->
+                    <div class="scheduler-panel">
+                        <div class="panel-header">
+                            <h3>Current Schedules</h3>
+                        </div>
+                        <div class="panel-content">
+                            <div class="table-responsive">
+                                <!-- Empty state message (visible by default) -->
+                                <div id="empty-state-container" class="empty-state-container">
+                                    <div class="empty-state-message-standalone">
+                                        <i class="fas fa-calendar-alt" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                                        <h4>No Schedules Available</h4>
+                                        <p>You haven't created any schedules yet. Use the form above to set up your first schedule.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Schedule table (hidden by default when empty) -->
+                                <div id="schedule-table-container" style="display: none;">
+                                    <table class="table table-dark table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th width="5%"><input type="checkbox" id="select-all-schedules"></th>
+                                                <th width="15%">Time</th>
+                                                <th width="20%">Days</th>
+                                                <th width="20%">Action</th>
+                                                <th width="25%">App</th>
+                                                <th width="15%" class="text-end">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="schedule-list">
+                                            <!-- Schedules will be populated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div id="noSchedulesMessage" class="no-schedules-message" style="display: none;">
+                                <p>No schedules configured. Use the form above to add a schedule.</p>
+                            </div>
+                            
+                            <!-- Save Button -->
+                            <div class="form-actions" style="margin-top: 20px;">
+                                <button id="saveSchedulesButton" class="schedule-button">
+                                    <i class="fas fa-save"></i> Save Schedules
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    {% include 'components/footer.html' %}
+    
+    {% include 'components/scripts.html' %}
+    
+    <!-- Load scheduling script -->
+    <script src="/static/js/scheduling.js"></script>
+    
+    <style>
+        /* Scheduler Container */
+        .scheduler-container {
+            display: grid;
+            grid-template-columns: minmax(300px, 1fr) minmax(400px, 2fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .scheduler-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Scheduler Panels */
+        .scheduler-panel {
+            background: var(--bg-secondary, #1e2738);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            background: linear-gradient(to right, rgba(52, 152, 219, 0.1), rgba(155, 89, 182, 0.1));
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color, rgba(90, 109, 137, 0.2));
+        }
+        
+        .panel-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary, #fff);
+        }
+        
+        .panel-content {
+            padding: 16px;
+        }
+        
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary, #fff);
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color, rgba(90, 109, 137, 0.3));
+            background-color: var(--bg-input, #131a27);
+            color: var(--text-primary, #fff);
+            font-size: 14px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--accent-color, #3b82f6);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+        }
+        
+        /* Time Selection */
+        .time-selection {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .time-selection .form-control {
+            width: 80px;
+        }
+        
+        .time-separator {
+            font-weight: bold;
+            color: var(--text-primary, #fff);
+        }
+        
+        /* Day Selection */
+        .days-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        
+        .day-checkbox {
+            display: flex;
+            align-items: center;
+        }
+        
+        .day-checkbox label {
+            margin-left: 8px;
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+        
+        .day-input {
+            width: 16px;
+            height: 16px;
+        }
+        
+        /* Action Button */
+        .form-actions {
+            margin-top: 24px;
+        }
+        
+        .action-button {
+            background-color: var(--accent-color, #3b82f6);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-button:hover {
+            background-color: var(--accent-hover, #2563eb);
+        }
+        
+        .action-button i {
+            margin-right: 8px;
+        }
+        
+        /* Current Schedules */
+        .schedules-list {
+            border: 1px solid var(--border-color, rgba(90, 109, 137, 0.2));
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .schedule-item {
+            display: grid;
+            grid-template-columns: auto 80px 1fr 1fr 1fr auto;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color, rgba(90, 109, 137, 0.1));
+            transition: background-color 0.2s ease;
+        }
+        
+        .schedule-item:last-child {
+            border-bottom: none;
+        }
+        
+        .schedule-item:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        
+        .schedule-item-checkbox {
+            margin-right: 12px;
+        }
+        
+        .schedule-item-time {
+            font-weight: 600;
+            color: var(--accent-color, #3b82f6);
+        }
+        
+        .schedule-item-days,
+        .schedule-item-action,
+        .schedule-item-app {
+            padding: 0 8px;
+        }
+        
+        .schedule-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .icon-button {
+            background: none;
+            border: none;
+            color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .icon-button:hover {
+            color: var(--text-primary, #fff);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .edit-schedule:hover {
+            color: var(--warning-color, #f59e0b);
+        }
+        
+        .delete-schedule:hover {
+            color: var(--error-color, #ef4444);
+        }
+        
+        .no-schedules-message {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+        }
+        
+        /* Save Schedules Button */
+        .save-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            font-size: 14px;
+            color: #fff;
+            background-color: var(--accent-color, #3b82f6);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .save-button:hover {
+            background-color: var(--accent-hover, #2563eb);
+        }
+        
+        .save-button i {
+            margin-right: 8px;
+        }
+        
+        /* Optgroup styling */
+        optgroup {
+            font-weight: 600;
+            color: var(--accent-color, #3b82f6);
+        }
+        
+        optgroup option {
+            color: var(--text-primary, #fff);
+            font-weight: normal;
+            padding-left: 8px;
+        }
+        
+        /* Toggle switch styling */
+        .toggle-switch-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin-right: 10px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--accent-color, #3b82f6);
+        }
+    </style>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make sure the navigation link is active
+            const schedulingNav = document.getElementById('schedulingNav');
+            if (schedulingNav) schedulingNav.classList.add('active');
+        });
+
+    </script>
+</body>
+</html>

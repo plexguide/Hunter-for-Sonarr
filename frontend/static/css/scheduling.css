@@ -1,0 +1,105 @@
+/* Styling for the scheduler page */
+
+.app-type-header {
+    background-color: #343a40;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+
+.app-type-header td {
+    padding: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.empty-schedule-row td {
+    padding: 30px;
+    color: #6c757d;
+    font-size: 1.1em;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.empty-state-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.empty-state-message i {
+    font-size: 2.5rem;
+    color: #6c757d;
+    margin-bottom: 15px;
+}
+
+.empty-state-message h5 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    color: #dee2e6;
+}
+
+.empty-state-message p {
+    color: #adb5bd;
+    margin-bottom: 0;
+}
+
+.empty-state-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    margin: 20px 0;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.empty-state-message-standalone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+}
+
+.empty-state-message-standalone i {
+    color: #495057;
+    margin-bottom: 20px;
+}
+
+.empty-state-message-standalone h4 {
+    color: #e9ecef;
+    margin-bottom: 15px;
+}
+
+.empty-state-message-standalone p {
+    color: #adb5bd;
+    max-width: 400px;
+}
+
+.save-success-message {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+
+.save-error-message {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #dc3545;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
