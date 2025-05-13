@@ -286,7 +286,9 @@ function formatAppInstances(data) {
                         };
                     }
                 }).filter(Boolean); // Remove any undefined entries
-            } else if (typeof data[appType] === 'object' && data[appType] !== null) {
+            }
+            // If days is already in our format
+            else if (typeof data[appType] === 'object' && data[appType] !== null) {
                 // Handle object with instance IDs as keys
                 formatted[normalizedType] = Object.keys(data[appType]).map((id) => {
                     const instance = data[appType][id];
@@ -687,7 +689,6 @@ function addSchedule() {
     const hour = parseInt(document.getElementById('scheduleHour').value);
     const minute = parseInt(document.getElementById('scheduleMinute').value);
     const action = document.getElementById('scheduleAction').value;
-    const app = document.getElementById('scheduleApp').value;
     
     // Get selected days
     const days = {
@@ -700,38 +701,27 @@ function addSchedule() {
         sunday: document.getElementById('day-sunday').checked
     };
     
-    // Emergency fix for day validation - temporarily forced to true to bypass error
-    // This guarantees schedules can be added while we investigate the root cause
+    // Calculate if any day was selected
+    const anyDaySelected = Object.values(days).some(dayIsSelected => dayIsSelected === true);
     
-    // Get the actual checkbox elements directly
-    const monday = document.getElementById('day-monday'); 
-    const tuesday = document.getElementById('day-tuesday');
-    const wednesday = document.getElementById('day-wednesday');
-    const thursday = document.getElementById('day-thursday');
-    const friday = document.getElementById('day-friday');
-    const saturday = document.getElementById('day-saturday');
-    const sunday = document.getElementById('day-sunday');
-    
-    // Log the actual DOM elements and their checked state
-    console.debug('Monday checkbox:', monday, monday ? monday.checked : 'not found');
-    console.debug('Tuesday checkbox:', tuesday, tuesday ? tuesday.checked : 'not found');
-    console.debug('Wednesday checkbox:', wednesday, wednesday ? wednesday.checked : 'not found');
-    console.debug('Thursday checkbox:', thursday, thursday ? thursday.checked : 'not found');
-    console.debug('Friday checkbox:', friday, friday ? friday.checked : 'not found');
-    console.debug('Saturday checkbox:', saturday, saturday ? saturday.checked : 'not found');
-    console.debug('Sunday checkbox:', sunday, sunday ? sunday.checked : 'not found');
-    
-    // Force validation to pass - we'll fix this properly later
-    // Temporarily forcing to true to ensure users can add schedules
-    const anyDaySelected = true;
-    
-    // Keep this commented out until we find the root cause
-    /*
-    if (!anyDaySelected) {
-        alert('Please select at least one day for the schedule.');
+    // Validate form inputs (basic validation)
+    if (isNaN(hour) || isNaN(minute)) {
+        alert('Please enter a valid hour and minute.');
         return;
     }
-    */
+    
+    if (!anyDaySelected) {
+        // Assuming huntarrUI is globally available
+        if (window.huntarrUI && typeof window.huntarrUI.showNotification === 'function') {
+            huntarrUI.showNotification('Please select at least one day to save the schedule.', 'error');
+        } else {
+            alert('Please select at least one day to save the schedule.'); // Fallback
+        }
+        console.error('Validation Error: No day selected for the new schedule.');
+        return; 
+    }
+    
+    const app = document.getElementById('scheduleApp').value;
     
     // Create new schedule with additional validation to prevent empty days
     const formattedDays = formatDaysForAPI(days);
