@@ -35,7 +35,7 @@ def load_schedules():
         
         # Create default schedule data if the file doesn't exist
         if not os.path.exists(SCHEDULE_FILE):
-            logger.debug("Schedule file not found, creating default")
+            logger.debug("Schedule file not found, creating empty default")
             default_data = {
                 "global": [],
                 "sonarr": [],
