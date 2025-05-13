@@ -13,8 +13,14 @@ function capitalizeFirst(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-// Store schedules in memory (will be saved to persistent storage)
-let schedules = [];
+// Store schedules in memory (will be saved to JSON files via API)
+let schedules = {
+    global: [],
+    sonarr: [],
+    radarr: [],
+    lidarr: [],
+    readarr: []
+};
 
 // Initialize scheduler when document is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -50,6 +56,23 @@ function initScheduler() {
         minuteSelect.value = minute;
     }
     
+    // Make sure schedule containers are visible
+    setTimeout(() => {
+        // Ensure schedule table container is visible
+        const tableContainer = document.getElementById('schedule-table-container');
+        if (tableContainer) {
+            tableContainer.style.display = 'block';
+            console.debug('Schedule table container visibility ensured');
+        }
+        
+        // Ensure current schedules panel is visible
+        const schedulePanel = document.querySelector('.scheduler-panel:nth-child(2)');
+        if (schedulePanel) {
+            schedulePanel.style.display = 'block';
+            console.debug('Current schedules panel visibility ensured');
+        }
+    }, 200);
+    
     // Check if we're on the scheduling section
     if (window.location.hash === '#scheduling') {
         // Make sure nav item is active
@@ -62,10 +85,27 @@ function initScheduler() {
  * Set up event listeners for the scheduler UI
  */
 function setupEventListeners() {
-    // Add Schedule button
+    // Add/Update Schedule button
     const addScheduleButton = document.getElementById('addScheduleButton');
     if (addScheduleButton) {
-        addScheduleButton.addEventListener('click', addSchedule);
+        addScheduleButton.addEventListener('click', function() {
+            // Check if this is an edit or a new schedule
+            const scheduleId = this.dataset.editId;
+            const appType = this.dataset.editAppType;
+            
+            if (scheduleId && appType) {
+                // This is an edit - add the schedule which will replace the existing one
+                addSchedule();
+                
+                // Reset the button
+                this.textContent = 'Add Schedule';
+                delete this.dataset.editId;
+                delete this.dataset.editAppType;
+            } else {
+                // New schedule
+                addSchedule();
+            }
+        });
     }
     
     // Save Schedules button
@@ -80,7 +120,8 @@ function setupEventListeners() {
         if (e.target.closest('.delete-schedule')) {
             const button = e.target.closest('.delete-schedule');
             const scheduleId = button.dataset.id;
-            deleteSchedule(scheduleId);
+            const appType = button.dataset.appType || 'global';
+            deleteSchedule(scheduleId, appType);
         }
         
         // Edit schedule button
@@ -347,77 +388,198 @@ function formatAppInstances(data) {
 }
 
 /**
- * Load schedules from storage
+ * Load schedules from server JSON files via API
  */
 function loadSchedules() {
-    console.debug('Loading schedules from storage'); // DEBUG level per user preference
+    console.debug('Loading schedules from server'); // DEBUG level per user preference
     
-    // Try to load from localStorage if available
-    try {
-        const storedSchedules = localStorage.getItem('huntarr-schedules');
-        if (storedSchedules) {
-            schedules = JSON.parse(storedSchedules);
-            console.debug(`Loaded ${schedules.length} schedules from localStorage`);
-        } else {
-            // Start with empty schedules array
-            schedules = [];
-            console.debug('No saved schedules found, starting with empty list');
-        }
-    } catch (error) {
-        // If any error occurs, start with an empty array
-        console.warn('Error loading schedules from storage:', error);
-        schedules = [];
-    }
-    
-    // Update UI with loaded schedules
-    renderSchedules();
+    // Make API call to get schedules
+    fetch('/api/scheduler/load')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to load schedules');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.debug('Loaded schedules from server:', data);
+            // Update schedules object without reassigning the reference
+            Object.keys(schedules).forEach(key => {
+                schedules[key] = data[key] || [];
+            });
+            renderSchedules();
+        })
+        .catch(error => {
+            console.error('Error loading schedules:', error);
+            // Initialize empty schedule structure if load fails
+            Object.keys(schedules).forEach(key => {
+                schedules[key] = [];
+            });
+            renderSchedules();
+        });
 }
 
 /**
- * Save schedules to storage
+ * Parse days from API format to our internal format
  */
-function saveSchedules() {
-    console.debug('Saving schedules to storage...'); // DEBUG level per user preference
+function parseDays(daysData) {
+    // Default all days to false
+    const days = {
+        monday: false,
+        tuesday: false,
+        wednesday: false,
+        thursday: false,
+        friday: false,
+        saturday: false,
+        sunday: false
+    };
     
-    try {
-        // Save to localStorage
-        localStorage.setItem('huntarr-schedules', JSON.stringify(schedules));
-        console.debug(`Successfully saved ${schedules.length} schedules to localStorage`);
-        
-        // Show success message
-        const saveMessage = document.createElement('div');
-        saveMessage.classList.add('save-success-message');
-        saveMessage.textContent = 'Schedules saved successfully!';
-        document.querySelector('.scheduler-container').appendChild(saveMessage);
-        
-        // Remove message after 3 seconds
-        setTimeout(() => {
-            if (saveMessage.parentNode) {
-                saveMessage.parentNode.removeChild(saveMessage);
-            }
-        }, 3000);
-    } catch (error) {
-        console.error('Error saving schedules:', error);
+    // If days is an array of day names
+    if (Array.isArray(daysData)) {
+        daysData.forEach(day => {
+            // Convert day names to our format (e.g., 'Mon' -> 'monday')
+            const dayLower = day.toLowerCase();
+            if (dayLower.startsWith('mon')) days.monday = true;
+            else if (dayLower.startsWith('tue')) days.tuesday = true;
+            else if (dayLower.startsWith('wed')) days.wednesday = true;
+            else if (dayLower.startsWith('thu')) days.thursday = true;
+            else if (dayLower.startsWith('fri')) days.friday = true;
+            else if (dayLower.startsWith('sat')) days.saturday = true;
+            else if (dayLower.startsWith('sun')) days.sunday = true;
+        });
+    }
+    // If days is already in our format
+    else if (daysData && typeof daysData === 'object') {
+        Object.assign(days, daysData);
     }
     
-    // Re-render the list
-    renderSchedules();
+    return days;
+}
+
+/**
+ * Save schedules to server via API
+ */
+function saveSchedules() {
+    console.debug('Saving schedules to server...'); // DEBUG level per user preference
+    
+    try {
+        // Save to server via API
+        fetch('/api/scheduler/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(schedules)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to save schedules');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.debug('Successfully saved schedules to server');
+            
+            // Show success message
+            const saveMessage = document.createElement('div');
+            saveMessage.classList.add('save-success-message');
+            saveMessage.textContent = 'Schedules saved successfully!';
+            document.querySelector('.scheduler-container').appendChild(saveMessage);
+            
+            // Remove message after 3 seconds
+            setTimeout(() => {
+                if (saveMessage.parentNode) {
+                    saveMessage.parentNode.removeChild(saveMessage);
+                }
+            }, 3000);
+        })
+        .catch(error => {
+            console.error('Error saving schedules:', error);
+            
+            // Show error message
+            const errorMessage = document.createElement('div');
+            errorMessage.classList.add('save-error-message');
+            errorMessage.textContent = 'Failed to save schedules!';
+            document.querySelector('.scheduler-container').appendChild(errorMessage);
+            
+            // Remove message after 3 seconds
+            setTimeout(() => {
+                if (errorMessage.parentNode) {
+                    errorMessage.parentNode.removeChild(errorMessage);
+                }
+            }, 3000);
+        });
+    } catch (error) {
+        console.error('Error in save function:', error);
+    }
+}
+
+/**
+ * Get formatted schedules for rendering
+ * This combines schedules from all app types into a single flat array
+ */
+function getFormattedSchedules() {
+    const formattedSchedules = [];
+    
+    // Flatten all app type schedules into a single array
+    Object.entries(schedules).forEach(([appType, appSchedules]) => {
+        if (Array.isArray(appSchedules)) {
+            appSchedules.forEach(schedule => {
+                formattedSchedules.push({
+                    ...schedule,
+                    appType // Add the app type for reference
+                });
+            });
+        }
+    });
+    
+    return formattedSchedules;
 }
 
 /**
  * Render schedules in the UI
  */
 function renderSchedules() {
+    // Find the schedules container and message element
     const schedulesContainer = document.getElementById('schedulesContainer');
     const noSchedulesMessage = document.getElementById('noSchedulesMessage');
     
-    if (!schedulesContainer || !noSchedulesMessage) return;
+    // If elements don't exist, try to find their parent and make them visible
+    if (!schedulesContainer || !noSchedulesMessage) {
+        // Look for the parent panel that contains schedules
+        const schedulePanel = document.querySelector('.scheduler-panel:nth-child(2)');
+        if (schedulePanel) {
+            // Ensure the panel content is visible
+            const panelContent = schedulePanel.querySelector('.panel-content');
+            if (panelContent) {
+                panelContent.style.display = 'block';
+                
+                // Try again to get the elements after making panel visible
+                setTimeout(() => renderSchedules(), 100);
+                return;
+            }
+        }
+        console.warn('Schedule container elements not found, cannot render schedules');
+        return;
+    }
+    
+    // Make sure container's parent elements are visible
+    const parentPanel = schedulesContainer.closest('.scheduler-panel');
+    if (parentPanel) {
+        parentPanel.style.display = 'block';
+    }
     
     // Clear current schedules
     schedulesContainer.innerHTML = '';
     
+    // Get all schedules in a flat array
+    const allSchedules = getFormattedSchedules();
+    
+    // Count total schedules
+    const totalSchedules = allSchedules.length;
+    
     // Show message if no schedules
-    if (schedules.length === 0) {
+    if (totalSchedules === 0) {
         schedulesContainer.style.display = 'none';
         noSchedulesMessage.style.display = 'block';
         return;
@@ -427,8 +589,18 @@ function renderSchedules() {
     schedulesContainer.style.display = 'block';
     noSchedulesMessage.style.display = 'none';
     
+    // Sort schedules by time for easier viewing
+    allSchedules.sort((a, b) => {
+        if (!a.time) return 1;
+        if (!b.time) return -1;
+        
+        const aTime = `${String(a.time.hour).padStart(2, '0')}:${String(a.time.minute).padStart(2, '0')}`;
+        const bTime = `${String(b.time.hour).padStart(2, '0')}:${String(b.time.minute).padStart(2, '0')}`;
+        return aTime.localeCompare(bTime);
+    });
+    
     // Add each schedule to the UI
-    schedules.forEach(schedule => {
+    allSchedules.forEach(schedule => {
         const scheduleItem = document.createElement('div');
         scheduleItem.className = 'schedule-item';
         
@@ -437,72 +609,57 @@ function renderSchedules() {
         
         // Format days
         let daysText = '';
-        const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-        const selectedDays = allDays.filter(day => schedule.days[day]);
-        
-        if (selectedDays.length === 7) {
-            daysText = 'Daily';
-        } else if (selectedDays.length === 0) {
-            daysText = 'None';
-        } else {
-            // Format day names nicely (e.g., 'Mon, Wed, Fri')
-            daysText = selectedDays.map(day => day.substring(0, 3).charAt(0).toUpperCase() + day.substring(1, 3)).join(', ');
+        if (Array.isArray(schedule.days)) {
+            // API format - array of day names
+            if (schedule.days.length === 7) {
+                daysText = 'Daily';
+            } else if (schedule.days.length === 0) {
+                daysText = 'None';
+            } else {
+                daysText = schedule.days.join(', ');
+            }
+        } else if (typeof schedule.days === 'object') {
+            // Internal format - object with day properties
+            const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            const selectedDays = allDays.filter(day => schedule.days[day]);
+            
+            if (selectedDays.length === 7) {
+                daysText = 'Daily';
+            } else if (selectedDays.length === 0) {
+                daysText = 'None';
+            } else {
+                // Format day names nicely (e.g., 'Mon, Wed, Fri')
+                daysText = selectedDays.map(day => day.substring(0, 3).charAt(0).toUpperCase() + day.substring(1, 3)).join(', ');
+            }
         }
         
         // Format action name
-        let actionText = '';
-        if (schedule.action === 'resume') {
+        let actionText = schedule.action || '';
+        if (actionText === 'resume') {
             actionText = 'Resume';
-        } else if (schedule.action === 'pause') {
+        } else if (actionText === 'pause') {
             actionText = 'Pause';
-        } else if (schedule.action.startsWith('api-')) {
-            const limit = schedule.action.split('-')[1];
+        } else if (actionText.startsWith('api-')) {
+            const limit = actionText.split('-')[1];
             actionText = `API Limits ${limit}`;
         }
         
         // Format app name
-        let appText = '';
-        if (schedule.app === 'global') {
-            appText = 'All Apps';
-        } else {
+        let appText = 'All Apps';
+        if (schedule.app && schedule.app !== 'global') {
             // Format app name nicely using the actual instance name
             const [app, instanceId] = schedule.app.split('-');
             if (instanceId === 'all') {
                 appText = `All ${capitalizeFirst(app)} Instances`;
             } else {
-                // Try to find the actual instance name from app_instances.json
-                const listUrl = `/static/data/app_instances.json?nocache=${new Date().getTime()}`;
-                
-                // Default fallback format in case we can't get instance data
-                let instanceName = `Instance ${instanceId}`;
-                
-                // Get the app instance data synchronously to ensure we have it for rendering
-                const xhr = new XMLHttpRequest();
-                xhr.open('GET', listUrl, false); // Synchronous request
-                try {
-                    xhr.send();
-                    if (xhr.status === 200) {
-                        const data = JSON.parse(xhr.responseText);
-                        if (data[app] && Array.isArray(data[app])) {
-                            // Find the instance with matching id
-                            const instance = data[app].find(inst => inst.id === instanceId);
-                            if (instance && instance.name) {
-                                instanceName = instance.name;
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.warn(`Could not get instance name for ${app}-${instanceId}:`, error);
-                }
-                
-                appText = `${capitalizeFirst(app)} ${instanceName}`;
+                appText = `${capitalizeFirst(app)} Instance ${instanceId}`;
             }
         }
         
         // Build the schedule item HTML
         scheduleItem.innerHTML = `
             <div class="schedule-item-checkbox">
-                <input type="checkbox" id="schedule-${schedule.id}" ${schedule.enabled ? 'checked' : ''}>
+                <input type="checkbox" id="schedule-${schedule.id}" ${schedule.enabled !== false ? 'checked' : ''}>
                 <label for="schedule-${schedule.id}"></label>
             </div>
             <div class="schedule-item-time">${formattedTime}</div>
@@ -510,8 +667,8 @@ function renderSchedules() {
             <div class="schedule-item-action">${actionText}</div>
             <div class="schedule-item-app">${appText}</div>
             <div class="schedule-item-actions">
-                <button class="icon-button edit-schedule" data-id="${schedule.id}"><i class="fas fa-edit"></i></button>
-                <button class="icon-button delete-schedule" data-id="${schedule.id}"><i class="fas fa-trash"></i></button>
+                <button class="icon-button edit-schedule" data-id="${schedule.id}" data-app-type="${schedule.appType}"><i class="fas fa-edit"></i></button>
+                <button class="icon-button delete-schedule" data-id="${schedule.id}" data-app-type="${schedule.appType}"><i class="fas fa-trash"></i></button>
             </div>
         `;
         
@@ -519,7 +676,22 @@ function renderSchedules() {
         const checkbox = scheduleItem.querySelector(`#schedule-${schedule.id}`);
         if (checkbox) {
             checkbox.addEventListener('change', function() {
-                toggleScheduleEnabled(schedule.id, this.checked);
+                toggleScheduleEnabled(schedule.id, schedule.appType, this.checked);
+            });
+        }
+        
+        // Add event listeners for edit and delete buttons
+        const editButton = scheduleItem.querySelector('.edit-schedule');
+        if (editButton) {
+            editButton.addEventListener('click', function() {
+                editSchedule(this.getAttribute('data-id'), this.getAttribute('data-app-type'));
+            });
+        }
+        
+        const deleteButton = scheduleItem.querySelector('.delete-schedule');
+        if (deleteButton) {
+            deleteButton.addEventListener('click', function() {
+                deleteSchedule(this.getAttribute('data-id'), this.getAttribute('data-app-type'));
             });
         }
         
@@ -560,52 +732,104 @@ function addSchedule() {
     const newSchedule = {
         id: String(Date.now()), // Simple ID generation
         time: { hour, minute },
-        days,
+        days: formatDaysForAPI(days),  // Save days in API format
         action,
         app,
         enabled: true
     };
     
-    // Add to schedules array
-    schedules.push(newSchedule);
+    // Determine app type for this schedule
+    let appType = 'global';
+    if (app && app !== 'global') {
+        const appParts = app.split('-');
+        appType = appParts[0] || 'global';
+    }
+    
+    // Make sure the array exists for this app type
+    if (!schedules[appType]) {
+        schedules[appType] = [];
+    }
+    
+    // Add to appropriate schedules array
+    schedules[appType].push(newSchedule);
+    
+    // Log at DEBUG level
+    console.debug(`Added new schedule to ${appType}:`, newSchedule); // DEBUG level per user preference
     
     // Update UI
     renderSchedules();
-    
-    // Log at DEBUG level
-    console.debug('Added new schedule:', newSchedule); // DEBUG level per user preference
     
     // Reset day checkboxes
     resetDayCheckboxes();
 }
 
 /**
+ * Format days from internal format to API format (array of day names)
+ */
+function formatDaysForAPI(days) {
+    const apiDays = [];
+    
+    if (days.monday) apiDays.push('Mon');
+    if (days.tuesday) apiDays.push('Tue');
+    if (days.wednesday) apiDays.push('Wed');
+    if (days.thursday) apiDays.push('Thu');
+    if (days.friday) apiDays.push('Fri');
+    if (days.saturday) apiDays.push('Sat');
+    if (days.sunday) apiDays.push('Sun');
+    
+    return apiDays;
+}
+
+/**
  * Edit an existing schedule
  */
-function editSchedule(scheduleId) {
-    // Find the schedule
-    const schedule = schedules.find(s => s.id === scheduleId);
-    if (!schedule) return;
+function editSchedule(scheduleId, appType = 'global') {
+    // Find the schedule in the appropriate app type array
+    if (!schedules[appType]) return;
     
+    const scheduleIndex = schedules[appType].findIndex(s => s.id === scheduleId);
+    if (scheduleIndex === -1) return;
+    
+    const schedule = schedules[appType][scheduleIndex];
     console.debug('Editing schedule:', schedule); // DEBUG level per user preference
     
-    // Set form values
+    // Set form values for time and action
     document.getElementById('scheduleHour').value = schedule.time.hour;
     document.getElementById('scheduleMinute').value = schedule.time.minute;
     document.getElementById('scheduleAction').value = schedule.action;
     document.getElementById('scheduleApp').value = schedule.app;
     
-    // Set day checkboxes
-    document.getElementById('day-monday').checked = schedule.days.monday;
-    document.getElementById('day-tuesday').checked = schedule.days.tuesday;
-    document.getElementById('day-wednesday').checked = schedule.days.wednesday;
-    document.getElementById('day-thursday').checked = schedule.days.thursday;
-    document.getElementById('day-friday').checked = schedule.days.friday;
-    document.getElementById('day-saturday').checked = schedule.days.saturday;
-    document.getElementById('day-sunday').checked = schedule.days.sunday;
+    // Handle days - convert from array format to checkbox format if needed
+    if (Array.isArray(schedule.days)) {
+        // API format - array of day names
+        document.getElementById('day-monday').checked = schedule.days.some(d => d.toLowerCase().startsWith('mon'));
+        document.getElementById('day-tuesday').checked = schedule.days.some(d => d.toLowerCase().startsWith('tue'));
+        document.getElementById('day-wednesday').checked = schedule.days.some(d => d.toLowerCase().startsWith('wed'));
+        document.getElementById('day-thursday').checked = schedule.days.some(d => d.toLowerCase().startsWith('thu'));
+        document.getElementById('day-friday').checked = schedule.days.some(d => d.toLowerCase().startsWith('fri'));
+        document.getElementById('day-saturday').checked = schedule.days.some(d => d.toLowerCase().startsWith('sat'));
+        document.getElementById('day-sunday').checked = schedule.days.some(d => d.toLowerCase().startsWith('sun'));
+    } else if (typeof schedule.days === 'object') {
+        // Object format with day properties
+        document.getElementById('day-monday').checked = schedule.days.monday;
+        document.getElementById('day-tuesday').checked = schedule.days.tuesday;
+        document.getElementById('day-wednesday').checked = schedule.days.wednesday;
+        document.getElementById('day-thursday').checked = schedule.days.thursday;
+        document.getElementById('day-friday').checked = schedule.days.friday;
+        document.getElementById('day-saturday').checked = schedule.days.saturday;
+        document.getElementById('day-sunday').checked = schedule.days.sunday;
+    }
     
-    // Remove the schedule (will be re-added when user clicks Add)
-    deleteSchedule(scheduleId, true); // Silent delete (no confirmation)
+    // Store the schedule ID and app type for update
+    const addButton = document.getElementById('addScheduleButton');
+    if (addButton) {
+        addButton.textContent = 'Update Schedule';
+        addButton.dataset.editId = scheduleId;
+        addButton.dataset.editAppType = appType;
+    }
+    
+    // Remove the schedule (will be re-added when user clicks Add/Update)
+    deleteSchedule(scheduleId, appType, true); // Silent delete (no confirmation)
     
     // Scroll to the Add Schedule panel
     document.querySelector('.scheduler-panel').scrollIntoView({ behavior: 'smooth' });
@@ -614,29 +838,45 @@ function editSchedule(scheduleId) {
 /**
  * Delete a schedule
  */
-function deleteSchedule(scheduleId, silent = false) {
+function deleteSchedule(scheduleId, appType = 'global', silent = false) {
     // Confirm delete (unless silent mode)
     if (!silent && !confirm('Are you sure you want to delete this schedule?')) {
         return;
     }
     
+    // Ensure the app type array exists
+    if (!schedules[appType]) {
+        schedules[appType] = [];
+        return;
+    }
+    
+    // Find the schedule index
+    const scheduleIndex = schedules[appType].findIndex(s => s.id === scheduleId);
+    if (scheduleIndex === -1) return;
+    
     // Remove from array
-    schedules = schedules.filter(s => s.id !== scheduleId);
+    schedules[appType].splice(scheduleIndex, 1);
     
     // Update UI
     renderSchedules();
     
-    console.debug('Deleted schedule ID:', scheduleId); // DEBUG level per user preference
+    console.debug(`Deleted schedule ID: ${scheduleId} from ${appType}`); // DEBUG level per user preference
 }
 
 /**
  * Toggle a schedule's enabled state
  */
-function toggleScheduleEnabled(scheduleId, enabled) {
+function toggleScheduleEnabled(scheduleId, appType = 'global', enabled) {
+    // Ensure the app type array exists
+    if (!schedules[appType]) {
+        schedules[appType] = [];
+        return;
+    }
+    
     // Find and update the schedule
-    const schedule = schedules.find(s => s.id === scheduleId);
-    if (schedule) {
-        schedule.enabled = enabled;
+    const scheduleIndex = schedules[appType].findIndex(s => s.id === scheduleId);
+    if (scheduleIndex !== -1) {
+        schedules[appType][scheduleIndex].enabled = enabled;
         console.debug(`Schedule ${scheduleId} ${enabled ? 'enabled' : 'disabled'}`); // DEBUG level per user preference
     }
 }
