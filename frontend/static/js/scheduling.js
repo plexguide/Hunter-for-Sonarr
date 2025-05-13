@@ -100,19 +100,19 @@ function setupEventListeners() {
         });
     }
     
-    // Save Schedules button
-    const saveSchedulesButton = document.getElementById('saveSchedulesButton');
-    if (saveSchedulesButton) {
-        saveSchedulesButton.addEventListener('click', saveSchedules);
-    }
+    // Save button functionality removed since we're using auto-save
     
     // Set up delegates for edit/delete schedule buttons
     document.addEventListener('click', function(e) {
         // Delete schedule button
-        if (e.target.closest('.delete-schedule')) {
-            const button = e.target.closest('.delete-schedule');
-            const scheduleId = button.dataset.id;
-            const appType = button.dataset.appType || 'global';
+        const deleteButton = e.target.closest('.delete-schedule');
+        if (deleteButton) {
+            // Stop event propagation to prevent multiple confirmations
+            e.stopPropagation();
+            e.preventDefault();
+            
+            const scheduleId = deleteButton.dataset.id;
+            const appType = deleteButton.dataset.appType || 'global';
             deleteSchedule(scheduleId, appType);
         }
         
