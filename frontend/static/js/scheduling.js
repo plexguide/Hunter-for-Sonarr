@@ -102,22 +102,32 @@ function setupEventListeners() {
     
     // Save button functionality removed since we're using auto-save
     
-    // Set up delegates for edit/delete schedule buttons
-    document.addEventListener('click', function(e) {
-        // Delete schedule button
-        const deleteButton = e.target.closest('.delete-schedule');
-        if (deleteButton) {
-            // Stop event propagation to prevent multiple confirmations
-            e.stopPropagation();
-            e.preventDefault();
-            
-            const scheduleId = deleteButton.dataset.id;
-            const appType = deleteButton.dataset.appType || 'global';
-            deleteSchedule(scheduleId, appType);
-        }
+    // Only set up the event handler during initialization, not on every page render
+    // Use a closure to ensure event listener is registered only once
+    if (!window.huntarrSchedulerInitialized) {
+        // Document level listener to catch delete actions regardless of when items are added
+        document.addEventListener('click', function(e) {
+            // Only react to delete buttons
+            const deleteButton = e.target.closest('.delete-schedule');
+            if (deleteButton) {
+                // Prevent default and bubbling to avoid multiple handlers
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const scheduleId = deleteButton.dataset.id;
+                const appType = deleteButton.dataset.appType || 'global';
+                
+                // One single confirmation dialog
+                if (confirm('Are you sure you want to delete this schedule?')) {
+                    deleteSchedule(scheduleId, appType);
+                }
+            }
+        });
         
-        // Edit functionality removed for simplicity
-    });
+        // Flag to prevent duplicate initialization
+        window.huntarrSchedulerInitialized = true;
+        console.debug('Scheduler event handlers initialized once');
+    }
 }
 
 /**
@@ -769,12 +779,7 @@ function renderSchedules() {
             });
         }
         
-        const deleteButton = scheduleItem.querySelector('.delete-schedule');
-        if (deleteButton) {
-            deleteButton.addEventListener('click', function() {
-                deleteSchedule(this.getAttribute('data-id'), this.getAttribute('data-app-type'));
-            });
-        }
+        // No individual delete button handlers - all handled by the document level listener
         
         // Add to container
         schedulesContainer.appendChild(scheduleItem);
@@ -908,13 +913,10 @@ function formatDaysForAPI(days) {
  */
 
 /**
- * Delete a schedule
+ * Delete a schedule (no confirmations to prevent multiple dialog issues)
  */
-function deleteSchedule(scheduleId, appType = 'global', silent = false) {
-    // Confirm delete (unless silent mode)
-    if (!silent && !confirm('Are you sure you want to delete this schedule?')) {
-        return;
-    }
+function deleteSchedule(scheduleId, appType = 'global') {
+    console.debug(`Deleting schedule ID: ${scheduleId} from ${appType}`); // DEBUG level per user preference
     
     // Ensure the app type array exists
     if (!schedules[appType]) {
@@ -935,7 +937,7 @@ function deleteSchedule(scheduleId, appType = 'global', silent = false) {
     // Update UI
     renderSchedules();
     
-    console.debug(`Deleted schedule ID: ${scheduleId} from ${appType}`); // DEBUG level per user preference
+    console.debug(`Successfully deleted schedule ID: ${scheduleId} from ${appType}`); // DEBUG level per user preference
 }
 
 /**
