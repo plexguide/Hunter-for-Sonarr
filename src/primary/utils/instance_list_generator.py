@@ -27,13 +27,22 @@ def generate_instance_list():
     """
     logger.debug("Generating app instance list for scheduler")
     
-    # Define the app types we support
-    app_types = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'bazarr']
-    instances = {}
+    # Define the app types we support in the specified order
+    # Order: Sonarr, Radarr, Readarr, Lidarr, WhisparrV2, WhisparrV3
+    app_types = ['sonarr', 'radarr', 'readarr', 'lidarr', 'whisparr', 'eros']
     
-    # Initialize all app types with empty arrays
+    # Ensure consistent order for data structure when returning results
+    instances_ordered = {}
     for app_type in app_types:
-        instances[app_type] = []
+        instances_ordered[app_type] = []
+    
+    # App type display names (for UI customization)
+    app_display_names = {
+        'whisparr': 'WhisparrV2',
+        'eros': 'WhisparrV3'
+    }
+    # Dictionary using ordered keys from above
+    instances = instances_ordered
     
     # Base config directory (internal Docker path)
     config_dir = Path("/config")
@@ -66,20 +75,29 @@ def generate_instance_list():
                     instance_name = instance.get("name") or f"{capitalize_first(app_type)} Instance {index + 1}"
                     instances[app_type].append({
                         "id": str(index),
-                        "name": instance_name
+                        "name": instance_name,
+                        "display_name": app_display_names.get(app_type, capitalize_first(app_type))
                     })
                 logger.debug(f"Added {len(instances[app_type])} {app_type} instances")
             else:
                 logger.debug(f"No instances found in {app_type}.json, adding default")
                 # Add a default instance if none found
                 instances[app_type] = [
-                    {"id": "0", "name": f"{capitalize_first(app_type)} Default"}
+                    {
+                        "id": "0", 
+                        "name": f"{capitalize_first(app_type)} Default",
+                        "display_name": app_display_names.get(app_type, capitalize_first(app_type))
+                    }
                 ]
         except Exception as e:
             logger.error(f"Error processing {app_type}.json: {str(e)}")
             # Add a default instance on error
             instances[app_type] = [
-                {"id": "0", "name": f"{capitalize_first(app_type)} Default"}
+                {
+                    "id": "0", 
+                    "name": f"{capitalize_first(app_type)} Default",
+                    "display_name": app_display_names.get(app_type, capitalize_first(app_type))
+                }
             ]
     
     # Write the consolidated list to list.json in Docker config volume

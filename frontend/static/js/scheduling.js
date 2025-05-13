@@ -218,13 +218,9 @@ function loadAppInstances() {
                 // Only create optgroup if there are instances
                 if (data[appType] && Array.isArray(data[appType]) && data[appType].length > 0) {
                     const optgroup = document.createElement('optgroup');
-                    optgroup.label = capitalizeFirst(appType);
-                    
-                    // Add "All X Instances" option
-                    const allInstancesOption = document.createElement('option');
-                    allInstancesOption.value = `${appType}-all`;
-                    allInstancesOption.textContent = `All ${capitalizeFirst(appType)} Instances`;
-                    optgroup.appendChild(allInstancesOption);
+                    // Use display name if available, otherwise fallback to capitalized app type
+                    const displayName = data[appType][0].display_name || capitalizeFirst(appType);
+                    optgroup.label = displayName;
                     
                     // Add individual instances
                     data[appType].forEach(instance => {
@@ -254,13 +250,9 @@ function loadAppInstances() {
                     // Only create optgroup if there are instances
                     if (instances[appType] && instances[appType].length > 0) {
                         const optgroup = document.createElement('optgroup');
-                        optgroup.label = capitalizeFirst(appType);
-                        
-                        // Add "All X Instances" option
-                        const allInstancesOption = document.createElement('option');
-                        allInstancesOption.value = `${appType}-all`;
-                        allInstancesOption.textContent = `All ${capitalizeFirst(appType)} Instances`;
-                        optgroup.appendChild(allInstancesOption);
+                        // Use display name if available, otherwise fallback to capitalized app type
+                        const displayName = instances[appType][0].display_name || capitalizeFirst(appType);
+                        optgroup.label = displayName;
                         
                         // Add individual instances
                         instances[appType].forEach(instance => {

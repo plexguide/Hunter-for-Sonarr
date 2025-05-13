@@ -2,47 +2,48 @@
   "sonarr": [
     {
       "id": "0",
-      "name": "Default2"
+      "name": "Default2",
+      "display_name": "Sonarr"
     },
     {
       "id": "1",
-      "name": "Instance 2"
+      "name": "Instance 2",
+      "display_name": "Sonarr"
     }
   ],
   "radarr": [
     {
       "id": "0",
-      "name": "Default"
-    }
-  ],
-  "lidarr": [
-    {
-      "id": "0",
-      "name": "Default"
+      "name": "Default",
+      "display_name": "Radarr"
     }
   ],
   "readarr": [
     {
       "id": "0",
-      "name": "Default"
+      "name": "Default",
+      "display_name": "Readarr"
+    }
+  ],
+  "lidarr": [
+    {
+      "id": "0",
+      "name": "Default",
+      "display_name": "Lidarr"
     }
   ],
   "whisparr": [
     {
       "id": "0",
-      "name": "Default"
+      "name": "Default",
+      "display_name": "WhisparrV2"
     }
   ],
   "eros": [
     {
       "id": "0",
-      "name": "Default"
-    }
-  ],
-  "bazarr": [
-    {
-      "id": "0",
-      "name": "Default"
+      "name": "Default",
+      "display_name": "WhisparrV3"
     }
   ]
 }
