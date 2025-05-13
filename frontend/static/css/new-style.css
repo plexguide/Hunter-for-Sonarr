@@ -2026,6 +2026,49 @@ section[id*="scheduling"] select.form-control,
     .history-table {
         font-size: 13px;
     }
+
+/* Header Consistency Styles */
+/* Update all section headers to match scheduling's minimalist style */
+.section-header h2,
+.settings-section-header h2,
+.stateful-header h2,
+#generalSettings h3,
+#securitySettings h3,
+#serviceSettings h3,
+#appSection h2 {
+    /* Remove background color for a cleaner look */
+    background-color: transparent !important;
+    /* Add an icon and proper spacing */
+    padding: 10px 0 !important;
+    margin-bottom: 10px !important;
+    /* Ensure text is readable */
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+}
+
+/* Add the gradient line under headers (matches scheduling) */
+.section-header h2::after,
+.settings-section-header h2::after,
+.stateful-header h2::after,
+#generalSettings h3::after,
+#securitySettings h3::after,
+#serviceSettings h3::after,
+#appSection h2::after {
+    content: '';
+    display: block;
+    height: 2px;
+    background: linear-gradient(to right, #3498db, #2ecc71);
+    margin-top: 10px;
+    border-radius: 2px;
+}
+
+/* Adjust app instances headers for consistency */
+.app-instance-header {
+    background-color: transparent !important;
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
     
     .history-table th, .history-table td {
         padding: 8px 10px;
