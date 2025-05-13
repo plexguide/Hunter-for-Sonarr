@@ -29,6 +29,7 @@ from src.primary import config, settings_manager
 from src.primary.state import check_state_reset, calculate_reset_time
 from src.primary.stats_manager import check_hourly_cap_exceeded
 from src.primary.utils.instance_list_generator import generate_instance_list
+from src.primary.scheduler_engine import start_scheduler, stop_scheduler
 # from src.primary.utils.app_utils import get_ip_address # No longer used here
 
 # Global state for managing app threads and their status
@@ -544,6 +545,14 @@ def shutdown_threads():
         else:
             logger.info("Hourly API cap scheduler stopped")
     
+    # Stop the scheduler engine
+    try:
+        logger.info("Stopping schedule action engine...")
+        stop_scheduler()
+        logger.info("Schedule action engine stopped successfully")
+    except Exception as e:
+        logger.error(f"Error stopping schedule action engine: {e}")
+    
     # Wait for all threads to terminate
     for thread in app_threads.values():
         if thread.is_alive():
@@ -671,6 +680,13 @@ def start_huntarr():
         logger.info("Hourly API cap scheduler started successfully")
     except Exception as e:
         logger.error(f"Failed to start hourly API cap scheduler: {e}")
+        
+    # Start the scheduler engine
+    try:
+        start_scheduler()
+        logger.info("Schedule action engine started successfully")
+    except Exception as e:
+        logger.error(f"Failed to start schedule action engine: {e}")
         
     # Start the instance list generator
     try:
