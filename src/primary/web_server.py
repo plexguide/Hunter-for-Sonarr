@@ -780,7 +780,7 @@ def api_get_hourly_caps():
     try:
         # Import necessary functions
         from src.primary.stats_manager import load_hourly_caps
-        from src.primary.settings_manager import load_settings
+        from src.primary.settings_manager import load_app_settings
         
         # Get the logger
         web_logger = get_logger("web_server")
@@ -788,16 +788,19 @@ def api_get_hourly_caps():
         # Load the current hourly caps
         caps = load_hourly_caps()
         
-        # Get the hourly cap limit from general settings
-        settings = load_settings('general')
-        hourly_limit = settings.get('hourly_cap', 20)  # Default to 20 if not set
+        # Get app-specific hourly cap limits
+        app_limits = {}
+        apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']
+        for app in apps:
+            app_settings = load_app_settings(app)
+            app_limits[app] = app_settings.get('hourly_cap', 20)  # Default to 20 if not set
         
-        web_logger.info(f"Serving hourly caps data with limit {hourly_limit}")
+        web_logger.debug(f"Serving hourly caps data with app-specific limits: {app_limits}")
         
         return jsonify({
             "success": True,
             "caps": caps,
-            "limit": hourly_limit
+            "limits": app_limits
         })
     except Exception as e:
         web_logger = get_logger("web_server")

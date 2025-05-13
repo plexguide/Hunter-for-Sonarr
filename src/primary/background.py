@@ -242,7 +242,7 @@ def app_specific_loop(app_type: str) -> None:
                     # Get the current cap status for logging
                     from src.primary.stats_manager import get_hourly_cap_status
                     cap_status = get_hourly_cap_status(app_type)
-                    app_logger.warning(f"{app_type.upper()} hourly cap reached {cap_status['current_usage']} of {cap_status['limit']}. Skipping cycle!")
+                    app_logger.warning(f"{app_type.upper()} hourly cap reached {cap_status['current_usage']} of {cap_status['limit']} (app-specific limit). Skipping cycle!")
                     continue # Skip this instance if API cap is exceeded
             except Exception as e:
                 app_logger.error(f"Error checking hourly API cap for {app_type}: {e}", exc_info=True)

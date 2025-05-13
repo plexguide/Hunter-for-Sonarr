@@ -113,6 +113,11 @@ const SettingsForms = {
                     <input type="number" id="sonarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
+                <div class="setting-item">
+                    <label for="sonarr_hourly_cap"><a href="#" class="info-icon" title="Maximum API requests per hour for this app" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Cap - Hourly:</label>
+                    <input type="number" id="sonarr_hourly_cap" name="hourly_cap" min="1" max="500" value="${settings.hourly_cap !== undefined ? settings.hourly_cap : 20}">
+                    <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
+                </div>
             </div>
             
             <div class="settings-group">
@@ -245,6 +250,11 @@ const SettingsForms = {
                     <label for="radarr_sleep_duration"><a href="https://huntarr.io/threads/sleep-duration.22/" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="radarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
+                </div>
+                <div class="setting-item">
+                    <label for="radarr_hourly_cap"><a href="#" class="info-icon" title="Maximum API requests per hour for this app" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Cap - Hourly:</label>
+                    <input type="number" id="radarr_hourly_cap" name="hourly_cap" min="1" max="500" value="${settings.hourly_cap !== undefined ? settings.hourly_cap : 20}">
+                    <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
                 </div>
             </div>
             
@@ -407,6 +417,11 @@ const SettingsForms = {
                     <input type="number" id="lidarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
+                <div class="setting-item">
+                    <label for="lidarr_hourly_cap"><a href="#" class="info-icon" title="Maximum API requests per hour for this app" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Cap - Hourly:</label>
+                    <input type="number" id="lidarr_hourly_cap" name="hourly_cap" min="1" max="500" value="${settings.hourly_cap !== undefined ? settings.hourly_cap : 20}">
+                    <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
+                </div>
             </div>
             
             <div class="settings-group">
@@ -536,6 +551,11 @@ const SettingsForms = {
                     <input type="number" id="readarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
+                <div class="setting-item">
+                    <label for="readarr_hourly_cap"><a href="#" class="info-icon" title="Maximum API requests per hour for this app" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Cap - Hourly:</label>
+                    <input type="number" id="readarr_hourly_cap" name="hourly_cap" min="1" max="500" value="${settings.hourly_cap !== undefined ? settings.hourly_cap : 20}">
+                    <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
+                </div>
             </div>
             
             <div class="settings-group">
@@ -662,6 +682,11 @@ const SettingsForms = {
                     <label for="whisparr_sleep_duration"><a href="https://huntarr.io/threads/sleep-duration.22/" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="whisparr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_hourly_cap"><a href="#" class="info-icon" title="Maximum API requests per hour for this app" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Cap - Hourly:</label>
+                    <input type="number" id="whisparr_hourly_cap" name="hourly_cap" min="1" max="500" value="${settings.hourly_cap !== undefined ? settings.hourly_cap : 20}">
+                    <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
                 </div>
             </div>
             
@@ -811,6 +836,11 @@ const SettingsForms = {
                     <label for="eros_sleep_duration"><a href="https://huntarr.io/threads/sleep-duration.22/" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Sleep Duration:</label>
                     <input type="number" id="eros_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
+                </div>
+                <div class="setting-item">
+                    <label for="eros_hourly_cap"><a href="#" class="info-icon" title="Maximum API requests per hour for this app" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Cap - Hourly:</label>
+                    <input type="number" id="eros_hourly_cap" name="hourly_cap" min="1" max="500" value="${settings.hourly_cap !== undefined ? settings.hourly_cap : 20}">
+                    <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
                 </div>
             </div>
             
@@ -1149,6 +1179,7 @@ const SettingsForms = {
                 settings.hunt_missing_items = getInputValue('#sonarr-hunt-missing-items', 1);
                 settings.hunt_upgrade_items = getInputValue('#sonarr-hunt-upgrade-items', 0);
                 settings.sleep_duration = getInputValue('#sonarr_sleep_duration', 900);
+                settings.hourly_cap = getInputValue('#sonarr_hourly_cap', 20);
                 settings.monitored_only = getInputValue('#sonarr_monitored_only', true);
                 settings.skip_future_episodes = getInputValue('#sonarr_skip_future_episodes', true);
                 settings.skip_series_refresh = getInputValue('#sonarr_skip_series_refresh', false);
@@ -1156,11 +1187,12 @@ const SettingsForms = {
             else if (appType === 'radarr') {
                 settings.hunt_missing_movies = getInputValue('#radarr_hunt_missing_movies', 1);
                 settings.hunt_upgrade_movies = getInputValue('#radarr_hunt_upgrade_movies', 0);
-                settings.monitored_only = getInputValue('#radarr_monitored_only', true);
-                settings.skip_future_releases = getInputValue('#skip_future_releases', true);
-                settings.skip_movie_refresh = getInputValue('#skip_movie_refresh', false);
                 settings.sleep_duration = getInputValue('#radarr_sleep_duration', 900);
-                settings.release_type = getInputValue('#release_type', 'physical');
+                settings.hourly_cap = getInputValue('#radarr_hourly_cap', 20);
+                settings.monitored_only = getInputValue('#radarr_monitored_only', true);
+                settings.skip_future_releases = getInputValue('#radarr_skip_future_releases', true);
+                settings.skip_movie_refresh = getInputValue('#radarr_skip_movie_refresh', false);
+                settings.release_type = getInputValue('#radarr_release_type', 'physical');
             } 
             else if (appType === 'lidarr') {
                 settings.hunt_missing_items = getInputValue('#lidarr_hunt_missing_items', 1);
@@ -1168,14 +1200,16 @@ const SettingsForms = {
                 settings.hunt_missing_mode = getInputValue('#lidarr_hunt_missing_mode', 'artist');
                 settings.monitored_only = getInputValue('#lidarr_monitored_only', true);
                 settings.sleep_duration = getInputValue('#lidarr_sleep_duration', 900);
+                settings.hourly_cap = getInputValue('#lidarr_hourly_cap', 20);
             } 
             else if (appType === 'readarr') {
                 settings.hunt_missing_books = getInputValue('#readarr_hunt_missing_books', 1);
                 settings.hunt_upgrade_books = getInputValue('#readarr_hunt_upgrade_books', 0);
                 settings.monitored_only = getInputValue('#readarr_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#readarr_skip_future_releases', true);
-                settings.skip_author_refresh = getInputValue('#skip_author_refresh', false);
+                settings.skip_author_refresh = getInputValue('#readarr_skip_author_refresh', false);
                 settings.sleep_duration = getInputValue('#readarr_sleep_duration', 900);
+                settings.hourly_cap = getInputValue('#readarr_hourly_cap', 20);
             } 
             else if (appType === 'whisparr') {
                 settings.hunt_missing_items = getInputValue('#whisparr_hunt_missing_items', 1);
@@ -1184,6 +1218,7 @@ const SettingsForms = {
                 settings.whisparr_version = getInputValue('#whisparr-api-version', 'v3');
                 settings.skip_future_releases = getInputValue('#whisparr_skip_future_releases', true);
                 settings.sleep_duration = getInputValue('#whisparr_sleep_duration', 900);
+                settings.hourly_cap = getInputValue('#whisparr_hourly_cap', 20);
             }
             else if (appType === 'eros') {
                 settings.search_mode = getInputValue('#eros_search_mode', 'movie');
@@ -1193,6 +1228,7 @@ const SettingsForms = {
                 settings.skip_future_releases = getInputValue('#eros_skip_future_releases', true);
                 settings.skip_item_refresh = getInputValue('#eros_skip_item_refresh', false);
                 settings.sleep_duration = getInputValue('#eros_sleep_duration', 900);
+                settings.hourly_cap = getInputValue('#eros_hourly_cap', 20);
             }
             else if (appType === 'swaparr') {
                 settings.enabled = getInputValue('#swaparr_enabled', false);

@@ -14,5 +14,6 @@
   "sleep_duration": 900,
   "monitored_only": true,
   "skip_future_episodes": true,
-  "skip_series_refresh": true
+  "skip_series_refresh": true,
+  "hourly_cap": 20
 }

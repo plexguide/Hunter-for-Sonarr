@@ -12,6 +12,7 @@
   "hunt_upgrade_items": 0,
   "sleep_duration": 900,
   "monitored_only": true,
+  "hourly_cap": 20,
   "skip_future_releases": true,
   "skip_artist_refresh": true
 }

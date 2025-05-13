@@ -14,5 +14,6 @@
   "skip_series_refresh": true,
   "skip_future_releases": true,
   "skip_scene_refresh": true,
-  "search_mode": "movie"
+  "search_mode": "movie",
+  "hourly_cap": 20
 }

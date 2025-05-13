@@ -275,11 +275,13 @@ def increment_hourly_cap(app_type: str, count: int = 1) -> bool:
         caps[app_type]["api_hits"] += count
         new_value = caps[app_type]["api_hits"]
         
-        # Get the hourly cap from settings
-        hourly_limit = get_advanced_setting("hourly_cap", 20)
+        # Get the hourly cap from the app's specific configuration
+        from src.primary.settings_manager import load_app_settings
+        app_settings = load_app_settings(app_type)
+        hourly_limit = app_settings.get("hourly_cap", 20)  # Default to 20 if not set
         
         # Log current usage vs limit
-        logger.info(f"*** HOURLY API INCREMENT *** {app_type} by {count}: {prev_value} -> {new_value} (limit: {hourly_limit})")
+        logger.debug(f"*** HOURLY API INCREMENT *** {app_type} by {count}: {prev_value} -> {new_value} (limit: {hourly_limit})")
         
         # Warn if approaching limit
         if new_value >= int(hourly_limit * 0.8) and prev_value < int(hourly_limit * 0.8):
@@ -312,7 +314,12 @@ def get_hourly_cap_status(app_type: str) -> Dict[str, Any]:
     
     with hourly_lock:
         caps = load_hourly_caps()
-        hourly_limit = get_advanced_setting("hourly_cap", 20)
+        
+        # Get the hourly cap from the app's specific configuration
+        from src.primary.settings_manager import load_app_settings
+        app_settings = load_app_settings(app_type)
+        hourly_limit = app_settings.get("hourly_cap", 20)  # Default to 20 if not set
+        
         current_usage = caps[app_type]["api_hits"]
         
         return {
