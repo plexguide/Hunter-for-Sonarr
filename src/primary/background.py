@@ -30,12 +30,16 @@ from src.primary.state import check_state_reset, calculate_reset_time
 from src.primary.stats_manager import check_hourly_cap_exceeded
 # from src.primary.utils.app_utils import get_ip_address # No longer used here
 
+# Import stateful expiration check for issue #407
+from src.primary.stateful_manager import check_expiration
+
 # Global state for managing app threads and their status
 app_threads: Dict[str, threading.Thread] = {}
 stop_event = threading.Event() # Use an event for clearer stop signaling
 
-# Hourly cap scheduler thread
+# Background threads
 hourly_cap_scheduler_thread = None
+stateful_check_thread = None
 
 def app_specific_loop(app_type: str) -> None:
     """
@@ -527,18 +531,29 @@ def shutdown_handler(signum, frame):
 
 def shutdown_threads():
     """Wait for all threads to finish."""
-    logger.info("Waiting for all app threads to stop...")
+    global hourly_cap_scheduler_thread, stateful_check_thread
+    
+    logger.info("Waiting for all threads to stop...")
     
     # Stop the hourly API cap scheduler
     global hourly_cap_scheduler_thread
     if hourly_cap_scheduler_thread and hourly_cap_scheduler_thread.is_alive():
         # The thread should exit naturally due to the stop_event being set
-        logger.info("Waiting for hourly API cap scheduler to stop...")
-        hourly_cap_scheduler_thread.join(timeout=5.0)
+        logger.debug("Waiting for hourly API cap scheduler to stop...")
+        hourly_cap_scheduler_thread.join(timeout=10.0)
         if hourly_cap_scheduler_thread.is_alive():
             logger.warning("Hourly API cap scheduler did not stop gracefully")
         else:
-            logger.info("Hourly API cap scheduler stopped")
+            logger.debug("Hourly API cap scheduler stopped")
+    
+    # Stop the stateful check thread (issue #407)
+    if stateful_check_thread and stateful_check_thread.is_alive():
+        logger.debug("Waiting for stateful check thread to stop...")
+        stateful_check_thread.join(timeout=10.0)
+        if stateful_check_thread.is_alive():
+            logger.warning("Stateful check thread did not stop gracefully")
+        else:
+            logger.debug("Stateful check thread stopped")
     
     # Wait for all threads to terminate
     for thread in app_threads.values():
@@ -597,6 +612,65 @@ def hourly_cap_scheduler_loop():
 # Instance list generator removed as it's no longer needed
 # App types are now hardcoded in the frontend
 
+def stateful_check_loop():
+    """Background thread for checking stateful management expiration (issue #407).
+    Runs checks every 5 minutes and resets state if needed.
+    """
+    stateful_logger = get_logger("stateful")
+    stateful_logger.debug("Starting stateful management check thread")
+    
+    # Initialize time for next check (check right away on first run)
+    next_check_time = time.time()
+    
+    try:
+        # Main monitoring loop
+        while not stop_event.is_set():
+            try:
+                current_time = time.time()
+                
+                # Check if it's time for stateful expiration check
+                if current_time >= next_check_time:
+                    # Check if stateful management has expired
+                    stateful_logger.debug("Checking stateful management expiration")
+                    if check_expiration():
+                        stateful_logger.info("Stateful management expiration detected - reset completed successfully")
+                    
+                    # Set next check time (every 5 minutes)
+                    next_check_time = current_time + 300
+                
+                # Sleep briefly to avoid consuming too much CPU
+                time.sleep(1)
+                
+            except Exception as e:
+                stateful_logger.error(f"Error in stateful check loop: {e}")
+                stateful_logger.error(traceback.format_exc())
+                # Sleep briefly to avoid spinning in case of repeated errors
+                time.sleep(5)
+    
+    except Exception as e:
+        stateful_logger.error(f"Fatal error in stateful check loop: {e}")
+        stateful_logger.error(traceback.format_exc())
+    
+    stateful_logger.info("Stateful management check thread stopped")
+
+def start_stateful_check():
+    """Start the stateful management check thread"""
+    global stateful_check_thread
+    
+    if stateful_check_thread and stateful_check_thread.is_alive():
+        logger.debug("Stateful management check thread already running")
+        return
+    
+    # Create and start the thread
+    stateful_check_thread = threading.Thread(
+        target=stateful_check_loop, 
+        name="StatefulCheck", 
+        daemon=True
+    )
+    stateful_check_thread.start()
+    
+    logger.info(f"Stateful management check thread started")
+
 def start_hourly_cap_scheduler():
     """Start the hourly API cap scheduler thread"""
     global hourly_cap_scheduler_thread
@@ -615,6 +689,8 @@ def start_hourly_cap_scheduler():
     
     logger.info(f"Hourly API cap scheduler started. Thread is alive: {hourly_cap_scheduler_thread.is_alive()}")
 
+# This function was moved to line 614 - duplicate removed
+
 def start_huntarr():
     """Main entry point for Huntarr background tasks."""
     logger.info(f"--- Starting Huntarr Background Tasks v{__version__} --- ")
@@ -628,6 +704,10 @@ def start_huntarr():
     try:
         start_hourly_cap_scheduler()
         logger.info("Hourly API cap scheduler started successfully")
+        
+        # Start stateful management check thread (issue #407)
+        start_stateful_check()
+        logger.info("Stateful management check thread started successfully")
     except Exception as e:
         logger.error(f"Failed to start hourly API cap scheduler: {e}")
         

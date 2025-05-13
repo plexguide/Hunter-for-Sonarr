@@ -14,7 +14,7 @@ function capitalizeFirst(string) {
 }
 
 // Store schedules by app type
-let schedules = {
+const schedules = {
     global: [],
     sonarr: [],
     radarr: [],
@@ -23,7 +23,7 @@ let schedules = {
     whisparr: [], // WhisparrV2
     eros: []      // WhisparrV3
 };
-let appInstances = [];
+const appInstances = [];
 
 // Initialize scheduler when document is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -39,6 +39,41 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load app instances dynamically
     loadAppInstances();
 });
+
+/**
+ * Set up all event listeners for the scheduler interface
+ */
+function setupEventListeners() {
+    console.debug('Setting up scheduler event listeners');
+    
+    // Add schedule button event listener
+    document.getElementById('addScheduleBtn')?.addEventListener('click', function() {
+        addSchedule();
+    });
+    
+    // Save schedules button event listener
+    document.getElementById('saveSchedulesBtn')?.addEventListener('click', function() {
+        saveSchedules();
+    });
+    
+    // App type dropdown change event
+    document.getElementById('scheduleAppType')?.addEventListener('change', function() {
+        // Update instance dropdown based on selected app
+        const appType = this.value;
+        updateInstanceDropdown(appType);
+    });
+    
+    // Prevent errors if any UI elements aren't found
+    if (!document.getElementById('addScheduleBtn')) {
+        console.debug('Warning: Add Schedule button not found');
+    }
+    if (!document.getElementById('saveSchedulesBtn')) {
+        console.debug('Warning: Save Schedules button not found');
+    }
+    if (!document.getElementById('scheduleAppType')) {
+        console.debug('Warning: App Type dropdown not found');
+    }
+}
 
 /**
  * Initialize the scheduler functionality
@@ -123,21 +158,18 @@ function loadSchedules() {
         })
         .then(data => {
             console.debug('Loaded schedules from server:', data);
-            schedules = data;
+            // Update schedules object without reassigning the const
+            Object.keys(schedules).forEach(key => {
+                schedules[key] = data[key] || [];
+            });
             renderSchedules();
         })
         .catch(error => {
             console.error('Error loading schedules:', error);
             // Initialize empty schedule structure if load fails
-            schedules = {
-                global: [],
-                sonarr: [],
-                radarr: [],
-                readarr: [],
-                lidarr: [],
-                whisparr: [],
-                eros: []
-            };
+            Object.keys(schedules).forEach(key => {
+                schedules[key] = [];
+            });
             renderSchedules();
         });
 }
@@ -464,11 +496,83 @@ function toggleScheduleEnabled(scheduleId, enabled) {
  * Reset day checkboxes to unchecked
  */
 function resetDayCheckboxes() {
-    document.getElementById('day-monday').checked = false;
-    document.getElementById('day-tuesday').checked = false;
-    document.getElementById('day-wednesday').checked = false;
-    document.getElementById('day-thursday').checked = false;
-    document.getElementById('day-friday').checked = false;
-    document.getElementById('day-saturday').checked = false;
-    document.getElementById('day-sunday').checked = false;
+    console.debug('Resetting day checkboxes'); // DEBUG level per user preference
+    
+    // Helper function to safely uncheck a checkbox if it exists
+    const uncheckIfExists = (id) => {
+        const checkbox = document.getElementById(id);
+        if (checkbox) {
+            checkbox.checked = false;
+        } else {
+            console.debug(`Checkbox with ID ${id} not found`);
+        }
+    };
+    
+    // Uncheck all day checkboxes
+    uncheckIfExists('day-monday');
+    uncheckIfExists('day-tuesday');
+    uncheckIfExists('day-wednesday');
+    uncheckIfExists('day-thursday');
+    uncheckIfExists('day-friday');
+    uncheckIfExists('day-saturday');
+    uncheckIfExists('day-sunday');
+}
+
+/**
+ * Update the instance dropdown based on the selected app type
+ * @param {string} appType - The selected app type ('global', 'sonarr', etc.)
+ */
+function updateInstanceDropdown(appType) {
+    console.debug(`Updating instance dropdown for app type: ${appType}`);
+    
+    const instanceDropdown = document.getElementById('scheduleInstance');
+    if (!instanceDropdown) {
+        console.debug('Warning: Instance dropdown not found');
+        return;
+    }
+    
+    // Clear existing options
+    instanceDropdown.innerHTML = '';
+    
+    // If global is selected, no instances are needed
+    if (appType === 'global') {
+        // Add a default "All Instances" option
+        const option = document.createElement('option');
+        option.value = 'all';
+        option.textContent = 'All Instances';
+        instanceDropdown.appendChild(option);
+        instanceDropdown.disabled = true;
+        return;
+    }
+    
+    // Enable the dropdown for app-specific instances
+    instanceDropdown.disabled = false;
+    
+    // Add a default "All Instances" option
+    const allOption = document.createElement('option');
+    allOption.value = 'all';
+    allOption.textContent = 'All Instances';
+    instanceDropdown.appendChild(allOption);
+    
+    // Add instances for the selected app type
+    const instances = appInstances.filter(instance => instance.app_type === appType);
+    
+    if (instances.length === 0) {
+        console.debug(`No instances found for app type: ${appType}`);
+        // Add a placeholder option
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No instances available';
+        option.disabled = true;
+        instanceDropdown.appendChild(option);
+        return;
+    }
+    
+    // Add each instance to the dropdown
+    instances.forEach(instance => {
+        const option = document.createElement('option');
+        option.value = instance.instance_name;
+        option.textContent = instance.instance_name;
+        instanceDropdown.appendChild(option);
+    });
 }
