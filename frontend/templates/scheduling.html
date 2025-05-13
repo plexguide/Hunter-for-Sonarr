@@ -3,6 +3,7 @@
 <head>
     {% include 'components/head.html' %}
     <title>Huntarr - Scheduling</title>
+    <link rel="stylesheet" href="/static/css/scheduling.css">
 </head>
 <body>
     <div class="app-container mobile-optimized">
@@ -108,28 +109,13 @@
                             <div class="form-group">
                                 <label for="scheduleApp">Apply to</label>
                                 <select id="scheduleApp" class="form-control">
-                                    <option value="global">All Applications</option>
-                                    <optgroup label="Sonarr">
-                                        <option value="sonarr-all">All Sonarr Instances</option>
-                                        <option value="sonarr-1">Sonarr Instance 1</option>
-                                        <option value="sonarr-2">Sonarr Instance 2</option>
-                                    </optgroup>
-                                    <optgroup label="Radarr">
-                                        <option value="radarr-all">All Radarr Instances</option>
-                                        <option value="radarr-1">Radarr Instance 1</option>
-                                    </optgroup>
-                                    <optgroup label="Lidarr">
-                                        <option value="lidarr-all">All Lidarr Instances</option>
-                                        <option value="lidarr-1">Lidarr Instance 1</option>
-                                    </optgroup>
-                                    <optgroup label="Readarr">
-                                        <option value="readarr-all">All Readarr Instances</option>
-                                        <option value="readarr-1">Readarr Instance 1</option>
-                                    </optgroup>
-                                    <optgroup label="Whisparr">
-                                        <option value="whisparr-all">All Whisparr Instances</option>
-                                        <option value="whisparr-1">Whisparr Instance 1</option>
-                                    </optgroup>
+                                    <option value="global">All Apps (Global)</option>
+                                    <option value="sonarr">Sonarr</option>
+                                    <option value="radarr">Radarr</option>
+                                    <option value="readarr">Readarr</option>
+                                    <option value="lidarr">Lidarr</option>
+                                    <option value="whisparr">WhisparrV2</option>
+                                    <option value="eros">WhisparrV3</option>
                                 </select>
                             </div>
                             
@@ -148,39 +134,25 @@
                             <h3>Current Schedules</h3>
                         </div>
                         <div class="panel-content">
-                            <div id="schedulesContainer" class="schedules-list">
-                                <!-- Example schedule items (will be dynamically populated) -->
-                                <div class="schedule-item">
-                                    <div class="schedule-item-checkbox">
-                                        <input type="checkbox" id="schedule-1" checked>
-                                        <label for="schedule-1"></label>
-                                    </div>
-                                    <div class="schedule-item-time">10:00</div>
-                                    <div class="schedule-item-days">Mon, Wed, Fri</div>
-                                    <div class="schedule-item-action">Resume</div>
-                                    <div class="schedule-item-app">All Apps</div>
-                                    <div class="schedule-item-actions">
-                                        <button class="icon-button edit-schedule" data-id="1"><i class="fas fa-edit"></i></button>
-                                        <button class="icon-button delete-schedule" data-id="1"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                </div>
-                                <div class="schedule-item">
-                                    <div class="schedule-item-checkbox">
-                                        <input type="checkbox" id="schedule-2" checked>
-                                        <label for="schedule-2"></label>
-                                    </div>
-                                    <div class="schedule-item-time">22:00</div>
-                                    <div class="schedule-item-days">Daily</div>
-                                    <div class="schedule-item-action">API Limit: 30</div>
-                                    <div class="schedule-item-app">Sonarr Instance 1</div>
-                                    <div class="schedule-item-actions">
-                                        <button class="icon-button edit-schedule" data-id="2"><i class="fas fa-edit"></i></button>
-                                        <button class="icon-button delete-schedule" data-id="2"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                </div>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th width="5%"><input type="checkbox" id="select-all-schedules"></th>
+                                            <th width="15%">Time</th>
+                                            <th width="20%">Days</th>
+                                            <th width="20%">Action</th>
+                                            <th width="25%">App</th>
+                                            <th width="15%" class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="schedule-list">
+                                        <!-- Schedules will be dynamically populated here -->
+                                    </tbody>
+                                </table>
                             </div>
                             <div id="noSchedulesMessage" class="no-schedules-message" style="display: none;">
-                                <p>No schedules configured. Use the form on the left to add a schedule.</p>
+                                <p>No schedules configured. Use the form above to add a schedule.</p>
                             </div>
                             
                             <!-- Save Button -->

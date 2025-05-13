@@ -13,8 +13,17 @@ function capitalizeFirst(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-// Store schedules in memory (will be saved to persistent storage)
-let schedules = [];
+// Store schedules by app type
+let schedules = {
+    global: [],
+    sonarr: [],
+    radarr: [],
+    readarr: [],
+    lidarr: [],
+    whisparr: [], // WhisparrV2
+    eros: []      // WhisparrV3
+};
+let appInstances = [];
 
 // Initialize scheduler when document is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -59,472 +68,247 @@ function initScheduler() {
 }
 
 /**
- * Set up event listeners for the scheduler UI
- */
-function setupEventListeners() {
-    // Add Schedule button
-    const addScheduleButton = document.getElementById('addScheduleButton');
-    if (addScheduleButton) {
-        addScheduleButton.addEventListener('click', addSchedule);
-    }
-    
-    // Save Schedules button
-    const saveSchedulesButton = document.getElementById('saveSchedulesButton');
-    if (saveSchedulesButton) {
-        saveSchedulesButton.addEventListener('click', saveSchedules);
-    }
-    
-    // Set up delegates for edit/delete schedule buttons
-    document.addEventListener('click', function(e) {
-        // Delete schedule button
-        if (e.target.closest('.delete-schedule')) {
-            const button = e.target.closest('.delete-schedule');
-            const scheduleId = button.dataset.id;
-            deleteSchedule(scheduleId);
-        }
-        
-        // Edit schedule button
-        if (e.target.closest('.edit-schedule')) {
-            const button = e.target.closest('.edit-schedule');
-            const scheduleId = button.dataset.id;
-            editSchedule(scheduleId);
-        }
-    });
-}
-
-/**
- * Fetch app instances from the pre-generated list.json file
- * @returns {Promise<Object>} - Object containing app instances
- */
-async function fetchAppInstances() {
-    console.debug('Fetching app instances from list.json for scheduler dropdown'); // DEBUG level per user preference
-    
-    // Define the app types we support (for fallback)
-    const appTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'bazarr'];
-    const instances = {};
-    
-    // Initialize all app types with empty arrays
-    appTypes.forEach(appType => {
-        instances[appType] = [];
-    });
-    
-    try {
-        // Add a cache-busting parameter to ensure we get fresh data
-        const cacheBuster = new Date().getTime();
-        const listUrl = `/config/scheduling/list.json?nocache=${cacheBuster}`;
-        
-        console.debug(`Loading app instances from ${listUrl}`);
-        const response = await fetch(listUrl);
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.debug('Successfully loaded app instances from list.json');
-            
-            // Process each app type from the list.json file
-            for (const appType of appTypes) {
-                if (data[appType] && Array.isArray(data[appType]) && data[appType].length > 0) {
-                    instances[appType] = data[appType];
-                    console.debug(`Added ${instances[appType].length} ${appType} instances from list.json`);
-                } else {
-                    // Add a fallback default instance if none found
-                    console.debug(`No ${appType} instances found in list.json, adding default fallback`);
-                    instances[appType] = [
-                        { id: '0', name: `${capitalizeFirst(appType)} Default` }
-                    ];
-                }
-            }
-        } else {
-            console.warn(`Error fetching list.json: ${response.status} ${response.statusText}`);
-            // Add fallback defaults for all app types
-            useDefaultInstances(instances, appTypes);
-        }
-    } catch (error) {
-        console.warn('Error fetching app instances from list.json:', error);
-        // Add fallback defaults for all app types
-        useDefaultInstances(instances, appTypes);
-    }
-    
-    console.debug('Final instances object:', instances);
-    return instances;
-}
-
-/**
- * Add default instances for all app types as a fallback
- * @param {Object} instances - The instances object to populate
- * @param {Array} appTypes - Array of app types to create defaults for
- */
-function useDefaultInstances(instances, appTypes) {
-    console.debug('Using default instances for all app types');
-    appTypes.forEach(appType => {
-        instances[appType] = [
-            { id: '0', name: `${capitalizeFirst(appType)} Default` }
-        ];
-    });
-}
-
-/**
- * Load available app instances for the scheduler
+ * Load app instances from available app types
  */
 function loadAppInstances() {
-    console.debug('Starting to load app instances for scheduler dropdown'); // DEBUG level per user preference
+    const appTypes = [
+        { id: 'sonarr', name: 'Sonarr' },
+        { id: 'radarr', name: 'Radarr' },
+        { id: 'readarr', name: 'Readarr' },
+        { id: 'lidarr', name: 'Lidarr' },
+        { id: 'whisparr', name: 'WhisparrV2' },
+        { id: 'eros', name: 'WhisparrV3' }
+    ];
     
+    // Use the app types directly
+    appInstances = appTypes;
+    
+    // Also update the dropdown in the UI
     const scheduleApp = document.getElementById('scheduleApp');
-    if (!scheduleApp) {
-        console.error('Schedule app dropdown not found in DOM');
-        return;
+    if (scheduleApp) {
+        // Clear existing options first
+        scheduleApp.innerHTML = '';
+        
+        // Add the global option
+        const globalOption = document.createElement('option');
+        globalOption.value = 'global';
+        globalOption.textContent = 'All Apps (Global)';
+        scheduleApp.appendChild(globalOption);
+        
+        // Add each app type
+        appTypes.forEach(app => {
+            const option = document.createElement('option');
+            option.value = app.id;
+            option.textContent = app.name;
+            scheduleApp.appendChild(option);
+        });
     }
     
-    // Clear existing options
-    scheduleApp.innerHTML = '';
+    console.debug('App types loaded successfully');
+}
+
+/**
+ * Load schedules from server
+ */
+function loadSchedules() {
+    console.debug('Loading schedules from server'); // DEBUG level per user preference
     
-    // Add the global option
-    const globalOption = document.createElement('option');
-    globalOption.value = 'global';
-    globalOption.textContent = 'All Apps (Global)';
-    scheduleApp.appendChild(globalOption);
-    
-    // Fetch app instances using our async function with force refresh
-    const cacheBuster = new Date().getTime();
-    // Use the web-accessible path (the web server can't access /config directly)
-    const listUrl = `/static/data/app_instances.json?nocache=${cacheBuster}`;
-    
-    // Show loading indicator in dropdown
-    const loadingOption = document.createElement('option');
-    loadingOption.disabled = true;
-    loadingOption.textContent = 'Loading instances...';
-    scheduleApp.appendChild(loadingOption);
-    
-    // Fetch the data directly for immediate response
-    console.debug(`Directly loading app instances from ${listUrl}`);
-    fetch(listUrl)
+    // Make API call to get schedules
+    fetch('/api/scheduler/load')
         .then(response => {
             if (!response.ok) {
-                throw new Error(`Failed to load app_instances.json: ${response.status} ${response.statusText}`);
+                throw new Error('Failed to load schedules');
             }
             return response.json();
         })
         .then(data => {
-            // Success - populate from the received data
-            console.debug('Successfully loaded app instances from app_instances.json:', data);
-            
-            // Remove loading indicator
-            scheduleApp.removeChild(loadingOption);
-            
-            // Manually define the exact order we want
-            const manualOrder = ['sonarr', 'radarr', 'readarr', 'lidarr', 'whisparr', 'eros'];
-            console.debug('Using hardcoded app order for consistent display');
-            
-            // Filter to only include app types that actually exist in our data
-            const sortedAppTypes = manualOrder.filter(appType => {
-                return data[appType] && Array.isArray(data[appType]) && data[appType].length > 0;
-            });
-            
-            // Create optgroups for each app type
-            sortedAppTypes.forEach(appType => {
-                // Only create optgroup if there are instances
-                if (data[appType] && Array.isArray(data[appType]) && data[appType].length > 0) {
-                    const optgroup = document.createElement('optgroup');
-                    // Use display name if available, otherwise fallback to capitalized app type
-                    const displayName = data[appType][0].display_name || capitalizeFirst(appType);
-                    optgroup.label = displayName;
-                    
-                    // Add individual instances
-                    data[appType].forEach(instance => {
-                        const option = document.createElement('option');
-                        option.value = `${appType}-${instance.id}`;
-                        option.textContent = instance.name;
-                        optgroup.appendChild(option);
-                    });
-                    
-                    scheduleApp.appendChild(optgroup);
-                }
-            });
+            console.debug('Loaded schedules from server:', data);
+            schedules = data;
+            renderSchedules();
         })
         .catch(error => {
-            console.error('Error loading app instances:', error);
-            console.debug('Attempting fallback to fetchAppInstances()');
-            // Remove loading indicator
-            scheduleApp.removeChild(loadingOption);
-            
-            // Fall back to fetchAppInstances for backwards compatibility
-            return fetchAppInstances().then(instances => {
-                // Manually define the exact order we want
-                const manualOrder = ['sonarr', 'radarr', 'readarr', 'lidarr', 'whisparr', 'eros'];
-                console.debug('Using hardcoded app order for consistent display (fallback mode)');
-                
-                // Filter to only include app types that actually exist in our data
-                const sortedAppTypes = manualOrder.filter(appType => {
-                    return instances[appType] && Array.isArray(instances[appType]) && instances[appType].length > 0;
-                });
-                
-                // Create optgroups for each app type
-                sortedAppTypes.forEach(appType => {
-                    // Only create optgroup if there are instances
-                    if (instances[appType] && instances[appType].length > 0) {
-                        const optgroup = document.createElement('optgroup');
-                        // Use display name if available, otherwise fallback to capitalized app type
-                        const displayName = instances[appType][0].display_name || capitalizeFirst(appType);
-                        optgroup.label = displayName;
-                        
-                        // Add individual instances
-                        instances[appType].forEach(instance => {
-                            const option = document.createElement('option');
-                            option.value = `${appType}-${instance.id}`;
-                            option.textContent = instance.name;
-                            optgroup.appendChild(option);
-                        });
-                        
-                        scheduleApp.appendChild(optgroup);
-                    }
-                });
-            });
+            console.error('Error loading schedules:', error);
+            // Initialize empty schedule structure if load fails
+            schedules = {
+                global: [],
+                sonarr: [],
+                radarr: [],
+                readarr: [],
+                lidarr: [],
+                whisparr: [],
+                eros: []
+            };
+            renderSchedules();
         });
 }
 
 /**
- * Format app instances data to a consistent structure
- * @param {Object} data Raw app instances data
- * @returns {Object} Formatted app instances data
- */
-function formatAppInstances(data) {
-    const formatted = {};
-    
-    // Check if data is in the expected format
-    if (typeof data !== 'object') {
-        throw new Error('Invalid app instances data format');
-    }
-    
-    // Process different potential formats
-    if (Array.isArray(data)) {
-        // Handle array format - group by app type
-        data.forEach(instance => {
-            if (!instance.type) return;
-            
-            const appType = instance.type.toLowerCase();
-            if (!formatted[appType]) {
-                formatted[appType] = [];
-            }
-            
-            formatted[appType].push({
-                id: instance.id || formatted[appType].length + 1,
-                name: instance.name || `${capitalizeFirst(appType)} Instance ${instance.id || formatted[appType].length + 1}`
-            });
-        });
-    } else {
-        // Handle object format with app types as keys
-        Object.keys(data).forEach(appType => {
-            const normalizedType = appType.toLowerCase();
-            
-            if (Array.isArray(data[appType])) {
-                formatted[normalizedType] = data[appType].map((instance, index) => {
-                    // Handle if instance is just a string or object
-                    if (typeof instance === 'string') {
-                        return {
-                            id: (index + 1).toString(),
-                            name: instance
-                        };
-                    } else if (typeof instance === 'object') {
-                        return {
-                            id: instance.id || (index + 1).toString(),
-                            name: instance.name || `${capitalizeFirst(normalizedType)} Instance ${instance.id || index + 1}`
-                        };
-                    }
-                }).filter(Boolean); // Remove any undefined entries
-            } else if (typeof data[appType] === 'object' && data[appType] !== null) {
-                // Handle object with instance IDs as keys
-                formatted[normalizedType] = Object.keys(data[appType]).map((id) => {
-                    const instance = data[appType][id];
-                    return {
-                        id: id,
-                        name: instance.name || `${capitalizeFirst(normalizedType)} Instance ${id}`
-                    };
-                });
-            }
-        });
-    }
-    
-    return formatted;
-}
-
-/**
- * Load schedules from storage
- */
-function loadSchedules() {
-    console.debug('Loading schedules from storage'); // DEBUG level per user preference
-    
-    // Try to load from localStorage if available
-    try {
-        const storedSchedules = localStorage.getItem('huntarr-schedules');
-        if (storedSchedules) {
-            schedules = JSON.parse(storedSchedules);
-            console.debug(`Loaded ${schedules.length} schedules from localStorage`);
-        } else {
-            // Start with empty schedules array
-            schedules = [];
-            console.debug('No saved schedules found, starting with empty list');
-        }
-    } catch (error) {
-        // If any error occurs, start with an empty array
-        console.warn('Error loading schedules from storage:', error);
-        schedules = [];
-    }
-    
-    // Update UI with loaded schedules
-    renderSchedules();
-}
-
-/**
- * Save schedules to storage
+ * Save schedules to server
  */
 function saveSchedules() {
-    console.debug('Saving schedules to storage...'); // DEBUG level per user preference
+    console.debug('Saving schedules to server...'); // DEBUG level per user preference
     
     try {
-        // Save to localStorage
-        localStorage.setItem('huntarr-schedules', JSON.stringify(schedules));
-        console.debug(`Successfully saved ${schedules.length} schedules to localStorage`);
-        
-        // Show success message
-        const saveMessage = document.createElement('div');
-        saveMessage.classList.add('save-success-message');
-        saveMessage.textContent = 'Schedules saved successfully!';
-        document.querySelector('.scheduler-container').appendChild(saveMessage);
-        
-        // Remove message after 3 seconds
-        setTimeout(() => {
-            if (saveMessage.parentNode) {
-                saveMessage.parentNode.removeChild(saveMessage);
+        // Save to server via API
+        fetch('/api/scheduler/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(schedules)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to save schedules');
             }
-        }, 3000);
+            return response.json();
+        })
+        .then(data => {
+            console.debug('Successfully saved schedules to server');
+            
+            // Show success message
+            const saveMessage = document.createElement('div');
+            saveMessage.classList.add('save-success-message');
+            saveMessage.textContent = 'Schedules saved successfully!';
+            document.querySelector('.scheduler-container').appendChild(saveMessage);
+            
+            // Remove message after 3 seconds
+            setTimeout(() => {
+                if (saveMessage.parentNode) {
+                    saveMessage.parentNode.removeChild(saveMessage);
+                }
+            }, 3000);
+        })
+        .catch(error => {
+            console.error('Error saving schedules:', error);
+            
+            // Show error message
+            const errorMessage = document.createElement('div');
+            errorMessage.classList.add('save-error-message');
+            errorMessage.textContent = 'Failed to save schedules!';
+            document.querySelector('.scheduler-container').appendChild(errorMessage);
+            
+            // Remove message after 3 seconds
+            setTimeout(() => {
+                if (errorMessage.parentNode) {
+                    errorMessage.parentNode.removeChild(errorMessage);
+                }
+            }, 3000);
+        });
     } catch (error) {
-        console.error('Error saving schedules:', error);
+        console.error('Error preparing schedules for saving:', error);
     }
-    
-    // Re-render the list
-    renderSchedules();
 }
 
 /**
- * Render schedules in the UI
+ * Render the list of schedules
  */
 function renderSchedules() {
-    const schedulesContainer = document.getElementById('schedulesContainer');
-    const noSchedulesMessage = document.getElementById('noSchedulesMessage');
-    
-    if (!schedulesContainer || !noSchedulesMessage) return;
-    
-    // Clear current schedules
-    schedulesContainer.innerHTML = '';
-    
-    // Show message if no schedules
-    if (schedules.length === 0) {
-        schedulesContainer.style.display = 'none';
-        noSchedulesMessage.style.display = 'block';
+    const scheduleList = document.getElementById('schedule-list');
+    if (!scheduleList) {
+        console.error('Schedule list element not found!');
         return;
     }
     
-    // Show schedules and hide message
-    schedulesContainer.style.display = 'block';
-    noSchedulesMessage.style.display = 'none';
+    // Clear the list
+    scheduleList.innerHTML = '';
     
-    // Add each schedule to the UI
-    schedules.forEach(schedule => {
-        const scheduleItem = document.createElement('div');
-        scheduleItem.className = 'schedule-item';
+    // Get no schedules message element
+    const noSchedulesMessage = document.getElementById('noSchedulesMessage');
+    
+    // Count total schedules across all app types
+    const totalSchedules = Object.values(schedules).reduce(
+        (total, appSchedules) => total + appSchedules.length, 0
+    );
+    
+    // Show appropriate message if no schedules
+    if (totalSchedules === 0) {
+        if (noSchedulesMessage) noSchedulesMessage.style.display = 'block';
         
-        // Format time
-        const formattedTime = `${String(schedule.time.hour).padStart(2, '0')}:${String(schedule.time.minute).padStart(2, '0')}`;
+        const emptyMessage = document.createElement('tr');
+        emptyMessage.innerHTML = '<td colspan="6" class="text-center">No schedules found</td>';
+        scheduleList.appendChild(emptyMessage);
+        return;
+    } else {
+        if (noSchedulesMessage) noSchedulesMessage.style.display = 'none';
+    }
+    
+    // Render schedules for each app type
+    Object.entries(schedules).forEach(([appType, appSchedules]) => {
+        // Skip if no schedules for this app type
+        if (!appSchedules || appSchedules.length === 0) return;
         
-        // Format days
-        let daysText = '';
-        const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-        const selectedDays = allDays.filter(day => schedule.days[day]);
-        
-        if (selectedDays.length === 7) {
-            daysText = 'Daily';
-        } else if (selectedDays.length === 0) {
-            daysText = 'None';
-        } else {
-            // Format day names nicely (e.g., 'Mon, Wed, Fri')
-            daysText = selectedDays.map(day => day.substring(0, 3).charAt(0).toUpperCase() + day.substring(1, 3)).join(', ');
+        // Add a header row for the app type if we have multiple app types with schedules
+        if (totalSchedules > appSchedules.length) {
+            const headerRow = document.createElement('tr');
+            headerRow.className = 'app-type-header';
+            const headerCell = document.createElement('td');
+            headerCell.colSpan = 6;
+            headerCell.textContent = appType === 'global' ? 'Global (All Apps)' : 
+                appType === 'whisparr' ? 'WhisparrV2' : 
+                appType === 'eros' ? 'WhisparrV3' : 
+                appType.charAt(0).toUpperCase() + appType.slice(1);
+            headerRow.appendChild(headerCell);
+            scheduleList.appendChild(headerRow);
         }
         
-        // Format action name
-        let actionText = '';
-        if (schedule.action === 'resume') {
-            actionText = 'Resume';
-        } else if (schedule.action === 'pause') {
-            actionText = 'Pause';
-        } else if (schedule.action.startsWith('api-')) {
-            const limit = schedule.action.split('-')[1];
-            actionText = `API Limits ${limit}`;
-        }
-        
-        // Format app name
-        let appText = '';
-        if (schedule.app === 'global') {
-            appText = 'All Apps';
-        } else {
-            // Format app name nicely using the actual instance name
-            const [app, instanceId] = schedule.app.split('-');
-            if (instanceId === 'all') {
-                appText = `All ${capitalizeFirst(app)} Instances`;
-            } else {
-                // Try to find the actual instance name from app_instances.json
-                const listUrl = `/static/data/app_instances.json?nocache=${new Date().getTime()}`;
-                
-                // Default fallback format in case we can't get instance data
-                let instanceName = `Instance ${instanceId}`;
-                
-                // Get the app instance data synchronously to ensure we have it for rendering
-                const xhr = new XMLHttpRequest();
-                xhr.open('GET', listUrl, false); // Synchronous request
-                try {
-                    xhr.send();
-                    if (xhr.status === 200) {
-                        const data = JSON.parse(xhr.responseText);
-                        if (data[app] && Array.isArray(data[app])) {
-                            // Find the instance with matching id
-                            const instance = data[app].find(inst => inst.id === instanceId);
-                            if (instance && instance.name) {
-                                instanceName = instance.name;
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.warn(`Could not get instance name for ${app}-${instanceId}:`, error);
-                }
-                
-                appText = `${capitalizeFirst(app)} ${instanceName}`;
-            }
-        }
-        
-        // Build the schedule item HTML
-        scheduleItem.innerHTML = `
-            <div class="schedule-item-checkbox">
-                <input type="checkbox" id="schedule-${schedule.id}" ${schedule.enabled ? 'checked' : ''}>
-                <label for="schedule-${schedule.id}"></label>
-            </div>
-            <div class="schedule-item-time">${formattedTime}</div>
-            <div class="schedule-item-days">${daysText}</div>
-            <div class="schedule-item-action">${actionText}</div>
-            <div class="schedule-item-app">${appText}</div>
-            <div class="schedule-item-actions">
-                <button class="icon-button edit-schedule" data-id="${schedule.id}"><i class="fas fa-edit"></i></button>
-                <button class="icon-button delete-schedule" data-id="${schedule.id}"><i class="fas fa-trash"></i></button>
-            </div>
-        `;
-        
-        // Add event listener for enable/disable checkbox
-        const checkbox = scheduleItem.querySelector(`#schedule-${schedule.id}`);
-        if (checkbox) {
-            checkbox.addEventListener('change', function() {
-                toggleScheduleEnabled(schedule.id, this.checked);
-            });
-        }
-        
-        // Add to container
-        schedulesContainer.appendChild(scheduleItem);
+        // Render each schedule in this app type
+        appSchedules.forEach(schedule => {
+            const row = document.createElement('tr');
+            
+            // Create checkbox cell
+            const checkboxCell = document.createElement('td');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'schedule-checkbox';
+            checkbox.dataset.id = schedule.id;
+            checkbox.dataset.appType = appType;
+            checkboxCell.appendChild(checkbox);
+            row.appendChild(checkboxCell);
+            
+            // Time cell
+            const timeCell = document.createElement('td');
+            timeCell.textContent = schedule.time;
+            row.appendChild(timeCell);
+            
+            // Days cell
+            const daysCell = document.createElement('td');
+            daysCell.textContent = schedule.days.map(day => day.substring(0, 3)).join(', ');
+            row.appendChild(daysCell);
+            
+            // Action cell
+            const actionCell = document.createElement('td');
+            actionCell.textContent = schedule.action;
+            row.appendChild(actionCell);
+            
+            // App cell
+            const appCell = document.createElement('td');
+            appCell.textContent = schedule.app;
+            row.appendChild(appCell);
+            
+            // Action buttons cell
+            const actionsCell = document.createElement('td');
+            actionsCell.className = 'text-end';
+            
+            // Edit button
+            const editButton = document.createElement('button');
+            editButton.className = 'btn btn-sm btn-primary me-2';
+            editButton.innerHTML = '<i class="bi bi-pencil"></i>';
+            editButton.dataset.id = schedule.id;
+            editButton.dataset.appType = appType;
+            actionsCell.appendChild(editButton);
+            
+            // Delete button
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'btn btn-sm btn-danger';
+            deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
+            deleteButton.dataset.id = schedule.id;
+            deleteButton.dataset.appType = appType;
+            actionsCell.appendChild(deleteButton);
+            
+            row.appendChild(actionsCell);
+            scheduleList.appendChild(row);
+        });
     });
 }
 
@@ -532,91 +316,79 @@ function renderSchedules() {
  * Add a new schedule
  */
 function addSchedule() {
-    // Get form values
-    const hour = parseInt(document.getElementById('scheduleHour').value);
-    const minute = parseInt(document.getElementById('scheduleMinute').value);
+    const timeHour = document.getElementById('scheduleHour').value;
+    const timeMinute = document.getElementById('scheduleMinute').value;
+    const days = [];
+    
+    // Get selected days
+    if (document.getElementById('day-monday').checked) days.push('Monday');
+    if (document.getElementById('day-tuesday').checked) days.push('Tuesday');
+    if (document.getElementById('day-wednesday').checked) days.push('Wednesday');
+    if (document.getElementById('day-thursday').checked) days.push('Thursday');
+    if (document.getElementById('day-friday').checked) days.push('Friday');
+    if (document.getElementById('day-saturday').checked) days.push('Saturday');
+    if (document.getElementById('day-sunday').checked) days.push('Sunday');
+    
     const action = document.getElementById('scheduleAction').value;
     const app = document.getElementById('scheduleApp').value;
     
-    // Get selected days
-    const days = {
-        monday: document.getElementById('day-monday').checked,
-        tuesday: document.getElementById('day-tuesday').checked,
-        wednesday: document.getElementById('day-wednesday').checked,
-        thursday: document.getElementById('day-thursday').checked,
-        friday: document.getElementById('day-friday').checked,
-        saturday: document.getElementById('day-saturday').checked,
-        sunday: document.getElementById('day-sunday').checked
-    };
-    
-    // Validate at least one day is selected
-    const anyDaySelected = Object.values(days).some(day => day);
-    if (!anyDaySelected) {
-        alert('Please select at least one day for the schedule.');
+    if (!timeHour || !timeMinute || days.length === 0 || !action || !app) {
+        alert('Please fill in all fields');
         return;
     }
     
-    // Create new schedule
-    const newSchedule = {
-        id: String(Date.now()), // Simple ID generation
-        time: { hour, minute },
-        days,
-        action,
-        app,
-        enabled: true
+    const formattedTime = `${timeHour.padStart(2, '0')}:${timeMinute.padStart(2, '0')}`;
+    
+    const schedule = {
+        id: Date.now().toString(), // Simple unique ID
+        time: formattedTime,
+        days: days,
+        action: action,
+        app: app
     };
     
-    // Add to schedules array
-    schedules.push(newSchedule);
+    // Add to the appropriate app type array based on the selection
+    if (app === 'global') {
+        schedules.global.push(schedule);
+    } else if (app.includes('-all')) {
+        // This is an 'all instances' option
+        const appType = app.split('-')[0]; // Extract the app type
+        if (schedules[appType]) {
+            schedules[appType].push(schedule);
+        }
+    } else if (app.includes('-')) {
+        // This is a specific instance
+        const appParts = app.split('-');
+        const appType = appParts[0];
+        if (schedules[appType]) {
+            schedules[appType].push(schedule);
+        }
+    } else {
+        // Direct app type (from our simplified dropdown)
+        if (schedules[app]) {
+            schedules[app].push(schedule);
+        } else {
+            console.error('Could not find app type for', app);
+        }
+    }
     
-    // Update UI
+    saveSchedules();
     renderSchedules();
-    
-    // Log at DEBUG level
-    console.debug('Added new schedule:', newSchedule); // DEBUG level per user preference
-    
-    // Reset day checkboxes
-    resetDayCheckboxes();
-}
-
-/**
- * Edit an existing schedule
- */
-function editSchedule(scheduleId) {
-    // Find the schedule
-    const schedule = schedules.find(s => s.id === scheduleId);
-    if (!schedule) return;
-    
-    console.debug('Editing schedule:', schedule); // DEBUG level per user preference
-    
-    // Set form values
-    document.getElementById('scheduleHour').value = schedule.time.hour;
-    document.getElementById('scheduleMinute').value = schedule.time.minute;
-    document.getElementById('scheduleAction').value = schedule.action;
-    document.getElementById('scheduleApp').value = schedule.app;
-    
-    // Set day checkboxes
-    document.getElementById('day-monday').checked = schedule.days.monday;
-    document.getElementById('day-tuesday').checked = schedule.days.tuesday;
-    document.getElementById('day-wednesday').checked = schedule.days.wednesday;
-    document.getElementById('day-thursday').checked = schedule.days.thursday;
-    document.getElementById('day-friday').checked = schedule.days.friday;
-    document.getElementById('day-saturday').checked = schedule.days.saturday;
-    document.getElementById('day-sunday').checked = schedule.days.sunday;
-    
-    // Remove the schedule (will be re-added when user clicks Add)
-    deleteSchedule(scheduleId, true); // Silent delete (no confirmation)
-    
-    // Scroll to the Add Schedule panel
-    document.querySelector('.scheduler-panel').scrollIntoView({ behavior: 'smooth' });
 }
 
 /**
  * Delete a schedule
+ * @param {string} id - ID of the schedule to delete
+ * @param {string} appType - The app type the schedule belongs to ('global', 'sonarr', etc.)
  */
-function deleteSchedule(scheduleId, silent = false) {
-    // Confirm delete (unless silent mode)
-    if (!silent && !confirm('Are you sure you want to delete this schedule?')) {
+function deleteSchedule(id, appType) {
+    if (schedules[appType]) {
+        const index = schedules[appType].findIndex(schedule => schedule.id === id);
+        if (index !== -1) {
+            schedules[appType].splice(index, 1);
+            saveSchedules();
+            renderSchedules();
+        }
         return;
     }
     
@@ -627,6 +399,52 @@ function deleteSchedule(scheduleId, silent = false) {
     renderSchedules();
     
     console.debug('Deleted schedule ID:', scheduleId); // DEBUG level per user preference
+}
+
+/**
+ * Edit a schedule in the list
+ * @param {string} id - ID of the schedule to edit
+ * @param {string} appType - The app type the schedule belongs to ('global', 'sonarr', etc.)
+ */
+function editSchedule(id, appType) {
+    if (!schedules[appType]) return;
+    
+    const index = schedules[appType].findIndex(schedule => schedule.id === id);
+    
+    if (index !== -1) {
+        const schedule = schedules[appType][index];
+        const [hour, minute] = schedule.time.split(':');
+        
+        document.getElementById('scheduleHour').value = hour;
+        document.getElementById('scheduleMinute').value = minute;
+        
+        // Uncheck all days first
+        document.getElementById('day-monday').checked = false;
+        document.getElementById('day-tuesday').checked = false;
+        document.getElementById('day-wednesday').checked = false;
+        document.getElementById('day-thursday').checked = false;
+        document.getElementById('day-friday').checked = false;
+        document.getElementById('day-saturday').checked = false;
+        document.getElementById('day-sunday').checked = false;
+        
+        // Check the days from the schedule
+        schedule.days.forEach(day => {
+            const dayId = 'day-' + day.toLowerCase();
+            const checkbox = document.getElementById(dayId);
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        document.getElementById('scheduleAction').value = schedule.action;
+        document.getElementById('scheduleApp').value = schedule.app;
+        
+        // Remove the schedule being edited
+        schedules[appType].splice(index, 1);
+        saveSchedules();
+        renderSchedules();
+        
+        // Scroll to the form
+        document.querySelector('.scheduler-panel').scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 /**

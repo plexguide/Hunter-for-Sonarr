@@ -1,7 +1,8 @@
-Flask==3.0.0
+Flask==2.3.3
 requests==2.31.0
 waitress==2.1.2
 bcrypt==4.1.2
 qrcode[pil]==7.4.2 # Added qrcode with PIL support
 pyotp==2.9.0       # Added pyotp
+Flask-JWT-Extended==4.5.2 # JWT support for API authentication
 pywin32==306; sys_platform == 'win32' # For Windows service support
