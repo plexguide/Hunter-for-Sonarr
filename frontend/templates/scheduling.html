@@ -135,21 +135,33 @@
                         </div>
                         <div class="panel-content">
                             <div class="table-responsive">
-                                <table class="table table-dark table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th width="5%"><input type="checkbox" id="select-all-schedules"></th>
-                                            <th width="15%">Time</th>
-                                            <th width="20%">Days</th>
-                                            <th width="20%">Action</th>
-                                            <th width="25%">App</th>
-                                            <th width="15%" class="text-end">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="schedule-list">
-                                        <!-- Schedules will be dynamically populated here -->
-                                    </tbody>
-                                </table>
+                                <!-- Empty state message (visible by default) -->
+                                <div id="empty-state-container" class="empty-state-container">
+                                    <div class="empty-state-message-standalone">
+                                        <i class="fas fa-calendar-alt" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                                        <h4>No Schedules Available</h4>
+                                        <p>You haven't created any schedules yet. Use the form above to set up your first schedule.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Schedule table (hidden by default when empty) -->
+                                <div id="schedule-table-container" style="display: none;">
+                                    <table class="table table-dark table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th width="5%"><input type="checkbox" id="select-all-schedules"></th>
+                                                <th width="15%">Time</th>
+                                                <th width="20%">Days</th>
+                                                <th width="20%">Action</th>
+                                                <th width="25%">App</th>
+                                                <th width="15%" class="text-end">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="schedule-list">
+                                            <!-- Schedules will be populated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                             <div id="noSchedulesMessage" class="no-schedules-message" style="display: none;">
                                 <p>No schedules configured. Use the form above to add a schedule.</p>

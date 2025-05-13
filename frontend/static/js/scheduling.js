@@ -213,24 +213,25 @@ function renderSchedules() {
     // Clear the list
     scheduleList.innerHTML = '';
     
-    // Get no schedules message element
-    const noSchedulesMessage = document.getElementById('noSchedulesMessage');
+    // Get empty state and table containers
+    const emptyStateContainer = document.getElementById('empty-state-container');
+    const scheduleTableContainer = document.getElementById('schedule-table-container');
     
     // Count total schedules across all app types
     const totalSchedules = Object.values(schedules).reduce(
         (total, appSchedules) => total + appSchedules.length, 0
     );
     
-    // Show appropriate message if no schedules
+    // Show appropriate view based on whether we have schedules
     if (totalSchedules === 0) {
-        if (noSchedulesMessage) noSchedulesMessage.style.display = 'block';
-        
-        const emptyMessage = document.createElement('tr');
-        emptyMessage.innerHTML = '<td colspan="6" class="text-center">No schedules found</td>';
-        scheduleList.appendChild(emptyMessage);
+        // Show empty state, hide table
+        if (emptyStateContainer) emptyStateContainer.style.display = 'flex';
+        if (scheduleTableContainer) scheduleTableContainer.style.display = 'none';
         return;
     } else {
-        if (noSchedulesMessage) noSchedulesMessage.style.display = 'none';
+        // Show table, hide empty state
+        if (emptyStateContainer) emptyStateContainer.style.display = 'none';
+        if (scheduleTableContainer) scheduleTableContainer.style.display = 'block';
     }
     
     // Render schedules for each app type
