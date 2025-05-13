@@ -1,0 +1,48 @@
+{
+  "sonarr": [
+    {
+      "id": "0",
+      "name": "Default2"
+    },
+    {
+      "id": "1",
+      "name": "Instance 2"
+    }
+  ],
+  "radarr": [
+    {
+      "id": "0",
+      "name": "Default"
+    }
+  ],
+  "lidarr": [
+    {
+      "id": "0",
+      "name": "Default"
+    }
+  ],
+  "readarr": [
+    {
+      "id": "0",
+      "name": "Default"
+    }
+  ],
+  "whisparr": [
+    {
+      "id": "0",
+      "name": "Default"
+    }
+  ],
+  "eros": [
+    {
+      "id": "0",
+      "name": "Default"
+    }
+  ],
+  "bazarr": [
+    {
+      "id": "0",
+      "name": "Default"
+    }
+  ]
+}

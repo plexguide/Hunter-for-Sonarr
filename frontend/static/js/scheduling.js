@@ -93,14 +93,14 @@ function setupEventListeners() {
 }
 
 /**
- * Dynamically fetch app instances from the Docker container's config files
+ * Fetch app instances from the pre-generated list.json file
  * @returns {Promise<Object>} - Object containing app instances
  */
 async function fetchAppInstances() {
-    console.log('Dynamically fetching app instances for scheduler dropdown');
+    console.debug('Fetching app instances from list.json for scheduler dropdown'); // DEBUG level per user preference
     
-    // Define the app types we support
-    const appTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr'];
+    // Define the app types we support (for fallback)
+    const appTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'bazarr'];
     const instances = {};
     
     // Initialize all app types with empty arrays
@@ -108,80 +108,65 @@ async function fetchAppInstances() {
         instances[appType] = [];
     });
     
-    // Try to load each app's config directly from the Docker container
-    for (const appType of appTypes) {
+    try {
         // Add a cache-busting parameter to ensure we get fresh data
         const cacheBuster = new Date().getTime();
-        const configUrl = `/${appType}/config.json?nocache=${cacheBuster}`;
+        const listUrl = `/config/scheduling/list.json?nocache=${cacheBuster}`;
         
-        try {
-            console.log(`Attempting to load ${appType} config from ${configUrl}`);
-            const response = await fetch(configUrl);
+        console.debug(`Loading app instances from ${listUrl}`);
+        const response = await fetch(listUrl);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.debug('Successfully loaded app instances from list.json');
             
-            if (response.ok) {
-                const config = await response.json();
-                console.log(`Successfully loaded ${appType} config:`, config);
-                
-                // Check if we have an instances array in the config
-                if (config && config.instances && Array.isArray(config.instances)) {
-                    // Add each instance to our instances object
-                    config.instances.forEach((instance, index) => {
-                        instances[appType].push({
-                            id: index.toString(),
-                            name: instance.name || `${capitalizeFirst(appType)} Instance ${index + 1}`
-                        });
-                    });
-                    console.log(`Added ${instances[appType].length} ${appType} instances`);
-                    continue; // Skip the remaining attempts for this app type
+            // Process each app type from the list.json file
+            for (const appType of appTypes) {
+                if (data[appType] && Array.isArray(data[appType]) && data[appType].length > 0) {
+                    instances[appType] = data[appType];
+                    console.debug(`Added ${instances[appType].length} ${appType} instances from list.json`);
+                } else {
+                    // Add a fallback default instance if none found
+                    console.debug(`No ${appType} instances found in list.json, adding default fallback`);
+                    instances[appType] = [
+                        { id: '0', name: `${capitalizeFirst(appType)} Default` }
+                    ];
                 }
             }
-        } catch (error) {
-            console.warn(`Error fetching ${appType} config from app endpoint:`, error);
+        } else {
+            console.warn(`Error fetching list.json: ${response.status} ${response.statusText}`);
+            // Add fallback defaults for all app types
+            useDefaultInstances(instances, appTypes);
         }
-        
-        // Second attempt: Try to access the config file directly
-        try {
-            const directUrl = `/config/${appType}.json?nocache=${cacheBuster}`;
-            console.log(`Trying direct access for ${appType} config:`, directUrl);
-            
-            const directResponse = await fetch(directUrl);
-            if (directResponse.ok) {
-                const directConfig = await directResponse.json();
-                console.log(`Successfully loaded ${appType} config directly:`, directConfig);
-                
-                if (directConfig && directConfig.instances && Array.isArray(directConfig.instances)) {
-                    directConfig.instances.forEach((instance, index) => {
-                        instances[appType].push({
-                            id: index.toString(),
-                            name: instance.name || `${capitalizeFirst(appType)} Instance ${index + 1}`
-                        });
-                    });
-                    console.log(`Added ${instances[appType].length} ${appType} instances from direct access`);
-                    continue;
-                }
-            }
-        } catch (directError) {
-            console.warn(`Error with direct access to ${appType} config:`, directError);
-        }
-        
-        // If we still couldn't get instances, add a fallback
-        if (!instances[appType] || instances[appType].length === 0) {
-            console.warn(`No ${appType} instances found, adding default fallback`);
-            instances[appType] = [
-                { id: '0', name: `${capitalizeFirst(appType)} Default` }
-            ];
-        }
+    } catch (error) {
+        console.warn('Error fetching app instances from list.json:', error);
+        // Add fallback defaults for all app types
+        useDefaultInstances(instances, appTypes);
     }
     
-    console.log('Final instances object:', instances);
+    console.debug('Final instances object:', instances);
     return instances;
+}
+
+/**
+ * Add default instances for all app types as a fallback
+ * @param {Object} instances - The instances object to populate
+ * @param {Array} appTypes - Array of app types to create defaults for
+ */
+function useDefaultInstances(instances, appTypes) {
+    console.debug('Using default instances for all app types');
+    appTypes.forEach(appType => {
+        instances[appType] = [
+            { id: '0', name: `${capitalizeFirst(appType)} Default` }
+        ];
+    });
 }
 
 /**
  * Load available app instances for the scheduler
  */
 function loadAppInstances() {
-    console.log('Starting to load app instances for scheduler dropdown');
+    console.debug('Starting to load app instances for scheduler dropdown'); // DEBUG level per user preference
     
     const scheduleApp = document.getElementById('scheduleApp');
     if (!scheduleApp) {
@@ -198,57 +183,98 @@ function loadAppInstances() {
     globalOption.textContent = 'All Apps (Global)';
     scheduleApp.appendChild(globalOption);
     
-    // Fetch app instances using our async function
-    fetchAppInstances().then(instances => {
-        // Sort apps alphabetically
-        const sortedAppTypes = Object.keys(instances).sort();
-        
-        // Create optgroups for each app type
-        sortedAppTypes.forEach(appType => {
-            // Only create optgroup if there are instances
-            if (instances[appType] && instances[appType].length > 0) {
-                const optgroup = document.createElement('optgroup');
-                optgroup.label = capitalizeFirst(appType);
-                
-                // Add "All X Instances" option
-                const allInstancesOption = document.createElement('option');
-                allInstancesOption.value = `${appType}-all`;
-                allInstancesOption.textContent = `All ${capitalizeFirst(appType)} Instances`;
-                optgroup.appendChild(allInstancesOption);
-                
-                // Add individual instances
-                instances[appType].forEach(instance => {
-                    const option = document.createElement('option');
-                    option.value = `${appType}-${instance.id}`;
-                    option.textContent = instance.name;
-                    optgroup.appendChild(option);
-                });
-                
-                scheduleApp.appendChild(optgroup);
+    // Fetch app instances using our async function with force refresh
+    const cacheBuster = new Date().getTime();
+    // Use the web-accessible path (the web server can't access /config directly)
+    const listUrl = `/static/data/app_instances.json?nocache=${cacheBuster}`;
+    
+    // Show loading indicator in dropdown
+    const loadingOption = document.createElement('option');
+    loadingOption.disabled = true;
+    loadingOption.textContent = 'Loading instances...';
+    scheduleApp.appendChild(loadingOption);
+    
+    // Fetch the data directly for immediate response
+    console.debug(`Directly loading app instances from ${listUrl}`);
+    fetch(listUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to load app_instances.json: ${response.status} ${response.statusText}`);
             }
+            return response.json();
+        })
+        .then(data => {
+            // Success - populate from the received data
+            console.debug('Successfully loaded app instances from app_instances.json:', data);
+            
+            // Remove loading indicator
+            scheduleApp.removeChild(loadingOption);
+            
+            // Sort apps alphabetically
+            const sortedAppTypes = Object.keys(data).sort();
+            
+            // Create optgroups for each app type
+            sortedAppTypes.forEach(appType => {
+                // Only create optgroup if there are instances
+                if (data[appType] && Array.isArray(data[appType]) && data[appType].length > 0) {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = capitalizeFirst(appType);
+                    
+                    // Add "All X Instances" option
+                    const allInstancesOption = document.createElement('option');
+                    allInstancesOption.value = `${appType}-all`;
+                    allInstancesOption.textContent = `All ${capitalizeFirst(appType)} Instances`;
+                    optgroup.appendChild(allInstancesOption);
+                    
+                    // Add individual instances
+                    data[appType].forEach(instance => {
+                        const option = document.createElement('option');
+                        option.value = `${appType}-${instance.id}`;
+                        option.textContent = instance.name;
+                        optgroup.appendChild(option);
+                    });
+                    
+                    scheduleApp.appendChild(optgroup);
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading app instances:', error);
+            console.debug('Attempting fallback to fetchAppInstances()');
+            // Remove loading indicator
+            scheduleApp.removeChild(loadingOption);
+            
+            // Fall back to fetchAppInstances for backwards compatibility
+            return fetchAppInstances().then(instances => {
+                // Sort apps alphabetically
+                const sortedAppTypes = Object.keys(instances).sort();
+                
+                // Create optgroups for each app type
+                sortedAppTypes.forEach(appType => {
+                    // Only create optgroup if there are instances
+                    if (instances[appType] && instances[appType].length > 0) {
+                        const optgroup = document.createElement('optgroup');
+                        optgroup.label = capitalizeFirst(appType);
+                        
+                        // Add "All X Instances" option
+                        const allInstancesOption = document.createElement('option');
+                        allInstancesOption.value = `${appType}-all`;
+                        allInstancesOption.textContent = `All ${capitalizeFirst(appType)} Instances`;
+                        optgroup.appendChild(allInstancesOption);
+                        
+                        // Add individual instances
+                        instances[appType].forEach(instance => {
+                            const option = document.createElement('option');
+                            option.value = `${appType}-${instance.id}`;
+                            option.textContent = instance.name;
+                            optgroup.appendChild(option);
+                        });
+                        
+                        scheduleApp.appendChild(optgroup);
+                    }
+                });
+            });
         });
-    }).catch(error => {
-        console.error('Error loading app instances:', error);
-        // Add fallback options if loading fails completely
-        const appTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr'];
-        
-        appTypes.forEach(appType => {
-            const optgroup = document.createElement('optgroup');
-            optgroup.label = capitalizeFirst(appType);
-            
-            const allInstancesOption = document.createElement('option');
-            allInstancesOption.value = `${appType}-all`;
-            allInstancesOption.textContent = `All ${capitalizeFirst(appType)} Instances`;
-            optgroup.appendChild(allInstancesOption);
-            
-            const defaultOption = document.createElement('option');
-            defaultOption.value = `${appType}-1`;
-            defaultOption.textContent = `${capitalizeFirst(appType)} Default`;
-            optgroup.appendChild(defaultOption);
-            
-            scheduleApp.appendChild(optgroup);
-        });
-    });
 }
 
 /**
