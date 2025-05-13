@@ -46,6 +46,9 @@ from src.primary.stateful_routes import stateful_api
 # Import history blueprint
 from src.primary.routes.history_routes import history_blueprint
 
+# Import scheduler blueprint
+from src.primary.routes.scheduler_routes import scheduler_api
+
 # Import background module to trigger manual cycle resets
 from src.primary import background
 
@@ -127,6 +130,7 @@ app.register_blueprint(eros_bp, url_prefix='/api/eros')
 app.register_blueprint(swaparr_bp, url_prefix='/api/swaparr')
 app.register_blueprint(stateful_api, url_prefix='/api/stateful')
 app.register_blueprint(history_blueprint, url_prefix='/api/history')
+app.register_blueprint(scheduler_api)
 
 # Register the authentication check to run before requests
 app.before_request(authenticate_request)
