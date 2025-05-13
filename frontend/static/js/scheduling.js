@@ -342,6 +342,7 @@ function loadSchedules() {
                             days: Array.isArray(schedule.days) ? schedule.days : [],
                             action: schedule.action || 'pause',
                             app: schedule.app || 'global',
+                            appType: schedule.appType || key, // Preserve the appType
                             enabled: schedule.enabled !== false
                         };
                     });
@@ -421,10 +422,26 @@ function saveSchedules() {
             if (Array.isArray(appSchedules)) {
                 schedulesCopy[appType] = appSchedules.map(schedule => {
                     // Clean up the schedule object to ensure it has all required fields
+                    // Convert days from object format to array format if needed
+                    let daysArray = [];
+                    if (schedule.days) {
+                        if (typeof schedule.days === 'object' && !Array.isArray(schedule.days)) {
+                            // Convert from object format {monday: true, tuesday: false} to array ['monday']
+                            Object.entries(schedule.days).forEach(([day, selected]) => {
+                                if (selected === true) {
+                                    daysArray.push(day);
+                                }
+                            });
+                        } else if (Array.isArray(schedule.days)) {
+                            // Already an array, just use it
+                            daysArray = schedule.days;
+                        }
+                    }
+                    
                     return {
                         id: schedule.id,
                         time: schedule.time,
-                        days: schedule.days,
+                        days: daysArray, // Use the array format
                         action: schedule.action,
                         app: schedule.app || 'global',
                         enabled: schedule.enabled !== false,
@@ -606,7 +623,11 @@ function renderSchedules() {
             } else if (schedule.days.length === 0) {
                 daysText = 'None';
             } else {
-                daysText = schedule.days.join(', ');
+                // Format day names nicely (e.g., 'Mon, Wed, Fri')
+                daysText = schedule.days.map(day => {
+                    // Capitalize first letter and take first 3 characters
+                    return day.substring(0, 1).toUpperCase() + day.substring(1, 3);
+                }).join(', ');
             }
         } else if (typeof schedule.days === 'object') {
             // Internal format - object with day properties
@@ -619,7 +640,7 @@ function renderSchedules() {
                 daysText = 'None';
             } else {
                 // Format day names nicely (e.g., 'Mon, Wed, Fri')
-                daysText = selectedDays.map(day => day.substring(0, 3).charAt(0).toUpperCase() + day.substring(1, 3)).join(', ');
+                daysText = selectedDays.map(day => day.substring(0, 1).toUpperCase() + day.substring(1, 3)).join(', ');
             }
         }
         
@@ -641,6 +662,10 @@ function renderSchedules() {
             const [app, instanceId] = schedule.app.split('-');
             if (instanceId === 'all') {
                 appText = `All ${capitalizeFirst(app)} Instances`;
+            } else if (app === 'whisparr' && instanceId === 'v2') {
+                appText = 'Whisparr V2';
+            } else if (app === 'whisparr' && instanceId === 'v3') {
+                appText = 'Whisparr V3';
             } else {
                 appText = `${capitalizeFirst(app)} Instance ${instanceId}`;
             }
@@ -721,11 +746,19 @@ function addSchedule() {
     
     const app = document.getElementById('scheduleApp').value;
     
+    // Convert days from object format to array format
+    const daysArray = [];
+    Object.entries(days).forEach(([day, selected]) => {
+        if (selected === true) {
+            daysArray.push(day);
+        }
+    });
+    
     // Create new schedule object
     const newSchedule = {
         id: Date.now().toString(), // Unique ID for the new schedule
         time: { hour, minute },
-        days: days,
+        days: daysArray, // Store days as array
         action,
         app,
         enabled: true
