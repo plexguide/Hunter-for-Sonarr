@@ -91,26 +91,12 @@ function initScheduler() {
  * Set up event listeners for the scheduler UI
  */
 function setupEventListeners() {
-    // Add/Update Schedule button
+    // Add Schedule button (edit functionality removed for simplicity)
     const addScheduleButton = document.getElementById('addScheduleButton');
     if (addScheduleButton) {
         addScheduleButton.addEventListener('click', function() {
-            // Check if this is an edit or a new schedule
-            const scheduleId = this.dataset.editId;
-            const appType = this.dataset.editAppType;
-            
-            if (scheduleId && appType) {
-                // This is an edit - add the schedule which will replace the existing one
-                addSchedule();
-                
-                // Reset the button
-                this.textContent = 'Add Schedule';
-                delete this.dataset.editId;
-                delete this.dataset.editAppType;
-            } else {
-                // New schedule
-                addSchedule();
-            }
+            // Always treat as a new schedule - edit functionality removed
+            addSchedule();
         });
     }
     
@@ -130,12 +116,7 @@ function setupEventListeners() {
             deleteSchedule(scheduleId, appType);
         }
         
-        // Edit schedule button
-        if (e.target.closest('.edit-schedule')) {
-            const button = e.target.closest('.edit-schedule');
-            const scheduleId = button.dataset.id;
-            editSchedule(scheduleId);
-        }
+        // Edit functionality removed for simplicity
     });
 }
 
@@ -768,7 +749,6 @@ function renderSchedules() {
             <div class="schedule-item-action">${actionText}</div>
             <div class="schedule-item-app">${appText}</div>
             <div class="schedule-item-actions">
-                <button class="icon-button edit-schedule" data-id="${schedule.id}" data-app-type="${schedule.appType}"><i class="fas fa-edit"></i></button>
                 <button class="icon-button delete-schedule" data-id="${schedule.id}" data-app-type="${schedule.appType}"><i class="fas fa-trash"></i></button>
             </div>
         `;
@@ -923,59 +903,9 @@ function formatDaysForAPI(days) {
 }
 
 /**
- * Edit an existing schedule
+ * Edit functionality has been removed for simplicity
+ * Users can now only add new schedules or delete existing ones
  */
-function editSchedule(scheduleId, appType = 'global') {
-    // Find the schedule in the appropriate app type array
-    if (!schedules[appType]) return;
-    
-    const scheduleIndex = schedules[appType].findIndex(s => s.id === scheduleId);
-    if (scheduleIndex === -1) return;
-    
-    const schedule = schedules[appType][scheduleIndex];
-    console.debug('Editing schedule:', schedule); // DEBUG level per user preference
-    
-    // Set form values for time and action
-    document.getElementById('scheduleHour').value = schedule.time.hour;
-    document.getElementById('scheduleMinute').value = schedule.time.minute;
-    document.getElementById('scheduleAction').value = schedule.action;
-    document.getElementById('scheduleApp').value = schedule.app;
-    
-    // Handle days - convert from array format to checkbox format if needed
-    if (Array.isArray(schedule.days)) {
-        // API format - array of day names
-        document.getElementById('day-monday').checked = schedule.days.some(d => d.toLowerCase().startsWith('mon'));
-        document.getElementById('day-tuesday').checked = schedule.days.some(d => d.toLowerCase().startsWith('tue'));
-        document.getElementById('day-wednesday').checked = schedule.days.some(d => d.toLowerCase().startsWith('wed'));
-        document.getElementById('day-thursday').checked = schedule.days.some(d => d.toLowerCase().startsWith('thu'));
-        document.getElementById('day-friday').checked = schedule.days.some(d => d.toLowerCase().startsWith('fri'));
-        document.getElementById('day-saturday').checked = schedule.days.some(d => d.toLowerCase().startsWith('sat'));
-        document.getElementById('day-sunday').checked = schedule.days.some(d => d.toLowerCase().startsWith('sun'));
-    } else if (typeof schedule.days === 'object') {
-        // Object format with day properties
-        document.getElementById('day-monday').checked = schedule.days.monday;
-        document.getElementById('day-tuesday').checked = schedule.days.tuesday;
-        document.getElementById('day-wednesday').checked = schedule.days.wednesday;
-        document.getElementById('day-thursday').checked = schedule.days.thursday;
-        document.getElementById('day-friday').checked = schedule.days.friday;
-        document.getElementById('day-saturday').checked = schedule.days.saturday;
-        document.getElementById('day-sunday').checked = schedule.days.sunday;
-    }
-    
-    // Store the schedule ID and app type for update
-    const addButton = document.getElementById('addScheduleButton');
-    if (addButton) {
-        addButton.textContent = 'Update Schedule';
-        addButton.dataset.editId = scheduleId;
-        addButton.dataset.editAppType = appType;
-    }
-    
-    // Remove the schedule (will be re-added when user clicks Add/Update)
-    deleteSchedule(scheduleId, appType, true); // Silent delete (no confirmation)
-    
-    // Scroll to the Add Schedule panel
-    document.querySelector('.scheduler-panel').scrollIntoView({ behavior: 'smooth' });
-}
 
 /**
  * Delete a schedule
