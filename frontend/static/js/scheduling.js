@@ -453,18 +453,12 @@ function saveSchedules() {
             .then(data => {
                 if (data.success) {
                     console.debug('Schedules saved successfully');
-                    // Show success message
-                    const saveMessage = document.createElement('div');
-                    saveMessage.classList.add('save-success-message');
-                    saveMessage.textContent = 'Schedules saved successfully!';
-                    document.querySelector('.scheduler-container').appendChild(saveMessage);
-                    
-                    // Remove message after 3 seconds
-                    setTimeout(() => {
-                        if (saveMessage.parentNode) {
-                            saveMessage.parentNode.removeChild(saveMessage);
-                        }
-                    }, 3000);
+                    // Show success toast notification
+                    if (window.huntarrUI && typeof window.huntarrUI.showNotification === 'function') {
+                        huntarrUI.showNotification('Schedules saved successfully!', 'success');
+                    } else {
+                        alert('Schedules saved successfully!'); // Fallback
+                    }
                     
                     // Update our schedules object with the cleaned version
                     Object.keys(schedules).forEach(key => {
@@ -706,7 +700,11 @@ function addSchedule() {
     
     // Validate form inputs (basic validation)
     if (isNaN(hour) || isNaN(minute)) {
-        alert('Please enter a valid hour and minute.');
+        if (window.huntarrUI && typeof window.huntarrUI.showNotification === 'function') {
+            huntarrUI.showNotification('Please enter a valid hour and minute.', 'error');
+        } else {
+            alert('Please enter a valid hour and minute.'); // Fallback
+        }
         return;
     }
     
@@ -723,48 +721,36 @@ function addSchedule() {
     
     const app = document.getElementById('scheduleApp').value;
     
-    // Create new schedule with additional validation to prevent empty days
-    const formattedDays = formatDaysForAPI(days);
+    // Create new schedule object
+    const newSchedule = {
+        id: Date.now().toString(), // Unique ID for the new schedule
+        time: { hour, minute },
+        days: days,
+        action,
+        app,
+        enabled: true
+    };
     
-    // Debug the days data to understand what's happening
-    console.debug('Raw days object:', days);
-    console.debug('Formatted days for API:', formattedDays);
-    
-    // Only create and add the schedule if we have days selected
-    // This prevents the 'None' days schedule from being created
-    if (formattedDays.length > 0) {
-        const newSchedule = {
-            id: String(Date.now()), // Simple ID generation
-            time: { hour, minute },
-            days: formattedDays,
-            action,
-            app,
-            enabled: true
-        };
-        
-        // Determine app type for this schedule
-        let appType = 'global';
-        if (app && app !== 'global') {
-            const appParts = app.split('-');
-            appType = appParts[0] || 'global';
-        }
-        
-        // Make sure the array exists for this app type
-        if (!schedules[appType]) {
-            schedules[appType] = [];
-        }
-        
-        // Add to appropriate schedules array
-        schedules[appType].push(newSchedule);
-        
-        // Auto-save schedules after adding
-        saveSchedules();
-        
-        // Log at DEBUG level
-        console.debug(`Added new schedule to ${appType}:`, newSchedule);
-    } else {
-        console.warn('No days selected, not creating a schedule');
+    // Determine app type for this schedule
+    let appType = 'global';
+    if (app && app !== 'global') {
+        const appParts = app.split('-');
+        appType = appParts[0] || 'global';
     }
+    
+    // Make sure the array exists for this app type
+    if (!schedules[appType]) {
+        schedules[appType] = [];
+    }
+    
+    // Add to appropriate schedules array
+    schedules[appType].push(newSchedule);
+    
+    // Auto-save schedules after adding
+    saveSchedules();
+    
+    // Log at DEBUG level
+    console.debug(`Added new schedule to ${appType}:`, newSchedule);
     
     // Update UI
     renderSchedules();
