@@ -201,10 +201,10 @@ function useDefaultInstances(instances, appTypes) {
 }
 
 /**
- * Load available app instances for the scheduler
+ * Load standard apps for the scheduler
  */
 function loadAppInstances() {
-    console.debug('Starting to load app instances for scheduler dropdown'); // DEBUG level per user preference
+    console.debug('Loading standard apps for scheduler dropdown'); // DEBUG level per user preference
     
     const scheduleApp = document.getElementById('scheduleApp');
     if (!scheduleApp) {
@@ -215,124 +215,26 @@ function loadAppInstances() {
     // Clear existing options
     scheduleApp.innerHTML = '';
     
-    // Add the global option
-    const globalOption = document.createElement('option');
-    globalOption.value = 'global';
-    globalOption.textContent = 'All Apps (Global)';
-    scheduleApp.appendChild(globalOption);
+    // Define the standard apps list
+    const standardApps = [
+        { value: 'global', text: 'All Apps (Global)' },
+        { value: 'sonarr-all', text: 'Sonarr' },
+        { value: 'radarr-all', text: 'Radarr' },
+        { value: 'lidarr-all', text: 'Lidarr' },
+        { value: 'readarr-all', text: 'Readarr' },
+        { value: 'whisparr-v2', text: 'Whisparr V2' },
+        { value: 'whisparr-v3', text: 'Whisparr V3' }
+    ];
     
-    // Fetch app instances using our async function with force refresh
-    const cacheBuster = new Date().getTime();
-    // Use the web-accessible path (the web server can't access /config directly)
-    const listUrl = `/static/data/app_instances.json?nocache=${cacheBuster}`;
+    // Add each app to the dropdown
+    standardApps.forEach(app => {
+        const option = document.createElement('option');
+        option.value = app.value;
+        option.textContent = app.text;
+        scheduleApp.appendChild(option);
+    });
     
-    // Show loading indicator in dropdown
-    const loadingOption = document.createElement('option');
-    loadingOption.disabled = true;
-    loadingOption.textContent = 'Loading instances...';
-    scheduleApp.appendChild(loadingOption);
-    
-    // Fetch the data directly for immediate response
-    console.debug(`Directly loading app instances from ${listUrl}`);
-    fetch(listUrl)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Failed to load app_instances.json: ${response.status} ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Success - populate from the received data
-            console.debug('Successfully loaded app instances from app_instances.json:', data);
-            
-            // Remove loading indicator with safety check
-            try {
-                if (loadingOption && loadingOption.parentNode === scheduleApp) {
-                    scheduleApp.removeChild(loadingOption);
-                }
-                // Clear the reference to prevent future errors
-                loadingOption = null;
-            } catch (e) {
-                console.warn('Error removing loading option:', e);
-            }
-            
-            // Manually define the exact order we want
-            const manualOrder = ['sonarr', 'radarr', 'readarr', 'lidarr', 'whisparr', 'eros'];
-            console.debug('Using hardcoded app order for consistent display');
-            
-            // Filter to only include app types that actually exist in our data
-            const sortedAppTypes = manualOrder.filter(appType => {
-                return data[appType] && Array.isArray(data[appType]) && data[appType].length > 0;
-            });
-            
-            // Create optgroups for each app type
-            sortedAppTypes.forEach(appType => {
-                // Only create optgroup if there are instances
-                if (data[appType] && Array.isArray(data[appType]) && data[appType].length > 0) {
-                    const optgroup = document.createElement('optgroup');
-                    // Use display name if available, otherwise fallback to capitalized app type
-                    const displayName = data[appType][0].display_name || capitalizeFirst(appType);
-                    optgroup.label = displayName;
-                    
-                    // Add individual instances
-                    data[appType].forEach(instance => {
-                        const option = document.createElement('option');
-                        option.value = `${appType}-${instance.id}`;
-                        option.textContent = instance.name;
-                        optgroup.appendChild(option);
-                    });
-                    
-                    scheduleApp.appendChild(optgroup);
-                }
-            });
-        })
-        .catch(error => {
-            console.error('Error loading app instances:', error);
-            console.debug('Attempting fallback to fetchAppInstances()');
-            // Remove loading indicator with safety check
-            try {
-                if (loadingOption && loadingOption.parentNode === scheduleApp) {
-                    scheduleApp.removeChild(loadingOption);
-                }
-            } catch (e) {
-                console.warn('Error removing loading option:', e);
-                // Clear any reference to the option to prevent future errors
-                loadingOption = null;
-            }
-            
-            // Fall back to fetchAppInstances for backwards compatibility
-            return fetchAppInstances().then(instances => {
-                // Manually define the exact order we want
-                const manualOrder = ['sonarr', 'radarr', 'readarr', 'lidarr', 'whisparr', 'eros'];
-                console.debug('Using hardcoded app order for consistent display (fallback mode)');
-                
-                // Filter to only include app types that actually exist in our data
-                const sortedAppTypes = manualOrder.filter(appType => {
-                    return instances[appType] && Array.isArray(instances[appType]) && instances[appType].length > 0;
-                });
-                
-                // Create optgroups for each app type
-                sortedAppTypes.forEach(appType => {
-                    // Only create optgroup if there are instances
-                    if (instances[appType] && instances[appType].length > 0) {
-                        const optgroup = document.createElement('optgroup');
-                        // Use display name if available, otherwise fallback to capitalized app type
-                        const displayName = instances[appType][0].display_name || capitalizeFirst(appType);
-                        optgroup.label = displayName;
-                        
-                        // Add individual instances
-                        instances[appType].forEach(instance => {
-                            const option = document.createElement('option');
-                            option.value = `${appType}-${instance.id}`;
-                            option.textContent = instance.name;
-                            optgroup.appendChild(option);
-                        });
-                        
-                        scheduleApp.appendChild(optgroup);
-                    }
-                });
-            });
-        });
+    console.debug('Standard apps loaded for scheduler');
 }
 
 /**
