@@ -13,6 +13,9 @@ import traceback
 from typing import Dict, List, Any
 import collections
 
+# Import settings_manager to handle cache refreshing
+from src.primary.settings_manager import clear_cache
+
 from src.primary.utils.logger import get_logger
 
 # Initialize logger
@@ -135,9 +138,17 @@ def execute_action(action_entry):
                         if os.path.exists(config_file):
                             with open(config_file, 'r') as f:
                                 config_data = json.load(f)
+                            # Update root level enabled field
                             config_data['enabled'] = False
+                            # Also update enabled field in instances array if it exists
+                            if 'instances' in config_data and isinstance(config_data['instances'], list):
+                                for instance in config_data['instances']:
+                                    if isinstance(instance, dict):
+                                        instance['enabled'] = False
                             with open(config_file, 'w') as f:
                                 json.dump(config_data, f, indent=2)
+                            # Clear cache for this app to ensure the UI refreshes
+                            clear_cache(app)
                     result_message = "All apps disabled successfully"
                     scheduler_logger.info(result_message)
                     add_to_history(action_entry, "success", result_message)
@@ -154,9 +165,17 @@ def execute_action(action_entry):
                     if os.path.exists(config_file):
                         with open(config_file, 'r') as f:
                             config_data = json.load(f)
+                        # Update root level enabled field
                         config_data['enabled'] = False
+                        # Also update enabled field in instances array if it exists
+                        if 'instances' in config_data and isinstance(config_data['instances'], list):
+                            for instance in config_data['instances']:
+                                if isinstance(instance, dict):
+                                    instance['enabled'] = False
                         with open(config_file, 'w') as f:
                             json.dump(config_data, f, indent=2)
+                        # Clear cache for this app to ensure the UI refreshes
+                        clear_cache(app_type)
                     result_message = f"{app_type} disabled successfully"
                     scheduler_logger.info(result_message)
                     add_to_history(action_entry, "success", result_message)
@@ -179,9 +198,17 @@ def execute_action(action_entry):
                         if os.path.exists(config_file):
                             with open(config_file, 'r') as f:
                                 config_data = json.load(f)
+                            # Update root level enabled field
                             config_data['enabled'] = True
+                            # Also update enabled field in instances array if it exists
+                            if 'instances' in config_data and isinstance(config_data['instances'], list):
+                                for instance in config_data['instances']:
+                                    if isinstance(instance, dict):
+                                        instance['enabled'] = True
                             with open(config_file, 'w') as f:
                                 json.dump(config_data, f, indent=2)
+                            # Clear cache for this app to ensure the UI refreshes
+                            clear_cache(app)
                     result_message = "All apps enabled successfully"
                     scheduler_logger.info(result_message)
                     add_to_history(action_entry, "success", result_message)
@@ -198,9 +225,17 @@ def execute_action(action_entry):
                     if os.path.exists(config_file):
                         with open(config_file, 'r') as f:
                             config_data = json.load(f)
+                        # Update root level enabled field
                         config_data['enabled'] = True
+                        # Also update enabled field in instances array if it exists
+                        if 'instances' in config_data and isinstance(config_data['instances'], list):
+                            for instance in config_data['instances']:
+                                if isinstance(instance, dict):
+                                    instance['enabled'] = True
                         with open(config_file, 'w') as f:
                             json.dump(config_data, f, indent=2)
+                        # Clear cache for this app to ensure the UI refreshes
+                        clear_cache(app_type)
                     result_message = f"{app_type} enabled successfully"
                     scheduler_logger.info(result_message)
                     add_to_history(action_entry, "success", result_message)
