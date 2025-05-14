@@ -155,11 +155,30 @@ def process_cutoff_upgrades(
             
         # Log to history system for each book
         for book in books_to_process:
+            # Ensure we have a valid author name - if missing, fetch it
             author_name = book.get("authorName")
-            book_title = book.get("title")
+            author_id = book.get("authorId")
+            if not author_name and author_id:
+                try:
+                    # Fetch author details to get the name
+                    author_details = readarr_api.get_author_details(api_url, api_key, author_id, api_timeout)
+                    if author_details:
+                        author_name = author_details.get("authorName", f"Author ID {author_id}")
+                    else:
+                        author_name = f"Author ID {author_id}"
+                except Exception as e:
+                    readarr_logger.debug(f"Error fetching author details: {e}")
+                    author_name = f"Author ID {author_id}"
+            elif not author_name:
+                author_name = "Unknown Author"
+                
+            book_title = book.get("title", f"Book ID {book.get('id')}")
             media_name = f"{author_name} - {book_title}"
+            
+            # Include full details in history entry
             log_processed_media("readarr", media_name, book.get("id"), instance_name, "upgrade")
-            readarr_logger.debug(f"Logged quality upgrade to history for book ID {book.get('id')}")
+            readarr_logger.debug(f"Logged quality upgrade to history for '{media_name}' (Book ID: {book.get('id')})")
+
             
         processed_count += len(book_ids_to_search)
         processed_something = True

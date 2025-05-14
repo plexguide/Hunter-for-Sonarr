@@ -153,9 +153,16 @@ def process_missing_books(
             readarr_logger.info(f"Triggered book search command {command_id} for author {author_name}. Assuming success for now.") # Log only command ID
             increment_stat("readarr", "hunted")
             
-            # Log to history system
-            log_processed_media("readarr", author_name, author_id, instance_name, "missing")
-            readarr_logger.debug(f"Logged history entry for author: {author_name}")
+            # Log multiple history entries - one for each book with author info
+            for book in books_by_author[author_id]:
+                book_title = book.get('title', f"Unknown Book ID {book['id']}")
+                # Format includes both author and book info
+                media_name = f"{author_name} - {book_title}"
+                # Log each book as a separate history entry with book_id
+                log_processed_media("readarr", media_name, book['id'], instance_name, "missing")
+                readarr_logger.debug(f"Logged missing book history entry: {media_name} (ID: {book['id']})")
+            
+            readarr_logger.debug(f"Logged history entries for {len(books_by_author[author_id])} books by author: {author_name}")
             
             processed_count += 1 # Count processed authors/groups
             processed_authors.append(author_name) # Add to list of processed authors
