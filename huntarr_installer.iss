@@ -31,6 +31,12 @@ Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=admin
 ArchitecturesInstallIn64BitMode=x64
+DisableDirPage=no
+DisableProgramGroupPage=yes
+UninstallDisplayIcon={app}\{#MyAppExeName}
+WizardStyle=modern
+CloseApplications=no
+RestartApplications=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -42,6 +48,8 @@ Name: "installservice"; Description: "Install as Windows Service"; GroupDescript
 
 [Files]
 Source: "dist\Huntarr\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Create empty config directories to ensure they exist with proper permissions
+Source: "LICENSE"; DestDir: "{app}\config"; Flags: ignoreversion; AfterInstall: CreateConfigDirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -49,8 +57,57 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
+; First, remove any existing service
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--remove-service"; Flags: runhidden; RunOnceId: "RemoveExistingService"
+; Wait a moment for the service to be properly removed
+Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 3"; Flags: runhidden; RunOnceId: "WaitForServiceRemoval" 
+; Install the service
 Filename: "{app}\{#MyAppExeName}"; Parameters: "--install-service"; Description: "Install Huntarr as a Windows Service"; Tasks: installservice; Flags: runhidden
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+; Grant permissions to the config directory 
+Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; RunOnceId: "GrantPermissions"
+; Start the service
+Filename: "{sys}\net.exe"; Parameters: "start Huntarr"; Flags: runhidden; RunOnceId: "StartService"; Tasks: installservice
+; Launch Huntarr
+Filename: "http://localhost:9705"; Description: "Open Huntarr Web Interface"; Flags: postinstall shellexec nowait
+; Launch Huntarr
+Filename: "{app}\{#MyAppExeName}"; Description: "Run Huntarr Application"; Flags: nowait postinstall skipifsilent; Check: not IsTaskSelected('installservice')
 
 [UninstallRun]
-Filename: "{app}\{#MyAppExeName}"; Parameters: "--remove-service"; Flags: runhidden 
+; Stop the service first
+Filename: "{sys}\net.exe"; Parameters: "stop Huntarr"; Flags: runhidden
+; Wait a moment for the service to stop
+Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 3"; Flags: runhidden
+; Then remove it
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--remove-service"; Flags: runhidden
+
+[Code]
+procedure CreateConfigDirs;
+begin
+  // Create necessary directories with explicit permissions
+  ForceDirectories(ExpandConstant('{app}\config\logs'));
+  ForceDirectories(ExpandConstant('{app}\config\stateful'));
+  ForceDirectories(ExpandConstant('{app}\config\user'));
+end;
+
+// Check for running services and processes before install
+function InitializeSetup(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  // Try to stop the service if it's already running
+  Exec(ExpandConstant('{sys}\net.exe'), 'stop Huntarr', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  // Give it a moment to stop
+  Sleep(2000);
+  Result := True;
+end;
+
+// Handle cleaning up before uninstall
+function InitializeUninstall(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  // Try to stop the service before uninstalling
+  Exec(ExpandConstant('{sys}\net.exe'), 'stop Huntarr', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(2000);
+  Result := True;
+end; 
