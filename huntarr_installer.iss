@@ -58,15 +58,15 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: 
 
 [Run]
 ; First, remove any existing service
-Filename: "{app}\{#MyAppExeName}"; Parameters: "--remove-service"; Flags: runhidden; RunOnceId: "RemoveExistingService"
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--remove-service"; Flags: runhidden
 ; Wait a moment for the service to be properly removed
-Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 3"; Flags: runhidden; RunOnceId: "WaitForServiceRemoval" 
+Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 3"; Flags: runhidden
 ; Install the service
 Filename: "{app}\{#MyAppExeName}"; Parameters: "--install-service"; Description: "Install Huntarr as a Windows Service"; Tasks: installservice; Flags: runhidden
 ; Grant permissions to the config directory 
-Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; RunOnceId: "GrantPermissions"
+Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec
 ; Start the service
-Filename: "{sys}\net.exe"; Parameters: "start Huntarr"; Flags: runhidden; RunOnceId: "StartService"; Tasks: installservice
+Filename: "{sys}\net.exe"; Parameters: "start Huntarr"; Flags: runhidden; Tasks: installservice
 ; Launch Huntarr
 Filename: "http://localhost:9705"; Description: "Open Huntarr Web Interface"; Flags: postinstall shellexec nowait
 ; Launch Huntarr
