@@ -1,16 +1,24 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
+import sys
 
 block_cipher = None
+
+# Create a list of data files to include
+datas = [
+    ('frontend', 'frontend'),
+    ('src', 'src'),
+]
+
+# Add assets directory if it exists
+if os.path.exists('assets'):
+    datas.append(('assets', 'assets'))
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[
-        ('frontend', 'frontend'),
-        ('src', 'src'),
-        ('assets', 'assets'),
-    ],
+    datas=datas,
     hiddenimports=[
         'waitress',
         'pyotp',

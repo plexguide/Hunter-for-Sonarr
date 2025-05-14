@@ -45,9 +45,12 @@ jobs:
             echo "VERSION=dev-$COMMIT_SHA" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           }
       
-      - name: Create config directories
+      - name: Create required directories
         run: |
           mkdir -p config/logs
+          mkdir -p assets
+          # List directories to verify
+          dir
       
       - name: Build with PyInstaller
         run: |
