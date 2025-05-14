@@ -1,0 +1,59 @@
+/* Custom dropdown menu label overrides - Change Resume/Pause to Enable/Disable */
+
+/* First approach: Hide the original text and replace with new labels using CSS */
+.scheduleAction-option[data-value="resume"],
+.scheduleAction-option[data-value="pause"] {
+    position: relative;
+}
+
+.scheduleAction-option[data-value="resume"]:after {
+    content: "Enable";
+    position: absolute;
+    left: 25px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+.scheduleAction-option[data-value="pause"]:after {
+    content: "Disable";
+    position: absolute;
+    left: 25px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+.scheduleAction-option[data-value="resume"] > span:not(.checkmark),
+.scheduleAction-option[data-value="pause"] > span:not(.checkmark) {
+    visibility: hidden;
+}
+
+/* Alternative approach: Target text nodes directly */
+div:has(> .scheduleAction-menu) .scheduleAction-option:nth-child(2) {
+    content: "Enable";
+}
+
+div:has(> .scheduleAction-menu) .scheduleAction-option:nth-child(3) {
+    content: "Disable";
+}
+
+/* Target the existing UI elements that might be showing Resume/Pause */
+[data-action="resume"]:not(option):not(.scheduleAction-option)::after,
+.schedule-item-action:contains("Resume") {
+    content: "Enable" !important;
+    visibility: visible !important;
+}
+
+[data-action="pause"]:not(option):not(.scheduleAction-option)::after,
+.schedule-item-action:contains("Pause") {
+    content: "Disable" !important;
+    visibility: visible !important;
+}
+
+/* Activity Control dropdown styling */
+.scheduleAction-header:contains("Activity Control") {
+    display: flex !important;
+}

@@ -658,10 +658,10 @@ function renderSchedules() {
         
         // Format action name
         let actionText = schedule.action || '';
-        if (actionText === 'resume') {
-            actionText = 'Resume';
-        } else if (actionText === 'pause') {
-            actionText = 'Pause';
+        if (actionText === 'resume' || actionText === 'enable') {
+            actionText = 'Enable';
+        } else if (actionText === 'pause' || actionText === 'disable') {
+            actionText = 'Disable';
         } else if (actionText.startsWith('api-')) {
             const limit = actionText.split('-')[1];
             actionText = `API Limits ${limit}`;

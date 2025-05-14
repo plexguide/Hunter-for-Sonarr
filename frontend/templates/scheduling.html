@@ -4,6 +4,7 @@
     {% include 'components/head.html' %}
     <title>Huntarr - Scheduling</title>
     <link rel="stylesheet" href="/static/css/scheduler-history.css">
+    <link rel="stylesheet" href="/static/css/dropdown-overrides.css">
 </head>
 <body>
     <div class="app-container mobile-optimized">
@@ -89,8 +90,8 @@
                                 <label for="scheduleAction">Action</label>
                                 <select id="scheduleAction" class="form-control">
                                     <optgroup label="Activity Control">
-                                        <option value="resume">Resume Activity</option>
-                                        <option value="pause">Pause Activity</option>
+                                        <option value="enable">Enable Activity</option>
+                                        <option value="disable">Disable Activity</option>
                                     </optgroup>
                                     <optgroup label="API Limits">
                                         <option value="api-5">API Limits 5</option>
@@ -158,7 +159,7 @@
                                     </div>
                                     <div class="schedule-item-time">10:00</div>
                                     <div class="schedule-item-days">Mon, Wed, Fri</div>
-                                    <div class="schedule-item-action">Resume</div>
+                                    <div class="schedule-item-action">Enable</div>
                                     <div class="schedule-item-app">All Apps</div>
                                     <div class="schedule-item-actions">
                                         <button class="icon-button edit-schedule" data-id="1"><i class="fas fa-edit"></i></button>

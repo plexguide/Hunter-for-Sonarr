@@ -122,8 +122,9 @@ def execute_action(action_entry):
         return False  # Already executed
     
     try:
-        if action_type == "pause":
-            # Pause logic for global or specific app
+        # Handle both old "pause" and new "disable" terminology
+        if action_type == "pause" or action_type == "disable":
+            # Disable logic for global or specific app
             if app_type == "global":
                 message = "Executing global pause action"
                 scheduler_logger.info(message)
@@ -137,16 +138,16 @@ def execute_action(action_entry):
                             config_data['enabled'] = False
                             with open(config_file, 'w') as f:
                                 json.dump(config_data, f, indent=2)
-                    result_message = "All apps paused successfully"
+                    result_message = "All apps disabled successfully"
                     scheduler_logger.info(result_message)
                     add_to_history(action_entry, "success", result_message)
                 except Exception as e:
-                    error_message = f"Error pausing all apps: {str(e)}"
+                    error_message = f"Error disabling all apps: {str(e)}"
                     scheduler_logger.error(error_message)
                     add_to_history(action_entry, "error", error_message)
                     return False
             else:
-                message = f"Executing pause action for {app_type}"
+                message = f"Executing disable action for {app_type}"
                 scheduler_logger.info(message)
                 try:
                     config_file = f"/config/{app_type}.json"
@@ -156,19 +157,20 @@ def execute_action(action_entry):
                         config_data['enabled'] = False
                         with open(config_file, 'w') as f:
                             json.dump(config_data, f, indent=2)
-                    result_message = f"{app_type} paused successfully"
+                    result_message = f"{app_type} disabled successfully"
                     scheduler_logger.info(result_message)
                     add_to_history(action_entry, "success", result_message)
                 except Exception as e:
-                    error_message = f"Error pausing {app_type}: {str(e)}"
+                    error_message = f"Error disabling {app_type}: {str(e)}"
                     scheduler_logger.error(error_message)
                     add_to_history(action_entry, "error", error_message)
                     return False
         
-        elif action_type == "resume":
-            # Resume logic for global or specific app
+        # Handle both old "resume" and new "enable" terminology
+        elif action_type == "resume" or action_type == "enable":
+            # Enable logic for global or specific app
             if app_type == "global":
-                message = "Executing global resume action"
+                message = "Executing global enable action"
                 scheduler_logger.info(message)
                 try:
                     apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']
@@ -180,16 +182,16 @@ def execute_action(action_entry):
                             config_data['enabled'] = True
                             with open(config_file, 'w') as f:
                                 json.dump(config_data, f, indent=2)
-                    result_message = "All apps resumed successfully"
+                    result_message = "All apps enabled successfully"
                     scheduler_logger.info(result_message)
                     add_to_history(action_entry, "success", result_message)
                 except Exception as e:
-                    error_message = f"Error resuming all apps: {str(e)}"
+                    error_message = f"Error enabling all apps: {str(e)}"
                     scheduler_logger.error(error_message)
                     add_to_history(action_entry, "error", error_message)
                     return False
             else:
-                message = f"Executing resume action for {app_type}"
+                message = f"Executing enable action for {app_type}"
                 scheduler_logger.info(message)
                 try:
                     config_file = f"/config/{app_type}.json"
@@ -199,11 +201,11 @@ def execute_action(action_entry):
                         config_data['enabled'] = True
                         with open(config_file, 'w') as f:
                             json.dump(config_data, f, indent=2)
-                    result_message = f"{app_type} resumed successfully"
+                    result_message = f"{app_type} enabled successfully"
                     scheduler_logger.info(result_message)
                     add_to_history(action_entry, "success", result_message)
                 except Exception as e:
-                    error_message = f"Error resuming {app_type}: {str(e)}"
+                    error_message = f"Error enabling {app_type}: {str(e)}"
                     scheduler_logger.error(error_message)
                     add_to_history(action_entry, "error", error_message)
                     return False
