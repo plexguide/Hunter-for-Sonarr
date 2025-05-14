@@ -17,12 +17,12 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
@@ -78,7 +78,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Upload installer as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Huntarr_Windows_Installer
           path: ./installer/Huntarr_Setup.exe 
