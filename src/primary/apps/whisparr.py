@@ -4,9 +4,13 @@ from primary import keys_manager
 from src.primary.utils.logger import get_logger
 from src.primary.state import get_state_file_path
 from src.primary.settings_manager import load_settings
+from src.primary.utils.ssl_settings import get_ssl_verify
 
 whisparr_bp = Blueprint('whisparr', __name__)
 whisparr_logger = get_logger("whisparr")
+
+# Get SSL verification setting
+ssl_verify = get_ssl_verify()
 
 # Make sure we're using the correct state files
 PROCESSED_MISSING_FILE = get_state_file_path("whisparr", "processed_missing") 
@@ -46,11 +50,11 @@ def test_connection():
     for api_path in api_paths:
         test_url = f"{api_url.rstrip('/')}{api_path}"
         headers = {'X-Api-Key': api_key}
-        whisparr_logger.debug(f"Trying Whisparr API path: {test_url}")
+        whisparr_logger.debug(f"Trying Whisparr API path: {test_url} with SSL verification set to {ssl_verify}")
         
         try:
             # Use a connection timeout separate from read timeout
-            response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
+            response = requests.get(test_url, headers=headers, timeout=(10, api_timeout), verify=ssl_verify)
             
             # Log HTTP status code for diagnostic purposes
             whisparr_logger.debug(f"Whisparr API status code: {response.status_code} for path {api_path}")

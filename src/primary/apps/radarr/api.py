@@ -11,6 +11,7 @@ import datetime
 from typing import List, Dict, Any, Optional, Union
 # Correct the import path
 from src.primary.utils.logger import get_logger
+from src.primary.utils.ssl_settings import get_ssl_verify
 
 # Get logger for the Radarr app
 radarr_logger = get_logger("radarr")
@@ -51,6 +52,9 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         "Content-Type": "application/json",
         "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
     }
+
+    # Get SSL verification setting
+    verify_ssl = get_ssl_verify()
     
     # Log the User-Agent for debugging
     radarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
@@ -58,13 +62,13 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
     
     try:
         if method == "GET":
-            response = session.get(url, headers=headers, timeout=api_timeout)
+            response = session.get(url, headers=headers, timeout=api_timeout, verify=verify_ssl)
         elif method == "POST":
-            response = session.post(url, headers=headers, json=data, timeout=api_timeout)
+            response = session.post(url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
         elif method == "PUT":
-            response = session.put(url, headers=headers, json=data, timeout=api_timeout)
+            response = session.put(url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
         elif method == "DELETE":
-            response = session.delete(url, headers=headers, timeout=api_timeout)
+            response = session.delete(url, headers=headers, timeout=api_timeout, verify=verify_ssl)
         else:
             radarr_logger.error(f"Unsupported HTTP method: {method}")
             return None
@@ -100,7 +104,7 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int
         # Radarr uses /api/v3/queue
         endpoint = f"{api_url.rstrip('/')}/api/v3/queue?page=1&pageSize=1000" # Fetch a large page size
         headers = {"X-Api-Key": api_key}
-        response = session.get(endpoint, headers=headers, timeout=api_timeout)
+        response = session.get(endpoint, headers=headers, timeout=api_timeout, verify=get_ssl_verify())
         response.raise_for_status()
         queue_data = response.json()
         queue_size = queue_data.get('totalRecords', 0)
@@ -299,7 +303,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         base_url = api_url.rstrip('/')
         full_url = f"{base_url}/api/v3/system/status"
         
-        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout)
+        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout, verify=get_ssl_verify())
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         radarr_logger.info("Successfully connected to Radarr.")
         return True

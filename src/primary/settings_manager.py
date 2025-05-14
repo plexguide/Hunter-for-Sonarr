@@ -136,6 +136,11 @@ def load_settings(app_type, use_cache=True):
                     current_settings[key] = value
                     updated = True
             
+            '''# Ensure the "disable_ssl_verification" key is included in the default settings
+            if "disable_ssl_verification" not in current_settings and app_type == "general":
+                current_settings["disable_ssl_verification"] = default_settings.get("disable_ssl_verification", False)
+                updated = True'''
+
             # If keys were added, save the updated file
             if updated:
                 settings_logger.info(f"Added missing default keys to {app_type}.json")

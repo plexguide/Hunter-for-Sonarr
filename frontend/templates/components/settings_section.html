@@ -10,7 +10,13 @@
     </div>
     
     <div class="settings-form">
-        <div id="generalSettings" class="app-settings-panel active" style="display: block;"></div>
+        <div id="generalSettings" class="app-settings-panel active" style="display: block;">
+            <div class="form-group">
+                <label for="disableSSLVerification">Disable SSL Verification</label>
+                <input type="checkbox" id="disableSSLVerification" name="disableSSLVerification">
+                <small class="form-text text-muted">Disable SSL verification for self-signed certificates.</small>
+            </div>
+        </div>
     </div>
 </section>
 

@@ -8,9 +8,13 @@ from src.primary.utils.logger import get_logger
 import traceback
 import socket
 from urllib.parse import urlparse
+from src.primary.utils.ssl_settings import get_ssl_verify
 
 radarr_bp = Blueprint('radarr', __name__)
 radarr_logger = get_logger("radarr")
+
+# Get SSL verification setting
+ssl_verify = get_ssl_verify()
 
 # Make sure we're using the correct state files
 PROCESSED_MISSING_FILE = get_state_file_path("radarr", "processed_missing") 
@@ -67,7 +71,7 @@ def test_connection():
     }
     
     try:
-        response = requests.get(url, headers=headers, timeout=(10, api_timeout))
+        response = requests.get(url, headers=headers, timeout=(10, api_timeout), verify=ssl_verify)
         
         # For HTTP errors, provide more specific feedback
         if response.status_code == 401:
