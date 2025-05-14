@@ -78,6 +78,7 @@ jobs:
           name: Huntarr ${{ steps.version.outputs.VERSION }}
           draft: false
           prerelease: false
+          generate_release_notes: false
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Upload installer as artifact
