@@ -18,12 +18,6 @@
             </div>
             <span>History</span>
         </a>
-        <a href="/#logs" class="nav-item" id="logsNav">
-            <div class="nav-icon-wrapper">
-                <i class="fas fa-list-alt"></i>
-            </div>
-            <span>Logs</span>
-        </a>
         <a href="/#apps" class="nav-item" id="appsNav">
             <div class="nav-icon-wrapper">
                 <i class="fas fa-tools"></i>
@@ -41,6 +35,12 @@
                 <i class="fas fa-calendar-alt"></i>
             </div>
             <span>Scheduling</span>
+        </a>
+        <a href="/#logs" class="nav-item" id="logsNav">
+            <div class="nav-icon-wrapper">
+                <i class="fas fa-list-alt"></i>
+            </div>
+            <span>Logs</span>
         </a>
         <a href="/user" class="nav-item" id="userNav">
             <div class="nav-icon-wrapper">
@@ -111,6 +111,13 @@
         100% { box-shadow: 0 0 15px #3498db, 0 0 5px rgba(52, 152, 219, 0.4); } /* Back to Sonarr blue */
     }
     
+    /* Define heart icon pulsing animation */
+    @keyframes heart-pulse {
+        0% { color: #ff4d6d; text-shadow: 0 0 10px #ff4d6d, 0 0 20px #ff4d6d; } /* Pink */
+        50% { color: #ff0a33; text-shadow: 0 0 15px #ff0a33, 0 0 25px #ff0a33; } /* Red */
+        100% { color: #ff4d6d; text-shadow: 0 0 10px #ff4d6d, 0 0 20px #ff4d6d; } /* Pink */
+    }
+    
     .logo {
         width: 60px; /* 50% bigger than original 40px */
         height: 60px;
@@ -166,6 +173,11 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+    }
+    
+    /* Apply the pulsing animation to the heart icon */
+    .heart-icon i {
+        animation: heart-pulse 7.2s infinite ease-in-out;
     }
     
     .nav-item span {
