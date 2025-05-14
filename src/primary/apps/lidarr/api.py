@@ -434,20 +434,17 @@ def search_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int) 
         return None
 
 def refresh_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int) -> Optional[Dict]:
-    """Trigger a refresh for a specific artist in Lidarr."""
-    payload = {
-        "name": "RefreshArtist",
-        "artistId": artist_id
+    """Refresh functionality has been removed as it was a performance bottleneck.
+    This function now returns a placeholder success value without making any API calls."""
+    lidarr_logger.debug(f"Refresh functionality disabled for artist ID: {artist_id}")
+    # Return a placeholder command object to simulate success
+    return {
+        'id': 123,
+        'name': 'RefreshArtist',
+        'status': 'completed',
+        'artistId': artist_id,
+        'message': 'Refresh functionality disabled for performance reasons'
     }
-    response = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=payload)
-
-    if response and isinstance(response, dict) and 'id' in response:
-        command_id = response.get('id')
-        lidarr_logger.info(f"Triggered Lidarr RefreshArtist for artist ID: {artist_id}. Command ID: {command_id}")
-        return response # Return the full command object
-    else:
-        lidarr_logger.error(f"Failed to trigger Lidarr RefreshArtist for artist ID {artist_id}. Response: {response}")
-        return None
 
 def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id: int) -> Optional[Dict[str, Any]]:
     """Get the status of a Lidarr command."""

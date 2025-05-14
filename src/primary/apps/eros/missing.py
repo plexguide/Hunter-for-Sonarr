@@ -52,8 +52,7 @@ def process_missing_items(
     
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
-    skip_item_refresh = app_settings.get("skip_item_refresh", False)
-    eros_logger.info(f"Skip item refresh setting: {skip_item_refresh}")
+    # skip_item_refresh setting removed as it was a performance bottleneck
     search_mode = app_settings.get("search_mode", "movie")  # Default to movie mode if not specified
     
     eros_logger.info(f"Using search mode: {search_mode} for missing items")
@@ -179,18 +178,7 @@ def process_missing_items(
         add_processed_id("eros", instance_name, str(item_id))
         eros_logger.debug(f"Added item ID {item_id} to processed list for {instance_name}")
         
-        # Refresh the item information if not skipped
-        refresh_command_id = None
-        if not skip_item_refresh:
-            eros_logger.info(" - Refreshing item information...")
-            refresh_command_id = eros_api.refresh_item(api_url, api_key, api_timeout, item_id)
-            if refresh_command_id:
-                eros_logger.info(f"Triggered refresh command {refresh_command_id}. Waiting a few seconds...")
-                time.sleep(5) # Basic wait
-            else:
-                eros_logger.warning(f"Failed to trigger refresh command for item ID: {item_id}. Proceeding without refresh.")
-        else:
-            eros_logger.info(" - Skipping item refresh (skip_item_refresh=true)")
+        # Refresh functionality has been removed as it was identified as a performance bottleneck
         
         # Check for stop signal before searching
         if stop_check():

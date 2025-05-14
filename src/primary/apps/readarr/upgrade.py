@@ -55,7 +55,7 @@ def process_cutoff_upgrades(
     # Extract necessary settings
     instance_name = app_settings.get("instance_name", "Readarr Default")
     monitored_only = app_settings.get("monitored_only", True)
-    skip_author_refresh = app_settings.get("skip_author_refresh", False)
+    # skip_author_refresh setting removed as it was a performance bottleneck
     hunt_upgrade_books = app_settings.get("hunt_upgrade_books", 0)
     command_wait_delay = app_settings.get("command_wait_delay", 5)
     command_wait_attempts = app_settings.get("command_wait_attempts", 12)

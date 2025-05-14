@@ -22,7 +22,7 @@ def process_cutoff_upgrades(
     instance_name: str,
     api_timeout: int = get_advanced_setting("api_timeout", 120),
     monitored_only: bool = True,
-    skip_series_refresh: bool = False,
+
     hunt_upgrade_items: int = 5,
     upgrade_mode: str = "episodes",
     command_wait_delay: int = get_advanced_setting("command_wait_delay", 1),
@@ -45,14 +45,12 @@ def process_cutoff_upgrades(
     if upgrade_mode == "seasons_packs":
         return process_upgrade_seasons_mode(
             api_url, api_key, instance_name, api_timeout, monitored_only, 
-            skip_series_refresh, hunt_upgrade_items, 
-            command_wait_delay, command_wait_attempts, stop_check
+            hunt_upgrade_items, command_wait_delay, command_wait_attempts, stop_check
         )
     else:  # Default to episodes mode
         return process_upgrade_episodes_mode(
             api_url, api_key, instance_name, api_timeout, monitored_only, 
-            skip_series_refresh, hunt_upgrade_items, 
-            command_wait_delay, command_wait_attempts, stop_check
+            hunt_upgrade_items, command_wait_delay, command_wait_attempts, stop_check
         )
 
 def process_upgrade_episodes_mode(
@@ -61,7 +59,7 @@ def process_upgrade_episodes_mode(
     instance_name: str,
     api_timeout: int,
     monitored_only: bool,
-    skip_series_refresh: bool,
+
     hunt_upgrade_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -87,16 +85,16 @@ def process_upgrade_episodes_mode(
         return processed_any
         
     # Filter out future episodes for random selection approach
-    if skip_series_refresh:
-        now_unix = time.time()
-        original_count = len(episodes_to_search)
-        episodes_to_search = [
-            ep for ep in episodes_to_search
-            if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
-        ]
-        skipped_count = original_count - len(episodes_to_search)
-        if skipped_count > 0:
-            sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date for upgrades.")
+    # Filter future episodes (previously tied to skip_series_refresh)
+    now_unix = time.time()
+    original_count = len(episodes_to_search)
+    episodes_to_search = [
+        ep for ep in episodes_to_search
+        if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
+    ]
+    skipped_count = original_count - len(episodes_to_search)
+    if skipped_count > 0:
+        sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date for upgrades.")
     
     # Filter out already processed episodes for random selection approach
     unprocessed_episodes = []
@@ -159,22 +157,7 @@ def process_upgrade_episodes_mode(
         series_title = series_titles.get(series_id, f"Series ID {series_id}")
         sonarr_logger.info(f"Processing series for upgrades: {series_title} (ID: {series_id}) with {len(episode_ids)} episodes.")
 
-        # Refresh series metadata if not skipped
-        refresh_command_id = None
-        if not skip_series_refresh:
-            sonarr_logger.debug(f"Attempting to refresh series ID: {series_id} before upgrade search.")
-            refresh_command_id = sonarr_api.refresh_series(api_url, api_key, api_timeout, series_id)
-            if refresh_command_id:
-                # Wait for refresh command to complete
-                if not wait_for_command(
-                    api_url, api_key, api_timeout, refresh_command_id,
-                    command_wait_delay, command_wait_attempts, "Series Refresh (Upgrade)", stop_check
-                ):
-                    sonarr_logger.warning(f"Series refresh command (ID: {refresh_command_id}) for series {series_id} did not complete successfully or timed out. Proceeding with upgrade search anyway.")
-            else:
-                 sonarr_logger.warning(f"Failed to trigger refresh command for series ID: {series_id}. Proceeding without refresh.")
-        else:
-            sonarr_logger.debug(f"Skipping series refresh for series ID: {series_id} as configured.")
+        # Refresh functionality has been removed as it was identified as a performance bottleneck
 
         if stop_check(): 
             sonarr_logger.info("Stop requested after series refresh attempt for upgrades.")
@@ -269,7 +252,7 @@ def process_upgrade_seasons_mode(
     instance_name: str,
     api_timeout: int,
     monitored_only: bool,
-    skip_series_refresh: bool,
+
     hunt_upgrade_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -294,18 +277,17 @@ def process_upgrade_seasons_mode(
         sonarr_logger.info("No cutoff unmet episodes found in Sonarr.")
         return False
         
-    # Filter out future episodes if configured
-    if skip_series_refresh:
-        now_unix = time.time()
-        original_count = len(cutoff_unmet_episodes)
-        # Ensure airDateUtc exists and is not None before parsing
-        cutoff_unmet_episodes = [
-            ep for ep in cutoff_unmet_episodes
-            if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
-        ]
-        skipped_count = original_count - len(cutoff_unmet_episodes)
-        if skipped_count > 0:
-            sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date for upgrades.")
+    # Always filter out future episodes (previously tied to skip_series_refresh)
+    now_unix = time.time()
+    original_count = len(cutoff_unmet_episodes)
+    # Ensure airDateUtc exists and is not None before parsing
+    cutoff_unmet_episodes = [
+        ep for ep in cutoff_unmet_episodes
+        if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
+    ]
+    skipped_count = original_count - len(cutoff_unmet_episodes)
+    if skipped_count > 0:
+        sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date for upgrades.")
     
     if stop_check(): 
         sonarr_logger.info("Stop requested during upgrade processing.")
@@ -444,7 +426,7 @@ def process_upgrade_shows_mode(
     instance_name: str,
     api_timeout: int,
     monitored_only: bool,
-    skip_series_refresh: bool,
+
     hunt_upgrade_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -469,18 +451,17 @@ def process_upgrade_shows_mode(
         sonarr_logger.info("No cutoff unmet episodes found in Sonarr.")
         return False
         
-    # Filter out future episodes if configured
-    if skip_series_refresh:
-        now_unix = time.time()
-        original_count = len(cutoff_unmet_sample)
-        # Ensure airDateUtc exists and is not None before parsing
-        cutoff_unmet_sample = [
-            ep for ep in cutoff_unmet_sample
-            if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
-        ]
-        skipped_count = original_count - len(cutoff_unmet_sample)
-        if skipped_count > 0:
-            sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date for upgrades.")
+    # Always filter out future episodes (previously tied to skip_series_refresh)
+    now_unix = time.time()
+    original_count = len(cutoff_unmet_sample)
+    # Ensure airDateUtc exists and is not None before parsing
+    cutoff_unmet_sample = [
+        ep for ep in cutoff_unmet_sample
+        if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
+    ]
+    skipped_count = original_count - len(cutoff_unmet_sample)
+    if skipped_count > 0:
+        sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date for upgrades.")
     
     if stop_check(): 
         sonarr_logger.info("Stop requested during upgrade processing.")
@@ -528,17 +509,16 @@ def process_upgrade_shows_mode(
         all_series_episodes = sonarr_api.get_cutoff_unmet_episodes_for_series(
             api_url, api_key, api_timeout, series_id, monitored_only)
         
-        # Filter future episodes if needed
-        if skip_series_refresh:
-            now_unix = time.time()
-            original_count = len(all_series_episodes)
-            all_series_episodes = [
-                ep for ep in all_series_episodes
-                if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
-            ]
-            filtered_count = original_count - len(all_series_episodes)
-            if filtered_count > 0:
-                sonarr_logger.info(f"Filtered {filtered_count} future episodes from {series_title}")
+        # Always filter future episodes (previously tied to skip_series_refresh)
+        now_unix = time.time()
+        original_count = len(all_series_episodes)
+        all_series_episodes = [
+            ep for ep in all_series_episodes
+            if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
+        ]
+        filtered_count = original_count - len(all_series_episodes)
+        if filtered_count > 0:
+            sonarr_logger.info(f"Filtered {filtered_count} future episodes from {series_title}")
         
         episode_ids = [episode["id"] for episode in all_series_episodes]
         

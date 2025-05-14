@@ -23,7 +23,7 @@ def process_missing_episodes(
     api_timeout: int = get_advanced_setting("api_timeout", 120),
     monitored_only: bool = True,
     skip_future_episodes: bool = True,
-    skip_series_refresh: bool = False,
+
     hunt_missing_items: int = 5,
     hunt_missing_mode: str = "episodes",
     command_wait_delay: int = get_advanced_setting("command_wait_delay", 1),
@@ -46,8 +46,7 @@ def process_missing_episodes(
         sonarr_logger.info("Episode-based missing mode selected")
         return process_missing_episodes_mode(
             api_url, api_key, instance_name, api_timeout, monitored_only, 
-            skip_future_episodes, skip_series_refresh,
-            hunt_missing_items, command_wait_delay, command_wait_attempts,
+            skip_future_episodes, hunt_missing_items, command_wait_delay, command_wait_attempts,
             stop_check
         )
     elif hunt_missing_mode == "seasons_packs":
@@ -55,7 +54,7 @@ def process_missing_episodes(
         sonarr_logger.info("Season [Packs] mode selected - searching for complete season packs")
         return process_missing_seasons_packs_mode(
             api_url, api_key, instance_name, api_timeout, monitored_only, 
-            skip_series_refresh, hunt_missing_items,
+            hunt_missing_items,
             command_wait_delay, command_wait_attempts, stop_check
         )
     elif hunt_missing_mode == "shows":
@@ -63,7 +62,7 @@ def process_missing_episodes(
         sonarr_logger.info("Show-based missing mode selected")
         return process_missing_shows_mode(
             api_url, api_key, instance_name, api_timeout, monitored_only, 
-            skip_future_episodes, skip_series_refresh, hunt_missing_items,
+            skip_future_episodes, hunt_missing_items,
             command_wait_delay, command_wait_attempts, stop_check
         )
     else:
@@ -77,7 +76,6 @@ def process_missing_episodes_mode(
     api_timeout: int,
     monitored_only: bool,
     skip_future_episodes: bool,
-    skip_series_refresh: bool,
     hunt_missing_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -160,22 +158,7 @@ def process_missing_episodes_mode(
         series_title = series_titles.get(series_id, f"Series ID {series_id}")
         sonarr_logger.info(f"Processing series: {series_title} (ID: {series_id}) with {len(episode_ids)} missing episodes.")
 
-        # Refresh series metadata if not skipped
-        refresh_command_id = None
-        if not skip_series_refresh:
-            sonarr_logger.debug(f"Attempting to refresh series ID: {series_id}")
-            refresh_command_id = sonarr_api.refresh_series(api_url, api_key, api_timeout, series_id)
-            if refresh_command_id:
-                # Wait for refresh command to complete
-                if not wait_for_command(
-                    api_url, api_key, api_timeout, refresh_command_id,
-                    command_wait_delay, command_wait_attempts, "Series Refresh", stop_check
-                ):
-                    sonarr_logger.warning(f"Series refresh command (ID: {refresh_command_id}) for series {series_id} did not complete successfully or timed out. Proceeding with search anyway.")
-            else:
-                 sonarr_logger.warning(f"Failed to trigger refresh command for series ID: {series_id}. Proceeding without refresh.")
-        else:
-            sonarr_logger.debug(f"Skipping series refresh for series ID: {series_id} as configured.")
+        # Refresh functionality has been removed as it was identified as a performance bottleneck
 
         if stop_check(): sonarr_logger.info("Stop requested after series refresh attempt."); break
 
@@ -246,7 +229,6 @@ def process_missing_seasons_packs_mode(
     instance_name: str,
     api_timeout: int,
     monitored_only: bool,
-    skip_series_refresh: bool,
     hunt_missing_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -334,15 +316,7 @@ def process_missing_seasons_packs_mode(
         series_title = season['series_title']
         episode_count = season['episode_count']
         
-        # Refresh series metadata if not skipped
-        if not skip_series_refresh:
-            sonarr_logger.debug(f"Refreshing metadata for {series_title} before season pack search")
-            refresh_command_id = sonarr_api.refresh_series(api_url, api_key, api_timeout, series_id)
-            if refresh_command_id:
-                wait_for_command(
-                    api_url, api_key, api_timeout, refresh_command_id,
-                    command_wait_delay, command_wait_attempts, "Series Refresh", stop_check
-                )
+        # Refresh functionality has been removed as it was identified as a performance bottleneck
         
         sonarr_logger.info(f"Searching for season pack: {series_title} - Season {season_number} (contains {episode_count} missing episodes)")
         
@@ -388,7 +362,6 @@ def process_missing_shows_mode(
     api_timeout: int,
     monitored_only: bool,
     skip_future_episodes: bool,
-    skip_series_refresh: bool,
     hunt_missing_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -479,7 +452,7 @@ def process_missing_shows_mode(
             sonarr_logger.debug(f"  ... and {len(missing_episodes)-5} more episodes.")
         
         # Refresh series if not skipped
-        if not skip_series_refresh:
+        # Refresh functionality has been removed
             sonarr_logger.info(f"Refreshing series info for {show_title}...")
             refresh_command_id = sonarr_api.refresh_series(api_url, api_key, api_timeout, show_id)
             if refresh_command_id:

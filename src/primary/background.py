@@ -299,7 +299,6 @@ def app_specific_loop(app_type: str) -> None:
                     api_timeout = combined_settings.get("api_timeout", 120)
                     monitored_only = combined_settings.get("monitored_only", True)
                     skip_future_episodes = combined_settings.get("skip_future_episodes", True)
-                    skip_series_refresh = combined_settings.get("skip_series_refresh", False)
                     hunt_missing_items = combined_settings.get("hunt_missing_items", 0)
                     hunt_missing_mode = combined_settings.get("hunt_missing_mode", "episodes")
                     command_wait_delay = combined_settings.get("command_wait_delay", 1)
@@ -313,7 +312,6 @@ def app_specific_loop(app_type: str) -> None:
                             api_timeout=api_timeout,
                             monitored_only=monitored_only,
                             skip_future_episodes=skip_future_episodes,
-                            skip_series_refresh=skip_series_refresh,
                             hunt_missing_items=hunt_missing_items,
                             hunt_missing_mode=hunt_missing_mode,
                             command_wait_delay=command_wait_delay,
@@ -338,7 +336,6 @@ def app_specific_loop(app_type: str) -> None:
                         api_key = combined_settings.get("api_key", "").strip()
                         api_timeout = combined_settings.get("api_timeout", 120)
                         monitored_only = combined_settings.get("monitored_only", True)
-                        skip_series_refresh = combined_settings.get("skip_series_refresh", False)
                         hunt_upgrade_items = combined_settings.get("hunt_upgrade_items", 0)
                         upgrade_mode = combined_settings.get("upgrade_mode", "episodes")
                         command_wait_delay = combined_settings.get("command_wait_delay", 1)
@@ -350,7 +347,6 @@ def app_specific_loop(app_type: str) -> None:
                             instance_name=instance_name,  # Added the required instance_name parameter
                             api_timeout=api_timeout,
                             monitored_only=monitored_only,
-                            skip_series_refresh=skip_series_refresh,
                             hunt_upgrade_items=hunt_upgrade_items,
                             upgrade_mode=upgrade_mode,
                             command_wait_delay=command_wait_delay,

@@ -340,8 +340,8 @@ def get_wanted_missing_books(api_url: str, api_key: str, api_timeout: int, monit
 
 def refresh_author(author_id: int, api_url: Optional[str] = None, api_key: Optional[str] = None, api_timeout: Optional[int] = None) -> bool:
     """
-    Refresh an author in Readarr.
-    Accepts optional API credentials.
+    Refresh functionality has been removed as it was a performance bottleneck.
+    This function now returns a success value without making any API calls.
     
     Args:
         author_id: The ID of the author to refresh
@@ -350,20 +350,11 @@ def refresh_author(author_id: int, api_url: Optional[str] = None, api_key: Optio
         api_timeout: Optional API timeout
         
     Returns:
-        True if the refresh was successful, False otherwise
+        Always returns True to simulate success
     """
-    endpoint = f"command"
-    data = {
-        "name": "RefreshAuthor",
-        "authorId": author_id
-    }
-    
-    # Pass credentials to arr_request
-    response = arr_request(endpoint, method="POST", data=data, api_url=api_url, api_key=api_key, api_timeout=api_timeout)
-    if response:
-        logger.debug(f"Refreshed author ID {author_id}")
-        return True
-    return False
+    logger.debug(f"Refresh functionality disabled for author ID: {author_id}")
+    # Always return success without making any API calls
+    return True
 
 def book_search(book_ids: List[int], api_url: Optional[str] = None, api_key: Optional[str] = None, api_timeout: Optional[int] = None) -> bool:
     """

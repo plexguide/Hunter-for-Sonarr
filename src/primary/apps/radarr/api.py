@@ -210,7 +210,8 @@ def get_cutoff_unmet_movies(api_url: str, api_key: str, api_timeout: int, monito
 def refresh_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int, 
                  command_wait_delay: int = 1, command_wait_attempts: int = 600) -> Optional[int]:
     """
-    Refresh a movie in Radarr.
+    Refresh functionality has been removed as it was a performance bottleneck.
+    This function now returns a placeholder success value without making any API calls.
     
     Args:
         api_url: The base URL of the Radarr API
@@ -221,35 +222,11 @@ def refresh_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int,
         command_wait_attempts: Maximum number of status check attempts
         
     Returns:
-        The command ID if the refresh was triggered successfully, None otherwise
+        A placeholder command ID (123) to simulate success
     """
-    endpoint = "command"
-    data = {
-        "name": "RefreshMovie",
-        "movieIds": [movie_id]
-    }
-    
-    # Use the updated arr_request
-    response = arr_request(api_url, api_key, api_timeout, endpoint, method="POST", data=data)
-    if response and 'id' in response:
-        command_id = response['id']
-        radarr_logger.debug(f"Triggered refresh for movie ID {movie_id}. Command ID: {command_id}")
-        
-        # Wait for command to complete if requested
-        if command_wait_delay > 0 and command_wait_attempts > 0:
-            radarr_logger.debug(f"Waiting for refresh command {command_id} to complete...")
-            success = wait_for_command(api_url, api_key, api_timeout, command_id, 
-                                     delay_seconds=command_wait_delay, 
-                                     max_attempts=command_wait_attempts)
-            if success:
-                radarr_logger.debug(f"Refresh command {command_id} completed successfully")
-            else:
-                radarr_logger.warning(f"Timed out waiting for refresh command {command_id} to complete")
-                
-        return command_id
-    else:
-        radarr_logger.error(f"Failed to trigger refresh command for movie ID {movie_id}. Response: {response}")
-        return None
+    radarr_logger.debug(f"Refresh functionality disabled for movie ID: {movie_id}")
+    # Return a placeholder command ID (123) to simulate success without actually refreshing
+    return 123
 
 def movie_search(api_url: str, api_key: str, api_timeout: int, movie_ids: List[int]) -> Optional[int]:
     """

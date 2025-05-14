@@ -139,14 +139,6 @@ const SettingsForms = {
                     </label>
                     <p class="setting-help">Skip searching for episodes with future air dates</p>
                 </div>
-                <div class="setting-item">
-                    <label for="sonarr_skip_series_refresh"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping series refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Series Refresh:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="sonarr_skip_series_refresh" name="skip_series_refresh" ${settings.skip_series_refresh === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Skip refreshing series metadata before searching</p>
-                </div>
             </div>
         `;
 
@@ -286,14 +278,6 @@ const SettingsForms = {
                         <option value="cinema" ${settings.release_type === 'cinema' ? 'selected' : ''}>Cinema Release</option>
                     </select>
                     <p class="setting-help">Select which release date type to use when determining if a movie is considered a future release</p>
-                </div>
-                <div class="setting-item">
-                    <label for="skip_movie_refresh"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping movie refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Movie Refresh:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="skip_movie_refresh" ${settings.skip_movie_refresh === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Skip refreshing movie metadata before searching</p>
                 </div>
             </div>
         `;
@@ -445,14 +429,6 @@ const SettingsForms = {
                     </label>
                     <p class="setting-help">Skip searching for albums with future release dates</p>
                 </div>
-                <div class="setting-item">
-                    <label for="skip_artist_refresh"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping artist refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Artist Refresh:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="skip_artist_refresh" ${settings.skip_artist_refresh === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Skip refreshing artist metadata before searching</p>
-                </div>
             </div>
         `;
 
@@ -580,14 +556,6 @@ const SettingsForms = {
                     </label>
                     <p class="setting-help">Skip searching for books with future release dates</p>
                 </div>
-                <div class="setting-item">
-                    <label for="skip_author_refresh"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping author refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Author Refresh:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="skip_author_refresh" ${settings.skip_author_refresh === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Skip refreshing author metadata before searching</p>
-                </div>
             </div>
         `;
 
@@ -712,22 +680,6 @@ const SettingsForms = {
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Skip searching for scenes with future release dates</p>
-                </div>
-                <div class="setting-item">
-                    <label for="whisparr_skip_series_refresh"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping series refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Series Refresh:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="whisparr_skip_series_refresh" name="skip_series_refresh" ${settings.skip_series_refresh === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Skip refreshing series metadata before searching</p>
-                </div>
-                <div class="setting-item">
-                    <label for="whisparr_skip_scene_refresh"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping scene refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Scene Refresh:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="whisparr_skip_scene_refresh" name="skip_scene_refresh" ${settings.skip_scene_refresh === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Skip refreshing scene info before searching</p>
                 </div>
             </div>
         `;
@@ -867,14 +819,6 @@ const SettingsForms = {
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Skip searching for scenes with future release dates</p>
-                </div>
-                <div class="setting-item">
-                    <label for="eros_skip_item_refresh"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping item refresh" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Movie/Scene Refresh:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="eros_skip_item_refresh" name="skip_item_refresh" ${settings.skip_item_refresh === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Skip refreshing movie metadata before searching (strongly recommended to enable this for Whisparr V3)</p>
                 </div>
             </div>
         `;
@@ -1175,7 +1119,7 @@ const SettingsForms = {
                 settings.hourly_cap = getInputValue('#sonarr_hourly_cap', 20);
                 settings.monitored_only = getInputValue('#sonarr_monitored_only', true);
                 settings.skip_future_episodes = getInputValue('#sonarr_skip_future_episodes', true);
-                settings.skip_series_refresh = getInputValue('#sonarr_skip_series_refresh', false);
+
             } 
             else if (appType === 'radarr') {
                 settings.hunt_missing_movies = getInputValue('#radarr_hunt_missing_movies', 1);
@@ -1184,7 +1128,7 @@ const SettingsForms = {
                 settings.hourly_cap = getInputValue('#radarr_hourly_cap', 20);
                 settings.monitored_only = getInputValue('#radarr_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#radarr_skip_future_releases', true);
-                settings.skip_movie_refresh = getInputValue('#radarr_skip_movie_refresh', false);
+
                 settings.release_type = getInputValue('#radarr_release_type', 'physical');
             } 
             else if (appType === 'lidarr') {
@@ -1200,7 +1144,7 @@ const SettingsForms = {
                 settings.hunt_upgrade_books = getInputValue('#readarr_hunt_upgrade_books', 0);
                 settings.monitored_only = getInputValue('#readarr_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#readarr_skip_future_releases', true);
-                settings.skip_author_refresh = getInputValue('#readarr_skip_author_refresh', false);
+
                 settings.sleep_duration = getInputValue('#readarr_sleep_duration', 900);
                 settings.hourly_cap = getInputValue('#readarr_hourly_cap', 20);
             } 
@@ -1210,6 +1154,7 @@ const SettingsForms = {
                 settings.monitored_only = getInputValue('#whisparr_monitored_only', true);
                 settings.whisparr_version = getInputValue('#whisparr-api-version', 'v3');
                 settings.skip_future_releases = getInputValue('#whisparr_skip_future_releases', true);
+
                 settings.sleep_duration = getInputValue('#whisparr_sleep_duration', 900);
                 settings.hourly_cap = getInputValue('#whisparr_hourly_cap', 20);
             }
@@ -1219,7 +1164,7 @@ const SettingsForms = {
                 settings.hunt_upgrade_items = getInputValue('#eros_hunt_upgrade_items', 0);
                 settings.monitored_only = getInputValue('#eros_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#eros_skip_future_releases', true);
-                settings.skip_item_refresh = getInputValue('#eros_skip_item_refresh', false);
+
                 settings.sleep_duration = getInputValue('#eros_sleep_duration', 900);
                 settings.hourly_cap = getInputValue('#eros_hourly_cap', 20);
             }

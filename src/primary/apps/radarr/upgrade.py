@@ -39,7 +39,7 @@ def process_cutoff_upgrades(
     api_key = app_settings.get("api_key", "").strip()
     api_timeout = get_advanced_setting("api_timeout", 120)  # Use general.json value
     monitored_only = app_settings.get("monitored_only", True)
-    skip_movie_refresh = app_settings.get("skip_movie_refresh", False)
+    # skip_movie_refresh setting removed as it was a performance bottleneck
     hunt_upgrade_movies = app_settings.get("hunt_upgrade_movies", 0)
     
     # Use advanced settings from general.json for command operations
@@ -92,14 +92,7 @@ def process_cutoff_upgrades(
         
         radarr_logger.info(f"Processing upgrade for movie: \"{movie_title}\" ({movie_year}) (Movie ID: {movie_id})")
         
-        # Refresh movie (optional)
-        if not skip_movie_refresh:
-            radarr_logger.info(f"  - Refreshing movie info...")
-            refresh_result = radarr_api.refresh_movie(api_url, api_key, api_timeout, movie_id)
-            if not refresh_result:
-                 radarr_logger.warning(f"  - Failed to trigger movie refresh. Continuing search anyway.")
-        else:
-            radarr_logger.debug(f"  - Skipping movie refresh (skip_movie_refresh=true)")
+        # Refresh functionality has been removed as it was identified as a performance bottleneck
         
         # Search for cutoff upgrade
         radarr_logger.info(f"  - Searching for quality upgrade...")

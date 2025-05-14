@@ -51,7 +51,7 @@ def process_missing_books(
     
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
-    skip_author_refresh = app_settings.get("skip_author_refresh", False)
+    # skip_author_refresh setting removed as it was a performance bottleneck
     hunt_missing_books = app_settings.get("hunt_missing_books", 0)
     
     # Use advanced settings from general.json for command operations
@@ -115,15 +115,7 @@ def process_missing_books(
 
         readarr_logger.info(f"Processing missing books for author: \"{author_name}\" (Author ID: {author_id})")
 
-        # Refresh author (optional)
-        if not skip_author_refresh:
-            readarr_logger.info(f"  - Refreshing author info...")
-            refresh_result = readarr_api.refresh_author(author_id, api_url, api_key, api_timeout)
-            time.sleep(5) # Basic wait
-            if not refresh_result:
-                 readarr_logger.warning(f"  - Failed to trigger author refresh. Continuing search anyway.")
-        else:
-            readarr_logger.info(f"  - Skipping author refresh (skip_author_refresh=true)")
+        # Refresh functionality has been removed as it was identified as a performance bottleneck
 
         # Search for missing books associated with the author
         readarr_logger.info(f"  - Searching for missing books...")

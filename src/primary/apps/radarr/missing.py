@@ -47,7 +47,7 @@ def process_missing_movies(
     api_timeout = get_advanced_setting("api_timeout", 120)  # Use general.json value
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
-    skip_movie_refresh = app_settings.get("skip_movie_refresh", False)
+    # skip_movie_refresh setting removed as it was a performance bottleneck
     hunt_missing_movies = app_settings.get("hunt_missing_movies", 0)
     
     # Use advanced settings from general.json for command operations
@@ -58,7 +58,7 @@ def process_missing_movies(
     radarr_logger.info(f"Hunt Missing Movies: {hunt_missing_movies}")
     radarr_logger.info(f"Monitored Only: {monitored_only}")
     radarr_logger.info(f"Skip Future Releases: {skip_future_releases}")
-    radarr_logger.info(f"Skip Movie Refresh: {skip_movie_refresh}")
+    # Skip Movie Refresh setting has been removed
     radarr_logger.info(f"Release Type for Future Status: {release_type}")
     
     release_type_field = 'physicalRelease'
@@ -167,13 +167,7 @@ def process_missing_movies(
         movie_id = movie.get("id")
         movie_title = movie.get("title", "Unknown Title")
         
-        # Optional: Refresh the movie before searching
-        if not skip_movie_refresh:
-            radarr_logger.info(f"Refreshing movie metadata for '{movie_title}' (ID: {movie_id})...")
-            refresh_success = radarr_api.refresh_movie(api_url, api_key, api_timeout, movie_id, command_wait_delay, command_wait_attempts)
-            
-            if not refresh_success:
-                radarr_logger.warning(f"Failed to refresh movie metadata for '{movie_title}'. Continuing anyway...")
+        # Refresh functionality has been removed as it was identified as a performance bottleneck
         
         # Search for the movie
         radarr_logger.info(f"Searching for movie '{movie_title}' (ID: {movie_id})...")
