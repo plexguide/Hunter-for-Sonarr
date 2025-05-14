@@ -142,36 +142,70 @@ def setup_windows_paths():
                 os.makedirs(static_dir)
                 logger.info(f"Created static directory at: {static_dir}")
                 
-            # Copy frontend files from src/frontend if they exist
-            frontend_dir = os.path.join(app_path, "src", "frontend")
-            if os.path.exists(frontend_dir):
-                logger.info(f"Copying frontend files from {frontend_dir}")
-                try:
-                    # Copy all files from frontend/templates to templates
-                    frontend_templates = os.path.join(frontend_dir, "templates")
-                    if os.path.exists(frontend_templates):
-                        for file in os.listdir(frontend_templates):
-                            src_file = os.path.join(frontend_templates, file)
-                            dest_file = os.path.join(templates_dir, file)
-                            if os.path.isfile(src_file):
-                                shutil.copy2(src_file, dest_file)
-                                logger.info(f"Copied template file: {file}")
+            # IMPORTANT: Extract templates from setup_html.py
+            try:
+                logger.info("Attempting to extract templates from setup_html module")
+                from src.primary.setup_html import extract_templates, SETUP_HTML, INDEX_HTML
+                
+                # Extract templates directly to the templates directory
+                extract_templates(templates_dir)
+                logger.info(f"Templates extracted successfully to {templates_dir}")
+                
+                # Verify the templates were created correctly
+                setup_html_path = os.path.join(templates_dir, 'setup.html')
+                index_html_path = os.path.join(templates_dir, 'index.html')
+                
+                if os.path.exists(setup_html_path) and os.path.exists(index_html_path):
+                    logger.info("Verified template files exist")
+                else:
+                    # If extract_templates failed to create the files, create them directly
+                    if not os.path.exists(setup_html_path):
+                        logger.info("Creating setup.html directly")
+                        with open(setup_html_path, 'w') as f:
+                            f.write(SETUP_HTML)
                     
-                    # Copy all files from frontend/static to static
-                    frontend_static = os.path.join(frontend_dir, "static")
-                    if os.path.exists(frontend_static):
-                        for root, dirs, files in os.walk(frontend_static):
-                            for file in files:
-                                src_file = os.path.join(root, file)
-                                rel_path = os.path.relpath(src_file, frontend_static)
-                                dest_file = os.path.join(static_dir, rel_path)
-                                dest_dir = os.path.dirname(dest_file)
-                                if not os.path.exists(dest_dir):
-                                    os.makedirs(dest_dir)
-                                shutil.copy2(src_file, dest_file)
-                                logger.info(f"Copied static file: {rel_path}")
-                except Exception as e:
-                    logger.error(f"Error copying frontend files: {str(e)}")
+                    if not os.path.exists(index_html_path):
+                        logger.info("Creating index.html directly")
+                        with open(index_html_path, 'w') as f:
+                            f.write(INDEX_HTML)
+                            
+                    logger.info("Created template files directly")
+            except Exception as e:
+                logger.error(f"Error extracting templates from setup_html: {str(e)}")
+                logger.error(traceback.format_exc())
+                
+                # Fallback: Try to copy from source directory
+                try:
+                    # Try to copy template files from frontend directory as a fallback
+                    frontend_dir = os.path.join(app_path, "src", "frontend")
+                    if os.path.exists(frontend_dir):
+                        logger.info(f"Attempting to copy frontend files from {frontend_dir}")
+                        
+                        # Copy all files from frontend/templates to templates
+                        frontend_templates = os.path.join(frontend_dir, "templates")
+                        if os.path.exists(frontend_templates):
+                            for file in os.listdir(frontend_templates):
+                                src_file = os.path.join(frontend_templates, file)
+                                dest_file = os.path.join(templates_dir, file)
+                                if os.path.isfile(src_file):
+                                    shutil.copy2(src_file, dest_file)
+                                    logger.info(f"Copied template file: {file}")
+                        
+                        # Copy all files from frontend/static to static
+                        frontend_static = os.path.join(frontend_dir, "static")
+                        if os.path.exists(frontend_static):
+                            for root, dirs, files in os.walk(frontend_static):
+                                for file in files:
+                                    src_file = os.path.join(root, file)
+                                    rel_path = os.path.relpath(src_file, frontend_static)
+                                    dest_file = os.path.join(static_dir, rel_path)
+                                    dest_dir = os.path.dirname(dest_file)
+                                    if not os.path.exists(dest_dir):
+                                        os.makedirs(dest_dir)
+                                    shutil.copy2(src_file, dest_file)
+                                    logger.info(f"Copied static file: {rel_path}")
+                except Exception as fallback_error:
+                    logger.error(f"Error in fallback template copy: {str(fallback_error)}")
         except Exception as e:
             logger.error(f"Error setting up template directories: {str(e)}")
 

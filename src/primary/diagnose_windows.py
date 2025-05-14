@@ -1,194 +1,168 @@
+#!/usr/bin/env python3
 """
-Windows diagnostic tool for Huntarr.
-Helps identify common issues with Huntarr installations on Windows.
+Windows diagnostics for Huntarr
+This script helps diagnose common issues with Huntarr on Windows
 """
 
 import os
 import sys
+import platform
 import importlib
+from pathlib import Path
+import shutil
 import traceback
-import socket
 
-def check_dependency(module_name, package_name=None):
-    """Check if a Python dependency is installed and can be imported."""
-    if package_name is None:
-        package_name = module_name
-        
-    try:
-        importlib.import_module(module_name)
-        print(f"✓ {package_name} is installed and importable")
-        return True
-    except ImportError as e:
-        print(f"✗ {package_name} is NOT installed or not importable: {str(e)}")
-        return False
+print("=== Huntarr Windows Diagnostic Tool ===\n")
 
-def check_port(port=9705):
-    """Check if the specified port is available."""
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            # Try to bind to the port
-            s.bind(('127.0.0.1', port))
-            print(f"✓ Port {port} is available")
-            return True
-    except socket.error:
-        print(f"✗ Port {port} is already in use by another application")
-        return False
+# Check Windows version
+print(f"Windows Version: {platform.system()} {platform.version()}")
+print(f"Python Version: {sys.version}")
+print(f"Current Directory: {os.getcwd()}")
+print(f"Script Path: {os.path.abspath(__file__)}")
 
-def check_admin():
-    """Check if running with administrator privileges."""
-    try:
-        import ctypes
-        is_admin = ctypes.windll.shell32.IsUserAnAdmin()
-        if is_admin:
-            print("✓ Running with administrator privileges")
-        else:
-            print("✗ Not running with administrator privileges")
-        return is_admin
-    except Exception as e:
-        print(f"✗ Could not check administrator privileges: {str(e)}")
-        return False
+# Try to load the Windows path fix module
+print("\n=== Testing Windows Path Fix ===")
+try:
+    from src.primary.windows_path_fix import setup_windows_paths
+    config_dir = setup_windows_paths()
+    print(f"Config directory: {config_dir}")
+    if config_dir:
+        print("Windows path fix module loaded successfully")
+    else:
+        print("WARNING: Windows path fix module loaded but config_dir is None")
+except Exception as e:
+    print(f"ERROR: Failed to load windows_path_fix: {str(e)}")
+    print(traceback.format_exc())
 
-def check_service_status():
-    """Check if the Huntarr service is installed and its status."""
-    try:
-        import win32serviceutil
-        import win32service
-        
+# Check Flask is installed
+print("\n=== Testing Flask Installation ===")
+try:
+    import flask
+    print(f"Flask version: {flask.__version__}")
+except ImportError:
+    print("ERROR: Flask is not installed or not importable")
+
+# Check if running as frozen application
+print("\n=== Execution Environment ===")
+is_frozen = getattr(sys, 'frozen', False)
+print(f"Running as PyInstaller bundle: {is_frozen}")
+if is_frozen:
+    print(f"Executable path: {sys.executable}")
+    bundle_dir = os.path.dirname(sys.executable)
+    print(f"Bundle directory: {bundle_dir}")
+else:
+    print("Running as script")
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    print(f"Project root: {root_dir}")
+
+# Test template directories
+print("\n=== Template Directory Test ===")
+template_dirs = []
+
+# Check environment variables first
+env_template_dir = os.environ.get('TEMPLATE_FOLDER')
+if env_template_dir:
+    template_dirs.append(("Environment Variable", env_template_dir))
+
+# Check PyInstaller bundle location if frozen
+if is_frozen:
+    bundle_template_dir = os.path.join(os.path.dirname(sys.executable), 'templates')
+    template_dirs.append(("PyInstaller Bundle", bundle_template_dir))
+
+# Check default frontend location
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+frontend_template_dir = os.path.join(root_dir, 'frontend', 'templates')
+template_dirs.append(("Frontend", frontend_template_dir))
+
+# Check current directory
+current_dir_template = os.path.join(os.getcwd(), 'templates')
+template_dirs.append(("Current Directory", current_dir_template))
+
+for source, template_dir in template_dirs:
+    print(f"\nChecking {source} template directory: {template_dir}")
+    if os.path.exists(template_dir):
+        print(f"  - Directory exists")
         try:
-            status = win32serviceutil.QueryServiceStatus("Huntarr")
-            status_map = {
-                win32service.SERVICE_STOPPED: "STOPPED",
-                win32service.SERVICE_START_PENDING: "START PENDING",
-                win32service.SERVICE_STOP_PENDING: "STOP PENDING",
-                win32service.SERVICE_RUNNING: "RUNNING",
-                win32service.SERVICE_CONTINUE_PENDING: "CONTINUE PENDING",
-                win32service.SERVICE_PAUSE_PENDING: "PAUSE PENDING",
-                win32service.SERVICE_PAUSED: "PAUSED"
-            }
-            status_str = status_map.get(status[1], f"UNKNOWN ({status[1]})")
-            print(f"✓ Huntarr service is installed, current status: {status_str}")
-            return True
-        except Exception:
-            print("✗ Huntarr service is not installed or accessible")
-            return False
-    except ImportError:
-        print("✗ Could not check service status: win32serviceutil not available")
-        return False
-
-def check_config_directory():
-    """Check if the config directory exists and is writable."""
-    try:
-        # First try to use the windows_path_fix module
-        try:
-            from primary.windows_path_fix import setup_windows_paths
-            config_dir = setup_windows_paths()
-            if config_dir:
-                print(f"✓ Config directory created and writable: {config_dir}")
-                return True
+            contents = os.listdir(template_dir)
+            print(f"  - Contents: {contents}")
+            
+            # Check for required templates
+            has_setup = os.path.exists(os.path.join(template_dir, 'setup.html'))
+            has_index = os.path.exists(os.path.join(template_dir, 'index.html'))
+            
+            print(f"  - setup.html exists: {has_setup}")
+            print(f"  - index.html exists: {has_index}")
+            
+            if has_setup and has_index:
+                print("  - GOOD: All required templates exist")
             else:
-                print("✗ Failed to set up config directory using windows_path_fix")
-                return False
-        except ImportError:
-            print("✗ Could not import windows_path_fix module")
-            
-            # Try to check some common locations
-            potential_dirs = []
-            
-            # If running as PyInstaller bundle
-            if getattr(sys, 'frozen', False):
-                exe_dir = os.path.dirname(sys.executable)
-                potential_dirs.append(os.path.join(exe_dir, 'config'))
-                
-            # ProgramData location
-            potential_dirs.append(os.path.join(os.environ.get('PROGRAMDATA', 'C:\\ProgramData'), 'Huntarr', 'config'))
-            
-            # Local AppData location
-            potential_dirs.append(os.path.join(os.environ.get('LOCALAPPDATA', 'C:\\Users\\' + os.environ.get('USERNAME', 'Default') + '\\AppData\\Local'), 'Huntarr', 'config'))
-            
-            # Home directory
-            from pathlib import Path
-            home_dir = str(Path.home())
-            potential_dirs.append(os.path.join(home_dir, 'Huntarr', 'config'))
-            
-            for dir_path in potential_dirs:
-                if os.path.exists(dir_path):
-                    # Check if it's writable
-                    try:
-                        test_file = os.path.join(dir_path, 'write_test.tmp')
-                        with open(test_file, 'w') as f:
-                            f.write('test')
-                        if os.path.exists(test_file):
-                            os.remove(test_file)
-                            print(f"✓ Found existing writable config directory: {dir_path}")
-                            return True
-                    except:
-                        pass
-                    
-            print("✗ Could not find a writable config directory")
-            return False
-            
-    except Exception as e:
-        print(f"✗ Error checking config directory: {str(e)}")
-        return False
+                print("  - WARNING: Missing required templates")
+        except Exception as e:
+            print(f"  - ERROR: {str(e)}")
+    else:
+        print(f"  - Directory does not exist")
 
-def run_diagnostics():
-    """Run all diagnostic checks."""
-    print("=" * 50)
-    print("HUNTARR WINDOWS DIAGNOSTICS")
-    print("=" * 50)
-    print(f"Python version: {sys.version}")
-    print(f"Working directory: {os.getcwd()}")
-    print(f"Executable: {sys.executable}")
-    print(f"Frozen: {getattr(sys, 'frozen', False)}")
-    print("=" * 50)
+# Test template string extraction
+print("\n=== Template Content Test ===")
+try:
+    from src.primary.setup_html import SETUP_HTML, INDEX_HTML, extract_templates
     
-    # Check administrator privileges
-    admin = check_admin()
+    print("setup_html.py module loaded successfully")
     
-    # Basic dependency checks
-    print("\nChecking core dependencies:")
-    check_dependency('flask', 'Flask')
-    check_dependency('waitress')
-    check_dependency('requests')
-    check_dependency('bcrypt')
-    check_dependency('qrcode')
-    check_dependency('pyotp')
+    if "<!DOCTYPE html>" in SETUP_HTML and "<html" in SETUP_HTML:
+        print("SETUP_HTML content looks valid")
+    else:
+        print("WARNING: SETUP_HTML content may be incomplete")
+        
+    if "<!DOCTYPE html>" in INDEX_HTML and "<html" in INDEX_HTML:
+        print("INDEX_HTML content looks valid")
+    else:
+        print("WARNING: INDEX_HTML content may be incomplete")
     
-    # Flask-specific dependencies
-    print("\nChecking Flask dependencies:")
-    check_dependency('werkzeug')
-    check_dependency('jinja2')
-    check_dependency('markupsafe')
-    check_dependency('itsdangerous')
+    # Try extracting templates to a test directory
+    test_dir = os.path.join(os.getcwd(), 'templates_test')
+    if not os.path.exists(test_dir):
+        os.makedirs(test_dir)
     
-    # Windows-specific dependencies
-    print("\nChecking Windows-specific dependencies:")
-    check_dependency('win32serviceutil', 'pywin32')
-    check_dependency('win32service', 'pywin32')
-    check_dependency('win32event', 'pywin32')
-    check_dependency('servicemanager', 'pywin32')
+    print(f"Testing extract_templates to: {test_dir}")
+    extract_templates(test_dir)
     
-    # Environment checks
-    print("\nChecking environment:")
-    check_port()
-    check_config_directory()
-    
-    # Service checks
-    print("\nChecking Huntarr service:")
-    check_service_status()
-    
-    print("\nDiagnostic Summary:")
-    print("If you see any '✗' marks above, those indicate issues that need to be addressed.")
-    print("For detailed troubleshooting assistance, please visit:")
-    print("https://github.com/plexguide/Huntarr.io")
+    if os.path.exists(os.path.join(test_dir, 'setup.html')) and os.path.exists(os.path.join(test_dir, 'index.html')):
+        print("Template extraction successful")
+    else:
+        print("WARNING: Template extraction may have failed")
+except Exception as e:
+    print(f"Error testing setup_html.py: {str(e)}")
+    print(traceback.format_exc())
 
-if __name__ == "__main__":
+# Test Flask configuration
+print("\n=== Flask Configuration Test ===")
+try:
+    import flask
+    from flask import Flask, render_template_string
+    
+    # Create a minimal test Flask app
+    test_app = Flask(__name__)
+    
+    # Get actual template folder from environment or use default
+    template_folder = os.environ.get('TEMPLATE_FOLDER')
+    if template_folder and os.path.exists(template_folder):
+        test_app.template_folder = template_folder
+        print(f"Using template folder from environment: {template_folder}")
+    else:
+        print(f"Using Flask default template folder: {test_app.template_folder}")
+    
+    print(f"Flask import path: {flask.__file__}")
+    print(f"Flask template folder: {test_app.template_folder}")
+    print(f"Flask static folder: {test_app.static_folder}")
+    
+    # Test direct template string rendering
     try:
-        run_diagnostics()
+        result = render_template_string("<html><body>Test template</body></html>")
+        print("Template string rendering: SUCCESS")
     except Exception as e:
-        print("=" * 50)
-        print("DIAGNOSTIC TOOL CRASHED")
-        print("=" * 50)
-        print(f"Error: {str(e)}")
-        print("Traceback:")
-        traceback.print_exc() 
+        print(f"Template string rendering error: {str(e)}")
+except Exception as e:
+    print(f"Flask configuration test error: {str(e)}")
+
+print("\n=== Diagnostic Complete ===") 

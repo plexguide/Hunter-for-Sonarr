@@ -56,8 +56,11 @@ from src.primary import background
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.DEBUG)  # Change to DEBUG to see all Flask/Werkzeug logs
 
+# Create a dedicated web server logger
+web_logger = logging.getLogger("web_server")
+web_logger.setLevel(logging.INFO)
+
 # Configure template and static paths with proper PyInstaller support
-# Check if we're running from a PyInstaller bundle
 print("==== HUNTARR TEMPLATE DEBUG ====")
 print(f"__file__: {__file__}")
 print(f"sys.executable: {sys.executable}")
@@ -65,26 +68,59 @@ print(f"os.getcwd(): {os.getcwd()}")
 print(f"sys.path: {sys.path}")
 print(f"Is frozen: {getattr(sys, 'frozen', False)}")
 
-if getattr(sys, 'frozen', False):
-    # We're running from the bundled package
-    bundle_dir = os.path.dirname(sys.executable)
-    # Override the template and static directories
-    template_dir = os.path.join(bundle_dir, 'templates')
-    static_dir = os.path.join(bundle_dir, 'static')
-    print(f"PyInstaller mode - Using templates dir: {template_dir}")
-    print(f"PyInstaller mode - Using static dir: {static_dir}")
-    print(f"Template dir exists: {os.path.exists(template_dir)}")
-    if os.path.exists(template_dir):
-        print(f"Template dir contents: {os.listdir(template_dir)}")
+# Template directory selection algorithm with multiple fallbacks
+# 1. Use environment variable if set (from windows_path_fix.py)
+# 2. Use PyInstaller bundle directory if running as frozen app
+# 3. Use frontend/templates if not frozen
+# 4. Extract templates from setup_html.py if other methods fail
+
+# First, check for environment variable (set by windows_path_fix.py)
+template_dir = os.environ.get('TEMPLATE_FOLDER')
+static_dir = os.environ.get('STATIC_FOLDER')
+
+if template_dir and os.path.exists(template_dir):
+    web_logger.info(f"Using template directory from environment: {template_dir}")
 else:
-    # Normal development mode - use relative paths
-    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'templates'))
-    static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'static'))
-    print(f"Normal mode - Using templates dir: {template_dir}")
-    print(f"Normal mode - Using static dir: {static_dir}")
-    print(f"Template dir exists: {os.path.exists(template_dir)}")
-    if os.path.exists(template_dir):
-        print(f"Template dir contents: {os.listdir(template_dir)}")
+    # Environment variable not set or directory doesn't exist
+    if getattr(sys, 'frozen', False):
+        # We're running from the bundled package
+        bundle_dir = os.path.dirname(sys.executable)
+        # Override the template and static directories
+        template_dir = os.path.join(bundle_dir, 'templates')
+        static_dir = os.path.join(bundle_dir, 'static')
+        web_logger.info(f"PyInstaller mode - Using templates dir: {template_dir}")
+    else:
+        # Normal development mode - use relative paths
+        template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'templates'))
+        static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'static'))
+        web_logger.info(f"Normal mode - Using templates dir: {template_dir}")
+
+print(f"Selected template directory: {template_dir}")
+print(f"Selected static directory: {static_dir}")
+
+# Ensure template directory exists
+if not os.path.exists(template_dir):
+    os.makedirs(template_dir, exist_ok=True)
+    print(f"Created template directory: {template_dir}")
+
+# Ensure static directory exists
+if not os.path.exists(static_dir):
+    os.makedirs(static_dir, exist_ok=True)
+    print(f"Created static directory: {static_dir}")
+
+# Final check: If template directory is empty or doesn't have key files, extract from setup_html
+if not os.path.exists(os.path.join(template_dir, 'setup.html')):
+    print("Template file setup.html not found, attempting to extract from setup_html module")
+    try:
+        from src.primary.setup_html import extract_templates
+        extract_templates(template_dir)
+        print(f"Extracted templates to {template_dir}")
+    except Exception as e:
+        print(f"Error extracting templates: {str(e)}")
+
+print(f"Template dir exists: {os.path.exists(template_dir)}")
+if os.path.exists(template_dir):
+    print(f"Template dir contents: {os.listdir(template_dir)}")
 
 # Create Flask app with additional debug logging
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
@@ -111,6 +147,24 @@ def debug_template_rendering():
                 print(f"Available templates: {all_templates}")
             except:
                 print("Could not list available templates")
+            
+            # Try to recover by extracting templates from setup_html if available
+            if template in ['setup.html', 'index.html']:
+                try:
+                    from src.primary.setup_html import SETUP_HTML, INDEX_HTML
+                    # Create the template file directly
+                    template_path = os.path.join(app.template_folder, template)
+                    with open(template_path, 'w') as f:
+                        if template == 'setup.html':
+                            f.write(SETUP_HTML)
+                        elif template == 'index.html':
+                            f.write(INDEX_HTML)
+                    print(f"Recovered by creating {template} directly")
+                    
+                    # Try again after recovery
+                    return orig_get_source(environment, template)
+                except Exception as recovery_error:
+                    print(f"Recovery attempt failed: {recovery_error}")
             raise
     
     app.jinja_env.loader.get_source = get_source_wrapper
@@ -134,8 +188,6 @@ app.register_blueprint(scheduler_api)
 
 # Register the authentication check to run before requests
 app.before_request(authenticate_request)
-
-# Removed MAIN_PID and signal-related code
 
 # Lock for accessing the log files
 log_lock = Lock()
