@@ -340,7 +340,7 @@ input:checked + .slider:before {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    overflow: auto; /* Changed from hidden to auto to allow scrolling */
+    overflow: auto; /* already set to auto, make sure it stays that way */
 }
 
 /* Scheduling specific styles */
@@ -447,6 +447,7 @@ button.action-button {
 .panel-content {
     padding: 20px !important;
     border-radius: 0 0 8px 8px !important;
+    overflow: visible !important;
 }
 
 /* Enhanced form field styling */
@@ -531,6 +532,7 @@ section[id*="scheduling"] select.form-control,
     margin-left: 15px !important;
     margin-right: 15px !important;
     width: calc(100% - 30px) !important;
+    overflow: auto !important;
 }
 
 /* Color-shifting divider line */
@@ -2125,4 +2127,23 @@ section[id*="scheduling"] select.form-control,
 .styled-select option {
   color: #222;
   background: #fff;
+}
+
+/* Any container elements that might have overflow: hidden */
+.app-container, 
+.content-section, 
+.scheduler-container, 
+.scheduler-panel {
+    overflow: auto !important;
+}
+
+#schedulingPage, 
+#schedulingSection {
+    overflow-y: auto !important;
+}
+
+/* Special case for panels that should show their content but not have a scrollbar themselves */
+.panel-content,
+.schedules-list {
+    overflow: visible !important;
 }

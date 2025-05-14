@@ -1,10 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- CRITICAL FIX: Override all overflow settings to ensure scrolling works -->
+    <style>
+        /* Force scrolling on critical elements */
+        html, body {
+            overflow: auto !important;
+            height: 100% !important;
+            max-height: none !important;
+            position: static !important;
+        }
+        
+        /* Fix app container */
+        .app-container {
+            overflow: auto !important;
+            height: 100vh !important;
+            max-height: none !important;
+        }
+        
+        /* Fix main content area */
+        .main-content {
+            overflow-y: auto !important;
+            height: 100vh !important;
+            max-height: none !important;
+        }
+        
+        /* Allow scheduling page to scroll */
+        #schedulingPage, 
+        .content-section {
+            overflow-y: auto !important;
+            height: auto !important;
+            min-height: calc(100vh - 60px) !important;
+            padding-bottom: 300px !important;
+        }
+        
+        /* Let container content flow properly */
+        .scheduler-container,
+        .scheduler-panel,
+        .panel-content,
+        #schedulesContainer,
+        .schedules-list {
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+        }
+    </style>
+    
     {% include 'components/head.html' %}
     <title>Huntarr - Scheduling</title>
     <link rel="stylesheet" href="/static/css/scheduler-history.css">
     <link rel="stylesheet" href="/static/css/dropdown-overrides.css">
+    <!-- Add scrolling fix stylesheet -->
+    <link rel="stylesheet" href="/static/css/scheduling-fix.css">
+    <link rel="stylesheet" href="/static/css/emergency-scroll-fix.css">
+    
+    <style>
+        /* Critical scrolling fixes applied directly to the page */
+        @media (min-width: 769px) {
+            body, html {
+                overflow: auto !important;
+                height: 100% !important;
+            }
+            
+            .app-container {
+                overflow: auto !important;
+                height: 100vh !important;
+            }
+            
+            .main-content {
+                overflow-y: auto !important;
+                height: 100vh !important;
+            }
+            
+            #schedulingPage, 
+            .content-section.active {
+                overflow-y: auto !important;
+                height: auto !important;
+                min-height: calc(100vh - 60px) !important;
+                padding-bottom: 100px !important;
+            }
+            
+            .scheduler-container {
+                overflow: visible !important;
+                height: auto !important;
+            }
+            
+            .scheduler-panel, 
+            .panel-content {
+                overflow: visible !important;
+                height: auto !important;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="app-container mobile-optimized">
@@ -199,6 +286,13 @@
     
     <!-- Load scheduling script -->
     <script src="/static/js/scheduling.js"></script>
+    
+    <!-- Add scrolling fix script -->
+    <script src="/static/js/scheduling-fix.js"></script>
+    
+    <!-- Add emergency scrolling fixes -->
+    <link rel="stylesheet" href="/static/css/emergency-scroll-fix.css">
+    <script src="/static/js/scroll-fix-override.js"></script>
     
     <style>
         /* Scheduler Container */
@@ -504,8 +598,74 @@
             // Make sure the navigation link is active
             const schedulingNav = document.getElementById('schedulingNav');
             if (schedulingNav) schedulingNav.classList.add('active');
+            
+            // Apply scrolling fixes immediately and after a delay
+            function applyScrollingFixes() {
+                // Fix body and main content scrolling
+                document.body.style.overflow = 'auto';
+                document.documentElement.style.overflow = 'auto';
+                
+                const mainContent = document.querySelector('.main-content');
+                if (mainContent) {
+                    mainContent.style.overflowY = 'auto';
+                    mainContent.style.height = 'auto';
+                }
+                
+                const schedulingPage = document.getElementById('schedulingPage');
+                if (schedulingPage) {
+                    schedulingPage.style.overflowY = 'auto';
+                    schedulingPage.style.height = 'auto';
+                    schedulingPage.style.maxHeight = 'none';
+                }
+                
+                // Fix all scheduler containers
+                const containers = document.querySelectorAll('.scheduler-container, .scheduler-panel, .panel-content, #schedulesContainer');
+                containers.forEach(container => {
+                    container.style.overflow = 'visible';
+                    container.style.height = 'auto';
+                    container.style.maxHeight = 'none';
+                });
+            }
+            
+            // Apply immediately and after a short delay
+            applyScrollingFixes();
+            setTimeout(applyScrollingFixes, 500);
+            setTimeout(applyScrollingFixes, 1000);
+            
+            // Also apply on window resize
+            window.addEventListener('resize', applyScrollingFixes);
         });
-
     </script>
+    
+    <!-- Last resort inline emergency scrolling fix -->
+    <style>
+        /* Force critical containers to be scrollable */
+        body, html, .app-container, .main-content, #schedulingPage, .scheduler-container {
+            overflow: auto !important;
+            height: auto !important;
+        }
+        
+        /* Make main-content scrollable */
+        .main-content {
+            overflow-y: auto !important;
+            height: 100vh !important;
+        }
+        
+        /* Make the most important element scrollable */
+        #schedulingPage {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            height: auto !important;
+            min-height: calc(100vh - 60px) !important;
+            padding-bottom: 200px !important;
+        }
+        
+        /* Remove fixed heights */
+        .scheduler-container, .scheduler-panel, .panel-content, #schedulesContainer {
+            max-height: none !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+    </style>
 </body>
 </html>

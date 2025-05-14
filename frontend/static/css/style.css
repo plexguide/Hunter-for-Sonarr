@@ -82,7 +82,7 @@ body {
     line-height: 1.6;
     transition: background-color 0.3s, color 0.3s;
     height: 100vh;
-    overflow: hidden;
+    overflow: auto;
 }
 
 a {
@@ -100,7 +100,7 @@ button {
     display: flex;
     height: 100vh;
     width: 100%;
-    overflow: hidden;
+    overflow: auto;
 }
 
 .sidebar {
