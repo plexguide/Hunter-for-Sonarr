@@ -387,22 +387,26 @@ def should_execute_schedule(schedule_entry):
         scheduler_logger.info(f"BLOCKED EXECUTION: Current minute {current_time.minute} is BEFORE scheduled minute {schedule_minute}")
         return False
     
-    # ===== 1-MINUTE EXECUTION WINDOW =====
+    # ===== 4-MINUTE EXECUTION WINDOW =====
     
-    # We're in the scheduled hour and minute, or later - check 1-minute window
-    if current_time.hour == schedule_hour and current_time.minute == schedule_minute:
-        scheduler_logger.info(f"EXECUTING: Current time matches scheduled hour and minute exactly")
-        return True
+    # We're in the scheduled hour and minute, or later - check 4-minute window
+    if current_time.hour == schedule_hour:
+        # Execute if we're in the scheduled minute or up to 3 minutes after the scheduled minute
+        if current_time.minute >= schedule_minute and current_time.minute < schedule_minute + 4:
+            scheduler_logger.info(f"EXECUTING: Current time {current_time.hour:02d}:{current_time.minute:02d} is within the 4-minute window after {schedule_hour:02d}:{schedule_minute:02d}")
+            return True
     
-    # We're later than the scheduled time - check if we're still within the 1-minute window
-    # This would catch executions that are in the same hour but 1 minute later
-    if current_time.hour == schedule_hour and current_time.minute == schedule_minute + 1 and current_time.second == 0:
-        scheduler_logger.info(f"EXECUTING: Within 1-minute window (at the start of the next minute)")
-        return True
+    # Handle hour rollover case (e.g., scheduled for 6:59, now it's 7:00, 7:01, or 7:02)
+    if current_time.hour == schedule_hour + 1:
+        # Only apply if scheduled minute was in the last 3 minutes of the hour (57-59)
+        # and current minute is in the first (60 - schedule_minute) minutes of the next hour
+        if schedule_minute >= 57 and current_time.minute < (60 - schedule_minute):
+            scheduler_logger.info(f"EXECUTING: Hour rollover within 4-minute window after {schedule_hour:02d}:{schedule_minute:02d}")
+            return True
     
-    # We've missed the 1-minute window
+    # We've missed the 4-minute window
     scheduler_logger.info(f"MISSED WINDOW: Current time {current_time.hour:02d}:{current_time.minute:02d} " 
-                        f"is past the 1-minute window for {schedule_hour:02d}:{schedule_minute:02d}")
+                        f"is past the 4-minute window for {schedule_hour:02d}:{schedule_minute:02d}")
     return False
 
 def check_and_execute_schedules():
