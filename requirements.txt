@@ -6,3 +6,7 @@ qrcode[pil]==7.4.2 # Added qrcode with PIL support
 pyotp==2.9.0       # Added pyotp
 pywin32==306; sys_platform == 'win32' # For Windows service support
 pyinstaller==5.13.0; sys_platform == 'win32' # For building Windows executable
+Werkzeug==3.0.1    # Flask dependency
+Jinja2==3.1.2      # Flask dependency
+MarkupSafe==2.1.3  # Flask dependency
+itsdangerous==2.1.2 # Flask dependency

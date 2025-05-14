@@ -13,9 +13,19 @@ import socket
 import win32event
 import win32service
 import win32serviceutil
+import pywintypes
+import ctypes
+from pathlib import Path
 
 # Add the parent directory to sys.path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+# Function to check if running as admin
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
 
 # Configure basic logging to file in the same directory as the executable first
 exe_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.getcwd()
@@ -260,40 +270,79 @@ def install_service():
     if sys.platform != 'win32':
         print("Windows service installation is only available on Windows.")
         return False
+    
+    # Check if running as admin    
+    if not is_admin():
+        print("ERROR: Administrator privileges are required to install the service.")
+        print("Please run this command from an elevated (Run as Administrator) command prompt.")
+        logger.error("Service installation failed: Not running as administrator")
+        return False
         
     try:
         # Before installing, ensure the service isn't already installed
         try:
             win32serviceutil.StopService("Huntarr")
             print("Stopped existing Huntarr service before reinstallation.")
-        except:
-            pass  # Service doesn't exist or couldn't be stopped, that's fine
+        except Exception as stop_error:
+            print(f"Note: Could not stop service (it may not be running): {stop_error}")
             
         try:
             win32serviceutil.RemoveService("Huntarr")
             print("Removed existing Huntarr service before reinstallation.")
-        except:
-            pass  # Service doesn't exist or couldn't be removed, that's fine
+        except Exception as remove_error:
+            print(f"Note: Could not remove service (it may not exist): {remove_error}")
             
         # Now install the service
-        win32serviceutil.InstallService(
-            pythonClassString="src.primary.windows_service.HuntarrService",
-            serviceName="Huntarr",
-            displayName="Huntarr Service",
-            description="Automated media collection management for Arr apps",
-            startType=win32service.SERVICE_AUTO_START
-        )
-        print("Huntarr service installed successfully.")
-        
-        # Try to start the service after installation
         try:
-            win32serviceutil.StartService("Huntarr")
-            print("Huntarr service started successfully.")
-        except Exception as start_error:
-            print(f"Service installed but couldn't be started automatically: {start_error}")
-            print("Try starting it manually from Windows Services.")
+            python_class_string = "src.primary.windows_service.HuntarrService"
             
-        return True
+            # If running from PyInstaller bundle, use a different approach
+            if getattr(sys, 'frozen', False):
+                # Get the path to the executable
+                exe_path = sys.executable
+                
+                # Use os.system to run the SC command directly
+                binary_path = f'"{exe_path}" --run-service'
+                
+                # Use os.system for administrator privileges
+                cmd = f'sc create Huntarr binPath= "{binary_path}" DisplayName= "Huntarr Service" start= auto'
+                logger.info(f"Creating service with command: {cmd}")
+                
+                ret = os.system(cmd)
+                if ret != 0:
+                    raise Exception(f"SC command failed with return code {ret}")
+                
+                # Set description
+                desc_cmd = f'sc description Huntarr "Automated media collection management for Arr apps"'
+                os.system(desc_cmd)
+                
+                print("Huntarr service installed successfully using SC command.")
+            else:
+                # Standard method for development environments
+                win32serviceutil.InstallService(
+                    pythonClassString=python_class_string,
+                    serviceName="Huntarr",
+                    displayName="Huntarr Service",
+                    description="Automated media collection management for Arr apps",
+                    startType=win32service.SERVICE_AUTO_START
+                )
+                print("Huntarr service installed successfully using win32serviceutil.")
+            
+            # Try to start the service after installation
+            try:
+                win32serviceutil.StartService("Huntarr")
+                print("Huntarr service started successfully.")
+            except Exception as start_error:
+                print(f"Service installed but couldn't be started automatically: {start_error}")
+                print("Try starting it manually from Windows Services.")
+                
+            return True
+        except Exception as install_error:
+            error_msg = f"Service installation failed: {str(install_error)}\n{traceback.format_exc()}"
+            logger.error(error_msg)
+            print(error_msg)
+            return False
+            
     except Exception as e:
         print(f"Error installing Huntarr service: {e}")
         print(f"Detailed error: {traceback.format_exc()}")
@@ -304,6 +353,13 @@ def remove_service():
     """Remove the Huntarr Windows service"""
     if sys.platform != 'win32':
         print("Windows service removal is only available on Windows.")
+        return False
+    
+    # Check if running as admin    
+    if not is_admin():
+        print("ERROR: Administrator privileges are required to remove the service.")
+        print("Please run this command from an elevated (Run as Administrator) command prompt.")
+        logger.error("Service removal failed: Not running as administrator")
         return False
         
     try:
@@ -317,9 +373,22 @@ def remove_service():
             print(f"Note: Could not stop service (it may not be running): {stop_error}")
             
         # Now remove it
-        win32serviceutil.RemoveService("Huntarr")
-        print("Huntarr service removed successfully.")
-        return True
+        try:
+            win32serviceutil.RemoveService("Huntarr")
+            print("Huntarr service removed successfully.")
+            return True
+        except Exception as remove_error:
+            # Try using SC command as a fallback
+            print(f"Could not remove service with win32serviceutil: {remove_error}")
+            print("Trying to remove with SC command...")
+            
+            cmd = "sc delete Huntarr"
+            ret = os.system(cmd)
+            if ret != 0:
+                raise Exception(f"SC command failed with return code {ret}")
+                
+            print("Huntarr service removed successfully using SC command.")
+            return True
     except Exception as e:
         print(f"Error removing Huntarr service: {e}")
         print(f"Detailed error: {traceback.format_exc()}")
@@ -332,6 +401,11 @@ if __name__ == '__main__':
             install_service()
         elif sys.argv[1] == 'remove':
             remove_service()
+        elif sys.argv[1] == '--run-service':
+            # Special parameter used when the service is started by the SC command
+            servicemanager.Initialize()
+            servicemanager.PrepareToHostSingle(HuntarrService)
+            servicemanager.StartServiceCtrlDispatcher()
         else:
             win32serviceutil.HandleCommandLine(HuntarrService)
     else:

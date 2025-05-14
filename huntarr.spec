@@ -10,6 +10,10 @@ datas = [
     ('src', 'src'),
 ]
 
+# Add tools directory if it exists
+if os.path.exists('tools'):
+    datas.append(('tools', 'tools'))
+
 # Add assets directory if it exists
 if os.path.exists('assets'):
     datas.append(('assets', 'assets'))
@@ -31,6 +35,39 @@ a = Analysis(
         'bcrypt',
         'qrcode',
         'PIL.Image',
+        'flask',
+        'flask.json',
+        'flask.sessions',
+        'markupsafe',
+        'jinja2',
+        'jinja2.ext',
+        'werkzeug',
+        'werkzeug.exceptions',
+        'itsdangerous',
+        'logging.handlers',
+        'email',
+        'importlib',
+        'json',
+        'sqlite3',
+        'requests',
+        'urllib3',
+        'certifi',
+        'idna',
+        'charset_normalizer',
+        'queue',
+        'threading',
+        'socket',
+        'datetime',
+        'time',
+        'os',
+        'sys',
+        're',
+        'winreg',
+        'hashlib',
+        'base64',
+        'uuid',
+        'pathlib',
+        'concurrent.futures',
     ],
     hookspath=[],
     hooksconfig={},
