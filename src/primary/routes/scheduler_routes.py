@@ -10,6 +10,9 @@ import logging
 from flask import Blueprint, jsonify, request, Response
 from datetime import datetime
 
+# Import the scheduler engine to get execution history
+from src.primary.scheduler_engine import get_execution_history
+
 # Create logger
 scheduler_logger = logging.getLogger("scheduler")
 
@@ -60,6 +63,29 @@ def load_schedules():
     
     except Exception as e:
         error_msg = f"Error loading schedules: {str(e)}"
+        scheduler_logger.error(error_msg)
+        return jsonify({"error": error_msg}), 500
+        
+
+@scheduler_api.route('/api/scheduler/history', methods=['GET'])
+def get_scheduler_history():
+    """Get the execution history of the scheduler"""
+    try:
+        # Get the execution history from the scheduler engine
+        history = get_execution_history()
+        
+        # Add CORS headers
+        response = Response(json.dumps({
+            "success": True,
+            "history": history,
+            "timestamp": datetime.now().isoformat()
+        }))
+        response.headers['Content-Type'] = 'application/json'
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        return response
+    
+    except Exception as e:
+        error_msg = f"Error getting scheduler history: {str(e)}"
         scheduler_logger.error(error_msg)
         return jsonify({"error": error_msg}), 500
 

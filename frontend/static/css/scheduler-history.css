@@ -1,0 +1,81 @@
+/* Scheduler History Styles */
+.scheduler-history-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+}
+
+.panel-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #ddd;
+}
+
+.scheduler-history-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.history-table th, 
+.history-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.history-table th {
+    background-color: rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+    color: #ddd;
+}
+
+.history-row {
+    transition: background-color 0.2s;
+}
+
+.history-row:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Status-specific styles */
+.status-success {
+    color: #4caf50;
+}
+
+.status-error {
+    color: #f44336;
+}
+
+.status-skipped {
+    color: #ffc107;
+}
+
+.status-info {
+    color: #2196f3;
+}
+
+.empty-message, 
+.loading-indicator, 
+.error-message {
+    padding: 15px;
+    text-align: center;
+    color: #aaa;
+}
+
+.error-message {
+    color: #f44336;
+}
+
+#refreshHistoryButton {
+    display: block;
+    margin: 0 auto;
+}

@@ -49,6 +49,18 @@ window.huntarrSchedules = window.huntarrSchedules || {
 function initScheduler() {
     console.debug('Initializing scheduler'); // DEBUG level per user preference
     
+    // Load and render the schedules
+    loadSchedules();
+    
+    // Initialize the app dropdown
+    loadAppInstances();
+    
+    // Set up event listeners
+    setupEventListeners();
+    
+    // Load scheduler history
+    loadSchedulerHistory();
+    
     // Initialize time inputs with current time
     const now = new Date();
     const hour = now.getHours();
@@ -790,6 +802,102 @@ function addSchedule() {
     
     // Reset day checkboxes
     resetDayCheckboxes();
+}
+
+/**
+ * Load and display scheduler execution history
+ */
+function loadSchedulerHistory() {
+    console.debug('Loading scheduler history');
+    
+    // Find or create the history container
+    let historyContainer = document.getElementById('schedulerHistoryContainer');
+    if (!historyContainer) {
+        const schedulerPanel = document.querySelector('.scheduler-panel:nth-child(2)');
+        if (!schedulerPanel) {
+            console.warn('Could not find scheduler panel to add history container');
+            return;
+        }
+        
+        // Create the history section
+        const historySection = document.createElement('div');
+        historySection.className = 'scheduler-history-section';
+        historySection.innerHTML = `
+            <h3 class="panel-subtitle">Execution History</h3>
+            <div id="schedulerHistoryContainer" class="scheduler-history-container">
+                <div class="loading-indicator">Loading history...</div>
+            </div>
+            <button id="refreshHistoryButton" class="btn btn-sm btn-primary">Refresh History</button>
+        `;
+        
+        // Add it to the panel
+        schedulerPanel.appendChild(historySection);
+        historyContainer = document.getElementById('schedulerHistoryContainer');
+        
+        // Add event listener to refresh button
+        const refreshButton = document.getElementById('refreshHistoryButton');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', loadSchedulerHistory);
+        }
+    }
+    
+    // Fetch the scheduler history
+    fetch('/api/scheduler/history')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to load scheduler history');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Clear the container
+            historyContainer.innerHTML = '';
+            
+            if (!data.history || data.history.length === 0) {
+                historyContainer.innerHTML = '<div class="empty-message">No execution history available yet.</div>';
+                return;
+            }
+            
+            // Create a table to display the history
+            const table = document.createElement('table');
+            table.className = 'history-table';
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Action</th>
+                        <th>App</th>
+                        <th>Status</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            
+            const tbody = table.querySelector('tbody');
+            
+            // Add rows for each history entry
+            data.history.forEach(entry => {
+                const row = document.createElement('tr');
+                row.className = `history-row status-${entry.status}`;
+                
+                row.innerHTML = `
+                    <td>${entry.timestamp || 'Unknown'}</td>
+                    <td>${entry.action || 'Unknown'}</td>
+                    <td>${entry.app || 'Unknown'}</td>
+                    <td>${entry.status || 'Unknown'}</td>
+                    <td>${entry.message || ''}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            historyContainer.appendChild(table);
+        })
+        .catch(error => {
+            console.error('Error loading scheduler history:', error);
+            historyContainer.innerHTML = `<div class="error-message">Error loading history: ${error.message}</div>`;
+        });
 }
 
 /**
