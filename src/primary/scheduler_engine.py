@@ -45,7 +45,6 @@ def load_schedule():
             try:
                 # Check if file is empty
                 if os.path.getsize(SCHEDULE_FILE) == 0:
-                    scheduler_logger.warning(f"Schedule file is empty: {SCHEDULE_FILE}")
                     return {"global": [], "sonarr": [], "radarr": [], "lidarr": [], "readarr": [], "whisparr": [], "eros": []}
                 
                 # Attempt to load JSON
@@ -57,7 +56,6 @@ def load_schedule():
                     # Ensure the schedule data has the expected structure
                     for app_type in ["global", "sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros"]:
                         if app_type not in schedule_data:
-                            scheduler_logger.warning(f"Missing app type {app_type} in schedule data, adding empty list")
                             schedule_data[app_type] = []
                     
                     return schedule_data
@@ -78,7 +76,6 @@ def load_schedule():
                 
                 return default_schedule
         else:
-            scheduler_logger.warning(f"Schedule file not found: {SCHEDULE_FILE}")
             # Create the default schedule file
             default_schedule = {"global": [], "sonarr": [], "radarr": [], "lidarr": [], "readarr": [], "whisparr": [], "eros": []}
             with open(SCHEDULE_FILE, 'w') as f:
@@ -427,8 +424,6 @@ def check_and_execute_schedules():
         # Load the schedule
         schedule_data = load_schedule()
         if not schedule_data:
-            scheduler_logger.warning("No schedule data available")
-            add_to_history({"action": "check"}, "warning", "No schedule data available")
             return
         
         # Log schedule data summary
@@ -470,9 +465,7 @@ def check_and_execute_schedules():
                     if entry_id:
                         last_executed_actions[entry_id] = datetime.datetime.now()
         
-        if schedules_found == 0:
-            scheduler_logger.warning("No schedules found in the configuration")
-            add_to_history({"action": "check"}, "warning", "No schedules found in the configuration")
+        # No need to log anything when no schedules are found, as this is expected
     
     except Exception as e:
         error_msg = f"Error checking schedules: {e}"
