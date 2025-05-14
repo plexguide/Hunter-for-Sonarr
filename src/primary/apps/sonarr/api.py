@@ -13,6 +13,7 @@ import traceback
 from typing import List, Dict, Any, Optional, Union, Callable
 # Correct the import path
 from src.primary.utils.logger import get_logger
+from src.primary.settings_manager import get_ssl_verify_setting
 
 # Get logger for the Sonarr app
 sonarr_logger = get_logger("sonarr")
@@ -60,16 +61,21 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         # Log the User-Agent for debugging
         sonarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
         
+        # Get SSL verification setting
+        verify_ssl = get_ssl_verify_setting()
+        
+        if not verify_ssl:
+            sonarr_logger.debug("SSL verification disabled by user setting")
         
         try:
             if method.upper() == "GET":
-                response = session.get(full_url, headers=headers, timeout=api_timeout)
+                response = session.get(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
             elif method.upper() == "POST":
-                response = session.post(full_url, headers=headers, json=data, timeout=api_timeout)
+                response = session.post(full_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
             elif method.upper() == "PUT":
-                response = session.put(full_url, headers=headers, json=data, timeout=api_timeout)
+                response = session.put(full_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
             elif method.upper() == "DELETE":
-                response = session.delete(full_url, headers=headers, timeout=api_timeout)
+                response = session.delete(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
             else:
                 sonarr_logger.error(f"Unsupported HTTP method: {method}")
                 return None

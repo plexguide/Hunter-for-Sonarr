@@ -3,7 +3,7 @@ import datetime, os, requests
 from src.primary import keys_manager
 from src.primary.utils.logger import get_logger
 from src.primary.state import get_state_file_path
-from src.primary.settings_manager import load_settings
+from src.primary.settings_manager import load_settings, get_ssl_verify_setting
 
 radarr_bp = Blueprint('radarr', __name__)
 radarr_logger = get_logger("radarr")
@@ -36,10 +36,16 @@ def test_connection():
     api_base = "api/v3"
     test_url = f"{api_url.rstrip('/')}/{api_base}/system/status"
     headers = {'X-Api-Key': api_key}
+    
+    # Get SSL verification setting
+    verify_ssl = get_ssl_verify_setting()
+    
+    if not verify_ssl:
+        radarr_logger.debug("SSL verification disabled by user setting for connection test")
 
     try:
         # Use a connection timeout separate from read timeout
-        response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
+        response = requests.get(test_url, headers=headers, timeout=(10, api_timeout), verify=verify_ssl)
         
         # Log HTTP status code for diagnostic purposes
         radarr_logger.debug(f"Radarr API status code: {response.status_code}")

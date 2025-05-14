@@ -6,11 +6,13 @@ Handles all communication with the Radarr API
 
 import requests
 import json
+import sys
 import time
-import datetime
+import traceback
 from typing import List, Dict, Any, Optional, Union
 # Correct the import path
 from src.primary.utils.logger import get_logger
+from src.primary.settings_manager import get_ssl_verify_setting
 
 # Get logger for the Radarr app
 radarr_logger = get_logger("radarr")
@@ -26,45 +28,45 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         api_url: The base URL of the Radarr API
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
-        endpoint: The API endpoint to call
+        endpoint: The API endpoint to call (without /api/v3/)
         method: HTTP method (GET, POST, PUT, DELETE)
-        data: Optional data to send with the request
-        
+        data: Optional data payload for POST/PUT requests
+    
     Returns:
-        The JSON response from the API, or None if the request failed
+        The parsed JSON response or None if the request failed
     """
-    if not api_url or not api_key:
-        radarr_logger.error("API URL or API key is missing. Check your settings.")
-        return None
-    
-    # Ensure api_url has a scheme
-    if not (api_url.startswith('http://') or api_url.startswith('https://')):
-        radarr_logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
-        return None
-    
-    # Full URL - ensure no double slashes
-    url = f"{api_url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
-    
-    # Headers with User-Agent to identify Huntarr
-    headers = {
-        "X-Api-Key": api_key,
-        "Content-Type": "application/json",
-        "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
-    }
-    
-    # Log the User-Agent for debugging
-    radarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
-    
-    
     try:
-        if method == "GET":
-            response = session.get(url, headers=headers, timeout=api_timeout)
-        elif method == "POST":
-            response = session.post(url, headers=headers, json=data, timeout=api_timeout)
-        elif method == "PUT":
-            response = session.put(url, headers=headers, json=data, timeout=api_timeout)
-        elif method == "DELETE":
-            response = session.delete(url, headers=headers, timeout=api_timeout)
+        if not api_url or not api_key:
+            radarr_logger.error("No URL or API key provided")
+            return None
+        
+        # Construct the full URL properly
+        full_url = f"{api_url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
+        
+        radarr_logger.debug(f"Making {method} request to: {full_url}")
+        
+        # Set up headers with the API key
+        headers = {
+            "X-Api-Key": api_key,
+            "Content-Type": "application/json",
+            "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
+        }
+        
+        # Get SSL verification setting
+        verify_ssl = get_ssl_verify_setting()
+        
+        if not verify_ssl:
+            radarr_logger.debug("SSL verification disabled by user setting")
+        
+        # Make the request based on the method
+        if method.upper() == "GET":
+            response = session.get(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
+        elif method.upper() == "POST":
+            response = session.post(full_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
+        elif method.upper() == "PUT":
+            response = session.put(full_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
+        elif method.upper() == "DELETE":
+            response = session.delete(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
         else:
             radarr_logger.error(f"Unsupported HTTP method: {method}")
             return None

@@ -3,7 +3,7 @@ import datetime, os, requests
 from primary import keys_manager
 from src.primary.utils.logger import get_logger
 from src.primary.state import get_state_file_path
-from src.primary.settings_manager import load_settings, settings_manager
+from src.primary.settings_manager import load_settings, settings_manager, get_ssl_verify_setting
 
 eros_bp = Blueprint('eros', __name__)
 eros_logger = get_logger("eros")
@@ -14,7 +14,7 @@ PROCESSED_UPGRADES_FILE = get_state_file_path("eros", "processed_upgrades")
 
 @eros_bp.route('/test-connection', methods=['POST'])
 def test_connection():
-    """Test connection to an Eros API instance with comprehensive diagnostics"""
+    """Test connection to Eros API instance with comprehensive diagnostics"""
     data = request.json
     api_url = data.get('api_url')
     api_key = data.get('api_key')
@@ -32,93 +32,71 @@ def test_connection():
         eros_logger.error(error_msg)
         return jsonify({"success": False, "message": error_msg}), 400
         
-    # Try multiple API path combinations to handle different Whisparr V3/Eros setups
-    api_paths = [
-        "/api/v3/system/status",  # Standard V3 path
-        "/api/system/status",     # Standard V2 path that might still work
-        "/system/status"          # Direct path without /api prefix
-    ]
+    # Create the test URL and set headers
+    test_url = f"{api_url.rstrip('/')}/api/v3/system/status"
+    headers = {'X-Api-Key': api_key}
     
-    success = False
-    last_error = None
-    response_data = None
+    # Get SSL verification setting
+    verify_ssl = get_ssl_verify_setting()
     
-    for api_path in api_paths:
-        test_url = f"{api_url.rstrip('/')}{api_path}"
-        headers = {'X-Api-Key': api_key}
-        eros_logger.debug(f"Trying Eros API path: {test_url}")
+    if not verify_ssl:
+        eros_logger.debug("SSL verification disabled by user setting for connection test")
+
+    try:
+        # Use a connection timeout separate from read timeout
+        response = requests.get(test_url, headers=headers, timeout=(10, api_timeout), verify=verify_ssl)
         
+        # Log HTTP status code for diagnostic purposes
+        eros_logger.debug(f"Eros API status code: {response.status_code}")
+        
+        # Check HTTP status code
+        if response.status_code == 404:
+            # Try next path if 404
+            return jsonify({"success": False, "message": "API path not found"}), 404
+            
+        response.raise_for_status()
+    
+        # Ensure the response is valid JSON
         try:
-            # Use a connection timeout separate from read timeout
-            response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
+            response_data = response.json()
+            eros_logger.debug(f"Eros API response: {response_data}")
             
-            # Log HTTP status code for diagnostic purposes
-            eros_logger.debug(f"Eros API status code: {response.status_code} for path {api_path}")
+            # Verify this is actually an Eros API by checking for version
+            version = response_data.get('version', None)
+            if not version:
+                # No version info, try next path
+                return jsonify({"success": False, "message": "API response doesn't contain version information"}), 400
             
-            # Check HTTP status code
-            if response.status_code == 404:
-                # Try next path if 404
-                continue
+            # The version number should start with 3 for Eros
+            if version.startswith('3'):
+                eros_logger.info(f"Successfully connected to Eros API version {version}")
+                return jsonify({
+                    "success": True, 
+                    "message": f"Successfully connected to Eros (version {version})",
+                    "version": version
+                })
+            elif version.startswith('2'):
+                error_msg = f"Connected to Whisparr V2 (version {version}). Use the Whisparr integration for V2."
+                eros_logger.error(error_msg)
+                return jsonify({"success": False, "message": error_msg}), 400
+            else:
+                # Connected to some other version, try next path
+                return jsonify({"success": False, "message": f"Connected to unknown version {version}, but Huntarr requires Eros V3"}), 400
                 
-            response.raise_for_status()
-    
-            # Ensure the response is valid JSON
-            try:
-                response_data = response.json()
-                eros_logger.debug(f"Eros API response: {response_data}")
-                
-                # Verify this is actually an Eros API by checking for version
-                version = response_data.get('version', None)
-                if not version:
-                    # No version info, try next path
-                    last_error = "API response doesn't contain version information"
-                    continue
-                
-                # The version number should start with 3 for Eros
-                if version.startswith('3'):
-                    eros_logger.info(f"Successfully connected to Eros API version {version} using path {api_path}")
-                    success = True
-                    break
-                elif version.startswith('2'):
-                    error_msg = f"Connected to Whisparr V2 (version {version}). Use the Whisparr integration for V2."
-                    eros_logger.error(error_msg)
-                    return jsonify({"success": False, "message": error_msg}), 400
-                else:
-                    # Connected to some other version, try next path
-                    last_error = f"Connected to unknown version {version}, but Huntarr requires Eros V3"
-                    continue
-                    
-            except ValueError:
-                last_error = "Invalid JSON response from API"
-                continue
-                
-        except requests.exceptions.Timeout:
-            last_error = f"Connection timed out after {api_timeout} seconds"
-            continue
+        except ValueError:
+            return jsonify({"success": False, "message": "Invalid JSON response from API"}), 400
             
-        except requests.exceptions.ConnectionError:
-            last_error = "Failed to connect. Check that the URL is correct and that Eros is running."
-            continue
-            
-        except requests.exceptions.HTTPError as e:
-            last_error = f"HTTP error: {str(e)}"
-            continue
-            
-        except Exception as e:
-            last_error = f"Unexpected error: {str(e)}"
-            continue
-    
-    # After trying all paths
-    if success:
-        return jsonify({
-            "success": True, 
-            "message": f"Successfully connected to Eros (version {response_data.get('version')})",
-            "version": response_data.get('version')
-        })
-    else:
-        error_msg = last_error or "Failed to connect to Eros API. Please check your URL and API key."
-        eros_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 400
+    except requests.exceptions.Timeout:
+        return jsonify({"success": False, "message": "Connection timed out after 10 seconds"}), 408
+        
+    except requests.exceptions.ConnectionError:
+        return jsonify({"success": False, "message": "Failed to connect. Check that the URL is correct and that Eros is running."}), 503
+        
+    except requests.exceptions.HTTPError as e:
+        return jsonify({"success": False, "message": f"HTTP error: {str(e)}"}), 500
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Unexpected error: {str(e)}"}), 500
 
 # Function to check if Eros is configured
 def is_configured():

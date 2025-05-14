@@ -1107,28 +1107,16 @@ const SettingsForms = {
         
         // For the general settings form, collect settings including advanced settings
         if (appType === 'general') {
-            settings.themeName = getInputValue('#theme-select', 'dark');
-            settings.resetInterval = getInputValue('#resetInterval', 168);
-            settings.clearCache = getInputValue('#clearCache', false);
-            settings.refreshSchedule = getInputValue('#refreshSchedule', false);
-            settings.disableSorting = getInputValue('#disableSorting', false);
-            settings.disableNotifications = getInputValue('#disableNotifications', false);
-            settings.openInNewTab = getInputValue('#openInNewTab', false);
-            settings.saveColumnSortState = getInputValue('#saveColumnSortState', true);
-            settings.disableAnimation = getInputValue('#disableAnimation', false);
-            settings.useCompactLayout = getInputValue('#useCompactLayout', false);
-            settings.disableAllowListPopup = getInputValue('#disableAllowListPopup', false);
-            settings.maxHistoryItems = getInputValue('#maxHistoryItems', 100);
-            settings.maxLogItems = getInputValue('#maxLogItems', 200);
-            settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);
-            settings.autoLoginWithoutPassword = getInputValue('#autoLoginWithoutPassword', false);
-            
-            // Add collection of advanced settings
+            settings.check_for_updates = getInputValue('#check_for_updates', true);
+            settings.debug_mode = getInputValue('#debug_mode', false);
             settings.api_timeout = getInputValue('#api_timeout', 120);
             settings.command_wait_delay = getInputValue('#command_wait_delay', 1);
             settings.command_wait_attempts = getInputValue('#command_wait_attempts', 600);
             settings.minimum_download_queue_size = getInputValue('#minimum_download_queue_size', -1);
             settings.log_refresh_interval_seconds = getInputValue('#log_refresh_interval_seconds', 30);
+            settings.ssl_verify = getInputValue('#ssl_verify', true);
+            settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);
+            settings.local_access_bypass = getInputValue('#local_access_bypass', false);
         }
         
         // For other app types, collect settings
@@ -1313,6 +1301,14 @@ const SettingsForms = {
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Allow access without login when connecting from local network IP addresses (e.g., 192.168.x.x, 10.x.x.x)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="ssl_verify">SSL Verification:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="ssl_verify" ${settings.ssl_verify !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Enable/disable SSL certificate verification. Disable for self-signed certificates in private networks.</p>
                 </div>
             </div>
             

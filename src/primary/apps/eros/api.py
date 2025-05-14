@@ -14,6 +14,7 @@ import traceback
 import sys
 from typing import List, Dict, Any, Optional, Union
 from src.primary.utils.logger import get_logger
+from src.primary.settings_manager import get_ssl_verify_setting
 
 # Get logger for the Eros app
 eros_logger = get_logger("eros")
@@ -31,71 +32,76 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         api_timeout: Timeout for the API request
         endpoint: The API endpoint to call
         method: HTTP method (GET, POST, PUT, DELETE)
-        data: Optional data to send with the request
-        
+        data: Optional data payload for POST/PUT requests
+    
     Returns:
-        The JSON response from the API, or None if the request failed
+        The parsed JSON response or None if the request failed
     """
-    if not api_url or not api_key:
-        eros_logger.error("API URL or API key is missing. Check your settings.")
-        return None
-    
-    # Always use v3 API path
-    api_base = "api/v3"
-    eros_logger.debug(f"Using Eros API path: {api_base}")
-    
-    # Full URL - ensure no double slashes
-    url = f"{api_url.rstrip('/')}/{api_base}/{endpoint.lstrip('/')}"
-    
-    # Add debug logging for the exact URL being called
-    eros_logger.debug(f"Making {method} request to: {url}")
-    
-    # Headers with User-Agent to identify Huntarr
-    headers = {
-        "X-Api-Key": api_key,
-        "Content-Type": "application/json",
-        "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
-    }
-    
-    eros_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
-    
     try:
-        if method == "GET":
-            response = session.get(url, headers=headers, timeout=api_timeout)
-        elif method == "POST":
-            response = session.post(url, headers=headers, json=data, timeout=api_timeout)
-        elif method == "PUT":
-            response = session.put(url, headers=headers, json=data, timeout=api_timeout)
-        elif method == "DELETE":
-            response = session.delete(url, headers=headers, timeout=api_timeout)
-        else:
-            eros_logger.error(f"Unsupported HTTP method: {method}")
+        if not api_url or not api_key:
+            eros_logger.error("No URL or API key provided")
+            return None
+        
+        # Ensure api_url has a scheme
+        if not (api_url.startswith('http://') or api_url.startswith('https://')):
+            eros_logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
             return None
             
-        # Check if the request was successful
+        # Construct the full URL properly
+        full_url = f"{api_url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
+        
+        eros_logger.debug(f"Making {method} request to: {full_url}")
+        
+        # Set up headers with User-Agent to identify Huntarr
+        headers = {
+            "X-Api-Key": api_key,
+            "Content-Type": "application/json",
+            "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
+        }
+        
+        # Get SSL verification setting
+        verify_ssl = get_ssl_verify_setting()
+        
+        if not verify_ssl:
+            eros_logger.debug("SSL verification disabled by user setting")
+        
         try:
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            eros_logger.error(f"Error during {method} request to {endpoint}: {e}, Status Code: {response.status_code}")
-            eros_logger.debug(f"Response content: {response.text[:200]}")
-            return None
-            
-        # Try to parse JSON response
-        try:
-            if response.text:
-                result = response.json()
-                eros_logger.debug(f"Response from {response.url}: Status {response.status_code}, JSON parsed successfully")
-                return result
+            if method.upper() == "GET":
+                response = session.get(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
+            elif method.upper() == "POST":
+                response = session.post(full_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
+            elif method.upper() == "PUT":
+                response = session.put(full_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
+            elif method.upper() == "DELETE":
+                response = session.delete(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
             else:
-                eros_logger.debug(f"Response from {response.url}: Status {response.status_code}, Empty response")
-                return {}
-        except json.JSONDecodeError:
-            eros_logger.error(f"Invalid JSON response from API: {response.text[:200]}")
-            return None
+                eros_logger.error(f"Unsupported HTTP method: {method}")
+                return None
             
-    except requests.exceptions.RequestException as e:
-        eros_logger.error(f"Request failed: {e}")
-        return None
+            # Check if the request was successful
+            try:
+                response.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                eros_logger.error(f"Error during {method} request to {endpoint}: {e}, Status Code: {response.status_code}")
+                eros_logger.debug(f"Response content: {response.text[:200]}")
+                return None
+            
+            # Try to parse JSON response
+            try:
+                if response.text:
+                    result = response.json()
+                    eros_logger.debug(f"Response from {response.url}: Status {response.status_code}, JSON parsed successfully")
+                    return result
+                else:
+                    eros_logger.debug(f"Response from {response.url}: Status {response.status_code}, Empty response")
+                    return {}
+            except json.JSONDecodeError:
+                eros_logger.error(f"Invalid JSON response from API: {response.text[:200]}")
+                return None
+            
+        except requests.exceptions.RequestException as e:
+            eros_logger.error(f"Request failed: {e}")
+            return None
     except Exception as e:
         eros_logger.error(f"Unexpected error during API request: {e}")
         return None
