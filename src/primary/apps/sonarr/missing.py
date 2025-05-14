@@ -46,8 +46,7 @@ def process_missing_episodes(
         sonarr_logger.info("Episode-based missing mode selected")
         return process_missing_episodes_mode(
             api_url, api_key, instance_name, api_timeout, monitored_only, 
-            skip_future_episodes, skip_series_refresh,
-            hunt_missing_items, command_wait_delay, command_wait_attempts,
+            skip_future_episodes, hunt_missing_items, command_wait_delay, command_wait_attempts,
             stop_check
         )
     elif hunt_missing_mode == "seasons_packs":
@@ -77,7 +76,6 @@ def process_missing_episodes_mode(
     api_timeout: int,
     monitored_only: bool,
     skip_future_episodes: bool,
-    skip_series_refresh: bool,
     hunt_missing_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -231,7 +229,6 @@ def process_missing_seasons_packs_mode(
     instance_name: str,
     api_timeout: int,
     monitored_only: bool,
-    skip_series_refresh: bool,
     hunt_missing_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -365,7 +362,6 @@ def process_missing_shows_mode(
     api_timeout: int,
     monitored_only: bool,
     skip_future_episodes: bool,
-    skip_series_refresh: bool,
     hunt_missing_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
