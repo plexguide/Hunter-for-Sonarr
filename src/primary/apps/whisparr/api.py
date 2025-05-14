@@ -232,7 +232,8 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
 
 def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int) -> int:
     """
-    Refresh an item in Whisparr.
+    Refresh functionality has been removed as it was a performance bottleneck.
+    This function now returns a placeholder command ID without making any API calls.
     
     Args:
         api_url: The base URL of the Whisparr API
@@ -241,76 +242,11 @@ def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int) -> 
         item_id: The ID of the item to refresh
         
     Returns:
-        The command ID if the refresh was triggered successfully, None otherwise
+        A placeholder command ID (123) to simulate success
     """
-    try:
-        whisparr_logger.debug(f"Refreshing item with ID {item_id}")
-        
-        # Some Whisparr versions have issues with RefreshEpisode, try a safer approach
-        # Use series refresh instead if we can get the series ID from the episode
-        # First, attempt to get the episode details
-        episode_endpoint = f"episode/{item_id}"
-        episode_data = arr_request(api_url, api_key, api_timeout, episode_endpoint)
-        
-        if episode_data and "seriesId" in episode_data:
-            # We have the series ID, use series refresh which is more reliable
-            series_id = episode_data["seriesId"]
-            whisparr_logger.debug(f"Retrieved series ID {series_id} for episode {item_id}, using series refresh")
-            
-            # RefreshSeries is generally more reliable
-            payload = {
-                "name": "RefreshSeries",
-                "seriesId": series_id
-            }
-        else:
-            # Fall back to episode refresh if we can't get the series ID
-            whisparr_logger.debug(f"Could not retrieve series ID for episode {item_id}, using episode refresh")
-            payload = {
-                "name": "RefreshEpisode",
-                "episodeIds": [item_id]
-            }
-        
-        # For commands, we need to directly try both path formats since command endpoints
-        # may have different structures in different Whisparr versions
-        command_endpoint = "command"
-        url = f"{api_url.rstrip('/')}/api/{command_endpoint}"
-        backup_url = f"{api_url.rstrip('/')}/api/v3/{command_endpoint}"
-        
-        headers = {
-            "X-Api-Key": api_key,
-            "Content-Type": "application/json"
-        }
-        
-        # Try standard API path first
-        whisparr_logger.debug(f"Attempting command with standard API path: {url}")
-        try:
-            response = session.post(url, headers=headers, json=payload, timeout=api_timeout)
-            # If we get a 404 or 405, try the v3 path
-            if response.status_code in [404, 405]:
-                whisparr_logger.debug(f"Standard path returned {response.status_code}, trying with V3 path: {backup_url}")
-                response = session.post(backup_url, headers=headers, json=payload, timeout=api_timeout)
-                
-            response.raise_for_status()
-            result = response.json()
-            
-            if result and "id" in result:
-                command_id = result["id"]
-                whisparr_logger.debug(f"Refresh command triggered with ID {command_id}")
-                return command_id
-            else:
-                whisparr_logger.error("Failed to trigger refresh command - no command ID returned")
-                return None
-        except requests.exceptions.HTTPError as e:
-            whisparr_logger.error(f"HTTP error during refresh command: {e}, Status Code: {response.status_code}")
-            whisparr_logger.debug(f"Response content: {response.text[:200]}")
-            return None
-        except Exception as e:
-            whisparr_logger.error(f"Error sending refresh command: {e}")
-            return None
-            
-    except Exception as e:
-        whisparr_logger.error(f"Error refreshing item: {str(e)}")
-        return None
+    whisparr_logger.debug(f"Refresh functionality disabled for item ID: {item_id}")
+    # Return a placeholder command ID to simulate success without actually refreshing
+    return 123
 
 def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int]) -> int:
     """

@@ -319,7 +319,8 @@ def get_quality_upgrades(api_url: str, api_key: str, api_timeout: int, monitored
 
 def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int) -> int:
     """
-    Refresh a movie in Whisparr V3.
+    Refresh functionality has been removed as it was a performance bottleneck.
+    This function now returns a placeholder command ID without making any API calls.
     
     Args:
         api_url: The base URL of the Whisparr V3 API
@@ -328,34 +329,11 @@ def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int) -> 
         item_id: The ID of the movie to refresh
         
     Returns:
-        The command ID if the refresh was triggered successfully, None otherwise
+        A placeholder command ID (123) to simulate success
     """
-    try:
-        eros_logger.info(f"Explicitly refreshing movie with ID {item_id} via API call")
-        
-        # In Whisparr V3, we use RefreshMovie command directly with the movieId
-        payload = {
-            "name": "RefreshMovie",
-            "movieId": item_id
-        }
-        
-        # Command endpoint
-        command_endpoint = "command"
-        
-        # Make the API request
-        response = arr_request(api_url, api_key, api_timeout, command_endpoint, "POST", payload)
-        
-        if response and "id" in response:
-            command_id = response["id"]
-            eros_logger.info(f"Refresh movie command triggered with ID {command_id} for movie {item_id}")
-            return command_id
-        else:
-            eros_logger.error(f"Failed to trigger refresh command for movie {item_id} - no command ID returned")
-            return None
-            
-    except Exception as e:
-        eros_logger.error(f"Error refreshing movie {item_id}: {str(e)}")
-        return None
+    eros_logger.debug(f"Refresh functionality disabled for movie ID: {item_id}")
+    # Return a placeholder command ID to simulate success without actually refreshing
+    return 123
 
 def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int]) -> int:
     """

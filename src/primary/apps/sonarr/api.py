@@ -839,24 +839,12 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int
     return -1
 
 def refresh_series(api_url: str, api_key: str, api_timeout: int, series_id: int) -> Optional[Union[int, str]]:
-    """Trigger a refresh for a specific series in Sonarr."""
-    try:
-        endpoint = f"{api_url}/api/v3/command"
-        payload = {
-            "name": "RefreshSeries",
-            "seriesId": series_id
-        }
-        response = requests.post(endpoint, headers={"X-Api-Key": api_key}, json=payload, timeout=api_timeout)
-        response.raise_for_status()
-        command_id = response.json().get('id')
-        sonarr_logger.info(f"Triggered Sonarr refresh for series ID: {series_id}. Command ID: {command_id}")
-        return command_id
-    except requests.exceptions.RequestException as e:
-        sonarr_logger.error(f"Error triggering Sonarr refresh for series ID {series_id}: {e}")
-        return None
-    except Exception as e:
-        sonarr_logger.error(f"An unexpected error occurred while triggering Sonarr series refresh: {e}")
-        return None
+    """Refresh functionality has been removed as it was a performance bottleneck.
+    This function now returns a placeholder success value without making any API calls.
+    """
+    sonarr_logger.debug(f"Refresh functionality disabled for series ID: {series_id}")
+    # Return a placeholder command ID (123) to simulate success without actually refreshing
+    return 123
 
 def get_series_by_id(api_url: str, api_key: str, api_timeout: int, series_id: int) -> Optional[Dict[str, Any]]:
     """Get series details by ID from Sonarr."""

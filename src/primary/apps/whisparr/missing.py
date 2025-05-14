@@ -52,7 +52,7 @@ def process_missing_items(
     
     monitored_only = app_settings.get("monitored_only", True)
     skip_future_releases = app_settings.get("skip_future_releases", True)
-    skip_item_refresh = app_settings.get("skip_item_refresh", False)
+    # skip_item_refresh setting removed as it was a performance bottleneck
     
     # Use the new hunt_missing_items parameter name, falling back to hunt_missing_scenes for backwards compatibility
     hunt_missing_items = app_settings.get("hunt_missing_items", app_settings.get("hunt_missing_scenes", 0))
@@ -156,18 +156,7 @@ def process_missing_items(
         
         whisparr_logger.info(f"Processing missing item: \"{title}\" - {season_episode} (Item ID: {item_id})")
         
-        # Refresh the item information if not skipped
-        refresh_command_id = None
-        if not skip_item_refresh:
-            whisparr_logger.info(" - Refreshing item information...")
-            refresh_command_id = whisparr_api.refresh_item(api_url, api_key, api_timeout, item_id)
-            if refresh_command_id:
-                whisparr_logger.info(f"Triggered refresh command {refresh_command_id}. Waiting a few seconds...")
-                time.sleep(5) # Basic wait
-            else:
-                whisparr_logger.warning(f"Failed to trigger refresh command for item ID: {item_id}. Proceeding without refresh.")
-        else:
-            whisparr_logger.info(" - Skipping item refresh (skip_item_refresh=true)")
+        # Refresh functionality has been removed as it was identified as a performance bottleneck
         
         # Mark the item as processed BEFORE triggering any searches
         add_processed_id("whisparr", instance_name, str(item_id))

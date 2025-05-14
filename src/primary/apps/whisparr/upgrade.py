@@ -52,7 +52,7 @@ def process_cutoff_upgrades(
     command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
     
     monitored_only = app_settings.get("monitored_only", True)
-    skip_item_refresh = app_settings.get("skip_item_refresh", False)
+    # skip_item_refresh setting removed as it was a performance bottleneck
     
     # Use the new hunt_upgrade_items parameter name, falling back to hunt_upgrade_scenes for backwards compatibility
     hunt_upgrade_items = app_settings.get("hunt_upgrade_items", app_settings.get("hunt_upgrade_scenes", 0))
@@ -133,18 +133,7 @@ def process_cutoff_upgrades(
         whisparr_logger.info(f"Processing item for quality upgrade: \"{title}\" - {season_episode} (Item ID: {item_id})")
         whisparr_logger.info(f" - Current quality: {current_quality}")
         
-        # Refresh the item information if not skipped
-        refresh_command_id = None
-        if not skip_item_refresh:
-            whisparr_logger.info(" - Refreshing item information...")
-            refresh_command_id = whisparr_api.refresh_item(api_url, api_key, api_timeout, item_id)
-            if refresh_command_id:
-                whisparr_logger.info(f"Triggered refresh command {refresh_command_id}. Waiting a few seconds...")
-                time.sleep(5) # Basic wait
-            else:
-                whisparr_logger.warning(f"Failed to trigger refresh command for item ID: {item_id}. Proceeding without refresh.")
-        else:
-            whisparr_logger.info(" - Skipping item refresh (skip_item_refresh=true)")
+        # Refresh functionality has been removed as it was identified as a performance bottleneck
         
         # Check for stop signal before searching
         if stop_check():
