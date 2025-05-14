@@ -125,9 +125,32 @@ def setup_windows_paths():
 
         # Create a translation function to convert /config paths to Windows paths
         def convert_unix_to_windows_path(original_path):
-            if platform.system() == 'Windows' and original_path and original_path.startswith('/config'):
-                return original_path.replace('/config', config_dir).replace('/', '\\')
+            if not original_path:
+                return original_path
+            
+            # Convert Path objects to string if needed
+            path_str = str(original_path) if hasattr(original_path, '__fspath__') else original_path
+            
+            # Only process string paths
+            if isinstance(path_str, str) and platform.system() == 'Windows' and path_str.startswith('/config'):
+                return path_str.replace('/config', config_dir).replace('/', '\\')
+            elif isinstance(path_str, str) and platform.system() == 'Windows' and path_str.startswith('\\config'):
+                return path_str.replace('\\config', config_dir)
             return original_path
+        
+        # Handle WindowsPath objects directly by extending the Path class
+        original_path_init = Path.__init__
+        
+        def patched_path_init(self, *args, **kwargs):
+            new_args = list(args)
+            if len(new_args) > 0 and isinstance(new_args[0], str):
+                # If it's a string path that starts with /config or \config, convert it
+                if new_args[0].startswith('/config') or new_args[0].startswith('\\config'):
+                    new_args[0] = convert_unix_to_windows_path(new_args[0])
+            original_path_init(self, *new_args, **kwargs)
+        
+        # Apply the monkey patch to Path
+        Path.__init__ = patched_path_init
         
         # Monkey patch os.path.exists, os.path.isfile, open, etc. to handle /config paths
         original_exists = os.path.exists
@@ -152,16 +175,37 @@ def setup_windows_paths():
         os.path.isdir = patched_isdir
         __builtins__['open'] = patched_open
         
-        logger.info(f"Windows path setup complete. Using config dir: {config_dir}")
-        
         # Fix for os.makedirs and similar functions
         original_makedirs = os.makedirs
+        original_listdir = os.listdir
+        original_remove = os.remove
         
         def patched_makedirs(path, *args, **kwargs):
             return original_makedirs(convert_unix_to_windows_path(path), *args, **kwargs)
         
-        os.makedirs = patched_makedirs
+        def patched_listdir(path):
+            return original_listdir(convert_unix_to_windows_path(path))
         
+        def patched_remove(path):
+            return original_remove(convert_unix_to_windows_path(path))
+        
+        os.makedirs = patched_makedirs
+        os.listdir = patched_listdir
+        os.remove = patched_remove
+        
+        # Create empty JSON setting files if they don't exist
+        logger.info("Creating empty JSON settings files...")
+        for app in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'swaparr', 'eros', 'general']:
+            json_file = os.path.join(config_dir, f'{app}.json')
+            if not os.path.exists(json_file):
+                try:
+                    with open(json_file, 'w') as f:
+                        f.write('{}')
+                    logger.info(f"Created empty settings file: {json_file}")
+                except Exception as e:
+                    logger.error(f"Error creating settings file {json_file}: {str(e)}")
+        
+        logger.info(f"Windows path setup complete. Using config dir: {config_dir}")
         return config_dir
     except Exception as e:
         logger.error(f"Windows path setup failed with error: {str(e)}")
