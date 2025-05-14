@@ -317,6 +317,10 @@ def should_execute_schedule(schedule_entry):
     # Debug log the schedule we're checking
     scheduler_logger.debug(f"Checking if schedule {schedule_id} should be executed")
     
+    # Log exact system time for debugging
+    exact_time = datetime.datetime.now()
+    scheduler_logger.info(f"EXACT CURRENT TIME: {exact_time.strftime('%Y-%m-%d %H:%M:%S.%f')}")
+    
     if not schedule_entry.get("enabled", True):
         scheduler_logger.debug(f"Schedule {schedule_id} is disabled, skipping")
         return False
@@ -325,49 +329,80 @@ def should_execute_schedule(schedule_entry):
     days = schedule_entry.get("days", [])
     scheduler_logger.debug(f"Schedule {schedule_id} days: {days}")
     
+    # Get today's day of week in lowercase
+    current_day = datetime.datetime.now().strftime("%A").lower()  # e.g., 'monday'
+    
+    # Debug what's being compared
+    scheduler_logger.info(f"CRITICAL DEBUG - Today: '{current_day}', Schedule days: {days}")
+    
     # If days array is empty, treat as "run every day"
     if not days:
         scheduler_logger.debug(f"Schedule {schedule_id} has no days specified, treating as 'run every day'")
     else:
-        # If days array is not empty, check if today is in the list
-        current_day = datetime.datetime.now().strftime("%A").lower()  # e.g., 'monday'
-        
-        # Debug what's being compared - print EXACTLY what we're comparing
-        scheduler_logger.info(f"CRITICAL DEBUG - Today: '{current_day}', Schedule days: {days}")
-        
-        # Convert all days to lowercase for comparison
+        # Make sure all day comparisons are done with lowercase strings
         lowercase_days = [str(day).lower() for day in days]
-        scheduler_logger.info(f"CRITICAL DEBUG - Lowercase days: {lowercase_days}")
         
-        # Direct check if current_day (lowercase) is in the lowercase days
-        if current_day in lowercase_days:
-            scheduler_logger.info(f"SUCCESS: Schedule {schedule_id} IS configured to run on {current_day}")
-            return True
-        else:
+        # If today is not in the schedule days, skip this schedule
+        if current_day not in lowercase_days:
             scheduler_logger.info(f"FAILURE: Schedule {schedule_id} not configured to run on {current_day}, skipping")
             return False
+        else:
+            scheduler_logger.info(f"SUCCESS: Schedule {schedule_id} IS configured to run on {current_day}")
 
     
+    # Get current time with second-level precision for accurate timing
     current_time = datetime.datetime.now()
-    schedule_hour = schedule_entry.get("time", {}).get("hour")
-    schedule_minute = schedule_entry.get("time", {}).get("minute")
     
-    scheduler_logger.debug(f"Schedule {schedule_id} time: {schedule_hour}:{schedule_minute}, current time: {current_time.hour}:{current_time.minute}")
-    
-    if schedule_hour is None or schedule_minute is None:
-        scheduler_logger.warning(f"Schedule entry missing time information: {schedule_entry}")
+    # Extract scheduled time from different possible formats
+    try:
+        # First try the flat format
+        schedule_hour = schedule_entry.get("hour")
+        schedule_minute = schedule_entry.get("minute")
+        
+        # If not found, try nested format
+        if schedule_hour is None or schedule_minute is None:
+            schedule_hour = schedule_entry.get("time", {}).get("hour")
+            schedule_minute = schedule_entry.get("time", {}).get("minute")
+        
+        # Convert to integers to ensure proper comparison
+        schedule_hour = int(schedule_hour)
+        schedule_minute = int(schedule_minute)
+    except (TypeError, ValueError):
+        scheduler_logger.warning(f"Invalid schedule time format in entry: {schedule_entry}")
         return False
     
-    # Check if the current time matches the scheduled time
-    # Use a 5-minute window to ensure we don't miss it
-    if current_time.hour == schedule_hour:
-        # Execute if we're within 5 minutes after the scheduled time
-        # This handles cases where the scheduler isn't running exactly at the specified time
-        should_execute = current_time.minute >= schedule_minute and current_time.minute < schedule_minute + 5
-        scheduler_logger.debug(f"Current hour matches schedule hour. Within 5-minute window? {should_execute}")
-        return should_execute
+    # Add detailed logging for time debugging
+    scheduler_logger.info(f"Schedule {schedule_id} time: {schedule_hour:02d}:{schedule_minute:02d}, " 
+                         f"current time: {current_time.hour:02d}:{current_time.minute:02d}:{current_time.second:02d}")
     
-    scheduler_logger.debug(f"Current hour {current_time.hour} doesn't match schedule hour {schedule_hour}, skipping")
+    # ===== STRICT TIME COMPARISON - PREVENT EARLY EXECUTION =====
+    
+    # If current hour is BEFORE scheduled hour, NEVER execute
+    if current_time.hour < schedule_hour:
+        scheduler_logger.info(f"BLOCKED EXECUTION: Current hour {current_time.hour} is BEFORE scheduled hour {schedule_hour}")
+        return False
+    
+    # If same hour but current minute is BEFORE scheduled minute, NEVER execute
+    if current_time.hour == schedule_hour and current_time.minute < schedule_minute:
+        scheduler_logger.info(f"BLOCKED EXECUTION: Current minute {current_time.minute} is BEFORE scheduled minute {schedule_minute}")
+        return False
+    
+    # ===== 1-MINUTE EXECUTION WINDOW =====
+    
+    # We're in the scheduled hour and minute, or later - check 1-minute window
+    if current_time.hour == schedule_hour and current_time.minute == schedule_minute:
+        scheduler_logger.info(f"EXECUTING: Current time matches scheduled hour and minute exactly")
+        return True
+    
+    # We're later than the scheduled time - check if we're still within the 1-minute window
+    # This would catch executions that are in the same hour but 1 minute later
+    if current_time.hour == schedule_hour and current_time.minute == schedule_minute + 1 and current_time.second == 0:
+        scheduler_logger.info(f"EXECUTING: Within 1-minute window (at the start of the next minute)")
+        return True
+    
+    # We've missed the 1-minute window
+    scheduler_logger.info(f"MISSED WINDOW: Current time {current_time.hour:02d}:{current_time.minute:02d} " 
+                        f"is past the 1-minute window for {schedule_hour:02d}:{schedule_minute:02d}")
     return False
 
 def check_and_execute_schedules():
