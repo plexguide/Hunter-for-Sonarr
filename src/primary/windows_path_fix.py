@@ -7,11 +7,12 @@ import os
 import sys
 import logging
 import traceback
-from pathlib import Path, WindowsPath, PurePath
+from pathlib import Path, PurePath
 import platform
 import json
 import builtins
 import importlib
+import shutil
 
 def setup_windows_paths():
     """
@@ -120,73 +121,155 @@ def setup_windows_paths():
         os.environ['HUNTARR_STATEFUL_DIR'] = os.path.join(config_dir, 'stateful')
         
         # Create other needed directories
-        for dir_name in ['user', 'stateful', 'settings']:
+        needed_dirs = ['user', 'stateful', 'settings', 'scheduler', 'tally']
+        for dir_name in needed_dirs:
             dir_path = os.path.join(config_dir, dir_name)
             if not os.path.exists(dir_path):
                 os.makedirs(dir_path)
                 logger.info(f"Created directory: {dir_path}")
 
+        # Ensure templates directory exists and has necessary files
+        templates_dir = os.path.join(app_path, "templates")
+        static_dir = os.path.join(app_path, "static")
+        
+        try:
+            # Create templates and static directories if they don't exist
+            if not os.path.exists(templates_dir):
+                os.makedirs(templates_dir)
+                logger.info(f"Created templates directory at: {templates_dir}")
+                
+            if not os.path.exists(static_dir):
+                os.makedirs(static_dir)
+                logger.info(f"Created static directory at: {static_dir}")
+                
+            # Copy frontend files from src/frontend if they exist
+            frontend_dir = os.path.join(app_path, "src", "frontend")
+            if os.path.exists(frontend_dir):
+                logger.info(f"Copying frontend files from {frontend_dir}")
+                try:
+                    # Copy all files from frontend/templates to templates
+                    frontend_templates = os.path.join(frontend_dir, "templates")
+                    if os.path.exists(frontend_templates):
+                        for file in os.listdir(frontend_templates):
+                            src_file = os.path.join(frontend_templates, file)
+                            dest_file = os.path.join(templates_dir, file)
+                            if os.path.isfile(src_file):
+                                shutil.copy2(src_file, dest_file)
+                                logger.info(f"Copied template file: {file}")
+                    
+                    # Copy all files from frontend/static to static
+                    frontend_static = os.path.join(frontend_dir, "static")
+                    if os.path.exists(frontend_static):
+                        for root, dirs, files in os.walk(frontend_static):
+                            for file in files:
+                                src_file = os.path.join(root, file)
+                                rel_path = os.path.relpath(src_file, frontend_static)
+                                dest_file = os.path.join(static_dir, rel_path)
+                                dest_dir = os.path.dirname(dest_file)
+                                if not os.path.exists(dest_dir):
+                                    os.makedirs(dest_dir)
+                                shutil.copy2(src_file, dest_file)
+                                logger.info(f"Copied static file: {rel_path}")
+                except Exception as e:
+                    logger.error(f"Error copying frontend files: {str(e)}")
+        except Exception as e:
+            logger.error(f"Error setting up template directories: {str(e)}")
+
         # Create a translation function to convert /config paths to Windows paths
         def convert_unix_to_windows_path(original_path):
             if original_path is None:
                 return None
-            
-            # Handle Path objects
-            if isinstance(original_path, PurePath):
-                path_str = str(original_path)
-                # Check if it's an absolute path that doesn't point to the config directory
-                if os.path.isabs(path_str) and not path_str.startswith('/config') and not path_str.startswith('\\config'):
-                    return original_path
                 
-                # Convert to a string for our path conversion logic
-                original_path = path_str
-
+            # Convert to string if it's a Path object
+            if isinstance(original_path, PurePath):
+                original_path = str(original_path)
+                
             # Only process string paths
             if isinstance(original_path, str):
-                if platform.system() == 'Windows' and original_path.startswith('/config'):
+                if original_path.startswith('/config'):
                     return original_path.replace('/config', config_dir).replace('/', '\\')
-                elif platform.system() == 'Windows' and original_path.startswith('\\config'):
+                elif original_path.startswith('\\config'):
                     return original_path.replace('\\config', config_dir)
-            
+                
             return original_path
         
-        # --- Monkey-patch Path class to handle /config paths ---
-        
-        # Extend Path to add startswith method for WindowsPath
-        original_windowspath = WindowsPath
-        
-        class PatchedWindowsPath(original_windowspath):
-            def startswith(self, prefix):
+        # Add a startswith method to the PathLib Path class if needed
+        if platform.system() == 'Windows' and not hasattr(Path, 'startswith'):
+            # Create a safer monkey patch that doesn't mess with internal attributes
+            original_path_str = Path.__str__
+            
+            def patch_startswith(self, prefix):
                 return str(self).startswith(prefix)
                 
-            def __truediv__(self, key):
-                # Handle path division for /config paths
-                result = super().__truediv__(key)
-                return result
-                
-        # Apply the patch
-        Path._flavour._WindowsFlavour.pathcls = PatchedWindowsPath
-        
-        # Replace the original __new__ method to intercept path creation
-        original_path_new = Path.__new__
-        
-        def patched_path_new(cls, *args, **kwargs):
-            if args and isinstance(args[0], str):
-                # Convert /config paths to Windows paths
-                if args[0].startswith('/config') or args[0].startswith('\\config'):
-                    args = list(args)
-                    args[0] = convert_unix_to_windows_path(args[0])
-                    args = tuple(args)
-            return original_path_new(cls, *args, **kwargs)
+            # Add the startswith method to Path
+            Path.startswith = patch_startswith
             
-        Path.__new__ = patched_path_new
+            logger.info("Added startswith method to Path class")
+            
+        # Create json config files
+        for app in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'swaparr', 'eros', 'general']:
+            json_file = os.path.join(config_dir, f'{app}.json')
+            if not os.path.exists(json_file):
+                try:
+                    with open(json_file, 'w') as f:
+                        f.write('{}')
+                    logger.info(f"Created empty settings file: {json_file}")
+                except Exception as e:
+                    logger.error(f"Error creating settings file {json_file}: {str(e)}")
+                    
+        # Create empty scheduler file
+        scheduler_file = os.path.join(config_dir, 'scheduler', 'schedule.json')
+        if not os.path.exists(scheduler_file):
+            try:
+                scheduler_dir = os.path.dirname(scheduler_file)
+                if not os.path.exists(scheduler_dir):
+                    os.makedirs(scheduler_dir)
+                with open(scheduler_file, 'w') as f:
+                    f.write('{"schedules":[]}')
+                logger.info(f"Created empty scheduler file: {scheduler_file}")
+            except Exception as e:
+                logger.error(f"Error creating scheduler file {scheduler_file}: {str(e)}")
+                
+        # Create tally tracking files
+        tally_dir = os.path.join(config_dir, 'tally')
+        if not os.path.exists(tally_dir):
+            os.makedirs(tally_dir)
+            
+        media_stats_file = os.path.join(tally_dir, 'media_stats.json')
+        if not os.path.exists(media_stats_file):
+            try:
+                with open(media_stats_file, 'w') as f:
+                    f.write('{}')
+                logger.info(f"Created empty media stats file: {media_stats_file}")
+            except Exception as e:
+                logger.error(f"Error creating media stats file {media_stats_file}: {str(e)}")
+                
+        hourly_cap_file = os.path.join(tally_dir, 'hourly_cap.json')
+        if not os.path.exists(hourly_cap_file):
+            try:
+                with open(hourly_cap_file, 'w') as f:
+                    f.write('{}')
+                logger.info(f"Created empty hourly cap file: {hourly_cap_file}")
+            except Exception as e:
+                logger.error(f"Error creating hourly cap file {hourly_cap_file}: {str(e)}")
         
-        # Monkey patch file operations
+        # Monkey patch the open function and os.path operations
         original_open = builtins.open
         
         def patched_open(file, *args, **kwargs):
-            converted_path = convert_unix_to_windows_path(file)
-            return original_open(converted_path, *args, **kwargs)
+            # Skip binary files (prevent errors with non-string file paths)
+            if len(args) > 0 and 'b' in args[0]:
+                return original_open(file, *args, **kwargs)
+                
+            try:
+                # Convert the path if it's a string or Path object
+                if isinstance(file, (str, PurePath)):
+                    converted_path = convert_unix_to_windows_path(file)
+                    return original_open(converted_path, *args, **kwargs)
+                return original_open(file, *args, **kwargs)
+            except Exception as e:
+                logger.error(f"Error in patched_open with path {file}: {str(e)}")
+                raise
         
         builtins.open = patched_open
         
@@ -206,8 +289,11 @@ def setup_windows_paths():
             return original_isdir(convert_unix_to_windows_path(path))
         
         def patched_join(path, *paths):
-            result = original_join(convert_unix_to_windows_path(path), *paths)
-            return result
+            # Only process the first argument (the base path)
+            converted_path = convert_unix_to_windows_path(path)
+            if converted_path != path:
+                return original_join(converted_path, *paths)
+            return original_join(path, *paths)
         
         os.path.exists = patched_exists
         os.path.isfile = patched_isfile
@@ -232,55 +318,17 @@ def setup_windows_paths():
         os.listdir = patched_listdir
         os.remove = patched_remove
         
-        # Patch json module for file operations
-        original_json_load = json.load
-        original_json_dump = json.dump
-        
-        def patched_json_load(fp, *args, **kwargs):
-            # Just intercept for logging purposes
-            try:
-                return original_json_load(fp, *args, **kwargs)
-            except Exception as e:
-                # If the error is related to the file path, log it
-                logger.error(f"Error in json.load with file: {fp}")
-                raise
-                
-        def patched_json_dump(obj, fp, *args, **kwargs):
-            # Just intercept for logging purposes
-            try:
-                return original_json_dump(obj, fp, *args, **kwargs)
-            except Exception as e:
-                # If the error is related to the file path, log it
-                logger.error(f"Error in json.dump with file: {fp}")
-                raise
-        
-        json.load = patched_json_load
-        json.dump = patched_json_dump
-        
-        # Create empty JSON setting files if they don't exist
-        logger.info("Creating empty JSON settings files...")
-        for app in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'swaparr', 'eros', 'general']:
-            json_file = os.path.join(config_dir, f'{app}.json')
-            if not os.path.exists(json_file):
-                try:
-                    with open(json_file, 'w') as f:
-                        f.write('{}')
-                    logger.info(f"Created empty settings file: {json_file}")
-                except Exception as e:
-                    logger.error(f"Error creating settings file {json_file}: {str(e)}")
-        
-        # Modify sys.path to ensure the proper imports can be found
+        # Modify sys.path to ensure all imports work
         if config_dir not in sys.path:
             sys.path.append(config_dir)
-        
-        # Create a symlink to make /config work directly if possible
-        try:
-            if platform.system() == 'Windows' and not os.path.exists('/config'):
-                # On Windows, symlinks require admin privileges, so this might fail
-                os.symlink(config_dir, '/config')
-                logger.info(f"Created symlink from {config_dir} to /config")
-        except Exception as e:
-            logger.debug(f"Could not create symlink (expected on Windows): {str(e)}")
+            
+        if app_path not in sys.path:
+            sys.path.append(app_path)
+            
+        # Set Flask environment variables 
+        os.environ['FLASK_APP'] = 'src.primary.web_server'
+        os.environ['TEMPLATE_FOLDER'] = templates_dir
+        os.environ['STATIC_FOLDER'] = static_dir
         
         logger.info(f"Windows path setup complete. Using config dir: {config_dir}")
         return config_dir
