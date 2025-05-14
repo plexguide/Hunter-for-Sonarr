@@ -7,8 +7,11 @@ import os
 import sys
 import logging
 import traceback
-from pathlib import Path
+from pathlib import Path, WindowsPath, PurePath
 import platform
+import json
+import builtins
+import importlib
 
 def setup_windows_paths():
     """
@@ -125,38 +128,73 @@ def setup_windows_paths():
 
         # Create a translation function to convert /config paths to Windows paths
         def convert_unix_to_windows_path(original_path):
-            if not original_path:
-                return original_path
+            if original_path is None:
+                return None
             
-            # Convert Path objects to string if needed
-            path_str = str(original_path) if hasattr(original_path, '__fspath__') else original_path
-            
+            # Handle Path objects
+            if isinstance(original_path, PurePath):
+                path_str = str(original_path)
+                # Check if it's an absolute path that doesn't point to the config directory
+                if os.path.isabs(path_str) and not path_str.startswith('/config') and not path_str.startswith('\\config'):
+                    return original_path
+                
+                # Convert to a string for our path conversion logic
+                original_path = path_str
+
             # Only process string paths
-            if isinstance(path_str, str) and platform.system() == 'Windows' and path_str.startswith('/config'):
-                return path_str.replace('/config', config_dir).replace('/', '\\')
-            elif isinstance(path_str, str) and platform.system() == 'Windows' and path_str.startswith('\\config'):
-                return path_str.replace('\\config', config_dir)
+            if isinstance(original_path, str):
+                if platform.system() == 'Windows' and original_path.startswith('/config'):
+                    return original_path.replace('/config', config_dir).replace('/', '\\')
+                elif platform.system() == 'Windows' and original_path.startswith('\\config'):
+                    return original_path.replace('\\config', config_dir)
+            
             return original_path
         
-        # Handle WindowsPath objects directly by extending the Path class
-        original_path_init = Path.__init__
+        # --- Monkey-patch Path class to handle /config paths ---
         
-        def patched_path_init(self, *args, **kwargs):
-            new_args = list(args)
-            if len(new_args) > 0 and isinstance(new_args[0], str):
-                # If it's a string path that starts with /config or \config, convert it
-                if new_args[0].startswith('/config') or new_args[0].startswith('\\config'):
-                    new_args[0] = convert_unix_to_windows_path(new_args[0])
-            original_path_init(self, *new_args, **kwargs)
+        # Extend Path to add startswith method for WindowsPath
+        original_windowspath = WindowsPath
         
-        # Apply the monkey patch to Path
-        Path.__init__ = patched_path_init
+        class PatchedWindowsPath(original_windowspath):
+            def startswith(self, prefix):
+                return str(self).startswith(prefix)
+                
+            def __truediv__(self, key):
+                # Handle path division for /config paths
+                result = super().__truediv__(key)
+                return result
+                
+        # Apply the patch
+        Path._flavour._WindowsFlavour.pathcls = PatchedWindowsPath
         
-        # Monkey patch os.path.exists, os.path.isfile, open, etc. to handle /config paths
+        # Replace the original __new__ method to intercept path creation
+        original_path_new = Path.__new__
+        
+        def patched_path_new(cls, *args, **kwargs):
+            if args and isinstance(args[0], str):
+                # Convert /config paths to Windows paths
+                if args[0].startswith('/config') or args[0].startswith('\\config'):
+                    args = list(args)
+                    args[0] = convert_unix_to_windows_path(args[0])
+                    args = tuple(args)
+            return original_path_new(cls, *args, **kwargs)
+            
+        Path.__new__ = patched_path_new
+        
+        # Monkey patch file operations
+        original_open = builtins.open
+        
+        def patched_open(file, *args, **kwargs):
+            converted_path = convert_unix_to_windows_path(file)
+            return original_open(converted_path, *args, **kwargs)
+        
+        builtins.open = patched_open
+        
+        # Patch os.path functions
         original_exists = os.path.exists
         original_isfile = os.path.isfile
         original_isdir = os.path.isdir
-        original_open = open
+        original_join = os.path.join
         
         def patched_exists(path):
             return original_exists(convert_unix_to_windows_path(path))
@@ -167,15 +205,16 @@ def setup_windows_paths():
         def patched_isdir(path):
             return original_isdir(convert_unix_to_windows_path(path))
         
-        def patched_open(file, *args, **kwargs):
-            return original_open(convert_unix_to_windows_path(file), *args, **kwargs)
+        def patched_join(path, *paths):
+            result = original_join(convert_unix_to_windows_path(path), *paths)
+            return result
         
         os.path.exists = patched_exists
         os.path.isfile = patched_isfile
         os.path.isdir = patched_isdir
-        __builtins__['open'] = patched_open
+        os.path.join = patched_join
         
-        # Fix for os.makedirs and similar functions
+        # Fix for directory operations
         original_makedirs = os.makedirs
         original_listdir = os.listdir
         original_remove = os.remove
@@ -193,6 +232,31 @@ def setup_windows_paths():
         os.listdir = patched_listdir
         os.remove = patched_remove
         
+        # Patch json module for file operations
+        original_json_load = json.load
+        original_json_dump = json.dump
+        
+        def patched_json_load(fp, *args, **kwargs):
+            # Just intercept for logging purposes
+            try:
+                return original_json_load(fp, *args, **kwargs)
+            except Exception as e:
+                # If the error is related to the file path, log it
+                logger.error(f"Error in json.load with file: {fp}")
+                raise
+                
+        def patched_json_dump(obj, fp, *args, **kwargs):
+            # Just intercept for logging purposes
+            try:
+                return original_json_dump(obj, fp, *args, **kwargs)
+            except Exception as e:
+                # If the error is related to the file path, log it
+                logger.error(f"Error in json.dump with file: {fp}")
+                raise
+        
+        json.load = patched_json_load
+        json.dump = patched_json_dump
+        
         # Create empty JSON setting files if they don't exist
         logger.info("Creating empty JSON settings files...")
         for app in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'swaparr', 'eros', 'general']:
@@ -204,6 +268,19 @@ def setup_windows_paths():
                     logger.info(f"Created empty settings file: {json_file}")
                 except Exception as e:
                     logger.error(f"Error creating settings file {json_file}: {str(e)}")
+        
+        # Modify sys.path to ensure the proper imports can be found
+        if config_dir not in sys.path:
+            sys.path.append(config_dir)
+        
+        # Create a symlink to make /config work directly if possible
+        try:
+            if platform.system() == 'Windows' and not os.path.exists('/config'):
+                # On Windows, symlinks require admin privileges, so this might fail
+                os.symlink(config_dir, '/config')
+                logger.info(f"Created symlink from {config_dir} to /config")
+        except Exception as e:
+            logger.debug(f"Could not create symlink (expected on Windows): {str(e)}")
         
         logger.info(f"Windows path setup complete. Using config dir: {config_dir}")
         return config_dir
