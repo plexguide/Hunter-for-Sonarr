@@ -13,6 +13,7 @@ import traceback
 import logging
 from typing import List, Dict, Any, Optional, Union
 from src.primary.utils.logger import get_logger
+from src.primary.settings_manager import get_ssl_verify_setting
 
 # Get logger for the Lidarr app
 lidarr_logger = get_logger("lidarr")
@@ -57,7 +58,12 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
     
     lidarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
     
-        
+    # Get SSL verification setting
+    verify_ssl = get_ssl_verify_setting()
+    
+    if not verify_ssl:
+        lidarr_logger.debug("SSL verification disabled by user setting")
+    
     lidarr_logger.debug(f"Lidarr API Request: {method} {full_url} Params: {params} Data: {data}")
 
     try:
@@ -67,7 +73,8 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
             headers=headers,
             json=data if method.upper() in ["POST", "PUT"] else None,
             params=params if method.upper() == "GET" else None,
-            timeout=api_timeout
+            timeout=api_timeout,
+            verify=verify_ssl
         )
             
         lidarr_logger.debug(f"Lidarr API Response Status: {response.status_code}")
@@ -110,36 +117,70 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
 
 # --- Specific API Functions ---
 
-def get_system_status(api_url: str, api_key: str, api_timeout: int) -> Optional[Dict]:
-    """Get Lidarr system status."""
-    return arr_request(api_url, api_key, api_timeout, "system/status")
+def get_system_status(api_url: str, api_key: str, api_timeout: int, verify_ssl: Optional[bool] = None) -> Dict:
+    """
+    Get Lidarr system status.
+    
+    Args:
+        api_url: The base URL of the Lidarr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        verify_ssl: Optional override for SSL verification
+        
+    Returns:
+        System status information or empty dict if request failed
+    """
+    # If verify_ssl is not provided, get it from settings
+    if verify_ssl is None:
+        verify_ssl = get_ssl_verify_setting()
+        
+    # Log whether SSL verification is being used
+    if not verify_ssl:
+        lidarr_logger.debug("SSL verification disabled for system status check")
+        
+    try:
+        # For Lidarr, use V1 API
+        endpoint = f"{api_url.rstrip('/')}/api/v1/system/status"
+        headers = {"X-Api-Key": api_key}
+        
+        # Execute the request with SSL verification setting
+        response = requests.get(endpoint, headers=headers, timeout=api_timeout, verify=verify_ssl)
+        response.raise_for_status()
+        
+        # Parse and return the result
+        return response.json()
+    except Exception as e:
+        lidarr_logger.error(f"Error getting system status: {str(e)}")
+        return {}
 
 def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
-    """Check the connection to Lidarr API."""
-    try:
-        # Ensure api_url is properly formatted
-        if not api_url:
-            lidarr_logger.error("API URL is empty or not set")
-            return False
-            
-        # Make sure api_url has a scheme
-        if not (api_url.startswith('http://') or api_url.startswith('https://')):
-            lidarr_logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
-            return False
-            
-        # Ensure URL doesn't end with a slash before adding the endpoint
-        base_url = api_url.rstrip('/')
-        full_url = f"{base_url}/api/v1/system/status"
-        
-        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout)
-        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
-        lidarr_logger.debug("Successfully connected to Lidarr.")
-        return True
-    except requests.exceptions.RequestException as e:
-        lidarr_logger.error(f"Error connecting to Lidarr: {e}")
+    """Checks connection by fetching system status."""
+    if not api_url:
+        lidarr_logger.error("API URL is empty or not set")
         return False
+    if not api_key:
+        lidarr_logger.error("API Key is empty or not set")
+        return False
+
+    try:
+        # Use a shorter timeout for a quick connection check
+        quick_timeout = min(api_timeout, 15) 
+        
+        # Get SSL verification setting
+        verify_ssl = get_ssl_verify_setting()
+        
+        status = get_system_status(api_url, api_key, quick_timeout, verify_ssl)
+        if status and isinstance(status, dict) and 'version' in status:
+             # Log success only if debug is enabled to avoid clutter
+             lidarr_logger.debug(f"Connection check successful for {api_url}. Version: {status.get('version')}")
+             return True
+        else:
+             # Log details if the status response was unexpected
+             lidarr_logger.warning(f"Connection check for {api_url} returned unexpected status: {str(status)[:200]}")
+             return False
     except Exception as e:
-        lidarr_logger.error(f"An unexpected error occurred during Lidarr connection check: {e}")
+        # Error should have been logged by arr_request, just indicate failure
+        lidarr_logger.error(f"Connection check failed for {api_url}: {str(e)}")
         return False
 
 def get_artists(api_url: str, api_key: str, api_timeout: int, artist_id: Optional[int] = None) -> Union[List, Dict, None]:

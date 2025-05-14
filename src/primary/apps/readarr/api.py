@@ -12,7 +12,8 @@ from typing import List, Dict, Any, Optional, Union
 # Correct the import path
 from src.primary.utils.logger import get_logger
 # Import load_settings
-from src.primary.settings_manager import load_settings
+from src.primary.settings_manager import load_settings, get_ssl_verify_setting
+import importlib
 
 # Get app-specific logger
 logger = get_logger("readarr")
@@ -102,66 +103,112 @@ def get_download_queue_size(api_url: str = None, api_key: str = None, timeout: i
         logger.error(f"Error getting download queue size: {e}")
         return 0
 
-def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type: str = "readarr", 
-                api_url: Optional[str] = None, api_key: Optional[str] = None, api_timeout: Optional[int] = None) -> Any:
+def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type: str = "readarr",
+                api_url: str = None, api_key: str = None, api_timeout: int = None, 
+                params: Dict = None, instance_data: Dict = None) -> Any:
     """
     Make a request to the Readarr API.
-    Now accepts optional api_url, api_key, and api_timeout.
+    
+    This function handles making API requests to Readarr, with automatic
+    instance detection or manual override of API details.
     
     Args:
-        endpoint: The API endpoint to call
+        endpoint: The API endpoint to call (relative path)
         method: HTTP method (GET, POST, PUT, DELETE)
-        data: Optional data to send with the request
-        app_type: The app type (readarr by default)
-        api_url: Optional API URL (overrides loaded settings)
-        api_key: Optional API key (overrides loaded settings)
-        api_timeout: Optional API timeout (overrides loaded settings)
+        data: Optional data payload for POST/PUT requests
+        app_type: Application type (default: readarr)
+        api_url: Optional URL override (if not using instances)
+        api_key: Optional API key override (if not using instances)
+        api_timeout: Optional timeout override
+        params: Optional query parameters
+        instance_data: Optional specific instance data to use
         
     Returns:
-        The JSON response from the API, or None if the request failed
+        The parsed JSON response or None if the request failed
     """
-    # Load settings only if credentials are not provided directly
-    if api_url is None or api_key is None or api_timeout is None:
-        settings = load_settings(app_type)
-        loaded_api_url = settings.get('api_url', '')
-        loaded_api_key = settings.get('api_key', '')
-        loaded_api_timeout = settings.get('api_timeout', 60)
-        
-        # Use provided args if available, otherwise use loaded settings
-        api_url = api_url if api_url is not None else loaded_api_url
-        api_key = api_key if api_key is not None else loaded_api_key
-        api_timeout = api_timeout if api_timeout is not None else loaded_api_timeout
-
-    if not api_url or not api_key:
-        logger.error("API URL or API key is missing. Check your settings.")
+    # Initialize logger
+    logger = get_logger(app_type)
+    
+    # Try to get instance data if not provided directly
+    if not instance_data and not (api_url and api_key):
+        # Import at function level to avoid circular imports
+        try:
+            module_name = f'src.primary.apps.{app_type}'
+            module = importlib.import_module(module_name)
+            if hasattr(module, 'get_configured_instances'):
+                instances = module.get_configured_instances()
+                if instances:
+                    # Use the first instance by default
+                    instance_data = instances[0]
+        except (ImportError, AttributeError) as e:
+            logger.error(f"Error importing module for {app_type}: {e}")
+    
+    # Get the API details - either from instance_data, direct parameters, or by loading settings
+    if instance_data:
+        # Instance data directly provided or loaded above
+        url = instance_data.get('api_url', '')
+        key = instance_data.get('api_key', '')
+        timeout = api_timeout or 60  # Default timeout
+    elif api_url and api_key:
+        # Direct parameters provided
+        url = api_url
+        key = api_key
+        timeout = api_timeout or 60  # Default timeout
+    else:
+        # No valid parameters, try loading from settings
+        try:
+            from src.primary.settings_manager import load_settings
+            settings = load_settings(app_type)
+            url = settings.get('api_url', '')
+            key = settings.get('api_key', '')
+            timeout = api_timeout or settings.get('api_timeout', 60)
+        except Exception as e:
+            logger.error(f"Error loading {app_type} settings: {e}")
+            return None
+    
+    # Validate the required parameters
+    if not url or not key:
+        logger.error(f"Missing API URL or key for {app_type}")
         return None
     
-    # Ensure api_url has a scheme
-    if not (api_url.startswith('http://') or api_url.startswith('https://')):
-        logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
-        return None
+    # Normalize the URL
+    url = url.rstrip('/')
     
-    # Determine the API version
-    api_base = "api/v1"  # Readarr uses v1
+    # Ensure endpoint starts correctly
+    endpoint = endpoint.lstrip('/')
     
-    # Full URL
-    url = f"{api_url.rstrip('/')}/{api_base}/{endpoint.lstrip('/')}"
+    # API version path - different for each app
+    api_version = "v1"  # Default for Readarr
     
-    # Headers
+    # Construct the full URL
+    full_url = f"{url}/api/{api_version}/{endpoint}"
+    
+    # Set up headers
     headers = {
-        "X-Api-Key": api_key,
-        "Content-Type": "application/json"
+        "X-Api-Key": key,
+        "Content-Type": "application/json",
+        "User-Agent": f"Huntarr/1.0 ({app_type})"
     }
     
+    # Get SSL verification setting
+    verify_ssl = get_ssl_verify_setting()
+    
+    if not verify_ssl:
+        logger.debug("SSL verification disabled by user setting")
+    
+    # Log the request
+    logger.debug(f"Making {method} request to {full_url}")
+    
+    # Make the request with appropriate method
     try:
-        if method == "GET":
-            response = session.get(url, headers=headers, timeout=api_timeout)
-        elif method == "POST":
-            response = session.post(url, headers=headers, json=data, timeout=api_timeout)
-        elif method == "PUT":
-            response = session.put(url, headers=headers, json=data, timeout=api_timeout)
-        elif method == "DELETE":
-            response = session.delete(url, headers=headers, timeout=api_timeout)
+        if method.upper() == "GET":
+            response = requests.get(full_url, headers=headers, params=params, timeout=timeout, verify=verify_ssl)
+        elif method.upper() == "POST":
+            response = requests.post(full_url, headers=headers, json=data, timeout=timeout, verify=verify_ssl)
+        elif method.upper() == "PUT":
+            response = requests.put(full_url, headers=headers, json=data, timeout=timeout, verify=verify_ssl)
+        elif method.upper() == "DELETE":
+            response = requests.delete(full_url, headers=headers, timeout=timeout, verify=verify_ssl)
         else:
             logger.error(f"Unsupported HTTP method: {method}")
             return None

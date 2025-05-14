@@ -281,7 +281,8 @@ ADVANCED_SETTINGS = [
     "log_refresh_interval_seconds",
     "debug_mode",
     "stateful_management_hours",
-    "hourly_cap"
+    "hourly_cap",
+    "ssl_verify"  # Add SSL verification setting
 ]
 
 def get_advanced_setting(setting_name, default_value=None):
@@ -305,6 +306,15 @@ def get_advanced_setting(setting_name, default_value=None):
     # Get from general settings
     general_settings = load_settings('general', use_cache=True)
     return general_settings.get(setting_name, default_value)
+
+def get_ssl_verify_setting():
+    """
+    Get the SSL verification setting.
+    
+    Returns:
+        bool: True if SSL verification should be enabled (default), False otherwise
+    """
+    return get_advanced_setting("ssl_verify", True)
 
 # Example usage (for testing purposes, remove later)
 if __name__ == "__main__":
