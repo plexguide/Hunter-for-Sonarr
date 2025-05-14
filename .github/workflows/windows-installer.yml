@@ -1,0 +1,93 @@
+name: Windows Installer Build
+
+on:
+  push:
+    tags:
+      - "*"  # This will trigger on any tag push
+    branches:
+      - main  # Also build on main branch pushes
+
+jobs:
+  build-windows-installer:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller==5.13.0
+          pip install pywin32==306
+      
+      - name: Get version info
+        id: version
+        run: |
+          if ("${{ github.ref }}" -like "refs/tags/*") {
+            $VERSION = "${{ github.ref }}" -replace "refs/tags/", ""
+            echo "VERSION=$VERSION" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          } else {
+            $COMMIT_SHA = "${{ github.sha }}".Substring(0, 7)
+            echo "VERSION=dev-$COMMIT_SHA" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          }
+      
+      - name: Create config directories
+        run: |
+          mkdir -p config/logs
+      
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller huntarr.spec --noconfirm
+      
+      - name: Download Inno Setup
+        run: |
+          $innoSetupUrl = "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe"
+          $innoSetupInstaller = "innosetup-installer.exe"
+          Invoke-WebRequest -Uri $innoSetupUrl -OutFile $innoSetupInstaller
+          Start-Process -FilePath $innoSetupInstaller -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-" -Wait
+      
+      - name: Build installer with Inno Setup
+        run: |
+          $env:PATH += ";C:\Program Files (x86)\Inno Setup 6"
+          mkdir -p installer
+          ISCC.exe huntarr_installer.iss /Q
+      
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Huntarr ${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+      
+      - name: Upload Release Asset
+        if: startsWith(github.ref, 'refs/tags/')
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./installer/Huntarr_Setup.exe
+          asset_name: Huntarr_Setup-${{ steps.version.outputs.VERSION }}.exe
+          asset_content_type: application/octet-stream
+      
+      - name: Upload installer as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Huntarr_Windows_Installer
+          path: ./installer/Huntarr_Setup.exe 

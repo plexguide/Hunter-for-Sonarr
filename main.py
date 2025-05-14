@@ -22,6 +22,15 @@ root_logger = logging.getLogger("HuntarrRoot") # Specific logger for this entry 
 root_logger.info("--- Huntarr Main Process Starting ---")
 root_logger.info(f"Python sys.path: {sys.path}")
 
+# Setup Windows-specific paths if on Windows
+if sys.platform == 'win32':
+    try:
+        from primary.windows_path_fix import setup_windows_paths
+        config_dir = setup_windows_paths()
+        root_logger.info(f"Windows path setup completed. Config directory: {config_dir}")
+    except Exception as e:
+        root_logger.error(f"Error setting up Windows paths: {e}")
+
 # Check for Windows service commands
 if sys.platform == 'win32' and len(sys.argv) > 1:
     if sys.argv[1] == '--install-service':

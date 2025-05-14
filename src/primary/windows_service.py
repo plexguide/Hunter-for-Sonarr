@@ -16,10 +16,24 @@ import win32serviceutil
 # Add the parent directory to sys.path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
+# Import path fix early
+try:
+    from primary.windows_path_fix import setup_windows_paths
+    config_dir = setup_windows_paths()
+    # Ensure logs dir exists for service log
+    logs_dir = os.path.join(config_dir, 'logs')
+    if not os.path.exists(logs_dir):
+        os.makedirs(logs_dir)
+except Exception:
+    # Fall back to default path if unable to use path fix
+    config_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config')
+    logs_dir = os.path.join(config_dir, 'logs')
+    if not os.path.exists(logs_dir):
+        os.makedirs(logs_dir)
+
 # Configure basic logging
 logging.basicConfig(
-    filename=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
-                         'config', 'logs', 'windows_service.log'),
+    filename=os.path.join(logs_dir, 'windows_service.log'),
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
@@ -67,6 +81,11 @@ class HuntarrService(win32serviceutil.ServiceFramework):
         """Main service loop"""
         try:
             logger.info('Starting Huntarr service...')
+            
+            # Set up Windows paths again to be sure
+            from primary.windows_path_fix import setup_windows_paths
+            config_dir = setup_windows_paths()
+            logger.info(f"Using config directory: {config_dir}")
             
             # Import here to avoid import errors when installing the service
             import threading
