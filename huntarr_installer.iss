@@ -1,7 +1,13 @@
 #define MyAppName "Huntarr"
-#define MyAppVersion GetFileVersion("dist\Huntarr\Huntarr.exe")
+#define ReadVersionFile(str fileName) \
+   Local[0] = FileOpen(fileName), \
+   Local[1] = FileRead(Local[0]), \
+   FileClose(Local[0]), \
+   Local[1]
+
+#define MyAppVersion ReadVersionFile("version.txt")
 #define MyAppPublisher "Huntarr"
-#define MyAppURL "https://github.com/yourusername/Huntarr"
+#define MyAppURL "https://github.com/plexguide/Huntarr.io"
 #define MyAppExeName "Huntarr.exe"
 
 [Setup]
