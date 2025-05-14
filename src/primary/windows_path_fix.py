@@ -8,6 +8,7 @@ import sys
 import logging
 import traceback
 from pathlib import Path
+import platform
 
 def setup_windows_paths():
     """
@@ -94,39 +95,81 @@ def setup_windows_paths():
                 logger.error(error_msg)
                 error_messages.append(error_msg)
         
+        # Set up file logging now that we have a logs directory
+        logs_dir = os.path.join(config_dir, 'logs')
+        if not os.path.exists(logs_dir):
+            os.makedirs(logs_dir)
+            
+        log_file = os.path.join(logs_dir, 'windows_path.log')
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        logger.addHandler(file_handler)
+
         if not success:
             logger.error("CRITICAL: Could not find a writable location for config directory!")
             logger.error("Errors encountered: " + "\n".join(error_messages))
             return None
         
-        # Ensure logs directory exists
-        logs_dir = os.path.join(config_dir, 'logs')
-        if not os.path.exists(logs_dir):
-            os.makedirs(logs_dir)
-            logger.info(f"Created logs directory at: {logs_dir}")
-        
-        # Set environment variable for other parts of the app to use
+        # Set up environment variables to ensure consistent path usage throughout the application
         os.environ['HUNTARR_CONFIG_DIR'] = config_dir
+        os.environ['HUNTARR_LOGS_DIR'] = logs_dir
+        os.environ['HUNTARR_USER_DIR'] = os.path.join(config_dir, 'user')
+        os.environ['HUNTARR_STATEFUL_DIR'] = os.path.join(config_dir, 'stateful')
         
-        # Set up file logging now that we have a logs directory
-        file_handler = logging.FileHandler(os.path.join(logs_dir, 'windows_path.log'))
-        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-        logger.addHandler(file_handler)
+        # Create other needed directories
+        for dir_name in ['user', 'stateful', 'settings']:
+            dir_path = os.path.join(config_dir, dir_name)
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+                logger.info(f"Created directory: {dir_path}")
+
+        # Create a translation function to convert /config paths to Windows paths
+        def convert_unix_to_windows_path(original_path):
+            if platform.system() == 'Windows' and original_path and original_path.startswith('/config'):
+                return original_path.replace('/config', config_dir).replace('/', '\\')
+            return original_path
+        
+        # Monkey patch os.path.exists, os.path.isfile, open, etc. to handle /config paths
+        original_exists = os.path.exists
+        original_isfile = os.path.isfile
+        original_isdir = os.path.isdir
+        original_open = open
+        
+        def patched_exists(path):
+            return original_exists(convert_unix_to_windows_path(path))
+        
+        def patched_isfile(path):
+            return original_isfile(convert_unix_to_windows_path(path))
+        
+        def patched_isdir(path):
+            return original_isdir(convert_unix_to_windows_path(path))
+        
+        def patched_open(file, *args, **kwargs):
+            return original_open(convert_unix_to_windows_path(file), *args, **kwargs)
+        
+        os.path.exists = patched_exists
+        os.path.isfile = patched_isfile
+        os.path.isdir = patched_isdir
+        __builtins__['open'] = patched_open
         
         logger.info(f"Windows path setup complete. Using config dir: {config_dir}")
+        
+        # Fix for os.makedirs and similar functions
+        original_makedirs = os.makedirs
+        
+        def patched_makedirs(path, *args, **kwargs):
+            return original_makedirs(convert_unix_to_windows_path(path), *args, **kwargs)
+        
+        os.makedirs = patched_makedirs
+        
         return config_dir
     except Exception as e:
-        full_traceback = traceback.format_exc()
-        logger.error(f"Error setting up Windows paths: {e}")
-        logger.error(f"Traceback: {full_traceback}")
-        
-        # Try to write error to a file somewhere accessible
-        try:
-            error_file = os.path.join(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.getcwd(), 'huntarr_error.log')
-            with open(error_file, 'a') as f:
-                f.write(f"Error setting up Windows paths: {e}\n")
-                f.write(f"Traceback: {full_traceback}\n")
-        except:
-            pass  # If this fails too, we've done all we can
-            
-        return None 
+        logger.error(f"Windows path setup failed with error: {str(e)}")
+        logger.error(traceback.format_exc())
+        return None
+
+# Call setup_windows_paths automatically when imported on Windows
+if platform.system() == 'Windows':
+    CONFIG_DIR = setup_windows_paths()
+else:
+    CONFIG_DIR = "/config"  # Default for non-Windows 
