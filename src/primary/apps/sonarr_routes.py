@@ -8,9 +8,13 @@ from src.primary.utils.logger import get_logger
 import traceback
 import socket
 from urllib.parse import urlparse
+from src.primary.utils.ssl_settings import get_ssl_verify
 
 sonarr_bp = Blueprint('sonarr', __name__)
 sonarr_logger = get_logger("sonarr")
+
+# Get SSL verification setting
+ssl_verify = get_ssl_verify()
 
 # Make sure we're using the correct state files
 PROCESSED_MISSING_FILE = get_state_file_path("sonarr", "processed_missing") 
@@ -28,7 +32,7 @@ def test_connection():
         return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
     
     # Log the test attempt
-    sonarr_logger.info(f"Testing connection to Sonarr API at {api_url}")
+    sonarr_logger.info(f"Testing connection to Sonarr API at {api_url} with SSL verification set to {ssl_verify}")
     
     # First check if URL is properly formatted
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
@@ -66,7 +70,7 @@ def test_connection():
 
     try:
         # Now proceed with the actual API request
-        response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
+        response = requests.get(test_url, headers=headers, timeout=(10, api_timeout), verify=ssl_verify)
         
         # For HTTP errors, provide more specific feedback
         if response.status_code == 401:

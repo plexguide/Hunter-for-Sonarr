@@ -14,9 +14,13 @@ import traceback
 import sys
 from typing import List, Dict, Any, Optional, Union
 from src.primary.utils.logger import get_logger
+from src.primary.utils.ssl_settings import get_ssl_verify
 
 # Get logger for the Whisparr app
 whisparr_logger = get_logger("whisparr")
+
+# Get SSL verification setting
+ssl_verify = get_ssl_verify()
 
 # Use a session for better performance
 session = requests.Session()
@@ -61,13 +65,13 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
     
     try:
         if method == "GET":
-            response = session.get(url, headers=headers, timeout=api_timeout)
+            response = session.get(url, headers=headers, timeout=api_timeout, verify=ssl_verify)
         elif method == "POST":
-            response = session.post(url, headers=headers, json=data, timeout=api_timeout)
+            response = session.post(url, headers=headers, json=data, timeout=api_timeout, verify=ssl_verify)
         elif method == "PUT":
-            response = session.put(url, headers=headers, json=data, timeout=api_timeout)
+            response = session.put(url, headers=headers, json=data, timeout=api_timeout, verify=ssl_verify)
         elif method == "DELETE":
-            response = session.delete(url, headers=headers, timeout=api_timeout)
+            response = session.delete(url, headers=headers, timeout=api_timeout, verify=ssl_verify)
         else:
             whisparr_logger.error(f"Unsupported HTTP method: {method}")
             return None
@@ -79,13 +83,13 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
             whisparr_logger.debug(f"Standard path returned 404, trying with V3 path: {v3_url}")
             
             if method == "GET":
-                response = session.get(v3_url, headers=headers, timeout=api_timeout)
+                response = session.get(v3_url, headers=headers, timeout=api_timeout, verify=ssl_verify)
             elif method == "POST":
-                response = session.post(v3_url, headers=headers, json=data, timeout=api_timeout)
+                response = session.post(v3_url, headers=headers, json=data, timeout=api_timeout, verify=ssl_verify)
             elif method == "PUT":
-                response = session.put(v3_url, headers=headers, json=data, timeout=api_timeout)
+                response = session.put(v3_url, headers=headers, json=data, timeout=api_timeout, verify=ssl_verify)
             elif method == "DELETE":
-                response = session.delete(v3_url, headers=headers, timeout=api_timeout)
+                response = session.delete(v3_url, headers=headers, timeout=api_timeout, verify=ssl_verify)
                 
             whisparr_logger.debug(f"V3 path request returned status code: {response.status_code}")
             
@@ -278,11 +282,11 @@ def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int) -> 
         # Try standard API path first
         whisparr_logger.debug(f"Attempting command with standard API path: {url}")
         try:
-            response = session.post(url, headers=headers, json=payload, timeout=api_timeout)
+            response = session.post(url, headers=headers, json=payload, timeout=api_timeout, verify=ssl_verify)
             # If we get a 404 or 405, try the v3 path
             if response.status_code in [404, 405]:
                 whisparr_logger.debug(f"Standard path returned {response.status_code}, trying with V3 path: {backup_url}")
-                response = session.post(backup_url, headers=headers, json=payload, timeout=api_timeout)
+                response = session.post(backup_url, headers=headers, json=payload, timeout=api_timeout, verify=ssl_verify)
                 
             response.raise_for_status()
             result = response.json()
@@ -341,11 +345,11 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
         # Try standard API path first
         whisparr_logger.debug(f"Attempting command with standard API path: {url}")
         try:
-            response = session.post(url, headers=headers, json=payload, timeout=api_timeout)
+            response = session.post(url, headers=headers, json=payload, timeout=api_timeout, verify=ssl_verify)
             # If we get a 404 or 405, try the v3 path
             if response.status_code in [404, 405]:
                 whisparr_logger.debug(f"Standard path returned {response.status_code}, trying with V3 path: {backup_url}")
-                response = session.post(backup_url, headers=headers, json=payload, timeout=api_timeout)
+                response = session.post(backup_url, headers=headers, json=payload, timeout=api_timeout, verify=ssl_verify)
                 
             response.raise_for_status()
             result = response.json()
@@ -400,11 +404,11 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
         # Try standard API path first
         whisparr_logger.debug(f"Checking command status with standard API path: {url}")
         try:
-            response = session.get(url, headers=headers, timeout=api_timeout)
+            response = session.get(url, headers=headers, timeout=api_timeout, verify=ssl_verify)
             # If we get a 404, try the v3 path
             if response.status_code == 404:
                 whisparr_logger.debug(f"Standard path returned 404, trying with V3 path: {backup_url}")
-                response = session.get(backup_url, headers=headers, timeout=api_timeout)
+                response = session.get(backup_url, headers=headers, timeout=api_timeout, verify=ssl_verify)
                 
             response.raise_for_status()
             result = response.json()
@@ -451,7 +455,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
             headers = {'X-Api-Key': api_key}
             
             try:
-                resp = session.get(url, headers=headers, timeout=api_timeout)
+                resp = session.get(url, headers=headers, timeout=api_timeout, verify=ssl_verify)
                 resp.raise_for_status()
                 response = resp.json()
             except Exception as e:

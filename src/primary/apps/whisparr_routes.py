@@ -9,9 +9,13 @@ import traceback
 import socket
 from urllib.parse import urlparse
 from src.primary.apps.whisparr import api as whisparr_api
+from src.primary.utils.ssl_settings import get_ssl_verify
 
 whisparr_bp = Blueprint('whisparr', __name__)
 whisparr_logger = get_logger("whisparr")
+
+# Get SSL verification setting
+ssl_verify = get_ssl_verify()
 
 # Make sure we're using the correct state files
 PROCESSED_MISSING_FILE = get_state_file_path("whisparr", "processed_missing") 
@@ -112,7 +116,7 @@ def test_connection():
         try:
             url = api_path["url"]
             whisparr_logger.debug(f"Trying API path: {url}")
-            response = requests.get(url, headers=headers, timeout=(10, api_timeout))
+            response = requests.get(url, headers=headers, timeout=(10, api_timeout), verify=ssl_verify)
             
             if response.status_code == 200:
                 detected_version = api_path["version"]
@@ -238,13 +242,13 @@ def get_versions():
             headers = {"X-Api-Key": api_key}
             
             try:
-                response = requests.get(version_url, headers=headers, timeout=10)
+                response = requests.get(version_url, headers=headers, timeout=10, verify=ssl_verify)
                 
                 # If we get a 404, try with the v3 path
                 if response.status_code == 404:
                     whisparr_logger.debug(f"Standard API path failed for {instance_name}, trying v3 path")
                     v3_url = f"{api_url.rstrip('/')}/api/v3/system/status"
-                    response = requests.get(v3_url, headers=headers, timeout=10)
+                    response = requests.get(v3_url, headers=headers, timeout=10, verify=ssl_verify)
                     
                 if response.status_code == 200:
                     version_data = response.json()

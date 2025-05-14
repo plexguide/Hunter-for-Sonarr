@@ -1086,6 +1086,7 @@ const SettingsForms = {
             settings.minimum_download_queue_size = getInputValue('#minimum_download_queue_size', -1);
             settings.log_refresh_interval_seconds = getInputValue('#log_refresh_interval_seconds', 30);
             settings.hourly_cap = getInputValue('#hourly_cap', 20);
+            settings.disableSSLVerificationCheckbox = getInputValue('#disableSSLVerificationCheckbox', false);
         }
         
         // For other app types, collect settings
@@ -1268,6 +1269,14 @@ const SettingsForms = {
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Allow access without login when connecting from local network IP addresses (e.g., 192.168.x.x, 10.x.x.x)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="disable_ssl_verification">Disable SSL Verification:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="disable_ssl_verification" ${settings.disable_ssl_verification === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Disable SSL certificate verification for API requests (not recommended)</p>
                 </div>
             </div>
             
@@ -1460,6 +1469,16 @@ const SettingsForms = {
                     }
                 })
                 .catch(error => console.warn('Silent stateful info fetch failed:', error));
+        }
+
+        // Add event listener for the Disable SSL Verification toggle
+        const disableSSLVerificationCheckbox = document.getElementById('disable_ssl_verification');
+        if (disableSSLVerificationCheckbox) {
+            disableSSLVerificationCheckbox.addEventListener('change', function() {
+                const isChecked = this.checked;
+                console.log('Disable SSL Verification:', isChecked);
+                // Update the settings object or send to backend as needed
+            });
         }
     },
     

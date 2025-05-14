@@ -8,9 +8,13 @@ from src.primary.utils.logger import get_logger
 import traceback
 import socket
 from urllib.parse import urlparse
+from src.primary.utils.ssl_settings import get_ssl_verify
 
 readarr_bp = Blueprint('readarr', __name__)
 readarr_logger = get_logger("readarr")
+
+# Get SSL verification setting
+ssl_verify = get_ssl_verify()
 
 # Make sure we're using the correct state files
 PROCESSED_MISSING_FILE = get_state_file_path("readarr", "processed_missing") 
@@ -67,7 +71,7 @@ def test_connection():
             readarr_logger.debug(f"Socket test error, continuing with full request: {str(e)}")
             
         # Now proceed with the actual API request
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10, verify=ssl_verify)
         
         # For HTTP errors, provide more specific feedback
         if response.status_code == 401:

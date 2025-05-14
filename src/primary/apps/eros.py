@@ -4,9 +4,13 @@ from primary import keys_manager
 from src.primary.utils.logger import get_logger
 from src.primary.state import get_state_file_path
 from src.primary.settings_manager import load_settings, settings_manager
+from src.primary.utils.ssl_settings import get_ssl_verify
 
 eros_bp = Blueprint('eros', __name__)
 eros_logger = get_logger("eros")
+
+# Get SSL verification setting
+ssl_verify = get_ssl_verify()
 
 # Make sure we're using the correct state files
 PROCESSED_MISSING_FILE = get_state_file_path("eros", "processed_missing") 
@@ -24,7 +28,7 @@ def test_connection():
         return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
     
     # Log the test attempt
-    eros_logger.info(f"Testing connection to Eros API at {api_url}")
+    eros_logger.info(f"Testing connection to Eros API at {api_url} with SSL verification set to {ssl_verify}")
     
     # First check if URL is properly formatted
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
@@ -50,7 +54,7 @@ def test_connection():
         
         try:
             # Use a connection timeout separate from read timeout
-            response = requests.get(test_url, headers=headers, timeout=(10, api_timeout))
+            response = requests.get(test_url, headers=headers, timeout=(10, api_timeout), verify=ssl_verify)
             
             # Log HTTP status code for diagnostic purposes
             eros_logger.debug(f"Eros API status code: {response.status_code} for path {api_path}")

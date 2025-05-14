@@ -10,9 +10,13 @@ import traceback
 import socket
 from urllib.parse import urlparse
 from src.primary.apps.eros import api as eros_api
+from src.primary.utils.ssl_settings import get_ssl_verify
 
 eros_bp = Blueprint('eros', __name__)
 eros_logger = get_logger("eros")
+
+# Get SSL verification setting
+ssl_verify = get_ssl_verify()
 
 # Make sure we're using the correct state files
 PROCESSED_MISSING_FILE = get_state_file_path("eros", "processed_missing") 
@@ -62,7 +66,7 @@ def test_connection(url, api_key):
     try:
         # Make the request with appropriate timeouts
         eros_logger.debug(f"Trying API path: {api_url}")
-        response = requests.get(api_url, headers=headers, timeout=(5, 30))
+        response = requests.get(api_url, headers=headers, timeout=(5, 30), verify=ssl_verify)
         
         try:
             response.raise_for_status()

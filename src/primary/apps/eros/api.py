@@ -14,6 +14,7 @@ import traceback
 import sys
 from typing import List, Dict, Any, Optional, Union
 from src.primary.utils.logger import get_logger
+from src.primary.utils.ssl_settings import get_ssl_verify
 
 # Get logger for the Eros app
 eros_logger = get_logger("eros")
@@ -57,17 +58,20 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
     }
     
+    # Get SSL verification setting
+    verify_ssl = get_ssl_verify()
+    
     eros_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
     
     try:
         if method == "GET":
-            response = session.get(url, headers=headers, timeout=api_timeout)
+            response = session.get(url, headers=headers, timeout=api_timeout, verify=verify_ssl)
         elif method == "POST":
-            response = session.post(url, headers=headers, json=data, timeout=api_timeout)
+            response = session.post(url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
         elif method == "PUT":
-            response = session.put(url, headers=headers, json=data, timeout=api_timeout)
+            response = session.put(url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
         elif method == "DELETE":
-            response = session.delete(url, headers=headers, timeout=api_timeout)
+            response = session.delete(url, headers=headers, timeout=api_timeout, verify=verify_ssl)
         else:
             eros_logger.error(f"Unsupported HTTP method: {method}")
             return None

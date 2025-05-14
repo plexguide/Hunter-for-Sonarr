@@ -13,6 +13,7 @@ from typing import List, Dict, Any, Optional, Union
 from src.primary.utils.logger import get_logger
 # Import load_settings
 from src.primary.settings_manager import load_settings
+from src.primary.utils.ssl_settings import get_ssl_verify
 
 # Get app-specific logger
 logger = get_logger("readarr")
@@ -47,7 +48,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         }
         logger.debug(f"Using User-Agent: {headers['User-Agent']}")
         
-        response = requests.get(full_url, headers=headers, timeout=api_timeout)
+        response = requests.get(full_url, headers=headers, timeout=api_timeout, verify=get_ssl_verify())
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         logger.info("Successfully connected to Readarr.")
         return True
@@ -84,7 +85,7 @@ def get_download_queue_size(api_url: str = None, api_key: str = None, timeout: i
             }
             
             # Make the request
-            response = session.get(url, headers=headers, timeout=timeout)
+            response = session.get(url, headers=headers, timeout=timeout, verify=get_ssl_verify())
             response.raise_for_status()
             
             # Parse JSON response
@@ -152,16 +153,19 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type:
         "X-Api-Key": api_key,
         "Content-Type": "application/json"
     }
+
+    # Get SSL verification setting
+    verify_ssl = get_ssl_verify()
     
     try:
         if method == "GET":
-            response = session.get(url, headers=headers, timeout=api_timeout)
+            response = session.get(url, headers=headers, timeout=api_timeout, verify=verify_ssl)
         elif method == "POST":
-            response = session.post(url, headers=headers, json=data, timeout=api_timeout)
+            response = session.post(url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
         elif method == "PUT":
-            response = session.put(url, headers=headers, json=data, timeout=api_timeout)
+            response = session.put(url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
         elif method == "DELETE":
-            response = session.delete(url, headers=headers, timeout=api_timeout)
+            response = session.delete(url, headers=headers, timeout=api_timeout, verify=verify_ssl)
         else:
             logger.error(f"Unsupported HTTP method: {method}")
             return None
@@ -263,7 +267,7 @@ def get_wanted_missing_books(api_url: str, api_key: str, api_timeout: int, monit
             # 'monitored': monitored_only # Note: Check if Readarr API supports this directly for wanted/missing
         }
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=api_timeout)
+            response = requests.get(url, headers=headers, params=params, timeout=api_timeout, verify=get_ssl_verify())
             response.raise_for_status()
             data = response.json()
 
@@ -349,7 +353,7 @@ def get_author_details(api_url: str, api_key: str, author_id: int, api_timeout: 
     endpoint = f"{api_url}/api/v1/author/{author_id}"
     headers = {'X-Api-Key': api_key}
     try:
-        response = requests.get(endpoint, headers=headers, timeout=api_timeout)
+        response = requests.get(endpoint, headers=headers, timeout=api_timeout, verify=get_ssl_verify())
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         author_data = response.json()
         logger.debug(f"Successfully fetched details for author ID {author_id}.")
@@ -371,7 +375,7 @@ def search_books(api_url: str, api_key: str, book_ids: List[int], api_timeout: i
     }
     try:
         # This uses requests.post directly, not arr_request. It's already correct.
-        response = requests.post(endpoint, headers=headers, json=payload, timeout=api_timeout)
+        response = requests.post(endpoint, headers=headers, json=payload, timeout=api_timeout, verify=get_ssl_verify())
         response.raise_for_status()
         command_data = response.json()
         command_id = command_data.get('id')

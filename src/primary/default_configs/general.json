@@ -11,5 +11,6 @@
   "command_wait_attempts": 600,
   "minimum_download_queue_size": -1,
   "api_timeout": 120,
-  "hourly_cap": 20
+  "hourly_cap": 20,
+  "disable_ssl_verification": false
 }

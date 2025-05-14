@@ -13,6 +13,7 @@ import traceback
 import logging
 from typing import List, Dict, Any, Optional, Union
 from src.primary.utils.logger import get_logger
+from src.primary.utils.ssl_settings import get_ssl_verify
 
 # Get logger for the Lidarr app
 lidarr_logger = get_logger("lidarr")
@@ -55,10 +56,13 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
     }
     
+    # Get SSL verification setting
+    verify_ssl = get_ssl_verify()
+
     lidarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
     
         
-    lidarr_logger.debug(f"Lidarr API Request: {method} {full_url} Params: {params} Data: {data}")
+    lidarr_logger.debug(f"Lidarr API Request: {method} {full_url} Params: {params} Data: {data} SSL Verification: {verify_ssl}")
 
     try:
         response = session.request(
@@ -67,7 +71,8 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
             headers=headers,
             json=data if method.upper() in ["POST", "PUT"] else None,
             params=params if method.upper() == "GET" else None,
-            timeout=api_timeout
+            timeout=api_timeout,
+            verify=verify_ssl
         )
             
         lidarr_logger.debug(f"Lidarr API Response Status: {response.status_code}")
@@ -131,7 +136,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         base_url = api_url.rstrip('/')
         full_url = f"{base_url}/api/v1/system/status"
         
-        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout)
+        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout, verify=get_ssl_verify())
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         lidarr_logger.info("Successfully connected to Lidarr.")
         return True
