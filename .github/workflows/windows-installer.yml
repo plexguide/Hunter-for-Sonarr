@@ -7,6 +7,10 @@ on:
     branches:
       - main  # Also build on main branch pushes
 
+permissions:
+  contents: write
+  packages: read
+  
 jobs:
   build-windows-installer:
     runs-on: windows-latest
@@ -65,26 +69,13 @@ jobs:
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Huntarr ${{ steps.version.outputs.VERSION }}
+          files: ./installer/Huntarr_Setup.exe
+          name: Huntarr ${{ steps.version.outputs.VERSION }}
           draft: false
           prerelease: false
-      
-      - name: Upload Release Asset
-        if: startsWith(github.ref, 'refs/tags/')
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./installer/Huntarr_Setup.exe
-          asset_name: Huntarr_Setup-${{ steps.version.outputs.VERSION }}.exe
-          asset_content_type: application/octet-stream
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Upload installer as artifact
         uses: actions/upload-artifact@v2
