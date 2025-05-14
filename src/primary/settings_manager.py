@@ -135,7 +135,7 @@ def load_settings(app_type, use_cache=True):
                 if key not in current_settings:
                     current_settings[key] = value
                     updated = True
-
+                    
             # If keys were added, save the updated file
             if updated:
                 settings_logger.info(f"Added missing default keys to {app_type}.json")
