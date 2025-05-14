@@ -87,7 +87,7 @@ jobs:
           asset_content_type: application/octet-stream
       
       - name: Upload installer as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: Huntarr_Windows_Installer
           path: ./installer/Huntarr_Setup.exe 
