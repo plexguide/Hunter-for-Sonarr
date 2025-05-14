@@ -1,0 +1,85 @@
+/* 
+ * Apps Double Scroll Fix
+ * Aggressive fix for double scrollbars in the Apps section
+ */
+
+/* CRITICAL: Make sure only the main content scrolls */
+html, body {
+    overflow: hidden !important;
+    height: 100% !important;
+    width: 100% !important;
+    position: fixed !important;
+}
+
+/* Main content should be the only scrollable element */
+.main-content {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: 100vh !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 250px !important; /* Sidebar width */
+    right: 0 !important;
+    bottom: 0 !important;
+    width: calc(100% - 250px) !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .main-content {
+        left: 60px !important; /* Mobile sidebar width */
+        width: calc(100% - 60px) !important;
+    }
+}
+
+/* Absolutely prevent any other element from scrolling */
+.content-section,
+.single-scroll-container,
+#appsSection,
+.app-panels-container,
+.app-apps-panel,
+.app-content-panel,
+#appsContainer,
+#sonarrApps, #radarrApps, #lidarrApps, #readarrApps,
+#whisparrApps, #erosApps, #swaparrApps, #cleanuperrApps,
+.additional-options-section,
+.additional-options,
+.skip-series-refresh,
+table, tr, td, tbody, thead {
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+    max-height: none !important;
+    max-width: 100% !important;
+    scrollbar-width: none !important;
+}
+
+/* Force proper spacing instead of relying on scroll */
+#appsSection {
+    padding-bottom: 100px !important;
+}
+
+.app-panels-container {
+    margin-bottom: 50px !important;
+}
+
+#sonarrApps, #radarrApps, #lidarrApps, #readarrApps,
+#whisparrApps, #erosApps, #swaparrApps, #cleanuperrApps {
+    padding-bottom: 30px !important;
+    margin-bottom: 20px !important;
+}
+
+.additional-options, .skip-series-refresh {
+    margin-bottom: 30px !important;
+    padding-bottom: 20px !important;
+}
+
+/* Ensure app selectors appear properly */
+.section-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    background-color: var(--bg-primary, #121926) !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+} 
