@@ -258,12 +258,25 @@ def authenticate_request():
     """Flask route decorator to check if user is authenticated"""
     # If no user exists, redirect to setup
     if not user_exists():
-        if request.path != "/setup" and not request.path.startswith(("/static/", "/api/setup")):
-            return redirect("/setup")
+        script_root = request.script_root
+        setup_path = f"{script_root}/setup"
+        static_path = f"{script_root}/static/"
+        api_setup_path = f"{script_root}/api/setup"
+        
+        if request.path != setup_path and not request.path.startswith((static_path, api_setup_path)):
+            return redirect(setup_path)
         return None
     
     # Skip authentication for static files and the login/setup pages
-    if request.path.startswith(("/static/", "/login", "/api/login", "/setup", "/api/setup")) or request.path == "/favicon.ico":
+    script_root = request.script_root
+    static_path = f"{script_root}/static/"
+    login_path = f"{script_root}/login"
+    api_login_path = f"{script_root}/api/login"
+    setup_path = f"{script_root}/setup"
+    api_setup_path = f"{script_root}/api/setup"
+    favicon_path = f"{script_root}/favicon.ico"
+    
+    if request.path.startswith((static_path, login_path, api_login_path, setup_path, api_setup_path)) or request.path == favicon_path:
         return None
     
     # Check if the request is from a local network and bypass authentication if enabled
@@ -354,8 +367,12 @@ def authenticate_request():
         return None
     
     # No valid session, redirect to login
-    if request.path != "/login" and not request.path.startswith("/api/"):
-        return redirect("/login")
+    script_root = request.script_root
+    login_path = f"{script_root}/login"
+    api_path = f"{script_root}/api/"
+    
+    if request.path != login_path and not request.path.startswith(api_path):
+        return redirect(login_path)
     
     # For API calls, return 401 Unauthorized
     if request.path.startswith("/api/"):
