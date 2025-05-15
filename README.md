@@ -210,12 +210,21 @@ You can install Huntarr using the Unraid App Store.
 If not, you can run this from Command Line in Unraid:
 
 ```bash
+# Option 1: DockerHub
 docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
   -v /mnt/user/appdata/huntarr:/config \
   -e TZ=America/New_York \
   huntarr/huntarr:latest
+  
+# Option 2: GitHub Container Registry
+docker run -d --name huntarr \
+  --restart always \
+  -p 9705:9705 \
+  -v /mnt/user/appdata/huntarr:/config \
+  -e TZ=America/New_York \
+  ghcr.io/plexguide/huntarr:latest
 ```
 
 ## The Perfect Pair: Huntarr & Cleanuperr
