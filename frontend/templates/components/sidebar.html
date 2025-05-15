@@ -6,8 +6,15 @@
     </div>
     
     <nav class="nav-menu">
+        <!-- Project Sponsors Link -->
+        <a href="https://github.com/sponsors/plexguide" class="nav-item" target="_blank" rel="noopener noreferrer">
+            <div class="nav-icon-wrapper heart-icon">
+                <i class="fas fa-heart"></i>
+            </div>
+            <span>Project Sponsors</span>
+        </a>
         <!-- Core Navigation Group -->
-        <div class="nav-group">
+        <div class="nav-group" style="margin-top: -10px;">
             <div class="nav-group-title">Core</div>
             <a href="/" class="nav-item" id="homeNav">
                 <div class="nav-icon-wrapper">
@@ -67,17 +74,29 @@
                 </div>
                 <span>My AV1 Guide</span>
             </a>
-            <a href="https://github.com/sponsors/plexguide" class="nav-item" target="_blank" rel="noopener noreferrer">
-                <div class="nav-icon-wrapper heart-icon">
-                    <i class="fas fa-heart"></i>
-                </div>
-                <span>Project Sponsors</span>
-            </a>
+            <!-- Project Sponsors removed from here and placed above CORE -->
         </div>
     </nav>
 </div>
 
 <style>
+    /* Heart icon styling for project sponsors */
+    .heart-icon {
+        color: #e74c3c;
+        animation: pulse-heart 1.5s infinite alternate;
+    }
+    
+    @keyframes pulse-heart {
+        0% {
+            transform: scale(1);
+            opacity: 0.7;
+        }
+        100% {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+    }
+    
     .sidebar {
         width: 250px;
         height: 100vh;
@@ -111,8 +130,9 @@
     .logo-container {
         display: flex;
         align-items: center;
-        padding: 20px;
-        border-bottom: 1px solid rgba(90, 109, 137, 0.15);
+        padding: 15px 20px 0px;
+        border-bottom: none;
+        margin-bottom: -25px;
     }
     
     /* Define logo glowing animation */
@@ -195,7 +215,13 @@
     }
     
     .nav-group {
-        margin-bottom: 15px;
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+    
+    /* Specific adjustment for the Core nav group */
+    .nav-group:first-of-type {
+        margin-top: 0;
     }
     
     .nav-group-title {
