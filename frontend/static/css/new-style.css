@@ -852,8 +852,12 @@ section[id*="scheduling"] select.form-control,
 }
 
 /* Ensure section header handles flex layout properly */
-/* Remove background from apps section header specifically */
-#appsSection .section-header {
+/* Remove background from all section headers */
+#appsSection .section-header,
+#settingsSection .section-header,
+#schedulingSection .section-header,
+#logsSection .section-header,
+#historySection .section-header {
     background-color: transparent !important;
     background: none !important;
     border: none !important;

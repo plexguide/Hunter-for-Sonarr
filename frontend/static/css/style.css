@@ -1394,7 +1394,16 @@ label .info-icon ~ text {
     display: block;
 }
 
-/* Instance panel styling */
+.app-apps-panel.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0px;
+    margin-bottom: 20px;
+    background-color: transparent !important;
+    border: none !important;
+}
+
 .instance-panel {
     background-color: var(--bg-secondary, #2c2c2c);
     border-radius: 4px;

@@ -9,14 +9,12 @@
     justify-content: space-between !important;
     align-items: center !important;
     flex-wrap: wrap !important;
-    background-color: #252a34 !important;
-    border-radius: 8px !important;
-    padding: 15px 20px !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    padding: 15px 0 !important;
     margin-bottom: 20px !important;
-    min-height: 60px !important;
-    max-height: 60px !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
-    border-bottom: none !important;
+    box-shadow: none !important;
+    border: none !important;
 }
 
 /* Better handling of the Save button in the settings header */
