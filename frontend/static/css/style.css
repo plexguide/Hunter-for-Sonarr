@@ -1518,9 +1518,11 @@ label .info-icon ~ text {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--border-color, #3c3c3c);
-    padding-bottom: 10px;
+    margin-bottom: 15px;
+    background: none !important;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
 }
 
 #appsSection .settings-group {
