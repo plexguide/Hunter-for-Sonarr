@@ -2,45 +2,67 @@
     <style>
         /* Make support-link and community-link buttons 20% shorter in height */
         .support-link, .community-link {
-            padding: 8px !important; /* Reduced padding to make buttons shorter */
+            padding: 5px !important; /* Further reduced padding */
             min-height: 0 !important; /* Allow height to be determined by content + padding */
         }
         
-        /* Keep icon containers perfectly circular */
+        /* Keep icon containers perfectly circular but smaller */
         .support-links-grid .icon-container, .community-links-grid .icon-container {
             aspect-ratio: 1/1 !important; /* Maintain perfect circle */
             border-radius: 50% !important; /* Ensure circular shape */
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            transform: scale(0.85) !important; /* Make icons slightly smaller */
         }
         
-        /* Maintain proper spacing */
+        /* Maintain proper spacing with reduced padding */
         .support-links-grid, .community-links-grid {
-            padding: 8px !important; /* Reduced padding */
-            gap: 8px !important; /* Reduced gap between items */
+            padding: 4px !important; /* Reduced padding further */
+            gap: 6px !important; /* Smaller gap between items */
         }
         
-        /* Adjust text size slightly to fit better in shorter buttons */
+        /* Adjust text size for compact fit */
         .link-title {
-            font-size: 0.95em !important;
+            font-size: 0.9em !important;
+            margin-bottom: 1px !important;
         }
         
         .link-description {
-            font-size: 0.85em !important;
+            font-size: 0.8em !important;
         }
         
-        /* Reduce Community & Resources header height by 50% */
+        /* Reduce Community & Resources header height */
         .community-hub-card .card-header {
-            padding: 6px 15px !important; /* Reduced top/bottom padding by 50% */
+            padding: 4px 15px !important; /* Reduced padding further */
             min-height: 0 !important;
             height: auto !important;
         }
         
         .community-hub-card .card-header h3 {
             margin: 0 !important;
-            font-size: 16px !important; /* Slightly smaller font size */
-            line-height: 1.4 !important; /* Tighter line height */
+            font-size: 15px !important; /* Slightly smaller font size */
+            line-height: 1.3 !important; /* Tighter line height */
+        }
+        
+        /* Reduce height of both container cards by 35% */
+        .support-links-card, .community-hub-card {
+            padding: 8px !important; /* Reduced padding from default */
+            margin-bottom: 8px !important;
+        }
+        
+        .support-links-container, .community-resources-container {
+            padding: 2px !important;
+        }
+        
+        /* Tighten up the entire dashboard grid */
+        .dashboard-grid {
+            gap: 10px !important; /* Reduced gap between cards */
+        }
+        
+        /* Add slight negative margin to buttons to tighten layout */
+        .support-link .link-details, .community-link .link-details {
+            margin-top: -3px !important;
         }
     </style>
     <div class="dashboard-grid stack-layout mobile-scrollable">
