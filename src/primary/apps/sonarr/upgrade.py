@@ -22,12 +22,13 @@ def process_cutoff_upgrades(
     instance_name: str,
     api_timeout: int = get_advanced_setting("api_timeout", 120),
     monitored_only: bool = True,
-
+    # series_type: str = "standard",  # TODO: Add series type filtering (standard, daily, anime)
     hunt_upgrade_items: int = 5,
     upgrade_mode: str = "episodes",
     command_wait_delay: int = get_advanced_setting("command_wait_delay", 1),
     command_wait_attempts: int = get_advanced_setting("command_wait_attempts", 600),
-    stop_check: Callable[[], bool] = lambda: False
+    stop_check: Callable[[], bool] = lambda: False,
+    skip_series_refresh: bool = False
 ) -> bool:
     """
     Process quality cutoff upgrades for Sonarr.
@@ -45,7 +46,8 @@ def process_cutoff_upgrades(
     if upgrade_mode == "seasons_packs":
         return process_upgrade_seasons_mode(
             api_url, api_key, instance_name, api_timeout, monitored_only, 
-            hunt_upgrade_items, command_wait_delay, command_wait_attempts, stop_check
+            hunt_upgrade_items, command_wait_delay, command_wait_attempts, stop_check,
+            skip_series_refresh
         )
     else:  # Default to episodes mode
         return process_upgrade_episodes_mode(
@@ -256,7 +258,8 @@ def process_upgrade_seasons_mode(
     hunt_upgrade_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
-    stop_check: Callable[[], bool]
+    stop_check: Callable[[], bool],
+    skip_series_refresh: bool
 ) -> bool:
     """Process upgrades in season mode - groups episodes by season."""
     processed_any = False
