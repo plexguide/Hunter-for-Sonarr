@@ -157,8 +157,6 @@ def process_upgrade_episodes_mode(
         series_title = series_titles.get(series_id, f"Series ID {series_id}")
         sonarr_logger.info(f"Processing series for upgrades: {series_title} (ID: {series_id}) with {len(episode_ids)} episodes.")
 
-        # Refresh functionality has been removed as it was identified as a performance bottleneck
-
         if stop_check(): 
             sonarr_logger.info("Stop requested during episode processing for upgrades.")
             break
@@ -341,9 +339,6 @@ def process_upgrade_seasons_mode(
         
         sonarr_logger.info(f"Processing {series_title} - Season {season_number} with {len(episode_ids)} cutoff unmet episodes")
         
-        # Series refresh logic removed as it was causing 404 errors
-        # and sonarr_api.refresh_series is a stubbed function
-                
         if stop_check(): 
             sonarr_logger.info("Stop requested during season processing.")
             break
@@ -517,20 +512,6 @@ def process_upgrade_shows_mode(
             
         sonarr_logger.info(f"Processing {series_title} with {len(episode_ids)} cutoff unmet episodes")
         
-        # Refresh series metadata if not skipped
-        if not skip_series_refresh:
-            sonarr_logger.debug(f"Attempting to refresh series ID: {series_id}")
-            refresh_command_id = sonarr_api.refresh_series(api_url, api_key, api_timeout, series_id)
-            if refresh_command_id:
-                # Wait for refresh command to complete
-                if not wait_for_command(
-                    api_url, api_key, api_timeout, refresh_command_id,
-                    command_wait_delay, command_wait_attempts, "Series Refresh (Upgrade)", stop_check
-                ):
-                    sonarr_logger.warning(f"Series refresh command for {series_title} did not complete successfully or timed out.")
-            else:
-                sonarr_logger.warning(f"Failed to trigger refresh command for series {series_title}")
-                
         if stop_check(): 
             sonarr_logger.info("Stop requested during show processing.")
             break
