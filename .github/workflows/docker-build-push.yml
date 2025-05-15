@@ -35,7 +35,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            plexguide/huntarr
+            huntarr/huntarr
             ghcr.io/plexguide/huntarr
           tags: |
             type=ref,event=branch
