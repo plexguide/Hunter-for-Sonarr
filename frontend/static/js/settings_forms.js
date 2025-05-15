@@ -263,16 +263,16 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="skip_future_releases"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Future Releases:</label>
+                    <label for="radarr_skip_future_releases"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Skip Future Releases:</label>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
+                        <input type="checkbox" id="radarr_skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Skip searching for movies with future release dates</p>
                 </div>
                 <div class="setting-item" id="future_release_type_container" style="${settings.skip_future_releases !== false ? '' : 'display: none;'}">
-                    <label for="release_type"><a href="https://huntarr.io/threads/radarr-release-type.24/" class="info-icon" title="Learn more about release type options" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Release Type for Future Status:</label>
-                    <select id="release_type">
+                    <label for="radarr_release_type"><a href="https://huntarr.io/threads/radarr-release-type.24/" class="info-icon" title="Learn more about release type options" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Release Type for Future Status:</label>
+                    <select id="radarr_release_type">
                         <option value="digital" ${settings.release_type === 'digital' ? 'selected' : ''}>Digital Release</option>
                         <option value="physical" ${settings.release_type === 'physical' || !settings.release_type ? 'selected' : ''}>Physical Release</option>
                         <option value="cinema" ${settings.release_type === 'cinema' ? 'selected' : ''}>Cinema Release</option>
@@ -286,7 +286,7 @@ const SettingsForms = {
         SettingsForms.setupInstanceManagement(container, 'radarr', settings.instances.length);
         
         // Set up event listeners for the skip_future_releases checkbox
-        const skipFutureCheckbox = container.querySelector('#skip_future_releases');
+        const skipFutureCheckbox = container.querySelector('#radarr_skip_future_releases');
         const releaseTypeContainer = container.querySelector('#future_release_type_container');
         
         if (skipFutureCheckbox) {
