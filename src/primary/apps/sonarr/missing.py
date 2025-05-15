@@ -451,19 +451,8 @@ def process_missing_shows_mode(
         if len(missing_episodes) > 5:
             sonarr_logger.debug(f"  ... and {len(missing_episodes)-5} more episodes.")
         
-        # Refresh series if not skipped
-        # Refresh functionality has been removed
-            sonarr_logger.info(f"Refreshing series info for {show_title}...")
-            refresh_command_id = sonarr_api.refresh_series(api_url, api_key, api_timeout, show_id)
-            if refresh_command_id:
-                wait_success = wait_for_command(
-                    api_url, api_key, api_timeout, refresh_command_id,
-                    command_wait_delay, command_wait_attempts, "Series Refresh", stop_check
-                )
-                if not wait_success:
-                    sonarr_logger.warning(f"Series refresh command timed out or failed for {show_title}. Proceeding with search anyway.")
-            else:
-                sonarr_logger.warning(f"Failed to trigger refresh command for {show_title}. Proceeding with search anyway.")
+        # Series refresh functionality has been completely removed
+        # No longer performing refresh before search to avoid API rate limiting and unnecessary delays
         
         # Extract episode IDs to search
         episode_ids = [episode.get('id') for episode in missing_episodes if episode.get('id')]
