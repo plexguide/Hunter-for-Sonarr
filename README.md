@@ -57,7 +57,7 @@ For detailed documentation, please visit our [Wiki](https://github.com/plexguide
 <p align="center">
   Join the community on Discord!
   <br>
-  <a href="https://discord.gg/VQbZCGzQsn" target="_blank">
+  <a href="https://discord.com/invite/PGJJjR5Cww" target="_blank">
     <img src="frontend/static/images/discord.png" alt="Discord" width="48" height="48">
   </a>
 </p>
