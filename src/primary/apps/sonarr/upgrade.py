@@ -27,8 +27,7 @@ def process_cutoff_upgrades(
     upgrade_mode: str = "episodes",
     command_wait_delay: int = get_advanced_setting("command_wait_delay", 1),
     command_wait_attempts: int = get_advanced_setting("command_wait_attempts", 600),
-    stop_check: Callable[[], bool] = lambda: False,
-    skip_series_refresh: bool = False
+    stop_check: Callable[[], bool] = lambda: False
 ) -> bool:
     """
     Process quality cutoff upgrades for Sonarr.
@@ -46,8 +45,7 @@ def process_cutoff_upgrades(
     if upgrade_mode == "seasons_packs":
         return process_upgrade_seasons_mode(
             api_url, api_key, instance_name, api_timeout, monitored_only, 
-            hunt_upgrade_items, command_wait_delay, command_wait_attempts, stop_check,
-            skip_series_refresh
+            hunt_upgrade_items, command_wait_delay, command_wait_attempts, stop_check
         )
     else:  # Default to episodes mode
         return process_upgrade_episodes_mode(
@@ -162,7 +160,7 @@ def process_upgrade_episodes_mode(
         # Refresh functionality has been removed as it was identified as a performance bottleneck
 
         if stop_check(): 
-            sonarr_logger.info("Stop requested after series refresh attempt for upgrades.")
+            sonarr_logger.info("Stop requested during episode processing for upgrades.")
             break
 
         # Trigger search for the selected episodes in this series
@@ -258,8 +256,7 @@ def process_upgrade_seasons_mode(
     hunt_upgrade_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
-    stop_check: Callable[[], bool],
-    skip_series_refresh: bool
+    stop_check: Callable[[], bool]
 ) -> bool:
     """Process upgrades in season mode - groups episodes by season."""
     processed_any = False
@@ -336,7 +333,7 @@ def process_upgrade_seasons_mode(
     # Process each selected season
     for series_id, season_number, _, series_title in seasons_to_process:
         if stop_check(): 
-            sonarr_logger.info("Stop requested before processing next season.")
+            sonarr_logger.info("Stop requested during season processing.")
             break
             
         episodes = series_season_episodes[series_id][season_number]
@@ -344,22 +341,11 @@ def process_upgrade_seasons_mode(
         
         sonarr_logger.info(f"Processing {series_title} - Season {season_number} with {len(episode_ids)} cutoff unmet episodes")
         
-        # Refresh series metadata if not skipped
-        if not skip_series_refresh:
-            sonarr_logger.debug(f"Attempting to refresh series ID: {series_id}")
-            refresh_command_id = sonarr_api.refresh_series(api_url, api_key, api_timeout, series_id)
-            if refresh_command_id:
-                # Wait for refresh command to complete
-                if not wait_for_command(
-                    api_url, api_key, api_timeout, refresh_command_id,
-                    command_wait_delay, command_wait_attempts, "Series Refresh (Upgrade)", stop_check
-                ):
-                    sonarr_logger.warning(f"Series refresh command for {series_title} did not complete successfully or timed out.")
-            else:
-                sonarr_logger.warning(f"Failed to trigger refresh command for series {series_title}")
+        # Series refresh logic removed as it was causing 404 errors
+        # and sonarr_api.refresh_series is a stubbed function
                 
         if stop_check(): 
-            sonarr_logger.info("Stop requested after series refresh attempt.")
+            sonarr_logger.info("Stop requested during season processing.")
             break
             
         # Trigger search for the entire season instead of individual episodes
@@ -546,7 +532,7 @@ def process_upgrade_shows_mode(
                 sonarr_logger.warning(f"Failed to trigger refresh command for series {series_title}")
                 
         if stop_check(): 
-            sonarr_logger.info("Stop requested after series refresh attempt.")
+            sonarr_logger.info("Stop requested during show processing.")
             break
             
         # Trigger search for all cutoff unmet episodes in this series
@@ -647,11 +633,13 @@ def wait_for_command(
             return False
             
         command_status = sonarr_api.get_command_status(api_url, api_key, api_timeout, command_id)
-        if not command_status:
-            sonarr_logger.warning(f"Failed to get status for {command_name} (ID: {command_id}), attempt {attempts+1}")
-            attempts += 1
-            time.sleep(wait_delay)
-            continue
+        
+        if command_status is None: 
+            sonarr_logger.warning(
+                f"Failed to get status for {command_name} (ID: {command_id}), attempt {attempts+1}. "
+                f"Command may have already completed or the ID is no longer valid."
+            )
+            return False # Stop polling if command ID is not found or error occurs
             
         status = command_status.get('status')
         if status == 'completed':
