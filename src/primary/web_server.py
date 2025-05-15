@@ -921,6 +921,18 @@ def reset_app_cycle(app_name):
             'error': f"Failed to reset cycle for {app_name}. The app may not be running."
         }), 500
 
+# Docker health check endpoint
+@app.route('/ping', methods=['GET'])
+def health_check():
+    """
+    Simple health check endpoint for Docker health checks.
+    Returns a status OK response to indicate the application is running properly.
+    This follows the pattern of other *arr applications.
+    """
+    logger = get_logger("system")
+    logger.debug("Health check endpoint accessed")
+    return jsonify({"status": "OK"})
+
 # Start the web server in debug or production mode
 def start_web_server():
     """Start the web server in debug or production mode"""
