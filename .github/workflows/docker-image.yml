@@ -8,6 +8,10 @@ on:
   pull_request:
     branches:
       - main
+
+permissions:
+  contents: read
+  packages: write  # Permission to write to GitHub Container Registry
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -32,13 +36,22 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       
-      # 5) Log in to Docker Hub
+      # 5a) Log in to Docker Hub
       - name: Log in to Docker Hub
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          
+      # 5b) Log in to GitHub Container Registry
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       
       # 6) Extract metadata (version, branch name, etc.)
       - name: Extract metadata
@@ -63,6 +76,8 @@ jobs:
           tags: |
             huntarr/huntarr:latest
             huntarr/huntarr:${{ github.sha }}
+            ghcr.io/plexguide/huntarr:latest
+            ghcr.io/plexguide/huntarr:${{ github.sha }}
       
       # 7b) Build & Push if on 'dev' branch
       - name: Build and Push (dev)
@@ -75,6 +90,8 @@ jobs:
           tags: |
             huntarr/huntarr:dev
             huntarr/huntarr:${{ github.sha }}
+            ghcr.io/plexguide/huntarr:dev
+            ghcr.io/plexguide/huntarr:${{ github.sha }}
       
       # 7c) Build & Push if it's a tag/release
       - name: Build and Push (release)
@@ -87,6 +104,8 @@ jobs:
           tags: |
             huntarr/huntarr:${{ steps.meta.outputs.VERSION }}
             huntarr/huntarr:latest
+            ghcr.io/plexguide/huntarr:${{ steps.meta.outputs.VERSION }}
+            ghcr.io/plexguide/huntarr:latest
       
       # 7d) Build & Push for any other branch
       - name: Build and Push (feature branch)
@@ -99,6 +118,8 @@ jobs:
           tags: |
             huntarr/huntarr:${{ steps.meta.outputs.BRANCH }}
             huntarr/huntarr:${{ github.sha }}
+            ghcr.io/plexguide/huntarr:${{ steps.meta.outputs.BRANCH }}
+            ghcr.io/plexguide/huntarr:${{ github.sha }}
       
       # 7e) Just build on pull requests
       - name: Build (PR)
