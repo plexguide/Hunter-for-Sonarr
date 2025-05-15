@@ -154,12 +154,21 @@ To ensure data persistence, make sure you map the `/config` directory to a persi
 The simplest way to run Huntarr is via Docker (all configuration is done via the web UI):
 
 ```bash
+# Option 1: DockerHub
 docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
   -v /your-path/huntarr:/config \
   -e TZ=America/New_York \
   huntarr/huntarr:latest
+
+# Option 2: GitHub Container Registry
+docker run -d --name huntarr \
+  --restart always \
+  -p 9705:9705 \
+  -v /your-path/huntarr:/config \
+  -e TZ=America/New_York \
+  ghcr.io/plexguide/huntarr:latest
 ```
 
 To check on the status of the program, you can use the web interface at http://YOUR_SERVER_IP:9705 or check the logs with:
@@ -174,7 +183,10 @@ For those who prefer Docker Compose, add this to your `docker-compose.yml` file:
 ```yaml
 services:
   huntarr:
+    # Option 1: DockerHub
     image: huntarr/huntarr:latest
+    # Option 2: GitHub Container Registry
+    # image: ghcr.io/plexguide/huntarr:latest
     container_name: huntarr
     restart: always
     ports:
