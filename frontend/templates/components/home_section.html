@@ -1,4 +1,48 @@
 <section id="homeSection" class="content-section">
+    <style>
+        /* Make support-link and community-link buttons 20% shorter in height */
+        .support-link, .community-link {
+            padding: 8px !important; /* Reduced padding to make buttons shorter */
+            min-height: 0 !important; /* Allow height to be determined by content + padding */
+        }
+        
+        /* Keep icon containers perfectly circular */
+        .support-links-grid .icon-container, .community-links-grid .icon-container {
+            aspect-ratio: 1/1 !important; /* Maintain perfect circle */
+            border-radius: 50% !important; /* Ensure circular shape */
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        /* Maintain proper spacing */
+        .support-links-grid, .community-links-grid {
+            padding: 8px !important; /* Reduced padding */
+            gap: 8px !important; /* Reduced gap between items */
+        }
+        
+        /* Adjust text size slightly to fit better in shorter buttons */
+        .link-title {
+            font-size: 0.95em !important;
+        }
+        
+        .link-description {
+            font-size: 0.85em !important;
+        }
+        
+        /* Reduce Community & Resources header height by 50% */
+        .community-hub-card .card-header {
+            padding: 6px 15px !important; /* Reduced top/bottom padding by 50% */
+            min-height: 0 !important;
+            height: auto !important;
+        }
+        
+        .community-hub-card .card-header h3 {
+            margin: 0 !important;
+            font-size: 16px !important; /* Slightly smaller font size */
+            line-height: 1.4 !important; /* Tighter line height */
+        }
+    </style>
     <div class="dashboard-grid stack-layout mobile-scrollable">
         <!-- Enhanced Support Links with Modern Design -->
         <div class="card support-links-card">
