@@ -61,10 +61,15 @@ def generate_instance_list():
     scheduling_dir = config_dir / "scheduling"
     os.makedirs(scheduling_dir, exist_ok=True)
     
-    # Also save to a web-accessible location
-    web_accessible_dir = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))) / "frontend" / "static" / "data"
-    os.makedirs(web_accessible_dir, exist_ok=True)
-    logger.debug(f"Web accessible directory: {web_accessible_dir}")
+    # Also try to save to a web-accessible location
+    try:
+        web_accessible_dir = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))) / "frontend" / "static" / "data"
+        os.makedirs(web_accessible_dir, exist_ok=True)
+        logger.debug(f"Web accessible directory: {web_accessible_dir}")
+        web_accessible_path_valid = True
+    except (PermissionError, OSError) as e:
+        logger.debug(f"Cannot create web-accessible directory: {e}. Will only save to config directory.")
+        web_accessible_path_valid = False
     
     # Scan each app's config file
     for app_type in app_types:
@@ -118,10 +123,16 @@ def generate_instance_list():
     with open(list_file, 'w') as f:
         json.dump(instances, f, indent=2)
     
-    # Also write to web-accessible location
-    web_list_file = web_accessible_dir / "app_instances.json"
-    with open(web_list_file, 'w') as f:
-        json.dump(instances, f, indent=2)
-    
-    logger.debug(f"Instance list generated successfully at {list_file} and {web_list_file}")
+    # Also write to web-accessible location if path is valid
+    if web_accessible_path_valid:
+        try:
+            web_list_file = web_accessible_dir / "app_instances.json"
+            with open(web_list_file, 'w') as f:
+                json.dump(instances, f, indent=2)
+            logger.debug(f"Instance list generated successfully at {list_file} and {web_list_file}")
+        except (PermissionError, OSError) as e:
+            logger.debug(f"Cannot write to web-accessible file: {e}")
+            logger.debug(f"Instance list generated successfully at {list_file} only")
+    else:
+        logger.debug(f"Instance list generated successfully at {list_file} only")
     return instances
