@@ -1,4 +1,4 @@
-name: Deploy Huntarr Documentation
+name: Deploy Docusaurus to GitHub Pages
 
 on:
   push:
@@ -7,66 +7,51 @@ on:
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'docs/**'
-  # Allow manual trigger
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
-  actions: write
 
 # Allow only one concurrent deployment
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  deploy:
+    name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
-    # Enable for debugging issues
-    timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-        
-      - name: Build Documentation
-        run: |
-          # Copy the assets needed for documentation
-          mkdir -p docs/assets
-          cp -r frontend/static/css docs/assets/css || true
-          cp -r frontend/static/js docs/assets/js || true
-          cp -r frontend/static/img docs/assets/img || true
-          cp -r assets/logo docs/assets/logo || true
-          
-      # Try standard GitHub Pages deployment first
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './docs'
-          
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v3
-        if: github.event_name != 'pull_request'
-        continue-on-error: true
+        uses: actions/checkout@v3
       
-      # Fallback deployment method if first method fails
-      - name: Deploy to GitHub Pages (Fallback)
-        if: steps.deployment.outcome == 'failure' && github.event_name != 'pull_request'
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          folder: docs
-          branch: gh-pages 
+          node-version: 18
+          cache: 'npm'
+      
+      - name: Install dependencies
+        working-directory: ./docs
+        run: |
+          npm install
+
+      - name: Build website
+        working-directory: ./docs
+        run: |
+          npm run build
+
+      # Popular action to deploy to GitHub Pages:
+      # Docs: https://github.com/peaceiris/actions-gh-pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Build output to publish to the `gh-pages` branch:
+          publish_dir: ./docs/build
+          # Assign commit authorship to the official GH-Actions bot
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com 
