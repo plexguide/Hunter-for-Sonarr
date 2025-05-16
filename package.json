@@ -1,0 +1,14 @@
+{
+  "name": "huntarr-docs-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "docs:install": "cd docs && npm install",
+    "docs:start": "cd docs && npm start",
+    "docs:build": "cd docs && npm run build",
+    "docs:serve": "cd docs && npm run serve"
+  },
+  "workspaces": [
+    "docs"
+  ]
+} 
