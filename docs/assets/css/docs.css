@@ -1,0 +1,295 @@
+:root {
+  --background-color: #181c25;
+  --text-color: #e0e6ed;
+  --accent-color: #3498db;
+  --accent-hover: #2980b9;
+  --secondary-color: #2c3e50;
+  --border-color: rgba(90, 109, 137, 0.2);
+  --sidebar-background: #10151f;
+  --search-background: #263244;
+  --code-background: #0f1620;
+  --blockquote-border: #3498db;
+  --section-border: rgba(79, 93, 115, 0.2);
+  --section-background: rgba(15, 20, 30, 0.5);
+  --link-color: #5acdff;
+  --link-hover-color: #00aef0;
+}
+
+/* Base styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
+/* Sidebar */
+.sidebar {
+  background-color: var(--sidebar-background);
+  border-right: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.sidebar-toggle {
+  background-color: var(--sidebar-background);
+}
+
+.sidebar ul li a {
+  color: var(--text-color);
+}
+
+.sidebar ul li.active > a {
+  color: var(--accent-color);
+  border-right: 2px solid var(--accent-color);
+}
+
+.sidebar ul li a:hover {
+  text-decoration: none;
+  color: var(--accent-hover);
+}
+
+/* Content area */
+.content {
+  padding-top: 40px;
+}
+
+/* Links */
+a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--link-hover-color);
+  text-decoration: underline;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 2.2rem;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 1.8rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Code blocks */
+pre {
+  background-color: var(--code-background);
+  border-radius: 5px;
+  padding: 1rem;
+  margin: 1rem 0;
+  overflow: auto;
+}
+
+code {
+  background-color: var(--code-background);
+  border-radius: 3px;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, Courier New, monospace;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.85rem;
+}
+
+/* Blockquotes */
+blockquote {
+  border-left: 4px solid var(--blockquote-border);
+  padding-left: 20px;
+  margin-left: 0;
+  background-color: rgba(52, 152, 219, 0.1);
+  border-radius: 0 4px 4px 0;
+  padding: 1rem 1rem 1rem 20px;
+}
+
+blockquote p {
+  margin: 0;
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  display: table;
+  overflow: auto;
+}
+
+table thead {
+  background-color: var(--secondary-color);
+}
+
+table th, table td {
+  border: 1px solid var(--border-color);
+  padding: 0.6rem;
+  text-align: left;
+}
+
+table tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Search box */
+.search {
+  margin-bottom: 20px;
+  padding: 6px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.search input {
+  background-color: var(--search-background);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.5rem;
+  width: 100%;
+}
+
+.search input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+/* Cards for special sections */
+.card {
+  background-color: var(--section-background);
+  border: 1px solid var(--section-border);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.card h3 {
+  margin-top: 0;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 4px;
+  background-color: var(--accent-color);
+  color: white;
+  text-decoration: none;
+  transition: background-color 0.3s;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn:hover {
+  background-color: var(--accent-hover);
+  text-decoration: none;
+  color: white;
+}
+
+/* Docsify overrides */
+.app-name-link img {
+  max-width: 150px;
+}
+
+.markdown-section {
+  max-width: 900px;
+  padding: 30px 15px 40px;
+}
+
+.markdown-section code {
+  color: #e06c75;
+}
+
+.markdown-section pre>code {
+  color: var(--text-color);
+}
+
+/* Custom Huntarr styles */
+.app-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin: 30px 0;
+}
+
+.app-icon-card {
+  background: rgba(24, 28, 37, 0.8);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(120, 140, 180, 0.15);
+  overflow: hidden;
+}
+
+.app-icon-card img {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.app-icon-card h4 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.app-icon-card p {
+  margin: 0;
+  color: rgba(224, 230, 237, 0.7);
+  font-size: 14px;
+}
+
+/* Feature list */
+.feature-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 20px 0;
+}
+
+.feature-list li {
+  padding: 10px 0 10px 30px;
+  position: relative;
+}
+
+.feature-list li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .markdown-section {
+    padding: 20px 15px;
+  }
+  
+  h1 {
+    font-size: 1.8rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.3rem;
+  }
+} 
