@@ -128,10 +128,9 @@ button {
 /* Content Section styles */
 .content-section {
     display: none;
-    padding: 20px;
-    height: calc(100vh - 60px); /* 60px is topbar height */
+    height: calc(100vh - 30px); /* Reduced from 60px to match the new top bar height */
     overflow-y: auto;
-    box-sizing: border-box;
+    padding: 20px;
 }
 
 .content-section.active {
@@ -322,7 +321,7 @@ input:checked + .slider:before {
 /* Content Sections */
 .content-section {
     display: none;
-    height: calc(100vh - 60px);
+    height: calc(100vh - 30px); /* Reduced from 60px to match the new top bar height */
     overflow-y: auto;
     padding: 20px;
 }
@@ -582,7 +581,7 @@ input:checked + .slider:before {
 }
 
 .logs {
-    height: calc(100vh - 160px);
+    height: calc(100vh - 130px); /* Reduced from 160px to account for smaller header */
     background-color: var(--log-bg);
     border: 1px solid var(--log-border);
     border-radius: 8px;
