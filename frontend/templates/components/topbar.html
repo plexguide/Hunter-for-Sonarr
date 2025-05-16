@@ -228,6 +228,40 @@
             align-items: center !important;
         }
     }
+    
+    /* Phone-specific styling for very small screens */
+    @media (max-width: 480px) {
+        .top-bar {
+            height: 80px; /* Increased height for phones to accommodate wrapped version info */
+            flex-direction: column;
+            justify-content: center;
+            padding: 5px 10px;
+        }
+        
+        .topbar-section.left {
+            margin: 0 0 5px 0;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .topbar-section.center {
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .version-bar {
+            justify-content: center;
+            flex-wrap: wrap !important;
+            gap: 5px !important;
+        }
+        
+        /* Make the page title centered */
+        .page-title {
+            width: 100%;
+            text-align: center;
+            margin: 0 0 4px 0;
+        }
+    }
     @media (max-width: 1024px) {
         /* Sidebar: icons only */
         .sidebar .nav-item span {

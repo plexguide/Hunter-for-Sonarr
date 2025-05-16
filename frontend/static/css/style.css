@@ -330,7 +330,7 @@ input:checked + .slider:before {
     display: block;
 }
 
-/* Responsive adjustments for content section height */
+/* Responsive adjustments for mobile view */
 @media (max-width: 768px) {
     .content-section {
         height: calc(100vh - 50px); /* Account for taller topbar in mobile */
@@ -355,6 +355,21 @@ input:checked + .slider:before {
         display: flex;
         align-items: center;
         flex-wrap: nowrap;
+    }
+}
+
+/* Phone-specific height adjustments */
+@media (max-width: 480px) {
+    .content-section {
+        height: calc(100vh - 80px); /* Account for the taller stacked header on phones */
+    }
+    
+    .logs {
+        height: calc(100vh - 180px); /* Adjust logs container for taller phone header */
+    }
+    
+    .page-title {
+        font-size: 1.2rem; /* Slightly smaller font for phone */
     }
 }
 
