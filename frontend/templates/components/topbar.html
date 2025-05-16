@@ -35,7 +35,7 @@
 
 <style>
     .top-bar {
-        height: 30px;
+        height: 30px; /* Desktop reduced height */
         background: linear-gradient(135deg, rgba(30, 39, 56, 0.95) 0%, rgba(14, 20, 32, 0.95) 50%, rgba(16, 24, 36, 0.95) 100%);
         display: flex;
         align-items: center;
@@ -138,9 +138,14 @@
     
     /* Responsive styling */
     @media (max-width: 768px) {
+        .top-bar {
+            height: 50px; /* Increased height for mobile to fit version info */
+            flex-wrap: wrap;
+        }
         .version-bar {
             display: flex !important;
             gap: 8px !important;
+            flex-wrap: wrap;
         }
         .version-item {
             display: none !important;
@@ -183,6 +188,29 @@
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
+        }
+        .topbar-section.center {
+            justify-content: center;
+            width: 100%;
+            order: 2;
+            margin-top: 5px;
+        }
+        
+        .topbar-section.left,
+        .topbar-section.right {
+            flex: 0 0 auto;
+        }
+        
+        .version-item {
+            padding: 3px 5px;
+        }
+        
+        .version-item:nth-child(1),
+        .version-item:nth-child(3) {
+            background: rgba(30, 39, 56, 0.6);
+            border-radius: 4px;
+            padding: 3px 6px;
+            border: 1px solid rgba(90, 109, 137, 0.2);
         }
     }
     @media (max-width: 1024px) {

@@ -330,6 +330,17 @@ input:checked + .slider:before {
     display: block;
 }
 
+/* Responsive adjustments for content section height */
+@media (max-width: 768px) {
+    .content-section {
+        height: calc(100vh - 50px); /* Account for taller topbar in mobile */
+    }
+    
+    .logs {
+        height: calc(100vh - 150px); /* Adjust logs container for mobile topbar */
+    }
+}
+
 /* Cards */
 .dashboard-grid {
     display: grid;
