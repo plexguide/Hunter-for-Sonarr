@@ -1365,6 +1365,11 @@ let huntarrUI = {
                 } else {
                     this.loadStatefulInfo();
                 }
+                
+                // Dispatch a custom event that community-resources.js can listen for
+                window.dispatchEvent(new CustomEvent('settings-saved', {
+                    detail: { appType: app, settings: settings }
+                }));
             }
         })
         .catch(error => {

@@ -1053,6 +1053,7 @@ const SettingsForms = {
         if (appType === 'general') {
             settings.check_for_updates = getInputValue('#check_for_updates', true);
             settings.debug_mode = getInputValue('#debug_mode', false);
+            settings.display_community_resources = getInputValue('#display_community_resources', true);
             settings.api_timeout = getInputValue('#api_timeout', 120);
             settings.command_wait_delay = getInputValue('#command_wait_delay', 1);
             settings.command_wait_attempts = getInputValue('#command_wait_attempts', 600);
@@ -1205,6 +1206,14 @@ const SettingsForms = {
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Enable verbose logging for troubleshooting (applies to all apps)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="display_community_resources">&nbsp;&nbsp;&nbsp;Display Community/Resources:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="display_community_resources" ${settings.display_community_resources !== false ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Show or hide the Community/Resources section on the home page</p>
                 </div>
 
             </div>
