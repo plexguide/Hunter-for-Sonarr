@@ -18,7 +18,7 @@
 | Readarr     | **✅ Ready**  |
 | Whisparr v2 | **✅ Ready**  |
 | Whisparr v3 | **✅ Ready**  |
-| Bazarr    | **❌ Not Ready** |
+| Bazarr    | **❌ Not Ready** | 
 
 
 Keep in mind this is very early in program development. If you have a very special hand picked collection (because some users are extra special), test before you deploy.
