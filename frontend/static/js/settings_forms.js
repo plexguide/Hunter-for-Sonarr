@@ -1208,12 +1208,12 @@ const SettingsForms = {
                     <p class="setting-help">Enable verbose logging for troubleshooting (applies to all apps)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="display_community_resources">&nbsp;&nbsp;&nbsp;Display Community/Resources:</label>
+                    <label for="display_community_resources"><a href="https://huntarr.io" class="info-icon" title="Learn more about resources display options" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Display Resources:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="display_community_resources" ${settings.display_community_resources !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
-                    <p class="setting-help">Show or hide the Community/Resources section on the home page</p>
+                    <p class="setting-help">Show or hide the Resources section on the home page</p>
                 </div>
 
             </div>
