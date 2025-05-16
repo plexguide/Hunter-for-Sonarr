@@ -54,6 +54,7 @@
         overflow: hidden; /* Prevent outer scrolling */
         display: none; /* Hide by default */
         width: 100%;
+        position: relative; /* Establish positioning context */
     }
     
     /* Only show when active */
@@ -69,6 +70,11 @@
         margin-bottom: 20px;
         flex-wrap: wrap;
         gap: 15px;
+        position: sticky;
+        top: 0;
+        z-index: 100; /* Ensure header stays above log content */
+        background-color: #101520; /* Match background to prevent transparency */
+        padding-bottom: 10px;
     }
     
     /* Dropdown styling */
@@ -350,7 +356,7 @@
     
     /* Logs container styling with modern gradient */
     .logs {
-        height: calc(100vh - 200px);
+        height: calc(100vh - 250px); /* Increased to account for header height */
         overflow-y: auto;
         background: linear-gradient(135deg, rgba(30, 39, 56, 0.95) 0%, rgba(14, 20, 32, 0.95) 50%, rgba(16, 24, 36, 0.95) 100%);
         border-radius: 10px;
@@ -364,6 +370,8 @@
         -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
         padding-bottom: 70px; /* Extra padding at bottom to ensure content isn't cut off */
         position: relative; /* For accent line positioning */
+        z-index: 1; /* Ensure it's below the header */
+        margin-top: 5px; /* Add a slight gap after the header */
     }
     
     .logs::-webkit-scrollbar {
@@ -565,7 +573,7 @@
         
         /* Mobile specific log container styling */
         .logs {
-            height: calc(100vh - 240px); /* Adjusted height for mobile */
+            height: calc(100vh - 300px); /* Adjusted height for mobile + account for header */
             padding-bottom: 120px; /* Extra padding to ensure no content is hidden */
             margin-bottom: 60px; /* Space for mobile browser UI */
         }
