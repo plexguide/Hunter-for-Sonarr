@@ -20,6 +20,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: write
 
 # Allow only one concurrent deployment
 concurrency:
@@ -32,6 +33,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    # Enable for debugging issues
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,6 +51,7 @@ jobs:
           cp -r frontend/static/img docs/assets/img || true
           cp -r assets/logo docs/assets/logo || true
           
+      # Try standard GitHub Pages deployment first
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -56,4 +60,13 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
-        if: github.event_name != 'pull_request' 
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+      
+      # Fallback deployment method if first method fails
+      - name: Deploy to GitHub Pages (Fallback)
+        if: steps.deployment.outcome == 'failure' && github.event_name != 'pull_request'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs
+          branch: gh-pages 
