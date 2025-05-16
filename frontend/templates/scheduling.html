@@ -56,40 +56,43 @@
     
     <style>
         /* Critical scrolling fixes applied directly to the page */
-        @media (min-width: 769px) {
-            body, html {
-                overflow: auto !important;
-                height: 100% !important;
-            }
-            
-            .app-container {
-                overflow: auto !important;
-                height: 100vh !important;
-            }
-            
-            .main-content {
-                overflow-y: auto !important;
-                height: 100vh !important;
-            }
-            
-            #schedulingPage, 
-            .content-section.active {
-                overflow-y: auto !important;
-                height: auto !important;
-                min-height: calc(100vh - 60px) !important;
-                padding-bottom: 100px !important;
-            }
-            
-            .scheduler-container {
-                overflow: visible !important;
-                height: auto !important;
-            }
-            
-            .scheduler-panel, 
-            .panel-content {
-                overflow: visible !important;
-                height: auto !important;
-            }
+        body, html {
+            overflow: auto !important;
+            height: 100% !important;
+        }
+        
+        .app-container {
+            overflow: auto !important;
+            height: 100vh !important;
+        }
+        
+        .main-content {
+            overflow-y: auto !important;
+            height: 100vh !important;
+        }
+        
+        #schedulingPage, 
+        .content-section.active {
+            overflow-y: auto !important;
+            height: auto !important;
+            min-height: calc(100vh - 60px) !important;
+            padding-bottom: 100px !important;
+        }
+        
+        .scheduler-container {
+            overflow: visible !important;
+            height: auto !important;
+        }
+        
+        .scheduler-panel, 
+        .panel-content {
+            overflow: visible !important;
+            height: auto !important;
+        }
+        
+        /* Mobile overrides handled in the 768px media query */
+        @media (max-width: 768px) {
+            /* Any mobile-specific overrides can go here */
         }
     </style>
 </head>

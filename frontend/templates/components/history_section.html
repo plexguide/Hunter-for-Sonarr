@@ -746,6 +746,7 @@
         z-index: 1000;
     }
     
+    /* Mobile-specific styling */
     .mobile-sticky {
         position: fixed;
         bottom: 0;
@@ -756,13 +757,17 @@
         border-top: 1px solid rgba(90, 109, 137, 0.3);
     }
     
-    @media (min-width: 769px) {
-        .mobile-sticky {
-            position: static;
-            box-shadow: none;
-            border-top: none;
-            background: transparent;
-        }
+    /* Desktop styling (default) */
+    @media (max-width: 768px) {
+        /* Mobile-specific styles remain */
+    }
+    
+    /* Default desktop styling */
+    .mobile-sticky {
+        position: static;
+        box-shadow: none;
+        border-top: none;
+        background: transparent;
     }
     
     .pagination-button {

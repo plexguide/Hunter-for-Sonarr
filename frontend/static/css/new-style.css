@@ -1243,62 +1243,6 @@ section[id*="scheduling"] select.form-control,
 }
 
 /* Responsive Adjustments */
-@media (max-width: 950px) {
-    .sidebar {
-        width: 70px;
-    }
-    
-    .sidebar h1, .nav-item span, .switch-label {
-        display: none;
-    }
-    
-    .nav-item i {
-        margin-right: 0;
-        font-size: 22px;
-    }
-    
-    .logo-container {
-        justify-content: center;
-    }
-    
-    .logo {
-        margin-right: 0;
-    }
-}
-
-@media (max-width: 992px) {
-    .settings-group {
-        padding: 15px;
-    }
-    
-    .setting-item label {
-        width: 100%;
-        margin-bottom: 8px;
-    }
-    
-    .setting-help {
-        margin-left: 0;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    /* Make inputs responsive on narrow screens */
-    .setting-item input[type="text"],
-    .setting-item input[type="number"],
-    .setting-item input[type="password"] {
-        width: 100%;
-        max-width: 300px;
-    }
-
-    /* Specific width for short number inputs */
-    .setting-item input.short-number-input {
-        width: 80px; /* Adjust width as needed */
-        max-width: 80px;
-    }
-}
-
 @media (max-width: 768px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
@@ -1336,6 +1280,88 @@ section[id*="scheduling"] select.form-control,
         max-width: 200px;
         margin-right: 0;
         margin-bottom: 10px;
+    }
+    
+    /* Styles moved from 992px breakpoint */
+    .settings-group {
+        padding: 15px;
+    }
+    
+    .setting-item label {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+    
+    .setting-help {
+        margin-left: 0;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Make inputs responsive on narrow screens */
+    .setting-item input[type="text"],
+    .setting-item input[type="number"],
+    .setting-item input[type="password"] {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    /* Specific width for short number inputs */
+    .setting-item input.short-number-input {
+        width: 80px; /* Adjust width as needed */
+        max-width: 80px;
+    }
+    
+    /* History styles moved from 992px breakpoint */
+    .history-table {
+        font-size: 13px;
+    }
+    
+    .history-table th, .history-table td {
+        padding: 8px 10px;
+    }
+    
+    .history-search input {
+        width: 150px;
+    }
+    
+    /* Original mobile history styles */
+    .history-controls {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .history-search {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .history-search input {
+        width: calc(100% - 40px);
+    }
+    
+    /* Sidebar styles moved from 950px breakpoint */
+    .sidebar {
+        width: 60px;
+    }
+    
+    .sidebar h1, .nav-item span, .switch-label {
+        display: none;
+    }
+    
+    .nav-item i {
+        margin-right: 0;
+        font-size: 22px;
+    }
+    
+    .logo-container {
+        justify-content: center;
+    }
+    
+    .logo {
+        margin-right: 0;
     }
 }
 
@@ -2037,20 +2063,6 @@ section[id*="scheduling"] select.form-control,
 }
 
 /* Responsive adjustments */
-@media (max-width: 992px) {
-    .history-table {
-        font-size: 13px;
-    }
-    
-    .history-table th, .history-table td {
-        padding: 8px 10px;
-    }
-    
-    .history-search input {
-        width: 150px;
-    }
-}
-
 @media (max-width: 768px) {
     .history-controls {
         flex-wrap: wrap;

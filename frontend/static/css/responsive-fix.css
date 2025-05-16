@@ -22,9 +22,9 @@
     margin-left: auto;
 }
 
-/* Additional breakpoint for medium-sized screens */
-@media (max-width: 992px) {
-    /* Force mobile mode at this breakpoint for consistency */
+/* Mobile-specific settings adjustments */
+@media (max-width: 768px) {
+    /* Force mobile mode at this breakpoint for consistency - moved from tablet view */
     .sidebar {
         width: 60px !important;
         min-width: 60px !important;
@@ -36,7 +36,7 @@
         width: calc(100% - 60px) !important;
     }
     
-    /* Navbar item adjustments */
+    /* Navbar item adjustments - moved from tablet view */
     .nav-item {
         padding: 10px 0;
         justify-content: center;
@@ -50,12 +50,12 @@
         margin-right: 0 !important;
     }
     
-    /* Ensure General Settings header is responsive */
+    /* Ensure General Settings header is responsive - moved from tablet view */
     #settingsSection .section-header {
         flex-wrap: wrap !important;
     }
     
-    /* Move Save button to its own row when space is limited */
+    /* Move Save button to its own row when space is limited - moved from tablet view */
     #settingsSection .settings-actions {
         margin-top: 10px;
         width: 100%;
@@ -63,16 +63,13 @@
         justify-content: flex-end;
     }
     
-    /* Fix the positioning of the Save button on narrow screens */
+    /* Fix the positioning of the Save button on narrow screens - moved from tablet view */
     #saveSettingsButton {
         position: relative !important;
         top: auto !important;
         right: auto !important;
     }
-}
-
-/* Mobile-specific settings adjustments */
-@media (max-width: 768px) {
+    
     /* Fix General Settings section header on mobile */
     #settingsSection .section-header {
         padding: 10px 15px !important;
