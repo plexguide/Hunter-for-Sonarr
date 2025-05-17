@@ -1,4 +1,5 @@
 name: Deploy Huntarr Documentation
+# Updated workflow for docs deployment
 
 on:
   push:
