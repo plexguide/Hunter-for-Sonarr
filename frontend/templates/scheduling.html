@@ -107,7 +107,12 @@
             <section id="schedulingPage" class="content-section active" style="margin: 0 15px;">
                 <!-- Minimalistic header with gradient line -->
                 <div class="scheduling-minimalist-header">
-                    <h2><i class="fas fa-calendar-alt"></i> Scheduling</h2>
+                    <h2>
+                        <i class="fas fa-calendar-alt"></i> Scheduling
+                        <a href="/docs/features/scheduling.html" target="_blank" class="info-icon" data-tooltip="View detailed scheduling documentation">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                    </h2>
                     <hr class="color-shift-divider">
                 </div>
                 
@@ -298,6 +303,38 @@
     <script src="/static/js/scroll-fix-override.js"></script>
     
     <style>
+        /* Info Icon Tooltip Styling */
+        [data-tooltip] {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        [data-tooltip]:before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 12px;
+            background-color: #252a34;
+            color: white;
+            border-radius: 4px;
+            white-space: nowrap;
+            font-size: 12px;
+            font-weight: normal;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 100;
+            box-shadow: 0 0 8px rgba(45, 99, 237, 0.5), 0 0 15px rgba(131, 81, 237, 0.5);
+            border: 1px solid rgba(96, 165, 250, 0.4);
+        }
+        
+        [data-tooltip]:hover:before {
+            visibility: visible;
+            opacity: 1;
+        }
+        
         /* Scheduler Container */
         .scheduler-container {
             display: grid;
