@@ -290,7 +290,7 @@ def logs_stream():
                         if client_id in app.active_log_streams:
                             app.active_log_streams[client_id] = current_time
                         else:
-                            web_logger.warning(f"Client {client_id} gone. Stopping generator.")
+                            web_logger.debug(f"Client {client_id} gone. Stopping generator.")
                             break
                     last_activity = current_time
 
@@ -403,7 +403,7 @@ def logs_stream():
                 if removed_client:
                      web_logger.info(f"Successfully removed client {client_id} from active log streams.")
                 else:
-                     web_logger.warning(f"Client {client_id} was already removed from active log streams before finally block.")
+                     web_logger.debug(f"Client {client_id} was already removed from active log streams before finally block.")
             web_logger.info(f"Log stream generator finished for {app_type} (Client: {client_id})")
 
     # Return the SSE response with appropriate headers for better streaming

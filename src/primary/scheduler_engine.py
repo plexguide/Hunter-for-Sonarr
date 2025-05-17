@@ -102,7 +102,7 @@ def add_to_history(action_entry, status, message):
     }
     
     execution_history.appendleft(history_entry)
-    scheduler_logger.info(f"Scheduler history: {time_str} - {action_entry.get('action')} for {action_entry.get('app')} - {status} - {message}")
+    scheduler_logger.debug(f"Scheduler history: {time_str} - {action_entry.get('action')} for {action_entry.get('app')} - {status} - {message}")
 
 def execute_action(action_entry):
     """Execute a scheduled action"""
@@ -411,15 +411,15 @@ def check_and_execute_schedules():
     try:
         # Format time
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        scheduler_logger.info(f"Checking schedules at {current_time}")
+        scheduler_logger.debug(f"Checking schedules at {current_time}")
         
         # Check if schedule file exists and log its status
         if not os.path.exists(SCHEDULE_FILE):
-            scheduler_logger.warning(f"Schedule file does not exist: {SCHEDULE_FILE}")
-            add_to_history({"action": "check"}, "warning", f"Schedule file not found at {SCHEDULE_FILE}")
+            scheduler_logger.debug(f"Schedule file does not exist: {SCHEDULE_FILE}")
+            add_to_history({"action": "check"}, "debug", f"Schedule file not found at {SCHEDULE_FILE}")
             return
         
-        scheduler_logger.info(f"Schedule file exists at {SCHEDULE_FILE} with size {os.path.getsize(SCHEDULE_FILE)} bytes")
+        scheduler_logger.debug(f"Schedule file exists at {SCHEDULE_FILE} with size {os.path.getsize(SCHEDULE_FILE)} bytes")
         
         # Load the schedule
         schedule_data = load_schedule()
@@ -428,10 +428,10 @@ def check_and_execute_schedules():
         
         # Log schedule data summary
         schedule_summary = {app: len(schedules) for app, schedules in schedule_data.items()}
-        scheduler_logger.info(f"Loaded schedules: {schedule_summary}")
+        scheduler_logger.debug(f"Loaded schedules: {schedule_summary}")
         
         # Add to history that we've checked schedules
-        add_to_history({"action": "check"}, "info", f"Checking schedules at {current_time}")
+        add_to_history({"action": "check"}, "debug", f"Checking schedules at {current_time}")
         
         # Initialize counter for schedules found
         schedules_found = 0

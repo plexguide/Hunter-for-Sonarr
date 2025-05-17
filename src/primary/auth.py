@@ -296,8 +296,8 @@ def authenticate_request():
         general_settings = settings
         local_access_bypass = general_settings.get("local_access_bypass", False)
         proxy_auth_bypass = general_settings.get("proxy_auth_bypass", False)
-        logger.info(f"Local access bypass setting: {local_access_bypass}")
-        logger.info(f"Proxy auth bypass setting: {proxy_auth_bypass}")
+        logger.debug(f"Local access bypass setting: {local_access_bypass}")
+        logger.debug(f"Proxy auth bypass setting: {proxy_auth_bypass}")
         
         # Debug print all general settings
         logger.debug(f"All general settings: {general_settings}")

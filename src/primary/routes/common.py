@@ -166,7 +166,7 @@ def setup():
                         
                         # Save the updated settings
                         settings_manager.save_settings('general', general_settings)
-                        logger.info("Proxy auth bypass setting enabled during setup")
+                        logger.debug("Proxy auth bypass setting enabled during setup")
                     except Exception as e:
                         logger.error(f"Error saving proxy auth bypass setting: {e}", exc_info=True)
                 
