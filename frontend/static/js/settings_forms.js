@@ -1272,7 +1272,7 @@ const SettingsForms = {
                 <h3>Security</h3>
                 <div class="setting-item">
                     <label for="auth_mode"><a href="/Huntarr.io/docs/#/configuration?id=security-settings" class="info-icon" title="Learn more about authentication modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Authentication Mode:</label>
-                    <select id="auth_mode" name="auth_mode" class="form-control">
+                    <select id="auth_mode" name="auth_mode" style="width: 100%; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db; background-image: url('data:image/svg+xml;utf8,<svg fill=\'white\' height=\'24\' viewBox=\'0 0 24 24\' width=\'24\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/><path d=\'M0 0h24v24H0z\' fill=\'none\'/></svg>'); background-repeat: no-repeat; background-position: right 8px center; -webkit-appearance: none; -moz-appearance: none; appearance: none;">
                         <option value="login" ${(settings.auth_mode === 'login' || (!settings.auth_mode && !settings.local_access_bypass && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Login Mode</option>
                         <option value="local_bypass" ${(settings.auth_mode === 'local_bypass' || (!settings.auth_mode && settings.local_access_bypass === true && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Local Bypass Mode</option>
                         <option value="no_login" ${(settings.auth_mode === 'no_login' || (!settings.auth_mode && settings.proxy_auth_bypass === true)) ? 'selected' : ''}>No Login Mode</option>
@@ -1285,10 +1285,10 @@ const SettingsForms = {
                     <p class="setting-help warning" style="color: #ff6b6b;"><strong>Warning:</strong> Only use No Login Mode if your reverse proxy (e.g., Cloudflare, Nginx) is properly securing access!</p>
                 </div>
                 <div class="setting-item">
-                    <label for="ssl_verify">Enable SSL Verification:</label>
-                    <label class="toggle-switch">
+                    <label for="ssl_verify"><a href="https://huntarr.io" class="info-icon" title="Learn more about SSL verification" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enable SSL Verify:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="ssl_verify" ${settings.ssl_verify === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
                     <p class="setting-help">Disable SSL certificate verification when using self-signed certificates in private networks.</p>
                 </div>
