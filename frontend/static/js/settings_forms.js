@@ -1219,7 +1219,7 @@ const SettingsForms = {
                         <input type="checkbox" id="check_for_updates" ${settings.check_for_updates !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
-                    <p class="setting-help">Automatically check for Huntarr updates</p>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Automatically check for Huntarr updates</p>
                 </div>
                 <div class="setting-item">
                     <label for="debug_mode"><a href="/Huntarr.io/docs/#/configuration?id=debug-mode" class="info-icon" title="Learn more about debug mode" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Debug Mode:</label>
@@ -1227,7 +1227,7 @@ const SettingsForms = {
                         <input type="checkbox" id="debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
-                    <p class="setting-help">Enable verbose logging for troubleshooting (applies to all apps)</p>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Enable verbose logging for troubleshooting (applies to all apps)</p>
                 </div>
                 <div class="setting-item">
                     <label for="display_community_resources"><a href="/Huntarr.io/docs/#/configuration?id=global-hunting-options" class="info-icon" title="Learn more about resources display options" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Display Resources:</label>
@@ -1235,7 +1235,7 @@ const SettingsForms = {
                         <input type="checkbox" id="display_community_resources" ${settings.display_community_resources !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
-                    <p class="setting-help">Show or hide the Resources section on the home page</p>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Show or hide the Resources section on the home page</p>
                 </div>
 
             </div>
@@ -1263,8 +1263,8 @@ const SettingsForms = {
                 <div class="setting-item">
                     <label for="stateful_management_hours"><a href="/Huntarr.io/docs/#/advanced/stateful-management" class="info-icon" title="Learn more about state reset intervals" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;State Reset (Hours):</label>
                     <input type="number" id="stateful_management_hours" min="1" value="${settings.stateful_management_hours || 168}" style="width: 50% !important; max-width: 200px !important; box-sizing: border-box !important; margin: 0 !important; padding: 8px 12px !important; border-radius: 4px !important; display: block !important; text-align: left !important;">
-                    <p class="setting-help">Hours before resetting processed media state (<span id="stateful_management_days">${((settings.stateful_management_hours || 168) / 24).toFixed(1)} days</span>)</p>
-                    <p class="setting-help reset-help">Reset clears all processed media IDs to allow reprocessing</p>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Hours before resetting processed media state (<span id="stateful_management_days">${((settings.stateful_management_hours || 168) / 24).toFixed(1)} days</span>)</p>
+                    <p class="setting-help reset-help" style="margin-left: -3ch !important;">Reset clears all processed media IDs to allow reprocessing</p>
                 </div>
             </div>
             
@@ -1277,12 +1277,12 @@ const SettingsForms = {
                         <option value="local_bypass" ${(settings.auth_mode === 'local_bypass' || (!settings.auth_mode && settings.local_access_bypass === true && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Local Bypass Mode</option>
                         <option value="no_login" ${(settings.auth_mode === 'no_login' || (!settings.auth_mode && settings.proxy_auth_bypass === true)) ? 'selected' : ''}>No Login Mode</option>
                     </select>
-                    <p class="setting-help">
+                    <p class="setting-help" style="margin-left: -3ch !important;">
                         <strong>Login Mode:</strong> Standard login required for all connections<br>
                         <strong>Local Bypass Mode:</strong> Only local network connections (192.168.x.x, 10.x.x.x) bypass login<br>
                         <strong>No Login Mode:</strong> Completely disable authentication when running behind your own reverse proxy
                     </p>
-                    <p class="setting-help warning" style="color: #ff6b6b;"><strong>Warning:</strong> Only use No Login Mode if your reverse proxy (e.g., Cloudflare, Nginx) is properly securing access!</p>
+                    <p class="setting-help warning" style="color: #ff6b6b; margin-left: -3ch !important;"><strong>Warning:</strong> Only use No Login Mode if your reverse proxy (e.g., Cloudflare, Nginx) is properly securing access!</p>
                 </div>
                 <div class="setting-item">
                     <label for="ssl_verify"><a href="https://huntarr.io" class="info-icon" title="Learn more about SSL verification" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enable SSL Verify:</label>
@@ -1290,7 +1290,7 @@ const SettingsForms = {
                         <input type="checkbox" id="ssl_verify" ${settings.ssl_verify === true ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
-                    <p class="setting-help">Disable SSL certificate verification when using self-signed certificates in private networks.</p>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Disable SSL certificate verification when using self-signed certificates in private networks.</p>
                 </div>
             </div>
             
@@ -1299,27 +1299,27 @@ const SettingsForms = {
                 <div class="setting-item">
                     <label for="api_timeout"><a href="/Huntarr.io/docs/#/configuration?id=advanced-features" class="info-icon" title="Learn more about API timeout settings" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;API Timeout:</label>
                     <input type="number" id="api_timeout" min="10" value="${settings.api_timeout !== undefined ? settings.api_timeout : 120}">
-                    <p class="setting-help">API request timeout in seconds</p>
+                    <p class="setting-help" style="margin-left: -3ch !important;">API request timeout in seconds</p>
                 </div>
                 <div class="setting-item">
                     <label for="command_wait_delay"><a href="https://huntarr.io/threads/command-wait-delay.12/" class="info-icon" title="Learn more about command wait settings" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Command Wait Delay:</label>
                     <input type="number" id="command_wait_delay" min="1" value="${settings.command_wait_delay !== undefined ? settings.command_wait_delay : 1}">
-                    <p class="setting-help">Delay between command status checks in seconds</p>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Delay between command status checks in seconds</p>
                 </div>
                 <div class="setting-item">
                     <label for="command_wait_attempts"><a href="https://huntarr.io/threads/command-wait-attempts.13/" class="info-icon" title="Learn more about command wait settings" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;CMD Wait Attempts:</label>
                     <input type="number" id="command_wait_attempts" min="1" value="${settings.command_wait_attempts !== undefined ? settings.command_wait_attempts : 600}">
-                    <p class="setting-help">Maximum number of attempts to check command status</p>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Maximum number of attempts to check command status</p>
                 </div>
                 <div class="setting-item">
                     <label for="minimum_download_queue_size"><a href="https://huntarr.io/threads/maximum-download-queue-size.14/" class="info-icon" title="Learn more about download queue management" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Max DL Queue Size:</label>
                     <input type="number" id="minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size !== undefined ? settings.minimum_download_queue_size : -1}">
-                    <p class="setting-help">If the current download queue for an app instance exceeds this value, downloads will be skipped until the queue reduces. Set to -1 to disable this limit.</span>
+                    <p class="setting-help" style="margin-left: -3ch !important;">If the current download queue for an app instance exceeds this value, downloads will be skipped until the queue reduces. Set to -1 to disable this limit.</span>
                 </div>
                 <div class="setting-item">
                     <label for="log_refresh_interval_seconds"><a href="https://huntarr.io/threads/log-refresh-interval.15/" class="info-icon" title="Learn more about log settings" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Log Refresh Interval:</label>
                     <input type="number" id="log_refresh_interval_seconds" min="5" value="${settings.log_refresh_interval_seconds !== undefined ? settings.log_refresh_interval_seconds : 30}">
-                    <p class="setting-help">How often Huntarr refreshes logs from apps (seconds)</p>
+                    <p class="setting-help" style="margin-left: -3ch !important;">How often Huntarr refreshes logs from apps (seconds)</p>
                 </div>
             </div>
         `;
@@ -1955,6 +1955,11 @@ styleEl.innerHTML = `
     }
     .toggle-switch input:checked + .toggle-slider:before {
         transform: translateX(20px);
+    }
+    
+    /* Align setting help text 3 characters to the left */
+    .setting-help {
+        margin-left: -3ch !important;
     }
 `;
 document.head.appendChild(styleEl);
