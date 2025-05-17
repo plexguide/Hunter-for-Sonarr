@@ -524,6 +524,14 @@ section[id*="scheduling"] select.form-control,
     max-width: 300px !important;
 }
 
+/* Make all dropdown selects across the app fit their content */
+select.form-control {
+    width: auto !important;
+    min-width: 160px !important;
+    max-width: 300px !important;
+    display: inline-block !important;
+}
+
 /* Scheduler Container - Changed to vertical layout as per user preference */
 .scheduler-container {
     display: flex !important;
