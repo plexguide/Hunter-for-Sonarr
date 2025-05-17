@@ -32,10 +32,18 @@ jobs:
           # Create .nojekyll file
           touch docs/.nojekyll
       
+      # Force using upload-artifact@v4 for all artifact operations
+      - name: Setup Dependencies
+        run: |
+          echo "Using upload-artifact@v4 explicitly"
+          echo "ACTIONS_RUNTIME_URL=https://pipelines.actions.githubusercontent.com/${{ github.run_id}}" >> $GITHUB_ENV
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
           path: ./docs
+          # Make sure we use v4 internally
+          artifact_name: github-pages
       
       - name: Deploy to GitHub Pages
         id: deployment
