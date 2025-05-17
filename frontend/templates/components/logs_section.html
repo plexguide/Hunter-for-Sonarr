@@ -576,8 +576,12 @@
             display: none;
         }
         
-        .clear-button {
-            display: none;
+        /* More specific rules to ensure the clear button is hidden on mobile */
+        .clear-button, 
+        #clearLogsButton, 
+        button[id="clearLogsButton"],
+        .log-options .clear-button {
+            display: none !important;
         }
         
         /* Mobile specific log container styling */
