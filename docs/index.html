@@ -45,99 +45,133 @@
 
     <div class="main-content">
         <div class="container">
-            <h1>Welcome to Huntarr.io Documentation</h1>
-            
-            <p>Thank you for using Huntarr.io! This documentation provides comprehensive guides, tutorials, and reference materials for all Huntarr features.</p>
-            
-            <div class="app-icons">
-                <div class="app-icon sonarr">S</div>
-                <div class="app-icon radarr">R</div>
-                <div class="app-icon lidarr">L</div>
-                <div class="app-icon readarr">R</div>
-                <div class="app-icon whisparr">W</div>
-            </div>
-            
-            <p>Huntarr.io is a powerful management tool for your media automation stack, providing simplified control over:</p>
-            
-            <div class="app-card sonarr-card">
-                <div class="app-card-header">
-                    <div class="app-card-icon sonarr">S</div>
-                    <h3 class="app-card-title">Sonarr</h3>
+            <h1>Welcome to Huntarr.io</h1>
+
+            <section class="hero-section">
+                <div class="hero-content">
+                    <div class="hero-logo">
+                        <img src="images/huntarr-logo.svg" alt="Huntarr Logo" width="120" height="120">
+                    </div>
+                    <div class="hero-text">
+                        <h2>Media Automation Management Suite</h2>
+                        <p>Huntarr.io is a comprehensive management platform that unifies your media automation stack into a single, intuitive interface. Control and monitor all your media services from one centralized dashboard.</p>
+                        <div class="hero-cta">
+                            <a href="getting-started/installation.html" class="btn btn-primary">Get Started</a>
+                            <a href="apps/index.html" class="btn btn-secondary">View Applications</a>
+                        </div>
+                    </div>
                 </div>
-                <div class="app-card-content">
-                    <p>Manage and automate TV show downloads with advanced features like calendar view, automatic searching, and series management.</p>
+            </section>
+
+            <section class="features-section">
+                <h2>Why Choose Huntarr?</h2>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36">
+                                <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"></path>
+                            </svg>
+                        </div>
+                        <h3>Unified Dashboard</h3>
+                        <p>Manage all your media automation applications from a single, cohesive interface.</p>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36">
+                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"></path>
+                            </svg>
+                        </div>
+                        <h3>Easy Configuration</h3>
+                        <p>Simple setup and maintenance with intuitive configuration options for all applications.</p>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36">
+                                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path>
+                            </svg>
+                        </div>
+                        <h3>Advanced Controls</h3>
+                        <p>Powerful management capabilities with scheduling, monitoring, and automation tools.</p>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36">
+                                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"></path>
+                            </svg>
+                        </div>
+                        <h3>Secure & Reliable</h3>
+                        <p>Built with security in mind, ensuring your media services run reliably and securely.</p>
+                    </div>
                 </div>
-                <div class="app-card-footer">
-                    <a href="apps/sonarr.html">View Documentation →</a>
+            </section>
+
+            <section class="apps-overview">
+                <h2>Supported Applications</h2>
+                <p>Huntarr.io integrates with the most popular media automation applications, providing a seamless experience across your entire media stack:</p>
+                
+                <div class="apps-list">
+                    <div class="app-list-item">
+                        <span class="app-name">Sonarr</span>
+                        <span class="app-description">TV show automation and management</span>
+                        <a href="apps/sonarr.html" class="app-link">Documentation →</a>
+                    </div>
+                    
+                    <div class="app-list-item">
+                        <span class="app-name">Radarr</span>
+                        <span class="app-description">Movie collection manager</span>
+                        <a href="apps/radarr.html" class="app-link">Documentation →</a>
+                    </div>
+                    
+                    <div class="app-list-item">
+                        <span class="app-name">Lidarr</span>
+                        <span class="app-description">Music collection manager</span>
+                        <a href="apps/lidarr.html" class="app-link">Documentation →</a>
+                    </div>
+                    
+                    <div class="app-list-item">
+                        <span class="app-name">Readarr</span>
+                        <span class="app-description">Book collection manager</span>
+                        <a href="apps/readarr.html" class="app-link">Documentation →</a>
+                    </div>
+                    
+                    <div class="app-list-item">
+                        <span class="app-name">Whisparr</span>
+                        <span class="app-description">Adult content manager</span>
+                        <a href="apps/whisparr.html" class="app-link">Documentation →</a>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="app-card radarr-card">
-                <div class="app-card-header">
-                    <div class="app-card-icon radarr">R</div>
-                    <h3 class="app-card-title">Radarr</h3>
+            </section>
+
+            <section class="quick-links">
+                <h2>Quick Links</h2>
+                <div class="quick-links-grid">
+                    <a href="getting-started/installation.html" class="quick-link-item">
+                        <h3>Installation Guide</h3>
+                        <p>Get Huntarr up and running on your system</p>
+                    </a>
+                    
+                    <a href="getting-started/quick-setup.html" class="quick-link-item">
+                        <h3>Quick Setup</h3>
+                        <p>Configure your first application in minutes</p>
+                    </a>
+                    
+                    <a href="features/index.html" class="quick-link-item">
+                        <h3>Feature Overview</h3>
+                        <p>Explore all the capabilities of Huntarr</p>
+                    </a>
+                    
+                    <a href="troubleshooting/index.html" class="quick-link-item">
+                        <h3>Troubleshooting</h3>
+                        <p>Solutions for common issues</p>
+                    </a>
                 </div>
-                <div class="app-card-content">
-                    <p>Find and download movies automatically with quality profiles, release preferences, and more.</p>
-                </div>
-                <div class="app-card-footer">
-                    <a href="apps/radarr.html">View Documentation →</a>
-                </div>
-            </div>
-            
-            <div class="app-card lidarr-card">
-                <div class="app-card-header">
-                    <div class="app-card-icon lidarr">L</div>
-                    <h3 class="app-card-title">Lidarr</h3>
-                </div>
-                <div class="app-card-content">
-                    <p>Manage your music collection with artist tracking, album releases, and quality preferences.</p>
-                </div>
-                <div class="app-card-footer">
-                    <a href="apps/lidarr.html">View Documentation →</a>
-                </div>
-            </div>
-            
-            <div class="app-card readarr-card">
-                <div class="app-card-header">
-                    <div class="app-card-icon readarr">R</div>
-                    <h3 class="app-card-title">Readarr</h3>
-                </div>
-                <div class="app-card-content">
-                    <p>Find and download ebooks and audiobooks with author tracking and release monitoring.</p>
-                </div>
-                <div class="app-card-footer">
-                    <a href="apps/readarr.html">View Documentation →</a>
-                </div>
-            </div>
-            
-            <div class="app-card whisparr-card">
-                <div class="app-card-header">
-                    <div class="app-card-icon whisparr">W</div>
-                    <h3 class="app-card-title">Whisparr</h3>
-                </div>
-                <div class="app-card-content">
-                    <p>Manage adult content with scene tracking, automatic searching, and content management.</p>
-                </div>
-                <div class="app-card-footer">
-                    <a href="apps/whisparr.html">View Documentation →</a>
-                </div>
-            </div>
-            
-            <h2>Documentation Sections</h2>
-            
-            <div class="app-box sonarr">
-                <h3><a href="apps/index.html">Applications Documentation</a></h3>
-                <p>Detailed information about each Huntarr-supported application, including setup, configuration, and usage guides.</p>
-            </div>
-            
-            <div class="app-box radarr">
-                <h3><a href="settings/index.html">Settings Documentation</a></h3>
-                <p>Learn about all Huntarr.io settings and configurations to optimize your media management experience.</p>
-            </div>
+            </section>
             
             <footer>
-                Huntarr.io <span class="version-badge">v6.5.18</span> | Test Deployment | Thanks 4 Using Huntarr - Admin9705
+                Huntarr.io <span class="version-badge">v6.5.18</span> | Thanks 4 Using Huntarr - Admin9705
             </footer>
         </div>
     </div>

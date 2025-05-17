@@ -13,6 +13,8 @@
     --lidarr-color: #2ecc71; /* Green */
     --readarr-color: #e74c3c; /* Red */
     --whisparr-color: #9b59b6; /* Purple */
+    --card-bg: rgba(20, 25, 35, 0.6);
+    --card-hover-bg: rgba(30, 35, 45, 0.6);
 }
 
 body {
@@ -162,6 +164,205 @@ a:hover {
     text-decoration: underline;
 }
 
+/* Hero Section */
+.hero-section {
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    padding: 30px;
+    margin-bottom: 40px;
+    border-left: 4px solid var(--highlight-color);
+}
+
+.hero-content {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.hero-logo {
+    flex: 0 0 150px;
+    text-align: center;
+    margin-right: 30px;
+}
+
+.hero-logo img {
+    max-width: 100%;
+    height: auto;
+}
+
+.hero-text {
+    flex: 1;
+    min-width: 200px;
+}
+
+.hero-text h2 {
+    margin-top: 0;
+    border-bottom: none;
+    color: var(--highlight-color);
+}
+
+.hero-cta {
+    margin-top: 25px;
+    display: flex;
+    gap: 15px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: all 0.3s;
+    font-weight: bold;
+    text-align: center;
+}
+
+.btn:hover {
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background-color: var(--highlight-color);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background-color: #217dbb;
+    color: #fff;
+}
+
+.btn-secondary {
+    background-color: rgba(52, 152, 219, 0.2);
+    color: var(--highlight-color);
+    border: 1px solid var(--highlight-color);
+}
+
+.btn-secondary:hover {
+    background-color: rgba(52, 152, 219, 0.3);
+    color: var(--highlight-color);
+}
+
+/* Features Section */
+.features-section {
+    margin: 40px 0;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.feature-item {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.feature-item:hover {
+    background-color: var(--card-hover-bg);
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    margin-bottom: 15px;
+    color: var(--highlight-color);
+}
+
+.feature-item h3 {
+    margin: 0 0 10px;
+    font-size: 1.2rem;
+}
+
+.feature-item p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+/* Apps Overview */
+.apps-overview {
+    margin: 40px 0;
+}
+
+.apps-list {
+    margin-top: 20px;
+}
+
+.app-list-item {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    align-items: center;
+    padding: 15px;
+    background-color: var(--card-bg);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    transition: all 0.3s;
+}
+
+.app-list-item:hover {
+    background-color: var(--card-hover-bg);
+}
+
+.app-name {
+    font-weight: bold;
+    color: var(--highlight-color);
+}
+
+.app-description {
+    color: #ccc;
+}
+
+.app-link {
+    color: var(--highlight-color);
+    white-space: nowrap;
+}
+
+/* Quick Links */
+.quick-links {
+    margin: 40px 0;
+}
+
+.quick-links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.quick-link-item {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    padding: 20px;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: all 0.3s;
+    border-left: 3px solid var(--highlight-color);
+}
+
+.quick-link-item:hover {
+    background-color: var(--card-hover-bg);
+    transform: translateY(-5px);
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.quick-link-item h3 {
+    margin: 0 0 10px;
+    color: var(--highlight-color);
+}
+
+.quick-link-item p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+/* Existing styles from before... */
 .app-icons {
     display: flex;
     justify-content: center;
@@ -315,6 +516,21 @@ footer {
     
     .app-icons {
         flex-wrap: wrap;
+    }
+    
+    .hero-content {
+        flex-direction: column;
+    }
+    
+    .hero-logo {
+        margin-right: 0;
+        margin-bottom: 20px;
+    }
+    
+    .apps-list .app-list-item {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        gap: 10px;
     }
 }
 
