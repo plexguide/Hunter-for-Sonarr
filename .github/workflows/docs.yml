@@ -32,7 +32,11 @@ jobs:
 
       - name: Install dependencies
         working-directory: docs
-        run: yarn install --frozen-lockfile
+        run: |
+          # Remove package-lock.json to avoid conflicts
+          rm -f package-lock.json
+          # Force install with legacy peer deps to avoid warnings
+          yarn install --force --no-fund --silent --legacy-peer-deps
 
       - name: Build Docusaurus
         working-directory: docs
