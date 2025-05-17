@@ -430,6 +430,21 @@ def save_general_settings():
     
     data = request.json
     
+    # Ensure auth_mode and bypass flags are consistent
+    auth_mode = data.get('auth_mode')
+    
+    # If auth_mode is explicitly set, ensure the bypass flags match it
+    if auth_mode:
+        if auth_mode == 'local_bypass':
+            data['local_access_bypass'] = True
+            data['proxy_auth_bypass'] = False
+        elif auth_mode == 'no_login':
+            data['local_access_bypass'] = False
+            data['proxy_auth_bypass'] = True
+        elif auth_mode == 'login':
+            data['local_access_bypass'] = False
+            data['proxy_auth_bypass'] = False
+    
     # Save general settings
     success = settings_manager.save_settings('general', data)
     
