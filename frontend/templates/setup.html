@@ -14,6 +14,52 @@
     <link rel="preload" href="/static/logo/256.png" as="image" fetchpriority="high">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Match the heart icon pulsing animation from the sidebar */
+        @keyframes heart-pulse {
+            0% { color: #ff4d6d; text-shadow: 0 0 10px #ff4d6d, 0 0 20px #ff4d6d; } /* Pink */
+            50% { color: #ff0a33; text-shadow: 0 0 15px #ff0a33, 0 0 25px #ff0a33; } /* Red */
+            100% { color: #ff4d6d; text-shadow: 0 0 10px #ff4d6d, 0 0 20px #ff4d6d; } /* Pink */
+        }
+        
+        /* Heart animation scaling effect */
+        @keyframes pulse-heart {
+            0% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+        
+        /* Special thankyou heart styling */
+        .thankyou-heart {
+            animation: heart-pulse 7.2s infinite ease-in-out, pulse-heart 1.5s infinite alternate;
+            font-size: 28px;
+        }
+        
+        /* Define logo glowing animation same as sidebar */
+        @keyframes logo-glow {
+            0% { box-shadow: 0 0 15px #3498db, 0 0 5px rgba(52, 152, 219, 0.4); } /* Sonarr blue */
+            20% { box-shadow: 0 0 15px #f1c40f, 0 0 5px rgba(241, 196, 15, 0.4); } /* Radarr yellow */
+            40% { box-shadow: 0 0 15px #2ecc71, 0 0 5px rgba(46, 204, 113, 0.4); } /* Lidarr green */
+            60% { box-shadow: 0 0 15px #e74c3c, 0 0 5px rgba(231, 76, 60, 0.4); } /* Readarr red */
+            80% { box-shadow: 0 0 15px #9b59b6, 0 0 5px rgba(155, 89, 182, 0.4); } /* Whisparr purple */
+            100% { box-shadow: 0 0 15px #3498db, 0 0 5px rgba(52, 152, 219, 0.4); } /* Back to Sonarr blue */
+        }
+        
+        /* Logo styling */
+        .huntarr-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            animation: logo-glow 10s infinite ease-in-out;
+            transition: all 0.3s ease;
+            margin-bottom: 5px;
+        }
+    </style>
     <link rel="icon" href="/static/logo/16.png">
     <!-- Preload script to prevent flashing -->
     <script src="/static/js/theme-preload.js"></script>
@@ -30,7 +76,7 @@
         }
         
         .login-container {
-            width: 500px;
+            width: 625px; /* Increased by 25% */
             max-width: 90%;
             background: linear-gradient(180deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
             border-radius: 15px;
@@ -403,14 +449,15 @@
 <body class="login-page dark-mode">
     <div class="login-container">
         <div class="login-header">
-            <img src="/static/logo/256.png" alt="Huntarr Logo" class="login-logo">
+            <img src="/static/logo/256.png" alt="Huntarr Logo" class="login-logo huntarr-logo">
             <h1>Huntarr</h1>
         </div>
         <div class="login-form">
             <div class="setup-steps">
                 <div id="step1" class="step active">1. Create Account</div>
                 <div id="step2" class="step">2. Setup 2FA</div>
-                <div id="step3" class="step">3. Finish</div>
+                <div id="step3" class="step">3. Auth Mode</div>
+                <div id="step4" class="step">4. Finish</div>
             </div>
             
             <div id="accountSetup" class="setup-section active">
@@ -437,6 +484,9 @@
                     </label>
                     <input type="password" id="confirm_password" name="confirm_password" required>
                 </div>
+                
+
+                
                 <div class="error-message" id="errorMessage" style="display: none;"></div>
                 <div class="form-actions">
                     <button type="button" id="accountNextButton" class="next-button">
@@ -464,7 +514,7 @@
                     </div>
                     
                     <div class="form-actions">
-                        <button type="button" id="twoFactorNextButton" class="next-button">
+                        <button type="button" id="twoFactorNextButton" class="next-button" style="margin-right: 10px;">
                             <i class="fas fa-check"></i> Verify & Continue
                         </button>
                         <button id="skip2FALink" class="skip-button">
@@ -474,16 +524,62 @@
                 </div>
             </div>
             
+            <div id="authModeSetup" class="setup-section">
+                <h2>Choose Authentication Mode</h2>
+                <p>Select how users will authenticate with Huntarr</p>
+                
+                <div class="form-group" style="margin-top: 25px;">
+                    <div style="background-color: rgba(28, 36, 54, 0.8); border-radius: 10px; padding: 15px; border: 1px solid rgba(65, 105, 225, 0.3);">
+                        <div style="display: flex; align-items: flex-start;">
+                            <div style="margin-right: 12px; margin-top: 2px;">
+                                <i class="fas fa-shield-alt" style="color: #4a90e2; font-size: 18px;"></i>
+                            </div>
+                            <div>
+                                <label for="auth_mode" style="font-weight: 600; display: flex; align-items: center; margin-bottom: 8px;">
+                                    <span>Authentication Mode</span>
+                                </label>
+                                <div style="margin-bottom: 10px;">
+                                    <select id="auth_mode" style="width: 100%; padding: 8px; background-color: rgba(28, 36, 54, 0.8); color: #fff; border: 1px solid rgba(65, 105, 225, 0.6); border-radius: 5px;">
+                                        <option value="login" selected>Login Mode</option>
+                                        <option value="local_bypass">Local Bypass Mode</option>
+                                        <option value="no_login">No Login Mode</option>
+                                    </select>
+                                </div>
+                                <div style="font-size: 13px; color: rgba(255, 255, 255, 0.7); margin-top: 5px;">
+                                    <p><strong>Login Mode:</strong> Standard login required for all connections</p>
+                                    <p><strong>Local Bypass Mode:</strong> Only local network connections (192.168.x.x, 10.x.x.x) bypass login</p>
+                                    <p><strong>No Login Mode:</strong> Completely disable authentication when running behind a reverse proxy</p>
+                                </div>
+                                <p style="font-size: 13px; color: #ff9966; margin-top: 5px;">
+                                    <i class="fas fa-exclamation-triangle"></i> <strong>Warning:</strong> Only use No Login Mode if your reverse proxy (e.g., Cloudflare, Nginx) is properly securing access!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="error-message" id="authModeErrorMessage" style="display: none;"></div>
+                <div class="form-actions">
+                    <button type="button" id="authModeNextButton" class="next-button">
+                        <i class="fas fa-arrow-right"></i> Next
+                    </button>
+                </div>
+            </div>
+            
             <div id="setupComplete" class="setup-section">
                 <h2>Setup Complete</h2>
                 <p>Your Huntarr account has been created successfully!</p>
                 <div style="text-align: center; margin-top: 20px;">
                     <div style="background-color: #2c2c2c; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                        <p><i class="fas fa-shield-alt" style="color: #4a90e2; font-size: 24px;"></i></p>
-                        <p style="font-weight: bold; margin-top: 10px;">Local Authentication Bypass Available</p>
-                        <p style="margin-top: 5px;">To enable authentication bypass for local network access:</p>
-                        <p style="color: #aaa; font-size: 0.9em; margin-top: 5px;">
-                            Go to <strong>Settings</strong> → <strong>General</strong> and toggle on <strong>Local Network Auth Bypass</strong>
+                        <p>
+                            <i class="fas fa-heart thankyou-heart"></i>
+                        </p>
+                        <p style="font-weight: bold; margin-top: 10px;">Thank You For Using Huntarr</p>
+                        <p style="color: #bbb; font-size: 0.95em; margin-top: 10px; line-height: 1.4; text-align: left;">
+                            If you love the program, any future donation to my daughter's college fund would make her day! Regardless, enjoy Huntarr and please join us on Discord and Reddit for community support.
+                        </p>
+                        <p style="color: #aaa; font-size: 0.9em; margin-top: 10px; text-align: left;">
+                            - Admin9705 & Huntarr Crew
                         </p>
                     </div>
                     <p><i class="fas fa-check-circle" style="color: #4CAF50;"></i> You can now proceed to the main interface.</p>
@@ -517,6 +613,11 @@
             const skip2FALink = document.getElementById('skip2FALink');
             const twoFactorNextButton = document.getElementById('twoFactorNextButton');
             
+            // Auth Mode setup elements
+            const authModeSelect = document.getElementById('auth_mode');
+            const authModeNextButton = document.getElementById('authModeNextButton');
+            const authModeErrorMessage = document.getElementById('authModeErrorMessage');
+            
             // Complete setup elements
             const finishSetupButton = document.getElementById('finishSetupButton');
             
@@ -546,13 +647,28 @@
                     }
                 });
                 
-                screens.forEach((screen, index) => {
-                    if (index + 1 === step) {
-                        screen.classList.add('active');
-                    } else {
-                        screen.classList.remove('active');
-                    }
-                });
+                // For the four sections: Account, 2FA, Auth Mode, Complete
+                if (step === 1) {
+                    document.getElementById('accountSetup').classList.add('active');
+                    document.getElementById('twoFactorSetup').classList.remove('active');
+                    document.getElementById('authModeSetup').classList.remove('active');
+                    document.getElementById('setupComplete').classList.remove('active');
+                } else if (step === 2) {
+                    document.getElementById('accountSetup').classList.remove('active');
+                    document.getElementById('twoFactorSetup').classList.add('active');
+                    document.getElementById('authModeSetup').classList.remove('active');
+                    document.getElementById('setupComplete').classList.remove('active');
+                } else if (step === 3) {
+                    document.getElementById('accountSetup').classList.remove('active');
+                    document.getElementById('twoFactorSetup').classList.remove('active');
+                    document.getElementById('authModeSetup').classList.add('active');
+                    document.getElementById('setupComplete').classList.remove('active');
+                } else if (step === 4) {
+                    document.getElementById('accountSetup').classList.remove('active');
+                    document.getElementById('twoFactorSetup').classList.remove('active');
+                    document.getElementById('authModeSetup').classList.remove('active');
+                    document.getElementById('setupComplete').classList.add('active');
+                }
                 
                 currentStep = step;
             }
@@ -582,6 +698,7 @@
                 const username = usernameInput.value.trim(); // Trim whitespace
                 const password = passwordInput.value;
                 const confirmPassword = confirmPasswordInput.value;
+                // No longer needed here - will be captured in step 3
                 
                 if (!username || !password || !confirmPassword) {
                     showError('All fields are required');
@@ -724,7 +841,7 @@
                 .then(data => {
                     if (data.success) {
                         twoFactorEnabled = true;
-                        showStep(3);
+                        showStep(3); // Go to Auth Mode step
                     } else {
                         showError(data.message || 'Invalid verification code');
                     }
@@ -737,7 +854,48 @@
             
             // Skip 2FA setup
             skip2FALink.addEventListener('click', function() {
-                showStep(3);
+                showStep(3); // Go to Auth Mode step
+            });
+            
+            // Auth Mode setup navigation
+            authModeNextButton.addEventListener('click', function() {
+                // Get the selected auth mode
+                const selectedAuthMode = authModeSelect.value;
+                
+                // Save the authentication mode settings
+                fetch('/api/settings/general', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        auth_mode: selectedAuthMode,
+                        local_access_bypass: selectedAuthMode === 'local_bypass', 
+                        proxy_auth_bypass: selectedAuthMode === 'no_login'
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || `Error: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Proceed to the finish step
+                    showStep(4);
+                })
+                .catch(error => {
+                    console.error('Error saving auth mode settings:', error);
+                    authModeErrorMessage.textContent = error.message || 'Error saving authentication settings';
+                    authModeErrorMessage.style.display = 'block';
+                    
+                    // Hide after 5 seconds
+                    setTimeout(() => {
+                        authModeErrorMessage.style.display = 'none';
+                    }, 5000);
+                });
             });
             
             // Complete setup navigation
@@ -753,7 +911,9 @@
                         accountNextButton.click();
                     } else if (currentStep === 2 && document.activeElement !== twoFactorNextButton) {
                         twoFactorNextButton.click();
-                    } else if (currentStep === 3 && document.activeElement !== finishSetupButton) {
+                    } else if (currentStep === 3 && document.activeElement !== authModeNextButton) {
+                        authModeNextButton.click();
+                    } else if (currentStep === 4 && document.activeElement !== finishSetupButton) {
                         finishSetupButton.click();
                     }
                 }

@@ -1269,13 +1269,20 @@ let huntarrUI = {
 
         console.log(`[huntarrUI] Collected settings for ${app}:`, settings);
         
-        // Check if this is general settings and if local_access_bypass is being changed
+        // Check if this is general settings and if auth bypass settings are changed
         const isLocalAccessBypassChanged = app === 'general' && 
             this.originalSettings && 
             this.originalSettings.general && 
             this.originalSettings.general.local_access_bypass !== settings.local_access_bypass;
+        
+        const isProxyAuthBypassChanged = app === 'general' && 
+            this.originalSettings && 
+            this.originalSettings.general && 
+            this.originalSettings.general.proxy_auth_bypass !== settings.proxy_auth_bypass;
             
+        // Log changes to authentication settings
         console.log(`[huntarrUI] Local access bypass changed: ${isLocalAccessBypassChanged}`);
+        console.log(`[huntarrUI] Proxy auth bypass changed: ${isProxyAuthBypassChanged}`);
 
         console.log(`[huntarrUI] Sending settings payload for ${app}:`, settings);
 
@@ -1304,8 +1311,8 @@ let huntarrUI = {
         .then(savedConfig => {
             console.log('[huntarrUI] Settings saved successfully. Full config received:', savedConfig);
             
-            // If local access bypass setting was changed, reload the page
-            if (isLocalAccessBypassChanged) {
+            // If any authentication bypass setting was changed, reload the page
+            if (isLocalAccessBypassChanged || isProxyAuthBypassChanged) {
                 this.showNotification('Settings saved successfully. Reloading page to apply authentication changes...', 'success');
                 setTimeout(() => {
                     window.location.href = '/'; // Redirect to home page after a brief delay

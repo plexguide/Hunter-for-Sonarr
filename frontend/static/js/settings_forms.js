@@ -1061,7 +1061,29 @@ const SettingsForms = {
             settings.log_refresh_interval_seconds = getInputValue('#log_refresh_interval_seconds', 30);
             settings.ssl_verify = getInputValue('#ssl_verify', true);
             settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);
-            settings.local_access_bypass = getInputValue('#local_access_bypass', false);
+            
+            // Handle the auth_mode dropdown
+            const authMode = container.querySelector('#auth_mode')?.value || 'login';
+            
+            // Save the auth_mode value directly
+            settings.auth_mode = authMode;
+            
+            // Set the appropriate flags based on the selected auth mode
+            switch (authMode) {
+                case 'local_bypass':
+                    settings.local_access_bypass = true;
+                    settings.proxy_auth_bypass = false;
+                    break;
+                case 'no_login':
+                    settings.local_access_bypass = false;
+                    settings.proxy_auth_bypass = true;
+                    break;
+                case 'login':
+                default:
+                    settings.local_access_bypass = false;
+                    settings.proxy_auth_bypass = false;
+                    break;
+            }
         }
         
         // For other app types, collect settings
@@ -1249,12 +1271,18 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Security</h3>
                 <div class="setting-item">
-                    <label for="local_access_bypass"><a href="/Huntarr.io/docs/#/configuration?id=security-settings" class="info-icon" title="Learn more about local network authentication bypass" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Local Network Auth Bypass:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="local_access_bypass" ${settings.local_access_bypass === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <p class="setting-help">Allow access without login when connecting from local network IP addresses (e.g., 192.168.x.x, 10.x.x.x)</p>
+                    <label for="auth_mode"><a href="/Huntarr.io/docs/#/configuration?id=security-settings" class="info-icon" title="Learn more about authentication modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Authentication Mode:</label>
+                    <select id="auth_mode" name="auth_mode" class="form-control">
+                        <option value="login" ${(settings.auth_mode === 'login' || (!settings.auth_mode && !settings.local_access_bypass && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Login Mode</option>
+                        <option value="local_bypass" ${(settings.auth_mode === 'local_bypass' || (!settings.auth_mode && settings.local_access_bypass === true && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Local Bypass Mode</option>
+                        <option value="no_login" ${(settings.auth_mode === 'no_login' || (!settings.auth_mode && settings.proxy_auth_bypass === true)) ? 'selected' : ''}>No Login Mode</option>
+                    </select>
+                    <p class="setting-help">
+                        <strong>Login Mode:</strong> Standard login required for all connections<br>
+                        <strong>Local Bypass Mode:</strong> Only local network connections (192.168.x.x, 10.x.x.x) bypass login<br>
+                        <strong>No Login Mode:</strong> Completely disable authentication when running behind your own reverse proxy
+                    </p>
+                    <p class="setting-help warning" style="color: #ff6b6b;"><strong>Warning:</strong> Only use No Login Mode if your reverse proxy (e.g., Cloudflare, Nginx) is properly securing access!</p>
                 </div>
                 <div class="setting-item">
                     <label for="ssl_verify">Enable SSL Verification:</label>
