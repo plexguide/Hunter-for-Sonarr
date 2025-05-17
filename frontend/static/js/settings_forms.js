@@ -1062,6 +1062,7 @@ const SettingsForms = {
             settings.ssl_verify = getInputValue('#ssl_verify', true);
             settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);
             settings.local_access_bypass = getInputValue('#local_access_bypass', false);
+            settings.proxy_auth_bypass = getInputValue('#proxy_auth_bypass', false);
         }
         
         // For other app types, collect settings
@@ -1255,6 +1256,15 @@ const SettingsForms = {
                         <span class="toggle-slider"></span>
                     </label>
                     <p class="setting-help">Allow access without login when connecting from local network IP addresses (e.g., 192.168.x.x, 10.x.x.x)</p>
+                </div>
+                <div class="setting-item">
+                    <label for="proxy_auth_bypass"><a href="#" class="info-icon" title="Disable Huntarr authentication when running behind a reverse proxy" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Proxy Auth Bypass:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="proxy_auth_bypass" ${settings.proxy_auth_bypass === true ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <p class="setting-help">Completely disable Huntarr authentication for all connections when running behind your own reverse proxy</p>
+                    <p class="setting-help warning" style="color: #ff6b6b;"><strong>Warning:</strong> Only enable this if your reverse proxy (e.g., Cloudflare, Nginx) is properly securing access!</p>
                 </div>
                 <div class="setting-item">
                     <label for="ssl_verify">Enable SSL Verification:</label>

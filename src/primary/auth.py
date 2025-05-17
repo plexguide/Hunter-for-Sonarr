@@ -275,13 +275,14 @@ def authenticate_request():
     setup_path = f"{script_root}/setup"
     api_setup_path = f"{script_root}/api/setup"
     favicon_path = f"{script_root}/favicon.ico"
+    health_check_path = f"{script_root}/api/health"
     
-    if request.path.startswith((static_path, login_path, api_login_path, setup_path, api_setup_path)) or request.path == favicon_path:
+    if request.path.startswith((static_path, login_path, api_login_path, setup_path, api_setup_path)) or request.path in (favicon_path, health_check_path):
         return None
     
-    # Check if the request is from a local network and bypass authentication if enabled
-    # Get configuration setting for local network bypass
+    # Load general settings
     local_access_bypass = False
+    proxy_auth_bypass = False
     try:
         # Force reload settings from disk to ensure we have the latest
         from src.primary.settings_manager import load_settings
@@ -294,12 +295,19 @@ def authenticate_request():
         settings = load_settings("general")  # Specify 'general' as the app_type
         general_settings = settings
         local_access_bypass = general_settings.get("local_access_bypass", False)
+        proxy_auth_bypass = general_settings.get("proxy_auth_bypass", False)
         logger.info(f"Local access bypass setting: {local_access_bypass}")
+        logger.info(f"Proxy auth bypass setting: {proxy_auth_bypass}")
         
         # Debug print all general settings
         logger.debug(f"All general settings: {general_settings}")
     except Exception as e:
-        logger.error(f"Error loading local access bypass setting: {e}", exc_info=True)
+        logger.error(f"Error loading authentication bypass settings: {e}", exc_info=True)
+    
+    # Check if proxy auth bypass is enabled - this completely disables authentication
+    if proxy_auth_bypass:
+        logger.info("Proxy authentication bypass is ENABLED - Authentication bypassed!")
+        return None
     
     remote_addr = request.remote_addr
     logger.info(f"Request IP address: {remote_addr}")

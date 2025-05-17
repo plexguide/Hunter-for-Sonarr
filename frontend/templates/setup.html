@@ -437,6 +437,35 @@
                     </label>
                     <input type="password" id="confirm_password" name="confirm_password" required>
                 </div>
+                
+                <div class="form-group" style="margin-top: 25px;">
+                    <div style="background-color: rgba(28, 36, 54, 0.8); border-radius: 10px; padding: 15px; border: 1px solid rgba(65, 105, 225, 0.3);">
+                        <div style="display: flex; align-items: flex-start;">
+                            <div style="margin-right: 12px; margin-top: 2px;">
+                                <i class="fas fa-shield-alt" style="color: #4a90e2; font-size: 18px;"></i>
+                            </div>
+                            <div>
+                                <label for="proxy_auth_bypass" style="font-weight: 600; display: flex; align-items: center; margin-bottom: 8px;">
+                                    <span>No Login Mode (Proxy Auth Bypass)</span>
+                                </label>
+                                <div class="toggle-container" style="margin-bottom: 10px;">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="proxy_auth_bypass">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span style="margin-left: 10px; font-size: 14px;">Enable No Login Mode</span>
+                                </div>
+                                <p style="font-size: 13px; color: rgba(255, 255, 255, 0.7); margin-top: 5px;">
+                                    When enabled, Huntarr will not require a login. Only use this if you're running behind a secure reverse proxy (e.g., Cloudflare, Nginx) that handles authentication.
+                                </p>
+                                <p style="font-size: 13px; color: #ff9966; margin-top: 5px;">
+                                    <i class="fas fa-exclamation-triangle"></i> <strong>Warning:</strong> This disables all built-in authentication! Make sure your reverse proxy is properly securing access.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="error-message" id="errorMessage" style="display: none;"></div>
                 <div class="form-actions">
                     <button type="button" id="accountNextButton" class="next-button">
@@ -480,10 +509,14 @@
                 <div style="text-align: center; margin-top: 20px;">
                     <div style="background-color: #2c2c2c; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
                         <p><i class="fas fa-shield-alt" style="color: #4a90e2; font-size: 24px;"></i></p>
-                        <p style="font-weight: bold; margin-top: 10px;">Local Authentication Bypass Available</p>
-                        <p style="margin-top: 5px;">To enable authentication bypass for local network access:</p>
-                        <p style="color: #aaa; font-size: 0.9em; margin-top: 5px;">
-                            Go to <strong>Settings</strong> → <strong>General</strong> and toggle on <strong>Local Network Auth Bypass</strong>
+                        <p style="font-weight: bold; margin-top: 10px;">Authentication Options</p>
+                        <p style="margin-top: 5px;">You have two authentication bypass options available:</p>
+                        <p style="color: #aaa; font-size: 0.9em; margin-top: 10px;">
+                            1. <strong>Local Network Auth Bypass</strong>: Only bypass login for local network connections<br>
+                            2. <strong>Proxy Auth Bypass</strong>: Completely disable login when behind a reverse proxy
+                        </p>
+                        <p style="color: #aaa; font-size: 0.9em; margin-top: 10px;">
+                            Go to <strong>Settings</strong> → <strong>General</strong> → <strong>Security</strong> section to configure these options
                         </p>
                     </div>
                     <p><i class="fas fa-check-circle" style="color: #4CAF50;"></i> You can now proceed to the main interface.</p>
@@ -582,6 +615,7 @@
                 const username = usernameInput.value.trim(); // Trim whitespace
                 const password = passwordInput.value;
                 const confirmPassword = confirmPasswordInput.value;
+                const proxyAuthBypass = document.getElementById('proxy_auth_bypass').checked;
                 
                 if (!username || !password || !confirmPassword) {
                     showError('All fields are required');
@@ -626,7 +660,8 @@
                     body: JSON.stringify({
                         username: username,
                         password: password,
-                        confirm_password: confirmPassword // Keep confirm_password if backend expects it, otherwise remove
+                        confirm_password: confirmPassword, // Keep confirm_password if backend expects it, otherwise remove
+                        proxy_auth_bypass: proxyAuthBypass // Add new No Login option
                     })
                 })
                 .then(response => {

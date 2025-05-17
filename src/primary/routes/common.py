@@ -133,6 +133,7 @@ def setup():
             username = data.get('username')
             password = data.get('password')
             confirm_password = data.get('confirm_password')
+            proxy_auth_bypass = data.get('proxy_auth_bypass', False)  # Get proxy auth bypass setting
 
             # Basic validation
             if not username or not password or not confirm_password:
@@ -152,6 +153,23 @@ def setup():
 
             logger.info(f"Attempting to create user '{username}' during setup.")
             if create_user(username, password): # This function should now be defined via import
+                # If proxy auth bypass is enabled, update general settings
+                if proxy_auth_bypass:
+                    try:
+                        from src.primary import settings_manager
+                        
+                        # Load current general settings
+                        general_settings = settings_manager.load_settings('general')
+                        
+                        # Update the proxy_auth_bypass setting
+                        general_settings['proxy_auth_bypass'] = True
+                        
+                        # Save the updated settings
+                        settings_manager.save_settings('general', general_settings)
+                        logger.info("Proxy auth bypass setting enabled during setup")
+                    except Exception as e:
+                        logger.error(f"Error saving proxy auth bypass setting: {e}", exc_info=True)
+                
                 # Automatically log in the user after setup
                 logger.info(f"User '{username}' created successfully during setup. Creating session.")
                 session_token = create_session(username)
