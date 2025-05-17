@@ -1,4 +1,4 @@
-name: Deploy Docusaurus to GitHub Pages
+name: Deploy Huntarr Documentation
 
 on:
   push:
@@ -7,52 +7,85 @@ on:
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+  # Allow manual trigger
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 # Allow only one concurrent deployment
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  deploy:
-    name: Deploy to GitHub Pages
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/checkout@v4
+        
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+        
+      - name: Build Documentation
+        run: |
+          # Ensure nested docs directory exists if it doesn't already
+          mkdir -p docs/assets/css
+          mkdir -p docs/assets/img
+          mkdir -p docs/assets/js
+          mkdir -p docs/assets/logo
+          
+          # Copy the assets needed for documentation
+          cp -r frontend/static/css/* docs/assets/css/ || true
+          cp -r frontend/static/js/* docs/assets/js/ || true
+          cp -r frontend/static/img/* docs/assets/img/ || true
+          
+          # Copy logo if it exists
+          cp -r assets/logo/* docs/assets/logo/ || true
+          
+          # Create .nojekyll file to disable Jekyll processing
+          touch docs/.nojekyll
+          
+          # Check if there's a nested docs directory and move files up
+          if [ -d "docs/docs" ]; then
+            # Move content from docs/docs to docs if it doesn't already exist
+            for file in docs/docs/*; do
+              if [ -f "$file" ]; then
+                filename=$(basename "$file")
+                if [ ! -f "docs/$filename" ]; then
+                  cp "$file" "docs/"
+                fi
+              fi
+            done
+            
+            # Move directories from docs/docs to docs if they don't already exist
+            for dir in docs/docs/*/; do
+              if [ -d "$dir" ]; then
+                dirname=$(basename "$dir")
+                mkdir -p "docs/$dirname"
+                cp -r "$dir"* "docs/$dirname/" || true
+              fi
+            done
+          fi
+          
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          node-version: 18
-          cache: 'npm'
-          cache-dependency-path: docs/package.json
-      
-      - name: Install dependencies
-        working-directory: ./docs
-        run: |
-          npm install
-
-      - name: Build website
-        working-directory: ./docs
-        run: |
-          npm run build
-
-      # Popular action to deploy to GitHub Pages:
-      # Docs: https://github.com/peaceiris/actions-gh-pages
+          path: './docs'
+          
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Build output to publish to the `gh-pages` branch:
-          publish_dir: ./docs/build
-          # Assign commit authorship to the official GH-Actions bot
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com 
+        id: deployment
+        uses: actions/deploy-pages@v3
+        if: github.event_name != 'pull_request' 
