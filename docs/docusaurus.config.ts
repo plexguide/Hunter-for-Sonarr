@@ -3,15 +3,15 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Cleanuperr',
-  tagline: 'Cleaning arrs since \'24.',
-  favicon: 'img/16.png',
+  title: 'Huntarr.io',
+  tagline: 'The Ultimate Arr Management Tool',
+  favicon: 'img/favicon.ico',
 
-  url: 'https://flmorg.github.io',
-  baseUrl: '/cleanuperr/',
+  url: 'https://plexguide.github.io',
+  baseUrl: '/Huntarr.io/',
 
-  organizationName: 'flmorg',
-  projectName: 'cleanuperr',
+  organizationName: 'plexguide',
+  projectName: 'Huntarr.io',
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -42,10 +42,10 @@ const config: Config = {
       respectPrefersColorScheme: false,
     },
     navbar: {
-      title: 'Cleanuperr',
+      title: 'Huntarr.io',
       logo: {
-        alt: 'Cleanuperr Logo',
-        src: 'img/cleanuperr.svg',
+        alt: 'Huntarr.io Logo',
+        src: 'img/favicon.ico',
       },
       items: [
         {
@@ -56,12 +56,12 @@ const config: Config = {
           activeBasePath: '/docs',
         },
         {
-          href: 'https://github.com/flmorg/cleanuperr',
+          href: 'https://github.com/plexguide/Huntarr.io',
           label: 'GitHub',
           position: 'right',
         },
         {
-          href: 'https://discord.gg/SCtMCgtsc4',
+          href: 'https://discord.com/invite/PGJJjR5Cww',
           label: 'Discord',
           position: 'right',
         }
@@ -70,7 +70,7 @@ const config: Config = {
     footer: {
       style: 'dark',
       links: [],
-      copyright: `Copyright © ${new Date().getFullYear()} Cleanuperr. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Huntarr.io - Admin9705. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,
@@ -78,11 +78,11 @@ const config: Config = {
     },
     algolia: {
       // The application ID provided by Algolia
-      appId: 'Y4APRVTFUQ',
+      appId: '',
 
-      apiKey: 'bdaa942f24c8f4ed9893a5b5970405fa',
+      apiKey: '',
 
-      indexName: 'flmorgio',
+      indexName: '',
 
       // Optional: see doc section below
       contextualSearch: true,
