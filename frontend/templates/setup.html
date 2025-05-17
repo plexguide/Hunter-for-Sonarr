@@ -445,21 +445,23 @@
                                 <i class="fas fa-shield-alt" style="color: #4a90e2; font-size: 18px;"></i>
                             </div>
                             <div>
-                                <label for="proxy_auth_bypass" style="font-weight: 600; display: flex; align-items: center; margin-bottom: 8px;">
-                                    <span>No Login Mode (Proxy Auth Bypass)</span>
+                                <label for="auth_mode" style="font-weight: 600; display: flex; align-items: center; margin-bottom: 8px;">
+                                    <span>Authentication Mode</span>
                                 </label>
-                                <div class="toggle-container" style="margin-bottom: 10px;">
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="proxy_auth_bypass">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                    <span style="margin-left: 10px; font-size: 14px;">Enable No Login Mode</span>
+                                <div style="margin-bottom: 10px;">
+                                    <select id="auth_mode" style="width: 100%; padding: 8px; background-color: rgba(28, 36, 54, 0.8); color: #fff; border: 1px solid rgba(65, 105, 225, 0.6); border-radius: 5px;">
+                                        <option value="login" selected>Login Mode</option>
+                                        <option value="local_bypass">Local Bypass Mode</option>
+                                        <option value="no_login">No Login Mode</option>
+                                    </select>
                                 </div>
-                                <p style="font-size: 13px; color: rgba(255, 255, 255, 0.7); margin-top: 5px;">
-                                    When enabled, Huntarr will not require a login. Only use this if you're running behind a secure reverse proxy (e.g., Cloudflare, Nginx) that handles authentication.
-                                </p>
+                                <div style="font-size: 13px; color: rgba(255, 255, 255, 0.7); margin-top: 5px;">
+                                    <p><strong>Login Mode:</strong> Standard login required for all connections</p>
+                                    <p><strong>Local Bypass Mode:</strong> Only local network connections (192.168.x.x, 10.x.x.x) bypass login</p>
+                                    <p><strong>No Login Mode:</strong> Completely disable authentication when running behind a reverse proxy</p>
+                                </div>
                                 <p style="font-size: 13px; color: #ff9966; margin-top: 5px;">
-                                    <i class="fas fa-exclamation-triangle"></i> <strong>Warning:</strong> This disables all built-in authentication! Make sure your reverse proxy is properly securing access.
+                                    <i class="fas fa-exclamation-triangle"></i> <strong>Warning:</strong> Only use No Login Mode if your reverse proxy (e.g., Cloudflare, Nginx) is properly securing access!
                                 </p>
                             </div>
                         </div>
@@ -615,7 +617,7 @@
                 const username = usernameInput.value.trim(); // Trim whitespace
                 const password = passwordInput.value;
                 const confirmPassword = confirmPasswordInput.value;
-                const proxyAuthBypass = document.getElementById('proxy_auth_bypass').checked;
+                const authMode = document.getElementById('auth_mode').value;
                 
                 if (!username || !password || !confirmPassword) {
                     showError('All fields are required');
@@ -661,7 +663,8 @@
                         username: username,
                         password: password,
                         confirm_password: confirmPassword, // Keep confirm_password if backend expects it, otherwise remove
-                        proxy_auth_bypass: proxyAuthBypass // Add new No Login option
+                        local_access_bypass: authMode === 'local_bypass',
+                        proxy_auth_bypass: authMode === 'no_login'
                     })
                 })
                 .then(response => {

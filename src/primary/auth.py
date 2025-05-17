@@ -305,8 +305,9 @@ def authenticate_request():
         logger.error(f"Error loading authentication bypass settings: {e}", exc_info=True)
     
     # Check if proxy auth bypass is enabled - this completely disables authentication
+    # Note: This has highest priority and is checked first (matching the "No Login Mode" in the UI)
     if proxy_auth_bypass:
-        logger.info("Proxy authentication bypass is ENABLED - Authentication bypassed!")
+        logger.info("Proxy authentication bypass is ENABLED (No Login Mode) - Authentication bypassed!")
         return None
     
     remote_addr = request.remote_addr
@@ -362,12 +363,12 @@ def authenticate_request():
                     break
                     
         if is_local:
-            logger.info(f"Local network access from {remote_addr} - Authentication bypassed!")
+            logger.info(f"Local network access from {remote_addr} - Authentication bypassed! (Local Bypass Mode)")
             return None
         else:
             logger.warning(f"Access from {remote_addr} is not recognized as local network - Authentication required")
     else:
-        logger.info("Local access bypass is DISABLED - Authentication required")
+        logger.info("Local Bypass Mode is DISABLED - Authentication required")
     
     # Check for valid session
     session_id = session.get(SESSION_COOKIE_NAME)
