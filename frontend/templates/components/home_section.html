@@ -503,12 +503,12 @@
     }
     
     .app-stats-card {
-        background: rgba(24, 28, 37, 0.8);
-        border-radius: 12px;
+        background: linear-gradient(145deg, rgba(26, 32, 44, 0.9), rgba(20, 24, 33, 0.8));
+        border-radius: 16px;
         padding: 0 20px 0 20px;
         text-align: center;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        transition: all 0.3s ease;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25), 0 1px 1px rgba(255, 255, 255, 0.05) inset;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         position: relative;
         display: flex;
         flex-direction: column;
@@ -517,43 +517,45 @@
         justify-content: flex-start;
         border: 1px solid rgba(120, 140, 180, 0.15);
         overflow: hidden;
+        backdrop-filter: blur(5px);
     }
-    
-    /* Removing card-level border styles since we only want rings around the icons */
     
     .app-stats-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(255, 255, 255, 0.07) inset;
         border-color: rgba(120, 140, 180, 0.3);
     }
 
-    /* Status container styling */
+    /* Enhanced status container styling */
     .status-container {
         width: 100%;
-        margin: 0 0 20px 0;
-        padding: 15px 0;
+        margin: 0 0 15px 0;
+        padding: 10px 0;
         display: flex;
         justify-content: center;
         align-items: center;
         flex-wrap: wrap;
         gap: 5px;
-        background: rgba(20, 26, 35, 0.6);
+        background: linear-gradient(to bottom, rgba(17, 23, 35, 0.7), rgba(13, 17, 26, 0.5));
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 12px 12px 0 0;
+        border-radius: 16px 16px 0 0;
         margin-left: -20px;
         margin-right: -20px;
         width: calc(100% + 40px);
+        backdrop-filter: blur(10px);
     }
     
     .status-badge {
-        padding: 6px 16px;
-        border-radius: 20px;
+        padding: 5px 14px;
+        border-radius: 30px;
         font-weight: 600;
-        font-size: 12px;
+        font-size: 11px;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(5px);
     }
 
     /* App content styling */
@@ -562,20 +564,49 @@
         flex-direction: column;
         align-items: center;
         margin: 10px 0 5px 0;
+        position: relative;
+        z-index: 1;
     }
     
     /* App icon wrapper base styling */
     .app-icon-wrapper {
-        width: 70px;
-        height: 70px;
+        width: 76px;
+        height: 76px;
         display: flex;
         justify-content: center;
         align-items: center;
         border-radius: 50%;
-        background: rgba(28, 34, 46, 0.8);
+        background: radial-gradient(circle at 30% 30%, rgba(35, 42, 55, 0.9), rgba(22, 27, 38, 0.8));
         margin-bottom: 12px;
         position: relative;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+        transform: perspective(800px) rotateX(10deg);
+        backdrop-filter: blur(5px);
+    }
+    
+    .app-logo {
+        width: 40px;
+        height: 40px;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        transform: scale(1.15);
+        transition: transform 0.3s ease;
+    }
+    
+    .app-stats-card:hover .app-logo {
+        transform: scale(1.25);
+    }
+    
+    .app-stats-card h4 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 600;
+        color: #e0e6ed;
+        letter-spacing: 0.7px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        background: linear-gradient(to bottom, #fff, #a0a8b8);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
     
     /* Glowing ring animations */
@@ -692,7 +723,7 @@
         letter-spacing: 0.5px;
     }
     
-    /* Stats display styling */
+    /* Enhanced stats numbers display */
     .stats-numbers {
         display: flex;
         justify-content: space-around;
@@ -700,7 +731,8 @@
         padding: 15px 0;
         margin-top: auto;
         margin-bottom: 0;
-        border-top: 1px solid rgba(120, 140, 180, 0.15);
+        border-top: none;
+        background: transparent;
     }
 
     .stat-box {
@@ -710,40 +742,22 @@
         align-items: center;
     }
 
+    /* Make the stat numbers more vibrant and prominent */
     .stat-number {
-        font-size: 28px;
+        font-size: 36px;
         font-weight: 700;
         line-height: 1;
-        background: linear-gradient(to bottom right, #fff, #a0a8b8);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
     
-    .stat-label {
-        font-size: 12px;
-        color: #a0a8b8;
-        font-weight: 500;
-    }
-    
-    /* App-specific accent colors for sonarr */
-    .app-stats-card.sonarr .app-icon-wrapper {
-        border-color: rgba(0, 174, 240, 0.5);
-        box-shadow: 0 0 15px rgba(0, 174, 240, 0.2);
-    }
-    
+    /* App-specific stat number styles */
     .app-stats-card.sonarr .stat-number {
         background: linear-gradient(to bottom right, #5acdff, #00aef0);
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
-    }
-    
-    /* App-specific accent colors for radarr */
-    .app-stats-card.radarr .app-icon-wrapper {
-        border-color: rgba(253, 203, 43, 0.5);
-        box-shadow: 0 0 15px rgba(253, 203, 43, 0.2);
     }
     
     .app-stats-card.radarr .stat-number {
@@ -753,23 +767,11 @@
         -webkit-text-fill-color: transparent;
     }
     
-    /* App-specific accent colors for lidarr */
-    .app-stats-card.lidarr .app-icon-wrapper {
-        border-color: rgba(49, 197, 56, 0.5);
-        box-shadow: 0 0 15px rgba(49, 197, 56, 0.2);
-    }
-    
     .app-stats-card.lidarr .stat-number {
         background: linear-gradient(to bottom right, #5de264, #31c538);
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
-    }
-    
-    /* App-specific accent colors for readarr */
-    .app-stats-card.readarr .app-icon-wrapper {
-        border-color: rgba(192, 45, 40, 0.5);
-        box-shadow: 0 0 15px rgba(192, 45, 40, 0.2);
     }
     
     .app-stats-card.readarr .stat-number {
@@ -779,23 +781,11 @@
         -webkit-text-fill-color: transparent;
     }
     
-    /* App-specific accent colors for whisparr */
-    .app-stats-card.whisparr .app-icon-wrapper {
-        border-color: rgba(195, 0, 230, 0.5);
-        box-shadow: 0 0 15px rgba(195, 0, 230, 0.2);
-    }
-    
     .app-stats-card.whisparr .stat-number {
         background: linear-gradient(to bottom right, #e64dff, #c300e6);
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
-    }
-    
-    /* App-specific accent colors for eros */
-    .app-stats-card.eros .app-icon-wrapper {
-        border-color: rgba(195, 0, 230, 0.5);
-        box-shadow: 0 0 15px rgba(195, 0, 230, 0.2);
     }
     
     .app-stats-card.eros .stat-number {
@@ -805,23 +795,85 @@
         -webkit-text-fill-color: transparent;
     }
     
+    .stat-label {
+        font-size: 11px;
+        color: rgba(160, 168, 184, 0.9);
+        font-weight: 500;
+        letter-spacing: 0.7px;
+        text-transform: uppercase;
+        opacity: 0.8;
+    }
+    
+    /* App-specific accent colors for sonarr */
+    .app-stats-card.sonarr .app-icon-wrapper {
+        border-color: rgba(0, 174, 240, 0.5);
+        box-shadow: 0 0 15px rgba(0, 174, 240, 0.2);
+    }
+    
+    /* App-specific accent colors for radarr */
+    .app-stats-card.radarr .app-icon-wrapper {
+        border-color: rgba(253, 203, 43, 0.5);
+        box-shadow: 0 0 15px rgba(253, 203, 43, 0.2);
+    }
+    
+    /* App-specific accent colors for lidarr */
+    .app-stats-card.lidarr .app-icon-wrapper {
+        border-color: rgba(49, 197, 56, 0.5);
+        box-shadow: 0 0 15px rgba(49, 197, 56, 0.2);
+    }
+    
+    /* App-specific accent colors for readarr */
+    .app-stats-card.readarr .app-icon-wrapper {
+        border-color: rgba(192, 45, 40, 0.5);
+        box-shadow: 0 0 15px rgba(192, 45, 40, 0.2);
+    }
+    
+    /* App-specific accent colors for whisparr */
+    .app-stats-card.whisparr .app-icon-wrapper {
+        border-color: rgba(195, 0, 230, 0.5);
+        box-shadow: 0 0 15px rgba(195, 0, 230, 0.2);
+    }
+    
+    /* App-specific accent colors for eros */
+    .app-stats-card.eros .app-icon-wrapper {
+        border-color: rgba(195, 0, 230, 0.5);
+        box-shadow: 0 0 15px rgba(195, 0, 230, 0.2);
+    }
+    
     /* Status badge colors */
     .status-badge.connected {
-        background-color: rgba(39, 174, 96, 0.15);
+        background: linear-gradient(145deg, rgba(39, 174, 96, 0.15), rgba(46, 204, 113, 0.05));
         color: #2ecc71;
         border: 1px solid rgba(39, 174, 96, 0.3);
+        box-shadow: 0 3px 10px rgba(46, 204, 113, 0.1);
     }
     
     .status-badge.partially-connected {
-        background-color: rgba(243, 156, 18, 0.15);
+        background: linear-gradient(145deg, rgba(243, 156, 18, 0.15), rgba(241, 196, 15, 0.05));
         color: #f39c12;
         border: 1px solid rgba(243, 156, 18, 0.3);
+        box-shadow: 0 3px 10px rgba(243, 156, 18, 0.1);
     }
     
-    /* Hourly API Cap Styling */
+    .status-badge.not-connected {
+        background: linear-gradient(145deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.05));
+        color: #e74c3c;
+        border: 1px solid rgba(231, 76, 60, 0.3);
+        box-shadow: 0 3px 10px rgba(231, 76, 60, 0.1);
+    }
+    
+    .status-badge.loading {
+        background: linear-gradient(145deg, rgba(41, 128, 185, 0.15), rgba(52, 152, 219, 0.05));
+        color: #3498db;
+        border: 1px solid rgba(41, 128, 185, 0.3);
+        box-shadow: 0 3px 10px rgba(41, 128, 185, 0.1);
+    }
+    
+    /* Improved hourly cap container styling */
     .hourly-cap-container {
         padding: 0 10px;
         margin: 5px 0 5px 0;
+        width: 100%;
     }
     
     .api-link {
@@ -844,15 +896,18 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 5px 10px;
-        border-radius: 6px;
+        padding: 5px 12px;
+        border-radius: 8px;
         font-size: 12px;
         font-weight: 600;
-        background-color: rgba(20, 25, 35, 0.5);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        background: linear-gradient(145deg, rgba(20, 25, 35, 0.6), rgba(15, 19, 26, 0.4));
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
         border-left: 3px solid rgba(255, 255, 255, 0.2);
         transition: all 0.2s ease;
         position: relative;
+        backdrop-filter: blur(5px);
+        margin: 0 auto;
+        max-width: 200px;
     }
     
     .hourly-cap-status:after {
@@ -883,18 +938,21 @@
     
     /* API Cap Status Colors */
     .hourly-cap-status.good {
-        background-color: rgba(20, 25, 35, 0.5);
+        background: linear-gradient(145deg, rgba(20, 25, 35, 0.5), rgba(15, 19, 26, 0.3));
         border-left: 3px solid rgba(46, 204, 113, 0.9);
+        box-shadow: 0 3px 10px rgba(46, 204, 113, 0.15);
     }
     
     .hourly-cap-status.warning {
-        background-color: rgba(20, 25, 35, 0.5);
+        background: linear-gradient(145deg, rgba(20, 25, 35, 0.5), rgba(15, 19, 26, 0.3));
         border-left: 3px solid rgba(243, 156, 18, 0.9);
+        box-shadow: 0 3px 10px rgba(243, 156, 18, 0.15);
     }
     
     .hourly-cap-status.danger {
-        background-color: rgba(20, 25, 35, 0.5);
+        background: linear-gradient(145deg, rgba(20, 25, 35, 0.5), rgba(15, 19, 26, 0.3));
         border-left: 3px solid rgba(231, 76, 60, 0.9);
+        box-shadow: 0 3px 10px rgba(231, 76, 60, 0.15);
     }
     
     .hourly-cap-status.good .hourly-cap-icon:before {
@@ -918,18 +976,6 @@
         color: #e74c3c;
     }
     
-    .status-badge.not-connected {
-        background-color: rgba(231, 76, 60, 0.15);
-        color: #e74c3c;
-        border: 1px solid rgba(231, 76, 60, 0.3);
-    }
-    
-    .status-badge.loading {
-        background-color: rgba(41, 128, 185, 0.15);
-        color: #3498db;
-        border: 1px solid rgba(41, 128, 185, 0.3);
-    }
-    
     /* Header for cards */
     .card-header {
         display: flex;
@@ -943,6 +989,50 @@
         margin-bottom: 0;
     }
 
+    /* Special card styling and afterglow effects */
+    .app-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 10px 0 5px 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Add subtle after-glow to the cards */
+    .app-stats-card::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.08), transparent 60%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* App-specific gradients */
+    .app-stats-card.sonarr::after {
+        background: radial-gradient(circle at 50% 10%, rgba(0, 174, 240, 0.08), transparent 70%);
+    }
+
+    .app-stats-card.radarr::after {
+        background: radial-gradient(circle at 50% 10%, rgba(253, 203, 43, 0.08), transparent 70%);
+    }
+
+    .app-stats-card.lidarr::after {
+        background: radial-gradient(circle at 50% 10%, rgba(49, 197, 56, 0.08), transparent 70%);
+    }
+
+    .app-stats-card.readarr::after {
+        background: radial-gradient(circle at 50% 10%, rgba(192, 45, 40, 0.08), transparent 70%);
+    }
+
+    .app-stats-card.whisparr::after, .app-stats-card.eros::after {
+        background: radial-gradient(circle at 50% 10%, rgba(195, 0, 230, 0.08), transparent 70%);
+    }
+
     /* Ensure button in header doesn't inherit odd margins and adjust padding */
     .card-header .action-button {
         margin: 0;
@@ -951,15 +1041,35 @@
         flex-grow: 0;
     }
 
-    /* Re-add danger button style */
+    /* Enhanced action button styling */
+    .card-header .action-button {
+        margin: 0;
+        padding: 6px 12px;
+        font-size: 0.85em;
+        flex-grow: 0;
+        background: linear-gradient(145deg, rgba(244, 67, 54, 0.12), rgba(229, 57, 53, 0.07));
+        border: 1px solid rgba(244, 67, 54, 0.25);
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
     .action-button.danger {
         background-color: rgba(244, 67, 54, 0.1);
         color: #f44336;
     }
-    
+
     .action-button.danger:hover {
-        background-color: #f44336;
+        background: linear-gradient(145deg, rgba(244, 67, 54, 0.9), rgba(229, 57, 53, 0.8));
         color: white;
+        border-color: #f44336;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(244, 67, 54, 0.2);
+    }
+
+    .action-button.danger:active {
+        transform: translateY(0);
+        background: linear-gradient(145deg, rgba(229, 57, 53, 0.9), rgba(244, 67, 54, 0.8));
     }
 
     /* Responsive adjustments */
@@ -1346,10 +1456,10 @@
     /* Reset button container */
     .reset-button-container {
         margin-top: auto;
-        padding: 15px 0;
-        background: rgba(23, 30, 42, 0.8);
+        padding: 12px 0;
+        background: linear-gradient(to bottom, rgba(20, 26, 38, 0.5), rgba(16, 20, 30, 0.8));
         border-top: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 0 0 12px 12px;
+        border-radius: 0 0 16px 16px;
         display: flex;
         justify-content: center;
         width: 100%;
@@ -1361,13 +1471,13 @@
         width: calc(100% + 40px);
     }
     
-    /* Cycle reset button styles */
+    /* Enhanced cycle reset button */
     .cycle-reset-button {
-        padding: 7px 16px;
-        background-color: rgba(52, 152, 219, 0.15);
+        padding: 6px 14px;
+        background: linear-gradient(145deg, rgba(52, 152, 219, 0.2), rgba(41, 128, 185, 0.1));
         color: #3498db;
         border: 1px solid rgba(52, 152, 219, 0.3);
-        border-radius: 4px;
+        border-radius: 6px;
         font-size: 0.8rem;
         font-weight: 500;
         cursor: pointer;
@@ -1375,18 +1485,24 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(5px);
     }
     
     .cycle-reset-button:hover {
-        background-color: rgba(52, 152, 219, 0.25);
+        background: linear-gradient(145deg, rgba(52, 152, 219, 0.3), rgba(41, 128, 185, 0.2));
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
     
     .cycle-reset-button:active {
-        background-color: rgba(52, 152, 219, 0.35);
+        background: linear-gradient(145deg, rgba(41, 128, 185, 0.3), rgba(52, 152, 219, 0.2));
+        transform: translateY(0);
     }
     
     .cycle-reset-button i {
         font-size: 0.75rem;
+        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
     }
     
     .cycle-reset-button.resetting {
