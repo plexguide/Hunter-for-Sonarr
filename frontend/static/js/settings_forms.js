@@ -1065,6 +1065,9 @@ const SettingsForms = {
             // Handle the auth_mode dropdown
             const authMode = container.querySelector('#auth_mode')?.value || 'login';
             
+            // Save the auth_mode value directly
+            settings.auth_mode = authMode;
+            
             // Set the appropriate flags based on the selected auth mode
             switch (authMode) {
                 case 'local_bypass':
@@ -1270,9 +1273,9 @@ const SettingsForms = {
                 <div class="setting-item">
                     <label for="auth_mode"><a href="/Huntarr.io/docs/#/configuration?id=security-settings" class="info-icon" title="Learn more about authentication modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Authentication Mode:</label>
                     <select id="auth_mode" name="auth_mode" class="form-control">
-                        <option value="login" ${!settings.local_access_bypass && !settings.proxy_auth_bypass ? 'selected' : ''}>Login Mode</option>
-                        <option value="local_bypass" ${settings.local_access_bypass === true && !settings.proxy_auth_bypass ? 'selected' : ''}>Local Bypass Mode</option>
-                        <option value="no_login" ${settings.proxy_auth_bypass === true ? 'selected' : ''}>No Login Mode</option>
+                        <option value="login" ${(settings.auth_mode === 'login' || (!settings.auth_mode && !settings.local_access_bypass && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Login Mode</option>
+                        <option value="local_bypass" ${(settings.auth_mode === 'local_bypass' || (!settings.auth_mode && settings.local_access_bypass === true && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Local Bypass Mode</option>
+                        <option value="no_login" ${(settings.auth_mode === 'no_login' || (!settings.auth_mode && settings.proxy_auth_bypass === true)) ? 'selected' : ''}>No Login Mode</option>
                     </select>
                     <p class="setting-help">
                         <strong>Login Mode:</strong> Standard login required for all connections<br>

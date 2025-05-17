@@ -823,7 +823,8 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        local_access_bypass: selectedAuthMode === 'local_bypass',
+                        auth_mode: selectedAuthMode,
+                        local_access_bypass: selectedAuthMode === 'local_bypass', 
                         proxy_auth_bypass: selectedAuthMode === 'no_login'
                     })
                 })
