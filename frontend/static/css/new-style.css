@@ -1091,165 +1091,314 @@ select.form-control {
 }
 
 .settings-group {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
+    background: linear-gradient(145deg, rgba(30, 39, 56, 0.6), rgba(22, 28, 40, 0.7));
+    border: 1px solid rgba(90, 109, 137, 0.15);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
     position: relative;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(5px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.panel-header {
-    background: linear-gradient(to right, rgba(52, 152, 219, 0.2), rgba(155, 89, 182, 0.2));
-    padding: 14px 18px;
-    border-bottom: 1px solid rgba(90, 109, 137, 0.3);
-    border-radius: 8px 8px 0 0;
+.settings-group:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
 }
 
 .settings-group h3 {
-    margin-bottom: 15px;
-    padding: 10px 15px;
-    font-size: 1.1rem;
+    margin-bottom: 20px;
+    padding: 12px 18px;
+    font-size: 1.2rem;
     color: white;
-    border-radius: 6px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    background: linear-gradient(to right, rgba(52, 152, 219, 0.8), rgba(52, 152, 219, 0.6));
-    border-left: 4px solid #3498db;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(to right, rgba(52, 152, 219, 0.8), rgba(41, 128, 185, 0.7));
+    border-left: 4px solid rgba(52, 152, 219, 0.9);
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.settings-group h3::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    pointer-events: none;
 }
 
 .setting-item {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-start;
+    position: relative;
+    padding-bottom: 5px;
+}
+
+.setting-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, rgba(90, 109, 137, 0), rgba(90, 109, 137, 0.1), rgba(90, 109, 137, 0));
 }
 
 .setting-item label {
     width: 200px;
-    font-weight: 500;
-    margin-right: 15px;
+    font-weight: 600;
+    margin-right: 20px;
+    color: var(--text-primary);
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem; /* Reduced font size by ~25% */
 }
 
+.setting-item label .info-icon {
+    margin-right: 8px;
+    color: rgba(52, 152, 219, 0.8);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.setting-item label .info-icon:hover {
+    color: rgba(52, 152, 219, 1);
+    transform: scale(1.1);
+}
+
+/* Enhanced input fields */
 .setting-item input[type="text"],
 .setting-item input[type="number"],
 .setting-item input[type="password"] {
     width: 300px;
-    padding: 8px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: var(--bg-tertiary);
+    padding: 12px 15px;
+    border: 1px solid rgba(90, 109, 137, 0.2);
+    border-radius: 8px;
+    background: linear-gradient(145deg, rgba(15, 23, 36, 0.7), rgba(22, 30, 45, 0.5));
     color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    backdrop-filter: blur(5px);
 }
 
-/* Make number inputs shorter where appropriate */
-.short-number-input {
-    width: 100px !important; /* Use !important to override wider default if needed */
+.setting-item input[type="text"]:focus,
+.setting-item input[type="number"]:focus,
+.setting-item input[type="password"]:focus {
+    border-color: rgba(52, 152, 219, 0.5);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15), 0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    outline: none;
 }
 
-/* Make number inputs for intervals shorter */
-.short-number-input {
-    width: 80px !important; /* Use !important to override potential broader input styles */
+.setting-item input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
+/* Enhanced select boxes */
+.setting-item select {
+    width: 300px;
+    padding: 12px 15px;
+    border: 1px solid rgba(90, 109, 137, 0.2);
+    border-radius: 8px;
+    background: linear-gradient(145deg, rgba(15, 23, 36, 0.7), rgba(22, 30, 45, 0.5));
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235A6D89' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    backdrop-filter: blur(5px);
+}
+
+.setting-item select:focus {
+    border-color: rgba(52, 152, 219, 0.5);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15), 0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    outline: none;
+}
+
+/* Improved help text */
 .setting-help {
     width: 100%;
-    margin-top: 5px;
-    margin-left: 215px;
-    font-size: 13px;
+    margin-top: 8px;
+    margin-left: 220px;
+    font-size: 0.75rem; /* Reduced font size ~25% */
     color: var(--text-muted);
+    opacity: 0.85;
+    line-height: 1.4;
+    position: relative;
+    padding-left: 18px;
 }
 
-/* Stateful management header row with reset button */
-.stateful-header-row {
+@media (max-width: 768px) {
+    .setting-help {
+        margin-left: 0;
+        margin-top: 6px;
+    }
+}
+
+/* Improved toggle switch styling */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px; /* Reduced size to match setup.html */
+    height: 20px; /* Reduced height */
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(145deg, rgba(30, 39, 56, 0.6), rgba(22, 28, 40, 0.7));
+    border: 1px solid rgba(90, 109, 137, 0.2);
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 12px; /* Reduced size to match setup.html */
+    width: 12px; /* Reduced size to match setup.html */
+    left: 4px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .toggle-slider {
+    background: linear-gradient(145deg, rgba(41, 128, 185, 0.7), rgba(52, 152, 219, 0.8));
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(20px); /* Adjusted for new smaller size */
+}
+
+/* Enhanced instance items */
+.instance-item {
+    background: linear-gradient(145deg, rgba(30, 39, 56, 0.4), rgba(22, 28, 40, 0.5));
+    border: 1px solid rgba(90, 109, 137, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.instance-item:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    border-color: rgba(90, 109, 137, 0.2);
+}
+
+.instance-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 10px; /* Reduced padding */
-    margin-bottom: 15px; /* Spacing below header */
-    /* border-bottom: 1px solid var(--border-color); Removed border */
-    width: 100%;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(90, 109, 137, 0.1);
 }
 
-.stateful-header-row h3 {
+.instance-header h4 {
     margin: 0;
-    font-size: 1.1rem; /* Match other group headers */
+    font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
 }
 
-/* Reset button styling */
-#reset_stateful_btn {
-    background-color: var(--button-danger-bg); /* Use variable */
-    color: white;
-    border: none;
-    padding: 5px 12px;
-    border-radius: 4px;
-    font-size: 13px;
+.instance-header h4::before {
+    content: '\f233'; /* Font Awesome server icon */
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    margin-right: 10px;
+    color: rgba(52, 152, 219, 0.8);
+    font-size: 14px;
+}
+
+/* Enhanced buttons */
+.test-connection-btn,
+.add-instance-btn,
+.remove-instance-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
     font-weight: 500;
-    cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    transition: background-color 0.2s ease;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-#reset_stateful_btn:hover {
-    background-color: var(--button-danger-hover); /* Use variable */
+.test-connection-btn {
+    background: linear-gradient(145deg, rgba(41, 128, 185, 0.2), rgba(52, 152, 219, 0.15));
+    color: rgba(52, 152, 219, 0.9);
+    border: 1px solid rgba(52, 152, 219, 0.3);
 }
 
-#reset_stateful_btn i {
-    font-size: 13px;
+.test-connection-btn:hover {
+    background: linear-gradient(145deg, rgba(41, 128, 185, 0.3), rgba(52, 152, 219, 0.25));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    color: rgba(52, 152, 219, 1);
 }
 
-/* Stateful Management Section Styling */
-#generalSettings .setting-info-block {
-    background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 15px;
-    margin-top: 0; /* Remove top margin as header row provides spacing */
-    margin-bottom: 20px;
+.add-instance-btn {
+    background: linear-gradient(145deg, rgba(39, 174, 96, 0.2), rgba(46, 204, 113, 0.15));
+    color: rgba(46, 204, 113, 0.9);
+    border: 1px solid rgba(46, 204, 113, 0.3);
 }
 
-#generalSettings .info-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive columns */
-    gap: 15px;
-    /* margin-bottom: 15px; Removed margin, handled by parent */
+.add-instance-btn:hover {
+    background: linear-gradient(145deg, rgba(39, 174, 96, 0.3), rgba(46, 204, 113, 0.25));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    color: rgba(46, 204, 113, 1);
 }
 
-#generalSettings .date-info-block {
-    background-color: var(--bg-secondary);
-    padding: 12px 15px; /* Adjusted padding */
-    border-radius: 4px;
-    border-left: 3px solid var(--accent-color);
+.remove-instance-btn {
+    background: linear-gradient(145deg, rgba(231, 76, 60, 0.2), rgba(192, 57, 43, 0.15));
+    color: rgba(231, 76, 60, 0.9);
+    border: 1px solid rgba(231, 76, 60, 0.3);
 }
 
-#generalSettings .date-label {
-    font-size: 0.85em; /* Slightly smaller */
-    color: var(--text-secondary);
-    margin-bottom: 5px; /* Increased spacing */
-}
-
-#generalSettings .date-value {
-    font-size: 0.95em; /* Adjusted size */
-    font-weight: 500;
-    color: var(--text-primary);
-    font-family: inherit; /* Use standard font */
-    background-color: transparent; /* Remove background */
-    padding: 0; /* Remove padding */
-}
-
-/* Style the State Reset Interval item specifically */
-#generalSettings .setting-item input#stateful_management_hours {
-    width: 100px; /* Make input smaller */
-}
-
-#generalSettings .setting-item .reset-help {
-    color: var(--warning-color); /* Use warning color */
-    font-style: normal;
-    font-size: 0.85em;
+.remove-instance-btn:hover {
+    background: linear-gradient(145deg, rgba(231, 76, 60, 0.3), rgba(192, 57, 43, 0.25));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    color: rgba(231, 76, 60, 1);
 }
 
 /* Responsive Adjustments */
@@ -2181,4 +2330,124 @@ select.form-control {
 .panel-content,
 .schedules-list {
     overflow: visible !important;
+}
+
+/* Make number inputs shorter where appropriate */
+.short-number-input,
+.setting-item input.short-number-input {
+    width: 100px !important; /* Use !important to override wider default */
+    padding: 12px 10px !important;
+}
+
+/* Make number inputs for intervals shorter */
+input[type="number"].interval-input,
+#generalSettings .setting-item input#stateful_management_hours {
+    width: 80px !important; /* Use !important to override potential broader input styles */
+    padding: 12px 8px !important;
+}
+
+/* Stateful management header row with reset button */
+.stateful-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.stateful-header-row h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Reset button styling */
+#reset_stateful_btn {
+    background: linear-gradient(145deg, rgba(231, 76, 60, 0.2), rgba(192, 57, 43, 0.15));
+    color: rgba(231, 76, 60, 0.9);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#reset_stateful_btn:hover {
+    background: linear-gradient(145deg, rgba(231, 76, 60, 0.3), rgba(192, 57, 43, 0.25));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    color: rgba(231, 76, 60, 1);
+}
+
+#reset_stateful_btn i {
+    font-size: 13px;
+}
+
+/* Stateful Management Section Styling */
+#generalSettings .setting-info-block {
+    background: linear-gradient(145deg, rgba(30, 39, 56, 0.4), rgba(22, 28, 40, 0.5));
+    border: 1px solid rgba(90, 109, 137, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+#generalSettings .info-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+#generalSettings .date-info-block {
+    background: linear-gradient(145deg, rgba(20, 25, 35, 0.4), rgba(15, 19, 26, 0.3));
+    padding: 12px 15px;
+    border-radius: 6px;
+    border-left: 3px solid var(--accent-color);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+#generalSettings .date-label {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    opacity: 0.85;
+}
+
+#generalSettings .date-value {
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: inherit;
+    background-color: transparent;
+    padding: 0;
+}
+
+#generalSettings .setting-item .reset-help {
+    color: var(--warning-color);
+    font-style: normal;
+    font-size: 0.85em;
+    opacity: 0.9;
+}
+
+/* Fix specific input field widths - State Reset Interval */
+#generalSettings .setting-item input#stateful_management_hours,
+input#stateful_management_hours {
+    width: 55px !important; /* Make it significantly narrower to match the red line in the image */
+    padding: 8px 6px !important;
+    text-align: center;
+    margin-right: 10px;
+    min-width: 55px !important;
+    max-width: 55px !important;
+    font-size: 0.9rem;
 }
