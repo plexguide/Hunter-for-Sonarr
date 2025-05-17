@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -39,38 +39,22 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
         
-      - name: Build Documentation
+      - name: Prepare Documentation
         run: |
-          # Ensure nested docs directory exists if it doesn't already
-          mkdir -p docs/assets/css
-          mkdir -p docs/assets/img
-          mkdir -p docs/assets/js
-          mkdir -p docs/assets/logo
+          mkdir -p docs/assets/{css,img,js,logo}
           
-          # Copy the assets needed for documentation
-          cp -r frontend/static/css/* docs/assets/css/ || true
-          cp -r frontend/static/js/* docs/assets/js/ || true
-          cp -r frontend/static/img/* docs/assets/img/ || true
+          # Copy assets
+          [ -d frontend/static/css ] && cp -r frontend/static/css/* docs/assets/css/ || true
+          [ -d frontend/static/js ] && cp -r frontend/static/js/* docs/assets/js/ || true
+          [ -d frontend/static/img ] && cp -r frontend/static/img/* docs/assets/img/ || true
+          [ -d assets/logo ] && cp -r assets/logo/* docs/assets/logo/ || true
           
-          # Copy logo if it exists
-          cp -r assets/logo/* docs/assets/logo/ || true
-          
-          # Create .nojekyll file to disable Jekyll processing
+          # Create .nojekyll file
           touch docs/.nojekyll
           
-          # Check if there's a nested docs directory and move files up
+          # Process nested docs if they exist
           if [ -d "docs/docs" ]; then
-            # Move content from docs/docs to docs if it doesn't already exist
-            for file in docs/docs/*; do
-              if [ -f "$file" ]; then
-                filename=$(basename "$file")
-                if [ ! -f "docs/$filename" ]; then
-                  cp "$file" "docs/"
-                fi
-              fi
-            done
-            
-            # Move directories from docs/docs to docs if they don't already exist
+            find docs/docs -type f -exec cp {} docs/ \;
             for dir in docs/docs/*/; do
               if [ -d "$dir" ]; then
                 dirname=$(basename "$dir")
@@ -81,11 +65,11 @@ jobs:
           fi
           
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v2
         with:
           path: './docs'
           
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v2
         if: github.event_name != 'pull_request' 
