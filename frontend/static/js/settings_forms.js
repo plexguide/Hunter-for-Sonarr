@@ -1272,7 +1272,7 @@ const SettingsForms = {
                 <h3>Security</h3>
                 <div class="setting-item">
                     <label for="auth_mode"><a href="/Huntarr.io/docs/#/configuration?id=security-settings" class="info-icon" title="Learn more about authentication modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Authentication Mode:</label>
-                    <select id="auth_mode" name="auth_mode" style="width: 100%; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db; background-image: url('data:image/svg+xml;utf8,<svg fill=\'white\' height=\'24\' viewBox=\'0 0 24 24\' width=\'24\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/><path d=\'M0 0h24v24H0z\' fill=\'none\'/></svg>'); background-repeat: no-repeat; background-position: right 8px center; -webkit-appearance: none; -moz-appearance: none; appearance: none;">
+                    <select id="auth_mode" name="auth_mode" style="width: auto; max-width: 250px; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db; background-image: url('data:image/svg+xml;utf8,<svg fill=\'white\' height=\'24\' viewBox=\'0 0 24 24\' width=\'24\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/><path d=\'M0 0h24v24H0z\' fill=\'none\'/></svg>'); background-repeat: no-repeat; background-position: right 8px center; -webkit-appearance: none; -moz-appearance: none; appearance: none;">
                         <option value="login" ${(settings.auth_mode === 'login' || (!settings.auth_mode && !settings.local_access_bypass && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Login Mode</option>
                         <option value="local_bypass" ${(settings.auth_mode === 'local_bypass' || (!settings.auth_mode && settings.local_access_bypass === true && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Local Bypass Mode</option>
                         <option value="no_login" ${(settings.auth_mode === 'no_login' || (!settings.auth_mode && settings.proxy_auth_bypass === true)) ? 'selected' : ''}>No Login Mode</option>
@@ -1307,12 +1307,12 @@ const SettingsForms = {
                     <p class="setting-help">Delay between command status checks in seconds</p>
                 </div>
                 <div class="setting-item">
-                    <label for="command_wait_attempts"><a href="https://huntarr.io/threads/command-wait-attempts.13/" class="info-icon" title="Learn more about command wait settings" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Command Wait Attempts:</label>
+                    <label for="command_wait_attempts"><a href="https://huntarr.io/threads/command-wait-attempts.13/" class="info-icon" title="Learn more about command wait settings" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;CMD Wait Attempts:</label>
                     <input type="number" id="command_wait_attempts" min="1" value="${settings.command_wait_attempts !== undefined ? settings.command_wait_attempts : 600}">
                     <p class="setting-help">Maximum number of attempts to check command status</p>
                 </div>
                 <div class="setting-item">
-                    <label for="minimum_download_queue_size"><a href="https://huntarr.io/threads/maximum-download-queue-size.14/" class="info-icon" title="Learn more about download queue management" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Maximum Download Queue Size:</label>
+                    <label for="minimum_download_queue_size"><a href="https://huntarr.io/threads/maximum-download-queue-size.14/" class="info-icon" title="Learn more about download queue management" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Max DL Queue Size:</label>
                     <input type="number" id="minimum_download_queue_size" min="-1" value="${settings.minimum_download_queue_size !== undefined ? settings.minimum_download_queue_size : -1}">
                     <p class="setting-help">If the current download queue for an app instance exceeds this value, downloads will be skipped until the queue reduces. Set to -1 to disable this limit.</span>
                 </div>
