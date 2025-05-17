@@ -6,8 +6,28 @@
     <style>
         .user-section {
             padding: 15px;
-            max-width: 600px;
+            max-width: 1200px;
             margin: 0 auto;
+        }
+        
+        /* Desktop layout for cards side by side with intelligent wrapping */
+        @media (min-width: 992px) {
+            .user-section {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 20px;
+            }
+            
+            .user-card {
+                flex: 1 1 250px; /* Base width, but allow growth and shrinking */
+            }
+        }
+        
+        /* Medium displays - show just two cards side by side */
+        @media (min-width: 992px) and (max-width: 1200px) {
+            .user-section .user-card:nth-child(3) {
+                flex-basis: 100%; /* Third card takes full width */
+            }
         }
         
         /* Ensure main content area is scrollable */
@@ -21,16 +41,24 @@
             border-radius: 10px;
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
             padding: 18px;
-            margin-bottom: 18px;
             border: 1px solid rgba(90, 109, 137, 0.15);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Add bottom margin only when cards are stacked (mobile view) */
+        @media (max-width: 991px) {
+            .user-card {
+                margin-bottom: 15px;
+            }
         }
         
         .user-card h3 {
             display: flex;
             align-items: center;
             margin-top: 0;
-            margin-bottom: 18px;
+            margin-bottom: 10px;
             font-size: 16px;
             font-weight: 600;
             color: #fff;
@@ -43,8 +71,22 @@
         }
         
         .form-group {
-            margin-bottom: 14px;
+            margin-bottom: 8px;
             position: relative;
+        }
+        
+        /* Additional styling to compact the 2FA card */
+        .user-card:last-child .form-group {
+            margin-bottom: 6px;
+        }
+        
+        #twoFactorEnabled {
+            margin: 0;
+            line-height: 1.2;
+        }
+        
+        #enableTwoFactorSection, #setupTwoFactorSection, #disableTwoFactorSection {
+            margin-top: 8px;
         }
         
         .form-group label {
@@ -101,7 +143,7 @@
         }
         
         .form-actions {
-            margin-top: 14px;
+            margin-top: 10px;
             display: flex;
             gap: 7px;
         }
