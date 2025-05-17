@@ -392,11 +392,17 @@ def set_theme():
 
 @common_bp.route('/api/get_local_access_bypass_status', methods=['GET'])
 def get_local_access_bypass_status_route():
-    """API endpoint to get the status of the local network authentication bypass setting."""
+    """API endpoint to get the status of the local network authentication bypass setting.
+    Also checks proxy_auth_bypass to hide user menu in both bypass modes."""
     try:
-        # Get the setting from the 'general' section, default to False if not found
-        bypass_enabled = settings_manager.get_setting('general', 'local_access_bypass', False)
-        logger.debug(f"Retrieved local_access_bypass status: {bypass_enabled}")
+        # Get both bypass settings from the 'general' section, default to False if not found
+        local_access_bypass = settings_manager.get_setting('general', 'local_access_bypass', False)
+        proxy_auth_bypass = settings_manager.get_setting('general', 'proxy_auth_bypass', False)
+        
+        # Enable if either bypass mode is active
+        bypass_enabled = local_access_bypass or proxy_auth_bypass
+        
+        logger.debug(f"Retrieved bypass status: local={local_access_bypass}, proxy={proxy_auth_bypass}, combined={bypass_enabled}")
         # Return status in the format expected by the frontend
         return jsonify({"isEnabled": bypass_enabled})
     except Exception as e:
