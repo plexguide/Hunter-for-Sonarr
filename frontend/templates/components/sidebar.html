@@ -158,9 +158,9 @@
     .logo-container {
         display: flex;
         align-items: center;
-        padding: 15px 20px 10px;
+        padding: 15px 20px 0px;
         border-bottom: none;
-        margin-bottom: -10px;
+        margin-bottom: -15px;
         position: relative;
     }
     
@@ -177,6 +177,11 @@
             rgba(255, 255, 255, 0.1), 
             rgba(255, 255, 255, 0.01)
         );
+    }
+    
+    /* Remove the line under logo by setting this to empty */
+    .logo-container::after {
+        display: none;
     }
     
     /* Define logo glowing animation */
@@ -224,7 +229,7 @@
     .nav-menu {
         display: flex;
         flex-direction: column;
-        padding: 20px 0;
+        padding: 5px 0 20px 0;
         flex-grow: 1;
     }
     
@@ -426,6 +431,12 @@
         .nav-icon-wrapper i {
             font-size: 15px;
         }
+    }
+    
+    /* Adjust spacing for the sponsor link */
+    .nav-menu a.nav-item:first-child {
+        margin-top: 5px;
+        margin-bottom: 5px;
     }
 </style>
 
