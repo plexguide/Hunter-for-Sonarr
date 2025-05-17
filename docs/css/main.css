@@ -37,24 +37,12 @@ body {
     overflow-y: auto;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
     z-index: 100;
-    background: linear-gradient(135deg, #1e2738 0%, #0e1420 50%, #101824 75%, rgba(18, 25, 38, 0.95) 100%);
 }
 
 .sidebar-logo {
     text-align: center;
     padding: 10px 20px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    position: relative;
-}
-
-.sidebar-logo:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 10%;
-    right: 10%;
-    height: 1px;
-    background: linear-gradient(to right, transparent, rgba(52, 152, 219, 0.5), rgba(155, 89, 182, 0.5), transparent);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-logo img {
@@ -87,12 +75,6 @@ body {
     color: #777;
     padding: 10px 20px;
     margin: 0;
-    background: linear-gradient(90deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3));
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    font-weight: 600;
-    letter-spacing: 0.5px;
 }
 
 .sidebar-nav ul {
@@ -110,10 +92,8 @@ body {
     padding: 10px 20px;
     color: var(--text-color);
     text-decoration: none;
-    transition: all 0.3s ease;
-    margin: 0 10px;
-    border-radius: 4px;
-    position: relative;
+    transition: background-color 0.3s, color 0.3s;
+    border-left: 3px solid transparent;
 }
 
 .sidebar-nav a:hover {
@@ -123,23 +103,9 @@ body {
 }
 
 .sidebar-nav li.active a {
-    background-color: #3498db;
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 0 8px 2px rgba(52, 152, 219, 0.5);
-    z-index: 1;
-    animation: glowPulse 1.5s infinite alternate;
-    background: linear-gradient(90deg, rgba(52, 152, 219, 0.8), rgba(155, 89, 182, 0.8));
-    border-radius: 4px;
-}
-
-@keyframes glowPulse {
-    from {
-        box-shadow: 0 0 8px 2px rgba(52, 152, 219, 0.5);
-    }
-    to {
-        box-shadow: 0 0 15px 4px rgba(52, 152, 219, 0.7);
-    }
+    background-color: rgba(52, 152, 219, 0.2);
+    border-left: 3px solid var(--highlight-color);
+    color: var(--highlight-color);
 }
 
 .sidebar-nav .svg-icon {
