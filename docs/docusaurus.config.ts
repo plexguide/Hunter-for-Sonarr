@@ -27,7 +27,6 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          routeBasePath: '/', // This makes docs the main page
         },
         theme: {
           customCss: './src/css/custom.css',
