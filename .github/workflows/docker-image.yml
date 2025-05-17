@@ -91,7 +91,7 @@ jobs:
             ghcr.io/plexguide/huntarr:dev
             ghcr.io/plexguide/huntarr:${{ github.sha }}
       
-      # 7c) Build & Push if it's a tag/release
+      # 7c) Build & Push if it's a tag/release (version-specific tags only, no latest)
       - name: Build and Push (release)
         if: steps.meta.outputs.IS_TAG == 'true' && github.event_name != 'pull_request'
         uses: docker/build-push-action@v3
@@ -101,9 +101,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             huntarr/huntarr:${{ steps.meta.outputs.VERSION }}
-            huntarr/huntarr:latest
             ghcr.io/plexguide/huntarr:${{ steps.meta.outputs.VERSION }}
-            ghcr.io/plexguide/huntarr:latest
       
       # 7d) Build & Push for any other branch
       - name: Build and Push (feature branch)
