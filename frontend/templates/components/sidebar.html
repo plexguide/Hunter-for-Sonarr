@@ -1,4 +1,5 @@
 <div class="sidebar" id="sidebar">
+    <div class="sidebar-top-line"></div>
     <div class="logo-container">
         <img src="/static/logo/256.png" alt="Huntarr Logo" class="logo logo-large">
         <img src="/static/logo/32.png" alt="Huntarr Logo" class="logo logo-small">
@@ -115,8 +116,8 @@
         position: relative;
     }
     
-    /* Add subtle highlight to the top of the sidebar */
-    .sidebar::before {
+    /* Add horizontal line at the top of the sidebar */
+    .sidebar-top-line {
         content: '';
         position: absolute;
         top: 0;
@@ -124,7 +125,7 @@
         right: 0;
         height: 1px;
         background: linear-gradient(90deg, rgba(52, 152, 219, 0.6), rgba(155, 89, 182, 0.6)); /* Sonarr blue to Whisparr purple */
-        z-index: 1;
+        z-index: 2;
     }
     
     /* Add vertical color line to right edge of sidebar */
@@ -138,6 +139,18 @@
         background: linear-gradient(to bottom, rgba(52, 152, 219, 0.6), rgba(155, 89, 182, 0.6)); /* Sonarr blue to Whisparr purple */
         z-index: 2;
         box-shadow: none;
+    }
+    
+    /* Add matching vertical color line to left edge of sidebar */
+    .sidebar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 1px;
+        background: linear-gradient(to bottom, rgba(52, 152, 219, 0.6), rgba(155, 89, 182, 0.6)); /* Sonarr blue to Whisparr purple */
+        z-index: 2;
     }
     
     .logo-container {
@@ -270,10 +283,10 @@
             overflow-x: hidden !important;
         }
         
-        /* Adjust vertical color line on mobile */
+        /* Adjust vertical color lines on mobile */
+        .sidebar::before,
         .sidebar::after {
-            width: 2px;
-            right: 0;
+            width: 1px;
         }
         
         .logo-container {
