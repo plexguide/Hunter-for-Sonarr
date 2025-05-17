@@ -1,7 +1,7 @@
 /* Top bar styling for documentation pages */
 .top-bar {
-    height: 30px;
-    background: linear-gradient(135deg, rgba(30, 39, 56, 0.95) 0%, rgba(14, 20, 32, 0.95) 50%, rgba(16, 24, 36, 0.95) 100%);
+    height: 36px;
+    background-color: #0d1117; /* Darker background to match the screenshot */
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -10,7 +10,10 @@
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid #21262d;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: 12px;
 }
 
 .topbar-section {
@@ -20,10 +23,11 @@
 
 .topbar-section.left {
     flex: 1;
+    justify-content: flex-start;
 }
 
 .topbar-section.center {
-    flex: 3;
+    flex: 1;
     justify-content: center;
 }
 
@@ -32,21 +36,36 @@
     justify-content: flex-end;
 }
 
-.version-bar {
+.version-info {
     display: flex;
     align-items: center;
     font-size: 12px;
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
 }
 
-.version-item {
+.developer-info {
     display: flex;
     align-items: center;
+    font-size: 12px;
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+/* Version and developer items share similar styling */
+.version-info > *, .developer-info > * {
+    display: inline-flex;
+    align-items: center;
     margin: 0 3px;
+    white-space: nowrap;
 }
 
 .version-icon {
     margin-right: 5px;
     font-size: 12px;
+    color: #3498db;
 }
 
 .version-divider {
@@ -58,20 +77,22 @@
 
 .star-icon {
     color: #f8d12f;
+    animation: star-pulse 2s infinite;
 }
 
-a {
+.top-bar a {
     color: #3498db;
     text-decoration: none;
     transition: color 0.2s;
 }
 
-a:hover {
-    color: #2980b9;
+.top-bar a:hover {
+    color: #2ecc71;
+    text-decoration: none;
 }
 
 .developer-credit a {
-    color: #f0f0f0;
+    color: #ecf0f1;
     font-weight: 500;
 }
 
@@ -115,4 +136,38 @@ a:hover {
     .version-item {
         margin: 2px 5px;
     }
+}
+
+/* Add animation for star icon */
+@keyframes star-pulse {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+}
+
+/* Override any conflicting styles from main.css */
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.docs-link a {
+    display: flex;
+    align-items: center;
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    background-color: rgba(52, 152, 219, 0.2);
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.docs-link a:hover {
+    background-color: rgba(46, 204, 113, 0.3);
+    color: #2ecc71;
+}
+
+.docs-link i {
+    margin-right: 5px;
 }
