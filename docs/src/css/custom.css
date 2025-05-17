@@ -6,26 +6,47 @@
 
 /* You can override the default Infima variables here. */
 :root {
-  --ifm-color-primary: #3e0d60;
-  --ifm-color-primary-dark: #360b55;
-  --ifm-color-primary-darker: #2e094a;
-  --ifm-color-primary-darkest: #23073a;
-  --ifm-color-primary-light: #4b1573;
-  --ifm-color-primary-lighter: #561c85;
-  --ifm-color-primary-lightest: #642a95;
+  /* Huntarr primary blue */
+  --ifm-color-primary: #3498db;
+  --ifm-color-primary-dark: #2980b9;
+  --ifm-color-primary-darker: #2471a3;
+  --ifm-color-primary-darkest: #1f618d;
+  --ifm-color-primary-light: #5faee3;
+  --ifm-color-primary-lighter: #7fb9e7;
+  --ifm-color-primary-lightest: #a9d0f0;
+  
+  /* Custom Huntarr app colors */
+  --huntarr-sonarr-color: #3498db;
+  --huntarr-radarr-color: #f1c40f;
+  --huntarr-lidarr-color: #2ecc71;
+  --huntarr-readarr-color: #e74c3c;
+  --huntarr-whisparr-color: #9b59b6;
+  --huntarr-eros-color: #673AB7;
+  
+  /* Huntarr UI variables */
+  --huntarr-header-bg: #252a34;
+  --huntarr-sidebar-bg: #2c3e50;
+  
   --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(40, 10, 60, 0.1);
+  --docusaurus-highlighted-code-line-bg: rgba(52, 152, 219, 0.1);
+  
+  /* Customize navbar */
+  --ifm-navbar-background-color: var(--huntarr-header-bg);
+  --ifm-navbar-link-color: #ecf0f1;
+  --ifm-navbar-link-hover-color: var(--ifm-color-primary-lightest);
 }
 
 [data-theme='dark'] {
-  --ifm-color-primary: #6b3fa0;
-  --ifm-color-primary-dark: #5f3891;
-  --ifm-color-primary-darker: #553283;
-  --ifm-color-primary-darkest: #44276a;
-  --ifm-color-primary-light: #7f54b0;
-  --ifm-color-primary-lighter: #9168bd;
-  --ifm-color-primary-lightest: #a27bcc;
-  --docusaurus-highlighted-code-line-bg: rgba(100, 60, 130, 0.2);
+  --ifm-color-primary: #3498db;
+  --ifm-color-primary-dark: #2980b9;
+  --ifm-color-primary-darker: #2471a3;
+  --ifm-color-primary-darkest: #1f618d;
+  --ifm-color-primary-light: #5faee3;
+  --ifm-color-primary-lighter: #7fb9e7;
+  --ifm-color-primary-lightest: #a9d0f0;
+  --ifm-background-color: #1a1d24;
+  --ifm-background-surface-color: #252a34;
+  --docusaurus-highlighted-code-line-bg: rgba(52, 152, 219, 0.2);
 }
 
 [data-theme='light'] code {
@@ -98,6 +119,160 @@
   padding: 0.5rem 1rem;
   border-radius: 0.25rem;
   border-left: 4px solid;
+}
+
+/* Huntarr-specific customizations */
+
+/* Add Huntarr's blue header styling to section headers */
+.theme-doc-markdown h2 {
+  background-color: var(--huntarr-header-bg);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Style cards to match Huntarr's UI */
+.card {
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* App-specific color classes */
+.sonarr-color {
+  color: var(--huntarr-sonarr-color);
+}
+
+.radarr-color {
+  color: var(--huntarr-radarr-color);
+}
+
+.lidarr-color {
+  color: var(--huntarr-lidarr-color);
+}
+
+.readarr-color {
+  color: var(--huntarr-readarr-color);
+}
+
+.whisparr-color {
+  color: var(--huntarr-whisparr-color);
+}
+
+.eros-color {
+  color: var(--huntarr-eros-color);
+}
+
+/* App-specific border styles */
+.sonarr-border {
+  border: 2px solid var(--huntarr-sonarr-color);
+  border-radius: 8px;
+  padding: 15px;
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+.radarr-border {
+  border: 2px solid var(--huntarr-radarr-color);
+  border-radius: 8px;
+  padding: 15px;
+  background-color: rgba(241, 196, 15, 0.1);
+}
+
+.lidarr-border {
+  border: 2px solid var(--huntarr-lidarr-color);
+  border-radius: 8px;
+  padding: 15px;
+  background-color: rgba(46, 204, 113, 0.1);
+}
+
+.readarr-border {
+  border: 2px solid var(--huntarr-readarr-color);
+  border-radius: 8px;
+  padding: 15px;
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+.whisparr-border {
+  border: 2px solid var(--huntarr-whisparr-color);
+  border-radius: 8px;
+  padding: 15px;
+  background-color: rgba(155, 89, 182, 0.1);
+}
+
+.eros-border {
+  border: 2px solid var(--huntarr-eros-color);
+  border-radius: 8px;
+  padding: 15px;
+  background-color: rgba(103, 58, 183, 0.1);
+}
+
+/* Huntarr-style buttons */
+.button {
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Matching Huntarr's footer style */
+.footer {
+  background: linear-gradient(to right, var(--huntarr-header-bg), #1a1d24);
+  color: #ecf0f1;
+  padding: 2rem 0;
+}
+
+.footer a:hover {
+  text-decoration: none;
+  color: var(--ifm-color-primary-lightest);
+}
+
+/* Add glow effect to important elements */
+.glow-blue {
+  box-shadow: 0 0 15px rgba(52, 152, 219, 0.6);
+}
+
+/* Tooltip styling similar to Huntarr */
+.tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  width: 200px;
+  background-color: var(--ifm-background-surface-color);
+  color: var(--ifm-color-primary-lightest);
+  text-align: center;
+  border-radius: 6px;
+  padding: 10px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+  border: 1px solid var(--ifm-color-primary);
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
 }
 
 .admonition-heading {
