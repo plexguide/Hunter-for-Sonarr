@@ -1,0 +1,118 @@
+/* Top bar styling for documentation pages */
+.top-bar {
+    height: 30px;
+    background: linear-gradient(135deg, rgba(30, 39, 56, 0.95) 0%, rgba(14, 20, 32, 0.95) 50%, rgba(16, 24, 36, 0.95) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.topbar-section {
+    display: flex;
+    align-items: center;
+}
+
+.topbar-section.left {
+    flex: 1;
+}
+
+.topbar-section.center {
+    flex: 3;
+    justify-content: center;
+}
+
+.topbar-section.right {
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.version-bar {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+}
+
+.version-item {
+    display: flex;
+    align-items: center;
+    margin: 0 3px;
+}
+
+.version-icon {
+    margin-right: 5px;
+    font-size: 12px;
+}
+
+.version-divider {
+    width: 1px;
+    height: 14px;
+    background-color: rgba(255, 255, 255, 0.3);
+    margin: 0 8px;
+}
+
+.star-icon {
+    color: #f8d12f;
+}
+
+a {
+    color: #3498db;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: #2980b9;
+}
+
+.developer-credit a {
+    color: #f0f0f0;
+    font-weight: 500;
+}
+
+.developer-credit a:hover {
+    color: #3498db;
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+    .version-bar {
+        font-size: 11px;
+    }
+    
+    .version-divider {
+        margin: 0 5px;
+    }
+    
+    .version-icon {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 600px) {
+    .top-bar {
+        height: auto;
+        padding: 5px 10px;
+        flex-direction: column;
+    }
+    
+    .topbar-section {
+        width: 100%;
+        justify-content: center;
+        margin: 2px 0;
+    }
+    
+    .version-bar {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .version-item {
+        margin: 2px 5px;
+    }
+}
