@@ -43,7 +43,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
+            # Removed latest tag to prevent automatic updates
 
       # Login to DockerHub
       - name: Login to DockerHub
