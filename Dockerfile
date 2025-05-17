@@ -2,6 +2,11 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
+# Install system dependencies including net-tools for health checks
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    net-tools \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install required packages from the root requirements file
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
