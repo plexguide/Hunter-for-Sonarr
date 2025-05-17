@@ -5,6 +5,7 @@ import datetime, os, requests
 from src.primary import keys_manager
 from src.primary.state import get_state_file_path, reset_state_file
 from src.primary.utils.logger import get_logger
+from src.primary.settings_manager import get_ssl_verify_setting
 import traceback
 import socket
 from urllib.parse import urlparse
@@ -41,6 +42,12 @@ def test_connection():
         "Content-Type": "application/json"
     }
     
+    # Get SSL verification setting
+    verify_ssl = get_ssl_verify_setting()
+    
+    if not verify_ssl:
+        readarr_logger.debug("SSL verification disabled by user setting for connection test")
+    
     try:
         # First check if the host is reachable at all
         parsed_url = urlparse(api_url)
@@ -67,7 +74,7 @@ def test_connection():
             readarr_logger.debug(f"Socket test error, continuing with full request: {str(e)}")
             
         # Now proceed with the actual API request
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10, verify=verify_ssl)
         
         # For HTTP errors, provide more specific feedback
         if response.status_code == 401:

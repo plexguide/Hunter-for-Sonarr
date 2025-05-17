@@ -1257,12 +1257,12 @@ const SettingsForms = {
                     <p class="setting-help">Allow access without login when connecting from local network IP addresses (e.g., 192.168.x.x, 10.x.x.x)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="ssl_verify">SSL Verification:</label>
+                    <label for="ssl_verify">Enable SSL Verification:</label>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="ssl_verify" ${settings.ssl_verify !== false ? 'checked' : ''}>
+                        <input type="checkbox" id="ssl_verify" ${settings.ssl_verify === true ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
-                    <p class="setting-help">Enable/disable SSL certificate verification. Disable for self-signed certificates in private networks.</p>
+                    <p class="setting-help">Disable SSL certificate verification when using self-signed certificates in private networks.</p>
                 </div>
             </div>
             

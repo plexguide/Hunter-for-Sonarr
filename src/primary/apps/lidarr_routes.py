@@ -5,6 +5,7 @@ import datetime, os, requests
 from src.primary import keys_manager
 from src.primary.state import get_state_file_path, reset_state_file
 from src.primary.utils.logger import get_logger
+from src.primary.settings_manager import get_ssl_verify_setting
 import traceback
 import socket
 from urllib.parse import urlparse
@@ -66,8 +67,14 @@ def test_connection():
         "Content-Type": "application/json"
     }
     
+    # Get SSL verification setting
+    verify_ssl = get_ssl_verify_setting()
+    
+    if not verify_ssl:
+        lidarr_logger.debug("SSL verification disabled by user setting for connection test")
+    
     try:
-        response = requests.get(url, headers=headers, timeout=(10, api_timeout))
+        response = requests.get(url, headers=headers, timeout=(10, api_timeout), verify=verify_ssl)
         
         # For HTTP errors, provide more specific feedback
         if response.status_code == 401:

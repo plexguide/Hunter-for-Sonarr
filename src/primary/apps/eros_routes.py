@@ -5,7 +5,7 @@ import datetime, os, requests
 from src.primary import keys_manager
 from src.primary.state import get_state_file_path, reset_state_file
 from src.primary.utils.logger import get_logger, APP_LOG_FILES
-from src.primary.settings_manager import load_settings
+from src.primary.settings_manager import load_settings, get_ssl_verify_setting
 import traceback
 import socket
 from urllib.parse import urlparse
@@ -59,10 +59,16 @@ def test_connection(url, api_key):
     api_url = f"{url.rstrip('/')}/api/v3/system/status"
     headers = {'X-Api-Key': api_key}
     
+    # Get SSL verification setting
+    verify_ssl = get_ssl_verify_setting()
+    
+    if not verify_ssl:
+        eros_logger.debug("SSL verification disabled by user setting for connection test")
+    
     try:
         # Make the request with appropriate timeouts
         eros_logger.debug(f"Trying API path: {api_url}")
-        response = requests.get(api_url, headers=headers, timeout=(5, 30))
+        response = requests.get(api_url, headers=headers, timeout=(5, 30), verify=verify_ssl)
         
         try:
             response.raise_for_status()
