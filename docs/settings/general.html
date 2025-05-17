@@ -8,119 +8,149 @@
     <script src="../js/main.js" defer></script>
 </head>
 <body>
-    <div class="container">
-        <h1>General Settings</h1>
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="../images/huntarr-logo.svg" alt="Huntarr Logo">
+            <h2>Huntarr.io</h2>
+        </div>
         
-        <div class="nav-menu">
+        <nav class="sidebar-nav">
+            <div class="sidebar-section">
+                <h3 class="sidebar-section-title">Core</h3>
+                <ul>
+                    <li><a href="../index.html"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg> Home</a></li>
+                    <li><a href="../apps/index.html"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"></path></svg> Apps</a></li>
+                    <li class="active"><a href="index.html"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg> Settings</a></li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3 class="sidebar-section-title">Settings</h3>
+                <ul>
+                    <li class="active"><a href="general.html"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"></path></svg> General</a></li>
+                    <li><a href="network.html"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"></path></svg> Network</a></li>
+                    <li><a href="storage.html"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"></path></svg> Storage</a></li>
+                    <li><a href="security.html"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"></path></svg> Security</a></li>
+                    <li><a href="integration.html"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg> Integration</a></li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3 class="sidebar-section-title">Resources</h3>
+                <ul>
+                    <li><a href="https://github.com/plexguide/Huntarr.io" target="_blank"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path></svg> GitHub</a></li>
+                    <li><a href="https://plexguide.github.io/Huntarr.io/" target="_blank"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-2.033 16.01c.564-1.789 1.632-3.932 1.821-4.474.273-.787-.211-1.136-1.74.209l-.34-.64c1.744-1.897 5.335-2.326 4.113.613-.763 1.835-1.309 3.074-1.621 4.03-.455 1.393.694.828 1.819-.211.153.25.203.331.356.619-2.498 2.378-5.271 2.588-4.408-.146zm4.742-8.169c-.532.453-1.32.443-1.761-.022-.441-.465-.367-1.208.164-1.661.532-.453 1.32-.442 1.761.022.439.466.367 1.209-.164 1.661z"></path></svg> Website</a></li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <h1>General Settings</h1>
+            
+            <p>The General Settings section allows you to configure basic options for your Huntarr.io instance.</p>
+            
+            <h2>System Settings</h2>
+            
+            <h3>Application Name</h3>
+            <p>You can customize the name of your Huntarr.io instance that appears in the title bar and navbar. This is useful if you're running multiple instances.</p>
+            <p><strong>Default:</strong> Huntarr.io</p>
+            
+            <h3>UI Theme</h3>
+            <p>Choose between different UI themes for your Huntarr.io interface:</p>
             <ul>
-                <li><a href="../index.html">Home</a></li>
-                <li><a href="../apps/index.html">Apps</a></li>
-                <li class="active"><a href="index.html">Settings</a></li>
-                <li><a href="https://github.com/plexguide/Huntarr.io" target="_blank">GitHub</a></li>
+                <li><strong>Light:</strong> Default light theme</li>
+                <li><strong>Dark:</strong> Dark theme for low-light environments</li>
+                <li><strong>System:</strong> Follows your system's dark/light mode settings</li>
             </ul>
+            
+            <h3>Language</h3>
+            <p>Select the language for the Huntarr.io UI. Current supported languages include:</p>
+            <ul>
+                <li>English (Default)</li>
+                <li>Spanish</li>
+                <li>French</li>
+                <li>German</li>
+                <li>Italian</li>
+                <li>More languages are being added regularly</li>
+            </ul>
+            
+            <h2>Updates</h2>
+            
+            <h3>Update Channel</h3>
+            <p>Select which update channel to use:</p>
+            <ul>
+                <li><strong>Stable:</strong> Recommended for most users. Includes thoroughly tested updates.</li>
+                <li><strong>Beta:</strong> Preview newer features before they reach stable. May contain bugs.</li>
+                <li><strong>Nightly:</strong> Latest development builds. Not recommended for production use.</li>
+            </ul>
+            
+            <h3>Automatic Updates</h3>
+            <p>Configure how Huntarr.io handles updates:</p>
+            <ul>
+                <li><strong>Automatic:</strong> Huntarr.io will automatically update when new releases are available.</li>
+                <li><strong>Notify Only:</strong> You'll be notified about updates but they won't be installed automatically.</li>
+                <li><strong>Disabled:</strong> No update checks will be performed.</li>
+            </ul>
+            
+            <h2>Backup</h2>
+            
+            <h3>Backup Location</h3>
+            <p>Specify where backups should be stored. Default location is <code>/opt/appdata/huntarr/backups</code>, but you can change this to any accessible path.</p>
+            
+            <h3>Backup Schedule</h3>
+            <p>Configure automatic backups of your Huntarr.io configuration:</p>
+            <ul>
+                <li><strong>Daily:</strong> Run backups every day (recommended)</li>
+                <li><strong>Weekly:</strong> Run backups once per week</li>
+                <li><strong>Monthly:</strong> Run backups once per month</li>
+                <li><strong>Disabled:</strong> Don't run automatic backups</li>
+            </ul>
+            
+            <h3>Backup Retention</h3>
+            <p>Determine how many backups to keep before deleting older ones:</p>
+            <ul>
+                <li>Default: 7 backups</li>
+                <li>Range: 1-30 backups</li>
+            </ul>
+            
+            <h2>Logging</h2>
+            
+            <h3>Log Level</h3>
+            <p>Select how detailed the logs should be:</p>
+            <ul>
+                <li><strong>Error:</strong> Only log errors</li>
+                <li><strong>Warning:</strong> Log errors and warnings</li>
+                <li><strong>Info:</strong> Default, includes general operation information</li>
+                <li><strong>Debug:</strong> Detailed logs, useful for troubleshooting but generates larger log files</li>
+                <li><strong>Trace:</strong> Most detailed logging level, should only be used when debugging issues</li>
+            </ul>
+            
+            <h3>Log Rotation</h3>
+            <p>Configure when logs should be rotated:</p>
+            <ul>
+                <li><strong>Size:</strong> When log file reaches a certain size (default: 10MB)</li>
+                <li><strong>Daily:</strong> Rotate logs once per day</li>
+                <li><strong>Weekly:</strong> Rotate logs once per week</li>
+            </ul>
+            
+            <h3>Log Retention</h3>
+            <p>How many log files to keep before deleting older ones:</p>
+            <ul>
+                <li>Default: 10 files</li>
+                <li>Range: 1-50 files</li>
+            </ul>
+            
+            <div class="section-nav">
+                <a href="index.html">← Back to Settings</a>
+                <a href="network.html">Network Settings →</a>
+            </div>
+            
+            <footer>
+                Huntarr.io <span class="version-badge">v6.5.18</span> | General Settings Documentation | Thanks 4 Using Huntarr - Admin9705
+            </footer>
         </div>
-        
-        <p>The General Settings section allows you to configure basic options for your Huntarr.io instance.</p>
-        
-        <h2>System Settings</h2>
-        
-        <h3>Application Name</h3>
-        <p>You can customize the name of your Huntarr.io instance that appears in the title bar and navbar. This is useful if you're running multiple instances.</p>
-        <p><strong>Default:</strong> Huntarr.io</p>
-        
-        <h3>UI Theme</h3>
-        <p>Choose between different UI themes for your Huntarr.io interface:</p>
-        <ul>
-            <li><strong>Light:</strong> Default light theme</li>
-            <li><strong>Dark:</strong> Dark theme for low-light environments</li>
-            <li><strong>System:</strong> Follows your system's dark/light mode settings</li>
-        </ul>
-        
-        <h3>Language</h3>
-        <p>Select the language for the Huntarr.io UI. Current supported languages include:</p>
-        <ul>
-            <li>English (Default)</li>
-            <li>Spanish</li>
-            <li>French</li>
-            <li>German</li>
-            <li>Italian</li>
-            <li>More languages are being added regularly</li>
-        </ul>
-        
-        <h2>Updates</h2>
-        
-        <h3>Update Channel</h3>
-        <p>Select which update channel to use:</p>
-        <ul>
-            <li><strong>Stable:</strong> Recommended for most users. Includes thoroughly tested updates.</li>
-            <li><strong>Beta:</strong> Preview newer features before they reach stable. May contain bugs.</li>
-            <li><strong>Nightly:</strong> Latest development builds. Not recommended for production use.</li>
-        </ul>
-        
-        <h3>Automatic Updates</h3>
-        <p>Configure how Huntarr.io handles updates:</p>
-        <ul>
-            <li><strong>Automatic:</strong> Huntarr.io will automatically update when new releases are available.</li>
-            <li><strong>Notify Only:</strong> You'll be notified about updates but they won't be installed automatically.</li>
-            <li><strong>Disabled:</strong> No update checks will be performed.</li>
-        </ul>
-        
-        <h2>Backup</h2>
-        
-        <h3>Backup Location</h3>
-        <p>Specify where backups should be stored. Default location is <code>/opt/appdata/huntarr/backups</code>, but you can change this to any accessible path.</p>
-        
-        <h3>Backup Schedule</h3>
-        <p>Configure automatic backups of your Huntarr.io configuration:</p>
-        <ul>
-            <li><strong>Daily:</strong> Run backups every day (recommended)</li>
-            <li><strong>Weekly:</strong> Run backups once per week</li>
-            <li><strong>Monthly:</strong> Run backups once per month</li>
-            <li><strong>Disabled:</strong> Don't run automatic backups</li>
-        </ul>
-        
-        <h3>Backup Retention</h3>
-        <p>Determine how many backups to keep before deleting older ones:</p>
-        <ul>
-            <li>Default: 7 backups</li>
-            <li>Range: 1-30 backups</li>
-        </ul>
-        
-        <h2>Logging</h2>
-        
-        <h3>Log Level</h3>
-        <p>Select how detailed the logs should be:</p>
-        <ul>
-            <li><strong>Error:</strong> Only log errors</li>
-            <li><strong>Warning:</strong> Log errors and warnings</li>
-            <li><strong>Info:</strong> Default, includes general operation information</li>
-            <li><strong>Debug:</strong> Detailed logs, useful for troubleshooting but generates larger log files</li>
-            <li><strong>Trace:</strong> Most detailed logging level, should only be used when debugging issues</li>
-        </ul>
-        
-        <h3>Log Rotation</h3>
-        <p>Configure when logs should be rotated:</p>
-        <ul>
-            <li><strong>Size:</strong> When log file reaches a certain size (default: 10MB)</li>
-            <li><strong>Daily:</strong> Rotate logs once per day</li>
-            <li><strong>Weekly:</strong> Rotate logs once per week</li>
-        </ul>
-        
-        <h3>Log Retention</h3>
-        <p>How many log files to keep before deleting older ones:</p>
-        <ul>
-            <li>Default: 10 files</li>
-            <li>Range: 1-50 files</li>
-        </ul>
-        
-        <div class="section-nav">
-            <a href="index.html">← Back to Settings</a>
-            <a href="network.html">Network Settings →</a>
-        </div>
-        
-        <footer>
-            Huntarr.io v6.5.18 | General Settings Documentation | Thanks 4 Using Huntarr - Admin9705
-        </footer>
     </div>
 </body>
 </html> 

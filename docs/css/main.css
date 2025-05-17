@@ -1,9 +1,13 @@
 /* Huntarr.io Documentation Styles */
 :root {
-    --primary-color: #252a34;
-    --secondary-color: #3498db;
-    --background-color: #f5f5f5;
-    --text-color: #333;
+    --primary-bg: #1a1d24;
+    --secondary-bg: #252a34;
+    --sidebar-bg: #1a1d24;
+    --content-bg: #252a34;
+    --text-color: #e2e2e2;
+    --link-color: #3498db;
+    --highlight-color: #3498db;
+    --border-color: #333;
     --sonarr-color: #3498db; /* Blue */
     --radarr-color: #f1c40f; /* Yellow */
     --lidarr-color: #2ecc71; /* Green */
@@ -15,42 +19,140 @@ body {
     font-family: 'Arial', sans-serif;
     line-height: 1.6;
     color: var(--text-color);
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: var(--background-color);
+    margin: 0;
+    padding: 0;
+    background-color: var(--primary-bg);
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 220px;
+    background-color: var(--sidebar-bg);
+    padding: 20px 0;
+    position: fixed;
+    height: 100%;
+    overflow-y: auto;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+}
+
+.sidebar-logo {
+    text-align: center;
+    padding: 10px 20px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-logo img {
+    width: 80px;
+    height: 80px;
+    display: block;
+    margin: 0 auto 10px;
+}
+
+.sidebar-logo h2 {
+    color: var(--text-color);
+    margin: 0;
+    font-size: 1.4rem;
+    border: none;
+    padding: 0;
+    text-align: center;
+}
+
+.sidebar-nav {
+    margin-top: 20px;
+}
+
+.sidebar-section {
+    margin-bottom: 20px;
+}
+
+.sidebar-section-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #777;
+    padding: 10px 20px;
+    margin: 0;
+}
+
+.sidebar-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav li {
+    margin-bottom: 2px;
+}
+
+.sidebar-nav a {
+    display: block;
+    padding: 10px 20px;
+    color: var(--text-color);
+    text-decoration: none;
+    transition: background-color 0.3s, color 0.3s;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+.sidebar-nav li.active a {
+    background-color: rgba(52, 152, 219, 0.2);
+    border-left: 3px solid var(--highlight-color);
+    color: var(--highlight-color);
+}
+
+.sidebar-nav .svg-icon {
+    margin-right: 10px;
+    width: 18px;
+    vertical-align: text-bottom;
+}
+
+.main-content {
+    flex: 1;
+    margin-left: 220px;
+    padding: 30px;
+    background-color: var(--content-bg);
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
 .container {
-    background-color: white;
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: var(--secondary-bg);
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
-    color: var(--primary-color);
+    color: var(--text-color);
     text-align: center;
     margin-bottom: 30px;
     padding-bottom: 15px;
-    border-bottom: 2px solid var(--primary-color);
+    border-bottom: 2px solid var(--highlight-color);
 }
 
 h2 {
-    color: var(--primary-color);
+    color: var(--text-color);
     margin-top: 30px;
     margin-bottom: 15px;
     padding-bottom: 5px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border-color);
 }
 
 h3 {
     margin-top: 25px;
-    color: #444;
+    color: var(--text-color);
 }
 
 a {
-    color: var(--secondary-color);
+    color: var(--link-color);
     text-decoration: none;
     transition: color 0.3s;
 }
@@ -82,7 +184,12 @@ a:hover {
     margin: 20px 0;
     padding: 15px;
     border-radius: 8px;
+    background-color: rgba(10, 15, 25, 0.4);
     border-left: 4px solid;
+}
+
+.app-box h3 {
+    margin-top: 0;
 }
 
 .app-box.sonarr { border-left-color: var(--sonarr-color); }
@@ -101,25 +208,51 @@ a:hover {
     justify-content: space-between;
     margin: 30px 0;
     padding: 10px 0;
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #eee;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 code {
-    background-color: #f8f9fa;
+    background-color: rgba(10, 15, 25, 0.6);
     padding: 2px 6px;
     border-radius: 3px;
-    border: 1px solid #eee;
+    border: 1px solid var(--border-color);
     font-family: 'Courier New', monospace;
     font-size: 0.9em;
+    color: #f8f8f8;
 }
 
 pre {
-    background-color: #f8f9fa;
+    background-color: rgba(10, 15, 25, 0.6);
     padding: 15px;
     border-radius: 5px;
-    border: 1px solid #eee;
+    border: 1px solid var(--border-color);
     overflow-x: auto;
+    color: #f8f8f8;
+    position: relative;
+}
+
+pre code {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+}
+
+.copy-button {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    padding: 5px 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--text-color);
+    font-size: 0.8rem;
+}
+
+.copy-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 img {
@@ -133,10 +266,11 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin: 20px 0;
+    background-color: rgba(10, 15, 25, 0.4);
 }
 
 table, th, td {
-    border: 1px solid #eee;
+    border: 1px solid var(--border-color);
 }
 
 th, td {
@@ -145,7 +279,7 @@ th, td {
 }
 
 th {
-    background-color: #f8f9fa;
+    background-color: rgba(10, 15, 25, 0.6);
 }
 
 footer {
@@ -154,55 +288,34 @@ footer {
     padding-top: 20px;
     font-size: 0.9em;
     color: #777;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--border-color);
 }
 
 /* Responsive styles */
 @media (max-width: 768px) {
-    .app-icons {
-        flex-wrap: wrap;
+    body {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding: 10px 0;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
     }
     
     .container {
         padding: 15px;
     }
-}
-
-/* Navigation menu */
-.nav-menu {
-    margin-bottom: 30px;
-}
-
-.nav-menu ul {
-    display: flex;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    background-color: var(--primary-color);
-    border-radius: 5px;
-    overflow: hidden;
-}
-
-.nav-menu li {
-    flex: 1;
-    text-align: center;
-}
-
-.nav-menu li a {
-    display: block;
-    color: white;
-    padding: 12px 15px;
-    text-decoration: none;
-    transition: background-color 0.3s;
-}
-
-.nav-menu li a:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    text-decoration: none;
-}
-
-.nav-menu li.active a {
-    background-color: var(--secondary-color);
+    
+    .app-icons {
+        flex-wrap: wrap;
+    }
 }
 
 /* Info icon */
@@ -210,7 +323,7 @@ footer {
     display: inline-block;
     width: 20px;
     height: 20px;
-    background-color: var(--secondary-color);
+    background-color: var(--link-color);
     color: white;
     border-radius: 50%;
     text-align: center;
@@ -223,4 +336,95 @@ footer {
 .info-link:hover {
     background-color: #217dbb;
     text-decoration: none;
+}
+
+/* Version badge */
+.version-badge {
+    display: inline-block;
+    background-color: rgba(52, 152, 219, 0.2);
+    color: var(--link-color);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-left: 10px;
+}
+
+/* Card style for app blocks */
+.app-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    background-color: rgba(20, 25, 35, 0.6);
+    margin: 20px 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    overflow: hidden;
+}
+
+.app-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+}
+
+.app-card-header {
+    padding: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.app-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-weight: bold;
+}
+
+.app-card-title {
+    margin: 0;
+    color: var(--text-color);
+}
+
+.app-card-content {
+    padding: 15px;
+    flex: 1;
+}
+
+.app-card-footer {
+    padding: 10px 15px;
+    background-color: rgba(10, 15, 25, 0.3);
+    text-align: right;
+}
+
+/* Card styled for sonarr */
+.app-card.sonarr-card .app-card-header {
+    background-color: rgba(52, 152, 219, 0.2);
+    border-bottom: 2px solid var(--sonarr-color);
+}
+
+/* Card styled for radarr */
+.app-card.radarr-card .app-card-header {
+    background-color: rgba(241, 196, 15, 0.2);
+    border-bottom: 2px solid var(--radarr-color);
+}
+
+/* Card styled for lidarr */
+.app-card.lidarr-card .app-card-header {
+    background-color: rgba(46, 204, 113, 0.2);
+    border-bottom: 2px solid var(--lidarr-color);
+}
+
+/* Card styled for readarr */
+.app-card.readarr-card .app-card-header {
+    background-color: rgba(231, 76, 60, 0.2);
+    border-bottom: 2px solid var(--readarr-color);
+}
+
+/* Card styled for whisparr */
+.app-card.whisparr-card .app-card-header {
+    background-color: rgba(155, 89, 182, 0.2);
+    border-bottom: 2px solid var(--whisparr-color);
 } 
