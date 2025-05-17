@@ -1,50 +1,35 @@
-name: Deploy Huntarr Documentation
-# Updated workflow for docs deployment
+name: Deploy GitHub Pages
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'docs/**'
-      - '.github/workflows/docs.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'docs/**'
-  # Allow manual trigger
+    branches: [ main ]
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+      
       - name: Setup Pages
+        id: pages
         uses: actions/configure-pages@v4
-        
-      - name: Prepare Documentation
+      
+      - name: Prepare Docs
         run: |
           mkdir -p docs/assets/{css,img,js,logo}
           
-          # Copy assets
+          # Copy assets if they exist
           [ -d frontend/static/css ] && cp -r frontend/static/css/* docs/assets/css/ || true
           [ -d frontend/static/js ] && cp -r frontend/static/js/* docs/assets/js/ || true
           [ -d frontend/static/img ] && cp -r frontend/static/img/* docs/assets/img/ || true
@@ -64,13 +49,19 @@ jobs:
               fi
             done
           fi
-          
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+      
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v1
         with:
-          path: './docs'
-          
+          path: docs
+  
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
-        if: github.event_name != 'pull_request' 
+        uses: actions/deploy-pages@v1 
