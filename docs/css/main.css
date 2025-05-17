@@ -60,24 +60,26 @@ body {
 .sidebar-logo:before {
     content: '';
     position: absolute;
-    width: 90px;
-    height: 90px;
-    top: 15px;
+    width: 110px;
+    height: 110px;
+    top: 5px;
     left: 50%;
     transform: translateX(-50%);
     border-radius: 50%;
     background: transparent;
-    border: 2px solid var(--highlight-color);
-    box-shadow: 0 0 15px var(--highlight-color), inset 0 0 15px var(--highlight-color);
-    animation: glow 3s linear infinite, rotate 10s linear infinite;
+    border: 1px solid rgba(52, 152, 219, 0.7);
+    box-shadow: 0 0 25px 5px rgba(41, 128, 185, 0.8), inset 0 0 15px rgba(52, 152, 219, 0.4);
+    -webkit-animation: glow 4s ease-in-out infinite, rotate 30s linear infinite;
+    animation: glow 4s ease-in-out infinite, rotate 30s linear infinite;
     z-index: 1;
-    opacity: 0.8;
+    opacity: 0.95;
+    pointer-events: none;
 }
 
 @keyframes glow {
-    0% { opacity: 0.6; }
-    50% { opacity: 0.9; }
-    100% { opacity: 0.6; }
+    0% { opacity: 0.8; }
+    50% { opacity: 1; }
+    100% { opacity: 0.8; }
 }
 
 @keyframes rotate {
