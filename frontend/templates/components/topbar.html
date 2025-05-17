@@ -37,17 +37,19 @@
 
 <style>
     .top-bar {
-        height: 30px; /* Desktop reduced height */
+        height: 35px; /* Slightly increased height for better spacing */
         background: linear-gradient(135deg, rgba(30, 39, 56, 0.95) 0%, rgba(14, 20, 32, 0.95) 50%, rgba(16, 24, 36, 0.95) 100%);
         display: flex;
         align-items: center;
         padding: 0 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         border-bottom: 1px solid rgba(90, 109, 137, 0.15);
         position: sticky;
         top: 0;
         z-index: 100;
         position: relative;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px); /* Add subtle blur effect for depth */
     }
     
     /* Top color line */
@@ -59,6 +61,7 @@
         height: 1px;
         background: linear-gradient(90deg, rgba(52, 152, 219, 0.6), rgba(155, 89, 182, 0.6)); /* Sonarr blue to Whisparr purple */
         z-index: 2;
+        box-shadow: 0 0 8px rgba(52, 152, 219, 0.4); /* Add subtle glow */
     }
     
     /* Add subtle colored accent to the bottom of the top bar */
@@ -99,11 +102,25 @@
         justify-content: flex-end;
     }
     
+    /* Page title styling */
+    .page-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #ffffff;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        letter-spacing: 0.5px;
+    }
+    
     .version-bar {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         white-space: nowrap;
+        background: rgba(20, 30, 45, 0.4);
+        border-radius: 6px;
+        padding: 4px 10px;
+        box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(90, 109, 137, 0.15);
     }
     
     .version-item {
@@ -112,21 +129,33 @@
         gap: 4px;
         font-size: 12px;
         color: #e0e6ed;
+        transition: all 0.2s ease;
+    }
+    
+    .version-item:hover {
+        transform: translateY(-1px);
     }
     
     .version-divider {
         width: 1px;
-        height: 12px;
+        height: 14px;
         background-color: rgba(120, 140, 180, 0.3);
     }
     
     .version-icon {
         color: #3498db;
-        font-size: 12px;
+        font-size: 13px;
+        filter: drop-shadow(0 0 2px rgba(52, 152, 219, 0.4));
     }
     
     .star-icon {
         color: #ffd700;
+        animation: star-pulse 3s infinite alternate;
+    }
+    
+    @keyframes star-pulse {
+        0% { filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.4)); }
+        100% { filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.8)); }
     }
     
     .version-bar a {
@@ -134,10 +163,26 @@
         text-decoration: none;
         font-weight: 600;
         transition: all 0.2s ease;
+        position: relative;
+    }
+    
+    .version-bar a::after {
+        content: '';
+        position: absolute;
+        width: 0;
+        height: 1px;
+        bottom: -1px;
+        left: 0;
+        background-color: #3498db;
+        transition: width 0.3s ease;
     }
     
     .version-bar a:hover {
         color: #5dade2;
+    }
+    
+    .version-bar a:hover::after {
+        width: 100%;
     }
     
     .developer-credit {
@@ -147,6 +192,41 @@
     .developer-credit a {
         color: #3498db;
         font-weight: 600;
+    }
+    
+    /* User info styling */
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(20, 30, 45, 0.4);
+        border-radius: 6px;
+        padding: 4px 10px;
+        box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(90, 109, 137, 0.15);
+        transition: all 0.2s ease;
+    }
+    
+    .user-info:hover {
+        background: rgba(25, 35, 50, 0.6);
+    }
+    
+    #username {
+        font-weight: 600;
+        color: #e0e6ed;
+        font-size: 13px;
+    }
+    
+    .logout-btn {
+        color: #e74c3c;
+        transition: all 0.2s ease;
+        opacity: 0.8;
+    }
+    
+    .logout-btn:hover {
+        color: #ff6b6b;
+        opacity: 1;
+        transform: scale(1.1);
     }
     
     /* Responsive styling */
