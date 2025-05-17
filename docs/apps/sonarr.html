@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonarr Documentation - Huntarr.io</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <script src="../js/main.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Sonarr Documentation</h1>
+        
+        <div class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Home</a></li>
+                <li class="active"><a href="index.html">Apps</a></li>
+                <li><a href="../settings/index.html">Settings</a></li>
+                <li><a href="https://github.com/plexguide/Huntarr.io" target="_blank">GitHub</a></li>
+            </ul>
+        </div>
+        
+        <div class="app-icon sonarr" style="margin: 20px auto; width: 80px; height: 80px; font-size: 36px;">S</div>
+        
+        <p>Sonarr is an automated TV show downloading and management application. It works with various torrent and usenet clients to help you organize and manage your TV show collection.</p>
+        
+        <h2>Getting Started with Sonarr</h2>
+        
+        <h3>Setup in Huntarr.io</h3>
+        <p>To set up Sonarr in Huntarr.io:</p>
+        <ol>
+            <li>Navigate to the Apps section in the Huntarr.io dashboard</li>
+            <li>Click on "Sonarr" in the application list</li>
+            <li>Click the "Install" button</li>
+            <li>Configure the required settings (see Configuration section below)</li>
+            <li>Click "Deploy" to start the Sonarr container</li>
+        </ol>
+        
+        <h3>Configuration Options</h3>
+        <p>The following configuration options are available when setting up Sonarr:</p>
+        
+        <table>
+            <tr>
+                <th>Option</th>
+                <th>Description</th>
+                <th>Default</th>
+                <th>Notes</th>
+            </tr>
+            <tr>
+                <td>Port</td>
+                <td>The port Sonarr will use</td>
+                <td>8989</td>
+                <td>Change if you have port conflicts</td>
+            </tr>
+            <tr>
+                <td>Media Path</td>
+                <td>Location of your TV shows</td>
+                <td>/mnt/unionfs/tv</td>
+                <td>Should match your media server's TV library path</td>
+            </tr>
+            <tr>
+                <td>Download Path</td>
+                <td>Where downloads are stored</td>
+                <td>/mnt/downloads</td>
+                <td>Should match your download client's completed download folder</td>
+            </tr>
+            <tr>
+                <td>Config Path</td>
+                <td>Where Sonarr stores its config</td>
+                <td>/opt/appdata/sonarr</td>
+                <td>Usually best to leave as default</td>
+            </tr>
+        </table>
+        
+        <h2>Using Sonarr</h2>
+        
+        <h3>Adding a TV Show</h3>
+        <ol>
+            <li>Click the "Series" tab in the Sonarr interface</li>
+            <li>Click "Add New" button</li>
+            <li>Search for the TV show you want to add</li>
+            <li>Select the appropriate path, profile, and monitoring options</li>
+            <li>Click "Add" to add the series to Sonarr</li>
+        </ol>
+        
+        <h3>Managing Quality Profiles</h3>
+        <p>Quality profiles determine what quality of media files Sonarr will download:</p>
+        <ol>
+            <li>Go to Settings > Profiles</li>
+            <li>Click the "+" button to add a new profile or edit an existing one</li>
+            <li>Set your preferred qualities and cut-off point (minimum acceptable quality)</li>
+            <li>Save your changes</li>
+        </ol>
+        
+        <h3>Setting Up Indexers</h3>
+        <p>Indexers are how Sonarr finds content to download:</p>
+        <ol>
+            <li>Go to Settings > Indexers</li>
+            <li>Click the "+" button to add a new indexer</li>
+            <li>Select your indexer type (Newznab, Torznab, etc.)</li>
+            <li>Enter the required information (URL, API key, etc.)</li>
+            <li>Test the connection and save if successful</li>
+        </ol>
+        
+        <h3>Connecting Download Clients</h3>
+        <p>Download clients handle the actual downloading of content:</p>
+        <ol>
+            <li>Go to Settings > Download Clients</li>
+            <li>Click the "+" button to add a new download client</li>
+            <li>Select your client type (SABnzbd, NZBGet, qBittorrent, Deluge, etc.)</li>
+            <li>Enter the required connection information</li>
+            <li>Test the connection and save if successful</li>
+        </ol>
+        
+        <h2>Troubleshooting</h2>
+        
+        <h3>Common Issues</h3>
+        
+        <h4>Shows Not Being Downloaded</h4>
+        <p>Check the following:</p>
+        <ul>
+            <li>Ensure your indexers are properly configured and working</li>
+            <li>Verify your download client is running and accessible</li>
+            <li>Check that your quality profile isn't too restrictive</li>
+            <li>Look at the "Wanted" tab to see if shows are in the queue</li>
+        </ul>
+        
+        <h4>Path Issues</h4>
+        <p>If Sonarr can't find or move files:</p>
+        <ul>
+            <li>Ensure the user running Sonarr has proper permissions</li>
+            <li>Verify your paths are consistent between Sonarr and your download client</li>
+            <li>Check for path mapping issues if running in Docker</li>
+        </ul>
+        
+        <div class="section-nav">
+            <a href="index.html">← Back to Apps</a>
+            <a href="radarr.html">Radarr Documentation →</a>
+        </div>
+        
+        <footer>
+            Huntarr.io v6.5.18 | Sonarr Documentation | Thanks 4 Using Huntarr - Admin9705
+        </footer>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,226 @@
+/* Huntarr.io Documentation Styles */
+:root {
+    --primary-color: #252a34;
+    --secondary-color: #3498db;
+    --background-color: #f5f5f5;
+    --text-color: #333;
+    --sonarr-color: #3498db; /* Blue */
+    --radarr-color: #f1c40f; /* Yellow */
+    --lidarr-color: #2ecc71; /* Green */
+    --readarr-color: #e74c3c; /* Red */
+    --whisparr-color: #9b59b6; /* Purple */
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: var(--background-color);
+}
+
+.container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+h2 {
+    color: var(--primary-color);
+    margin-top: 30px;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+}
+
+h3 {
+    margin-top: 25px;
+    color: #444;
+}
+
+a {
+    color: var(--secondary-color);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: #217dbb;
+    text-decoration: underline;
+}
+
+.app-icons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.app-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+.app-box {
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.app-box.sonarr { border-left-color: var(--sonarr-color); }
+.app-box.radarr { border-left-color: var(--radarr-color); }
+.app-box.lidarr { border-left-color: var(--lidarr-color); }
+.app-box.readarr { border-left-color: var(--readarr-color); }
+.app-box.whisparr { border-left-color: var(--whisparr-color); }
+.sonarr { background-color: var(--sonarr-color); }
+.radarr { background-color: var(--radarr-color); }
+.lidarr { background-color: var(--lidarr-color); }
+.readarr { background-color: var(--readarr-color); }
+.whisparr { background-color: var(--whisparr-color); }
+
+.section-nav {
+    display: flex;
+    justify-content: space-between;
+    margin: 30px 0;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+code {
+    background-color: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #eee;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+pre {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #eee;
+    overflow-x: auto;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+table, th, td {
+    border: 1px solid #eee;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #f8f9fa;
+}
+
+footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    font-size: 0.9em;
+    color: #777;
+    border-top: 1px solid #eee;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .app-icons {
+        flex-wrap: wrap;
+    }
+    
+    .container {
+        padding: 15px;
+    }
+}
+
+/* Navigation menu */
+.nav-menu {
+    margin-bottom: 30px;
+}
+
+.nav-menu ul {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    background-color: var(--primary-color);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.nav-menu li {
+    flex: 1;
+    text-align: center;
+}
+
+.nav-menu li a {
+    display: block;
+    color: white;
+    padding: 12px 15px;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.nav-menu li a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    text-decoration: none;
+}
+
+.nav-menu li.active a {
+    background-color: var(--secondary-color);
+}
+
+/* Info icon */
+.info-link {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-color: var(--secondary-color);
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    font-weight: bold;
+    margin-left: 5px;
+    text-decoration: none;
+}
+
+.info-link:hover {
+    background-color: #217dbb;
+    text-decoration: none;
+} 

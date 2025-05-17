@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Settings - Huntarr.io Documentation</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <script src="../js/main.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>General Settings</h1>
+        
+        <div class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../apps/index.html">Apps</a></li>
+                <li class="active"><a href="index.html">Settings</a></li>
+                <li><a href="https://github.com/plexguide/Huntarr.io" target="_blank">GitHub</a></li>
+            </ul>
+        </div>
+        
+        <p>The General Settings section allows you to configure basic options for your Huntarr.io instance.</p>
+        
+        <h2>System Settings</h2>
+        
+        <h3>Application Name</h3>
+        <p>You can customize the name of your Huntarr.io instance that appears in the title bar and navbar. This is useful if you're running multiple instances.</p>
+        <p><strong>Default:</strong> Huntarr.io</p>
+        
+        <h3>UI Theme</h3>
+        <p>Choose between different UI themes for your Huntarr.io interface:</p>
+        <ul>
+            <li><strong>Light:</strong> Default light theme</li>
+            <li><strong>Dark:</strong> Dark theme for low-light environments</li>
+            <li><strong>System:</strong> Follows your system's dark/light mode settings</li>
+        </ul>
+        
+        <h3>Language</h3>
+        <p>Select the language for the Huntarr.io UI. Current supported languages include:</p>
+        <ul>
+            <li>English (Default)</li>
+            <li>Spanish</li>
+            <li>French</li>
+            <li>German</li>
+            <li>Italian</li>
+            <li>More languages are being added regularly</li>
+        </ul>
+        
+        <h2>Updates</h2>
+        
+        <h3>Update Channel</h3>
+        <p>Select which update channel to use:</p>
+        <ul>
+            <li><strong>Stable:</strong> Recommended for most users. Includes thoroughly tested updates.</li>
+            <li><strong>Beta:</strong> Preview newer features before they reach stable. May contain bugs.</li>
+            <li><strong>Nightly:</strong> Latest development builds. Not recommended for production use.</li>
+        </ul>
+        
+        <h3>Automatic Updates</h3>
+        <p>Configure how Huntarr.io handles updates:</p>
+        <ul>
+            <li><strong>Automatic:</strong> Huntarr.io will automatically update when new releases are available.</li>
+            <li><strong>Notify Only:</strong> You'll be notified about updates but they won't be installed automatically.</li>
+            <li><strong>Disabled:</strong> No update checks will be performed.</li>
+        </ul>
+        
+        <h2>Backup</h2>
+        
+        <h3>Backup Location</h3>
+        <p>Specify where backups should be stored. Default location is <code>/opt/appdata/huntarr/backups</code>, but you can change this to any accessible path.</p>
+        
+        <h3>Backup Schedule</h3>
+        <p>Configure automatic backups of your Huntarr.io configuration:</p>
+        <ul>
+            <li><strong>Daily:</strong> Run backups every day (recommended)</li>
+            <li><strong>Weekly:</strong> Run backups once per week</li>
+            <li><strong>Monthly:</strong> Run backups once per month</li>
+            <li><strong>Disabled:</strong> Don't run automatic backups</li>
+        </ul>
+        
+        <h3>Backup Retention</h3>
+        <p>Determine how many backups to keep before deleting older ones:</p>
+        <ul>
+            <li>Default: 7 backups</li>
+            <li>Range: 1-30 backups</li>
+        </ul>
+        
+        <h2>Logging</h2>
+        
+        <h3>Log Level</h3>
+        <p>Select how detailed the logs should be:</p>
+        <ul>
+            <li><strong>Error:</strong> Only log errors</li>
+            <li><strong>Warning:</strong> Log errors and warnings</li>
+            <li><strong>Info:</strong> Default, includes general operation information</li>
+            <li><strong>Debug:</strong> Detailed logs, useful for troubleshooting but generates larger log files</li>
+            <li><strong>Trace:</strong> Most detailed logging level, should only be used when debugging issues</li>
+        </ul>
+        
+        <h3>Log Rotation</h3>
+        <p>Configure when logs should be rotated:</p>
+        <ul>
+            <li><strong>Size:</strong> When log file reaches a certain size (default: 10MB)</li>
+            <li><strong>Daily:</strong> Rotate logs once per day</li>
+            <li><strong>Weekly:</strong> Rotate logs once per week</li>
+        </ul>
+        
+        <h3>Log Retention</h3>
+        <p>How many log files to keep before deleting older ones:</p>
+        <ul>
+            <li>Default: 10 files</li>
+            <li>Range: 1-50 files</li>
+        </ul>
+        
+        <div class="section-nav">
+            <a href="index.html">← Back to Settings</a>
+            <a href="network.html">Network Settings →</a>
+        </div>
+        
+        <footer>
+            Huntarr.io v6.5.18 | General Settings Documentation | Thanks 4 Using Huntarr - Admin9705
+        </footer>
+    </div>
+</body>
+</html> 

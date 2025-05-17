@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huntarr.io Settings Documentation</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <script src="../js/main.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Huntarr.io Settings</h1>
+        
+        <div class="nav-menu">
+            <ul>
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../apps/index.html">Apps</a></li>
+                <li class="active"><a href="index.html">Settings</a></li>
+                <li><a href="https://github.com/plexguide/Huntarr.io" target="_blank">GitHub</a></li>
+            </ul>
+        </div>
+        
+        <p>This section provides detailed documentation for all Huntarr.io settings and configuration options to help you optimize your media management experience.</p>
+        
+        <h2>Settings Categories</h2>
+        
+        <div class="app-box sonarr">
+            <h3><a href="general.html">General Settings</a></h3>
+            <p>Basic configuration options including server settings, update options, and user interface preferences.</p>
+            <p><a href="general.html">View General Settings Documentation</a></p>
+        </div>
+        
+        <div class="app-box radarr">
+            <h3><a href="network.html">Network Settings</a></h3>
+            <p>Configure network-related settings including port configuration, SSL options, and proxy settings.</p>
+            <p><a href="network.html">View Network Settings Documentation</a></p>
+        </div>
+        
+        <div class="app-box lidarr">
+            <h3><a href="storage.html">Storage Settings</a></h3>
+            <p>Configure storage paths, mount points, and disk management options for your media files.</p>
+            <p><a href="storage.html">View Storage Settings Documentation</a></p>
+        </div>
+        
+        <div class="app-box readarr">
+            <h3><a href="security.html">Security Settings</a></h3>
+            <p>Configure authentication, user accounts, and access controls for your Huntarr.io instance.</p>
+            <p><a href="security.html">View Security Settings Documentation</a></p>
+        </div>
+        
+        <div class="app-box whisparr">
+            <h3><a href="integration.html">Integration Settings</a></h3>
+            <p>Configure integrations with other services like Plex, Jellyfin, Emby, and notification systems.</p>
+            <p><a href="integration.html">View Integration Settings Documentation</a></p>
+        </div>
+        
+        <h2>Adding (i) Links to Your Huntarr.io UI</h2>
+        
+        <p>The information icon (<span class="info-link">i</span>) in the Huntarr.io user interface can be used to link directly to these documentation pages. When implementing the (i) links in your app's HTML, use the following format:</p>
+        
+        <pre><code>&lt;a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html" class="info-link" target="_blank"&gt;i&lt;/a&gt;</code></pre>
+        
+        <p>You can link to specific documentation pages by changing the URL path accordingly:</p>
+        
+        <ul>
+            <li>For app-specific pages: <code>/apps/[app-name].html</code> (e.g., <code>/apps/sonarr.html</code>)</li>
+            <li>For settings pages: <code>/settings/[settings-category].html</code> (e.g., <code>/settings/network.html</code>)</li>
+        </ul>
+        
+        <div class="section-nav">
+            <a href="../apps/index.html">← Applications Documentation</a>
+            <a href="../index.html">Back to Home →</a>
+        </div>
+        
+        <footer>
+            Huntarr.io v6.5.18 | Settings Documentation | Thanks 4 Using Huntarr - Admin9705
+        </footer>
+    </div>
+</body>
+</html> 
