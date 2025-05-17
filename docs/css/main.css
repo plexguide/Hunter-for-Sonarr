@@ -39,17 +39,50 @@ body {
     z-index: 100;
 }
 
-.sidebar-logo {
-    text-align: center;
-    padding: 10px 20px 20px;
-    border-bottom: 1px solid var(--border-color);
-}
+/* Sidebar logo styles moved to the combined selector above */
 
 .sidebar-logo img {
     width: 80px;
     height: 80px;
     display: block;
     margin: 0 auto 10px;
+    position: relative;
+    z-index: 2;
+}
+
+.sidebar-logo {
+    text-align: center;
+    padding: 10px 20px 20px;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+}
+
+.sidebar-logo:before {
+    content: '';
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: transparent;
+    border: 2px solid var(--highlight-color);
+    box-shadow: 0 0 15px var(--highlight-color), inset 0 0 15px var(--highlight-color);
+    animation: glow 3s linear infinite, rotate 10s linear infinite;
+    z-index: 1;
+    opacity: 0.8;
+}
+
+@keyframes glow {
+    0% { opacity: 0.6; }
+    50% { opacity: 0.9; }
+    100% { opacity: 0.6; }
+}
+
+@keyframes rotate {
+    0% { transform: translateX(-50%) rotate(0deg); }
+    100% { transform: translateX(-50%) rotate(360deg); }
 }
 
 .sidebar-logo h2 {
