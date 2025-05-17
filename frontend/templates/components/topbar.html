@@ -1,4 +1,6 @@
 <div class="top-bar">
+    <!-- Add color line at the top of the topbar -->
+    <div class="top-color-line"></div>
     <div class="topbar-section left">
         <div class="page-title" id="currentPageTitle"></div>
     </div>
@@ -48,7 +50,18 @@
         position: relative;
     }
     
-    /* Add subtle colored accent to the top bar */
+    /* Top color line */
+    .top-color-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(52, 152, 219, 0.6), rgba(155, 89, 182, 0.6)); /* Sonarr blue to Whisparr purple */
+        z-index: 2;
+    }
+    
+    /* Add subtle colored accent to the bottom of the top bar */
     .top-bar::before {
         content: '';
         position: absolute;
@@ -56,7 +69,7 @@
         left: 0;
         right: 0;
         height: 1px;
-        background: linear-gradient(90deg, rgba(52, 152, 219, 0.5), rgba(155, 89, 182, 0.5)); /* Sonarr blue to Whisparr purple */
+        background: linear-gradient(90deg, rgba(52, 152, 219, 0.6), rgba(155, 89, 182, 0.6)); /* Sonarr blue to Whisparr purple */
         z-index: 1;
     }
     
@@ -143,6 +156,11 @@
             display: flex;
             align-items: center;
             padding: 0 10px;
+        }
+        
+        /* Ensure color line spans full width on mobile */
+        .top-color-line {
+            width: 100%;
         }
         
         .topbar-section.left,

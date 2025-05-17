@@ -122,9 +122,22 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3)); /* Sonarr blue to Whisparr purple */
+        height: 1px;
+        background: linear-gradient(90deg, rgba(52, 152, 219, 0.6), rgba(155, 89, 182, 0.6)); /* Sonarr blue to Whisparr purple */
         z-index: 1;
+    }
+    
+    /* Add vertical color line to right edge of sidebar */
+    .sidebar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 1px;
+        background: linear-gradient(to bottom, rgba(52, 152, 219, 0.6), rgba(155, 89, 182, 0.6)); /* Sonarr blue to Whisparr purple */
+        z-index: 2;
+        box-shadow: none;
     }
     
     .logo-container {
@@ -253,9 +266,20 @@
     /* Mobile view optimization */
     @media (max-width: 768px) {
         .sidebar {
-            width: 60px !important;
-            min-width: 60px !important;
-            max-width: 60px !important;
+            width: 70px !important;
+            overflow-x: hidden !important;
+        }
+        
+        /* Adjust vertical color line on mobile */
+        .sidebar::after {
+            width: 2px;
+            right: 0;
+        }
+        
+        .logo-container {
+            padding: 15px 5px !important;
+            justify-content: center !important;
+            flex-direction: column !important;
         }
         
         .sidebar .nav-item span,
