@@ -1215,25 +1215,25 @@ const SettingsForms = {
                 <h3>System Settings</h3>
                 <div class="setting-item">
                     <label for="check_for_updates"><a href="https://huntarr.io/threads/checking-for-updates.7/" class="info-icon" title="Learn more about update checking" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Check for Updates:</label>
-                    <label class="toggle-switch">
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="check_for_updates" ${settings.check_for_updates !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
                     <p class="setting-help">Automatically check for Huntarr updates</p>
                 </div>
                 <div class="setting-item">
                     <label for="debug_mode"><a href="/Huntarr.io/docs/#/configuration?id=debug-mode" class="info-icon" title="Learn more about debug mode" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Debug Mode:</label>
-                    <label class="toggle-switch">
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
                     <p class="setting-help">Enable verbose logging for troubleshooting (applies to all apps)</p>
                 </div>
                 <div class="setting-item">
                     <label for="display_community_resources"><a href="/Huntarr.io/docs/#/configuration?id=global-hunting-options" class="info-icon" title="Learn more about resources display options" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Display Resources:</label>
-                    <label class="toggle-switch">
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="display_community_resources" ${settings.display_community_resources !== false ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
                     <p class="setting-help">Show or hide the Resources section on the home page</p>
                 </div>
@@ -1261,7 +1261,7 @@ const SettingsForms = {
                     </div>
                 </div>
                 <div class="setting-item">
-                    <label for="stateful_management_hours"><a href="/Huntarr.io/docs/#/advanced/stateful-management" class="info-icon" title="Learn more about state reset intervals" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;State Reset Interval (Hours):</label>
+                    <label for="stateful_management_hours"><a href="/Huntarr.io/docs/#/advanced/stateful-management" class="info-icon" title="Learn more about state reset intervals" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;State Reset (Hours):</label>
                     <input type="number" id="stateful_management_hours" min="1" value="${settings.stateful_management_hours || 168}">
                     <p class="setting-help">Hours before resetting processed media state (<span id="stateful_management_days">${((settings.stateful_management_hours || 168) / 24).toFixed(1)} days</span>)</p>
                     <p class="setting-help reset-help">Reset clears all processed media IDs to allow reprocessing</p>
@@ -1272,7 +1272,7 @@ const SettingsForms = {
                 <h3>Security</h3>
                 <div class="setting-item">
                     <label for="auth_mode"><a href="/Huntarr.io/docs/#/configuration?id=security-settings" class="info-icon" title="Learn more about authentication modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Authentication Mode:</label>
-                    <select id="auth_mode" name="auth_mode" style="width: auto; max-width: 250px; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db; background-image: url('data:image/svg+xml;utf8,<svg fill=\'white\' height=\'24\' viewBox=\'0 0 24 24\' width=\'24\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/><path d=\'M0 0h24v24H0z\' fill=\'none\'/></svg>'); background-repeat: no-repeat; background-position: right 8px center; -webkit-appearance: none; -moz-appearance: none; appearance: none;">
+                    <select id="auth_mode" name="auth_mode" style="width: 300px; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db; background-image: url('data:image/svg+xml;utf8,<svg fill=\'white\' height=\'24\' viewBox=\'0 0 24 24\' width=\'24\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/><path d=\'M0 0h24v24H0z\' fill=\'none\'/></svg>'); background-repeat: no-repeat; background-position: right 8px center; -webkit-appearance: none; -moz-appearance: none; appearance: none;">
                         <option value="login" ${(settings.auth_mode === 'login' || (!settings.auth_mode && !settings.local_access_bypass && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Login Mode</option>
                         <option value="local_bypass" ${(settings.auth_mode === 'local_bypass' || (!settings.auth_mode && settings.local_access_bypass === true && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Local Bypass Mode</option>
                         <option value="no_login" ${(settings.auth_mode === 'no_login' || (!settings.auth_mode && settings.proxy_auth_bypass === true)) ? 'selected' : ''}>No Login Mode</option>
