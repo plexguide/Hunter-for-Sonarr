@@ -65,7 +65,7 @@ jobs:
             echo "IS_TAG=false" >> $GITHUB_OUTPUT
           fi
       
-      # 7a) Build & Push if on 'main' branch
+      # 7a) Build & Push if on 'main' branch (only SHA tags, no latest tag)
       - name: Build and Push (main)
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: docker/build-push-action@v3
@@ -74,9 +74,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            huntarr/huntarr:latest
             huntarr/huntarr:${{ github.sha }}
-            ghcr.io/plexguide/huntarr:latest
             ghcr.io/plexguide/huntarr:${{ github.sha }}
       
       # 7b) Build & Push if on 'dev' branch
