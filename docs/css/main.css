@@ -649,6 +649,42 @@ footer {
     z-index: 1000;
 }
 
+/* Settings Page Styles */
+.setting-item {
+    margin: 30px 0;
+}
+
+.setting-item h3 {
+    color: var(--highlight-color);
+    font-size: 1.4em;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.setting-item h4 {
+    color: var(--sonarr-color);
+    font-size: 1.2em;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.state-time {
+    color: var(--highlight-color);
+    font-weight: bold;
+}
+
+/* Highlight effect when anchor links are clicked */
+.highlight {
+    animation: highlight-pulse 2s;
+}
+
+@keyframes highlight-pulse {
+    0% { background-color: var(--card-bg); }
+    25% { background-color: rgba(52, 152, 219, 0.2); }
+    50% { background-color: rgba(52, 152, 219, 0.1); }
+    100% { background-color: var(--card-bg); }
+}
+
 .back-to-top.visible {
     opacity: 1;
     transform: translateY(0);

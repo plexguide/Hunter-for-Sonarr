@@ -54,100 +54,206 @@
 
     <div class="main-content">
         <div class="container">
-            <h1>General Settings</h1>
+            <h1>System Settings</h1>
             
-            <p>The General Settings section allows you to configure basic options for your Huntarr.io instance.</p>
+            <p>This page contains all settings for customizing your Huntarr.io instance. Each setting has been documented with explanations suitable for both beginners and advanced users.</p>
             
-            <h2>System Settings</h2>
+            <div class="toc">
+                <h3>Table of Contents</h3>
+                <ul>
+                    <li><a href="#system-settings">System Settings</a>
+                        <ul>
+                            <li><a href="#check-for-updates">Check for Updates</a></li>
+                            <li><a href="#debug-mode">Debug Mode</a></li>
+                            <li><a href="#display-resources">Display Resources</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#stateful-management">Stateful Management</a>
+                        <ul>
+                            <li><a href="#emergency-reset">Emergency Reset</a></li>
+                            <li><a href="#state-reset-hours">State Reset (Hours)</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#security">Security</a>
+                        <ul>
+                            <li><a href="#authentication-mode">Authentication Mode</a></li>
+                            <li><a href="#enable-ssl-verify">Enable SSL Verify</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#advanced-settings">Advanced Settings</a>
+                        <ul>
+                            <li><a href="#api-timeout">API Timeout</a></li>
+                            <li><a href="#command-wait-delay">Command Wait Delay</a></li>
+                            <li><a href="#cmd-wait-attempts">CMD Wait Attempts</a></li>
+                            <li><a href="#max-dl-queue-size">Max DL Queue Size</a></li>
+                            <li><a href="#log-refresh-interval">Log Refresh Interval</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
             
-            <h3>Application Name</h3>
-            <p>You can customize the name of your Huntarr.io instance that appears in the title bar and navbar. This is useful if you're running multiple instances.</p>
-            <p><strong>Default:</strong> Huntarr.io</p>
+            <section id="system-settings">
+                <h2>System Settings</h2>
+                <p>These settings control basic functionality and appearance of your Huntarr.io instance.</p>
+                
+                <div class="setting-item" id="check-for-updates">
+                    <h3>Check for Updates</h3>
+                    <p>When enabled, Huntarr will automatically check for new versions and notify you when updates are available.</p>
+                    
+                    <div class="info-box">
+                        <h4>For Beginners:</h4>
+                        <p>We recommend keeping this enabled to ensure you're running the latest version with bug fixes and new features. Updates are not installed automatically; you'll just be notified when they're available.</p>
+                    </div>
+                </div>
+                
+                <div class="setting-item" id="debug-mode">
+                    <h3>Debug Mode</h3>
+                    <p>Enables verbose logging for troubleshooting issues. This setting applies to all apps connected to Huntarr.</p>
+                    
+                    <div class="info-box">
+                        <h4>For Beginners:</h4>
+                        <p>Only enable this when you're experiencing issues and need to troubleshoot or when requested by support. Debug mode generates more detailed logs that can help identify problems, but it can also increase disk usage and slightly reduce performance.</p>
+                    </div>
+                </div>
+                
+                <div class="setting-item" id="display-resources">
+                    <h3>Display Resources</h3>
+                    <p>Controls whether the Resources section is shown on the home page.</p>
+                    
+                    <div class="info-box">
+                        <h4>For Beginners:</h4>
+                        <p>The Resources section displays helpful links like documentation, GitHub repository, and community forums. You may want to hide this once you're familiar with Huntarr to optimize screen space.</p>
+                    </div>
+                </div>
+            </section>
             
-            <h3>UI Theme</h3>
-            <p>Choose between different UI themes for your Huntarr.io interface:</p>
-            <ul>
-                <li><strong>Light:</strong> Default light theme</li>
-                <li><strong>Dark:</strong> Dark theme for low-light environments</li>
-                <li><strong>System:</strong> Follows your system's dark/light mode settings</li>
-            </ul>
+            <section id="stateful-management">
+                <h2>Stateful Management</h2>
+                <p>These settings control how Huntarr manages the state of processed media.</p>
+                
+                <div class="setting-item" id="emergency-reset">
+                    <h3>🔥 EMERGENCY RESET 🔥</h3>
+                    <p>This button immediately resets all processed media state information.</p>
+                    
+                    <div class="info-box">
+                        <h4>For Beginners:</h4>
+                        <p>Use this only in emergency situations where you need to force Huntarr to reprocess all media. This will clear all records of what media has been processed, allowing Huntarr to start fresh. This does not delete your media files or configuration settings.</p>
+                        <p><strong>Warning:</strong> After reset, Huntarr may reprocess media that was already processed before, potentially causing duplicate downloads.</p>
+                    </div>
+                    
+                    <div class="stateful-info">
+                        <p><strong>Initial State Created:</strong> <span class="state-time">Sun, May 18, 2025, 02:45 PM (today)</span></p>
+                        <p><strong>State Reset Date:</strong> <span class="state-time">Sun, May 25, 2025, 02:45 PM (in 7 days)</span></p>
+                    </div>
+                </div>
+                
+                <div class="setting-item" id="state-reset-hours">
+                    <h3>State Reset (Hours)</h3>
+                    <p>Determines how many hours before automatically resetting processed media state information (default: 168 hours, or 7 days).</p>
+                    
+                    <div class="info-box">
+                        <h4>For Beginners:</h4>
+                        <p>This setting controls how long Huntarr remembers which media files it has already processed. After this time, Huntarr will "forget" what it has processed, allowing reprocessing of media.</p>
+                        <p>Increasing this value means Huntarr will remember processed media for longer, reducing the chance of duplicate processing. Decreasing it allows more frequent reprocessing of media, which might be useful if you often make changes to your media library or configuration.</p>
+                    </div>
+                </div>
+            </section>
             
-            <h3>Language</h3>
-            <p>Select the language for the Huntarr.io UI. Current supported languages include:</p>
-            <ul>
-                <li>English (Default)</li>
-                <li>Spanish</li>
-                <li>French</li>
-                <li>German</li>
-                <li>Italian</li>
-                <li>More languages are being added regularly</li>
-            </ul>
+            <section id="security">
+                <h2>Security</h2>
+                <p>These settings control access security and encryption options.</p>
+                
+                <div class="setting-item" id="authentication-mode">
+                    <h3>Authentication Mode</h3>
+                    <p>Controls how users authenticate with Huntarr:</p>
+                    
+                    <ul>
+                        <li><strong>Login Mode:</strong> Standard login required for all connections</li>
+                        <li><strong>Local Bypass Mode:</strong> Only local network connections (192.168.x.x, 10.x.x.x) bypass login</li>
+                        <li><strong>No Login Mode:</strong> Completely disable authentication when running behind your own reverse proxy</li>
+                    </ul>
+                    
+                    <div class="info-box">
+                        <h4>For Beginners:</h4>
+                        <p>Choose "Login Mode" for maximum security, especially if your Huntarr instance is accessible from the internet.</p>
+                        <p>"Local Bypass Mode" is convenient for home networks as it doesn't require login when accessing from your local network, but still requires login when accessing remotely.</p>
+                        <p>Only use "No Login Mode" if your instance is behind a secure reverse proxy (like Nginx or Cloudflare) that handles authentication for you.</p>
+                        <p><strong>Warning:</strong> Using "No Login Mode" without proper security could allow unauthorized access to your media and system!</p>
+                    </div>
+                </div>
+                
+                <div class="setting-item" id="enable-ssl-verify">
+                    <h3>Enable SSL Verify</h3>
+                    <p>Controls whether Huntarr verifies SSL certificates when connecting to other services.</p>
+                    
+                    <div class="info-box">
+                        <h4>For Beginners:</h4>
+                        <p>Normally, this should be enabled for security. It ensures Huntarr only connects to services with valid SSL certificates.</p>
+                        <p>You might need to disable this if you're using self-signed certificates on your private network. For example, if you have self-signed certificates for Sonarr, Radarr, or other services, Huntarr might not be able to connect to them unless this is disabled.</p>
+                        <p><strong>Note:</strong> Only disable this on private, trusted networks.</p>
+                    </div>
+                </div>
+            </section>
             
-            <h2>Updates</h2>
-            
-            <h3>Update Channel</h3>
-            <p>Select which update channel to use:</p>
-            <ul>
-                <li><strong>Stable:</strong> Recommended for most users. Includes thoroughly tested updates.</li>
-                <li><strong>Beta:</strong> Preview newer features before they reach stable. May contain bugs.</li>
-                <li><strong>Nightly:</strong> Latest development builds. Not recommended for production use.</li>
-            </ul>
-            
-            <h3>Automatic Updates</h3>
-            <p>Configure how Huntarr.io handles updates:</p>
-            <ul>
-                <li><strong>Automatic:</strong> Huntarr.io will automatically update when new releases are available.</li>
-                <li><strong>Notify Only:</strong> You'll be notified about updates but they won't be installed automatically.</li>
-                <li><strong>Disabled:</strong> No update checks will be performed.</li>
-            </ul>
-            
-            <h2>Backup</h2>
-            
-            <h3>Backup Location</h3>
-            <p>Specify where backups should be stored. Default location is <code>/opt/appdata/huntarr/backups</code>, but you can change this to any accessible path.</p>
-            
-            <h3>Backup Schedule</h3>
-            <p>Configure automatic backups of your Huntarr.io configuration:</p>
-            <ul>
-                <li><strong>Daily:</strong> Run backups every day (recommended)</li>
-                <li><strong>Weekly:</strong> Run backups once per week</li>
-                <li><strong>Monthly:</strong> Run backups once per month</li>
-                <li><strong>Disabled:</strong> Don't run automatic backups</li>
-            </ul>
-            
-            <h3>Backup Retention</h3>
-            <p>Determine how many backups to keep before deleting older ones:</p>
-            <ul>
-                <li>Default: 7 backups</li>
-                <li>Range: 1-30 backups</li>
-            </ul>
-            
-            <h2>Logging</h2>
-            
-            <h3>Log Level</h3>
-            <p>Select how detailed the logs should be:</p>
-            <ul>
-                <li><strong>Error:</strong> Only log errors</li>
-                <li><strong>Warning:</strong> Log errors and warnings</li>
-                <li><strong>Info:</strong> Default, includes general operation information</li>
-                <li><strong>Debug:</strong> Detailed logs, useful for troubleshooting but generates larger log files</li>
-                <li><strong>Trace:</strong> Most detailed logging level, should only be used when debugging issues</li>
-            </ul>
-            
-            <h3>Log Rotation</h3>
-            <p>Configure when logs should be rotated:</p>
-            <ul>
-                <li><strong>Size:</strong> When log file reaches a certain size (default: 10MB)</li>
-                <li><strong>Daily:</strong> Rotate logs once per day</li>
-                <li><strong>Weekly:</strong> Rotate logs once per week</li>
-            </ul>
-            
-            <h3>Log Retention</h3>
-            <p>How many log files to keep before deleting older ones:</p>
-            <ul>
-                <li>Default: 10 files</li>
-                <li>Range: 1-50 files</li>
-            </ul>
+            <section id="advanced-settings">
+                <h2>Advanced Settings</h2>
+                <p>These settings are for advanced users who need to fine-tune Huntarr's performance and behavior.</p>
+                
+                <div class="setting-item" id="api-timeout">
+                    <h3>API Timeout</h3>
+                    <p>The number of seconds Huntarr will wait for API responses before timing out (default: 120 seconds).</p>
+                    
+                    <div class="info-box">
+                        <h4>For Beginners:</h4>
+                        <p>If you notice Huntarr frequently reporting timeouts when connecting to Sonarr, Radarr, or other services, you might need to increase this value. This is especially useful on slower networks or when services are under heavy load.</p>
+                        <p>However, setting this too high could cause Huntarr to appear unresponsive if a service is down, as it will wait longer before giving up on connections.</p>
+                    </div>
+                </div>
+                
+                <div class="setting-item" id="command-wait-delay">
+                    <h3>Command Wait Delay</h3>
+                    <p>The delay in seconds between command status checks (default: 1 second).</p>
+                    
+                    <div class="info-box">
+                        <h4>For Beginners:</h4>
+                        <p>This setting controls how frequently Huntarr checks if a command sent to another service (like Sonarr or Radarr) has completed. Lower values make Huntarr more responsive but might increase network traffic. Higher values reduce network traffic but might make Huntarr seem less responsive.</p>
+                        <p>The default of 1 second works well for most users and shouldn't need changing.</p>
+                    </div>
+                </div>
+                
+                <div class="setting-item" id="cmd-wait-attempts">
+                    <h3>CMD Wait Attempts</h3>
+                    <p>The maximum number of attempts to check command status (default: 600).</p>
+                    
+                    <div class="info-box">
+                        <h4>For Beginners:</h4>
+                        <p>This setting, combined with Command Wait Delay, determines how long Huntarr will wait for a command to complete before giving up. With default settings (600 attempts × 1 second delay), Huntarr will wait up to 10 minutes.</p>
+                        <p>If you're processing very large libraries or have slower systems, you might need to increase this value. If commands are typically quick on your system, you could decrease it.</p>
+                    </div>
+                </div>
+                
+                <div class="setting-item" id="max-dl-queue-size">
+                    <h3>Max DL Queue Size</h3>
+                    <p>If the current download queue for an app instance exceeds this value, downloads will be skipped until the queue reduces (default: -1, which means no limit).</p>
+                    
+                    <div class="info-box">
+                        <h4>For Beginners:</h4>
+                        <p>This setting helps prevent overwhelming your download client with too many simultaneous downloads. If you notice performance issues when Huntarr triggers many downloads at once, you might want to set this to a reasonable value (like 5 or 10).</p>
+                        <p>Setting this to -1 means there's no limit on how many downloads Huntarr will queue, which can be useful if you have a very powerful system and fast internet.</p>
+                    </div>
+                </div>
+                
+                <div class="setting-item" id="log-refresh-interval">
+                    <h3>Log Refresh Interval</h3>
+                    <p>How often Huntarr refreshes logs from apps, in seconds (default: 30 seconds).</p>
+                    
+                    <div class="info-box">
+                        <h4>For Beginners:</h4>
+                        <p>This setting controls how frequently Huntarr updates the logs you see in the UI. Lower values (like 10-15 seconds) make logs update more frequently but might increase system load. Higher values (like 60 seconds) reduce system load but make logs less current.</p>
+                        <p>The default of 30 seconds provides a good balance between timely updates and system efficiency.</p>
+                    </div>
+                </div>
+            </section>
             
             <div class="section-nav">
                 <a href="index.html">← Back to Settings</a>
