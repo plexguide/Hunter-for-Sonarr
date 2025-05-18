@@ -183,7 +183,7 @@ jobs:
               logger.exception(f'Fatal error in app_launcher: {str(e)}')
               # Write to a separate file that's easier to access
               with open(os.path.expanduser('~/Desktop/huntarr_error.log'), 'a') as f:
-                  f.write(f'\n{str(e)}\n')
+                  f.write('\n' + str(e) + '\n')
                   import traceback
                   traceback.print_exc(file=f)
           """)
