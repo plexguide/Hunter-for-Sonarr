@@ -427,14 +427,14 @@ jobs:
           branch="${{ steps.meta.outputs.BRANCH }}"
           
           if [[ "${{ steps.meta.outputs.IS_TAG }}" == "true" ]]; then
-            pkg_name="Huntarr-${version}-intel.pkg"
+            pkg_name="Huntarr-${version}-mac-intel.pkg"
           else
             if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-              pkg_name="Huntarr-${version}-main-intel.pkg"
+              pkg_name="Huntarr-${version}-mac-main-intel.pkg"
             elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-              pkg_name="Huntarr-${version}-dev-intel.pkg"
+              pkg_name="Huntarr-${version}-mac-dev-intel.pkg"
             else
-              pkg_name="Huntarr-${version}-${branch}-intel.pkg"
+              pkg_name="Huntarr-${version}-mac-${branch}-intel.pkg"
             fi
           fi
           
