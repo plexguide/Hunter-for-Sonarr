@@ -57,27 +57,64 @@ log = logging.getLogger('werkzeug')
 log.setLevel(logging.DEBUG)  # Change to DEBUG to see all Flask/Werkzeug logs
 
 # Configure template and static paths with proper PyInstaller support
-# Check if we're running from a PyInstaller bundle
-print("==== HUNTARR TEMPLATE DEBUG ====")
-print(f"__file__: {__file__}")
-print(f"sys.executable: {sys.executable}")
-print(f"os.getcwd(): {os.getcwd()}")
-print(f"sys.path: {sys.path}")
-print(f"Is frozen: {getattr(sys, 'frozen', False)}")
-
 if getattr(sys, 'frozen', False):
-    # We're running from the bundled package
-    bundle_dir = os.path.dirname(sys.executable)
-    # Override the template and static directories
-    template_dir = os.path.join(bundle_dir, 'templates')
-    static_dir = os.path.join(bundle_dir, 'static')
-    print(f"PyInstaller mode - Using templates dir: {template_dir}")
+    # PyInstaller sets this attribute - use paths relative to the executable
+    base_path = os.path.dirname(sys.executable)
+    # Path candidates for MacOS app bundles and other PyInstaller formats
+    template_candidates = [
+        os.path.join(base_path, 'templates'),                                  # Direct templates folder
+        os.path.join(base_path, '..', 'Resources', 'frontend', 'templates'),    # Mac app bundle Resources path
+        os.path.join(base_path, 'frontend', 'templates'),                       # Alternate structure
+        os.path.join(os.path.dirname(base_path), 'Resources', 'frontend', 'templates') # Mac app bundle with different path
+    ]
+    
+    # Find the first existing templates directory
+    template_dir = None
+    for candidate in template_candidates:
+        candidate_path = os.path.abspath(candidate)
+        print(f"Checking template candidate: {candidate_path}")
+        if os.path.exists(candidate_path) and os.path.isdir(candidate_path):
+            template_dir = candidate_path
+            print(f"Found valid template directory: {template_dir}")
+            if os.path.exists(os.path.join(template_dir, 'setup.html')):
+                print(f"Found setup.html template in {template_dir}")
+                break
+            else:
+                print(f"Warning: setup.html not found in {template_dir}")
+    
+    # Similar approach for static files
+    static_candidates = [
+        os.path.join(base_path, 'static'),
+        os.path.join(base_path, '..', 'Resources', 'frontend', 'static'),
+        os.path.join(base_path, 'frontend', 'static'),
+        os.path.join(os.path.dirname(base_path), 'Resources', 'frontend', 'static')
+    ]
+    
+    # Find the first existing static directory
+    static_dir = None
+    for candidate in static_candidates:
+        candidate_path = os.path.abspath(candidate)
+        if os.path.exists(candidate_path) and os.path.isdir(candidate_path):
+            static_dir = candidate_path
+            print(f"Found valid static directory: {static_dir}")
+            break
+    
+    # If no valid directories found, use defaults
+    if not template_dir:
+        template_dir = os.path.join(base_path, 'templates')
+        print(f"Warning: Using default template dir: {template_dir}")
+    
+    if not static_dir:
+        static_dir = os.path.join(base_path, 'static')
+        print(f"Warning: Using default static dir: {static_dir}")
+        
+    print(f"PyInstaller mode - Using template dir: {template_dir}")
     print(f"PyInstaller mode - Using static dir: {static_dir}")
     print(f"Template dir exists: {os.path.exists(template_dir)}")
     if os.path.exists(template_dir):
         print(f"Template dir contents: {os.listdir(template_dir)}")
 else:
-    # Normal development mode - use relative paths
+    # Normal Python execution
     template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'templates'))
     static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'static'))
     print(f"Normal mode - Using templates dir: {template_dir}")
