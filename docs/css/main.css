@@ -652,6 +652,9 @@ footer {
 /* Settings Page Styles */
 .setting-item {
     margin: 30px 0;
+    background-color: var(--secondary-bg);
+    padding: 20px;
+    border-radius: 4px;
 }
 
 .setting-item h3 {
@@ -659,6 +662,15 @@ footer {
     font-size: 1.4em;
     padding-bottom: 5px;
     border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+}
+
+.info-icon {
+    color: var(--highlight-color);
+    margin-right: 10px;
+    font-size: 0.8em;
+    text-decoration: none;
 }
 
 .setting-item h4 {

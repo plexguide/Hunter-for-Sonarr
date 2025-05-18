@@ -4,6 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System Settings - Huntarr.io Documentation</title>
     <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="../js/main.js" defer></script>
 </head>
 <body>
@@ -84,21 +85,21 @@
                 <h2>System Settings</h2>
                 <p>These settings control basic functionality and appearance of your Huntarr.io instance.</p>
                 
-                <h3 id="check-for-updates">Check for Updates</h3>
+                <h3 id="check-for-updates"><a href="#check-for-updates" class="info-icon"><i class="fas fa-info-circle"></i></a> Check for Updates</h3>
                 <p>When enabled, Huntarr will automatically check for new versions and notify you when updates are available.</p>
                 
                 <p>We recommend keeping this enabled to ensure you're running the latest version with bug fixes and new features. Updates are not installed automatically; you'll just be notified when they're available.</p>
                 
                 <p>Disabling this option means you'll need to manually check for updates, which could lead to missing important security fixes or helpful new features. Most users should leave this enabled unless running Huntarr in an air-gapped environment.</p>
                 
-                <h3 id="debug-mode">Debug Mode</h3>
+                <h3 id="debug-mode"><a href="#debug-mode" class="info-icon"><i class="fas fa-info-circle"></i></a> Debug Mode</h3>
                 <p>Enables verbose logging for troubleshooting issues. This setting applies to all apps connected to Huntarr.</p>
                 
                 <p>Only enable this when you're experiencing issues and need to troubleshoot or when requested by support. Debug mode generates more detailed logs that can help identify problems, but it can also increase disk usage and slightly reduce performance.</p>
                 
                 <p>When troubleshooting, enable this setting, reproduce the issue you're experiencing, then check the logs for detailed information. After resolving the issue, remember to disable debug mode to restore optimal performance.</p>
                 
-                <h3 id="display-resources">Display Resources</h3>
+                <h3 id="display-resources"><a href="#display-resources" class="info-icon"><i class="fas fa-info-circle"></i></a> Display Resources</h3>
                 <p>Controls whether the Resources section is shown on the home page.</p>
                 
                 <p>The Resources section displays helpful links like documentation, GitHub repository, and community forums. You may want to hide this once you're familiar with Huntarr to optimize screen space.</p>
@@ -110,7 +111,7 @@
                 <h2>Stateful Management</h2>
                 <p>These settings control how Huntarr manages the state of processed media. Understanding these settings is crucial for proper operation of Huntarr's media processing capabilities.</p>
                 
-                <h3 id="emergency-reset">🔥 EMERGENCY RESET 🔥</h3>
+                <h3 id="emergency-reset"><a href="#emergency-reset" class="info-icon"><i class="fas fa-info-circle"></i></a> 🔥 EMERGENCY RESET 🔥</h3>
                 <p>This button immediately resets all processed media state information.</p>
                 
                 <p>Use this only in emergency situations where you need to force Huntarr to reprocess all media. This will clear all records of what media has been processed, allowing Huntarr to start fresh. This does not delete your media files or configuration settings.</p>
@@ -127,7 +128,7 @@
                 <p><strong>Initial State Created:</strong> Sun, May 18, 2025, 02:45 PM (today)<br>
                 <strong>State Reset Date:</strong> Sun, May 25, 2025, 02:45 PM (in 7 days)</p>
                 
-                <h3 id="state-reset-hours">State Reset (Hours)</h3>
+                <h3 id="state-reset-hours"><a href="#state-reset-hours" class="info-icon"><i class="fas fa-info-circle"></i></a> State Reset (Hours)</h3>
                 <p>Determines how many hours before automatically resetting processed media state information (default: 168 hours, or 7 days).</p>
                 
                 <p>This setting controls how long Huntarr remembers which media files it has already processed. After this time, Huntarr will "forget" what it has processed, allowing reprocessing of media.</p>
@@ -149,7 +150,7 @@
                 <h2>Security</h2>
                 <p>These settings control access security and encryption options to protect your Huntarr installation.</p>
                 
-                <h3 id="authentication-mode">Authentication Mode</h3>
+                <h3 id="authentication-mode"><a href="#authentication-mode" class="info-icon"><i class="fas fa-info-circle"></i></a> Authentication Mode</h3>
                 <p>Controls how users authenticate with Huntarr. There are three options available:</p>
                 
                 <h4>Login Mode</h4>
@@ -165,7 +166,7 @@
                 
                 <p><strong>Warning:</strong> Using "No Login Mode" without proper security could allow unauthorized access to your media and system! Only use this mode if you have implemented alternative security measures.</p>
                 
-                <h3 id="enable-ssl-verify">Enable SSL Verify</h3>
+                <h3 id="enable-ssl-verify"><a href="#enable-ssl-verify" class="info-icon"><i class="fas fa-info-circle"></i></a> Enable SSL Verify</h3>
                 <p>Controls whether Huntarr verifies SSL certificates when connecting to other services.</p>
                 
                 <p>Normally, this should be enabled for security. It ensures Huntarr only connects to services with valid SSL certificates, protecting against man-in-the-middle attacks and unauthorized access.</p>
@@ -181,7 +182,7 @@
                 <h2>Advanced Settings</h2>
                 <p>These settings are for advanced users who need to fine-tune Huntarr's performance and behavior. Adjust these settings only if you understand their impact on the system.</p>
                 
-                <h3 id="api-timeout">API Timeout</h3>
+                <h3 id="api-timeout"><a href="#api-timeout" class="info-icon"><i class="fas fa-info-circle"></i></a> API Timeout</h3>
                 <p>The number of seconds Huntarr will wait for API responses before timing out (default: 120 seconds).</p>
                 
                 <p>If you notice Huntarr frequently reporting timeouts when connecting to Sonarr, Radarr, or other services, you might need to increase this value. This is especially useful on slower networks or when services are under heavy load.</p>
@@ -195,14 +196,14 @@
                     <li>Your network has higher latency or occasional connectivity issues</li>
                 </ul>
                 
-                <h3 id="command-wait-delay">Command Wait Delay</h3>
+                <h3 id="command-wait-delay"><a href="#command-wait-delay" class="info-icon"><i class="fas fa-info-circle"></i></a> Command Wait Delay</h3>
                 <p>The delay in seconds between command status checks (default: 1 second).</p>
                 
                 <p>This setting controls how frequently Huntarr checks if a command sent to another service (like Sonarr or Radarr) has completed. Lower values make Huntarr more responsive but might increase network traffic. Higher values reduce network traffic but might make Huntarr seem less responsive.</p>
                 
                 <p>The default of 1 second works well for most users and shouldn't need changing. In high-performance environments with many services, increasing this value slightly (to 2-3 seconds) might reduce unnecessary network traffic without significantly impacting responsiveness.</p>
                 
-                <h3 id="cmd-wait-attempts">CMD Wait Attempts</h3>
+                <h3 id="cmd-wait-attempts"><a href="#cmd-wait-attempts" class="info-icon"><i class="fas fa-info-circle"></i></a> CMD Wait Attempts</h3>
                 <p>The maximum number of attempts to check command status (default: 600).</p>
                 
                 <p>This setting, combined with Command Wait Delay, determines how long Huntarr will wait for a command to complete before giving up. With default settings (600 attempts × 1 second delay), Huntarr will wait up to 10 minutes.</p>
@@ -216,7 +217,7 @@
                     <li>For faster systems: 1 second × 300 attempts = 300 seconds (5 minutes)</li>
                 </ul>
                 
-                <h3 id="max-dl-queue-size">Max DL Queue Size</h3>
+                <h3 id="max-dl-queue-size"><a href="#max-dl-queue-size" class="info-icon"><i class="fas fa-info-circle"></i></a> Max DL Queue Size</h3>
                 <p>If the current download queue for an app instance exceeds this value, downloads will be skipped until the queue reduces (default: -1, which means no limit).</p>
                 
                 <p>This setting helps prevent overwhelming your download client with too many simultaneous downloads. If you notice performance issues when Huntarr triggers many downloads at once, you might want to set this to a reasonable value (like 5 or 10).</p>
@@ -231,7 +232,7 @@
                     <li><strong>1-5:</strong> For slower connections or systems with limited resources</li>
                 </ul>
                 
-                <h3 id="log-refresh-interval">Log Refresh Interval</h3>
+                <h3 id="log-refresh-interval"><a href="#log-refresh-interval" class="info-icon"><i class="fas fa-info-circle"></i></a> Log Refresh Interval</h3>
                 <p>How often Huntarr refreshes logs from apps, in seconds (default: 30 seconds).</p>
                 
                 <p>This setting controls how frequently Huntarr updates the logs you see in the UI. Lower values (like 10-15 seconds) make logs update more frequently but might increase system load. Higher values (like 60 seconds) reduce system load but make logs less current.</p>
