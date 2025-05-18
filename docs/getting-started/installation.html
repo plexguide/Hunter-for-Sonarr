@@ -58,6 +58,7 @@
                     <li><a href="#installation-methods">Installation Methods</a>
                         <ul>
                             <li><a href="#docker-installation">Docker Installation</a></li>
+                            <li><a href="#unraid-installation">Unraid Installation</a></li>
                             <li><a href="#macos-installation">macOS Installation</a></li>
                             <li><a href="#alternative-methods">Alternative Installation Methods</a></li>
                         </ul>
@@ -120,16 +121,16 @@
                     <h4>Docker Run Method</h4>
                     <p>The simplest way to run Huntarr is via Docker (all configuration is done via the web UI):</p>
                     
-                    <pre class="terminal"><code># Option 1: DockerHub
-docker run -d --name huntarr \
+                    <h5>Option 1: DockerHub</h5>
+                    <pre class="terminal"><code>docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
   -v /your-path/huntarr:/config \
   -e TZ=America/New_York \
-  huntarr/huntarr:latest
+  huntarr/huntarr:latest</code></pre>
 
-# Option 2: GitHub Container Registry
-docker run -d --name huntarr \
+                    <h5>Option 2: GitHub Container Registry</h5>
+                    <pre class="terminal"><code>docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
   -v /your-path/huntarr:/config \
@@ -142,12 +143,23 @@ docker run -d --name huntarr \
                     <h4>Docker Compose Method</h4>
                     <p>For those who prefer Docker Compose, add this to your <code>docker-compose.yml</code> file:</p>
                     
+                    <h5>Option 1: DockerHub</h5>
                     <pre class="terminal"><code>services:
   huntarr:
-    # Option 1: DockerHub
     image: huntarr/huntarr:latest
-    # Option 2: GitHub Container Registry
-    # image: ghcr.io/plexguide/huntarr:latest
+    container_name: huntarr
+    restart: always
+    ports:
+      - "9705:9705"
+    volumes:
+      - /your-path/huntarr:/config
+    environment:
+      - TZ=America/New_York</code></pre>
+
+                    <h5>Option 2: GitHub Container Registry</h5>
+                    <pre class="terminal"><code>services:
+  huntarr:
+    image: ghcr.io/plexguide/huntarr:latest
     container_name: huntarr
     restart: always
     ports:
@@ -159,21 +171,23 @@ docker run -d --name huntarr \
                     
                     <p>Then run:</p>
                     <pre class="terminal"><code class="command-prompt">docker-compose up -d huntarr</code></pre>
-                    
-                    <h4>Unraid Users</h4>
+                </div>
+                
+                <div id="unraid">
+                    <h3 id="unraid-installation">Unraid Installation</h3>
                     <p>You can install Huntarr using the Unraid App Store.</p>
                     <p>If not, you can run this from Command Line in Unraid:</p>
                     
-                    <pre class="terminal"><code># Option 1: DockerHub
-docker run -d --name huntarr \
+                    <h5>Option 1: DockerHub</h5>
+                    <pre class="terminal"><code>docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
   -v /mnt/user/appdata/huntarr:/config \
   -e TZ=America/New_York \
-  huntarr/huntarr:latest
-  
-# Option 2: GitHub Container Registry
-docker run -d --name huntarr \
+  huntarr/huntarr:latest</code></pre>
+
+                    <h5>Option 2: GitHub Container Registry</h5>
+                    <pre class="terminal"><code>docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
   -v /mnt/user/appdata/huntarr:/config \
@@ -199,8 +213,8 @@ docker run -d --name huntarr \
                         <li>To proceed with installation, go to System Settings → Privacy & Security, scroll down to the security section, and click "Open Anyway" as shown below:</li>
                     </ol>
                     
-                    <div class="screenshot">
-                        <img src="../images/macos-security-warning.png" alt="macOS Security Warning" style="max-width: 100%; border: 1px solid #333; border-radius: 5px;">
+                    <div class="screenshot" style="text-align: center;">
+                        <img src="../images/mac-os-warning.jpg" alt="macOS Security Warning" style="max-width: 50%; border: 1px solid #333; border-radius: 5px;">
                         <p class="caption">The "Open Anyway" button allows you to proceed with installation despite macOS security warnings</p>
                     </div>
                     
@@ -242,17 +256,6 @@ docker run -d --name huntarr \
                             <pre class="terminal"><code class="command-prompt">python run.py</code></pre>
                         </li>
                     </ol>
-                    
-                    <h4>The Perfect Pair: Huntarr & Cleanuperr</h4>
-                    <p>For a complete media management solution, consider using Huntarr alongside Cleanuperr:</p>
-                    
-                    <ul>
-                        <li><strong>Huntarr</strong> hunts for content to add to your library</li>
-                        <li><strong>Cleanuperr</strong> ensures only clean downloads get through</li>
-                        <li>Together, they create a reliable, hands-off media management system</li>
-                    </ul>
-                    
-                    <p>Learn more about <strong>Cleanuperr</strong> at <a href="https://github.com/flmorg/cleanuperr" target="_blank">https://github.com/flmorg/cleanuperr</a></p>
                 </div>
             </section>
             
@@ -293,12 +296,6 @@ npm restart</code></pre>
                     <p>If port 9705 is already in use, you can change it in the docker-compose.yml file or use the <code>--port</code> option in the installation script.</p>
                 </div>
                 
-                <div class="issue-card">
-                    <h4>Permission issues</h4>
-                    <p>If you encounter permission issues, make sure the PUID and PGID environment variables in docker-compose.yml match your user's UID and GID.</p>
-                    <pre><code># Find your user ID and group ID
-id $(whoami)</code></pre>
-                </div>
                 
                 <div class="issue-card">
                     <h4>Connectivity problems</h4>
