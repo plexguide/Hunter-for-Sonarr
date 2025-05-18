@@ -414,29 +414,36 @@ a:hover {
 }
 
 code {
-    background-color: rgba(10, 15, 25, 0.6);
-    padding: 2px 6px;
+    background-color: rgba(30, 35, 45, 0.8);
+    padding: 4px 6px;
     border-radius: 3px;
     border: 1px solid var(--border-color);
     font-family: 'Courier New', monospace;
-    font-size: 0.9em;
-    color: #f8f8f8;
+    font-size: 1em;
+    color: #ffffff;
 }
 
 pre {
-    background-color: rgba(10, 15, 25, 0.6);
-    padding: 15px;
+    background-color: rgba(30, 35, 45, 0.8);
+    padding: 20px;
     border-radius: 5px;
     border: 1px solid var(--border-color);
     overflow-x: auto;
-    color: #f8f8f8;
+    color: #ffffff;
     position: relative;
+    margin: 15px 0;
+    line-height: 1.5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 pre code {
     background-color: transparent;
     border: none;
     padding: 0;
+    display: block;
+    width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .copy-button {
@@ -444,12 +451,13 @@ pre code {
     right: 10px;
     top: 10px;
     padding: 5px 10px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--border-color);
+    background-color: rgba(52, 152, 219, 0.3);
+    border: 1px solid var(--highlight-color);
     border-radius: 3px;
     cursor: pointer;
     color: var(--text-color);
     font-size: 0.8rem;
+    font-weight: bold;
 }
 
 .copy-button:hover {
