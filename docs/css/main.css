@@ -424,14 +424,15 @@ code {
 }
 
 pre {
-    background-color: #000;
+    background-color: var(--card-bg);
     padding: 20px;
-    border-radius: 5px;
+    border-radius: 8px;
     border: 1px solid var(--border-color);
+    border-left: 4px solid var(--highlight-color);
     overflow-x: auto;
     color: #ffffff;
     position: relative;
-    margin: 15px 0;
+    margin: 20px 0 30px 0;
     line-height: 1.5;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
@@ -439,7 +440,6 @@ pre {
 /* Special styling for terminal command blocks */
 pre.terminal {
     border-left: 4px solid var(--highlight-color);
-    font-family: 'Courier New', monospace;
 }
 
 pre.terminal code {
