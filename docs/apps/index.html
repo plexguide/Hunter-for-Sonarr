@@ -47,79 +47,101 @@
 
     <div class="main-content">
         <div class="container">
-            <h1>Huntarr.io Applications</h1>
+            <h1 id="page-title">Huntarr.io Applications</h1>
             
             <p>Huntarr.io provides a unified interface to manage your media automation applications. Each application has its own dedicated documentation page with setup instructions, configuration options, and usage guides.</p>
             
             <h2>Supported Applications</h2>
             
-            <div class="app-card sonarr-card">
-                <div class="app-card-header">
-                    <div class="app-card-icon sonarr">S</div>
-                    <h3 class="app-card-title">Sonarr</h3>
+            <div class="apps-grid">
+                <div class="app-card sonarr-card">
+                    <div class="app-card-header">
+                        <div class="app-card-icon sonarr">
+                            <img src="../images/arrs/48-sonarr.png" alt="Sonarr Logo" width="48" height="48">
+                        </div>
+                        <h3 class="app-card-title">Sonarr</h3>
+                    </div>
+                    <div class="app-card-content">
+                        <p>Manage and automate TV show downloads.</p>
+                    </div>
+                    <div class="app-card-footer">
+                        <a href="sonarr.html">View Sonarr Documentation →</a>
+                    </div>
                 </div>
-                <div class="app-card-content">
-                    <p><strong>Purpose:</strong> Manage and automate TV show downloads.</p>
-                    <p><strong>Features:</strong> Calendar view, automatic searching, series management, quality profiles, and more.</p>
+                
+                <div class="app-card radarr-card">
+                    <div class="app-card-header">
+                        <div class="app-card-icon radarr">
+                            <img src="../images/arrs/48-radarr.png" alt="Radarr Logo" width="48" height="48">
+                        </div>
+                        <h3 class="app-card-title">Radarr</h3>
+                    </div>
+                    <div class="app-card-content">
+                        <p>Manage and automate movie downloads.</p>
+                    </div>
+                    <div class="app-card-footer">
+                        <a href="radarr.html">View Radarr Documentation →</a>
+                    </div>
                 </div>
-                <div class="app-card-footer">
-                    <a href="sonarr.html">View Sonarr Documentation →</a>
+                
+                <div class="app-card lidarr-card">
+                    <div class="app-card-header">
+                        <div class="app-card-icon lidarr">
+                            <img src="../images/arrs/48-lidarr.png" alt="Lidarr Logo" width="48" height="48">
+                        </div>
+                        <h3 class="app-card-title">Lidarr</h3>
+                    </div>
+                    <div class="app-card-content">
+                        <p>Manage and automate music downloads.</p>
+                    </div>
+                    <div class="app-card-footer">
+                        <a href="lidarr.html">View Lidarr Documentation →</a>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="app-card radarr-card">
-                <div class="app-card-header">
-                    <div class="app-card-icon radarr">R</div>
-                    <h3 class="app-card-title">Radarr</h3>
+                
+                <div class="app-card readarr-card">
+                    <div class="app-card-header">
+                        <div class="app-card-icon readarr">
+                            <img src="../images/arrs/48-readarr.png" alt="Readarr Logo" width="48" height="48">
+                        </div>
+                        <h3 class="app-card-title">Readarr</h3>
+                    </div>
+                    <div class="app-card-content">
+                        <p>Manage and automate book downloads.</p>
+                    </div>
+                    <div class="app-card-footer">
+                        <a href="readarr.html">View Readarr Documentation →</a>
+                    </div>
                 </div>
-                <div class="app-card-content">
-                    <p><strong>Purpose:</strong> Manage and automate movie downloads.</p>
-                    <p><strong>Features:</strong> Automatic searching, movie management, quality profiles, and more.</p>
+                
+                <div class="app-card whisparr-card">
+                    <div class="app-card-header">
+                        <div class="app-card-icon whisparr">
+                            <img src="../images/arrs/48-whisparr.png" alt="Whisparr Logo" width="48" height="48">
+                        </div>
+                        <h3 class="app-card-title">Whisparr V2</h3>
+                    </div>
+                    <div class="app-card-content">
+                        <p>Manage and automate adult content downloads.</p>
+                    </div>
+                    <div class="app-card-footer">
+                        <a href="whisparr.html">View Whisparr Documentation →</a>
+                    </div>
                 </div>
-                <div class="app-card-footer">
-                    <a href="radarr.html">View Radarr Documentation →</a>
-                </div>
-            </div>
-            
-            <div class="app-card lidarr-card">
-                <div class="app-card-header">
-                    <div class="app-card-icon lidarr">L</div>
-                    <h3 class="app-card-title">Lidarr</h3>
-                </div>
-                <div class="app-card-content">
-                    <p><strong>Purpose:</strong> Manage and automate music downloads.</p>
-                    <p><strong>Features:</strong> Artist management, album tracking, quality profiles, and more.</p>
-                </div>
-                <div class="app-card-footer">
-                    <a href="lidarr.html">View Lidarr Documentation →</a>
-                </div>
-            </div>
-            
-            <div class="app-card readarr-card">
-                <div class="app-card-header">
-                    <div class="app-card-icon readarr">R</div>
-                    <h3 class="app-card-title">Readarr</h3>
-                </div>
-                <div class="app-card-content">
-                    <p><strong>Purpose:</strong> Manage and automate ebook and audiobook downloads.</p>
-                    <p><strong>Features:</strong> Author management, book tracking, quality profiles, and more.</p>
-                </div>
-                <div class="app-card-footer">
-                    <a href="readarr.html">View Readarr Documentation →</a>
-                </div>
-            </div>
-            
-            <div class="app-card whisparr-card">
-                <div class="app-card-header">
-                    <div class="app-card-icon whisparr">W</div>
-                    <h3 class="app-card-title">Whisparr</h3>
-                </div>
-                <div class="app-card-content">
-                    <p><strong>Purpose:</strong> Manage and automate adult content downloads.</p>
-                    <p><strong>Features:</strong> Scene tracking, automatic searching, quality profiles, and more.</p>
-                </div>
-                <div class="app-card-footer">
-                    <a href="whisparr.html">View Whisparr Documentation →</a>
+                
+                <div class="app-card whisparr-card">
+                    <div class="app-card-header">
+                        <div class="app-card-icon whisparr">
+                            <img src="../images/arrs/48-whisparr.png" alt="Whisparr V3 Logo" width="48" height="48">
+                        </div>
+                        <h3 class="app-card-title">Whisparr V3 (Eros)</h3>
+                    </div>
+                    <div class="app-card-content">
+                        <p>Newer version of Whisparr for managing adult content downloads.</p>
+                    </div>
+                    <div class="app-card-footer">
+                        <a href="eros.html">View Whisparr V3 Documentation →</a>
+                    </div>
                 </div>
             </div>
             
@@ -137,7 +159,36 @@
             <footer>
                 Huntarr.io <span class="version-badge">v6.5.18</span> | Applications Documentation | Thanks 4 Using Huntarr - Admin9705
             </footer>
+            
+            <a href="#page-title" class="back-to-top" id="back-to-top" title="Back to Top">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path>
+                </svg>
+            </a>
         </div>
     </div>
+    
+    <script>
+        // Show/hide back-to-top button based on scroll position
+        window.addEventListener('scroll', function() {
+            var backToTopButton = document.getElementById('back-to-top');
+            if (window.pageYOffset > 300) {
+                backToTopButton.classList.add('visible');
+            } else {
+                backToTopButton.classList.remove('visible');
+            }
+        });
+        
+        // Add smooth scrolling for back-to-top button
+        document.getElementById('back-to-top').addEventListener('click', function(e) {
+            e.preventDefault();
+            var targetId = this.getAttribute('href');
+            var targetElement = document.querySelector(targetId);
+            window.scrollTo({
+                top: targetElement.offsetTop - 20,
+                behavior: 'smooth'
+            });
+        });
+    </script>
 </body>
 </html> 
