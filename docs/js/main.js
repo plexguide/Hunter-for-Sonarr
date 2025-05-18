@@ -1,9 +1,36 @@
 // Huntarr.io Documentation JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Add copy functionality to code blocks
+    // Get all code blocks
     const codeBlocks = document.querySelectorAll('pre code');
+    
     if (codeBlocks.length > 0) {
+        // First pass: detect and enhance terminal command blocks
+        codeBlocks.forEach(function(codeBlock) {
+            const content = codeBlock.textContent.trim();
+            const pre = codeBlock.parentNode;
+            
+            // Detect if this is likely a terminal command (common CLI commands, starts with $, etc)
+            const isTerminalCommand = (
+                content.match(/^(git|npm|yarn|docker|curl|wget|cd|ls|mkdir|touch|rm|cp|mv|sudo|apt|brew)\s/) ||
+                content.startsWith('$') ||
+                content.includes('clone') ||
+                content.includes('install') ||
+                content.includes('://') && (content.includes('curl') || content.includes('wget'))
+            );
+            
+            if (isTerminalCommand) {
+                // Add terminal styling to this code block
+                pre.classList.add('terminal');
+                
+                // If it's a single-line command, add the command prompt
+                if (!content.includes('\n')) {
+                    codeBlock.classList.add('command-prompt');
+                }
+            }
+        });
+        
+        // Second pass: add copy functionality to all code blocks
         codeBlocks.forEach(function(codeBlock) {
             const copyButton = document.createElement('button');
             copyButton.className = 'copy-button';

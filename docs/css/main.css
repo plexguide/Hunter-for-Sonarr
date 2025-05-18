@@ -424,7 +424,7 @@ code {
 }
 
 pre {
-    background-color: rgba(30, 35, 45, 0.8);
+    background-color: #000;
     padding: 20px;
     border-radius: 5px;
     border: 1px solid var(--border-color);
@@ -438,8 +438,6 @@ pre {
 
 /* Special styling for terminal command blocks */
 pre.terminal {
-    background-color: #000;
-    border-color: #333;
     border-left: 4px solid var(--highlight-color);
     font-family: 'Courier New', monospace;
 }
@@ -470,11 +468,11 @@ pre code {
     right: 10px;
     top: 10px;
     padding: 5px 10px;
-    background-color: rgba(52, 152, 219, 0.3);
-    border: 1px solid var(--highlight-color);
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
     border-radius: 3px;
     cursor: pointer;
-    color: var(--text-color);
+    color: #000;
     font-size: 0.8rem;
     font-weight: bold;
 }
