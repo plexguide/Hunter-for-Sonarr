@@ -708,15 +708,23 @@ footer {
 }
 
 /* Card style for app blocks */
+/* App cards grid container */
+.app-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
 .app-card {
     display: flex;
     flex-direction: column;
     border-radius: 8px;
     background-color: rgba(20, 25, 35, 0.6);
-    margin: 20px 0;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s, box-shadow 0.3s;
     overflow: hidden;
+    height: 100%;
 }
 
 .app-card:hover {
@@ -725,9 +733,11 @@ footer {
 }
 
 .app-card-header {
-    padding: 15px;
+    padding: 12px 15px;
     display: flex;
     align-items: center;
+    background-color: #252a34;
+    border-bottom: none;
 }
 
 .app-card-icon {
@@ -778,14 +788,15 @@ footer {
 }
 
 .app-card-content {
-    padding: 15px;
+    padding: 12px 15px;
     flex: 1;
 }
 
 .app-card-footer {
-    padding: 10px 15px;
+    padding: 8px 15px;
     background-color: rgba(10, 15, 25, 0.3);
     text-align: right;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Card styled for sonarr */
