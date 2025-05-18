@@ -697,6 +697,42 @@ footer {
     100% { background-color: var(--card-bg); }
 }
 
+/* Warning and Note Boxes */
+.warning-box {
+    background-color: rgba(231, 76, 60, 0.1);
+    border-left: 4px solid #e74c3c;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.warning-box h3 {
+    color: #e74c3c;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.note-box {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-left: 4px solid var(--highlight-color);
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.note-box h4 {
+    color: var(--highlight-color);
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.warning-image {
+    max-width: 100%;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
 .back-to-top.visible {
     opacity: 1;
     transform: translateY(0);
