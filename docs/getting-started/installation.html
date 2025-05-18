@@ -103,144 +103,149 @@
                     <div class="tab-content">
                         <div class="tab-pane active" id="docker">
                             <h3>Docker Installation</h3>
-                            <p>The recommended way to install Huntarr.io is using Docker and Docker Compose. This method ensures that all dependencies are correctly installed and configured.</p>
+                            <p>The recommended way to install Huntarr.io is using Docker. This method ensures that all dependencies are correctly installed and configured.</p>
                             
                             <h4>Prerequisites</h4>
                             <ul>
-                                <li>Docker (19.03 or newer)</li>
-                                <li>Docker Compose (1.27 or newer)</li>
+                                <li>Docker (1.27 or newer)</li>
                             </ul>
                             
-                            <h4>Steps</h4>
-                            <ol>
-                                <li>Clone the repository:
-                                    <pre><code>git clone https://github.com/plexguide/Huntarr.io.git</code></pre>
-                                </li>
-                                <li>Navigate to the directory:
-                                    <pre><code>cd Huntarr.io</code></pre>
-                                </li>
-                                <li>Run the Docker Compose command:
-                                    <pre><code>docker-compose up -d</code></pre>
-                                </li>
-                                <li>Access Huntarr.io through your browser:
-                                    <pre><code>http://localhost:7575</code></pre>
-                                </li>
-                            </ol>
+                            <h4>Docker Run Method</h4>
+                            <p>The simplest way to run Huntarr is via Docker (all configuration is done via the web UI):</p>
                             
-                            <h4>Docker Compose Configuration</h4>
-                            <p>The default docker-compose.yml file includes all necessary components, but you can customize it according to your needs. Here's a sample configuration:</p>
+                            <pre class="terminal"><code># Option 1: DockerHub
+docker run -d --name huntarr \
+  --restart always \
+  -p 9705:9705 \
+  -v /your-path/huntarr:/config \
+  -e TZ=America/New_York \
+  huntarr/huntarr:latest
+
+# Option 2: GitHub Container Registry
+docker run -d --name huntarr \
+  --restart always \
+  -p 9705:9705 \
+  -v /your-path/huntarr:/config \
+  -e TZ=America/New_York \
+  ghcr.io/plexguide/huntarr:latest</code></pre>
                             
-                            <pre><code>version: '3'
-services:
+                            <p>To check on the status of the program:</p>
+                            <pre class="terminal"><code class="command-prompt">docker logs huntarr</code></pre>
+                            
+                            <h4>Docker Compose Method</h4>
+                            <p>For those who prefer Docker Compose, add this to your <code>docker-compose.yml</code> file:</p>
+                            
+                            <pre class="terminal"><code>services:
   huntarr:
-    image: plexguide/huntarr:latest
+    # Option 1: DockerHub
+    image: huntarr/huntarr:latest
+    # Option 2: GitHub Container Registry
+    # image: ghcr.io/plexguide/huntarr:latest
     container_name: huntarr
+    restart: always
     ports:
-      - 7575:7575
+      - "9705:9705"
     volumes:
-      - ./config:/config
-      - /path/to/media:/media
-      - /path/to/downloads:/downloads
+      - /your-path/huntarr:/config
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=UTC
-    restart: unless-stopped</code></pre>
+      - TZ=America/New_York</code></pre>
+                            
+                            <p>Then run:</p>
+                            <pre class="terminal"><code class="command-prompt">docker-compose up -d huntarr</code></pre>
+                            
+                            <h4>Unraid Users</h4>
+                            <p>You can install Huntarr using the Unraid App Store.</p>
+                            <p>If not, you can run this from Command Line in Unraid:</p>
+                            
+                            <pre class="terminal"><code># Option 1: DockerHub
+docker run -d --name huntarr \
+  --restart always \
+  -p 9705:9705 \
+  -v /mnt/user/appdata/huntarr:/config \
+  -e TZ=America/New_York \
+  huntarr/huntarr:latest
+  
+# Option 2: GitHub Container Registry
+docker run -d --name huntarr \
+  --restart always \
+  -p 9705:9705 \
+  -v /mnt/user/appdata/huntarr:/config \
+  -e TZ=America/New_York \
+  ghcr.io/plexguide/huntarr:latest</code></pre>
                         </div>
                         
                         <div class="tab-pane" id="script">
-                            <h3>Installation Script</h3>
-                            <p>For Linux systems, we provide a convenient installation script that automates the setup process.</p>
+                            <h3>macOS Installation</h3>
+                            <p>Huntarr.io provides native macOS installers for both Intel and Apple Silicon Macs.</p>
                             
-                            <h4>Supported Distributions</h4>
+                            <h4>Two Types of macOS Installers</h4>
                             <ul>
-                                <li>Ubuntu 18.04, 20.04, 22.04</li>
-                                <li>Debian 10, 11</li>
-                                <li>CentOS 8, Stream</li>
-                                <li>Fedora 34+</li>
+                                <li><strong>Intel (x86_64)</strong> - For Intel-based Macs</li>
+                                <li><strong>ARM (arm64)</strong> - For Apple Silicon Macs (M1, M2, etc.)</li>
                             </ul>
                             
-                            <h4>One-line Installation</h4>
-                            <p>Run the following command to install Huntarr.io:</p>
-                            <pre class="terminal"><code class="command-prompt">curl -sSL https://install.huntarr.io | bash</code></pre>
+                            <h4>Installation Steps</h4>
+                            <ol>
+                                <li>Download the appropriate installer package (.pkg) for your Mac from the <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank">GitHub Releases</a> page.</li>
+                                <li>Double-click the downloaded .pkg file to start the installation process.</li>
+                                <li>When you first try to open the package, you may see a security warning. This is expected as the app isn't signed by Apple.</li>
+                                <li>To proceed with installation, go to System Settings → Privacy & Security, scroll down to the security section, and click "Open Anyway" as shown below:</li>
+                            </ol>
                             
-                            <h4>Advanced Options</h4>
-                            <p>For more control over the installation process, you can use these flags:</p>
-                            <pre class="terminal"><code class="command-prompt">curl -sSL https://install.huntarr.io | bash -s -- --prefix /opt/huntarr --port 8080</code></pre>
+                            <div class="screenshot">
+                                <img src="../images/macos-security-warning.png" alt="macOS Security Warning" style="max-width: 100%; border: 1px solid #333; border-radius: 5px;">
+                                <p class="caption">The "Open Anyway" button allows you to proceed with installation despite macOS security warnings</p>
+                            </div>
                             
-                            <p>Available options:</p>
+                            <h4>Configuration</h4>
+                            <p>When first launched, Huntarr.io will create the necessary configuration directories in your user folder:</p>
+                            <pre><code>~/Library/Application Support/Huntarr/config/</code></pre>
+                            
+                            <h4>Notes about macOS Version</h4>
                             <ul>
-                                <li><code>--prefix</code>: Installation directory (default: /opt/huntarr)</li>
-                                <li><code>--port</code>: Web interface port (default: 7575)</li>
-                                <li><code>--no-docker</code>: Install without Docker (native installation)</li>
-                                <li><code>--no-deps</code>: Skip dependency installation</li>
+                                <li>Requires macOS 10.15 (Catalina) or newer</li>
+                                <li>The macOS version is provided as a convenience for users who prefer native applications</li>
+                                <li>The Docker version remains the primary supported deployment method</li>
                             </ul>
                         </div>
                         
                         <div class="tab-pane" id="manual">
-                            <h3>Manual Installation</h3>
-                            <p>If you prefer to install Huntarr.io manually, follow these steps based on your operating system.</p>
+                            <h3>Alternative Installation Methods</h3>
+                            <p>Although Docker and the native macOS installers are the recommended methods, there are additional ways to install and run Huntarr.</p>
                             
-                            <h4>Linux (Ubuntu/Debian)</h4>
+                            <div class="alert alert-warning">
+                                <strong>Note:</strong> These methods are provided for advanced users and development purposes only. For most users, we recommend the Docker installation or macOS installer.
+                            </div>
+                            
+                            <h4>From Source (Advanced)</h4>
+                            <p>If you're familiar with Python and want to run Huntarr from source:</p>
+                            
                             <ol>
-                                <li>Install dependencies:
-                                    <pre class="terminal"><code>sudo apt update
-sudo apt install -y nodejs npm git</code></pre>
-                                </li>
+                                <li>Ensure you have Python 3.9+ and Git installed on your system</li>
                                 <li>Clone the repository:
-                                    <pre><code>git clone https://github.com/plexguide/Huntarr.io.git</code></pre>
+                                    <pre class="terminal"><code class="command-prompt">git clone https://github.com/plexguide/Huntarr.io.git</code></pre>
                                 </li>
                                 <li>Navigate to the directory:
-                                    <pre><code>cd Huntarr.io</code></pre>
+                                    <pre class="terminal"><code class="command-prompt">cd Huntarr.io</code></pre>
                                 </li>
-                                <li>Install npm dependencies:
-                                    <pre><code>npm install</code></pre>
+                                <li>Install Python dependencies:
+                                    <pre class="terminal"><code class="command-prompt">pip install -r requirements.txt</code></pre>
                                 </li>
-                                <li>Start the application:
-                                    <pre><code>npm start</code></pre>
+                                <li>Run the application:
+                                    <pre class="terminal"><code class="command-prompt">python run.py</code></pre>
                                 </li>
                             </ol>
                             
-                            <h4>Windows</h4>
-                            <ol>
-                                <li>Install <a href="https://nodejs.org/" target="_blank">Node.js</a></li>
-                                <li>Install <a href="https://git-scm.com/download/win" target="_blank">Git for Windows</a></li>
-                                <li>Open Command Prompt or PowerShell</li>
-                                <li>Clone the repository:
-                                    <pre><code>git clone https://github.com/plexguide/Huntarr.io.git</code></pre>
-                                </li>
-                                <li>Navigate to the directory:
-                                    <pre><code>cd Huntarr.io</code></pre>
-                                </li>
-                                <li>Install npm dependencies:
-                                    <pre><code>npm install</code></pre>
-                                </li>
-                                <li>Start the application:
-                                    <pre><code>npm start</code></pre>
-                                </li>
-                            </ol>
+                            <h4>The Perfect Pair: Huntarr & Cleanuperr</h4>
+                            <p>For a complete media management solution, consider using Huntarr alongside Cleanuperr:</p>
                             
-                            <h4>macOS</h4>
-                            <ol>
-                                <li>Install <a href="https://brew.sh/" target="_blank">Homebrew</a> if you don't have it yet:
-                                    <pre class="terminal"><code class="command-prompt">/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</code></pre>
-                                </li>
-                                <li>Install Node.js and Git:
-                                    <pre class="terminal"><code class="command-prompt">brew install node git</code></pre>
-                                </li>
-                                <li>Clone the repository:
-                                    <pre><code>git clone https://github.com/plexguide/Huntarr.io.git</code></pre>
-                                </li>
-                                <li>Navigate to the directory:
-                                    <pre><code>cd Huntarr.io</code></pre>
-                                </li>
-                                <li>Install npm dependencies:
-                                    <pre><code>npm install</code></pre>
-                                </li>
-                                <li>Start the application:
-                                    <pre><code>npm start</code></pre>
-                                </li>
-                            </ol>
+                            <ul>
+                                <li><strong>Huntarr</strong> hunts for content to add to your library</li>
+                                <li><strong>Cleanuperr</strong> ensures only clean downloads get through</li>
+                                <li>Together, they create a reliable, hands-off media management system</li>
+                            </ul>
+                            
+                            <p>Learn more about <strong>Cleanuperr</strong> at <a href="https://github.com/flmorg/cleanuperr" target="_blank">https://github.com/flmorg/cleanuperr</a></p>
                         </div>
                     </div>
                 </div>
@@ -252,7 +257,7 @@ sudo apt install -y nodejs npm git</code></pre>
                 <h3>Initial Setup</h3>
                 <p>After installing Huntarr.io, you'll need to complete the initial setup:</p>
                 <ol>
-                    <li>Access the web interface (default: <code>http://localhost:7575</code>)</li>
+                    <li>Access the web interface (default: <code>http://localhost:9705</code>)</li>
                     <li>Create an administrator account when prompted</li>
                     <li>Follow the setup wizard to configure your media paths and integrate with media applications (Sonarr, Radarr, etc.)</li>
                 </ol>
@@ -280,7 +285,7 @@ npm restart</code></pre>
                 
                 <div class="issue-card">
                     <h4>Port already in use</h4>
-                    <p>If port 7575 is already in use, you can change it in the docker-compose.yml file or use the <code>--port</code> option in the installation script.</p>
+                    <p>If port 9705 is already in use, you can change it in the docker-compose.yml file or use the <code>--port</code> option in the installation script.</p>
                 </div>
                 
                 <div class="issue-card">

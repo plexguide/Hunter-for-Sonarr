@@ -443,7 +443,7 @@ pre.terminal {
 }
 
 pre.terminal code {
-    color: #00ff00; /* Terminal green text */
+    color: #ffffff; /* White text for better readability */
 }
 
 /* Add this class to any code block that shows terminal commands */
