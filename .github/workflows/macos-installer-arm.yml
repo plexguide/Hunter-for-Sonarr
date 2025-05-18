@@ -47,56 +47,169 @@ jobs:
       - name: Create app_launcher.py
         run: |
           cat > app_launcher.py << 'EOF'
+          #!/usr/bin/env python3
           import os
           import sys
           import logging
+          import shutil
+          import json
+          import traceback
+          import time
+          from datetime import datetime
 
-          # Create logger
-          if not os.path.exists(os.path.expanduser("~/Library/Application Support/Huntarr/config/logs")):
-              os.makedirs(os.path.expanduser("~/Library/Application Support/Huntarr/config/logs"), exist_ok=True)
-          
-          logging.basicConfig(
-              level=logging.DEBUG,
-              format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-              handlers=[
-                  logging.FileHandler(os.path.expanduser("~/Library/Application Support/Huntarr/config/logs/huntarr.log")),
-                  logging.StreamHandler()
-              ]
-          )
-          logger = logging.getLogger("Huntarr")
+          # Ensure Desktop log for critical errors
+          desktop_log = os.path.expanduser("~/Desktop/huntarr_error.log")
+          with open(desktop_log, "a") as f:
+              f.write(f"\n[{datetime.now().isoformat()}] Starting app_launcher.py\n")
+
+          # Setup base paths before anything else
+          home = os.path.expanduser("~")
+          config_dir = os.path.join(home, "Library", "Application Support", "Huntarr", "config")
+          log_dir = os.path.join(config_dir, "logs")
+
+          # Create essential directories
+          for dir_path in [
+              config_dir,
+              os.path.join(config_dir, "settings"),
+              os.path.join(config_dir, "stateful"),
+              os.path.join(config_dir, "user"),
+              os.path.join(config_dir, "logs"),
+              os.path.join(config_dir, "scheduler"),
+          ]:
+              try:
+                  os.makedirs(dir_path, exist_ok=True)
+                  with open(desktop_log, "a") as f:
+                      f.write(f"Created directory: {dir_path}\n")
+              except Exception as e:
+                  with open(desktop_log, "a") as f:
+                      f.write(f"Error creating directory {dir_path}: {str(e)}\n")
+
+          # Configure logging
+          try:
+              logging.basicConfig(
+                  level=logging.DEBUG,
+                  format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                  handlers=[
+                      logging.FileHandler(os.path.join(log_dir, "huntarr.log")),
+                      logging.StreamHandler()
+                  ]
+              )
+              logger = logging.getLogger("Huntarr")
+              logger.setLevel(logging.DEBUG)
+              
+              # Make sure log messages appear at the appropriate levels
+              for handler in logger.handlers:
+                  handler.setLevel(logging.DEBUG)
+                  
+              # Keep routine success messages at DEBUG level to reduce log clutter
+              # Only show ERROR level for actual errors
+              logging.getLogger('werkzeug').setLevel(logging.WARNING)
+              
+              with open(desktop_log, "a") as f:
+                  f.write("Logging system initialized\n")
+          except Exception as e:
+              with open(desktop_log, "a") as f:
+                  f.write(f"Error setting up logging: {str(e)}\n")
+              raise
+
+          # Create necessary default config files if they don't exist
+          try:
+              # Create default scheduler file
+              scheduler_dir = os.path.join(config_dir, "scheduler")
+              scheduler_file = os.path.join(scheduler_dir, "schedule.json")
+              if not os.path.exists(scheduler_file):
+                  default_schedule = {
+                      "global": [],
+                      "sonarr": [],
+                      "radarr": [],
+                      "lidarr": [],
+                      "readarr": []
+                  }
+                  with open(scheduler_file, "w") as f:
+                      json.dump(default_schedule, f, indent=2)
+                  logger.debug(f"Created default scheduler file at {scheduler_file}")
+              
+              # Create default general.json with appropriate timeouts
+              general_file = os.path.join(config_dir, "settings", "general.json")
+              if not os.path.exists(general_file):
+                  default_general = {
+                      "api_timeout": 120,
+                      "command_wait_delay": 1,
+                      "command_wait_attempts": 600,
+                      "log_level": "DEBUG"
+                  }
+                  with open(general_file, "w") as f:
+                      json.dump(default_general, f, indent=2)
+                  logger.debug(f"Created default general settings at {general_file}")
+          except Exception as e:
+              logger.exception(f"Error creating default config files: {str(e)}")
 
           try:
-              # Log startup
-              logger.info("Starting Huntarr macOS application")
-              
-              # Set container-like environment
-              home = os.path.expanduser("~")
-              config_dir = os.path.join(home, "Library", "Application Support", "Huntarr", "config")
+              # Set environment variables to mimic Docker container
               os.environ["HUNTARR_CONFIG_DIR"] = config_dir
+              os.environ["FLASK_ENV"] = "production"
               
-              # Make config directory structure if it doesn't exist
-              os.makedirs(os.path.join(config_dir, "settings"), exist_ok=True)
-              os.makedirs(os.path.join(config_dir, "stateful"), exist_ok=True)
-              os.makedirs(os.path.join(config_dir, "user"), exist_ok=True)
-              os.makedirs(os.path.join(config_dir, "logs"), exist_ok=True)
+              # Log environment information for debugging
+              logger.debug(f"Python version: {sys.version}")
+              logger.debug(f"Python executable: {sys.executable}")
+              logger.debug(f"Current working directory: {os.getcwd()}")
+              logger.debug(f"HUNTARR_CONFIG_DIR = {os.environ.get('HUNTARR_CONFIG_DIR')}")
               
-              # Adjust paths for bundled app
+              # List all environment variables for debugging
+              logger.debug("Environment variables:")
+              for key, value in sorted(os.environ.items()):
+                  logger.debug(f"  {key} = {value}")
+              
+              # Check if running in PyInstaller bundle
               if hasattr(sys, "_MEIPASS"):
-                  logger.info("Running in PyInstaller bundle: " + sys._MEIPASS)
-                  os.chdir(sys._MEIPASS)
+                  logger.debug(f"Running in PyInstaller bundle: {sys._MEIPASS}")
+                  bundle_dir = sys._MEIPASS
+                  os.chdir(bundle_dir)
+                  logger.debug(f"Changed working directory to: {os.getcwd()}")
+                  
+                  # List bundle contents for debugging
+                  logger.debug("Bundle contents:")
+                  for root, dirs, files in os.walk(bundle_dir, topdown=True, followlinks=False):
+                      rel_path = os.path.relpath(root, bundle_dir)
+                      if rel_path == ".":
+                          rel_path = ""
+                      logger.debug(f"  Directory: {rel_path}")
+                      for file in files:
+                          logger.debug(f"    {os.path.join(rel_path, file)}")
               
-              # Import and run main module
-              logger.info("Importing main")
-              import main
-              logger.info("Starting main application")
+              # Import main module with debug info
+              logger.debug("Attempting to import main module...")
+              try:
+                  sys.path.insert(0, os.getcwd())
+                  import main
+                  logger.debug("Main module imported successfully")
+              except ImportError as e:
+                  logger.error(f"Failed to import main: {str(e)}")
+                  raise
+              
+              # Start the main application
+              logger.debug("Starting main application")
               main.main()
           except Exception as e:
-              logger.exception("Fatal error in app_launcher: " + str(e))
-              # Write to a separate file that's easier to access
-              with open(os.path.expanduser("~/Desktop/huntarr_error.log"), "a") as f:
-                  f.write("\n" + str(e) + "\n")
-                  import traceback
+              logger.exception(f"Fatal error in app_launcher: {str(e)}")
+              with open(desktop_log, "a") as f:
+                  f.write(f"\n[{datetime.now().isoformat()}] FATAL ERROR: {str(e)}\n")
+                  f.write("\nTraceback:\n")
                   traceback.print_exc(file=f)
+                  
+                  # Add more diagnostic information
+                  f.write("\n\nSystem Information:\n")
+                  f.write(f"Python version: {sys.version}\n")
+                  f.write(f"Python path: {sys.path}\n")
+                  f.write(f"Working directory: {os.getcwd()}\n")
+                  
+                  # Try to list directory contents
+                  try:
+                      f.write("\nDirectory contents:\n")
+                      for item in os.listdir(os.getcwd()):
+                          f.write(f"  {item}\n")
+                  except Exception as dir_err:
+                      f.write(f"Error listing directory: {str(dir_err)}\n")
           EOF
 
       - name: Create runtime hook
