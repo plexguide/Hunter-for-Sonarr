@@ -431,14 +431,14 @@ jobs:
           branch="${{ steps.meta.outputs.BRANCH }}"
           
           if [[ "${{ steps.meta.outputs.IS_TAG }}" == "true" ]]; then
-            pkg_name="Huntarr-${version}-arm64.pkg"
+            pkg_name="Huntarr-${version}-mac-arm64.pkg"
           else
             if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-              pkg_name="Huntarr-${version}-main-arm64.pkg"
+              pkg_name="Huntarr-${version}-mac-main-arm64.pkg"
             elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-              pkg_name="Huntarr-${version}-dev-arm64.pkg"
+              pkg_name="Huntarr-${version}-mac-dev-arm64.pkg"
             else
-              pkg_name="Huntarr-${version}-${branch}-arm64.pkg"
+              pkg_name="Huntarr-${version}-mac-${branch}-arm64.pkg"
             fi
           fi
           
