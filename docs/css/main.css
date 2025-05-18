@@ -436,6 +436,25 @@ pre {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+/* Special styling for terminal command blocks */
+pre.terminal {
+    background-color: #000;
+    border-color: #333;
+    border-left: 4px solid var(--highlight-color);
+    font-family: 'Courier New', monospace;
+}
+
+pre.terminal code {
+    color: #00ff00; /* Terminal green text */
+}
+
+/* Add this class to any code block that shows terminal commands */
+.command-prompt::before {
+    content: '$ ';
+    color: #999;
+    user-select: none;
+}
+
 pre code {
     background-color: transparent;
     border: none;
@@ -461,7 +480,9 @@ pre code {
 }
 
 .copy-button:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(52, 152, 219, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 img {
