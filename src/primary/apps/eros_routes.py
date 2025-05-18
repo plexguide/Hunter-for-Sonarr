@@ -10,6 +10,8 @@ import traceback
 import socket
 from urllib.parse import urlparse
 from src.primary.apps.eros import api as eros_api
+# Import centralized path configuration
+from src.primary.utils.config_paths import CONFIG_PATH
 
 eros_bp = Blueprint('eros', __name__)
 eros_logger = get_logger("eros")
@@ -188,10 +190,10 @@ def test_eros_settings():
         import json
         import os
         
-        # Check all possible settings locations
+        # Check all possible settings locations using centralized config
         possible_locations = [
-            "/config/eros.json",  # Main Docker mount
-            "/app/config/eros.json",  # Alternate location
+            os.path.join(str(CONFIG_PATH), "eros.json"),  # Cross-platform main config path
+            "/app/config/eros.json",  # Alternate location for backwards compatibility
             os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "config", "eros.json")  # Relative path
         ]
         

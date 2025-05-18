@@ -410,7 +410,9 @@ def app_specific_loop(app_type: str) -> None:
         # Use shorter sleep intervals and check for reset file
         wait_interval = 1  # Check every second to be more responsive
         elapsed = 0
-        reset_file_path = f"/config/reset/{app_type}.reset"
+        # Use cross-platform path for reset file
+        from src.primary.utils.config_paths import get_reset_path
+        reset_file_path = get_reset_path(app_type)
                 
         while elapsed < sleep_seconds:
             # Check if stop event is set
@@ -461,12 +463,18 @@ def reset_app_cycle(app_type: str) -> bool:
     """
     logger.info(f"Manual cycle reset requested for {app_type} - Creating reset file")
     
-    # Create a reset file for this app
-    reset_file_path = f"/config/reset/{app_type}.reset"
+    # Create a reset file for this app using cross-platform paths
+    from src.primary.utils.config_paths import get_reset_path
+    
+    reset_file_path = get_reset_path(app_type)
     try:
+        # Ensure directory exists
+        reset_file_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Write to the reset file
         with open(reset_file_path, 'w') as f:
             f.write(str(int(time.time())))
-        logger.info(f"Reset file created for {app_type}. Cycle will reset on next check.")
+        logger.info(f"Reset file created for {app_type} at {reset_file_path}. Cycle will reset on next check.")
         return True
     except Exception as e:
         logger.error(f"Error creating reset file for {app_type}: {e}", exc_info=True)

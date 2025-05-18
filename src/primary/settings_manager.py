@@ -19,8 +19,10 @@ logging.basicConfig(level=logging.INFO)
 settings_logger = logging.getLogger("settings_manager")
 
 # Settings directory setup - Root config directory
-SETTINGS_DIR = pathlib.Path("/config")
-SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
+# Use the centralized path configuration
+from src.primary.utils.config_paths import SETTINGS_DIR
+
+# Settings directory is already created by config_paths module
 
 # Default configs location remains the same
 DEFAULT_CONFIGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'default_configs'))

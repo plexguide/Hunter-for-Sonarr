@@ -907,9 +907,12 @@ def reset_app_cycle(app_name):
         
     try:
         # Trigger cycle reset for the app using a file-based approach
-        # Ensure reset directory exists
-        reset_dir = "/config/reset"
+        # Use cross-platform paths
+        from src.primary.utils.config_paths import RESET_DIR
         import os
+        
+        # Convert Path object to string for compatibility
+        reset_dir = str(RESET_DIR)
         os.makedirs(reset_dir, exist_ok=True)
         
         # Create the reset file

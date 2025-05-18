@@ -11,8 +11,11 @@ import json
 from typing import List, Dict, Any, Optional
 from src.primary import settings_manager
 
-# Define the config directory - typically /config in Docker environment
-CONFIG_DIR = os.environ.get('CONFIG_DIR', '/config')
+# Use the centralized path configuration
+from src.primary.utils.config_paths import CONFIG_PATH
+
+# Define the config directory - using cross-platform path
+CONFIG_DIR = str(CONFIG_PATH)  # Convert to string for compatibility
 
 # Get the logger at module level
 from src.primary.utils.logger import get_logger

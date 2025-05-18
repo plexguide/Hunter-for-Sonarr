@@ -17,8 +17,11 @@ from src.primary.state import get_state_file_path
 # Create logger
 swaparr_logger = get_logger("swaparr")
 
-# Create state directory for tracking strikes
-SWAPARR_STATE_DIR = os.path.join(os.getenv("CONFIG_DIR", "/config"), "swaparr")
+# Use the centralized path configuration
+from src.primary.utils.config_paths import SWAPARR_DIR
+
+# Use cross-platform path for state directory
+SWAPARR_STATE_DIR = str(SWAPARR_DIR)  # Convert to string for compatibility with os.path
 
 def ensure_state_directory(app_name):
     """Ensure the state directory exists for tracking strikes for a specific app"""

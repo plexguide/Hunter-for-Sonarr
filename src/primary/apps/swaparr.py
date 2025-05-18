@@ -52,7 +52,9 @@ def get_status():
     
     # Get strike statistics from all app state directories
     statistics = {}
-    state_dir = os.path.join(os.getenv("CONFIG_DIR", "/config"), "swaparr")
+    # Use the cross-platform path from handler module
+    from src.primary.apps.swaparr.handler import SWAPARR_STATE_DIR
+    state_dir = SWAPARR_STATE_DIR
     
     if os.path.exists(state_dir):
         for app_name in os.listdir(state_dir):
@@ -125,7 +127,9 @@ def reset_strikes():
     data = request.json
     app_name = data.get('app_name') if data else None
     
-    state_dir = os.path.join(os.getenv("CONFIG_DIR", "/config"), "swaparr")
+    # Use the cross-platform path from handler module
+    from src.primary.apps.swaparr.handler import SWAPARR_STATE_DIR
+    state_dir = SWAPARR_STATE_DIR
     
     if not os.path.exists(state_dir):
         return jsonify({"success": True, "message": "No strike data to reset"})

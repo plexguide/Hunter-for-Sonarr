@@ -13,14 +13,16 @@ import threading
 from typing import Dict, Any, Optional
 from src.primary.utils.logger import get_logger
 from src.primary.settings_manager import get_advanced_setting
+# Import centralized path configuration
+from src.primary.utils.config_paths import CONFIG_PATH
 
 logger = get_logger("stats")
 
-# Path constants - Define multiple possible locations and check them in order
+# Path constants - Define multiple possible locations and check them in order using centralized config
 STATS_DIRS = [
-    "/config/tally",                                        # Docker default
-    os.path.join(os.path.expanduser("~"), ".huntarr/tally"), # User's home directory
-    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data/tally") # Relative to script
+    os.path.join(str(CONFIG_PATH), "tally"),                 # Main cross-platform config path
+    os.path.join(os.path.expanduser("~"), ".huntarr/tally"), # User's home directory (fallback)
+    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data/tally") # Relative to script (fallback)
 ]
 
 # Lock for thread-safe operations

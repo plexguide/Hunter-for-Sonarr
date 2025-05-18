@@ -16,7 +16,8 @@ from typing import Dict, Any, List, Optional, Set
 stateful_logger = logging.getLogger("stateful_manager")
 
 # Constants
-STATEFUL_DIR = pathlib.Path(os.getenv("STATEFUL_DIR", "/config/stateful"))
+# Use the centralized path configuration
+from src.primary.utils.config_paths import STATEFUL_DIR
 LOCK_FILE = STATEFUL_DIR / "lock.json"
 DEFAULT_HOURS = 168  # Default 7 days (168 hours)
 

@@ -10,6 +10,14 @@ import sys
 import signal
 import logging # Use standard logging for initial setup
 
+# Import path configuration early to set up environment
+try:
+    from src.primary.utils import config_paths
+    print(f"Using config directory: {config_paths.CONFIG_DIR}")
+except Exception as e:
+    print(f"Warning: Failed to initialize config paths: {str(e)}")
+    # Continue anyway - we'll handle this later
+
 # Ensure the 'src' directory is in the Python path
 # This allows importing modules from 'src.primary' etc.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))

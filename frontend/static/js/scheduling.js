@@ -158,7 +158,7 @@ async function fetchAppInstances() {
     try {
         // Add a cache-busting parameter to ensure we get fresh data
         const cacheBuster = new Date().getTime();
-        const listUrl = `/config/scheduling/list.json?nocache=${cacheBuster}`;
+        const listUrl = `/api/scheduling/list?nocache=${cacheBuster}`;
         
         console.debug(`Loading app instances from ${listUrl}`);
         const response = await fetch(listUrl);
