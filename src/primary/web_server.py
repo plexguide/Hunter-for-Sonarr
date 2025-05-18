@@ -104,13 +104,39 @@ def debug_template_rendering():
             return result
         except Exception as e:
             print(f"Error loading template {template}: {e}")
-            print(f"Loader search paths: {environment.loader.searchpath}")
+            # Safely print loader info - handle both PyInstaller and regular loaders
+            try:
+                if hasattr(environment.loader, 'searchpath'):
+                    print(f"Loader search paths: {environment.loader.searchpath}")
+                else:
+                    print(f"Using alternative loader: {type(environment.loader).__name__}")
+            except Exception as loader_err:
+                print(f"Could not get loader info: {loader_err}")
+                
             # Print all available templates
             try:
                 all_templates = environment.loader.list_templates()
                 print(f"Available templates: {all_templates}")
-            except:
-                print("Could not list available templates")
+            except Exception as templates_err:
+                print(f"Could not list available templates: {templates_err}")
+                
+            # Add debug info for ARM application
+            if getattr(sys, 'frozen', False):
+                print("Running as a PyInstaller bundle")
+                try:
+                    resource_dir = os.path.join(os.path.dirname(sys.executable), 'Resources')
+                    print(f"Resource directory: {resource_dir}")
+                    print(f"Resource directory exists: {os.path.exists(resource_dir)}")
+                    if os.path.exists(resource_dir):
+                        frontend_dir = os.path.join(resource_dir, 'frontend')
+                        print(f"Frontend directory exists: {os.path.exists(frontend_dir)}")
+                        if os.path.exists(frontend_dir):
+                            templates_dir = os.path.join(frontend_dir, 'templates')
+                            print(f"Templates directory exists: {os.path.exists(templates_dir)}")
+                            if os.path.exists(templates_dir):
+                                print(f"Templates directory contents: {os.listdir(templates_dir)}")
+                except Exception as path_err:
+                    print(f"Error checking paths: {path_err}")
             raise
     
     app.jinja_env.loader.get_source = get_source_wrapper
