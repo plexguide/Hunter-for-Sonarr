@@ -2,7 +2,10 @@ name: Deploy Huntarr Documentation
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - dev
+      - 'docs*'
     paths:
       - 'docs/**'
   workflow_dispatch:
