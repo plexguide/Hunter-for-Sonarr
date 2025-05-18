@@ -51,7 +51,23 @@
                 <p>This guide will walk you through the installation process for Huntarr.io. Huntarr.io can be installed in several ways depending on your preference and system configuration.</p>
             </section>
             
-            <section class="system-requirements">
+            <section id="toc" class="toc">
+                <h3>Table of Contents</h3>
+                <ul>
+                    <li><a href="#system-requirements">System Requirements</a></li>
+                    <li><a href="#installation-methods">Installation Methods</a>
+                        <ul>
+                            <li><a href="#docker-installation">Docker Installation</a></li>
+                            <li><a href="#macos-installation">macOS Installation</a></li>
+                            <li><a href="#alternative-methods">Alternative Installation Methods</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#post-installation">Post Installation</a></li>
+                    <li><a href="#troubleshooting">Troubleshooting</a></li>
+                </ul>
+            </section>
+            
+            <section id="system-requirements" class="system-requirements">
                 <h2>System Requirements</h2>
                 <p>Before installing Huntarr.io, ensure your system meets the following requirements:</p>
                 
@@ -89,31 +105,22 @@
                 </table>
             </section>
             
-            <section class="installation-methods">
+            <section id="installation-methods" class="installation-methods">
                 <h2>Installation Methods</h2>
-                <p>Choose the installation method that best suits your environment:</p>
                 
-                <div class="method-tabs">
-                    <div class="tab-buttons">
-                        <button class="tab-button active" data-tab="docker">Docker (Recommended)</button>
-                        <button class="tab-button" data-tab="script">Installation Script</button>
-                        <button class="tab-button" data-tab="manual">Manual Installation</button>
-                    </div>
+                <div id="docker">
+                    <h3 id="docker-installation">Docker Installation</h3>
+                    <p>The recommended way to install Huntarr.io is using Docker. This method ensures that all dependencies are correctly installed and configured.</p>
                     
-                    <div class="tab-content">
-                        <div class="tab-pane active" id="docker">
-                            <h3>Docker Installation</h3>
-                            <p>The recommended way to install Huntarr.io is using Docker. This method ensures that all dependencies are correctly installed and configured.</p>
-                            
-                            <h4>Prerequisites</h4>
-                            <ul>
-                                <li>Docker (1.27 or newer)</li>
-                            </ul>
-                            
-                            <h4>Docker Run Method</h4>
-                            <p>The simplest way to run Huntarr is via Docker (all configuration is done via the web UI):</p>
-                            
-                            <pre class="terminal"><code># Option 1: DockerHub
+                    <h4>Prerequisites</h4>
+                    <ul>
+                        <li>Docker (1.27 or newer)</li>
+                    </ul>
+                    
+                    <h4>Docker Run Method</h4>
+                    <p>The simplest way to run Huntarr is via Docker (all configuration is done via the web UI):</p>
+                    
+                    <pre class="terminal"><code># Option 1: DockerHub
 docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
@@ -128,14 +135,14 @@ docker run -d --name huntarr \
   -v /your-path/huntarr:/config \
   -e TZ=America/New_York \
   ghcr.io/plexguide/huntarr:latest</code></pre>
-                            
-                            <p>To check on the status of the program:</p>
-                            <pre class="terminal"><code class="command-prompt">docker logs huntarr</code></pre>
-                            
-                            <h4>Docker Compose Method</h4>
-                            <p>For those who prefer Docker Compose, add this to your <code>docker-compose.yml</code> file:</p>
-                            
-                            <pre class="terminal"><code>services:
+                    
+                    <p>To check on the status of the program:</p>
+                    <pre class="terminal"><code class="command-prompt">docker logs huntarr</code></pre>
+                    
+                    <h4>Docker Compose Method</h4>
+                    <p>For those who prefer Docker Compose, add this to your <code>docker-compose.yml</code> file:</p>
+                    
+                    <pre class="terminal"><code>services:
   huntarr:
     # Option 1: DockerHub
     image: huntarr/huntarr:latest
@@ -149,15 +156,15 @@ docker run -d --name huntarr \
       - /your-path/huntarr:/config
     environment:
       - TZ=America/New_York</code></pre>
-                            
-                            <p>Then run:</p>
-                            <pre class="terminal"><code class="command-prompt">docker-compose up -d huntarr</code></pre>
-                            
-                            <h4>Unraid Users</h4>
-                            <p>You can install Huntarr using the Unraid App Store.</p>
-                            <p>If not, you can run this from Command Line in Unraid:</p>
-                            
-                            <pre class="terminal"><code># Option 1: DockerHub
+                    
+                    <p>Then run:</p>
+                    <pre class="terminal"><code class="command-prompt">docker-compose up -d huntarr</code></pre>
+                    
+                    <h4>Unraid Users</h4>
+                    <p>You can install Huntarr using the Unraid App Store.</p>
+                    <p>If not, you can run this from Command Line in Unraid:</p>
+                    
+                    <pre class="terminal"><code># Option 1: DockerHub
 docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
@@ -172,86 +179,84 @@ docker run -d --name huntarr \
   -v /mnt/user/appdata/huntarr:/config \
   -e TZ=America/New_York \
   ghcr.io/plexguide/huntarr:latest</code></pre>
-                        </div>
-                        
-                        <div class="tab-pane" id="script">
-                            <h3>macOS Installation</h3>
-                            <p>Huntarr.io provides native macOS installers for both Intel and Apple Silicon Macs.</p>
-                            
-                            <h4>Two Types of macOS Installers</h4>
-                            <ul>
-                                <li><strong>Intel (x86_64)</strong> - For Intel-based Macs</li>
-                                <li><strong>ARM (arm64)</strong> - For Apple Silicon Macs (M1, M2, etc.)</li>
-                            </ul>
-                            
-                            <h4>Installation Steps</h4>
-                            <ol>
-                                <li>Download the appropriate installer package (.pkg) for your Mac from the <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank">GitHub Releases</a> page.</li>
-                                <li>Double-click the downloaded .pkg file to start the installation process.</li>
-                                <li>When you first try to open the package, you may see a security warning. This is expected as the app isn't signed by Apple.</li>
-                                <li>To proceed with installation, go to System Settings → Privacy & Security, scroll down to the security section, and click "Open Anyway" as shown below:</li>
-                            </ol>
-                            
-                            <div class="screenshot">
-                                <img src="../images/macos-security-warning.png" alt="macOS Security Warning" style="max-width: 100%; border: 1px solid #333; border-radius: 5px;">
-                                <p class="caption">The "Open Anyway" button allows you to proceed with installation despite macOS security warnings</p>
-                            </div>
-                            
-                            <h4>Configuration</h4>
-                            <p>When first launched, Huntarr.io will create the necessary configuration directories in your user folder:</p>
-                            <pre><code>~/Library/Application Support/Huntarr/config/</code></pre>
-                            
-                            <h4>Notes about macOS Version</h4>
-                            <ul>
-                                <li>Requires macOS 10.15 (Catalina) or newer</li>
-                                <li>The macOS version is provided as a convenience for users who prefer native applications</li>
-                                <li>The Docker version remains the primary supported deployment method</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="tab-pane" id="manual">
-                            <h3>Alternative Installation Methods</h3>
-                            <p>Although Docker and the native macOS installers are the recommended methods, there are additional ways to install and run Huntarr.</p>
-                            
-                            <div class="alert alert-warning">
-                                <strong>Note:</strong> These methods are provided for advanced users and development purposes only. For most users, we recommend the Docker installation or macOS installer.
-                            </div>
-                            
-                            <h4>From Source (Advanced)</h4>
-                            <p>If you're familiar with Python and want to run Huntarr from source:</p>
-                            
-                            <ol>
-                                <li>Ensure you have Python 3.9+ and Git installed on your system</li>
-                                <li>Clone the repository:
-                                    <pre class="terminal"><code class="command-prompt">git clone https://github.com/plexguide/Huntarr.io.git</code></pre>
-                                </li>
-                                <li>Navigate to the directory:
-                                    <pre class="terminal"><code class="command-prompt">cd Huntarr.io</code></pre>
-                                </li>
-                                <li>Install Python dependencies:
-                                    <pre class="terminal"><code class="command-prompt">pip install -r requirements.txt</code></pre>
-                                </li>
-                                <li>Run the application:
-                                    <pre class="terminal"><code class="command-prompt">python run.py</code></pre>
-                                </li>
-                            </ol>
-                            
-                            <h4>The Perfect Pair: Huntarr & Cleanuperr</h4>
-                            <p>For a complete media management solution, consider using Huntarr alongside Cleanuperr:</p>
-                            
-                            <ul>
-                                <li><strong>Huntarr</strong> hunts for content to add to your library</li>
-                                <li><strong>Cleanuperr</strong> ensures only clean downloads get through</li>
-                                <li>Together, they create a reliable, hands-off media management system</li>
-                            </ul>
-                            
-                            <p>Learn more about <strong>Cleanuperr</strong> at <a href="https://github.com/flmorg/cleanuperr" target="_blank">https://github.com/flmorg/cleanuperr</a></p>
-                        </div>
+                </div>
+                
+                <div id="macos">
+                    <h3 id="macos-installation">macOS Installation</h3>
+                    <p>Huntarr.io provides native macOS installers for both Intel and Apple Silicon Macs.</p>
+                    
+                    <h4>Two Types of macOS Installers</h4>
+                    <ul>
+                        <li><strong>Intel (x86_64)</strong> - For Intel-based Macs</li>
+                        <li><strong>ARM (arm64)</strong> - For Apple Silicon Macs (M1, M2, etc.)</li>
+                    </ul>
+                    
+                    <h4>Installation Steps</h4>
+                    <ol>
+                        <li>Download the appropriate installer package (.pkg) for your Mac from the <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank">GitHub Releases</a> page.</li>
+                        <li>Double-click the downloaded .pkg file to start the installation process.</li>
+                        <li>When you first try to open the package, you may see a security warning. This is expected as the app isn't signed by Apple.</li>
+                        <li>To proceed with installation, go to System Settings → Privacy & Security, scroll down to the security section, and click "Open Anyway" as shown below:</li>
+                    </ol>
+                    
+                    <div class="screenshot">
+                        <img src="../images/macos-security-warning.png" alt="macOS Security Warning" style="max-width: 100%; border: 1px solid #333; border-radius: 5px;">
+                        <p class="caption">The "Open Anyway" button allows you to proceed with installation despite macOS security warnings</p>
                     </div>
+                    
+                    <h4>Configuration</h4>
+                    <p>When first launched, Huntarr.io will create the necessary configuration directories in your user folder:</p>
+                    <pre><code>~/Library/Application Support/Huntarr/config/</code></pre>
+                    
+                    <h4>Notes about macOS Version</h4>
+                    <ul>
+                        <li>Requires macOS 10.15 (Catalina) or newer</li>
+                        <li>The macOS version is provided as a convenience for users who prefer native applications</li>
+                        <li>The Docker version remains the primary supported deployment method</li>
+                    </ul>
+                </div>
+                
+                <div id="alternative">
+                    <h3 id="alternative-methods">Alternative Installation Methods</h3>
+                    <p>Although Docker and the native macOS installers are the recommended methods, there are additional ways to install and run Huntarr.</p>
+                    
+                    <div class="alert alert-warning">
+                        <strong>Note:</strong> These methods are provided for advanced users and development purposes only. For most users, we recommend the Docker installation or macOS installer.
+                    </div>
+                    
+                    <h4>From Source (Advanced)</h4>
+                    <p>If you're familiar with Python and want to run Huntarr from source:</p>
+                    
+                    <ol>
+                        <li>Ensure you have Python 3.9+ and Git installed on your system</li>
+                        <li>Clone the repository:
+                            <pre class="terminal"><code class="command-prompt">git clone https://github.com/plexguide/Huntarr.io.git</code></pre>
+                        </li>
+                        <li>Navigate to the directory:
+                            <pre class="terminal"><code class="command-prompt">cd Huntarr.io</code></pre>
+                        </li>
+                        <li>Install Python dependencies:
+                            <pre class="terminal"><code class="command-prompt">pip install -r requirements.txt</code></pre>
+                        </li>
+                        <li>Run the application:
+                            <pre class="terminal"><code class="command-prompt">python run.py</code></pre>
+                        </li>
+                    </ol>
+                    
+                    <h4>The Perfect Pair: Huntarr & Cleanuperr</h4>
+                    <p>For a complete media management solution, consider using Huntarr alongside Cleanuperr:</p>
+                    
+                    <ul>
+                        <li><strong>Huntarr</strong> hunts for content to add to your library</li>
+                        <li><strong>Cleanuperr</strong> ensures only clean downloads get through</li>
+                        <li>Together, they create a reliable, hands-off media management system</li>
+                    </ul>
+                    
+                    <p>Learn more about <strong>Cleanuperr</strong> at <a href="https://github.com/flmorg/cleanuperr" target="_blank">https://github.com/flmorg/cleanuperr</a></p>
                 </div>
             </section>
             
-            <section class="post-installation">
+            <section id="post-installation" class="post-installation">
                 <h2>Post Installation</h2>
                 
                 <h3>Initial Setup</h3>
@@ -278,7 +283,7 @@ npm install
 npm restart</code></pre>
             </section>
             
-            <section class="troubleshooting">
+            <section id="troubleshooting" class="troubleshooting">
                 <h2>Troubleshooting</h2>
                 
                 <h3>Common Issues</h3>
@@ -314,6 +319,37 @@ id $(whoami)</code></pre>
             <footer>
                 Huntarr.io <span class="version-badge">v6.5.18</span> | Installation Guide | Thanks 4 Using Huntarr - Admin9705
             </footer>
+            
+            <a href="#toc" class="back-to-top" id="back-to-top" title="Back to Top">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path>
+                </svg>
+            </a>
+            
+            <script>
+                // Show/hide back-to-top button based on scroll position
+                window.addEventListener('scroll', function() {
+                    var backToTopButton = document.getElementById('back-to-top');
+                    if (window.pageYOffset > 300) {
+                        backToTopButton.classList.add('visible');
+                    } else {
+                        backToTopButton.classList.remove('visible');
+                    }
+                });
+                
+                // Smooth scroll to the target when clicking on table of contents links
+                document.querySelectorAll('.toc a').forEach(function(anchor) {
+                    anchor.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        var targetId = this.getAttribute('href');
+                        var targetElement = document.querySelector(targetId);
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 20,
+                            behavior: 'smooth'
+                        });
+                    });
+                });
+            </script>
         </div>
     </div>
     
