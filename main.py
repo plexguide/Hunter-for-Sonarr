@@ -164,12 +164,14 @@ def run_web_server():
 
 def main_shutdown_handler(signum, frame):
     """Gracefully shut down the application."""
-    huntarr_logger.warning(f"Received signal {signal.Signals(signum).name}. Initiating shutdown...")
+    huntarr_logger.info(f"Received signal {signum}. Initiating graceful shutdown...")
     if not stop_event.is_set():
         stop_event.set()
-    # The rest of the cleanup happens after run_web_server() returns or in the finally block.
 
-if __name__ == '__main__':
+def main():
+    """Main entry point function for Huntarr application.
+    This function is called by app_launcher.py in the packaged ARM application.
+    """
     # Register signal handlers for graceful shutdown in the main process
     signal.signal(signal.SIGINT, main_shutdown_handler)
     signal.signal(signal.SIGTERM, main_shutdown_handler)
@@ -221,5 +223,10 @@ if __name__ == '__main__':
         # shutdown_threads() # Uncomment if primary.main.shutdown_threads() does more cleanup
 
         huntarr_logger.info("--- Huntarr Main Process Exiting ---")
-        # Use os._exit(0) for a more forceful exit if necessary, but sys.exit(0) is generally preferred
-        sys.exit(0)
+        return 0  # Success exit code
+
+
+if __name__ == '__main__':
+    # Call the main function and exit with its return code
+    # This will use the return value from main() (0 for success) as the exit code
+    sys.exit(main())
