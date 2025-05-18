@@ -8,6 +8,8 @@ import json
 from src.primary.utils.logger import get_logger
 from src.primary.settings_manager import load_settings, save_settings
 from src.primary.apps.swaparr.handler import process_stalled_downloads
+# Import centralized path configuration
+from src.primary.utils.config_paths import CONFIG_PATH, SWAPARR_STATE_DIR
 
 # Create the blueprint directly in this file
 swaparr_bp = Blueprint('swaparr', __name__)
@@ -21,7 +23,7 @@ def get_status():
     
     # Get strike statistics from all app state directories
     statistics = {}
-    state_dir = os.path.join(os.getenv("CONFIG_DIR", "/config"), "swaparr")
+    state_dir = SWAPARR_STATE_DIR
     
     if os.path.exists(state_dir):
         for app_name in os.listdir(state_dir):
@@ -94,7 +96,7 @@ def reset_strikes():
     data = request.json
     app_name = data.get('app_name') if data else None
     
-    state_dir = os.path.join(os.getenv("CONFIG_DIR", "/config"), "swaparr")
+    state_dir = SWAPARR_STATE_DIR
     
     if not os.path.exists(state_dir):
         return jsonify({"success": True, "message": "No strike data to reset"})

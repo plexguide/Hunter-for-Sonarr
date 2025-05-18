@@ -21,8 +21,10 @@ from flask import request, redirect, url_for, session
 from .utils.logger import logger # Ensure logger is imported
 
 # User directory setup
-USER_DIR = pathlib.Path("/config/user")
-USER_DIR.mkdir(parents=True, exist_ok=True)
+# Use the centralized path configuration
+from src.primary.utils.config_paths import USER_DIR
+
+# User directory is already created by config_paths module
 USER_FILE = USER_DIR / "credentials.json"
 
 # Session settings

@@ -10,6 +10,14 @@ import sys
 import signal
 import logging # Use standard logging for initial setup
 
+# Import path configuration early to set up environment
+try:
+    from src.primary.utils import config_paths
+    print(f"Using config directory: {config_paths.CONFIG_DIR}")
+except Exception as e:
+    print(f"Warning: Failed to initialize config paths: {str(e)}")
+    # Continue anyway - we'll handle this later
+
 # Ensure the 'src' directory is in the Python path
 # This allows importing modules from 'src.primary' etc.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
@@ -156,12 +164,14 @@ def run_web_server():
 
 def main_shutdown_handler(signum, frame):
     """Gracefully shut down the application."""
-    huntarr_logger.warning(f"Received signal {signal.Signals(signum).name}. Initiating shutdown...")
+    huntarr_logger.info(f"Received signal {signum}. Initiating graceful shutdown...")
     if not stop_event.is_set():
         stop_event.set()
-    # The rest of the cleanup happens after run_web_server() returns or in the finally block.
 
-if __name__ == '__main__':
+def main():
+    """Main entry point function for Huntarr application.
+    This function is called by app_launcher.py in the packaged ARM application.
+    """
     # Register signal handlers for graceful shutdown in the main process
     signal.signal(signal.SIGINT, main_shutdown_handler)
     signal.signal(signal.SIGTERM, main_shutdown_handler)
@@ -213,5 +223,10 @@ if __name__ == '__main__':
         # shutdown_threads() # Uncomment if primary.main.shutdown_threads() does more cleanup
 
         huntarr_logger.info("--- Huntarr Main Process Exiting ---")
-        # Use os._exit(0) for a more forceful exit if necessary, but sys.exit(0) is generally preferred
-        sys.exit(0)
+        return 0  # Success exit code
+
+
+if __name__ == '__main__':
+    # Call the main function and exit with its return code
+    # This will use the return value from main() (0 for success) as the exit code
+    sys.exit(main())

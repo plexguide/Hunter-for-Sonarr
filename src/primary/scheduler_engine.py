@@ -23,7 +23,11 @@ scheduler_logger = get_logger("scheduler")
 
 # Scheduler constants
 SCHEDULE_CHECK_INTERVAL = 60  # Check schedule every minute
-SCHEDULE_DIR = "/config/scheduler"
+# Use the centralized path configuration
+from src.primary.utils.config_paths import SCHEDULER_DIR, CONFIG_PATH
+
+# Convert Path object to string for compatibility with os.path functions
+SCHEDULE_DIR = str(SCHEDULER_DIR)
 SCHEDULE_FILE = os.path.join(SCHEDULE_DIR, "schedule.json")
 
 # Track last executed actions to prevent duplicates
@@ -131,7 +135,7 @@ def execute_action(action_entry):
                 try:
                     apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']
                     for app in apps:
-                        config_file = f"/config/{app}.json"
+                        config_file = os.path.join(str(CONFIG_PATH), f"{app}.json")
                         if os.path.exists(config_file):
                             with open(config_file, 'r') as f:
                                 config_data = json.load(f)
@@ -158,7 +162,7 @@ def execute_action(action_entry):
                 message = f"Executing disable action for {app_type}"
                 scheduler_logger.info(message)
                 try:
-                    config_file = f"/config/{app_type}.json"
+                    config_file = os.path.join(str(CONFIG_PATH), f"{app_type}.json")
                     if os.path.exists(config_file):
                         with open(config_file, 'r') as f:
                             config_data = json.load(f)
@@ -191,7 +195,7 @@ def execute_action(action_entry):
                 try:
                     apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']
                     for app in apps:
-                        config_file = f"/config/{app}.json"
+                        config_file = os.path.join(str(CONFIG_PATH), f"{app}.json")
                         if os.path.exists(config_file):
                             with open(config_file, 'r') as f:
                                 config_data = json.load(f)
@@ -218,7 +222,7 @@ def execute_action(action_entry):
                 message = f"Executing enable action for {app_type}"
                 scheduler_logger.info(message)
                 try:
-                    config_file = f"/config/{app_type}.json"
+                    config_file = os.path.join(str(CONFIG_PATH), f"{app_type}.json")
                     if os.path.exists(config_file):
                         with open(config_file, 'r') as f:
                             config_data = json.load(f)
@@ -258,7 +262,7 @@ def execute_action(action_entry):
                     try:
                         apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']
                         for app in apps:
-                            config_file = f"/config/{app}.json"
+                            config_file = os.path.join(str(CONFIG_PATH), f"{app}.json")
                             if os.path.exists(config_file):
                                 with open(config_file, 'r') as f:
                                     config_data = json.load(f)
@@ -277,7 +281,7 @@ def execute_action(action_entry):
                     message = f"Setting API cap for {app_type} to {api_limit}"
                     scheduler_logger.info(message)
                     try:
-                        config_file = f"/config/{app_type}.json"
+                        config_file = os.path.join(str(CONFIG_PATH), f"{app_type}.json")
                         if os.path.exists(config_file):
                             with open(config_file, 'r') as f:
                                 config_data = json.load(f)

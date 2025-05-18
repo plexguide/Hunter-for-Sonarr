@@ -3,8 +3,13 @@ import path from 'path';
 import { json } from '@sveltejs/kit';
 import { invalidateCache } from '$lib/config'; // Assuming config.js handles huntarr.json read/write
 
-const CONFIG_FILE = path.resolve('huntarr.json'); // Path to the main config file
-const DEFAULT_CONFIGS_DIR = path.resolve('src/primary/default_configs'); // Path to new default configs
+// Use environment variables with fallbacks for configuration paths
+const CONFIG_DIR = process.env.HUNTARR_CONFIG_DIR || process.cwd();
+const CONFIG_FILE = path.join(CONFIG_DIR, 'huntarr.json'); // Path to the main config file
+const DEFAULT_CONFIGS_DIR = path.join(process.cwd(), 'src/primary/default_configs'); // Path to new default configs
+
+console.log(`Using config file: ${CONFIG_FILE}`);
+console.log(`Using default configs dir: ${DEFAULT_CONFIGS_DIR}`);
 
 // Helper function to load default settings for a specific app
 function loadDefaultAppSettings(appName) {

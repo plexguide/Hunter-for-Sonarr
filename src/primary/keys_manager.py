@@ -14,9 +14,12 @@ from typing import Dict, Any, Optional, Tuple
 logging.basicConfig(level=logging.INFO)
 keys_logger = logging.getLogger("keys_manager")
 
-# Settings directory - Changed to match the updated settings_manager.py
-SETTINGS_DIR = pathlib.Path("/config")
-SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
+# Use the centralized path configuration
+from src.primary.utils.config_paths import CONFIG_PATH
+
+# Settings directory using cross-platform configuration
+SETTINGS_DIR = CONFIG_PATH
+# Directory is already created by config_paths module
 
 SETTINGS_FILE = SETTINGS_DIR / "huntarr.json"
 

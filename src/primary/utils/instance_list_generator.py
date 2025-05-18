@@ -54,8 +54,11 @@ def generate_instance_list():
     # Dictionary using ordered keys from above
     instances = instances_ordered
     
-    # Base config directory (internal Docker path)
-    config_dir = Path("/config")
+    # Use the centralized path configuration
+    from src.primary.utils.config_paths import CONFIG_PATH
+    
+    # Base config directory (cross-platform path)
+    config_dir = CONFIG_PATH
     
     # Ensure the scheduling directory exists
     scheduling_dir = config_dir / "scheduling"

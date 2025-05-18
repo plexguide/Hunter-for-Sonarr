@@ -10,9 +10,11 @@ import os
 import pathlib
 from typing import Dict, Optional
 
-# Create log directory
-LOG_DIR = pathlib.Path("/config/logs") # Changed path
-LOG_DIR.mkdir(parents=True, exist_ok=True)
+# Use the centralized path configuration
+from src.primary.utils.config_paths import LOG_DIR
+
+# Log directory is already created by config_paths module
+# LOG_DIR already exists as pathlib.Path object pointing to the correct location
 
 # Default log file for general messages
 MAIN_LOG_FILE = LOG_DIR / "huntarr.log"

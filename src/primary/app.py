@@ -52,7 +52,9 @@ def configure_logging():
 def migrate_settings():
     """Migrate settings from nested to flat structure"""
     # Settings file path
-    SETTINGS_DIR = pathlib.Path("/config")
+    # Use the centralized path configuration
+    from src.primary.utils.config_paths import CONFIG_PATH
+    SETTINGS_DIR = CONFIG_PATH
     SETTINGS_FILE = SETTINGS_DIR / "huntarr.json"
     
     if not SETTINGS_FILE.exists():

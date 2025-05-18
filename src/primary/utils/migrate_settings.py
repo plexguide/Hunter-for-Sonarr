@@ -13,8 +13,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("settings_migration")
 
-# Settings file path
-SETTINGS_DIR = pathlib.Path("/config")
+# Use the centralized path configuration
+from src.primary.utils.config_paths import CONFIG_PATH
+
+# Settings file path using cross-platform configuration
+SETTINGS_DIR = CONFIG_PATH
 SETTINGS_FILE = SETTINGS_DIR / "huntarr.json"
 
 def migrate_settings():
