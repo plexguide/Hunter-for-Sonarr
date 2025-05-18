@@ -47,7 +47,7 @@
             
             <p>This page contains all settings for customizing your Huntarr.io instance with detailed explanations to help you optimize your setup.</p>
             
-            <div class="toc">
+            <div id="toc" class="toc">
                 <h3>Table of Contents</h3>
                 <ul>
                     <li><a href="#system-settings">System Settings</a>
@@ -256,5 +256,23 @@
             </footer>
         </div>
     </div>
+    
+    <a href="#toc" class="back-to-top" id="back-to-top" title="Back to Top">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path>
+        </svg>
+    </a>
+    
+    <script>
+        // Show/hide back-to-top button based on scroll position
+        window.addEventListener('scroll', function() {
+            var backToTopButton = document.getElementById('back-to-top');
+            if (window.pageYOffset > 300) {
+                backToTopButton.classList.add('visible');
+            } else {
+                backToTopButton.classList.remove('visible');
+            }
+        });
+    </script>
 </body>
 </html>

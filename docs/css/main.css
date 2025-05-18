@@ -731,14 +731,45 @@ footer {
 }
 
 .app-card-icon {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 15px;
-    font-weight: bold;
+    position: relative;
+    overflow: hidden;
+    background-color: #1a1d24;
+    border: 2px solid transparent;
+}
+
+.app-card-icon img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    margin: 0;
+    border-radius: 0;
+}
+
+.app-card.sonarr-card .app-card-icon {
+    border-color: var(--sonarr-color);
+}
+
+.app-card.radarr-card .app-card-icon {
+    border-color: var(--radarr-color);
+}
+
+.app-card.lidarr-card .app-card-icon {
+    border-color: var(--lidarr-color);
+}
+
+.app-card.readarr-card .app-card-icon {
+    border-color: var(--readarr-color);
+}
+
+.app-card.whisparr-card .app-card-icon {
+    border-color: var(--whisparr-color);
 }
 
 .app-card-title {
