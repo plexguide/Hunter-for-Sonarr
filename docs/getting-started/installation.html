@@ -45,7 +45,7 @@
 
     <div class="main-content">
         <div class="container">
-            <h1>Installation Guide</h1>
+            <h1 id="page-title">Installation Guide</h1>
             
             <section class="installation-overview">
                 <p>This guide will walk you through the installation process for Huntarr.io. Huntarr.io can be installed in several ways depending on your preference and system configuration.</p>
@@ -307,10 +307,39 @@ id $(whoami)</code></pre>
             </div>
             
             <footer>
-                Huntarr.io <span class="version-badge">v6.5.18</span> | Installation Guide | Thanks 4 Using Huntarr - Admin9705
+                Huntarr.io <span class="version-badge">v6.5.18</span> | Installation Documentation | Thanks 4 Using Huntarr - Admin9705
             </footer>
+            
+            <a href="#page-title" class="back-to-top" id="back-to-top" title="Back to Top">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path>
+                </svg>
+            </a>
         </div>
     </div>
+    
+    <script>
+        // Show/hide back-to-top button based on scroll position
+        window.addEventListener('scroll', function() {
+            var backToTopButton = document.getElementById('back-to-top');
+            if (window.pageYOffset > 300) {
+                backToTopButton.classList.add('visible');
+            } else {
+                backToTopButton.classList.remove('visible');
+            }
+        });
+        
+        // Add smooth scrolling for back-to-top button
+        document.getElementById('back-to-top').addEventListener('click', function(e) {
+            e.preventDefault();
+            var targetId = this.getAttribute('href');
+            var targetElement = document.querySelector(targetId);
+            window.scrollTo({
+                top: targetElement.offsetTop - 20,
+                behavior: 'smooth'
+            });
+        });
+    </script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
