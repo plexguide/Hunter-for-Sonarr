@@ -239,6 +239,85 @@
             margin-bottom: 150px !important;
             padding-bottom: 150px !important;
         }
+        
+        /* Apps section header mobile alignment - completely redone */
+        #appsSection .section-header {
+            display: grid;
+            grid-template-columns: auto auto;
+            width: 100%;
+            align-items: center;
+            padding: 10px 5px;
+            position: relative;
+            justify-content: flex-start; /* Align grid items to the left */
+        }
+        
+        #appsSection .section-header-dropdown-container {
+            justify-self: start;
+            margin: 0;
+            padding: 0;
+            width: auto;
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: left !important;
+        }
+        
+        #appsSection #saveAppsButton {
+            justify-self: end;
+            white-space: nowrap;
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        #appsSection .log-dropdown {
+            width: auto;
+            margin: 0;
+            padding: 0;
+            text-align: left !important;
+        }
+        
+        /* Make the dropdown more aggressive with left alignment */
+        #appsSection .styled-select,
+        #appsSection select#appsAppSelect {
+            margin: 0 !important;
+            padding-left: 5px !important;
+            width: auto !important;
+            min-width: 120px !important;
+            text-align: left !important;
+            justify-content: flex-start !important;
+            float: left !important;
+            position: relative !important;
+            left: 0 !important;
+        }
+        
+        /* Reset any center alignment that might be applied */
+        #appsSection .section-header *,
+        #appsSection .section-header-dropdown-container *,
+        #appsSection .log-dropdown * {
+            text-align: left !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* Override any flex or space-between properties */
+        .section-header-dropdown-container,
+        #appsSection .section-header-dropdown-container,
+        #appsSection .section-header > .section-header-dropdown-container {
+            display: block !important;
+            justify-content: flex-start !important;
+            align-items: flex-start !important;
+            flex: initial !important;
+            text-align: left !important;
+        }
+        
+        /* Fix specific dropdown menu positioning for mobile */
+        .log-dropdown .log-dropdown-content {
+            left: 0 !important;
+            right: auto !important;
+            transform: none !important;
+        }
     }
     
     /* Default desktop padding */
