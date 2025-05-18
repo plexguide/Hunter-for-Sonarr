@@ -1,4 +1,4 @@
-name: macOS Installer Build
+name: macOS Installer Build (Intel x86_64)
 
 on:
   push:
@@ -11,12 +11,9 @@ on:
       - main
 
 jobs:
-  build-macos-installer:
-    name: Build macOS Installer
+  build-macos-intel-installer:
+    name: Build macOS Intel Installer
     runs-on: macos-latest
-    strategy:
-      matrix:
-        arch: [x86_64, arm64]
     
     steps:
       - name: Checkout code
@@ -130,7 +127,7 @@ jobs:
               console=False,
               disable_windowed_traceback=False,
               argv_emulation=True,
-              target_arch='${{ matrix.arch }}',
+              target_arch=None,  # Let PyInstaller use the host architecture
               codesign_identity=None,
               entitlements_file=None,
               icon='frontend/static/logo/huntarr.icns',
@@ -192,17 +189,16 @@ jobs:
           # Create PKG installer
           version="${{ steps.meta.outputs.VERSION }}"
           branch="${{ steps.meta.outputs.BRANCH }}"
-          tag_suffix=""
           
           if [[ "${{ steps.meta.outputs.IS_TAG }}" == "true" ]]; then
-            pkg_name="Huntarr-${version}-${{ matrix.arch }}.pkg"
+            pkg_name="Huntarr-${version}-intel.pkg"
           else
             if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-              pkg_name="Huntarr-${version}-main-${{ matrix.arch }}.pkg"
+              pkg_name="Huntarr-${version}-main-intel.pkg"
             elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-              pkg_name="Huntarr-${version}-dev-${{ matrix.arch }}.pkg"
+              pkg_name="Huntarr-${version}-dev-intel.pkg"
             else
-              pkg_name="Huntarr-${version}-${branch}-${{ matrix.arch }}.pkg"
+              pkg_name="Huntarr-${version}-${branch}-intel.pkg"
             fi
           fi
           
@@ -216,7 +212,7 @@ jobs:
       - name: Upload installer as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: huntarr-macos-${{ matrix.arch }}-installer
+          name: huntarr-macos-intel-installer
           path: '*.pkg'
           retention-days: 30
       
