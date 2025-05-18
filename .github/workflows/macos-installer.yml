@@ -1,0 +1,229 @@
+name: macOS Installer Build
+
+on:
+  push:
+    branches:
+      - '*'  # This will trigger on any branch push
+    tags:
+      - "*"  # This will trigger on any tag push
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-macos-installer:
+    name: Build macOS Installer
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [x86_64, arm64]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install py2app==0.28.6 pyinstaller==6.1.0
+      
+      - name: Extract metadata
+        id: meta
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "IS_TAG=true" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=$(cat version.txt)" >> $GITHUB_OUTPUT
+            echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+            echo "IS_TAG=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create .icns file from .ico
+        run: |
+          mkdir -p MacOS/Resources
+          # Convert .ico to .png files of various sizes
+          mkdir -p icon.iconset
+          sips -s format png frontend/static/logo/huntarr.ico --out icon.iconset/icon_16x16.png --resampleWidth 16 > /dev/null 2>&1 || true
+          sips -s format png frontend/static/logo/huntarr.ico --out icon.iconset/icon_32x32.png --resampleWidth 32 > /dev/null 2>&1 || true
+          sips -s format png frontend/static/logo/huntarr.ico --out icon.iconset/icon_64x64.png --resampleWidth 64 > /dev/null 2>&1 || true
+          sips -s format png frontend/static/logo/huntarr.ico --out icon.iconset/icon_128x128.png --resampleWidth 128 > /dev/null 2>&1 || true
+          sips -s format png frontend/static/logo/huntarr.ico --out icon.iconset/icon_256x256.png --resampleWidth 256 > /dev/null 2>&1 || true
+          sips -s format png frontend/static/logo/huntarr.ico --out icon.iconset/icon_512x512.png --resampleWidth 512 > /dev/null 2>&1 || true
+          cp icon.iconset/icon_32x32.png icon.iconset/icon_16x16@2x.png 2>/dev/null || true
+          cp icon.iconset/icon_64x64.png icon.iconset/icon_32x32@2x.png 2>/dev/null || true
+          cp icon.iconset/icon_128x128.png icon.iconset/icon_64x64@2x.png 2>/dev/null || true
+          cp icon.iconset/icon_256x256.png icon.iconset/icon_128x128@2x.png 2>/dev/null || true
+          cp icon.iconset/icon_512x512.png icon.iconset/icon_256x256@2x.png 2>/dev/null || true
+          
+          # Create .icns file
+          iconutil -c icns icon.iconset -o frontend/static/logo/huntarr.icns
+          
+          # If the conversion fails, create a generic icon
+          if [ ! -f frontend/static/logo/huntarr.icns ]; then
+            echo "Icon conversion failed, creating placeholder icon"
+            # Create a simple placeholder icon using macOS system icons
+            cp /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns frontend/static/logo/huntarr.icns
+          fi
+
+      - name: Build macOS app bundle
+        run: |
+          # Create pyinstaller spec file
+          cat > Huntarr.spec << 'EOL'
+          # -*- mode: python ; coding: utf-8 -*-
+          from PyInstaller.building.api import PYZ, EXE, COLLECT
+          from PyInstaller.building.build_main import Analysis
+          from PyInstaller.building.datastruct import Tree
+          import os
+          
+          block_cipher = None
+          
+          a = Analysis(
+              ['main.py'],
+              pathex=['.'],
+              binaries=[],
+              datas=[
+                  ('frontend', 'frontend'),
+                  ('version.txt', '.'),
+                  ('README.md', '.'),
+                  ('LICENSE', '.'),
+              ],
+              hiddenimports=[
+                  'flask',
+                  'requests',
+                  'waitress',
+                  'bcrypt',
+                  'qrcode',
+                  'PIL',
+                  'pyotp',
+              ],
+              hookspath=[],
+              hooksconfig={},
+              runtime_hooks=[],
+              excludes=[],
+              win_no_prefer_redirects=False,
+              win_private_assemblies=False,
+              cipher=block_cipher,
+              noarchive=False,
+          )
+          
+          pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+          
+          exe = EXE(
+              pyz,
+              a.scripts,
+              [],
+              exclude_binaries=True,
+              name='Huntarr',
+              debug=False,
+              bootloader_ignore_signals=False,
+              strip=False,
+              upx=True,
+              console=False,
+              disable_windowed_traceback=False,
+              argv_emulation=True,
+              target_arch='${{ matrix.arch }}',
+              codesign_identity=None,
+              entitlements_file=None,
+              icon='frontend/static/logo/huntarr.icns',
+          )
+          
+          coll = COLLECT(
+              exe,
+              a.binaries,
+              a.zipfiles,
+              a.datas,
+              strip=False,
+              upx=True,
+              upx_exclude=[],
+              name='Huntarr',
+          )
+          
+          app = BUNDLE(
+              coll,
+              name='Huntarr.app',
+              icon='frontend/static/logo/huntarr.icns',
+              bundle_identifier='io.huntarr.app',
+              info_plist={
+                  'CFBundleShortVersionString': '${{ steps.meta.outputs.VERSION }}',
+                  'CFBundleVersion': '${{ steps.meta.outputs.VERSION }}',
+                  'NSHighResolutionCapable': True,
+                  'NSRequiresAquaSystemAppearance': False,
+                  'LSEnvironment': {
+                      'PYTHONPATH': '@executable_path/../Resources/lib/python3.9/site-packages',
+                  },
+              },
+          )
+          EOL
+          
+          # Build the app using PyInstaller
+          python -m PyInstaller Huntarr.spec --clean
+
+      - name: Create PKG installer
+        run: |
+          # Create a simple postinstall script
+          mkdir -p scripts
+          cat > scripts/postinstall << 'EOL'
+          #!/bin/bash
+          
+          # Create config directory in user's Application Support
+          mkdir -p "$HOME/Library/Application Support/Huntarr/config"
+          mkdir -p "$HOME/Library/Application Support/Huntarr/config/settings"
+          mkdir -p "$HOME/Library/Application Support/Huntarr/config/stateful"
+          mkdir -p "$HOME/Library/Application Support/Huntarr/config/user"
+          mkdir -p "$HOME/Library/Application Support/Huntarr/config/logs"
+          
+          # Set permissions
+          chmod -R 755 "$HOME/Library/Application Support/Huntarr"
+          
+          exit 0
+          EOL
+          
+          chmod +x scripts/postinstall
+          
+          # Create PKG installer
+          version="${{ steps.meta.outputs.VERSION }}"
+          branch="${{ steps.meta.outputs.BRANCH }}"
+          tag_suffix=""
+          
+          if [[ "${{ steps.meta.outputs.IS_TAG }}" == "true" ]]; then
+            pkg_name="Huntarr-${version}-${{ matrix.arch }}.pkg"
+          else
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              pkg_name="Huntarr-${version}-main-${{ matrix.arch }}.pkg"
+            elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+              pkg_name="Huntarr-${version}-dev-${{ matrix.arch }}.pkg"
+            else
+              pkg_name="Huntarr-${version}-${branch}-${{ matrix.arch }}.pkg"
+            fi
+          fi
+          
+          pkgbuild --root dist/ \
+                  --scripts scripts/ \
+                  --identifier io.huntarr.app \
+                  --version ${version} \
+                  --install-location /Applications \
+                  ${pkg_name}
+      
+      - name: Upload installer as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: huntarr-macos-${{ matrix.arch }}-installer
+          path: '*.pkg'
+          retention-days: 30
+      
+      - name: Upload to release
+        if: steps.meta.outputs.IS_TAG == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: '*.pkg'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
