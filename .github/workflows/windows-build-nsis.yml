@@ -70,7 +70,7 @@ jobs:
         Get-ChildItem -Path installer -Filter *.exe | ForEach-Object { Write-Host $_.FullName }
         
     - name: Upload installer
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: huntarr-installer
         path: installer/Huntarr_Setup.exe
