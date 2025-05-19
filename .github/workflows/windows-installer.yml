@@ -63,7 +63,8 @@ jobs:
       
       - name: Build with PyInstaller
         run: |
-          pyinstaller distribution/windows/huntarr.spec --noconfirm
+          # Use the dedicated build script from the distribution directory
+          python distribution/windows/main.py --exe-only
       
       - name: Download Inno Setup
         run: |
@@ -87,7 +88,8 @@ jobs:
         run: |
           $env:PATH += ";C:\Program Files (x86)\Inno Setup 6"
           mkdir -p installer
-          ISCC.exe distribution/windows/installer/huntarr_installer.iss /Q
+          # Use the dedicated build script for installer creation
+          python distribution/windows/main.py --installer-only
       
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
