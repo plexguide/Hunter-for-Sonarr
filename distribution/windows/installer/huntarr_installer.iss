@@ -90,14 +90,13 @@ Filename: "{sys}\cmd.exe"; Parameters: "/c echo Verifying installation permissio
 
 ; Verify executable exists before attempting to run it
 Filename: "{sys}\cmd.exe"; Parameters: "/c if exist ""{app}\{#MyAppExeName}"" (echo Executable found) else (echo ERROR: Executable not found)"; Flags: runhidden
-
 [UninstallRun]
 ; Kill any running instances of Huntarr
-Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM {#MyAppExeName}"; Flags: runhidden
+Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM ""{#MyAppExeName}"""; Flags: runhidden
 ; Wait a moment for processes to terminate
 Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 2"; Flags: runhidden
 ; Remove the Huntarr startup entry if it exists
-Filename: "{sys}\cmd.exe"; Parameters: "/c if exist ""{userstartup}\{#MyAppName}.lnk"" del /f ""{userstartup}\{#MyAppName}.lnk"""; Flags: runhidden
+Filename: "{sys}\cmd.exe"; Parameters: "/c if exist \"{userstartup}\{#MyAppName}.lnk\" del /f \"{userstartup}\{#MyAppName}.lnk\""; Flags: runhidden
 
 [Code]
 procedure CreateConfigDirs;
