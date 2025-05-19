@@ -302,51 +302,40 @@ def install_service():
         
         with open(log_file, 'a') as f:
             f.write("Attempting service installation...\n")
-            
-        # Use direct SC.EXE commands which are more reliable than win32serviceutil for complex paths
-        import subprocess
-        import shlex
         
+        # === SIMPLIFIED SERVICE INSTALLATION - win-555 style ===
         try:
-            # Format the command line properly
             if getattr(sys, 'frozen', False):
-                # For PyInstaller bundle, use the path with quotes if needed
-                bin_path = f'\"{exe_path}\" --service'
-            else:
-                # For Python script, use the pythonw executable if available
-                pythonw_exe = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
-                if not os.path.exists(pythonw_exe):
-                    pythonw_exe = sys.executable  # Fall back to regular python
-                bin_path = f'\"{pythonw_exe}\" \"{script_path}\" --service'
-            
-            # Log what we're about to do
-            with open(log_file, 'a') as f:
-                f.write(f"Using binPath: {bin_path}\n")
-            
-            # Use subprocess for direct SC.EXE command
-            create_cmd = f'sc create Huntarr binPath= {bin_path} start= auto DisplayName= "Huntarr Service"'
-            with open(log_file, 'a') as f:
-                f.write(f"Full SC command: {create_cmd}\n")
-            
-            # Execute the SC command
-            result = subprocess.run(create_cmd, shell=True, capture_output=True, text=True)
-            
-            # Check for errors
-            if result.returncode != 0:
+                # Running as PyInstaller executable
+                svc_exe_path = exe_path
+                module_name = None  # No Python module when running as executable
+                service_args = "--service"
                 with open(log_file, 'a') as f:
-                    f.write(f"SC command failed with return code {result.returncode}\n")
-                    f.write(f"STDERR: {result.stderr}\n")
-                    f.write(f"STDOUT: {result.stdout}\n")
-                raise Exception(f"SC command failed with return code {result.returncode}")
+                    f.write(f"Installing as frozen executable: {svc_exe_path} {service_args}\n")
+            else:
+                # Running as Python script
+                module_name = "src.primary.windows_service.HuntarrService"
+                svc_exe_path = sys.executable
+                service_args = f"\"{script_path}\" --service"
+                with open(log_file, 'a') as f:
+                    f.write(f"Installing as script: {svc_exe_path} {service_args}, module={module_name}\n")
             
-            # Set service description
-            desc_cmd = 'sc description Huntarr "Automated media collection management for Arr apps"'
-            subprocess.run(desc_cmd, shell=True, capture_output=True, text=True)
+            # Use the simplified win32serviceutil approach
+            win32serviceutil.InstallService(
+                pythonClassString=module_name,  # None for EXE, module path for Python script
+                serviceName="Huntarr",
+                displayName="Huntarr Service",
+                startType=win32service.SERVICE_AUTO_START,
+                exeName=svc_exe_path,
+                exeArgs=service_args,
+                description="Automated media collection management for Arr apps"
+            )
             
             # Log success
             with open(log_file, 'a') as f:
                 f.write("Service installed successfully\n")
             logger.info("Huntarr service installed successfully")
+            
         except Exception as e:
             logger.error(f"Service installation failed: {e}")
             with open(log_file, 'a') as f:
