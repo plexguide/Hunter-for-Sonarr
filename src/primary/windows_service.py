@@ -70,13 +70,35 @@ class HuntarrService(win32serviceutil.ServiceFramework):
         
     def SvcDoRun(self):
         """Run the service"""
-        servicemanager.LogMsg(
-            servicemanager.EVENTLOG_INFORMATION_TYPE,
-            servicemanager.PYS_SERVICE_STARTED,
-            (self._svc_name_, '')
-        )
-        self.is_running = True
-        self.main()
+        # Report service as starting but not started yet
+        # This critical step signals Windows that service initialization is underway
+        self.ReportServiceStatus(win32service.SERVICE_START_PENDING)
+        
+        try:
+            # Log the start attempt first
+            servicemanager.LogMsg(
+                servicemanager.EVENTLOG_INFORMATION_TYPE,
+                servicemanager.PYS_SERVICE_STARTING,
+                (self._svc_name_, 'Service is starting...')
+            )
+            
+            # Update logging to ensure output is properly captured
+            logging.basicConfig(
+                filename=os.path.join(logs_dir, 'windows_service.log'),
+                level=logging.INFO,
+                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+            
+            # Mark service as running
+            self.is_running = True
+            
+            # Enter the main service function
+            self.main()
+            
+        except Exception as e:
+            # Log any startup errors and mark service as stopped
+            servicemanager.LogErrorMsg(f"Failed to start service: {e}")
+            self.ReportServiceStatus(win32service.SERVICE_STOPPED)
         
     def main(self):
         """Main service loop"""
@@ -97,11 +119,20 @@ class HuntarrService(win32serviceutil.ServiceFramework):
             except Exception as e:
                 logger.error(f"Could not write to service log file: {e}")
             
-            # Import here to avoid import errors when installing the service
+            # Signal we're starting
+            self.ReportServiceStatus(win32service.SERVICE_START_PENDING)
+            
+            # Import dependencies - do this early to catch import errors
             import threading
-            from primary.background import start_huntarr, stop_event, shutdown_threads
-            from primary.web_server import app
-            from waitress import serve
+            try:
+                from primary.background import start_huntarr, stop_event, shutdown_threads
+                from primary.web_server import app
+                from waitress import serve
+                logger.info("Successfully imported required modules")
+            except Exception as e:
+                servicemanager.LogErrorMsg(f"Failed to import required modules: {e}")
+                logger.error(f"Critical error importing modules: {e}")
+                return
             
             # Store the stop event for proper shutdown
             self.stop_flag = stop_event
@@ -111,7 +142,10 @@ class HuntarrService(win32serviceutil.ServiceFramework):
             os.environ['PORT'] = '9705'
             os.environ['DEBUG'] = 'false'
             
-            # Make sure config directories exist
+            # Report status update to prevent timeout
+            self.ReportServiceStatus(win32service.SERVICE_START_PENDING)
+            
+            # Make sure config directories exist before proceeding
             try:
                 # Import config paths directly to avoid circular imports
                 from primary.utils.config_paths import ensure_directories
@@ -119,9 +153,17 @@ class HuntarrService(win32serviceutil.ServiceFramework):
                 logger.info("Service verified config directories exist")
             except Exception as e:
                 logger.error(f"Error ensuring config directories: {e}")
+                servicemanager.LogErrorMsg(f"Error ensuring directories: {e}")
                 # Create basic directories as fallback
-                for dir_name in ['config', 'logs', 'config/stateful']:
-                    os.makedirs(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), dir_name), exist_ok=True)
+                try:
+                    app_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                    for dir_name in ['config', 'logs', 'config/stateful']:
+                        os.makedirs(os.path.join(app_root, dir_name), exist_ok=True)
+                    logger.info("Created basic directories as fallback")
+                except Exception as e2:
+                    logger.error(f"Critical error creating directories: {e2}")
+                    servicemanager.LogErrorMsg(f"Failed to create basic directories: {e2}")
+                    return  # Exit if we can't create basic directories
             
             # Start background tasks in a thread with better error handling
             try:
@@ -138,8 +180,12 @@ class HuntarrService(win32serviceutil.ServiceFramework):
             
             # Start the web server in a thread with better error handling
             try:
+                # One more status update - Windows needs to hear from us regularly during startup
+                self.ReportServiceStatus(win32service.SERVICE_START_PENDING)
+                
+                # Create and start the web server thread
                 web_thread = threading.Thread(
-                    target=lambda: serve(app, host='0.0.0.0', port=9705, threads=8),
+                    target=lambda: serve(app, host='0.0.0.0', port=9705, threads=4),  # Reduced thread count for better stability
                     name="HuntarrWebServer",
                     daemon=True
                 )
@@ -149,6 +195,9 @@ class HuntarrService(win32serviceutil.ServiceFramework):
                 logger.error(f"Failed to start web server thread: {e}")
                 servicemanager.LogErrorMsg(f"Failed to start web server thread: {e}")
                 return  # Exit service if web server can't start
+            
+            # Now finally report that service is running
+            self.ReportServiceStatus(win32service.SERVICE_RUNNING)
             
             logger.info('Huntarr service started successfully')
             servicemanager.LogMsg(
