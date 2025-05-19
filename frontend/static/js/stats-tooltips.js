@@ -170,10 +170,6 @@ function showStatsTooltip(e) {
             <span class="tooltip-label">Monthly average:</span>
             <span class="tooltip-value">${monthlyAvg}</span>
         </div>
-        
-        <div class="tooltip-date">
-            Stats collected since: ${startTime.toLocaleDateString()}
-        </div>
     `;
     
     // Position tooltip initially
