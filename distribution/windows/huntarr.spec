@@ -49,6 +49,29 @@ if os.path.exists(str(project_dir / 'tools')):
 if os.path.exists(str(project_dir / 'assets')):
     datas.append((str(project_dir / 'assets'), 'assets'))
 
+# Ensure all frontend template files are included
+if os.path.exists(str(project_dir / 'frontend')):
+    print(f"Including frontend directory at {str(project_dir / 'frontend')}")
+    # Make sure we include all frontend template files
+    datas.append((str(project_dir / 'frontend/templates'), 'templates'))
+    datas.append((str(project_dir / 'frontend/static'), 'static'))
+
+    # Explicitly check for the login template
+    login_template = project_dir / 'frontend/templates/login.html'
+    if os.path.exists(login_template):
+        print(f"Found login.html at {login_template}")
+    else:
+        print(f"WARNING: login.html not found at {login_template}")
+
+    # List all available templates for debugging
+    template_dir = project_dir / 'frontend/templates'
+    if os.path.exists(template_dir):
+        print("Available templates:")
+        for template_file in os.listdir(template_dir):
+            print(f" - {template_file}")
+    else:
+        print(f"WARNING: Template directory not found at {template_dir}")
+
 a = Analysis(
     [str(main_py_path)],
     pathex=[str(project_dir)],
