@@ -91,11 +91,33 @@ jobs:
           # Add Inno Setup to the PATH
           $env:PATH += ";C:\Program Files (x86)\Inno Setup 6"
           
+          # Debug information about files in directories
+          Write-Host "Current directory structure:"
+          Get-ChildItem -Path "." -Recurse -Depth 1
+          
+          Write-Host "Files in dist/Huntarr:"
+          Get-ChildItem -Path "dist/Huntarr" -Recurse -Depth 1
+          
           # Create installer directory (using -Force to avoid errors if it already exists)
           New-Item -Path "installer" -ItemType Directory -Force
           
-          # Use the dedicated build script for installer creation
-          python distribution/windows/main.py --installer-only
+          # Copy the installer script to the root for direct use
+          Copy-Item -Path "distribution/windows/installer/huntarr_installer.iss" -Destination "huntarr_installer.iss" -Force
+          
+          # Run Inno Setup compiler directly
+          Write-Host "Running Inno Setup compiler..."
+          $innoCompilerResult = Start-Process -FilePath "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" -ArgumentList "huntarr_installer.iss" -Wait -NoNewWindow -PassThru
+          Write-Host "Inno Setup compiler exit code: $($innoCompilerResult.ExitCode)"
+          
+          # Check if the installer was created
+          if (Test-Path "installer/Huntarr_Setup.exe") {
+              Write-Host "Installer created successfully at installer/Huntarr_Setup.exe"
+          } else {
+              Write-Host "ERROR: Installer was not created. Check the logs above for errors."
+              Write-Host "Searching for any .exe files in the installer directory:"
+              Get-ChildItem -Path "installer" -Filter "*.exe" -Recurse
+              exit 1
+          }
       
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
