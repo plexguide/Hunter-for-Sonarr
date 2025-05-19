@@ -65,9 +65,9 @@ Filename: "{sys}\sc.exe"; Parameters: "delete Huntarr"; Flags: runhidden; Check:
 ; Wait a moment for the service to be properly removed
 Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 3"; Flags: runhidden
 ; Install the service using SC.EXE directly
-Filename: "{sys}\sc.exe"; Parameters: "create Huntarr binPath= ""{app}\{#MyAppExeName}"" DisplayName= ""Huntarr Service"" start= auto"; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
+Filename: "{sys}\sc.exe"; Parameters: "create Huntarr binPath= \"{app}\{#MyAppExeName}\" DisplayName= \"Huntarr Service\" start= auto"; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
 ; Set service description
-Filename: "{sys}\sc.exe"; Parameters: "description Huntarr ""Automated media collection management for Arr apps"""; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
+Filename: "{sys}\sc.exe"; Parameters: "description Huntarr \"Automated media collection management for Arr apps\""; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
 ; Start the service
 Filename: "{sys}\sc.exe"; Parameters: "start Huntarr"; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
 ; Grant permissions to the config directory and all subdirectories
@@ -89,13 +89,13 @@ Filename: "http://localhost:9705"; Description: "Open Huntarr Web Interface"; Fl
 Filename: "{sys}\cmd.exe"; Parameters: "/c echo Verifying installation permissions..."; Flags: runhidden shellexec postinstall; AfterInstall: VerifyInstallation
 
 ; Verify executable exists before attempting to run it
-Filename: "{sys}\cmd.exe"; Parameters: "/c if exist ""{app}\{#MyAppExeName}"" (echo Executable found) else (echo ERROR: Executable not found)"; Flags: runhidden
+Filename: "{sys}\cmd.exe"; Parameters: "/c if exist \"{app}\{#MyAppExeName}\" (echo Executable found) else (echo ERROR: Executable not found)"; Flags: runhidden
 
 ; Launch Huntarr directly if service installation skipped or failed
 Filename: "{app}\{#MyAppExeName}"; Parameters: "--no-service"; Description: "Run Huntarr without service"; Flags: nowait postinstall skipifsilent; Check: not IsTaskSelected('installservice') or not IsAdminLoggedOn
 
 ; Extra log for debugging service startup issues
-Filename: "{sys}\cmd.exe"; Parameters: "/c echo Service startup logging enabled > "{app}\service_debug.log""; Flags: runhidden; Tasks: installservice
+Filename: "{sys}\cmd.exe"; Parameters: "/c echo Service startup logging enabled > \"{app}\service_debug.log\""; Flags: runhidden; Tasks: installservice
 
 [UninstallRun]
 ; Stop the service first
