@@ -1,25 +1,30 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
 import sys
+import pathlib
+
+# Find the project root directory from the spec file location
+spec_dir = pathlib.Path(os.path.dirname(os.path.abspath(SPECPATH)))
+project_dir = spec_dir.parent.parent  # Go up two levels to project root
 
 block_cipher = None
 
-# Create a list of data files to include
+# Create a list of data files to include with absolute paths
 datas = [
-    ('frontend', 'frontend'),
-    ('src', 'src'),
+    (str(project_dir / 'frontend'), 'frontend'),
+    (str(project_dir / 'src'), 'src'),
 ]
 
 # Add tools directory if it exists
-if os.path.exists('tools'):
-    datas.append(('tools', 'tools'))
+if os.path.exists(str(project_dir / 'tools')):
+    datas.append((str(project_dir / 'tools'), 'tools'))
 
 # Add assets directory if it exists
-if os.path.exists('assets'):
-    datas.append(('assets', 'assets'))
+if os.path.exists(str(project_dir / 'assets')):
+    datas.append((str(project_dir / 'assets'), 'assets'))
 
 a = Analysis(
-    ['main.py'],
+    [str(project_dir / 'main.py')],
     pathex=[],
     binaries=[],
     datas=datas,
@@ -97,7 +102,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='frontend/static/logo/huntarr.ico',
+    icon=str(project_dir / 'frontend/static/logo/huntarr.ico'),
 )
 
 coll = COLLECT(

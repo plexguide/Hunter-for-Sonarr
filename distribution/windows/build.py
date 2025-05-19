@@ -11,14 +11,23 @@ import shutil
 import argparse
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-ROOT_DIR = SCRIPT_DIR.parent.parent
+# Constants
+SCRIPT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
+ROOT_DIR = SCRIPT_DIR.parent.parent  # Navigate up two directories to project root
 
-def run_command(cmd, cwd=None, check=True):
-    """Run a command and print output"""
+def run_command(cmd, cwd=None):
+    """Run a command and return the result
+    
+    Args:
+        cmd: Command list to run
+        cwd: Current working directory for the command
+    
+    Returns:
+        True if command succeeded, False otherwise
+    """
     print(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, cwd=cwd or ROOT_DIR, check=check)
-    return result
+    result = subprocess.run(cmd, check=False, cwd=cwd)
+    return result.returncode == 0
 
 def build_exe():
     """Build the Windows executable using PyInstaller"""
@@ -32,12 +41,15 @@ def build_exe():
         run_command([sys.executable, "-m", "pip", "install", "pyinstaller"])
     
     # Make sure all requirements are installed
-    run_command([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+    run_command([sys.executable, "-m", "pip", "install", "-r", str(ROOT_DIR / "requirements.txt")])
     run_command([sys.executable, "-m", "pip", "install", "pywin32"])
     
     # Build using the spec file
     spec_file = SCRIPT_DIR / "huntarr.spec"
-    run_command([sys.executable, "-m", "PyInstaller", str(spec_file)])
+    
+    # Make sure we're in the project root directory when running PyInstaller
+    # This helps with finding relative paths
+    run_command([sys.executable, "-m", "PyInstaller", str(spec_file)], cwd=str(ROOT_DIR))
     
     print("Executable build complete.")
     return True
