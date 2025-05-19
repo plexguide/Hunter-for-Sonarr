@@ -54,13 +54,24 @@ jobs:
         # Display current directory structure
         dir
         
-        # Run NSIS compiler
+        # Prepare version file path
         $versionContent = Get-Content version.txt -Raw
         Write-Host "Version from file: $versionContent"
-        & "C:\Program Files (x86)\NSIS\makensis.exe" /DVERSIONFILE="version.txt" distribution/windows/installer/huntarr_installer.nsi
+        $AbsVersionFile = Join-Path -Path $PWD.Path -ChildPath "version.txt"
+        Write-Host "Absolute path for VERSIONFILE: $AbsVersionFile"
+
+        # Prepare arguments for makensis.exe
+        $MakensisArgs = @(
+            "/DVERSIONFILE=${AbsVersionFile}",
+            "distribution\windows\installer\huntarr_installer.nsi"
+        )
+        
+        # Run NSIS compiler
+        Write-Host "Running makensis.exe with arguments: $MakensisArgs"
+        & "C:\Program Files (x86)\NSIS\makensis.exe" $MakensisArgs
         
         # Check if installer was created
-        $installerPath = "installer/Huntarr_Setup.exe"
+        $installerPath = "installer\Huntarr_Setup.exe"
         if (Test-Path $installerPath) {
             Write-Host "Installer created successfully at $installerPath"
         } else {

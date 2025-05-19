@@ -4,17 +4,34 @@
 !include "FileFunc.nsh"
 !include "LogicLib.nsh"
 
-; Set a default version in case the file read fails
-!define DEFAULT_VERSION "1.0.0"
+!verbose 4 ; Increase verbosity for debugging defines
+!define DEFAULT_VERSION "1.0.0-default"
 
-; Try to read version from file
 !ifdef VERSIONFILE
-  !define /file VERSION "${VERSIONFILE}"
-  !searchreplace VERSION "${VERSION}" "\n" ""
-  !searchreplace VERSION "${VERSION}" "\r" ""
+  !echo "VERSIONFILE is defined by command line as: '${VERSIONFILE}'"
+  !if ${FileExists} "${VERSIONFILE}"
+    !define /file VERSION "${VERSIONFILE}"
+    !searchreplace VERSION "${VERSION}" "\n" ""
+    !searchreplace VERSION "${VERSION}" "\r" ""
+    !echo "Successfully read version '${VERSION}' from '${VERSIONFILE}'"
+  !else
+    !error "VERSIONFILE was defined as '${VERSIONFILE}', but this file was NOT FOUND! Using default version."
+    !define VERSION "${DEFAULT_VERSION}" ; Fallback
+  !endif
 !else
-  !define VERSION "${DEFAULT_VERSION}"
+  !warning "VERSIONFILE was NOT defined on the command line. Trying relative 'version.txt'."
+  !if ${FileExists} "version.txt" ; Relative to script path, or project root if lucky
+    !define /file VERSION "version.txt"
+    !searchreplace VERSION "${VERSION}" "\n" ""
+    !searchreplace VERSION "${VERSION}" "\r" ""
+    !echo "Successfully read version '${VERSION}' from relative 'version.txt'"
+  !else
+    !warning "Relative 'version.txt' also not found. Using default version '${DEFAULT_VERSION}'."
+    !define VERSION "${DEFAULT_VERSION}"
+  !endif
 !endif
+
+!echo "Final VERSION defined as: '${VERSION}'"
 
 ; Application details
 !define APPNAME "Huntarr"
