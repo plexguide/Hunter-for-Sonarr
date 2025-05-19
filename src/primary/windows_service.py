@@ -220,6 +220,8 @@ def install_service():
         print("Windows service installation is only available on Windows.")
         return False
     
+    import subprocess  # For SC.EXE commands
+    
     # Check for administrator privileges
     if not is_admin():
         print("ERROR: Administrator privileges required to install the service.")
@@ -287,53 +289,65 @@ def install_service():
             with open(log_file, 'a') as f:
                 f.write(f"Service command (script): {exe_cmd}\n")
         
-        # First try to remove any existing service
+        # First try to remove any existing service using SC.EXE directly
         try:
-            # Try to stop and remove existing service if it exists
-            win32serviceutil.StopService("Huntarr")
-            logger.info("Stopped existing Huntarr service")
+            logger.info("Trying to remove any existing Huntarr service...")
+            # Direct SC commands are more reliable than win32serviceutil
+            subprocess.run('sc stop Huntarr', shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
             time.sleep(2)  # Wait for service to fully stop
-            win32serviceutil.RemoveService("Huntarr")
-            logger.info("Removed existing Huntarr service")
+            subprocess.run('sc delete Huntarr', shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
             time.sleep(1)  # Brief pause after removing service
+            logger.info("Removed any existing service if it was present")
         except Exception as e:
-            # This is expected if the service doesn't exist or is already stopped
-            logger.info(f"Note: {e} (this is usually fine if the service wasn't already installed)")
+            # This is expected if the service doesn't exist
+            logger.info(f"Note when removing service: {e} (this is usually fine)")
         
         with open(log_file, 'a') as f:
             f.write("Attempting service installation...\n")
         
-        # === SIMPLIFIED SERVICE INSTALLATION - win-555 style ===
+        # === DIRECT SC.EXE INSTALLATION - most reliable method ===
         try:
+            # Format the service command line correctly
             if getattr(sys, 'frozen', False):
-                # Running as PyInstaller executable
-                svc_exe_path = exe_path
-                module_name = None  # No Python module when running as executable
-                service_args = "--service"
+                # For PyInstaller bundle, use direct path to executable
+                bin_path = f'"{exe_path}" --service'
                 with open(log_file, 'a') as f:
-                    f.write(f"Installing as frozen executable: {svc_exe_path} {service_args}\n")
+                    f.write(f"Using frozen executable path: {bin_path}\n")
             else:
-                # Running as Python script
-                module_name = "src.primary.windows_service.HuntarrService"
-                svc_exe_path = sys.executable
-                service_args = f"\"{script_path}\" --service"
+                # For Python script
+                bin_path = f'"{sys.executable}" "{script_path}" --service'
                 with open(log_file, 'a') as f:
-                    f.write(f"Installing as script: {svc_exe_path} {service_args}, module={module_name}\n")
+                    f.write(f"Using script path: {bin_path}\n")
             
-            # Use the simplified win32serviceutil approach
-            win32serviceutil.InstallService(
-                pythonClassString=module_name,  # None for EXE, module path for Python script
-                serviceName="Huntarr",
-                displayName="Huntarr Service",
-                startType=win32service.SERVICE_AUTO_START,
-                exeName=svc_exe_path,
-                exeArgs=service_args,
-                description="Automated media collection management for Arr apps"
-            )
+            # SC.EXE command requires spaces after the equal signs!
+            sc_cmd = f'sc create Huntarr binPath= {bin_path} start= auto DisplayName= "Huntarr Service"'
+            
+            with open(log_file, 'a') as f:
+                f.write(f"SC command: {sc_cmd}\n")
+            
+            # Run SC.EXE to create the service
+            result = subprocess.run(sc_cmd, shell=True, capture_output=True, text=True)
+            
+            # Log the results
+            with open(log_file, 'a') as f:
+                f.write(f"SC create result code: {result.returncode}\n")
+                if result.stdout:
+                    f.write(f"STDOUT: {result.stdout}\n")
+                if result.stderr:
+                    f.write(f"STDERR: {result.stderr}\n")
+            
+            # Add service description
+            subprocess.run('sc description Huntarr "Automated media collection management for Arr apps"', 
+                          shell=True, capture_output=True)
+            
+            # Check for errors (1073 means service already exists, which we can ignore)
+            if result.returncode != 0 and result.returncode != 1073:
+                raise Exception(f"SC command failed with return code {result.returncode}")
             
             # Log success
             with open(log_file, 'a') as f:
-                f.write("Service installed successfully\n")
+                f.write("Service created successfully\n")
+                
             logger.info("Huntarr service installed successfully")
             
         except Exception as e:
@@ -343,30 +357,33 @@ def install_service():
             print(f"Service installation failed: {e}")
             return False
         
-        # Start the service with better error handling
+        # Start the service with direct SC.EXE command
         try:
-            # Try to start the service with a timeout
+            # Start the service
             logger.info("Attempting to start Huntarr service...")
             with open(log_file, 'a') as f:
-                f.write("Attempting to start the service...\n")
-                
-            win32serviceutil.StartService("Huntarr")
+                f.write("Starting service with SC start...\n")
             
-            # Wait a moment to verify service startup
+            # Use direct SC start command
+            start_result = subprocess.run('sc start Huntarr', shell=True, capture_output=True, text=True)
+            
+            with open(log_file, 'a') as f:
+                f.write(f"SC start result code: {start_result.returncode}\n")
+                if start_result.stdout:
+                    f.write(f"STDOUT: {start_result.stdout}\n")
+                if start_result.stderr:
+                    f.write(f"STDERR: {start_result.stderr}\n")
+            
+            # Wait a moment for the service to start
             time.sleep(2)
             
-            # Check if service is actually running
-            is_running = False
-            try:
-                status = win32serviceutil.QueryServiceStatus("Huntarr")
-                is_running = status[1] == win32service.SERVICE_RUNNING
-                
-                with open(log_file, 'a') as f:
-                    f.write(f"Service status: {status[1]} (Running={is_running})\n")
-            except Exception as e:
-                logger.error(f"Could not query service status: {e}")
-                with open(log_file, 'a') as f:
-                    f.write(f"Could not query service status: {e}\n")
+            # Check service status with SC command
+            query_result = subprocess.run('sc query Huntarr', shell=True, capture_output=True, text=True)
+            is_running = "RUNNING" in query_result.stdout
+            
+            with open(log_file, 'a') as f:
+                f.write(f"SC query result: {query_result.stdout}\n")
+                f.write(f"Service appears to be running: {is_running}\n")
             
             if is_running:
                 print("Huntarr service installed and started successfully.")
