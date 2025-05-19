@@ -75,14 +75,16 @@ jobs:
       
       - name: Prepare for installer build
         run: |
-          # Copy helper files to the distribution
-          mkdir -p dist/Huntarr/resources
-          Copy-Item -Path "distribution/windows/resources/*" -Destination "dist/Huntarr/resources/" -Recurse
-          # Copy scripts
-          mkdir -p dist/Huntarr/scripts
-          Copy-Item -Path "distribution/windows/scripts/*" -Destination "dist/Huntarr/scripts/" -Recurse
-          # Create installer directory
-          mkdir -p installer
+          # Create directories if they don't exist (using -Force to avoid errors)
+          New-Item -Path "dist/Huntarr/resources" -ItemType Directory -Force
+          New-Item -Path "dist/Huntarr/scripts" -ItemType Directory -Force
+          New-Item -Path "installer" -ItemType Directory -Force
+          
+          # Copy helper files to the distribution (using -Force to overwrite existing files)
+          Copy-Item -Path "distribution/windows/resources/*" -Destination "dist/Huntarr/resources/" -Recurse -Force
+          
+          # Copy scripts (using -Force to overwrite existing files)
+          Copy-Item -Path "distribution/windows/scripts/*" -Destination "dist/Huntarr/scripts/" -Recurse -Force
       
       - name: Build installer with Inno Setup
         run: |
