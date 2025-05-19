@@ -76,25 +76,25 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 ### 🐋 Docker Users
 
-- **[Docker Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html)**
+- **<a href="https://plexguide.github.io/Huntarr.io/getting-started/installation.html" target="_blank" rel="noopener noreferrer">Docker Installation Guide</a>**
 
 The most common and recommended way to install Huntarr.
 
 ### 🍏 macOS Installation
 
-- **[macOS Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#macos-installation)**
+- **<a href="https://plexguide.github.io/Huntarr.io/getting-started/installation.html#macos-installation" target="_blank" rel="noopener noreferrer">macOS Installation Guide</a>**
 
 Huntarr now offers native macOS support!
 
 ### 🔵 Unraid Users
 
-- **[Unraid Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#unraid-installation)**
+- **<a href="https://plexguide.github.io/Huntarr.io/getting-started/installation.html#unraid-installation" target="_blank" rel="noopener noreferrer">Unraid Installation Guide</a>**
 
 You can install Huntarr through the Unraid App Store or via command line.
 
 ### 🔧 Alternative Methods
 
-- **[Alternative Installation Methods](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#alternative-methods)**
+- **<a href="https://plexguide.github.io/Huntarr.io/getting-started/installation.html#alternative-methods" target="_blank" rel="noopener noreferrer">Alternative Installation Methods</a>**
 
 ## How It Works
 
