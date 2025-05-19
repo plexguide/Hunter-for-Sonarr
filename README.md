@@ -149,44 +149,33 @@ To ensure data persistence, make sure you map the `/config` directory to a persi
 
 ## Installation Methods
 
+For comprehensive installation guides and detailed configuration, please visit our documentation:
+
+- **[Complete Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html)**
+
 ### Docker Run
 
-The simplest way to run Huntarr is via Docker (all configuration is done via the web UI):
+The simplest way to run Huntarr is via Docker:
 
 ```bash
-# Option 1: DockerHub
 docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
   -v /your-path/huntarr:/config \
   -e TZ=America/New_York \
   huntarr/huntarr:latest
-
-# Option 2: GitHub Container Registry
-docker run -d --name huntarr \
-  --restart always \
-  -p 9705:9705 \
-  -v /your-path/huntarr:/config \
-  -e TZ=America/New_York \
-  ghcr.io/plexguide/huntarr:latest
 ```
 
-To check on the status of the program, you can use the web interface at http://YOUR_SERVER_IP:9705 or check the logs with:
-```bash
-docker logs huntarr
-```
+View the web interface at `http://YOUR_SERVER_IP:9705`
 
 ### Docker Compose
 
-For those who prefer Docker Compose, add this to your `docker-compose.yml` file:
+For Docker Compose users, add this to your `docker-compose.yml` file:
 
 ```yaml
 services:
   huntarr:
-    # Option 1: DockerHub
     image: huntarr/huntarr:latest
-    # Option 2: GitHub Container Registry
-    # image: ghcr.io/plexguide/huntarr:latest
     container_name: huntarr
     restart: always
     ports:
@@ -197,35 +186,21 @@ services:
       - TZ=America/New_York
 ```
 
-Then run:
-
-```bash
-docker-compose up -d huntarr
-```
-
 ### Unraid Users
 
-You can install Huntarr using the Unraid App Store.
+- **[Unraid Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#unraid-installation)**
 
-If not, you can run this from Command Line in Unraid:
+You can install Huntarr through the Unraid App Store or via command line.
 
-```bash
-# Option 1: DockerHub
-docker run -d --name huntarr \
-  --restart always \
-  -p 9705:9705 \
-  -v /mnt/user/appdata/huntarr:/config \
-  -e TZ=America/New_York \
-  huntarr/huntarr:latest
-  
-# Option 2: GitHub Container Registry
-docker run -d --name huntarr \
-  --restart always \
-  -p 9705:9705 \
-  -v /mnt/user/appdata/huntarr:/config \
-  -e TZ=America/New_York \
-  ghcr.io/plexguide/huntarr:latest
-```
+### macOS Installation
+
+- **[macOS Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#macos-installation)**
+
+Huntarr now offers native macOS support!
+
+### Alternative Methods
+
+- **[Alternative Installation Methods](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#alternative-methods)**
 
 ## The Perfect Pair: Huntarr & Cleanuperr
 
