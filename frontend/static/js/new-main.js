@@ -3,6 +3,11 @@
  * Main JavaScript file for handling UI interactions and API communication
  */
 
+/**
+ * Huntarr - New UI Implementation
+ * Main JavaScript file for handling UI interactions and API communication
+ */
+
 let huntarrUI = {
     // Current state
     eventSources: {},
@@ -2064,6 +2069,38 @@ let huntarrUI = {
         });
     },
     
+    // Format large numbers with appropriate suffixes (K, MIL, BIL, TRI)  
+    formatLargeNumber: function(num) {
+        if (num < 1000) {
+            // 0-999: Display as is
+            return num.toString();
+        } else if (num < 10000) {
+            // 1,000-9,999: Display with single decimal and K (e.g., 5.2K)
+            return (num / 1000).toFixed(1) + 'K';
+        } else if (num < 100000) {
+            // 10,000-99,999: Display with single decimal and K (e.g., 75.4K)
+            return (num / 1000).toFixed(1) + 'K';
+        } else if (num < 1000000) {
+            // 100,000-999,999: Display with K (no decimal) (e.g., 982K)
+            return Math.floor(num / 1000) + 'K';
+        } else if (num < 10000000) {
+            // 1,000,000-9,999,999: Display with single decimal and MIL (e.g., 9.7 MIL)
+            return (num / 1000000).toFixed(1) + ' MIL';
+        } else if (num < 100000000) {
+            // 10,000,000-99,999,999: Display with single decimal and MIL (e.g., 99.7 MIL)
+            return (num / 1000000).toFixed(1) + ' MIL';
+        } else if (num < 1000000000) {
+            // 100,000,000-999,999,999: Display with MIL (no decimal)
+            return Math.floor(num / 1000000) + ' MIL';
+        } else if (num < 1000000000000) {
+            // 1B - 999B: Display with single decimal and BIL
+            return (num / 1000000000).toFixed(1) + ' BIL';
+        } else {
+            // 1T+: Display with TRI
+            return (num / 1000000000000).toFixed(1) + ' TRI';
+        }
+    },
+
     animateNumber: function(element, start, end) {
         const duration = 1000; // Animation duration in milliseconds
         const startTime = performance.now();
@@ -2076,12 +2113,15 @@ let huntarrUI = {
             const easeOutQuad = progress * (2 - progress);
             
             const currentValue = Math.floor(start + (end - start) * easeOutQuad);
-            element.textContent = currentValue;
+            
+            // Format number for display
+            element.textContent = this.formatLargeNumber(currentValue);
             
             if (progress < 1) {
                 requestAnimationFrame(updateNumber);
             } else {
-                element.textContent = end; // Ensure we end with the exact target number
+                // Ensure we end with the exact formatted target number
+                element.textContent = this.formatLargeNumber(end);
             }
         };
         

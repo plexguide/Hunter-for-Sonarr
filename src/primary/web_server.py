@@ -123,10 +123,59 @@ else:
     if os.path.exists(template_dir):
         print(f"Template dir contents: {os.listdir(template_dir)}")
 
+# Get base_url from settings (used for reverse proxy subpath configurations)
+def get_base_url():
+    """
+    Get the configured base URL from general settings.
+    This allows Huntarr to run under a subpath like /huntarr when behind a reverse proxy.
+    
+    Returns:
+        str: The configured base URL (e.g., '/huntarr') or empty string if not configured
+    """
+    try:
+        base_url = settings_manager.get_setting('general', 'base_url', '')
+        # Ensure base_url always starts with a / if not empty
+        if base_url and not base_url.startswith('/'):
+            base_url = f'/{base_url}'
+        # Remove trailing slash if present
+        if base_url and base_url != '/' and base_url.endswith('/'):
+            base_url = base_url.rstrip('/')
+        return base_url
+    except Exception as e:
+        print(f"Error getting base_url from settings: {e}")
+        return ''
+
+# Define base_url at module level
+base_url = ''
+
 # Create Flask app with additional debug logging
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 print(f"Flask app created with template_folder: {app.template_folder}")
 print(f"Flask app created with static_folder: {app.static_folder}")
+
+# Get and apply the base URL setting after app is created
+try:
+    base_url = get_base_url()
+    if base_url:
+        print(f"Configuring base URL: {base_url}")
+        app.config['APPLICATION_ROOT'] = base_url
+        # Flask 1.x compatibility - needed for proper URL generation
+        if not hasattr(app, 'wsgi_app') or not hasattr(app.wsgi_app, '__call__'):
+            print("Warning: Unable to configure WSGI middleware for base URL")
+        else:
+            # This ensures static files and other routes respect the base URL
+            from werkzeug.middleware.dispatcher import DispatcherMiddleware
+            from werkzeug.exceptions import NotFound
+            app.wsgi_app = DispatcherMiddleware(
+                NotFound(),  # Default 404 app when accessed without base URL
+                {base_url: app.wsgi_app}  # Main app mounted at base URL
+            )
+            print(f"WSGI middleware configured for base URL: {base_url}")
+    else:
+        print("Running at root URL path (no base URL)")
+except Exception as e:
+    print(f"Error applying base URL setting: {e}")
+    base_url = ''  # Fallback to empty string on error
 
 # Add debug logging for template rendering
 def debug_template_rendering():
@@ -198,6 +247,12 @@ app.register_blueprint(scheduler_api)
 # Register the authentication check to run before requests
 app.before_request(authenticate_request)
 
+# Add base_url to template context so it can be used in templates
+@app.context_processor
+def inject_base_url():
+    """Add base_url to template context for use in templates"""
+    return {'base_url': base_url}
+
 # Removed MAIN_PID and signal-related code
 
 # Lock for accessing the log files
@@ -219,14 +274,19 @@ KNOWN_LOG_FILES = {k: v for k, v in KNOWN_LOG_FILES.items() if v}
 
 ALL_APP_LOG_FILES = list(KNOWN_LOG_FILES.values()) # List of all individual log file paths
 
+# Handle both root path and base URL root path
 @app.route('/')
 def home():
+    """Render the main index page"""
     return render_template('index.html')
 
 @app.route('/user')
 def user():
-    # User account screen
+    """Render the user account screen"""
     return render_template('user.html')
+    
+# This section previously contained code for redirecting paths to include the base URL
+# It has been removed as Flask's APPLICATION_ROOT setting provides this functionality
 
 # Removed /settings and /logs routes if handled by index.html and JS routing
 # Keep /logs if it's the actual SSE endpoint
