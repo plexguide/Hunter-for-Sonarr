@@ -2,7 +2,10 @@ name: Deploy Huntarr Documentation
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - dev
+      - 'docs*'
     paths:
       - 'docs/**'
   workflow_dispatch:
@@ -21,6 +24,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/heads/docs')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

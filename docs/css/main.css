@@ -414,29 +414,53 @@ a:hover {
 }
 
 code {
-    background-color: rgba(10, 15, 25, 0.6);
-    padding: 2px 6px;
+    background-color: rgba(30, 35, 45, 0.8);
+    padding: 4px 6px;
     border-radius: 3px;
     border: 1px solid var(--border-color);
     font-family: 'Courier New', monospace;
-    font-size: 0.9em;
-    color: #f8f8f8;
+    font-size: 1em;
+    color: #ffffff;
 }
 
 pre {
-    background-color: rgba(10, 15, 25, 0.6);
-    padding: 15px;
-    border-radius: 5px;
+    background-color: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
     border: 1px solid var(--border-color);
+    border-left: 4px solid var(--highlight-color);
     overflow-x: auto;
-    color: #f8f8f8;
+    color: #ffffff;
     position: relative;
+    margin: 20px 0 30px 0;
+    line-height: 1.5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Special styling for terminal command blocks */
+pre.terminal {
+    border-left: 4px solid var(--highlight-color);
+}
+
+pre.terminal code {
+    color: #ffffff; /* White text for better readability */
+}
+
+/* Add this class to any code block that shows terminal commands */
+.command-prompt::before {
+    content: '$ ';
+    color: #999;
+    user-select: none;
 }
 
 pre code {
     background-color: transparent;
     border: none;
     padding: 0;
+    display: block;
+    width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .copy-button {
@@ -444,16 +468,19 @@ pre code {
     right: 10px;
     top: 10px;
     padding: 5px 10px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--border-color);
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
     border-radius: 3px;
     cursor: pointer;
-    color: var(--text-color);
+    color: #000;
     font-size: 0.8rem;
+    font-weight: bold;
 }
 
 .copy-button:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(52, 152, 219, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 img {
@@ -565,16 +592,175 @@ footer {
     margin-left: 10px;
 }
 
+/* Table of Contents styles */
+.toc {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0 30px 0;
+    border-left: 4px solid var(--highlight-color);
+}
+
+.toc h3 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.toc ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.toc li {
+    margin-bottom: 8px;
+}
+
+.toc a {
+    text-decoration: none;
+    color: var(--text-color);
+    display: block;
+    padding: 5px 0;
+    transition: color 0.2s;
+}
+
+.toc a:hover {
+    color: var(--highlight-color);
+}
+
+/* Back to top button */
+.back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 40px;
+    height: 40px;
+    background-color: var(--highlight-color);
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    opacity: 0; /* Start hidden */
+    transition: opacity 0.3s, transform 0.3s;
+    transform: translateY(20px);
+    z-index: 1000;
+}
+
+/* Settings Page Styles */
+.setting-item {
+    margin: 30px 0;
+    background-color: var(--secondary-bg);
+    padding: 20px;
+    border-radius: 4px;
+}
+
+.setting-item h3 {
+    color: var(--highlight-color);
+    font-size: 1.4em;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+}
+
+.info-icon {
+    color: var(--highlight-color);
+    margin-right: 10px;
+    font-size: 0.8em;
+    text-decoration: none;
+}
+
+.setting-item h4 {
+    color: var(--sonarr-color);
+    font-size: 1.2em;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.state-time {
+    color: var(--highlight-color);
+    font-weight: bold;
+}
+
+/* Highlight effect when anchor links are clicked */
+.highlight {
+    animation: highlight-pulse 2s;
+}
+
+@keyframes highlight-pulse {
+    0% { background-color: var(--card-bg); }
+    25% { background-color: rgba(52, 152, 219, 0.2); }
+    50% { background-color: rgba(52, 152, 219, 0.1); }
+    100% { background-color: var(--card-bg); }
+}
+
+/* Warning and Note Boxes */
+.warning-box {
+    background-color: rgba(231, 76, 60, 0.1);
+    border-left: 4px solid #e74c3c;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.warning-box h3 {
+    color: #e74c3c;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.note-box {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-left: 4px solid var(--highlight-color);
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.note-box h4 {
+    color: var(--highlight-color);
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.warning-image {
+    max-width: 100%;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.back-to-top.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.back-to-top:hover {
+    background-color: #217dbb;
+    transform: translateY(-5px);
+}
+
 /* Card style for app blocks */
+/* App cards grid container */
+.app-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
 .app-card {
     display: flex;
     flex-direction: column;
     border-radius: 8px;
     background-color: rgba(20, 25, 35, 0.6);
-    margin: 20px 0;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s, box-shadow 0.3s;
     overflow: hidden;
+    height: 100%;
 }
 
 .app-card:hover {
@@ -583,20 +769,53 @@ footer {
 }
 
 .app-card-header {
-    padding: 15px;
+    padding: 12px 15px;
     display: flex;
     align-items: center;
+    background-color: #252a34;
+    border-bottom: none;
 }
 
 .app-card-icon {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 15px;
-    font-weight: bold;
+    position: relative;
+    overflow: hidden;
+    background-color: #1a1d24;
+    border: 2px solid transparent;
+}
+
+.app-card-icon img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    margin: 0;
+    border-radius: 0;
+}
+
+.app-card.sonarr-card .app-card-icon {
+    border-color: var(--sonarr-color);
+}
+
+.app-card.radarr-card .app-card-icon {
+    border-color: var(--radarr-color);
+}
+
+.app-card.lidarr-card .app-card-icon {
+    border-color: var(--lidarr-color);
+}
+
+.app-card.readarr-card .app-card-icon {
+    border-color: var(--readarr-color);
+}
+
+.app-card.whisparr-card .app-card-icon {
+    border-color: var(--whisparr-color);
 }
 
 .app-card-title {
@@ -605,14 +824,15 @@ footer {
 }
 
 .app-card-content {
-    padding: 15px;
+    padding: 12px 15px;
     flex: 1;
 }
 
 .app-card-footer {
-    padding: 10px 15px;
+    padding: 8px 15px;
     background-color: rgba(10, 15, 25, 0.3);
     text-align: right;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Card styled for sonarr */
