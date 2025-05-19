@@ -3,6 +3,11 @@
  * Main JavaScript file for handling UI interactions and API communication
  */
 
+/**
+ * Huntarr - New UI Implementation
+ * Main JavaScript file for handling UI interactions and API communication
+ */
+
 let huntarrUI = {
     // Current state
     eventSources: {},

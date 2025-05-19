@@ -31,7 +31,21 @@ const HuntarrUtils = {
             signal: controller.signal
         };
         
-        return fetch(url, fetchOptions)
+        // Process URL to handle base URL for reverse proxy subpaths
+        let processedUrl = url;
+        
+        // Only process internal API requests (not external URLs)
+        if (url && typeof url === 'string' && !url.startsWith('http') && !url.startsWith('//')) {
+            // Handle base URL from window.HUNTARR_BASE_URL if available
+            const baseUrl = window.HUNTARR_BASE_URL || '';
+            if (baseUrl && !url.startsWith(baseUrl)) {
+                // Ensure path starts with a slash
+                const normalizedPath = url.startsWith('/') ? url : '/' + url;
+                processedUrl = baseUrl + normalizedPath;
+            }
+        }
+        
+        return fetch(processedUrl, fetchOptions)
             .then(response => {
                 clearTimeout(timeoutId);
                 return response;
