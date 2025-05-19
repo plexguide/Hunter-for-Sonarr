@@ -23,10 +23,10 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
-LicenseFile=..\..\LICENSE
-OutputDir=..\..\installer
+LicenseFile=LICENSE
+OutputDir=installer
 OutputBaseFilename=Huntarr_Setup
-SetupIconFile=..\..\frontend\static\logo\huntarr.ico
+SetupIconFile=frontend\static\logo\huntarr.ico
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=admin
@@ -48,9 +48,9 @@ Name: "installservice"; Description: "Install as Windows Service (Requires Admin
 Name: "createshortcut"; Description: "Create 'Run Without Service' shortcut"; GroupDescription: "Fallback Options"; Flags: checkedonce
 
 [Files]
-Source: "..\..\dist\Huntarr\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\Huntarr\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Create empty config directories to ensure they exist with proper permissions
-Source: "..\..\LICENSE"; DestDir: "{app}\config"; Flags: ignoreversion; AfterInstall: CreateConfigDirs
+Source: "LICENSE"; DestDir: "{app}\config"; Flags: ignoreversion; AfterInstall: CreateConfigDirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
