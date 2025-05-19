@@ -71,17 +71,17 @@ Filename: "{sys}\sc.exe"; Parameters: "description Huntarr \"Automated media col
 ; Start the service
 Filename: "{sys}\sc.exe"; Parameters: "start Huntarr"; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
 ; Grant permissions to the config directory and all subdirectories
-Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config"" /grant Everyone:(OI)(CI)F /T"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\logs"" /grant Everyone:(OI)(CI)F /T"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\frontend"" /grant Everyone:(OI)(CI)F /T"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\config" /grant Everyone:(OI)(CI)F /T'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\logs" /grant Everyone:(OI)(CI)F /T'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\frontend" /grant Everyone:(OI)(CI)F /T'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
 ; Ensure proper permissions for each important subdirectory (in case the recursive permission failed)
-Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\logs"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\stateful"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\user"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\settings"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\history"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\frontend\templates"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\frontend\static"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\config\logs" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\config\stateful" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\config\user" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\config\settings" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\config\history" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\frontend\templates" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\frontend\static" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
 ; Launch Huntarr
 Filename: "http://localhost:9705"; Description: "Open Huntarr Web Interface"; Flags: postinstall shellexec nowait
 ; No need for batch file creation - using direct shortcut instead
@@ -89,13 +89,13 @@ Filename: "http://localhost:9705"; Description: "Open Huntarr Web Interface"; Fl
 Filename: "{sys}\cmd.exe"; Parameters: "/c echo Verifying installation permissions..."; Flags: runhidden shellexec postinstall; AfterInstall: VerifyInstallation
 
 ; Verify executable exists before attempting to run it
-Filename: "{sys}\cmd.exe"; Parameters: "/c if exist \"{app}\{#MyAppExeName}\" (echo Executable found) else (echo ERROR: Executable not found)"; Flags: runhidden
+Filename: "{sys}\cmd.exe"; Parameters: '/c if exist "{app}\{#MyAppExeName}" (echo Executable found) else (echo ERROR: Executable not found)'; Flags: runhidden
 
 ; Launch Huntarr directly if service installation skipped or failed
 Filename: "{app}\{#MyAppExeName}"; Parameters: "--no-service"; Description: "Run Huntarr without service"; Flags: nowait postinstall skipifsilent; Check: not IsTaskSelected('installservice') or not IsAdminLoggedOn
 
 ; Extra log for debugging service startup issues
-Filename: "{sys}\cmd.exe"; Parameters: "/c echo Service startup logging enabled > \"{app}\service_debug.log\""; Flags: runhidden; Tasks: installservice
+Filename: "{sys}\cmd.exe"; Parameters: '/c echo Service startup logging enabled > "{app}\service_debug.log"'; Flags: runhidden; Tasks: installservice
 
 [UninstallRun]
 ; Stop the service first
