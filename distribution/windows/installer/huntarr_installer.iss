@@ -87,7 +87,7 @@ Filename: "http://localhost:9705"; Description: "Open Huntarr Web Interface"; Fl
 Filename: "{sys}\cmd.exe"; Parameters: "/c echo Verifying installation permissions..."; Flags: runhidden shellexec postinstall; AfterInstall: VerifyInstallation
 
 ; Verify executable exists before attempting to run it
-Filename: "{sys}\cmd.exe"; Parameters: "/c if exist \"{app}\{#MyAppExeName}\" (echo Executable found) else (echo ERROR: Executable not found)"; Flags: runhidden
+Filename: "{sys}\cmd.exe"; Parameters: "/c if exist ""{app}\{#MyAppExeName}"" (echo Executable found) else (echo ERROR: Executable not found)"; Flags: runhidden
 
 ; Launch Huntarr directly if service installation skipped or failed
 Filename: "{app}\{#MyAppExeName}"; Parameters: "--no-service"; Description: "Run Huntarr without service"; Flags: nowait postinstall skipifsilent; Check: not IsTaskSelected('installservice') or not IsAdminLoggedOn
