@@ -86,6 +86,9 @@ Filename: "http://localhost:9705"; Description: "Open Huntarr Web Interface"; Fl
 ; Final verification of directory permissions
 Filename: "{sys}\cmd.exe"; Parameters: "/c echo Verifying installation permissions..."; Flags: runhidden shellexec postinstall; AfterInstall: VerifyInstallation
 
+; Verify executable exists before attempting to run it
+Filename: "{sys}\cmd.exe"; Parameters: "/c if exist "{app}\{#MyAppExeName}" (echo Executable found) else (echo ERROR: Executable not found)"; Flags: runhidden
+
 ; Launch Huntarr directly if service installation skipped or failed
 Filename: "{app}\{#MyAppExeName}"; Parameters: "--no-service"; Description: "Run Huntarr without service"; Flags: nowait postinstall skipifsilent; Check: not IsTaskSelected('installservice') or not IsAdminLoggedOn
 
@@ -170,9 +173,36 @@ procedure VerifyInstallation;
 var
   VerifyResult: Integer;
   ConfigPath: String;
+  ExePath: String;
+  ExeVerifyResult: Integer;
 begin
   ConfigPath := ExpandConstant('{app}\config');
-  Log('Verifying installation directory permissions: ' + ConfigPath);
+  ExePath := ExpandConstant('{app}\{#MyAppExeName}');
+  
+  // Log paths for troubleshooting
+  Log('Verifying installation paths:');
+  Log('- Application directory: ' + ExpandConstant('{app}'));
+  Log('- Config directory: ' + ConfigPath);
+  Log('- Executable path: ' + ExePath);
+  
+  // Verify the executable file exists
+  if FileExists(ExePath) then
+  begin
+    Log('Executable file exists: ' + ExePath);
+    
+    // Ensure proper permissions on the executable
+    if IsAdminLoggedOn then
+    begin
+      Log('Setting permissions on executable file...');
+      Exec(ExpandConstant('{sys}\cmd.exe'), '/c icacls "' + ExePath + '" /grant Everyone:RX', '', SW_HIDE, ewWaitUntilTerminated, ExeVerifyResult);
+    end;
+  end
+  else
+  begin
+    Log('ERROR: Executable file not found: ' + ExePath);
+    // Try to find the executable anywhere in the application directory
+    Exec(ExpandConstant('{sys}\cmd.exe'), '/c dir /s /b "' + ExpandConstant('{app}') + '\*.exe"', '', SW_HIDE, ewWaitUntilTerminated, ExeVerifyResult);
+  end;
   
   // Create a verification file in the main config directory
   if SaveStringToFile(ConfigPath + '\verification.tmp', 'Verification file', False) then
