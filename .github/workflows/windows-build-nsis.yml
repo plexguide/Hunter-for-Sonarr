@@ -1,0 +1,76 @@
+name: Windows Build with NSIS
+
+on:
+  push:
+    branches: [ "main", "dev", "win-*" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller==5.13.0
+        pip install pywin32
+
+    - name: Create directories
+      run: |
+        mkdir -p config/logs
+        dir
+        dir config
+        
+    - name: Build with PyInstaller
+      run: |
+        # Copy spec file from distribution directory to root
+        cp distribution/windows/huntarr.spec .
+        
+        # Use the dedicated build script from the distribution directory
+        python -m pip install -r requirements.txt
+        python -m pip install pywin32
+        pyinstaller -y distribution/windows/huntarr.spec
+        
+        # Display contents of dist/Huntarr
+        dir dist/Huntarr
+        
+    - name: Install NSIS
+      run: |
+        choco install nsis -y
+        
+    - name: Build NSIS Installer
+      run: |
+        # Display current directory structure
+        dir
+        
+        # Run NSIS compiler
+        & "C:\Program Files (x86)\NSIS\makensis.exe" distribution/windows/installer/huntarr_installer.nsi
+        
+        # Check if installer was created
+        $installerPath = "installer/Huntarr_Setup.exe"
+        if (Test-Path $installerPath) {
+            Write-Host "Installer created successfully at $installerPath"
+        } else {
+            Write-Error "Installer was not created. Check the logs above for errors."
+            exit 1
+        }
+        
+        # List any exe files in the installer directory
+        Get-ChildItem -Path installer -Filter *.exe | ForEach-Object { Write-Host $_.FullName }
+        
+    - name: Upload installer
+      uses: actions/upload-artifact@v3
+      with:
+        name: huntarr-installer
+        path: installer/Huntarr_Setup.exe
