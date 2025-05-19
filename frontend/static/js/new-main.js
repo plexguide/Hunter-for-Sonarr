@@ -2069,7 +2069,7 @@ let huntarrUI = {
         });
     },
     
-    // Format large numbers with appropriate suffixes (K, MIL, BIL, TRI)  
+    // Format large numbers with appropriate suffixes (K, M, B, T)  
     formatLargeNumber: function(num) {
         if (num < 1000) {
             // 0-999: Display as is
@@ -2084,20 +2084,20 @@ let huntarrUI = {
             // 100,000-999,999: Display with K (no decimal) (e.g., 982K)
             return Math.floor(num / 1000) + 'K';
         } else if (num < 10000000) {
-            // 1,000,000-9,999,999: Display with single decimal and MIL (e.g., 9.7 MIL)
-            return (num / 1000000).toFixed(1) + ' MIL';
+            // 1,000,000-9,999,999: Display with single decimal and M (e.g., 9.7M)
+            return (num / 1000000).toFixed(1) + 'M';
         } else if (num < 100000000) {
-            // 10,000,000-99,999,999: Display with single decimal and MIL (e.g., 99.7 MIL)
-            return (num / 1000000).toFixed(1) + ' MIL';
+            // 10,000,000-99,999,999: Display with single decimal and M (e.g., 99.7M)
+            return (num / 1000000).toFixed(1) + 'M';
         } else if (num < 1000000000) {
-            // 100,000,000-999,999,999: Display with MIL (no decimal)
-            return Math.floor(num / 1000000) + ' MIL';
+            // 100,000,000-999,999,999: Display with M (no decimal)
+            return Math.floor(num / 1000000) + 'M';
         } else if (num < 1000000000000) {
-            // 1B - 999B: Display with single decimal and BIL
-            return (num / 1000000000).toFixed(1) + ' BIL';
+            // 1B - 999B: Display with single decimal and B
+            return (num / 1000000000).toFixed(1) + 'B';
         } else {
-            // 1T+: Display with TRI
-            return (num / 1000000000000).toFixed(1) + ' TRI';
+            // 1T+: Display with T
+            return (num / 1000000000000).toFixed(1) + 'T';
         }
     },
 
