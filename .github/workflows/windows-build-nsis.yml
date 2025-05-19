@@ -55,7 +55,9 @@ jobs:
         dir
         
         # Run NSIS compiler
-        & "C:\Program Files (x86)\NSIS\makensis.exe" distribution/windows/installer/huntarr_installer.nsi
+        $versionContent = Get-Content version.txt -Raw
+        Write-Host "Version from file: $versionContent"
+        & "C:\Program Files (x86)\NSIS\makensis.exe" /DVERSIONFILE="version.txt" distribution/windows/installer/huntarr_installer.nsi
         
         # Check if installer was created
         $installerPath = "installer/Huntarr_Setup.exe"

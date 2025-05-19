@@ -4,10 +4,17 @@
 !include "FileFunc.nsh"
 !include "LogicLib.nsh"
 
-; Read version from file
-!define /file VERSION "version.txt"
-!searchreplace VERSION "${VERSION}" "\n" ""
-!searchreplace VERSION "${VERSION}" "\r" ""
+; Set a default version in case the file read fails
+!define DEFAULT_VERSION "1.0.0"
+
+; Try to read version from file
+!ifdef VERSIONFILE
+  !define /file VERSION "${VERSIONFILE}"
+  !searchreplace VERSION "${VERSION}" "\n" ""
+  !searchreplace VERSION "${VERSION}" "\r" ""
+!else
+  !define VERSION "${DEFAULT_VERSION}"
+!endif
 
 ; Application details
 !define APPNAME "Huntarr"
