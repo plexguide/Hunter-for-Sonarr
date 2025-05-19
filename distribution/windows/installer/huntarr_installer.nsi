@@ -9,7 +9,7 @@
 
 !ifdef VERSIONFILE
   !echo "VERSIONFILE is defined by command line as: '${VERSIONFILE}'"
-  !if ${FileExists} "${VERSIONFILE}"
+  !if /FILEEXISTS "${VERSIONFILE}"
     !define /file VERSION "${VERSIONFILE}"
     !searchreplace VERSION "${VERSION}" "\n" ""
     !searchreplace VERSION "${VERSION}" "\r" ""
@@ -20,7 +20,7 @@
   !endif
 !else
   !warning "VERSIONFILE was NOT defined on the command line. Trying relative 'version.txt'."
-  !if ${FileExists} "version.txt" ; Relative to script path, or project root if lucky
+  !if /FILEEXISTS "version.txt" ; Relative to script path, or project root if lucky
     !define /file VERSION "version.txt"
     !searchreplace VERSION "${VERSION}" "\n" ""
     !searchreplace VERSION "${VERSION}" "\r" ""
