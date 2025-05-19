@@ -29,8 +29,9 @@ Keep in mind this is very early in program development. If you have a very speci
 - [Community](#community)
 - [Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
 - [Installation Methods](#installation-methods)
-  - [Unraid Users](#unraid-users)
+  - [Docker Users](#docker-users)
   - [macOS Installation](#macos-installation)
+  - [Unraid Users](#unraid-users)
   - [Alternative Methods](#alternative-methods)
 - [How It Works](#how-it-works)
 - [Web Interface](#web-interface)
@@ -73,23 +74,25 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 ## Installation Methods
 
-For comprehensive installation guides and detailed configuration, please visit our documentation:
+### 🐋 Docker Users
 
-- **[Complete Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html)**
+- **[Docker Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html)**
 
-### Unraid Users
+The most common and recommended way to install Huntarr.
 
-- **[Unraid Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#unraid-installation)**
-
-You can install Huntarr through the Unraid App Store or via command line.
-
-### macOS Installation
+### 🍏 macOS Installation
 
 - **[macOS Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#macos-installation)**
 
 Huntarr now offers native macOS support!
 
-### Alternative Methods
+### 🔵 Unraid Users
+
+- **[Unraid Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#unraid-installation)**
+
+You can install Huntarr through the Unraid App Store or via command line.
+
+### 🔧 Alternative Methods
 
 - **[Alternative Installation Methods](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#alternative-methods)**
 
