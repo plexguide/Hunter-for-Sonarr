@@ -65,9 +65,9 @@ Filename: "{sys}\sc.exe"; Parameters: "delete Huntarr"; Flags: runhidden; Check:
 ; Wait a moment for the service to be properly removed
 Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 3"; Flags: runhidden
 ; Install the service using SC.EXE directly
-Filename: "{sys}\sc.exe"; Parameters: "create Huntarr binPath= \"{app}\{#MyAppExeName}\" DisplayName= \"Huntarr Service\" start= auto"; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
+Filename: "{sys}\sc.exe"; Parameters: 'create Huntarr binPath= "{app}\{#MyAppExeName}" DisplayName= "Huntarr Service" start= auto'; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
 ; Set service description
-Filename: "{sys}\sc.exe"; Parameters: "description Huntarr \"Automated media collection management for Arr apps\""; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
+Filename: "{sys}\sc.exe"; Parameters: 'description Huntarr "Automated media collection management for Arr apps"'; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
 ; Start the service
 Filename: "{sys}\sc.exe"; Parameters: "start Huntarr"; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
 ; Grant permissions to the config directory and all subdirectories
