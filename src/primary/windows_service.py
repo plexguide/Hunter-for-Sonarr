@@ -83,6 +83,20 @@ class HuntarrService(win32serviceutil.ServiceFramework):
         try:
             logger.info('Starting Huntarr service...')
             
+            # Create a service-specific log file
+            service_log_file = os.path.join(logs_dir, 'huntarr_service_runtime.log')
+            try:
+                with open(service_log_file, 'a') as f:
+                    f.write(f"\n\n--- Service started at {time.ctime()} ---\n")
+                    f.write(f"Current directory: {os.getcwd()}\n")
+                    f.write(f"Python executable: {sys.executable}\n")
+                    if hasattr(sys, 'frozen'):
+                        f.write("Running as PyInstaller bundle\n")
+                    else:
+                        f.write("Running as Python script\n")
+            except Exception as e:
+                logger.error(f"Could not write to service log file: {e}")
+            
             # Import here to avoid import errors when installing the service
             import threading
             from primary.background import start_huntarr, stop_event, shutdown_threads
@@ -97,23 +111,51 @@ class HuntarrService(win32serviceutil.ServiceFramework):
             os.environ['PORT'] = '9705'
             os.environ['DEBUG'] = 'false'
             
-            # Start background tasks in a thread
-            background_thread = threading.Thread(
-                target=start_huntarr, 
-                name="HuntarrBackground", 
-                daemon=True
-            )
-            background_thread.start()
+            # Make sure config directories exist
+            try:
+                # Import config paths directly to avoid circular imports
+                from primary.utils.config_paths import ensure_directories
+                ensure_directories()
+                logger.info("Service verified config directories exist")
+            except Exception as e:
+                logger.error(f"Error ensuring config directories: {e}")
+                # Create basic directories as fallback
+                for dir_name in ['config', 'logs', 'config/stateful']:
+                    os.makedirs(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), dir_name), exist_ok=True)
             
-            # Start the web server in a thread
-            web_thread = threading.Thread(
-                target=lambda: serve(app, host='0.0.0.0', port=9705, threads=8),
-                name="HuntarrWebServer",
-                daemon=True
-            )
-            web_thread.start()
+            # Start background tasks in a thread with better error handling
+            try:
+                background_thread = threading.Thread(
+                    target=start_huntarr, 
+                    name="HuntarrBackground", 
+                    daemon=True
+                )
+                background_thread.start()
+                logger.info("Started background thread successfully")
+            except Exception as e:
+                logger.error(f"Failed to start background thread: {e}")
+                servicemanager.LogErrorMsg(f"Failed to start background thread: {e}")
+            
+            # Start the web server in a thread with better error handling
+            try:
+                web_thread = threading.Thread(
+                    target=lambda: serve(app, host='0.0.0.0', port=9705, threads=8),
+                    name="HuntarrWebServer",
+                    daemon=True
+                )
+                web_thread.start()
+                logger.info("Started web server thread successfully")
+            except Exception as e:
+                logger.error(f"Failed to start web server thread: {e}")
+                servicemanager.LogErrorMsg(f"Failed to start web server thread: {e}")
+                return  # Exit service if web server can't start
             
             logger.info('Huntarr service started successfully')
+            servicemanager.LogMsg(
+                servicemanager.EVENTLOG_INFORMATION_TYPE,
+                servicemanager.PYS_SERVICE_STARTED,
+                (self._svc_name_, 'Service is running')
+            )
             
             # Main service loop - keep running until stop event
             while self.is_running:
@@ -182,74 +224,181 @@ def install_service():
     if not is_admin():
         print("ERROR: Administrator privileges required to install the service.")
         print("Please right-click on the installer or command prompt and select 'Run as administrator'.")
-        print("Alternatively, you can run Huntarr directly without service installation using 'python main.py'.")
+        print("Alternatively, you can run Huntarr directly without service installation using '--no-service'.")
         return False
         
     try:
-        # Get the Python executable path for service registration
+        # Set up logging for service installation
+        log_file = os.path.join(logs_dir, 'service_install.log')
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        with open(log_file, 'a') as f:
+            f.write(f"\n\n--- Service installation started at {time.ctime()} ---\n")
+            f.write(f"Python executable: {sys.executable}\n")
+            f.write(f"Current directory: {os.getcwd()}\n")
+            
+        # Get the executable path - simplify based on whether we're running from frozen exe
+        if getattr(sys, 'frozen', False):
+            # We're running from a PyInstaller bundle
+            exe_path = os.path.abspath(sys.executable)
+            logger.info(f"Using PyInstaller executable for service: {exe_path}")
+            
+            with open(log_file, 'a') as f:
+                f.write(f"Executable path: {exe_path}\n")
+                f.write(f"Executable exists: {os.path.exists(exe_path)}\n")
+            
+            # Verify the executable exists
+            if not os.path.exists(exe_path):
+                logger.error(f"ERROR: Executable not found at {exe_path}")
+                print(f"ERROR: Executable not found at {exe_path}")
+                return False
+        else:
+            # We're running as a Python script
+            exe_path = sys.executable
+            script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'main.py'))
+            logger.info(f"Using Python for service: {exe_path} with script {script_path}")
+            
+            with open(log_file, 'a') as f:
+                f.write(f"Python path: {exe_path}\n")
+                f.write(f"Script path: {script_path}\n")
+                f.write(f"Python exists: {os.path.exists(exe_path)}\n")
+                f.write(f"Script exists: {os.path.exists(script_path)}\n")
+            
+            if not os.path.exists(script_path):
+                logger.error(f"ERROR: Script not found at {script_path}")
+                print(f"ERROR: Script not found at {script_path}")
+                return False
         python_exe = sys.executable
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'main.py'))
         
-        # Ensure service has necessary permissions
-        service_acl = win32security.SECURITY_ATTRIBUTES()
-        service_dacl = win32security.ACL()
-        service_sid = win32security.GetTokenInformation(
-            win32security.OpenProcessToken(win32api.GetCurrentProcess(), win32con.TOKEN_QUERY),
-            win32security.TokenUser
-        )[0]
-        service_dacl.AddAccessAllowedAce(win32security.ACL_REVISION, win32con.GENERIC_ALL, service_sid)
-        service_acl.SetSecurityDescriptorDacl(1, service_dacl, 0)
-        
-        # Install the service with proper permissions
-        win32serviceutil.InstallService(
-            pythonClassString="src.primary.windows_service.HuntarrService",
-            serviceName="Huntarr",
-            displayName="Huntarr Service",
-            description="Automated media collection management for Arr apps",
-            startType=win32service.SERVICE_AUTO_START,
-            exeName=python_exe,
-            exeArgs=f'"{script_path}" --service'
-        )
-        
-        # Set more permissive service permissions
-        try:
-            hscm = win32service.OpenSCManager(None, None, win32service.SC_MANAGER_ALL_ACCESS)
-            hs = win32service.OpenService(hscm, "Huntarr", win32service.SERVICE_ALL_ACCESS)
+        # Prepare service command - make it simple and reliable
+        if getattr(sys, 'frozen', False):
+            # We're running from a PyInstaller bundle - use direct path to executable
+            exe_cmd = f'"{exe_path}" --service'
+            with open(log_file, 'a') as f:
+                f.write(f"Service command (frozen): {exe_cmd}\n")
+        else:
+            # We're running as a Python script - use pythonw.exe to avoid console window
+            # Use pythonw for service to avoid console window
+            pythonw_exe = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
+            if not os.path.exists(pythonw_exe):
+                pythonw_exe = sys.executable  # Fall back to regular python if pythonw not found
             
-            # Configure service to allow interaction with desktop
-            service_config = win32service.QueryServiceConfig(hs)
-            win32service.ChangeServiceConfig(
-                hs,
-                service_config[0],  # Service type
-                service_config[1],  # Start type
-                service_config[2] | win32service.SERVICE_INTERACTIVE_PROCESS,  # Error control & flags
-                service_config[3],  # Binary path
-                service_config[4],  # Load order group
-                service_config[5],  # Tag ID
-                service_config[6],  # Dependencies
-                service_config[7],  # Service start name
-                service_config[8],  # Password
-                service_config[9]   # Display name
-            )
-            win32service.CloseServiceHandle(hs)
-            win32service.CloseServiceHandle(hscm)
-        except Exception as e:
-            logger.warning(f"Could not set interactive permissions: {e}")
-            # Continue anyway, as this is not critical
+            exe_cmd = f'"{pythonw_exe}" "{script_path}" --service'
+            with open(log_file, 'a') as f:
+                f.write(f"Service command (script): {exe_cmd}\n")
         
-        # Start the service
+        # First try to remove any existing service
         try:
-            win32serviceutil.StartService("Huntarr")
-            print("Huntarr service installed and started successfully.")
+            # Try to stop and remove existing service if it exists
+            win32serviceutil.StopService("Huntarr")
+            logger.info("Stopped existing Huntarr service")
+            time.sleep(2)  # Wait for service to fully stop
+            win32serviceutil.RemoveService("Huntarr")
+            logger.info("Removed existing Huntarr service")
+            time.sleep(1)  # Brief pause after removing service
         except Exception as e:
+            # This is expected if the service doesn't exist or is already stopped
+            logger.info(f"Note: {e} (this is usually fine if the service wasn't already installed)")
+        
+        with open(log_file, 'a') as f:
+            f.write("Attempting service installation...\n")
+        
+        # Install the service - use a simpler approach with direct win32serviceutil call
+        # This is more reliable than the lower level SC commands
+        try:
+            # Use the actual module name and class for service registration
+            if getattr(sys, 'frozen', False):
+                # For PyInstaller bundle, just use the executable and command line args
+                win32serviceutil.InstallService(
+                    None,                # No Python class string needed for EXE
+                    "Huntarr",           # Service name
+                    "Huntarr Service",   # Display name
+                    startType=win32service.SERVICE_AUTO_START,
+                    exeName=exe_path,    # Path to the executable
+                    exeArgs="--service", # Command line args
+                    description="Automated media collection management for Arr apps"
+                )
+                with open(log_file, 'a') as f:
+                    f.write(f"Service installed (frozen exe): {exe_path} --service\n")
+            else:
+                # For Python script, register with module.Class format
+                pythonw_exe = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
+                if not os.path.exists(pythonw_exe):
+                    pythonw_exe = sys.executable  # Fall back to regular python
+                
+                win32serviceutil.InstallService(
+                    "src.primary.windows_service.HuntarrService", # Python class
+                    "Huntarr",                               # Service name 
+                    "Huntarr Service",                       # Display name
+                    startType=win32service.SERVICE_AUTO_START,
+                    exeName=pythonw_exe,                     # Python interpreter
+                    exeArgs=f'"{script_path}" --service',   # Script path and args
+                    description="Automated media collection management for Arr apps"
+                )
+                with open(log_file, 'a') as f:
+                    f.write(f"Service installed (script): {pythonw_exe} \"{script_path}\" --service\n")
+                    
+            logger.info("Huntarr service installed successfully")
+            with open(log_file, 'a') as f:
+                f.write("Service installation succeeded!\n")
+        except Exception as e:
+            logger.error(f"Service installation failed: {e}")
+            with open(log_file, 'a') as f:
+                f.write(f"SERVICE INSTALLATION FAILED: {e}\n")
+            print(f"Service installation failed: {e}")
+            return False
+        
+        # Start the service with better error handling
+        try:
+            # Try to start the service with a timeout
+            logger.info("Attempting to start Huntarr service...")
+            with open(log_file, 'a') as f:
+                f.write("Attempting to start the service...\n")
+                
+            win32serviceutil.StartService("Huntarr")
+            
+            # Wait a moment to verify service startup
+            time.sleep(2)
+            
+            # Check if service is actually running
+            is_running = False
+            try:
+                status = win32serviceutil.QueryServiceStatus("Huntarr")
+                is_running = status[1] == win32service.SERVICE_RUNNING
+                
+                with open(log_file, 'a') as f:
+                    f.write(f"Service status: {status[1]} (Running={is_running})\n")
+            except Exception as e:
+                logger.error(f"Could not query service status: {e}")
+                with open(log_file, 'a') as f:
+                    f.write(f"Could not query service status: {e}\n")
+            
+            if is_running:
+                print("Huntarr service installed and started successfully.")
+                logger.info("Huntarr service installed and started successfully")
+                with open(log_file, 'a') as f:
+                    f.write("Service started successfully!\n")
+            else:
+                print("Service installed but may not have started correctly.")
+                print("Check Windows Service Manager or try the 'Run without service' option.")
+                logger.warning("Service installed but may not be running correctly.")
+                with open(log_file, 'a') as f:
+                    f.write("WARNING: Service installed but may not be running correctly.\n")
+        except Exception as e:
+            logger.error(f"Service failed to start: {e}")
+            with open(log_file, 'a') as f:
+                f.write(f"SERVICE START FAILED: {e}\n")
             print(f"Service installed but failed to start automatically: {e}")
-            print("You can try starting it manually from Services control panel,")
-            print("or run Huntarr directly using 'python main.py'.")
+            print("You can try:")
+            print("1. Starting it manually from Services control panel")
+            print("2. Running Huntarr directly with the 'Run without service' option")
+            print("3. Check the logs in: " + log_file)
         
         return True
     except Exception as e:
+        logger.error(f"Error installing Huntarr service: {e}")
         print(f"Error installing Huntarr service: {e}")
-        print("Fallback: You can run Huntarr directly without service installation using 'python main.py'.")
+        print("Fallback: You can run Huntarr directly using the 'Run without service' option.")
         return False
 
 
@@ -317,12 +466,17 @@ def run_as_cli():
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
-        if sys.argv[1] == 'install':
+        if sys.argv[1] == '--install-service' or sys.argv[1] == 'install':
             install_service()
-        elif sys.argv[1] == 'remove':
+        elif sys.argv[1] == '--remove-service' or sys.argv[1] == 'remove':
             remove_service()
-        elif sys.argv[1] == 'cli':
+        elif sys.argv[1] == '--no-service' or sys.argv[1] == 'cli':
             run_as_cli()
+        elif sys.argv[1] == '--service':
+            # Service mode - let win32serviceutil handle it directly
+            servicemanager.Initialize()
+            servicemanager.PrepareToHostSingle(HuntarrService)
+            servicemanager.StartServiceCtrlDispatcher()
         else:
             win32serviceutil.HandleCommandLine(HuntarrService)
     else:
