@@ -41,14 +41,18 @@
 
 ; General settings
 Name "${APPNAME}"
-OutFile "installer\Huntarr_Setup.exe"
+OutFile "installer\${APPNAME}_Setup.exe"
 InstallDir "$PROGRAMFILES64\${APPNAME}"
 InstallDirRegKey HKLM "Software\${APPNAME}" "Install_Dir"
 RequestExecutionLevel admin ; Request admin privileges
 
 ; Interface settings
-!define MUI_ICON "frontend\static\logo\huntarr.ico"
-!define MUI_UNICON "frontend\static\logo\huntarr.ico"
+!ifdef PROJECT_ROOT
+  !define MUI_ICON "${PROJECT_ROOT}\frontend\static\logo\huntarr.ico"
+  !define MUI_UNICON "${PROJECT_ROOT}\frontend\static\logo\huntarr.ico"
+!else
+  !error "PROJECT_ROOT was not defined on the command line."
+!endif
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${EXENAME}"
 !define MUI_FINISHPAGE_RUN_PARAMETERS "--no-service"
