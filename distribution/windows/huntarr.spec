@@ -2,10 +2,36 @@
 import os
 import sys
 import pathlib
+import glob
 
 # Find the project root directory from the spec file location
 spec_dir = pathlib.Path(os.path.dirname(os.path.abspath(SPECPATH)))
 project_dir = spec_dir.parent.parent  # Go up two levels to project root
+
+# In GitHub Actions, the current working directory is already the project root
+# Check if we're in GitHub Actions by looking at the environment
+if os.environ.get('GITHUB_ACTIONS'):
+    # Use the current directory instead
+    project_dir = pathlib.Path(os.getcwd())
+
+# Print current directory and list files for debugging
+print(f"Current directory: {os.getcwd()}")
+print(f"Project directory: {project_dir}")
+print("Files in current directory:")
+for file in os.listdir(os.getcwd()):
+    print(f"  {file}")
+
+# Find main.py file
+main_py_path = project_dir / 'main.py'
+if not main_py_path.exists():
+    main_py_files = list(glob.glob(f"{project_dir}/**/main.py", recursive=True))
+    if main_py_files:
+        main_py_path = pathlib.Path(main_py_files[0])
+        print(f"Found main.py at: {main_py_path}")
+    else:
+        print("ERROR: main.py not found!")
+        # Use a placeholder that will cause an error with a clearer message
+        main_py_path = project_dir / 'main.py'
 
 block_cipher = None
 
@@ -24,8 +50,8 @@ if os.path.exists(str(project_dir / 'assets')):
     datas.append((str(project_dir / 'assets'), 'assets'))
 
 a = Analysis(
-    [str(project_dir / 'main.py')],
-    pathex=[],
+    [str(main_py_path)],
+    pathex=[str(project_dir)],
     binaries=[],
     datas=datas,
     hiddenimports=[
