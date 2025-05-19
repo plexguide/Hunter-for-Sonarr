@@ -1280,7 +1280,7 @@ const SettingsForms = {
                     <p class="setting-help" style="margin-left: -3ch !important;">
                         <strong>Login Mode:</strong> Standard login required for all connections<br>
                         <strong>Local Bypass Mode:</strong> Only local network connections (192.168.x.x, 10.x.x.x) bypass login<br>
-                        <strong>No Login Mode:</strong> Completely disable authentication when running behind your own reverse proxy
+                        <strong>No Login Mode:</strong> Completely disable authentication
                     </p>
                     <p class="setting-help warning" style="color: #ff6b6b; margin-left: -3ch !important;"><strong>Warning:</strong> Only use No Login Mode if your reverse proxy (e.g., Cloudflare, Nginx) is properly securing access!</p>
                 </div>
