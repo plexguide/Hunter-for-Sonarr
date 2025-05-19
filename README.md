@@ -28,15 +28,16 @@ Keep in mind this is very early in program development. If you have a very speci
 - [Other Projects](#other-projects)
 - [Community](#community)
 - [Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
+- [Installation Methods](#installation-methods)
+  - [Docker Users](#docker-users)
+  - [macOS Installation](#macos-installation)
+  - [Unraid Users](#unraid-users)
+  - [Alternative Methods](#alternative-methods)
 - [How It Works](#how-it-works)
 - [Web Interface](#web-interface)
   - [How to Access](#how-to-access)
   - [Web UI Settings](#web-ui-settings)
   - [Volume Mapping](#volume-mapping)
-- [Installation Methods](#installation-methods)
-  - [Docker Run](#docker-run)
-  - [Docker Compose](#docker-compose)
-  - [Unraid Users](#unraid-users)
 - [Tips](#tips)
 - [Troubleshooting](#troubleshooting)
 - [Change Log](#change-log)
@@ -45,7 +46,7 @@ Keep in mind this is very early in program development. If you have a very speci
 
 This application continually searches your media libraries for missing content and items that need quality upgrades. It automatically triggers searches for both missing items and those below your quality cutoff. It's designed to run continuously while being gentle on your indexers, helping you gradually complete your media collection with the best available quality.
 
-For detailed documentation, please visit our [Wiki](https://github.com/plexguide/Huntarr.io/wiki).
+For detailed documentation, please visit our <a href="https://plexguide.github.io/Huntarr.io/" target="_blank" rel="noopener noreferrer">Wiki</a>.
 
 ## Other Projects
 
@@ -70,6 +71,30 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 ## Indexers Approving of Huntarr:
 * https://ninjacentral.co.za
+
+## Installation Methods
+
+### 🐋 Docker Users
+
+- **<a href="https://plexguide.github.io/Huntarr.io/getting-started/installation.html" target="_blank" rel="noopener noreferrer">Docker Installation Guide</a>**
+
+The most common and recommended way to install Huntarr.
+
+### 🍏 macOS Installation
+
+- **<a href="https://plexguide.github.io/Huntarr.io/getting-started/installation.html#macos-installation" target="_blank" rel="noopener noreferrer">macOS Installation Guide</a>**
+
+Huntarr now offers native macOS support!
+
+### 🔵 Unraid Users
+
+- **<a href="https://plexguide.github.io/Huntarr.io/getting-started/installation.html#unraid-installation" target="_blank" rel="noopener noreferrer">Unraid Installation Guide</a>**
+
+You can install Huntarr through the Unraid App Store or via command line.
+
+### 🔧 Alternative Methods
+
+- **<a href="https://plexguide.github.io/Huntarr.io/getting-started/installation.html#alternative-methods" target="_blank" rel="noopener noreferrer">Alternative Installation Methods</a>**
 
 ## How It Works
 
@@ -146,86 +171,6 @@ To ensure data persistence, make sure you map the `/config` directory to a persi
 ```
 
 ---
-
-## Installation Methods
-
-### Docker Run
-
-The simplest way to run Huntarr is via Docker (all configuration is done via the web UI):
-
-```bash
-# Option 1: DockerHub
-docker run -d --name huntarr \
-  --restart always \
-  -p 9705:9705 \
-  -v /your-path/huntarr:/config \
-  -e TZ=America/New_York \
-  huntarr/huntarr:latest
-
-# Option 2: GitHub Container Registry
-docker run -d --name huntarr \
-  --restart always \
-  -p 9705:9705 \
-  -v /your-path/huntarr:/config \
-  -e TZ=America/New_York \
-  ghcr.io/plexguide/huntarr:latest
-```
-
-To check on the status of the program, you can use the web interface at http://YOUR_SERVER_IP:9705 or check the logs with:
-```bash
-docker logs huntarr
-```
-
-### Docker Compose
-
-For those who prefer Docker Compose, add this to your `docker-compose.yml` file:
-
-```yaml
-services:
-  huntarr:
-    # Option 1: DockerHub
-    image: huntarr/huntarr:latest
-    # Option 2: GitHub Container Registry
-    # image: ghcr.io/plexguide/huntarr:latest
-    container_name: huntarr
-    restart: always
-    ports:
-      - "9705:9705"
-    volumes:
-      - /your-path/huntarr:/config
-    environment:
-      - TZ=America/New_York
-```
-
-Then run:
-
-```bash
-docker-compose up -d huntarr
-```
-
-### Unraid Users
-
-You can install Huntarr using the Unraid App Store.
-
-If not, you can run this from Command Line in Unraid:
-
-```bash
-# Option 1: DockerHub
-docker run -d --name huntarr \
-  --restart always \
-  -p 9705:9705 \
-  -v /mnt/user/appdata/huntarr:/config \
-  -e TZ=America/New_York \
-  huntarr/huntarr:latest
-  
-# Option 2: GitHub Container Registry
-docker run -d --name huntarr \
-  --restart always \
-  -p 9705:9705 \
-  -v /mnt/user/appdata/huntarr:/config \
-  -e TZ=America/New_York \
-  ghcr.io/plexguide/huntarr:latest
-```
 
 ## The Perfect Pair: Huntarr & Cleanuperr
 
