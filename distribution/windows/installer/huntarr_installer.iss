@@ -42,10 +42,8 @@ RestartApplications=no
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
-Name: "installservice"; Description: "Install as Windows Service (Requires Administrator Access)"; GroupDescription: "Windows Service"; Flags: checkedonce
-Name: "createshortcut"; Description: "Create 'Run Without Service' shortcut"; GroupDescription: "Fallback Options"; Flags: checkedonce
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "autostart"; Description: "Start Huntarr automatically when Windows starts"; GroupDescription: "Startup options:"; Flags: checkedonce
 
 [Files]
 Source: "dist\Huntarr\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -53,23 +51,27 @@ Source: "dist\Huntarr\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 Source: "LICENSE"; DestDir: "{app}\config"; Flags: ignoreversion; AfterInstall: CreateConfigDirs
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+; Create Start Menu shortcuts
+Name: "{group}\{#MyAppName}"; Filename: "http://localhost:9705"; IconFilename: "{app}\{#MyAppExeName}"
+Name: "{group}\Run {#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--no-service"; Flags: runminimized
+Name: "{group}\Open {#MyAppName} Web Interface"; Filename: "http://localhost:9705"; IconFilename: "{app}\{#MyAppExeName}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-Name: "{commondesktop}\{#MyAppName} (No Service)"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--no-service"; Tasks: createshortcut
+
+; Create Desktop shortcut if requested
+Name: "{commondesktop}\{#MyAppName}"; Filename: "http://localhost:9705"; IconFilename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+
+; Add startup shortcut if the user selected that option
+Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--no-service"; Flags: runminimized; Tasks: autostart
 
 [Run]
-; First, remove any existing service
+; Make sure any existing service is removed (for upgrades from service to non-service mode)
 Filename: "{app}\{#MyAppExeName}"; Parameters: "--remove-service"; Flags: runhidden; Check: IsAdminLoggedOn
 ; Wait a moment for the service to be properly removed
 Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 3"; Flags: runhidden
-; Install the service
-Filename: "{app}\{#MyAppExeName}"; Parameters: "--install-service"; Description: "Install Huntarr as a Windows Service"; Tasks: installservice; Flags: runhidden; Check: IsAdminLoggedOn
 ; Grant permissions to the config directory and all subdirectories
 Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config"" /grant Everyone:(OI)(CI)F /T"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
 Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\logs"" /grant Everyone:(OI)(CI)F /T"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
 Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\frontend"" /grant Everyone:(OI)(CI)F /T"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-
 ; Ensure proper permissions for each important subdirectory (in case the recursive permission failed)
 Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\logs"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
 Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\stateful"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
@@ -78,30 +80,25 @@ Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\settings"" /gra
 Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\history"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
 Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\frontend\templates"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
 Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\frontend\static"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-; Start the service
-Filename: "{sys}\net.exe"; Parameters: "start Huntarr"; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
-; Launch Huntarr
-Filename: "http://localhost:9705"; Description: "Open Huntarr Web Interface"; Flags: postinstall shellexec nowait
-; No need for batch file creation - using direct shortcut instead
+; Launch Huntarr directly after installation
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--no-service"; Description: "Start Huntarr"; Flags: nowait postinstall
+
+; Open web interface after Huntarr has started (with a delay to let the app initialize)
+Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 5 && start http://localhost:9705"; Description: "Open Huntarr Web Interface"; Flags: nowait postinstall shellexec
+
 ; Final verification of directory permissions
 Filename: "{sys}\cmd.exe"; Parameters: "/c echo Verifying installation permissions..."; Flags: runhidden shellexec postinstall; AfterInstall: VerifyInstallation
 
 ; Verify executable exists before attempting to run it
 Filename: "{sys}\cmd.exe"; Parameters: "/c if exist ""{app}\{#MyAppExeName}"" (echo Executable found) else (echo ERROR: Executable not found)"; Flags: runhidden
 
-; Launch Huntarr directly if service installation skipped or failed
-Filename: "{app}\{#MyAppExeName}"; Parameters: "--no-service"; Description: "Run Huntarr without service"; Flags: nowait postinstall skipifsilent; Check: not IsTaskSelected('installservice') or not IsAdminLoggedOn
-
-; Extra log for debugging service startup issues
-Filename: "{sys}\cmd.exe"; Parameters: "/c echo Service startup logging enabled > ""{app}\service_debug.log"""; Flags: runhidden; Tasks: installservice
-
 [UninstallRun]
-; Stop the service first
-Filename: "{sys}\net.exe"; Parameters: "stop Huntarr"; Flags: runhidden
-; Wait a moment for the service to stop
-Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 3"; Flags: runhidden
-; Then remove it
-Filename: "{app}\{#MyAppExeName}"; Parameters: "--remove-service"; Flags: runhidden
+; Kill any running instances of Huntarr
+Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM {#MyAppExeName}"; Flags: runhidden
+; Wait a moment for processes to terminate
+Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 2"; Flags: runhidden
+; Remove the Huntarr startup entry if it exists
+Filename: "{sys}\cmd.exe"; Parameters: "/c if exist \"{userstartup}\{#MyAppName}.lnk\" del /f \"{userstartup}\{#MyAppName}.lnk\""; Flags: runhidden
 
 [Code]
 procedure CreateConfigDirs;
