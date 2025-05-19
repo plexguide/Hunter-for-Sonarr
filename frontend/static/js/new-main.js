@@ -2041,6 +2041,10 @@ let huntarrUI = {
             })
             .then(data => {
                 if (data.success && data.stats) {
+                    // Store raw stats data globally for tooltips to access
+                    window.mediaStats = data.stats;
+                    
+                    // Update display
                     this.updateStatsDisplay(data.stats);
                 } else {
                     console.error('Failed to load statistics:', data.message || 'Unknown error');
