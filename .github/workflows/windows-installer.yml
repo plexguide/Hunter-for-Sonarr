@@ -88,8 +88,12 @@ jobs:
       
       - name: Build installer with Inno Setup
         run: |
+          # Add Inno Setup to the PATH
           $env:PATH += ";C:\Program Files (x86)\Inno Setup 6"
-          mkdir -p installer
+          
+          # Create installer directory (using -Force to avoid errors if it already exists)
+          New-Item -Path "installer" -ItemType Directory -Force
+          
           # Use the dedicated build script for installer creation
           python distribution/windows/main.py --installer-only
       

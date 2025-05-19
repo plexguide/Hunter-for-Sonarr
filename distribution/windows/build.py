@@ -67,12 +67,38 @@ def build_installer():
     
     # Create installer directory if it doesn't exist
     installer_dir = ROOT_DIR / "installer"
-    installer_dir.mkdir(exist_ok=True)
+    os.makedirs(str(installer_dir), exist_ok=True)
+    
+    # Make sure the dist directory exists and has the expected structure
+    dist_dir = ROOT_DIR / "dist" / "Huntarr"
+    resources_dir = dist_dir / "resources"
+    scripts_dir = dist_dir / "scripts"
+    
+    os.makedirs(str(resources_dir), exist_ok=True)
+    os.makedirs(str(scripts_dir), exist_ok=True)
+    
+    # Copy resources and scripts if they don't exist in the dist directory
+    src_resources = SCRIPT_DIR / "resources"
+    src_scripts = SCRIPT_DIR / "scripts"
+    
+    if src_resources.exists():
+        # Copy all files from resources directory
+        for src_file in src_resources.glob("*"):
+            dst_file = resources_dir / src_file.name
+            if src_file.is_file():
+                shutil.copy2(str(src_file), str(dst_file))
+    
+    if src_scripts.exists():
+        # Copy all files from scripts directory
+        for src_file in src_scripts.glob("*"):
+            dst_file = scripts_dir / src_file.name
+            if src_file.is_file():
+                shutil.copy2(str(src_file), str(dst_file))
     
     # Copy the installer script to the root
     installer_script = SCRIPT_DIR / "installer" / "huntarr_installer.iss"
     target_script = ROOT_DIR / "huntarr_installer.iss"
-    shutil.copy2(installer_script, target_script)
+    shutil.copy2(str(installer_script), str(target_script))
     
     # Run the Inno Setup compiler
     run_command([inno_compiler, str(target_script)])
