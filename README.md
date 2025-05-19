@@ -28,15 +28,15 @@ Keep in mind this is very early in program development. If you have a very speci
 - [Other Projects](#other-projects)
 - [Community](#community)
 - [Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
+- [Installation Methods](#installation-methods)
+  - [Unraid Users](#unraid-users)
+  - [macOS Installation](#macos-installation)
+  - [Alternative Methods](#alternative-methods)
 - [How It Works](#how-it-works)
 - [Web Interface](#web-interface)
   - [How to Access](#how-to-access)
   - [Web UI Settings](#web-ui-settings)
   - [Volume Mapping](#volume-mapping)
-- [Installation Methods](#installation-methods)
-  - [Docker Run](#docker-run)
-  - [Docker Compose](#docker-compose)
-  - [Unraid Users](#unraid-users)
 - [Tips](#tips)
 - [Troubleshooting](#troubleshooting)
 - [Change Log](#change-log)
@@ -70,6 +70,28 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 ## Indexers Approving of Huntarr:
 * https://ninjacentral.co.za
+
+## Installation Methods
+
+For comprehensive installation guides and detailed configuration, please visit our documentation:
+
+- **[Complete Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html)**
+
+### Unraid Users
+
+- **[Unraid Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#unraid-installation)**
+
+You can install Huntarr through the Unraid App Store or via command line.
+
+### macOS Installation
+
+- **[macOS Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#macos-installation)**
+
+Huntarr now offers native macOS support!
+
+### Alternative Methods
+
+- **[Alternative Installation Methods](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#alternative-methods)**
 
 ## How It Works
 
@@ -146,61 +168,6 @@ To ensure data persistence, make sure you map the `/config` directory to a persi
 ```
 
 ---
-
-## Installation Methods
-
-For comprehensive installation guides and detailed configuration, please visit our documentation:
-
-- **[Complete Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html)**
-
-### Docker Run
-
-The simplest way to run Huntarr is via Docker:
-
-```bash
-docker run -d --name huntarr \
-  --restart always \
-  -p 9705:9705 \
-  -v /your-path/huntarr:/config \
-  -e TZ=America/New_York \
-  huntarr/huntarr:latest
-```
-
-View the web interface at `http://YOUR_SERVER_IP:9705`
-
-### Docker Compose
-
-For Docker Compose users, add this to your `docker-compose.yml` file:
-
-```yaml
-services:
-  huntarr:
-    image: huntarr/huntarr:latest
-    container_name: huntarr
-    restart: always
-    ports:
-      - "9705:9705"
-    volumes:
-      - /your-path/huntarr:/config
-    environment:
-      - TZ=America/New_York
-```
-
-### Unraid Users
-
-- **[Unraid Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#unraid-installation)**
-
-You can install Huntarr through the Unraid App Store or via command line.
-
-### macOS Installation
-
-- **[macOS Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#macos-installation)**
-
-Huntarr now offers native macOS support!
-
-### Alternative Methods
-
-- **[Alternative Installation Methods](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#alternative-methods)**
 
 ## The Perfect Pair: Huntarr & Cleanuperr
 
