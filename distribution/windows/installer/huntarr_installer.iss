@@ -59,29 +59,27 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: 
 Name: "{commondesktop}\{#MyAppName} (No Service)"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--no-service"; Tasks: createshortcut
 
 [Run]
-; First, remove any existing service using SC directly
-Filename: "{sys}\sc.exe"; Parameters: "stop Huntarr"; Flags: runhidden; Check: IsAdminLoggedOn
-Filename: "{sys}\sc.exe"; Parameters: "delete Huntarr"; Flags: runhidden; Check: IsAdminLoggedOn
+; First, remove any existing service
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--remove-service"; Flags: runhidden; Check: IsAdminLoggedOn
 ; Wait a moment for the service to be properly removed
 Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 3"; Flags: runhidden
-; Install the service using SC.EXE directly
-Filename: "{sys}\sc.exe"; Parameters: 'create Huntarr binPath= "{app}\{#MyAppExeName}" DisplayName= "Huntarr Service" start= auto'; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
-; Set service description
-Filename: "{sys}\sc.exe"; Parameters: "description Huntarr ""Automated media collection management for Arr apps"""; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
-; Start the service
-Filename: "{sys}\sc.exe"; Parameters: "start Huntarr"; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
+; Install the service
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--install-service"; Description: "Install Huntarr as a Windows Service"; Tasks: installservice; Flags: runhidden; Check: IsAdminLoggedOn
 ; Grant permissions to the config directory and all subdirectories
-Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\config" /grant Everyone:(OI)(CI)F /T'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\logs" /grant Everyone:(OI)(CI)F /T'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\frontend" /grant Everyone:(OI)(CI)F /T'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config"" /grant Everyone:(OI)(CI)F /T"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\logs"" /grant Everyone:(OI)(CI)F /T"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\frontend"" /grant Everyone:(OI)(CI)F /T"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+
 ; Ensure proper permissions for each important subdirectory (in case the recursive permission failed)
-Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\config\logs" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\config\stateful" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\config\user" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\config\settings" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\config\history" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\frontend\templates" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
-Filename: "{sys}\cmd.exe"; Parameters: '/c icacls "{app}\frontend\static" /grant Everyone:(OI)(CI)F'; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\logs"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\stateful"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\user"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\settings"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\config\history"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\frontend\templates"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+Filename: "{sys}\cmd.exe"; Parameters: "/c icacls ""{app}\frontend\static"" /grant Everyone:(OI)(CI)F"; Flags: runhidden shellexec; Check: IsAdminLoggedOn
+; Start the service
+Filename: "{sys}\net.exe"; Parameters: "start Huntarr"; Flags: runhidden; Tasks: installservice; Check: IsAdminLoggedOn
 ; Launch Huntarr
 Filename: "http://localhost:9705"; Description: "Open Huntarr Web Interface"; Flags: postinstall shellexec nowait
 ; No need for batch file creation - using direct shortcut instead
@@ -89,21 +87,21 @@ Filename: "http://localhost:9705"; Description: "Open Huntarr Web Interface"; Fl
 Filename: "{sys}\cmd.exe"; Parameters: "/c echo Verifying installation permissions..."; Flags: runhidden shellexec postinstall; AfterInstall: VerifyInstallation
 
 ; Verify executable exists before attempting to run it
-Filename: "{sys}\cmd.exe"; Parameters: '/c if exist "{app}\{#MyAppExeName}" (echo Executable found) else (echo ERROR: Executable not found)'; Flags: runhidden
+Filename: "{sys}\cmd.exe"; Parameters: "/c if exist ""{app}\{#MyAppExeName}"" (echo Executable found) else (echo ERROR: Executable not found)"; Flags: runhidden
 
 ; Launch Huntarr directly if service installation skipped or failed
 Filename: "{app}\{#MyAppExeName}"; Parameters: "--no-service"; Description: "Run Huntarr without service"; Flags: nowait postinstall skipifsilent; Check: not IsTaskSelected('installservice') or not IsAdminLoggedOn
 
 ; Extra log for debugging service startup issues
-Filename: "{sys}\cmd.exe"; Parameters: '/c echo Service startup logging enabled > "{app}\service_debug.log"'; Flags: runhidden; Tasks: installservice
+Filename: "{sys}\cmd.exe"; Parameters: "/c echo Service startup logging enabled > ""{app}\service_debug.log"""; Flags: runhidden; Tasks: installservice
 
 [UninstallRun]
 ; Stop the service first
-Filename: "{sys}\sc.exe"; Parameters: "stop Huntarr"; Flags: runhidden
+Filename: "{sys}\net.exe"; Parameters: "stop Huntarr"; Flags: runhidden
 ; Wait a moment for the service to stop
 Filename: "{sys}\cmd.exe"; Parameters: "/c timeout /t 3"; Flags: runhidden
 ; Then remove it
-Filename: "{sys}\sc.exe"; Parameters: "delete Huntarr"; Flags: runhidden
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--remove-service"; Flags: runhidden
 
 [Code]
 procedure CreateConfigDirs;
