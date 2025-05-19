@@ -2918,8 +2918,25 @@ let huntarrUI = {
 };
 
 // Initialize when document is ready
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
     huntarrUI.init();
+    
+    // Initialize our enhanced UI features
+    if (typeof StatsTooltips !== 'undefined') {
+        StatsTooltips.init();
+    }
+    
+    if (typeof CardHoverEffects !== 'undefined') {
+        CardHoverEffects.init();
+    }
+    
+    if (typeof CircularProgress !== 'undefined') {
+        CircularProgress.init();
+    }
+    
+    if (typeof BackgroundPattern !== 'undefined') {
+        BackgroundPattern.init();
+    }
 });
 
 // Expose huntarrUI to the global scope for access by app modules
