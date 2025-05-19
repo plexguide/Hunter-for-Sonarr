@@ -119,7 +119,15 @@ function showStatsTooltip(e) {
     const target = e.currentTarget;
     const app = target.getAttribute('data-app');
     const type = target.getAttribute('data-type');
-    const rawValue = parseInt(target.textContent.replace(/[^0-9]/g, '') || '0');
+    
+    // Try to get exact value from API data if available via window.mediaStats
+    let rawValue;
+    if (window.mediaStats && window.mediaStats[app] && typeof window.mediaStats[app][type] !== 'undefined') {
+        rawValue = window.mediaStats[app][type];
+    } else {
+        // Fallback to parsing from display text
+        rawValue = parseInt(target.textContent.replace(/[^0-9]/g, '') || '0');
+    }
     
     // App-specific details with proper color coding
     const appDetails = {
@@ -169,10 +177,6 @@ function showStatsTooltip(e) {
         <div class="tooltip-row">
             <span class="tooltip-label">Monthly average:</span>
             <span class="tooltip-value">${monthlyAvg}</span>
-        </div>
-        
-        <div class="tooltip-date">
-            Stats collected since: ${startTime.toLocaleDateString()}
         </div>
     `;
     
