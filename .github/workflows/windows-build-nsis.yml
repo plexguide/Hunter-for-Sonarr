@@ -96,11 +96,12 @@ jobs:
         & "C:\Program Files (x86)\NSIS\makensis.exe" $MakensisArgs
         
         # Check if installer was created
-        $installerPath = "distribution\windows\installer\installer\Huntarr_Setup.exe"
+        $version = (Get-Content version.txt).Trim()
+        $installerPath = "distribution\windows\installer\installer\Huntarr-${version}-win.exe"
         if (Test-Path $installerPath) {
             Write-Host "Installer created successfully at $installerPath"
             # Copy to expected upload location
-            Copy-Item -Path $installerPath -Destination "installer\Huntarr_Setup.exe" -Force
+            Copy-Item -Path $installerPath -Destination "installer\Huntarr-${version}-win.exe" -Force
         } else {
             Write-Error "Installer was not created. Check the logs above for errors."
             exit 1
@@ -113,12 +114,12 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: huntarr-installer
-        path: installer/Huntarr_Setup.exe
+        path: installer/Huntarr-*-win.exe
         
     - name: Upload to release
       if: steps.meta.outputs.IS_TAG == 'true'
       uses: softprops/action-gh-release@v1
       with:
-        files: installer/Huntarr_Setup.exe
+        files: installer/Huntarr-*-win.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

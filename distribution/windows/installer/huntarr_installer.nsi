@@ -41,7 +41,8 @@
 
 ; General settings
 Name "${APPNAME}"
-OutFile "installer\${APPNAME}_Setup.exe"
+!echo "Creating installer: Huntarr-${VERSION}-win.exe"
+OutFile "installer\Huntarr-${VERSION}-win.exe"
 InstallDir "$PROGRAMFILES64\${APPNAME}"
 InstallDirRegKey HKLM "Software\${APPNAME}" "Install_Dir"
 RequestExecutionLevel admin ; Request admin privileges
