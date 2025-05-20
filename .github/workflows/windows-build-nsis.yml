@@ -1,8 +1,14 @@
 name: Windows Build with NSIS
 
+# Add permissions needed for creating releases
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ "main", "dev", "win-*" ]
+    tags:
+      - "*"  # This will trigger on any tag push
   pull_request:
     branches: [ "main", "dev" ]
   workflow_dispatch:
@@ -13,6 +19,20 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    - name: Extract metadata
+      id: meta
+      shell: bash
+      run: |
+        if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "IS_TAG=true" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=$(cat version.txt)" >> $GITHUB_OUTPUT
+          echo "IS_TAG=false" >> $GITHUB_OUTPUT
+        fi
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -94,3 +114,11 @@ jobs:
       with:
         name: huntarr-installer
         path: installer/Huntarr_Setup.exe
+        
+    - name: Upload to release
+      if: steps.meta.outputs.IS_TAG == 'true'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: installer/Huntarr_Setup.exe
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
