@@ -62,8 +62,8 @@ jobs:
 
         # Prepare arguments for makensis.exe
         $MakensisArgs = @(
-            "/DVERSIONFILE=${AbsVersionFile}",
-            "/DPROJECT_ROOT=${PWD.Path}",
+            "/DVERSIONFILE=$AbsVersionFile",
+            "/DPROJECT_ROOT=$($PWD.Path)",
             "distribution\windows\installer\huntarr_installer.nsi"
         )
         
