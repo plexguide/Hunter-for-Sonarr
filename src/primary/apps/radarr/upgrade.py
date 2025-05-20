@@ -12,7 +12,7 @@ from src.primary.apps.radarr import api as radarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
-from src.primary.settings_manager import get_advanced_setting
+from src.primary.settings_manager import get_advanced_setting, get_dry_run_mode
 
 # Get logger for the app
 radarr_logger = get_logger("radarr")

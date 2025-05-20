@@ -294,7 +294,15 @@ def process_stalled_downloads(app_name, app_settings, swaparr_settings=None):
     max_download_time = parse_time_string_to_seconds(swaparr_settings.get("max_download_time", "2h"))
     ignore_above_size = parse_size_string_to_bytes(swaparr_settings.get("ignore_above_size", "25GB"))
     remove_from_client = swaparr_settings.get("remove_from_client", True)
-    dry_run = swaparr_settings.get("dry_run", False)
+    
+    # Check both the Swaparr-specific dry run setting and the global dry run setting
+    from src.primary.settings_manager import get_dry_run_mode
+    app_dry_run = swaparr_settings.get("dry_run", False)
+    global_dry_run = get_dry_run_mode()
+    dry_run = app_dry_run or global_dry_run
+    
+    if global_dry_run and not app_dry_run:
+        swaparr_logger.info("Global dry run mode is enabled. Actions will be logged but not executed.")
     
     api_url = app_settings.get("api_url")
     api_key = app_settings.get("api_key")

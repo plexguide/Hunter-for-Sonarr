@@ -12,7 +12,7 @@ import traceback
 from typing import List, Dict, Any, Optional, Union
 # Correct the import path
 from src.primary.utils.logger import get_logger
-from src.primary.settings_manager import get_ssl_verify_setting
+from src.primary.settings_manager import get_ssl_verify_setting, get_dry_run_mode
 
 # Get logger for the Radarr app
 radarr_logger = get_logger("radarr")
@@ -244,6 +244,11 @@ def movie_search(api_url: str, api_key: str, api_timeout: int, movie_ids: List[i
     if not movie_ids:
         radarr_logger.warning("No movie IDs provided for search.")
         return None
+    
+    # Check for dry run mode
+    if get_dry_run_mode():
+        radarr_logger.info(f"DRY RUN: Would have searched for movie IDs: {movie_ids}")
+        return 999999  # Return a fake command ID for dry run mode
         
     endpoint = "command"
     data = {
