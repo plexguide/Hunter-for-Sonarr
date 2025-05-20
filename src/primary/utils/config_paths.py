@@ -43,7 +43,7 @@ try:
     SETTINGS_DIR = CONFIG_PATH
     STATEFUL_DIR = CONFIG_PATH / "stateful"
     RESET_DIR = CONFIG_PATH / "reset"
-    SCHEDULER_DIR = CONFIG_PATH / "scheduling"
+    SCHEDULER_DIR = CONFIG_PATH / "scheduler"
     SWAPARR_STATE_DIR = CONFIG_PATH / "swaparr"
     
     # Create essential directories

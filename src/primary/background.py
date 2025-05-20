@@ -28,7 +28,7 @@ from src.primary import config, settings_manager
 # Removed keys_manager import as settings_manager handles API details
 from src.primary.state import check_state_reset, calculate_reset_time
 from src.primary.stats_manager import check_hourly_cap_exceeded
-from src.primary.utils.instance_list_generator import generate_instance_list
+# Instance list generator has been removed
 from src.primary.scheduler_engine import start_scheduler, stop_scheduler
 from src.primary.migrate_configs import migrate_json_configs  # Import the migration function
 # from src.primary.utils.app_utils import get_ip_address # No longer used here
@@ -40,8 +40,7 @@ stop_event = threading.Event() # Use an event for clearer stop signaling
 # Hourly cap scheduler thread
 hourly_cap_scheduler_thread = None
 
-# Instance list generator thread
-instance_list_generator_thread = None
+# Instance list generator has been removed
 
 def app_specific_loop(app_type: str) -> None:
     """
@@ -612,45 +611,9 @@ def hourly_cap_scheduler_loop():
     
     logger.info("Hourly API cap scheduler stopped")
 
-def instance_list_generator_loop():
-    """
-    Main loop for the instance list generator thread
-    Updates the instance list periodically (every 5 minutes)
-    """
-    interval = 300  # 5 minutes in seconds
-    
-    logger.debug("Starting instance list generator loop")
-    
-    while not stop_event.is_set():
-        try:
-            # Generate the instance list
-            instances = generate_instance_list()
-            logger.debug(f"Generated instance list with {sum(len(apps) for apps in instances.values())} total instances")
-        except Exception as e:
-            logger.error(f"Error generating instance list: {e}")
-            
-        # Wait for next interval or until stop event
-        stop_event.wait(interval)
-        
-    logger.debug("Instance list generator loop stopped")
+# The instance list generator loop has been removed as it's no longer needed
 
-def start_instance_list_generator():
-    """Start the instance list generator thread"""
-    global instance_list_generator_thread
-    
-    if instance_list_generator_thread and instance_list_generator_thread.is_alive():
-        logger.debug("Instance list generator already running")
-        return
-    
-    # Create and start the generator thread
-    instance_list_generator_thread = threading.Thread(
-        target=instance_list_generator_loop, 
-        name="InstanceListGenerator", 
-        daemon=True
-    )
-    instance_list_generator_thread.start()
-    
-    logger.debug(f"Instance list generator started. Thread is alive: {instance_list_generator_thread.is_alive()}")
+# The start_instance_list_generator function has been removed as it's no longer needed
 
 def start_hourly_cap_scheduler():
     """Start the hourly API cap scheduler thread"""
@@ -701,15 +664,8 @@ def start_huntarr():
     except Exception as e:
         logger.error(f"Failed to start schedule action engine: {e}")
         
-    # Start the instance list generator
-    try:
-        # Generate instance list immediately
-        generate_instance_list()
-        # Then start the background thread for periodic updates
-        start_instance_list_generator()
-        logger.debug("Instance list generator started successfully")
-    except Exception as e:
-        logger.error(f"Failed to start instance list generator: {e}")
+    # Instance list generator has been removed
+    logger.debug("Instance list generator has been removed and is no longer needed")
 
     # Log initial configuration for all known apps
     for app_name in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
