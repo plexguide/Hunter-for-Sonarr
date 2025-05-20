@@ -19,5 +19,6 @@
   "minimum_download_queue_size": -1,
   "api_timeout": 120,
   "ssl_verify": true,
-  "base_url": ""
+  "base_url": "",
+  "dry_run": false
 }

@@ -238,6 +238,11 @@ def get_configured_apps() -> List[str]:
     settings_logger.info(f"Configured apps: {configured}")
     return configured
 
+def get_dry_run_mode() -> bool:
+    """Get the global dry run mode setting."""
+    general_settings = load_settings("general")
+    return general_settings.get("dry_run", False)
+
 def apply_timezone(timezone: str) -> bool:
     """Apply the specified timezone to the container.
     
