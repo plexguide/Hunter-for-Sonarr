@@ -141,11 +141,15 @@ def process_missing_albums(
             items_by_artist = {}
             for item in missing_items: # Use the potentially filtered missing_items list
                 artist_id = item.get('artistId')
-                lidarr_logger.debug(f"Missing album item: {item.get('title')} by artistId: {artist_id}")
-                if artist_id:
+                title = item.get('title', 'Unknown Album')
+                lidarr_logger.debug(f"Missing album item: {title} by artistId: {artist_id}")
+                # Validate artist_id - ensure it's a positive integer
+                if artist_id and isinstance(artist_id, int) and artist_id > 0:
                     if artist_id not in items_by_artist:
                         items_by_artist[artist_id] = []
                     items_by_artist[artist_id].append(item)
+                else:
+                    lidarr_logger.warning(f"Skipping album '{title}' with invalid artist ID: {artist_id}")
             
             # In artist mode, map from artists to their albums
             # First, get all artist IDs

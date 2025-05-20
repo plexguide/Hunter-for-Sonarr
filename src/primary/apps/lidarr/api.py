@@ -419,6 +419,11 @@ def search_albums(api_url: str, api_key: str, api_timeout: int, album_ids: List[
 
 def search_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int) -> Optional[Dict]:
     """Trigger a search for a specific artist in Lidarr."""
+    # Validate artist_id to prevent errors in Lidarr
+    if artist_id is None or artist_id <= 0:
+        lidarr_logger.error(f"Invalid artist ID: {artist_id}. Artist ID must be a positive integer.")
+        return None
+
     payload = {
         "name": "ArtistSearch",
         "artistIds": [artist_id]
