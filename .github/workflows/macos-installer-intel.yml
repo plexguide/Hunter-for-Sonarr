@@ -1,5 +1,9 @@
 name: macOS Installer Build (Intel x86_64)
 
+# Add permissions needed for creating releases
+permissions:
+  contents: write
+
 on:
   push:
     branches:
@@ -434,7 +438,9 @@ jobs:
             elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
               pkg_name="Huntarr-${version}-mac-dev-intel.pkg"
             else
-              pkg_name="Huntarr-${version}-mac-${branch}-intel.pkg"
+              # Sanitize branch name by replacing slashes with hyphens
+              branch_safe=$(echo "${branch}" | tr '/' '-')
+              pkg_name="Huntarr-${version}-mac-${branch_safe}-intel.pkg"
             fi
           fi
           

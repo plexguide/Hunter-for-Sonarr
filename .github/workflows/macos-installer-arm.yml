@@ -1,5 +1,9 @@
 name: macOS Installer Build (ARM arm64)
 
+# Add permissions needed for creating releases
+permissions:
+  contents: write
+
 on:
   push:
     branches:
@@ -438,7 +442,9 @@ jobs:
             elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
               pkg_name="Huntarr-${version}-mac-dev-arm64.pkg"
             else
-              pkg_name="Huntarr-${version}-mac-${branch}-arm64.pkg"
+              # Sanitize branch name by replacing slashes with hyphens
+              branch_safe=$(echo "${branch}" | tr '/' '-')
+              pkg_name="Huntarr-${version}-mac-${branch_safe}-arm64.pkg"
             fi
           fi
           
