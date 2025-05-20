@@ -1241,6 +1241,46 @@ const SettingsForms = {
             </div>
             
             <div class="settings-group">
+                <h3>Notifications</h3>
+                <div class="setting-item">
+                    <label for="enable_notifications"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#notifications" class="info-icon" title="Learn more about notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enable Notifications:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="enable_notifications" ${settings.enable_notifications === true ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Enable notifications using Apprise</p>
+                </div>
+                <div class="setting-item">
+                    <label for="notification_level"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#notification-level" class="info-icon" title="Learn more about notification levels" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Minimum Notification Level:</label>
+                    <select id="notification_level" style="width: 200px; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db;">
+                        <option value="debug" ${settings.notification_level === 'debug' ? 'selected' : ''}>Debug (All Messages)</option>
+                        <option value="info" ${settings.notification_level === 'info' || !settings.notification_level ? 'selected' : ''}>Info (Default)</option>
+                        <option value="warning" ${settings.notification_level === 'warning' ? 'selected' : ''}>Warning</option>
+                        <option value="error" ${settings.notification_level === 'error' ? 'selected' : ''}>Error</option>
+                    </select>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Select the minimum level of notifications to send</p>
+                </div>
+                <div class="setting-item">
+                    <label for="apprise_url"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#apprise-url" class="info-icon" title="Learn more about Apprise URLs" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Apprise URL:</label>
+                    <input type="text" id="apprise_url" value="${settings.apprise_url || ''}" placeholder="e.g., discord://webhook_id/webhook_token" style="width: 100%; max-width: 600px;">
+                    <p class="setting-help" style="margin-left: -3ch !important;">
+                        Apprise notification URL for services like Discord, Telegram, Pushover, etc.<br>
+                        Examples:<br>
+                        - Discord: discord://webhook_id/webhook_token<br>
+                        - Telegram: tgram://bottoken/ChatID<br>
+                        - Pushover: pover://user@token<br>
+                        - <a href="https://github.com/caronc/apprise/wiki" target="_blank">See full list of supported services</a>
+                    </p>
+                </div>
+                <div class="setting-item" style="margin-top: 15px;">
+                    <button id="test_notification_button" class="default-button" style="padding: 8px 16px; border-radius: 6px;">
+                        <i class="fas fa-bell"></i> Test Notification
+                    </button>
+                    <span id="notification_test_result" style="margin-left: 15px; display: inline-block;"></span>
+                </div>
+            </div>
+            
+            <div class="settings-group">
                 <div class="stateful-header-row">
                     <h3>Stateful Management</h3>
                     <!-- Original reset button removed, now using emergency button -->
@@ -1489,6 +1529,9 @@ const SettingsForms = {
                 })
                 .catch(error => console.warn('Silent stateful info fetch failed:', error));
         }
+        
+        // Setup test notification button
+        this.setupTestNotificationButton(container);
     },
     
     // Update duration display - e.g., convert seconds to hours
@@ -1928,6 +1971,59 @@ const SettingsForms = {
             
             // Reset suppression flags
             this._resetSuppressionFlags();
+        });
+    },
+    
+    // Setup test notification button handler
+    setupTestNotificationButton: function(container) {
+        const testButton = container.querySelector('#test_notification_button');
+        if (!testButton) return;
+        
+        testButton.addEventListener('click', () => {
+            const resultSpan = container.querySelector('#notification_test_result');
+            if (!resultSpan) return;
+            
+            // Get current form values
+            const enableNotifications = container.querySelector('#enable_notifications').checked;
+            const appriseUrl = container.querySelector('#apprise_url').value.trim();
+            
+            // Show "testing" status
+            resultSpan.textContent = 'Testing...';
+            resultSpan.style.color = '#f0ad4e'; // warning yellow
+            
+            // Check if notifications are enabled and URL is provided
+            if (!enableNotifications) {
+                resultSpan.textContent = 'Notifications are disabled. Please enable them first.';
+                resultSpan.style.color = '#f0ad4e'; // warning yellow
+                return;
+            }
+            
+            if (!appriseUrl) {
+                resultSpan.textContent = 'Apprise URL is required. Please enter a valid URL.';
+                resultSpan.style.color = '#dc3545'; // error red
+                return;
+            }
+            
+            // Send test request
+            HuntarrUtils.fetchWithTimeout('/api/notifications/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultSpan.textContent = data.message || 'Test notification sent successfully!';
+                    resultSpan.style.color = '#28a745'; // success green
+                } else {
+                    resultSpan.textContent = data.message || 'Failed to send test notification.';
+                    resultSpan.style.color = '#dc3545'; // error red
+                }
+            })
+            .catch(error => {
+                console.error('Error testing notification:', error);
+                resultSpan.textContent = 'Error: ' + (error.message || 'Unknown error occurred.');
+                resultSpan.style.color = '#dc3545'; // error red
+            });
         });
     },
     

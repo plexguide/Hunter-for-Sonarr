@@ -284,7 +284,10 @@ ADVANCED_SETTINGS = [
     "debug_mode",
     "stateful_management_hours",
     "hourly_cap",
-    "ssl_verify"  # Add SSL verification setting
+    "ssl_verify",  # Add SSL verification setting
+    "enable_notifications",
+    "notification_level",
+    "apprise_url"
 ]
 
 def get_advanced_setting(setting_name, default_value=None):

@@ -49,6 +49,9 @@ from src.primary.routes.history_routes import history_blueprint
 # Import scheduler blueprint
 from src.primary.routes.scheduler_routes import scheduler_api
 
+# Import the notifications module
+from src.primary.utils.notifications import test_notification, send_notification
+
 # Import background module to trigger manual cycle resets
 from src.primary import background
 
@@ -817,6 +820,14 @@ def api_start_hunt():
     # This might enable all configured apps or toggle a global flag.
     # Or it could modify an 'enabled' setting per app.
     # settings_manager.update_setting('global', 'hunt_enabled', True)
+    
+    # Send a notification that the hunt has started
+    send_notification(
+        title="Huntarr Hunt Started",
+        message="The media hunt process has been started.",
+        level="info"
+    )
+    
     return jsonify({"success": True, "message": "Hunt control endpoint (start) - functionality may change."})
 
 @app.route('/api/hunt/stop', methods=['POST'])
@@ -827,6 +838,14 @@ def api_stop_hunt():
     # Or send SIGTERM/SIGINT to the main process?
     # pid = get_main_process_pid() # Need a way to get PID if not self
     # if pid: os.kill(pid, signal.SIGTERM)
+    
+    # Send a notification that the hunt has been stopped
+    send_notification(
+        title="Huntarr Hunt Stopped",
+        message="The media hunt process has been stopped.",
+        level="info"
+    )
+    
     return jsonify({"success": True, "message": "Hunt control endpoint (stop) - functionality may change."})
 
 @app.route('/api/settings/apply-timezone', methods=['POST'])
@@ -1073,6 +1092,12 @@ def health_check():
     logger = get_logger("system")
     logger.debug("Health check endpoint accessed")
     return jsonify({"status": "OK"})
+
+@app.route('/api/notifications/test', methods=['POST'])
+def test_notifications_endpoint():
+    """Test the notification system with a test message"""
+    result = test_notification()
+    return jsonify(result)
 
 # Start the web server in debug or production mode
 def start_web_server():
