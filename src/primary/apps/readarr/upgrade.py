@@ -14,7 +14,7 @@ from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.state import check_state_reset
-from src.primary.settings_manager import load_settings # Import load_settings function
+from src.primary.settings_manager import load_settings, get_dry_run_mode # Import load_settings function
 
 # Get logger for the app
 readarr_logger = get_logger("readarr")

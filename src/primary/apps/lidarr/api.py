@@ -13,7 +13,7 @@ import traceback
 import logging
 from typing import List, Dict, Any, Optional, Union
 from src.primary.utils.logger import get_logger
-from src.primary.settings_manager import get_ssl_verify_setting
+from src.primary.settings_manager import get_ssl_verify_setting, get_dry_run_mode
 
 # Get logger for the Lidarr app
 lidarr_logger = get_logger("lidarr")
@@ -402,7 +402,12 @@ def search_albums(api_url: str, api_key: str, api_timeout: int, album_ids: List[
     if not album_ids:
         lidarr_logger.warning("No album IDs provided for search.")
         return None
-        
+    
+    # Check for dry run mode
+    if get_dry_run_mode():
+        lidarr_logger.info(f"DRY RUN: Would have searched for album IDs: {album_ids}")
+        return {"id": 999999, "name": "AlbumSearch", "status": "queued"}  # Return a fake command object for dry run mode
+    
     payload = {
         "name": "AlbumSearch",
         "albumIds": album_ids
@@ -419,6 +424,12 @@ def search_albums(api_url: str, api_key: str, api_timeout: int, album_ids: List[
 
 def search_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int) -> Optional[Dict]:
     """Trigger a search for a specific artist in Lidarr."""
+    
+    # Check for dry run mode
+    if get_dry_run_mode():
+        lidarr_logger.info(f"DRY RUN: Would have searched for artist ID: {artist_id}")
+        return {"id": 999999, "name": "ArtistSearch", "status": "queued"}  # Return a fake command object for dry run mode
+    
     payload = {
         "name": "ArtistSearch",
         "artistIds": [artist_id]

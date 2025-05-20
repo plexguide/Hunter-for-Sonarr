@@ -12,7 +12,7 @@ from typing import List, Dict, Any, Optional, Union
 # Correct the import path
 from src.primary.utils.logger import get_logger
 # Import load_settings
-from src.primary.settings_manager import load_settings, get_ssl_verify_setting
+from src.primary.settings_manager import load_settings, get_ssl_verify_setting, get_dry_run_mode
 import importlib
 
 # Get app-specific logger
@@ -401,6 +401,12 @@ def get_author_details(api_url: str, api_key: str, author_id: int, api_timeout: 
 
 def search_books(api_url: str, api_key: str, book_ids: List[int], api_timeout: int = 120) -> Optional[Dict]:
     """Triggers a search for specific book IDs in Readarr."""
+    
+    # Check for dry run mode
+    if get_dry_run_mode():
+        logger.info(f"DRY RUN: Would have searched for book IDs: {book_ids}")
+        return {"id": 999999, "name": "BookSearch", "status": "queued"}  # Return a fake command object for dry run mode
+    
     endpoint = f"{api_url}/api/v1/command" # This uses the full URL, not arr_request
     headers = {'X-Api-Key': api_key}
     payload = {

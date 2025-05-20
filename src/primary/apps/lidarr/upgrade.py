@@ -12,7 +12,7 @@ from src.primary.apps.lidarr import api as lidarr_api
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.stats_manager import increment_stat
-from src.primary.settings_manager import load_settings, get_advanced_setting
+from src.primary.settings_manager import load_settings, get_advanced_setting, get_dry_run_mode
 from src.primary.state import check_state_reset  # Add the missing import
 
 # Get logger for the app
