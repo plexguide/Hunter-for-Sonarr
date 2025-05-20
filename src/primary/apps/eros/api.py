@@ -14,7 +14,7 @@ import traceback
 import sys
 from typing import List, Dict, Any, Optional, Union
 from src.primary.utils.logger import get_logger
-from src.primary.settings_manager import get_ssl_verify_setting
+from src.primary.settings_manager import get_ssl_verify_setting, get_dry_run_mode
 
 # Get logger for the Eros app
 eros_logger = get_logger("eros")
@@ -348,6 +348,11 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
     Returns:
         The command ID if the search command was triggered successfully, None otherwise
     """
+    # Check for dry run mode
+    if get_dry_run_mode():
+        eros_logger.info(f"DRY RUN: Would have searched for movie IDs: {item_ids}")
+        return 999999  # Return a fake command ID for dry run mode
+        
     try:
         if not item_ids:
             eros_logger.warning("No movie IDs provided for search.")
