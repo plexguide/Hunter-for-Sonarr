@@ -130,14 +130,14 @@ Section "Huntarr Application (required)" SecCore
   ; Create Start Menu shortcuts
   CreateDirectory "$SMPROGRAMS\${APPNAME}"
   CreateShortcut "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk" "http://localhost:9705" "" "$INSTDIR\${EXENAME}" 0
-  CreateShortcut "$SMPROGRAMS\${APPNAME}\Run ${APPNAME}.lnk" "$INSTDIR\${EXENAME}" "--no-service" "$INSTDIR\${EXENAME}" 0 SW_MINIMIZED
+  CreateShortcut "$SMPROGRAMS\${APPNAME}\Run ${APPNAME}.lnk" "$INSTDIR\${EXENAME}" "--no-service" "$INSTDIR\${EXENAME}" 0 SW_SHOWMINIMIZED
   CreateShortcut "$SMPROGRAMS\${APPNAME}\Open ${APPNAME} Web Interface.lnk" "http://localhost:9705" "" "$INSTDIR\${EXENAME}" 0
   CreateShortcut "$SMPROGRAMS\${APPNAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe"
 SectionEnd
 
 Section "Auto-start with Windows" SecAutoStart
   ; Create shortcut in startup folder
-  CreateShortcut "$SMSTARTUP\${APPNAME}.lnk" "$INSTDIR\${EXENAME}" "--no-service" "$INSTDIR\${EXENAME}" 0 SW_MINIMIZED
+  CreateShortcut "$SMSTARTUP\${APPNAME}.lnk" "$INSTDIR\${EXENAME}" "--no-service" "$INSTDIR\${EXENAME}" 0 SW_SHOWMINIMIZED
 SectionEnd
 
 ; Function to create desktop shortcut from the finish page option
