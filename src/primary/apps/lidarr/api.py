@@ -191,10 +191,18 @@ def get_artists(api_url: str, api_key: str, api_timeout: int, artist_id: Optiona
 def get_albums(api_url: str, api_key: str, api_timeout: int, album_id: Optional[int] = None, artist_id: Optional[int] = None) -> Union[List, Dict, None]:
     """Get album information from Lidarr."""
     params = {}
-    if artist_id:
+    
+    # Validate IDs if provided
+    if artist_id is not None:
+        if artist_id <= 0:
+            lidarr_logger.error(f"Invalid artist ID: {artist_id}. Artist ID must be a positive integer.")
+            return None
         params['artistId'] = artist_id
         
-    if album_id:
+    if album_id is not None:
+        if album_id <= 0:
+            lidarr_logger.error(f"Invalid album ID: {album_id}. Album ID must be a positive integer.")
+            return None
         endpoint = f"album/{album_id}"
     else:
         endpoint = "album"
@@ -472,4 +480,9 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
 
 def get_artist_by_id(api_url: str, api_key: str, api_timeout: int, artist_id: int) -> Optional[Dict[str, Any]]:
     """Get artist details by ID from Lidarr."""
+    # Validate artist_id to prevent errors
+    if artist_id is None or artist_id <= 0:
+        lidarr_logger.error(f"Invalid artist ID: {artist_id}. Artist ID must be a positive integer.")
+        return None
+        
     return arr_request(api_url, api_key, api_timeout, f"artist/{artist_id}")

@@ -113,10 +113,24 @@ def process_cutoff_upgrades(
         albums_to_search = random.sample(unprocessed_albums, min(len(unprocessed_albums), hunt_upgrade_items))
         lidarr_logger.info(f"Randomly selected {len(albums_to_search)} albums for upgrade search.")
 
-        album_ids_to_search = [album['id'] for album in albums_to_search]
+        # Filter out invalid album IDs
+        original_count = 0
+        album_ids_to_search = []
+        for album in albums_to_search:
+            original_count += 1
+            album_id = album.get('id')
+            album_title = album.get('title', 'Unknown Album')
+            # Validate album ID - ensure it's a positive integer
+            if album_id is not None and isinstance(album_id, int) and album_id > 0:
+                album_ids_to_search.append(album_id)
+            else:
+                lidarr_logger.warning(f"Skipping album '{album_title}' with invalid ID: {album_id}")
+        
+        if len(album_ids_to_search) < original_count:
+            lidarr_logger.warning(f"Filtered out {original_count - len(album_ids_to_search)} albums with invalid IDs")
 
         if not album_ids_to_search:
-             lidarr_logger.info("No album IDs selected for upgrade search. Skipping trigger.")
+             lidarr_logger.info("No valid album IDs selected for upgrade search. Skipping trigger.")
              return False
 
         # Prepare detailed album information for logging
