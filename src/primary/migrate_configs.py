@@ -3,26 +3,30 @@
 Huntarr Configuration Migration Script
 
 This module is responsible for migrating legacy JSON configuration files 
-from the old location (/config/) to the new settings directory (/config/settings/)
+from the root config directory to the settings subdirectory
 """
 
 import os
 import shutil
 import logging
+import pathlib
 
 # Get the logger
 logger = logging.getLogger('huntarr')
+
+# Import config paths
+from src.primary.utils.config_paths import CONFIG_PATH, SETTINGS_DIR
 
 def migrate_json_configs():
     """
     Migrates JSON configuration files from old location to new settings directory.
     
-    Looks for specific JSON configuration files in /config/ and moves them
-    to /config/settings/ if they exist.
+    Looks for specific JSON configuration files in the root config directory and moves them
+    to the settings subdirectory if they exist.
     """
-    # Define the source and destination directories
-    source_dir = "/config"
-    dest_dir = "/config/settings"
+    # Define the source and destination directories using platform-compatible paths
+    source_dir = CONFIG_PATH
+    dest_dir = SETTINGS_DIR
     
     # List of JSON files to look for and migrate
     json_files = [

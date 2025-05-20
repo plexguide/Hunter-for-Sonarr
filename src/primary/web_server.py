@@ -148,8 +148,32 @@ def get_base_url():
 # Define base_url at module level
 base_url = ''
 
+# Check for Windows platform and integrate Windows-specific helpers
+import platform
+if platform.system() == "Windows":
+    # Import Windows integration module for startup support
+    try:
+        from src.primary.utils.windows_integration import prepare_windows_environment
+        # Prepare Windows environment before creating Flask app
+        prepare_windows_environment()
+    except Exception as e:
+        print(f"Error integrating Windows helpers: {e}")
+
 # Create Flask app with additional debug logging
-app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+app = Flask(__name__, 
+             template_folder=template_dir, 
+             static_folder=static_dir,
+             static_url_path='/static')
+
+# Apply Windows-specific patches to Flask app if on Windows
+if platform.system() == "Windows":
+    try:
+        from src.primary.utils.windows_integration import integrate_windows_helpers
+        app = integrate_windows_helpers(app)
+    except Exception as e:
+        print(f"Error applying Windows patches: {e}")
+
+app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 print(f"Flask app created with template_folder: {app.template_folder}")
 print(f"Flask app created with static_folder: {app.static_folder}")
 
