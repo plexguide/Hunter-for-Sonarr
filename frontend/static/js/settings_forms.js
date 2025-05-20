@@ -1313,7 +1313,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Advanced Settings</h3>
                 <div class="setting-item">
-                    <label for="dry_run"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#dry-run" class="info-icon" title="Learn more about dry run mode" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Dry Run Mode:</label>
+                    <label for="dry_run"><a href="https://plexguide.github.io/Huntarr.io/dry-run-mode.html" class="info-icon" title="Learn more about dry run mode" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Dry Run Mode:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="dry_run" ${settings.dry_run === true ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
