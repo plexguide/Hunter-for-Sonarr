@@ -17,6 +17,8 @@ import collections
 from src.primary.settings_manager import clear_cache
 
 from src.primary.utils.logger import get_logger
+# Add import for stateful_manager's check_expiration
+from src.primary.stateful_manager import check_expiration as check_stateful_expiration
 
 # Initialize logger
 scheduler_logger = get_logger("scheduler")
@@ -479,17 +481,14 @@ def check_and_execute_schedules():
 
 def scheduler_loop():
     """Main scheduler loop - runs in a background thread"""
-    scheduler_logger.info("Scheduler engine started")
-    
-    # Clean up expired entries from last_executed_actions
-    now = datetime.datetime.now()
-    yesterday = now - datetime.timedelta(days=1)
-    for key in list(last_executed_actions.keys()):
-        if last_executed_actions[key] < yesterday:
-            del last_executed_actions[key]
-    
+    scheduler_logger.info("Scheduler loop started.")
     while not stop_event.is_set():
         try:
+            # Check for stateful management expiration first
+            scheduler_logger.debug("Checking for stateful management expiration...")
+            check_stateful_expiration() # Call the imported function
+            
+            scheduler_logger.debug("Checking and executing schedules...")
             check_and_execute_schedules()
             
             # Sleep until the next check
@@ -501,7 +500,7 @@ def scheduler_loop():
             # Sleep briefly to avoid rapidly repeating errors
             time.sleep(5)
     
-    scheduler_logger.info("Scheduler engine stopped")
+    scheduler_logger.info("Scheduler loop stopped")
 
 def get_execution_history():
     """Get the execution history for the scheduler"""
