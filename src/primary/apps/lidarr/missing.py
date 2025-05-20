@@ -142,10 +142,13 @@ def process_missing_albums(
             for item in missing_items: # Use the potentially filtered missing_items list
                 artist_id = item.get('artistId')
                 lidarr_logger.debug(f"Missing album item: {item.get('title')} by artistId: {artist_id}")
-                if artist_id:
+                # Only include valid artist IDs (must be positive integers)
+                if artist_id and artist_id > 0:
                     if artist_id not in items_by_artist:
                         items_by_artist[artist_id] = []
                     items_by_artist[artist_id].append(item)
+                else:
+                    lidarr_logger.warning(f"Skipping album '{item.get('title')}' with invalid artist ID: {artist_id}")
             
             # In artist mode, map from artists to their albums
             # First, get all artist IDs
@@ -159,10 +162,12 @@ def process_missing_albums(
             lidarr_logger.info(f"Found {len(unprocessed_entities)} unprocessed artists out of {len(target_entities)} total")
         else:
             # In album mode, directly track album IDs
-            target_entities = [item['id'] for item in missing_items]
+            target_entities = [item['id'] for item in missing_items if item.get('id') and item.get('id') > 0]
+            if len(target_entities) != len(missing_items):
+                lidarr_logger.warning(f"Filtered out {len(missing_items) - len(target_entities)} albums with invalid IDs")
             
             # Filter out processed albums
-            lidarr_logger.info(f"Found {len(target_entities)} missing albums before filtering")
+            lidarr_logger.info(f"Found {len(target_entities)} valid missing albums before filtering")
             unprocessed_entities = [eid for eid in target_entities 
                                    if not is_processed("lidarr", instance_name, str(eid))]
             
@@ -240,6 +245,11 @@ def process_missing_albums(
                     artist_info = first_album.get('artist')
                     if artist_info and isinstance(artist_info, dict):
                          artist_name = artist_info.get('artistName', artist_name)
+                
+                # Skip any invalid artist IDs (0 or negative)
+                if not artist_id or artist_id <= 0:
+                    lidarr_logger.warning(f"Skipping invalid artist ID: {artist_id}")
+                    continue
                 
                 # Mark the artist as processed right away - BEFORE triggering the search
                 success = add_processed_id("lidarr", instance_name, str(artist_id))

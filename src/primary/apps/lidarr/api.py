@@ -402,23 +402,38 @@ def search_albums(api_url: str, api_key: str, api_timeout: int, album_ids: List[
     if not album_ids:
         lidarr_logger.warning("No album IDs provided for search.")
         return None
+    
+    # Filter out any invalid album IDs (0 or negative)
+    valid_album_ids = [album_id for album_id in album_ids if album_id and album_id > 0]
+    if len(valid_album_ids) != len(album_ids):
+        lidarr_logger.warning(f"Filtered out {len(album_ids) - len(valid_album_ids)} invalid album IDs")
+    
+    # Exit if no valid IDs remain
+    if not valid_album_ids:
+        lidarr_logger.error("No valid album IDs to search for")
+        return None
         
     payload = {
         "name": "AlbumSearch",
-        "albumIds": album_ids
+        "albumIds": valid_album_ids
     }
     response = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=payload)
     
     if response and isinstance(response, dict) and 'id' in response:
         command_id = response.get('id')
-        lidarr_logger.info(f"Triggered Lidarr AlbumSearch for album IDs: {album_ids}. Command ID: {command_id}")
+        lidarr_logger.info(f"Triggered Lidarr AlbumSearch for album IDs: {valid_album_ids}. Command ID: {command_id}")
         return response # Return the full command object including ID
     else:
-        lidarr_logger.error(f"Failed to trigger Lidarr AlbumSearch for album IDs {album_ids}. Response: {response}")
+        lidarr_logger.error(f"Failed to trigger Lidarr AlbumSearch for album IDs {valid_album_ids}. Response: {response}")
         return None
 
 def search_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int) -> Optional[Dict]:
     """Trigger a search for a specific artist in Lidarr."""
+    # Validate artist_id to ensure it's a positive integer
+    if not artist_id or artist_id <= 0:
+        lidarr_logger.error(f"Invalid artist ID: {artist_id}. Must be a positive integer.")
+        return None
+        
     payload = {
         "name": "ArtistSearch",
         "artistIds": [artist_id]
