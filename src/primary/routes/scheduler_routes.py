@@ -19,8 +19,7 @@ scheduler_logger = logging.getLogger("scheduler")
 # Create blueprint
 scheduler_api = Blueprint('scheduler_api', __name__)
 
-# Import instance list generator to access its functions
-from src.primary.utils.instance_list_generator import generate_instance_list
+# No longer using instance list generator
 
 # Configuration file path
 # Use the centralized path configuration
@@ -93,21 +92,7 @@ def get_scheduler_history():
         scheduler_logger.error(error_msg)
         return jsonify({"error": error_msg}), 500
 
-@scheduler_api.route('/api/scheduling/list', methods=['GET'])
-def get_scheduler_instance_list():
-    """Return the list of app instances for the scheduler UI"""
-    try:
-        # Generate the instance list (this will create list.json in the scheduling directory)
-        instances = generate_instance_list()
-        
-        # Return the generated data directly as JSON
-        return jsonify(instances)
-    except Exception as e:
-        scheduler_logger.error(f"Error generating instance list: {str(e)}")
-        return jsonify({
-            'error': f"Failed to generate instance list: {str(e)}",
-            'order': ['sonarr', 'radarr', 'readarr', 'lidarr', 'whisparr', 'eros']
-        }), 500
+# API route for instance list generation has been removed
 
 @scheduler_api.route('/api/scheduler/save', methods=['POST'])
 def save_schedules():
