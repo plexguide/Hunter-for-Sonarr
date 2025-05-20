@@ -92,6 +92,10 @@ Section "Huntarr Application (required)" SecCore
   !echo "Copying files from '${PROJECT_ROOT}\dist\Huntarr\*.*'"
   File /r "${PROJECT_ROOT}\dist\Huntarr\*.*"
   
+  ; Copy version.txt file
+  !echo "Copying version.txt from '${PROJECT_ROOT}\version.txt'"
+  File "${PROJECT_ROOT}\version.txt"
+  
   ; Create required directories
   CreateDirectory "$INSTDIR\config"
   CreateDirectory "$INSTDIR\config\logs"
