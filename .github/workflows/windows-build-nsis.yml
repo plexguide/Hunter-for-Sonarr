@@ -54,6 +54,10 @@ jobs:
         # Display current directory structure
         dir
         
+        # Create installer output directory
+        mkdir -Force distribution\windows\installer\installer
+        mkdir -Force installer
+        
         # Prepare version file path
         $versionContent = Get-Content version.txt -Raw
         Write-Host "Version from file: $versionContent"
