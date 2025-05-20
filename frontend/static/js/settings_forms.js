@@ -1062,6 +1062,21 @@ const SettingsForms = {
             settings.ssl_verify = getInputValue('#ssl_verify', true);
             settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);
             
+            // Notification settings
+            settings.enable_notifications = getInputValue('#enable_notifications', false);
+            settings.notification_level = container.querySelector('#notification_level')?.value || 'info';
+            
+            // Process apprise URLs (split by newline)
+            const appriseUrlsText = container.querySelector('#apprise_urls')?.value || '';
+            settings.apprise_urls = appriseUrlsText.split('\n')
+                .map(url => url.trim())
+                .filter(url => url.length > 0);
+                
+            settings.notify_on_missing = getInputValue('#notify_on_missing', true);
+            settings.notify_on_upgrade = getInputValue('#notify_on_upgrade', true);
+            settings.notification_include_instance = getInputValue('#notification_include_instance', true);
+            settings.notification_include_app = getInputValue('#notification_include_app', true);
+            
             // Handle the auth_mode dropdown
             const authMode = container.querySelector('#auth_mode')?.value || 'login';
             
@@ -1325,6 +1340,66 @@ const SettingsForms = {
                     <label for="base_url"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#base-url" class="info-icon" title="Learn more about reverse proxy base URL settings" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Base URL:</label>
                     <input type="text" id="base_url" value="${settings.base_url || ''}" placeholder="/huntarr">
                     <p class="setting-help" style="margin-left: -3ch !important;">Base URL path for reverse proxy (e.g., '/huntarr'). Leave empty for root path. Requires restart.</p>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <h3>Notifications</h3>
+                <div class="setting-item">
+                    <label for="enable_notifications"><a href="#" class="info-icon" title="Enable or disable notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enable Notifications:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="enable_notifications" ${settings.enable_notifications === true ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Enable sending notifications via Apprise</p>
+                </div>
+                <div class="setting-item">
+                    <label for="notification_level"><a href="#" class="info-icon" title="Set minimum notification level" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Notification Level:</label>
+                    <select id="notification_level" name="notification_level" style="width: 200px; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db;">
+                        <option value="info" ${settings.notification_level === 'info' || !settings.notification_level ? 'selected' : ''}>Info</option>
+                        <option value="success" ${settings.notification_level === 'success' ? 'selected' : ''}>Success</option>
+                        <option value="warning" ${settings.notification_level === 'warning' ? 'selected' : ''}>Warning</option>
+                        <option value="error" ${settings.notification_level === 'error' ? 'selected' : ''}>Error</option>
+                    </select>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Minimum level of events that will trigger notifications</p>
+                </div>
+                <div class="setting-item">
+                    <label for="apprise_urls"><a href="https://github.com/caronc/apprise#supported-notifications" class="info-icon" title="Learn about Apprise URL formats" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Apprise URLs:</label>
+                    <textarea id="apprise_urls" rows="4" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db;">${(settings.apprise_urls || []).join('\n')}</textarea>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Enter one Apprise URL per line (e.g., discord://, telegram://, etc)</p>
+                    <p class="setting-help"><a href="https://github.com/caronc/apprise#supported-notifications" target="_blank">Click here for Apprise URL format documentation</a></p>
+                </div>
+                <div class="setting-item">
+                    <label for="notify_on_missing"><a href="#" class="info-icon" title="Send notifications for missing media" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Notify on Missing:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="notify_on_missing" ${settings.notify_on_missing !== false ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Send notifications when missing media is processed</p>
+                </div>
+                <div class="setting-item">
+                    <label for="notify_on_upgrade"><a href="#" class="info-icon" title="Send notifications for upgrades" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Notify on Upgrade:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="notify_on_upgrade" ${settings.notify_on_upgrade !== false ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Send notifications when media is upgraded</p>
+                </div>
+                <div class="setting-item">
+                    <label for="notification_include_instance"><a href="#" class="info-icon" title="Include instance name in notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Include Instance:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="notification_include_instance" ${settings.notification_include_instance !== false ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Include instance name in notification messages</p>
+                </div>
+                <div class="setting-item">
+                    <label for="notification_include_app"><a href="#" class="info-icon" title="Include app name in notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Include App Name:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="notification_include_app" ${settings.notification_include_app !== false ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Include app name (Sonarr, Radarr, etc.) in notification messages</p>
                 </div>
             </div>
         `;
