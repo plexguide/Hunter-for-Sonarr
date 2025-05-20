@@ -89,7 +89,8 @@ Section "Huntarr Application (required)" SecCore
   nsExec::ExecToLog '"$INSTDIR\${EXENAME}" --remove-service'
   
   ; Copy all files from dist directory
-  File /r "dist\Huntarr\*.*"
+  !echo "Copying files from '${PROJECT_ROOT}\dist\Huntarr\*.*'"
+  File /r "${PROJECT_ROOT}\dist\Huntarr\*.*"
   
   ; Create required directories
   CreateDirectory "$INSTDIR\config"
