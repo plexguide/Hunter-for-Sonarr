@@ -13,7 +13,7 @@ import traceback
 from typing import List, Dict, Any, Optional, Union, Callable
 # Correct the import path
 from src.primary.utils.logger import get_logger
-from src.primary.settings_manager import get_ssl_verify_setting
+from src.primary.settings_manager import get_ssl_verify_setting, get_dry_run_mode
 
 # Get logger for the Sonarr app
 sonarr_logger = get_logger("sonarr")
@@ -756,6 +756,12 @@ def search_episode(api_url: str, api_key: str, api_timeout: int, episode_ids: Li
     if not episode_ids:
         sonarr_logger.warning("No episode IDs provided for search.")
         return None
+    
+    # Check for dry run mode
+    if get_dry_run_mode():
+        sonarr_logger.info(f"DRY RUN: Would have searched for episode IDs: {episode_ids}")
+        return 999999  # Return a fake command ID for dry run mode
+        
     try:
         endpoint = f"{api_url}/api/v3/command"
         payload = {
@@ -864,6 +870,12 @@ def get_series_by_id(api_url: str, api_key: str, api_timeout: int, series_id: in
 
 def search_season(api_url: str, api_key: str, api_timeout: int, series_id: int, season_number: int) -> Optional[Union[int, str]]:
     """Trigger a search for a specific season in Sonarr."""
+    
+    # Check for dry run mode
+    if get_dry_run_mode():
+        sonarr_logger.info(f"DRY RUN: Would have searched for series ID: {series_id}, season: {season_number}")
+        return 999999  # Return a fake command ID for dry run mode
+        
     try:
         endpoint = f"{api_url}/api/v3/command"
         payload = {
