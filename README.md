@@ -205,6 +205,7 @@ Learn more about **Cleanuperr** at [https://github.com/flmorg/cleanuperr](https:
 - **API Rate Limits**: Configure hourly API caps to prevent rate limiting by your indexers
 - **Universal Timeouts**: All apps use consistent 120s timeouts for reliable command completion
 - **Monitored Only**: Filter searches to focus only on content you've marked as monitored
+- **Notifications**: Configure Apprise notifications to get alerts when media is processed
 
 ## Troubleshooting
 

@@ -120,6 +120,15 @@ def add_history_entry(app_type, entry_data):
             json.dump(history_data, f, indent=2)
     
     logger.info(f"Added history entry for {app_type}-{instance_name}: {entry_data['name']}")
+    
+    # Send notification about this history entry
+    try:
+        # Import here to avoid circular imports
+        from src.primary.notification_manager import send_history_notification
+        send_history_notification(entry)
+    except Exception as e:
+        logger.error(f"Failed to send notification for history entry: {e}")
+    
     return entry
 
 def get_history(app_type, search_query=None, page=1, page_size=20):
