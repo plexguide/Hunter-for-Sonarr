@@ -61,7 +61,8 @@ def get_ui_preference():
 def index():
     """Root route with UI switching capability"""
     if get_ui_preference():
-        return redirect('/new')
+        # Use relative URL or join with request.script_root to support base_url
+        return redirect(request.script_root + '/new' if request.script_root else '/new')
     else:
         return render_template('index.html')
 
@@ -69,7 +70,8 @@ def index():
 def user_page():
     """User settings page with UI switching capability"""
     if get_ui_preference():
-        return redirect('/user/new')
+        # Use relative URL or join with request.script_root to support base_url
+        return redirect(request.script_root + '/user/new' if request.script_root else '/user/new')
     else:
         return render_template('user.html')
 
