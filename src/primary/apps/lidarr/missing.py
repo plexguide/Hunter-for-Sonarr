@@ -163,7 +163,15 @@ def process_missing_albums(
             lidarr_logger.info(f"Found {len(unprocessed_entities)} unprocessed artists out of {len(target_entities)} total")
         else:
             # In album mode, directly track album IDs
-            target_entities = [item['id'] for item in missing_items]
+            target_entities = []
+            for item in missing_items:
+                album_id = item.get('id')
+                title = item.get('title', 'Unknown Album')
+                # Validate album ID - ensure it's a positive integer
+                if album_id is not None and isinstance(album_id, int) and album_id > 0:
+                    target_entities.append(album_id)
+                else:
+                    lidarr_logger.warning(f"Skipping album '{title}' with invalid ID: {album_id}")
             
             # Filter out processed albums
             lidarr_logger.info(f"Found {len(target_entities)} missing albums before filtering")

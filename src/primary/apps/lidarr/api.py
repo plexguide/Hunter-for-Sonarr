@@ -403,18 +403,27 @@ def search_albums(api_url: str, api_key: str, api_timeout: int, album_ids: List[
         lidarr_logger.warning("No album IDs provided for search.")
         return None
         
+    # Filter out invalid album IDs
+    valid_album_ids = [album_id for album_id in album_ids if album_id is not None and album_id > 0]
+    if not valid_album_ids:
+        lidarr_logger.error("No valid album IDs found for search. All provided IDs were invalid.")
+        return None
+    
+    if len(valid_album_ids) < len(album_ids):
+        lidarr_logger.warning(f"Filtered out {len(album_ids) - len(valid_album_ids)} invalid album IDs from search request.")
+    
     payload = {
         "name": "AlbumSearch",
-        "albumIds": album_ids
+        "albumIds": valid_album_ids
     }
     response = arr_request(api_url, api_key, api_timeout, "command", method="POST", data=payload)
     
     if response and isinstance(response, dict) and 'id' in response:
         command_id = response.get('id')
-        lidarr_logger.info(f"Triggered Lidarr AlbumSearch for album IDs: {album_ids}. Command ID: {command_id}")
+        lidarr_logger.info(f"Triggered Lidarr AlbumSearch for album IDs: {valid_album_ids}. Command ID: {command_id}")
         return response # Return the full command object including ID
     else:
-        lidarr_logger.error(f"Failed to trigger Lidarr AlbumSearch for album IDs {album_ids}. Response: {response}")
+        lidarr_logger.error(f"Failed to trigger Lidarr AlbumSearch for album IDs {valid_album_ids}. Response: {response}")
         return None
 
 def search_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int) -> Optional[Dict]:
