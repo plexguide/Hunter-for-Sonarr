@@ -48,6 +48,7 @@ RequestExecutionLevel admin ; Request admin privileges
 
 ; Interface settings
 !ifdef PROJECT_ROOT
+  !echo "DEBUG: Inside !ifdef PROJECT_ROOT. Value is: '${PROJECT_ROOT}'"
   !define MUI_ICON "${PROJECT_ROOT}\frontend\static\logo\huntarr.ico"
   !define MUI_UNICON "${PROJECT_ROOT}\frontend\static\logo\huntarr.ico"
 !else
