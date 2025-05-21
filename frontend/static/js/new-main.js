@@ -30,7 +30,7 @@ let huntarrUI = {
     suppressUnsavedChangesCheck: false, // Flag to suppress unsaved changes dialog
     
     // Logo URL
-    logoUrl: '/static/logo/256.png',
+    logoUrl: './static/logo/256.png',
     
     // Element references
     elements: {},
@@ -869,7 +869,7 @@ let huntarrUI = {
         
         try {
             // Append the app type to the URL
-            const eventSource = new EventSource(`/logs?app=${appType}`); 
+            const eventSource = new EventSource(`./logs?app=${appType}`); 
             
             eventSource.onopen = () => {
                 this.elements.logConnectionStatus.textContent = 'Connected';

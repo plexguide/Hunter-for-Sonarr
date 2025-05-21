@@ -3,6 +3,11 @@
 <head>
     {% include 'components/head.html' %}
     <title>Huntarr - Home</title>
+
+    <!-- Pass base URL configuration to JavaScript -->
+    <script>window.HUNTARR_BASE_URL = '{{ base_url|default("", true) }}';</script>
+    <!-- Pass global scripts -->
+    {% include 'components/scripts.html' %}
 </head>
 <body>
     <div class="app-container mobile-optimized">
@@ -37,25 +42,24 @@
     
     {% include 'components/footer.html' %}
     
-    {% include 'components/scripts.html' %}
     <!-- Load settings-related scripts -->
-    <script src="/static/js/settings_forms.js"></script>
+    <script src="./static/js/settings_forms.js"></script>
     <!-- Load history script -->
-    <script src="/static/js/history.js"></script>
+    <script src="./static/js/history.js"></script>
     <!-- Load apps script -->
-    <script src="/static/js/apps.js"></script>
+    <script src="./static/js/apps.js"></script>
     <!-- Load scheduling script -->
-    <script src="/static/js/scheduling.js"></script>
+    <script src="./static/js/scheduling.js"></script>
     <!-- Emergency reset button implementation -->
-    <script src="/static/js/direct-reset.js"></script>
+    <script src="./static/js/direct-reset.js"></script>
     <!-- Stats reset handler -->
-    <script src="/static/js/stats-reset.js"></script>
+    <script src="./static/js/stats-reset.js"></script>
     <!-- Hourly API cap handler -->
-    <script src="/static/js/hourly-cap.js"></script>
+    <script src="./static/js/hourly-cap.js"></script>
     <!-- Scheduling handler -->
-    <script src="/static/js/scheduling.js"></script>
+    <script src="./static/js/scheduling.js"></script>
     <!-- Community Resources visibility handler -->
-    <script src="/static/js/community-resources.js"></script>
+    <script src="./static/js/community-resources.js"></script>
     
 </body>
 </html>

@@ -164,7 +164,7 @@ function getErosVersion() {
  */
 function refreshErosStatusAndVersion() {
     // Try to get current connection status from the server
-    fetch('/api/eros/status')
+    HuntarrUtils.fetchWithTimeout('/api/eros/status')
         .then(response => response.json())
         .then(data => {
             const panel = document.getElementById('erosSettings');

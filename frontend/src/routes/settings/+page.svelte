@@ -11,7 +11,7 @@
   // Ensure settings are properly loaded on component mount
   onMount(async () => {
     try {
-      const response = await fetch('/api/settings');
+      const response = await HuntarrUtils.fetchWithTimeout('/api/settings');
       if (response.ok) {
         const data = await response.json();
         settings.set(ensureNumericValues(data));
@@ -23,7 +23,7 @@
   
   async function loadSettings() {
     try {
-      const response = await fetch('/api/settings');
+      const response = await HuntarrUtils.fetchWithTimeout('/api/settings');
       if (response.ok) {
         const data = await response.json();
         // Ensure all numeric values are properly handled
@@ -73,7 +73,7 @@
     try {
       const settingsValue = $settings;
       
-      const response = await fetch('/api/settings', {
+      const response = await HuntarrUtils.fetchWithTimeout('/api/settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

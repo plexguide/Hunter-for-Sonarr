@@ -908,7 +908,7 @@ const SettingsForms = {
         const resetStrikesBtn = container.querySelector('#reset_swaparr_strikes');
         const statusContainer = container.querySelector('#swaparr_status');
         
-        fetch('/api/swaparr/status')
+        HuntarrUtils.fetchWithTimeout('/api/swaparr/status')
             .then(response => response.json())
             .then(data => {
                 let statusHTML = '';
@@ -944,7 +944,7 @@ const SettingsForms = {
                 if (confirm('Are you sure you want to reset all Swaparr strikes? This will clear the strike history for all apps.')) {
                     statusContainer.innerHTML = '<p>Resetting strikes...</p>';
                     
-                    fetch('/api/swaparr/reset', {
+                    HuntarrUtils.fetchWithTimeout('/api/swaparr/reset', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -957,7 +957,7 @@ const SettingsForms = {
                             statusContainer.innerHTML = `<p>Success: ${data.message}</p>`;
                             // Reload status after a short delay
                             setTimeout(() => {
-                                fetch('/api/swaparr/status')
+                                HuntarrUtils.fetchWithTimeout('/api/swaparr/status')
                                     .then(response => response.json())
                                     .then(data => {
                                         let statusHTML = '';
@@ -1473,7 +1473,7 @@ const SettingsForms = {
             }
         }
 
-        fetch('/api/stateful/info', {
+        HuntarrUtils.fetchWithTimeout('/api/stateful/info', {
             cache: 'no-cache',
             headers: {
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -1550,7 +1550,7 @@ const SettingsForms = {
             
         // Helper function to fetch data silently without updating UI
         function fetchStatefulInfoSilently() {
-            fetch('/api/stateful/info', {
+            HuntarrUtils.fetchWithTimeout('/api/stateful/info', {
                 cache: 'no-cache',
                 headers: {
                     'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -1665,7 +1665,7 @@ const SettingsForms = {
                 button.disabled = true;
                 
                 // Make the API request
-                fetch(`/api/${appType}/test-connection`, {
+                HuntarrUtils.fetchWithTimeout(`/api/${appType}/test-connection`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1950,7 +1950,7 @@ const SettingsForms = {
         }
         
         // Make the API request
-        fetch(`/api/${app}/test-connection`, {
+        HuntarrUtils.fetchWithTimeout(`/api/${app}/test-connection`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

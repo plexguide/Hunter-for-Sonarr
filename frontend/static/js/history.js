@@ -177,7 +177,7 @@ const historyModule = {
             url += `&search=${encodeURIComponent(this.searchQuery)}`;
         }
         
-        fetch(url)
+        HuntarrUtils.fetchWithTimeout(url)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -201,7 +201,7 @@ const historyModule = {
     clearHistory: function() {
         this.setLoading(true);
         
-        fetch(`/api/history/${this.currentApp}`, {
+        HuntarrUtils.fetchWithTimeout(`/api/history/${this.currentApp}`, {
             method: 'DELETE',
         })
             .then(response => {
