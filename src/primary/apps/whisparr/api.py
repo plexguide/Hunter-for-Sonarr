@@ -22,7 +22,7 @@ whisparr_logger = get_logger("whisparr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, verify_ssl: Optional[bool] = None) -> Any:
     """
     Make a request to the Whisparr API.
     
@@ -33,6 +33,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         endpoint: The API endpoint to call
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data payload for POST/PUT requests
+        verify_ssl: Optional override for SSL verification
     
     Returns:
         The parsed JSON response or None if the request failed
@@ -60,8 +61,8 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         }
         
         # Get SSL verification setting
-        verify_ssl = get_ssl_verify_setting()
-        
+        if verify_ssl is None:
+            verify_ssl = get_ssl_verify_setting()
         if not verify_ssl:
             whisparr_logger.debug("SSL verification disabled by user setting")
         
@@ -365,7 +366,7 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
         whisparr_logger.error(f"Error getting command status for ID {command_id}: {e}")
         return None
 
-def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
+def check_connection(api_url: str, api_key: str, api_timeout: int, verify_ssl: Optional[bool] = None) -> bool:
     """
     Check the connection to Whisparr V2 API.
     
@@ -373,6 +374,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         api_url: The base URL of the Whisparr API
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
+        verify_ssl: Optional override for SSL verification
         
     Returns:
         True if the connection is successful, False otherwise
@@ -383,17 +385,16 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         
         # First try with standard path
         endpoint = "system/status"
-        response = arr_request(api_url, api_key, api_timeout, endpoint)
-        
-        # If that failed, try with v3 path format
+        response = arr_request(api_url, api_key, api_timeout, endpoint, verify_ssl=verify_ssl)
         if response is None:
             whisparr_logger.debug("Standard API path failed, trying v3 format...")
             # Try direct HTTP request to v3 endpoint without using arr_request
             url = f"{api_url.rstrip('/')}/api/v3/system/status"
             headers = {'X-Api-Key': api_key}
-            
+            if verify_ssl is None:
+                verify_ssl = get_ssl_verify_setting()
             try:
-                resp = session.get(url, headers=headers, timeout=api_timeout)
+                resp = session.get(url, headers=headers, timeout=api_timeout, verify=verify_ssl)
                 resp.raise_for_status()
                 response = resp.json()
             except Exception as e:

@@ -21,7 +21,7 @@ sonarr_logger = get_logger("sonarr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, verify_ssl: Optional[bool] = None) -> Any:
     """
     Make a request to the Sonarr API.
     
@@ -32,6 +32,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         endpoint: The API endpoint to call
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data payload for POST/PUT requests
+        verify_ssl: Optional override for SSL verification
     
     Returns:
         The parsed JSON response or None if the request failed
@@ -62,8 +63,8 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         sonarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
         
         # Get SSL verification setting
-        verify_ssl = get_ssl_verify_setting()
-        
+        if verify_ssl is None:
+            verify_ssl = get_ssl_verify_setting()
         if not verify_ssl:
             sonarr_logger.debug("SSL verification disabled by user setting")
         
@@ -128,7 +129,8 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
     try:
         # Use a shorter timeout for a quick connection check
         quick_timeout = min(api_timeout, 15) 
-        status = get_system_status(api_url, api_key, quick_timeout)
+        verify_ssl = get_ssl_verify_setting()
+        status = get_system_status(api_url, api_key, quick_timeout, verify_ssl=verify_ssl)
         if status and isinstance(status, dict) and 'version' in status:
              # Log success only if debug is enabled to avoid clutter
              sonarr_logger.debug(f"Connection check successful for {api_url}. Version: {status.get('version')}")
@@ -142,7 +144,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         sonarr_logger.error(f"Connection check failed for {api_url}")
         return False
 
-def get_system_status(api_url: str, api_key: str, api_timeout: int) -> Dict:
+def get_system_status(api_url: str, api_key: str, api_timeout: int, verify_ssl: Optional[bool] = None) -> Dict:
     """
     Get Sonarr system status.
     
@@ -150,11 +152,12 @@ def get_system_status(api_url: str, api_key: str, api_timeout: int) -> Dict:
         api_url: The base URL of the Sonarr API
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
+        verify_ssl: Optional override for SSL verification
     
     Returns:
         System status information or empty dict if request failed
     """
-    response = arr_request(api_url, api_key, api_timeout, "system/status")
+    response = arr_request(api_url, api_key, api_timeout, "system/status", verify_ssl=verify_ssl)
     if response:
         return response
     return {}
