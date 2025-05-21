@@ -2451,3 +2451,20 @@ input#stateful_management_hours {
     max-width: 55px !important;
     font-size: 0.9rem;
 }
+
+/* Style for the Resources section header bar */
+.community-hub-card > .card-header {
+    background-color: #252a34; /* User preferred header blue */
+    padding: 10px 15px;       /* Consistent padding */
+    border-radius: 8px;       /* Round all corners */
+    display: flex;            /* For vertical centering of h3 if needed */
+    align-items: center;      /* For vertical centering of h3 if needed */
+    margin-bottom: 15px;      /* Space between this header and the resource items below */
+}
+
+.community-hub-card > .card-header h3 {
+    color: #ffffff;           /* White text on dark blue background */
+    margin: 0;                /* Remove default h3 margin */
+    font-size: 1.1em;         /* Adjust size as needed */
+    font-weight: 500;         /* Medium weight */
+}
