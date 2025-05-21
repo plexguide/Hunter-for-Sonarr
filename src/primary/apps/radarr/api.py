@@ -102,7 +102,10 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int
         # Radarr uses /api/v3/queue
         endpoint = f"{api_url.rstrip('/')}/api/v3/queue?page=1&pageSize=1000" # Fetch a large page size
         headers = {"X-Api-Key": api_key}
-        response = session.get(endpoint, headers=headers, timeout=api_timeout)
+        verify_ssl = get_ssl_verify_setting()
+        if not verify_ssl:
+            radarr_logger.debug("SSL verification disabled by user setting for queue size check")
+        response = session.get(endpoint, headers=headers, timeout=api_timeout, verify=verify_ssl)
         response.raise_for_status()
         queue_data = response.json()
         queue_size = queue_data.get('totalRecords', 0)
@@ -277,8 +280,10 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         # Ensure URL doesn't end with a slash before adding the endpoint
         base_url = api_url.rstrip('/')
         full_url = f"{base_url}/api/v3/system/status"
-        
-        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout)
+        verify_ssl = get_ssl_verify_setting()
+        if not verify_ssl:
+            radarr_logger.debug("SSL verification disabled by user setting for connection check")
+        response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout, verify=verify_ssl)
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         radarr_logger.debug("Successfully connected to Radarr.")
         return True

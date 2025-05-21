@@ -22,7 +22,7 @@ eros_logger = get_logger("eros")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, verify_ssl: Optional[bool] = None) -> Any:
     """
     Make a request to the Eros API.
     
@@ -33,6 +33,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         endpoint: The API endpoint to call
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data payload for POST/PUT requests
+        verify_ssl: Whether to verify SSL certificates (overrides global setting if provided)
     
     Returns:
         The parsed JSON response or None if the request failed
@@ -60,7 +61,8 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         }
         
         # Get SSL verification setting
-        verify_ssl = get_ssl_verify_setting()
+        if verify_ssl is None:
+            verify_ssl = get_ssl_verify_setting()
         
         if not verify_ssl:
             eros_logger.debug("SSL verification disabled by user setting")
@@ -106,7 +108,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         eros_logger.error(f"Unexpected error during API request: {e}")
         return None
 
-def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int:
+def get_download_queue_size(api_url: str, api_key: str, api_timeout: int, verify_ssl: Optional[bool] = None) -> int:
     """
     Get the current size of the download queue.
 
@@ -118,7 +120,7 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int
     Returns:
         The number of items in the download queue, or -1 if the request failed
     """
-    response = arr_request(api_url, api_key, api_timeout, "queue")
+    response = arr_request(api_url, api_key, api_timeout, "queue", verify_ssl=verify_ssl)
     
     if response is None:
         return -1
@@ -132,7 +134,7 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int
     else:
         return -1
 
-def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, search_mode: str = "movie") -> List[Dict[str, Any]]:
+def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, search_mode: str = "movie", verify_ssl: Optional[bool] = None) -> List[Dict[str, Any]]:
     """
     Get a list of items with missing files (not downloaded/available).
 
@@ -153,7 +155,7 @@ def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitor
             # In movie mode, we get all movies and filter for ones without files
             endpoint = "movie"
             
-            response = arr_request(api_url, api_key, api_timeout, endpoint)
+            response = arr_request(api_url, api_key, api_timeout, endpoint, verify_ssl=verify_ssl)
             
             if response is None:
                 return None
@@ -172,12 +174,12 @@ def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitor
             # First check if the movie-scene endpoint exists
             endpoint = "scene/missing?pageSize=1000"
             
-            response = arr_request(api_url, api_key, api_timeout, endpoint)
+            response = arr_request(api_url, api_key, api_timeout, endpoint, verify_ssl=verify_ssl)
             
             if response is None:
                 # Fallback to regular movie filtering if scene endpoint doesn't exist
                 eros_logger.warning("Scene endpoint not available, falling back to movie mode")
-                return get_items_with_missing(api_url, api_key, api_timeout, monitored_only, "movie")
+                return get_items_with_missing(api_url, api_key, api_timeout, monitored_only, "movie", verify_ssl=verify_ssl)
             
             # Extract the scenes
             items = []
@@ -203,7 +205,7 @@ def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitor
         eros_logger.error(f"Error retrieving missing items: {str(e)}")
         return None
 
-def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitored_only: bool) -> List[Dict[str, Any]]:
+def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, verify_ssl: Optional[bool] = None) -> List[Dict[str, Any]]:
     """
     Get a list of items that don't meet their quality profile cutoff.
 
@@ -222,7 +224,7 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
         # Endpoint
         endpoint = "wanted/cutoff?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
         
-        response = arr_request(api_url, api_key, api_timeout, endpoint)
+        response = arr_request(api_url, api_key, api_timeout, endpoint, verify_ssl=verify_ssl)
         
         if response is None:
             return None
@@ -247,7 +249,7 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
         eros_logger.error(f"Error retrieving cutoff unmet items: {str(e)}")
         return None
 
-def get_quality_upgrades(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, search_mode: str = "movie") -> List[Dict[str, Any]]:
+def get_quality_upgrades(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, search_mode: str = "movie", verify_ssl: Optional[bool] = None) -> List[Dict[str, Any]]:
     """
     Get a list of items that can be upgraded to better quality.
 
@@ -268,7 +270,7 @@ def get_quality_upgrades(api_url: str, api_key: str, api_timeout: int, monitored
             # In movie mode, we get all movies and filter for ones that have files but need quality upgrades
             endpoint = "movie"
             
-            response = arr_request(api_url, api_key, api_timeout, endpoint)
+            response = arr_request(api_url, api_key, api_timeout, endpoint, verify_ssl=verify_ssl)
             
             if response is None:
                 return None
@@ -286,12 +288,12 @@ def get_quality_upgrades(api_url: str, api_key: str, api_timeout: int, monitored
             # In scene mode, try to use scene-specific endpoints
             endpoint = "scene/cutoff?pageSize=1000"
             
-            response = arr_request(api_url, api_key, api_timeout, endpoint)
+            response = arr_request(api_url, api_key, api_timeout, endpoint, verify_ssl=verify_ssl)
             
             if response is None:
                 # Fallback to regular movie filtering if scene endpoint doesn't exist
                 eros_logger.warning("Scene cutoff endpoint not available, falling back to movie mode")
-                return get_quality_upgrades(api_url, api_key, api_timeout, monitored_only, "movie")
+                return get_quality_upgrades(api_url, api_key, api_timeout, monitored_only, "movie", verify_ssl=verify_ssl)
             
             # Extract the scenes
             items = []
@@ -335,7 +337,7 @@ def refresh_item(api_url: str, api_key: str, api_timeout: int, item_id: int) -> 
     # Return a placeholder command ID to simulate success without actually refreshing
     return 123
 
-def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int]) -> int:
+def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int], verify_ssl: Optional[bool] = None) -> int:
     """
     Trigger a search for one or more movies in Whisparr V3.
     
@@ -416,7 +418,7 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
             eros_logger.debug(f"Trying search command format {i+1}: {payload}")
             
             # Make the API request
-            response = arr_request(api_url, api_key, api_timeout, command_endpoint, "POST", payload)
+            response = arr_request(api_url, api_key, api_timeout, command_endpoint, "POST", payload, verify_ssl=verify_ssl)
             
             if response and "id" in response:
                 command_id = response["id"]
@@ -431,7 +433,7 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
         eros_logger.error(f"Error searching for movies: {str(e)}")
         return None
 
-def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id: int) -> Optional[Dict]:
+def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id: int, verify_ssl: Optional[bool] = None) -> Optional[Dict]:
     """
     Get the status of a specific command.
 
@@ -452,7 +454,7 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
         command_endpoint = f"command/{command_id}"
         
         # Make the API request
-        result = arr_request(api_url, api_key, api_timeout, command_endpoint)
+        result = arr_request(api_url, api_key, api_timeout, command_endpoint, verify_ssl=verify_ssl)
         
         if result:
             eros_logger.debug(f"Command {command_id} status: {result.get('status', 'unknown')}")
@@ -465,7 +467,7 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
         eros_logger.error(f"Error getting command status for ID {command_id}: {e}")
         return None
 
-def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
+def check_connection(api_url: str, api_key: str, api_timeout: int, verify_ssl: Optional[bool] = None) -> bool:
     """
     Check the connection to Whisparr V3 API.
     
@@ -473,6 +475,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         api_url: The base URL of the Whisparr V3 API
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
+        verify_ssl: Whether to verify SSL certificates (overrides global setting if provided)
         
     Returns:
         True if the connection is successful, False otherwise
@@ -481,7 +484,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         eros_logger.debug(f"Checking connection to Whisparr V3 instance at {api_url}")
         
         endpoint = "system/status"
-        response = arr_request(api_url, api_key, api_timeout, endpoint)
+        response = arr_request(api_url, api_key, api_timeout, endpoint, verify_ssl=verify_ssl)
         
         if response is not None:
             # Get the version information if available
