@@ -20,7 +20,7 @@ radarr_logger = get_logger("radarr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, verify_ssl: Optional[bool] = None) -> Any:
     """
     Make a request to the Radarr API.
     
@@ -31,6 +31,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         endpoint: The API endpoint to call (without /api/v3/)
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data payload for POST/PUT requests
+        verify_ssl: Optional SSL verification flag. If not provided, falls back to global setting.
     
     Returns:
         The parsed JSON response or None if the request failed
@@ -53,8 +54,8 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         }
         
         # Get SSL verification setting
-        verify_ssl = get_ssl_verify_setting()
-        
+        if verify_ssl is None:
+            verify_ssl = get_ssl_verify_setting()
         if not verify_ssl:
             radarr_logger.debug("SSL verification disabled by user setting")
         
@@ -132,7 +133,7 @@ def get_movies_with_missing(api_url: str, api_key: str, api_timeout: int, monito
         A list of movie objects with missing files, or None if the request failed.
     """
     # Use the updated arr_request with passed arguments
-    movies = arr_request(api_url, api_key, api_timeout, "movie")
+    movies = arr_request(api_url, api_key, api_timeout, "movie", verify_ssl=None)
     if movies is None: # Check for None explicitly, as an empty list is valid
         radarr_logger.error("Failed to retrieve movies from Radarr API.")
         return None
@@ -166,14 +167,14 @@ def get_cutoff_unmet_movies(api_url: str, api_key: str, api_timeout: int, monito
     # We need to fetch all movies and filter locally, or use the /api/v3/movie/lookup endpoint if searching by TMDB/IMDB ID.
     # Fetching all movies is simpler for now.
     radarr_logger.debug("Fetching all movies to determine cutoff unmet status...")
-    movies = arr_request(api_url, api_key, api_timeout, "movie")
+    movies = arr_request(api_url, api_key, api_timeout, "movie", verify_ssl=None)
     if movies is None:
         radarr_logger.error("Failed to retrieve movies from Radarr API for cutoff check.")
         return None
 
     # Need quality profile information to determine cutoff unmet status.
     # Fetch quality profiles first.
-    profiles = arr_request(api_url, api_key, api_timeout, "qualityprofile")
+    profiles = arr_request(api_url, api_key, api_timeout, "qualityprofile", verify_ssl=None)
     if profiles is None:
         radarr_logger.error("Failed to retrieve quality profiles from Radarr API.")
         return None
@@ -255,7 +256,7 @@ def movie_search(api_url: str, api_key: str, api_timeout: int, movie_ids: List[i
     }
     
     # Use the updated arr_request
-    response = arr_request(api_url, api_key, api_timeout, endpoint, method="POST", data=data)
+    response = arr_request(api_url, api_key, api_timeout, endpoint, method="POST", data=data, verify_ssl=None)
     if response and 'id' in response:
         command_id = response['id']
         radarr_logger.debug(f"Triggered search for movie IDs: {movie_ids}. Command ID: {command_id}")
@@ -312,7 +313,7 @@ def wait_for_command(api_url: str, api_key: str, api_timeout: int, command_id: i
     """
     attempts = 0
     while attempts < max_attempts:
-        response = arr_request(api_url, api_key, api_timeout, f"command/{command_id}")
+        response = arr_request(api_url, api_key, api_timeout, f"command/{command_id}", verify_ssl=None)
         if response and 'state' in response:
             state = response['state']
             if state == "completed":
