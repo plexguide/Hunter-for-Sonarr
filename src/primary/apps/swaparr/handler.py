@@ -13,6 +13,7 @@ import requests
 from src.primary.utils.logger import get_logger
 from src.primary.settings_manager import load_settings
 from src.primary.state import get_state_file_path
+from src.primary.settings_manager import get_ssl_verify_setting
 
 # Create logger
 swaparr_logger = get_logger("swaparr")
@@ -165,9 +166,11 @@ def get_queue_items(app_name, api_url, api_key, api_timeout=120):
         # Add pagination parameters
         queue_url = f"{api_url.rstrip('/')}/api/{api_version}/queue?page={page}&pageSize={page_size}"
         headers = {'X-Api-Key': api_key}
-        
+        verify_ssl = get_ssl_verify_setting()
+        if not verify_ssl:
+            swaparr_logger.debug("SSL verification disabled by user setting for get_queue_items")
         try:
-            response = requests.get(queue_url, headers=headers, timeout=api_timeout)
+            response = requests.get(queue_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
             response.raise_for_status()
             queue_data = response.json()
             
@@ -268,9 +271,11 @@ def delete_download(app_name, api_url, api_key, download_id, remove_from_client=
     api_version = api_version_map.get(app_name, "v3")
     delete_url = f"{api_url.rstrip('/')}/api/{api_version}/queue/{download_id}?removeFromClient={str(remove_from_client).lower()}&blocklist=true"
     headers = {'X-Api-Key': api_key}
-    
+    verify_ssl = get_ssl_verify_setting()
+    if not verify_ssl:
+        swaparr_logger.debug("SSL verification disabled by user setting for delete_download")
     try:
-        response = requests.delete(delete_url, headers=headers, timeout=api_timeout)
+        response = requests.delete(delete_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
         response.raise_for_status()
         swaparr_logger.info(f"Successfully removed download {download_id} from {app_name}")
         return True

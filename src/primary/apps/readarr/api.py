@@ -48,7 +48,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         }
         logger.debug(f"Using User-Agent: {headers['User-Agent']}")
         
-        response = requests.get(full_url, headers=headers, timeout=api_timeout)
+        response = requests.get(full_url, headers=headers, timeout=api_timeout, verify=get_ssl_verify_setting())
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         logger.debug("Successfully connected to Readarr.")
         return True
@@ -310,7 +310,7 @@ def get_wanted_missing_books(api_url: str, api_key: str, api_timeout: int, monit
             # 'monitored': monitored_only # Note: Check if Readarr API supports this directly for wanted/missing
         }
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=api_timeout)
+            response = requests.get(url, headers=headers, params=params, timeout=api_timeout, verify=get_ssl_verify_setting())
             response.raise_for_status()
             data = response.json()
 
@@ -409,7 +409,7 @@ def search_books(api_url: str, api_key: str, book_ids: List[int], api_timeout: i
     }
     try:
         # This uses requests.post directly, not arr_request. It's already correct.
-        response = requests.post(endpoint, headers=headers, json=payload, timeout=api_timeout)
+        response = requests.post(endpoint, headers=headers, json=payload, timeout=api_timeout, verify=get_ssl_verify_setting())
         response.raise_for_status()
         command_data = response.json()
         command_id = command_data.get('id')
