@@ -161,14 +161,14 @@
         
         /* Sponsor title link styling */
         .sponsor-title-link {
-            color: #ffb700;
+            color: #ffffff;
             text-decoration: none;
             transition: all 0.2s ease;
             position: relative;
         }
         
         .sponsor-title-link:hover {
-            color: #ffd700;
+            color: #e0e0e0;
             text-decoration: underline;
         }
         
@@ -183,7 +183,7 @@
         
         /* Sponsor name styling */
         .sponsor-widget .link-description a {
-            color: #3498db; /* A nice blue color for sponsor names */
+            color: #ffb700; /* Gold color for sponsor names */
             text-decoration: none;
             transition: all 0.2s ease;
             position: relative;
@@ -191,7 +191,7 @@
         }
         
         .sponsor-widget .link-description a:hover {
-            color: #5dade2;
+            color: #ffd700;
         }
         
         .sponsor-widget .link-description a::after {
@@ -201,7 +201,7 @@
             height: 1px;
             bottom: 0;
             left: 0;
-            background-color: #5dade2;
+            background-color: #ffd700;
             transition: width 0.3s ease;
         }
         
@@ -1788,9 +1788,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentSponsorIndex = randomIndex;
                 displaySponsor(sponsors[randomIndex]);
                 
-                // Set up rotation every 10 seconds
+                // Set up rotation every 12 seconds
                 if (intervalId) clearInterval(intervalId);
-                intervalId = setInterval(rotateSponsor, 10000);
+                intervalId = setInterval(rotateSponsor, 12000);
             } else {
                 // If no sponsors, show a fallback message
                 sponsorContainer.textContent = 'Support us on GitHub!';
