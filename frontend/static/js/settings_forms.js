@@ -1344,14 +1344,14 @@ const SettingsForms = {
             </div>
 
             <div class="settings-group">
-                <h3>Notifications</h3>
+                <h3>Apprise Notifications <span style="color: #ff6b6b; font-size: 0.85em; font-weight: normal;">(Not Working Yet)</span></h3>
                 <div class="setting-item">
                     <label for="enable_notifications"><a href="#" class="info-icon" title="Enable or disable notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enable Notifications:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="enable_notifications" ${settings.enable_notifications === true ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
-                    <p class="setting-help" style="margin-left: -3ch !important;">Enable sending notifications via Apprise</p>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Enable sending notifications via Apprise <span style="color: #ff6b6b;">(Coming soon - not functional yet)</span></p>
                 </div>
                 <div class="setting-item">
                     <label for="notification_level"><a href="#" class="info-icon" title="Set minimum notification level" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Notification Level:</label>
