@@ -1798,9 +1798,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentSponsorIndex = randomIndex;
                 displaySponsor(sponsors[randomIndex]);
                 
-                // Set up rotation every 12 seconds
+                // Set up rotation every 15 seconds
                 if (intervalId) clearInterval(intervalId);
-                intervalId = setInterval(rotateSponsor, 12000);
+                intervalId = setInterval(rotateSponsor, 15000);
             } else {
                 // If no sponsors, show a fallback message
                 sponsorContainer.textContent = 'Support us on GitHub!';
