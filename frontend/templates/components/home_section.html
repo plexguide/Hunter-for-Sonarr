@@ -106,6 +106,52 @@
             font-size: 0.9em;
             font-weight: 500;
         }
+        /* Subtle pulsing golden ring for sponsor avatars */
+        .sponsor-icon {
+            position: relative;
+            border-radius: 50%;
+            padding: 2px; /* Create space for the golden ring */
+            background: linear-gradient(45deg, #ffd700, #ffb700, #ffd700, #fff6a1, #ffd700);
+            background-size: 400% 400%;
+            animation: goldPulse 6s ease-in-out infinite, subtlePulse 4s alternate infinite;
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.4);
+        }
+        
+        .sponsor-icon a {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Subtle pulse effect */
+        @keyframes subtlePulse {
+            0% { box-shadow: 0 0 4px rgba(255, 215, 0, 0.4); }
+            100% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.7); }
+        }
+        
+        @keyframes goldPulse {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Align sponsor name properly */
+        .sponsor-widget .link-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        
+        .sponsor-widget .link-title {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .sponsor-widget .link-description {
+            text-align: left;
+            justify-content: flex-start;
+        }
     </style>
     <div class="dashboard-grid stack-layout mobile-scrollable">
         <!-- Enhanced Support Links with Modern Design -->
@@ -1591,10 +1637,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function displaySponsor(sponsor) {
         if (!sponsor) return;
         
-        // Display avatar in the left icon container
+        // Display avatar in the left icon container with enhanced styling
         document.getElementById('sponsor-avatar-container').innerHTML = `
             <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
-                <img src="${sponsor.avatarUrl}" alt="${sponsor.name}'s avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                <img src="${sponsor.avatarUrl}" alt="${sponsor.name}'s avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">
             </a>
         `;
         
