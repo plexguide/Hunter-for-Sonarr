@@ -135,23 +135,65 @@
             100% { background-position: 0% 50%; }
         }
         
-        /* Align sponsor name properly */
+        /* Align sponsor name properly with enhanced styling */
         .sponsor-widget .link-details {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
             justify-content: center;
+            padding-left: 4px; /* Add a bit more space for breathing room */
         }
         
         .sponsor-widget .link-title {
             font-weight: 600;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px; /* Slightly improve text readability */
         }
         
         .sponsor-widget .link-description {
             text-align: left;
             justify-content: flex-start;
+            opacity: 0.95; /* Subtle contrast with the title */
         }
+        
+        /* Sponsor name styling */
+        .sponsor-widget .link-description a {
+            color: #3498db; /* A nice blue color for sponsor names */
+            text-decoration: none;
+            transition: all 0.2s ease;
+            position: relative;
+            padding-bottom: 1px;
+        }
+        
+        .sponsor-widget .link-description a:hover {
+            color: #5dade2;
+        }
+        
+        .sponsor-widget .link-description a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: 0;
+            left: 0;
+            background-color: #5dade2;
+            transition: width 0.3s ease;
+        }
+        
+        .sponsor-widget .link-description a:hover::after {
+            width: 100%;
+        }
+        
+        /* Sponsor icon hover effect */
+        .sponsor-icon a img {
+            transition: transform 0.3s ease;
+        }
+        
+        .sponsor-icon a:hover img {
+            transform: scale(1.05);
+        }
+        
+
     </style>
     <div class="dashboard-grid stack-layout mobile-scrollable">
         <!-- Enhanced Support Links with Modern Design -->
@@ -1616,6 +1658,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return array;
     }
     
+    // Apply transition styles for smooth sponsor changes
+    const avatarContainer = document.getElementById('sponsor-avatar-container');
+    const descContainer = document.getElementById('rotating-sponsor-content');
+    
+    // Add transition effects
+    avatarContainer.style.transition = 'opacity 0.3s ease';
+    descContainer.style.transition = 'opacity 0.3s ease';
+    
     // Function to get a random sponsor different from the current one
     function getRandomSponsor() {
         if (sponsors.length === 0) return null;
@@ -1637,19 +1687,34 @@ document.addEventListener('DOMContentLoaded', function() {
     function displaySponsor(sponsor) {
         if (!sponsor) return;
         
-        // Display avatar in the left icon container with enhanced styling
-        document.getElementById('sponsor-avatar-container').innerHTML = `
-            <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
-                <img src="${sponsor.avatarUrl}" alt="${sponsor.name}'s avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">
-            </a>
-        `;
+        // Add fade-out effect
+        const avatarContainer = document.getElementById('sponsor-avatar-container');
+        const descContainer = sponsorContainer;
         
-        // Display name in the description area
-        sponsorContainer.innerHTML = `
-            <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
-                ${sponsor.name}
-            </a>
-        `;
+        // Apply fade-out
+        avatarContainer.style.opacity = '0';
+        descContainer.style.opacity = '0';
+        
+        // Wait for fade-out, then update content
+        setTimeout(() => {
+            // Update avatar with enhanced styling
+            avatarContainer.innerHTML = `
+                <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
+                    <img src="${sponsor.avatarUrl}" alt="${sponsor.name}'s avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">
+                </a>
+            `;
+            
+            // Update name in the description area
+            descContainer.innerHTML = `
+                <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
+                    ${sponsor.name}
+                </a>
+            `;
+            
+            // Apply fade-in
+            avatarContainer.style.opacity = '1';
+            descContainer.style.opacity = '1';
+        }, 150);
     }
     
     // Function to rotate to a new random sponsor
