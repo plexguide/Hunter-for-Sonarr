@@ -123,14 +123,14 @@
                         </div>
                     </a>
                     <div id="sponsor-widget-container" class="support-link sponsor-widget">
-                        <div class="icon-container sponsor-icon">
-                            <i class="fas fa-users"></i>
+                        <div id="sponsor-avatar-container" class="icon-container sponsor-icon">
+                            <!-- JavaScript will inject sponsor avatar here -->
                         </div>
                         <div class="link-details">
                             <span class="link-title">Thank You Sponsors!</span>
-                            <div id="rotating-sponsor-content" class="link-description">
-                                <!-- JavaScript will inject sponsor name/avatar here -->
-                            </div>
+                            <span id="rotating-sponsor-content" class="link-description">
+                                <!-- JavaScript will inject sponsor name here -->
+                            </span>
                         </div>
                     </div>
                     <a href="https://donate.plex.one" target="_blank" class="support-link donate">
@@ -1577,16 +1577,29 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!sponsors || sponsors.length === 0) return;
 
         const sponsor = sponsors[currentSponsorIndex];
+        // Display avatar in the left icon container
+        document.getElementById('sponsor-avatar-container').innerHTML = `
+            <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
+                <img src="${sponsor.avatarUrl}" alt="${sponsor.name}'s avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+            </a>
+        `;
+        
+        // Display name in the description area
         sponsorContainer.innerHTML = `
-            <a href="${sponsor.url || '#'}" target="_blank" class="sponsor-item" title="Visit ${sponsor.name}'s GitHub profile">
-                <img src="${sponsor.avatar_url}" alt="${sponsor.name}'s avatar" class="sponsor-avatar">
-                <span class="sponsor-name">${sponsor.name}</span>
+            <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
+                ${sponsor.name}
             </a>
         `;
     }
 
     function rotateSponsor() {
-        currentSponsorIndex = (currentSponsorIndex + 1) % sponsors.length;
+        // Select a random sponsor instead of sequential rotation
+        let newIndex;
+        do {
+            newIndex = Math.floor(Math.random() * sponsors.length);
+        } while (sponsors.length > 1 && newIndex === currentSponsorIndex); // Ensure we don't show the same sponsor twice in a row
+        
+        currentSponsorIndex = newIndex;
         displaySponsor();
     }
 
@@ -1600,7 +1613,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (intervalId) {
                     clearInterval(intervalId);
                 }
-                intervalId = setInterval(rotateSponsor, 5000); 
+                intervalId = setInterval(rotateSponsor, 10000); // Changed to 10 seconds per user request 
             }
         } else {
             sponsorContainer.innerHTML = 'Thank you to all our sponsors!'; // Fallback if no sponsors loaded but API call was 'successful'
