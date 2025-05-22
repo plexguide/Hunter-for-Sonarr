@@ -265,7 +265,7 @@ def movie_search(api_url: str, api_key: str, api_timeout: int, movie_ids: List[i
         radarr_logger.error(f"Failed to trigger search command for movie IDs {movie_ids}. Response: {response}")
         return None
 
-def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
+def check_connection(api_url: str, api_key: str, api_timeout: int, verify_ssl: Optional[bool] = None) -> bool:
     """Check the connection to Radarr API."""
     try:
         # Ensure api_url is properly formatted
@@ -281,7 +281,8 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         # Ensure URL doesn't end with a slash before adding the endpoint
         base_url = api_url.rstrip('/')
         full_url = f"{base_url}/api/v3/system/status"
-        verify_ssl = get_ssl_verify_setting()
+        if verify_ssl is None:
+            verify_ssl = get_ssl_verify_setting()
         if not verify_ssl:
             radarr_logger.debug("SSL verification disabled by user setting for connection check")
         response = requests.get(full_url, headers={"X-Api-Key": api_key}, timeout=api_timeout, verify=verify_ssl)
