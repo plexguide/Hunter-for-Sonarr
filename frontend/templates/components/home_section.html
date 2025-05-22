@@ -220,7 +220,8 @@
         
 
     </style>
-    <div class="dashboard-grid stack-layout mobile-scrollable">
+    <!-- Add initially hidden class to prevent flickering before JS initializes -->  
+    <div class="dashboard-grid stack-layout mobile-scrollable" style="opacity: 0; transition: opacity 0.3s ease;">
         <!-- Enhanced Support Links with Modern Design -->
         <div class="card support-links-card">
             <div class="support-links-container">
@@ -235,7 +236,8 @@
                             <span class="link-description">Support development &amp; features</span>
                         </div>
                     </a>
-                    <div id="sponsor-widget-container" class="support-link sponsor-widget">
+                    <!-- Hide the sponsor widget until it's configured -->
+                    <div id="sponsor-widget-container" class="support-link sponsor-widget" style="visibility: hidden;">
                         <div id="sponsor-avatar-container" class="icon-container" style="visibility: hidden;">
                             <!-- JavaScript will inject sponsor avatar here -->
                             <!-- Initially hidden until content is loaded -->
@@ -1663,6 +1665,11 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Set a small timeout to allow all DOM elements to initialize
+    setTimeout(function() {
+        // Show the dashboard after initialization
+        document.querySelector('.dashboard-grid').style.opacity = '1';
+    }, 100);
     const sponsorContainer = document.getElementById('rotating-sponsor-content');
     let sponsors = [];
     let currentSponsorIndex = 0;
@@ -1750,6 +1757,9 @@ document.addEventListener('DOMContentLoaded', function() {
             descContainer.style.visibility = 'visible';
             avatarContainer.style.opacity = '1';
             descContainer.style.opacity = '1';
+            
+            // Make the sponsor widget container visible once content is loaded
+            document.getElementById('sponsor-widget-container').style.visibility = 'visible';
         }, 150);
     }
     
