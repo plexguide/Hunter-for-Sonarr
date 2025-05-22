@@ -1190,9 +1190,9 @@ def get_github_sponsors():
                     'url': sponsor_node.get('url')
                 })
         
-        # Generate a random expiration period between 1-7 days
+        # Generate a random expiration period between 4-7 days
         import random  # Import here to ensure it's available
-        expiry_days = random.randint(1, 7)
+        expiry_days = random.randint(4, 7)
         
         # Save to cache with timestamp and expiration
         with open(SPONSORS_CACHE_FILE, 'w') as f:
