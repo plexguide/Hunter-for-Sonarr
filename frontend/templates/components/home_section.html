@@ -1553,30 +1553,44 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSponsorIndex = 0;
     let intervalId = null;
 
-    async function fetchSponsors() {
-        try {
-            const response = await fetch('/api/github_sponsors');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            sponsors = await response.json();
-            if (sponsors && sponsors.length > 0) {
-                // Display up to 10 sponsors as per preference
-                sponsors = sponsors.slice(0, 10);
-                startRotation();
-            } else {
-                sponsorContainer.innerHTML = 'No sponsors to display currently.';
-            }
-        } catch (error) {
-            console.error('Error fetching GitHub sponsors:', error);
-            sponsorContainer.innerHTML = 'Could not load sponsors.';
+    // Function to shuffle an array (Fisher-Yates algorithm)
+    function shuffleArray(array) {
+        let currentIndex = array.length, randomIndex;
+        
+        // While there remain elements to shuffle
+        while (currentIndex > 0) {
+            // Pick a remaining element
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            
+            // And swap it with the current element
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
         }
+        
+        return array;
     }
-
-    function displaySponsor() {
-        if (!sponsors || sponsors.length === 0) return;
-
-        const sponsor = sponsors[currentSponsorIndex];
+    
+    // Function to get a random sponsor different from the current one
+    function getRandomSponsor() {
+        if (sponsors.length === 0) return null;
+        
+        // If only one sponsor, just return it
+        if (sponsors.length === 1) return sponsors[0];
+        
+        // Generate a random index different from the current one
+        let newIndex;
+        do {
+            newIndex = Math.floor(Math.random() * sponsors.length);
+        } while (newIndex === currentSponsorIndex);
+        
+        currentSponsorIndex = newIndex;
+        return sponsors[currentSponsorIndex];
+    }
+    
+    // Display the sponsor information in the UI
+    function displaySponsor(sponsor) {
+        if (!sponsor) return;
+        
         // Display avatar in the left icon container
         document.getElementById('sponsor-avatar-container').innerHTML = `
             <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
@@ -1591,35 +1605,56 @@ document.addEventListener('DOMContentLoaded', function() {
             </a>
         `;
     }
-
+    
+    // Function to rotate to a new random sponsor
     function rotateSponsor() {
-        // Select a random sponsor instead of sequential rotation
-        let newIndex;
-        do {
-            newIndex = Math.floor(Math.random() * sponsors.length);
-        } while (sponsors.length > 1 && newIndex === currentSponsorIndex); // Ensure we don't show the same sponsor twice in a row
-        
-        currentSponsorIndex = newIndex;
-        displaySponsor();
+        const sponsor = getRandomSponsor();
+        displaySponsor(sponsor);
     }
 
-    function startRotation() {
-        if (sponsors.length > 0) {
-            // Display the first sponsor immediately
-            displaySponsor(); 
-            // If more than one sponsor, start rotating every 5 seconds (5000ms)
-            if (sponsors.length > 1) {
-                 // Clear any existing interval before starting a new one
-                if (intervalId) {
-                    clearInterval(intervalId);
-                }
-                intervalId = setInterval(rotateSponsor, 10000); // Changed to 10 seconds per user request 
+    // Fetch sponsors from the API
+    async function fetchSponsors() {
+        try {
+            const response = await fetch('/api/github_sponsors');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        } else {
-            sponsorContainer.innerHTML = 'Thank you to all our sponsors!'; // Fallback if no sponsors loaded but API call was 'successful'
+            
+            sponsors = await response.json();
+            
+            if (sponsors && sponsors.length > 0) {
+                // Limit to 10 sponsors if there are more
+                if (sponsors.length > 10) {
+                    sponsors = sponsors.slice(0, 10);
+                }
+                
+                // Force a truly random initial display by shuffling multiple times
+                // This helps prevent any pattern in the API response ordering
+                sponsors = shuffleArray([...sponsors]);
+                sponsors = shuffleArray([...sponsors]); // Shuffle twice for extra randomness
+                
+                // Use timestamp as additional entropy for initial selection
+                const timestamp = new Date().getTime();
+                const randomOffset = timestamp % sponsors.length;
+                const randomIndex = (Math.floor(Math.random() * sponsors.length) + randomOffset) % sponsors.length;
+                
+                currentSponsorIndex = randomIndex;
+                displaySponsor(sponsors[randomIndex]);
+                
+                // Set up rotation every 5 seconds
+                if (intervalId) clearInterval(intervalId);
+                intervalId = setInterval(rotateSponsor, 5000);
+            } else {
+                // If no sponsors, show a fallback message
+                sponsorContainer.textContent = 'Support us on GitHub!';
+            }
+        } catch (error) {
+            console.error('Error fetching sponsors:', error);
+            sponsorContainer.textContent = 'Support us on GitHub!';
         }
     }
 
+    // Initialize sponsors on page load
     fetchSponsors();
 });
 </script>
