@@ -80,6 +80,32 @@
             padding: 4px 10px !important; /* Smaller button padding */
             font-size: 0.85em !important; /* Smaller font size */
         }
+        
+        /* Sponsor Widget Styles */
+        .sponsor-widget .link-description {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center if only one sponsor or as placeholder */
+            min-height: 30px; /* Ensure space for avatar and name */
+            text-align: center;
+        }
+        .sponsor-widget .sponsor-item {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+        }
+        .sponsor-widget .sponsor-avatar {
+            width: 24px; /* Adjust size as needed, keep it small */
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 1px solid #ddd; /* Optional: adds a light border */
+        }
+        .sponsor-widget .sponsor-name {
+            font-size: 0.9em;
+            font-weight: 500;
+        }
     </style>
     <div class="dashboard-grid stack-layout mobile-scrollable">
         <!-- Enhanced Support Links with Modern Design -->
@@ -96,15 +122,17 @@
                             <span class="link-description">Support development &amp; features</span>
                         </div>
                     </a>
-                    <a href="https://github.com/plexguide/Huntarr.io/discussions" target="_blank" class="support-link forum">
-                        <div class="icon-container forum-icon">
-                            <i class="fas fa-comments"></i>
+                    <div id="sponsor-widget-container" class="support-link sponsor-widget">
+                        <div class="icon-container sponsor-icon">
+                            <i class="fas fa-users"></i>
                         </div>
                         <div class="link-details">
-                            <span class="link-title">Huntarr Forum</span>
-                            <span class="link-description">Chat via GITHUB</span>
+                            <span class="link-title">Thank You Sponsors!</span>
+                            <div id="rotating-sponsor-content" class="link-description">
+                                <!-- JavaScript will inject sponsor name/avatar here -->
+                            </div>
                         </div>
-                    </a>
+                    </div>
                     <a href="https://donate.plex.one" target="_blank" class="support-link donate">
                         <div class="icon-container donate-icon">
                             <i class="fas fa-heart"></i>
@@ -1517,3 +1545,69 @@
         // App cards are no longer clickable
     });
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sponsorContainer = document.getElementById('rotating-sponsor-content');
+    let sponsors = [];
+    let currentSponsorIndex = 0;
+    let intervalId = null;
+
+    async function fetchSponsors() {
+        try {
+            const response = await fetch('/api/github_sponsors');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            sponsors = await response.json();
+            if (sponsors && sponsors.length > 0) {
+                // Display up to 10 sponsors as per preference
+                sponsors = sponsors.slice(0, 10);
+                startRotation();
+            } else {
+                sponsorContainer.innerHTML = 'No sponsors to display currently.';
+            }
+        } catch (error) {
+            console.error('Error fetching GitHub sponsors:', error);
+            sponsorContainer.innerHTML = 'Could not load sponsors.';
+        }
+    }
+
+    function displaySponsor() {
+        if (!sponsors || sponsors.length === 0) return;
+
+        const sponsor = sponsors[currentSponsorIndex];
+        sponsorContainer.innerHTML = `
+            <a href="${sponsor.url || '#'}" target="_blank" class="sponsor-item" title="Visit ${sponsor.name}'s GitHub profile">
+                <img src="${sponsor.avatar_url}" alt="${sponsor.name}'s avatar" class="sponsor-avatar">
+                <span class="sponsor-name">${sponsor.name}</span>
+            </a>
+        `;
+    }
+
+    function rotateSponsor() {
+        currentSponsorIndex = (currentSponsorIndex + 1) % sponsors.length;
+        displaySponsor();
+    }
+
+    function startRotation() {
+        if (sponsors.length > 0) {
+            // Display the first sponsor immediately
+            displaySponsor(); 
+            // If more than one sponsor, start rotating every 5 seconds (5000ms)
+            if (sponsors.length > 1) {
+                 // Clear any existing interval before starting a new one
+                if (intervalId) {
+                    clearInterval(intervalId);
+                }
+                intervalId = setInterval(rotateSponsor, 5000); 
+            }
+        } else {
+            sponsorContainer.innerHTML = 'Thank you to all our sponsors!'; // Fallback if no sponsors loaded but API call was 'successful'
+        }
+    }
+
+    fetchSponsors();
+});
+</script>
+</section>

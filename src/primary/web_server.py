@@ -1098,6 +1098,77 @@ def health_check():
     logger.debug("Health check endpoint accessed")
     return jsonify({"status": "OK"})
 
+@app.route('/api/github_sponsors', methods=['GET'])
+def get_github_sponsors():
+    github_pat = os.environ.get('GITHUB_PAT')
+    if not github_pat:
+        current_app.logger.error("GITHUB_PAT environment variable not set.")
+        return jsonify({'error': 'Server configuration error for GitHub sponsors.'}), 500
+
+    headers = {
+        'Authorization': f'bearer {github_pat}',
+        'Content-Type': 'application/json',
+    }
+
+    query = """
+    query {
+      organization(login: "plexguide") {
+        sponsorshipsAsMaintainer(first: 20, orderBy: {field: CREATED_AT, direction: DESC}) {
+          totalCount
+          edges {
+            node {
+              sponsorEntity {
+                ... on User {
+                  login
+                  avatarUrl
+                  name
+                  url
+                }
+                ... on Organization {
+                  login
+                  avatarUrl
+                  name
+                  url
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+
+    try:
+        response = requests.post('https://api.github.com/graphql', json={'query': query}, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        if 'errors' in data:
+            current_app.logger.error(f"GitHub API errors: {data['errors']}")
+            return jsonify({'error': 'Failed to fetch sponsors from GitHub API', 'details': data['errors']}), 500
+
+        sponsors_data = data.get('data', {}).get('organization', {}).get('sponsorshipsAsMaintainer', {}).get('edges', [])
+        
+        sponsors_list = []
+        for edge in sponsors_data:
+            sponsor_node = edge.get('node', {}).get('sponsorEntity', {})
+            if sponsor_node:
+                sponsors_list.append({
+                    'login': sponsor_node.get('login'),
+                    'avatar_url': sponsor_node.get('avatarUrl'),
+                    'name': sponsor_node.get('name') or sponsor_node.get('login'),
+                    'url': sponsor_node.get('url')
+                })
+        
+        return jsonify(sponsors_list)
+
+    except requests.exceptions.RequestException as e:
+        current_app.logger.error(f"Error fetching GitHub sponsors: {e}")
+        return jsonify({'error': f'Could not connect to GitHub API: {e}'}), 500
+    except Exception as e:
+        current_app.logger.error(f"An unexpected error occurred while fetching sponsors: {e}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+
 # Start the web server in debug or production mode
 def start_web_server():
     """Start the web server in debug or production mode"""
