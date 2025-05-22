@@ -3,11 +3,11 @@
  * Disables animations to reduce CPU/GPU usage on older devices
  */
 
-/* Disable all animations when Low Usage Mode is active */
+/* Disable animations when Low Usage Mode is active without affecting positioning */
 .low-usage-mode * {
     animation: none !important;
     transition: none !important;
-    transform: none !important;
+    /* transform is removed from here to prevent positioning issues */
 }
 
 /* Disable specific pulse effects in the sidebar */
@@ -16,7 +16,7 @@
 .low-usage-mode .pulse-animation,
 .low-usage-mode [class*="pulse"] {
     animation: none !important;
-    transform: none !important;
+    /* Don't override transform as it affects icon positioning */
     opacity: 1 !important;
 }
 
