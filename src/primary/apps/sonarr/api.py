@@ -267,7 +267,7 @@ def command_status(api_url: str, api_key: str, api_timeout: int, command_id: Uni
         return response
     return {}
 
-def get_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, series_id: Optional[int] = None) -> List[Dict[str, Any]]:
+def get_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, series_id: Optional[int] = None, verify_ssl: Optional[bool] = None) -> List[Dict[str, Any]]:
     """Get missing episodes from Sonarr, handling pagination."""
     endpoint = "wanted/missing"
     page = 1
@@ -298,91 +298,39 @@ def get_missing_episodes(api_url: str, api_key: str, api_timeout: int, monitored
             sonarr_logger.debug(f"Requesting missing episodes page {page} (attempt {retry_count+1}/{retries_per_page+1})")
             
             try:
-                response = requests.get(url, headers={"X-Api-Key": api_key}, params=params, timeout=api_timeout, verify=get_ssl_verify_setting())
-                response.raise_for_status() # Check for HTTP errors (4xx or 5xx)
-                
-                if not response.content:
-                    sonarr_logger.warning(f"Empty response for missing episodes page {page} (attempt {retry_count+1})")
+                response = arr_request(api_url, api_key, api_timeout, f"{endpoint}?" + "&".join(f"{k}={v}" for k,v in params.items()), verify_ssl=verify_ssl)
+                if not response or "records" not in response:
                     if retry_count < retries_per_page:
                         retry_count += 1
                         time.sleep(retry_delay)
                         continue
                     else:
-                        sonarr_logger.error(f"Giving up on empty response after {retries_per_page+1} attempts")
-                        break  # Exit the retry loop, continuing to next page or ending
-                
-                try:
-                    data = response.json()
-                    records = data.get('records', [])
-                    total_records_on_page = len(records)
-                    sonarr_logger.debug(f"Parsed {total_records_on_page} missing episode records from page {page}")
-                    
-                    if not records: # No more records found
-                        sonarr_logger.debug(f"No more records found on page {page}. Stopping pagination.")
-                        success = True  # Mark as successful even though no records (might be legitimate)
-                        break  # Exit retry loop, then also exit pagination loop
-                    
-                    all_missing_episodes.extend(records)
-                    
-                    # Check if this was the last page
-                    if total_records_on_page < page_size:
-                        sonarr_logger.debug(f"Received {total_records_on_page} records (less than page size {page_size}). Last page.")
-                        success = True
-                        break  # Exit retry loop, then also exit pagination loop
-                    
-                    # We got records and need to continue - mark success for this page
+                        break
+                records = response.get('records', [])
+                total_records_on_page = len(records)
+                if not records:
                     success = True
-                    break  # Exit retry loop, continue to next page
-                    
-                except json.JSONDecodeError as e:
-                    sonarr_logger.error(f"Failed to decode JSON response for missing episodes page {page} (attempt {retry_count+1}): {e}")
-                    if retry_count < retries_per_page:
-                        retry_count += 1
-                        time.sleep(retry_delay)
-                        continue
-                    else:
-                        sonarr_logger.error(f"Giving up after {retries_per_page+1} failed JSON decode attempts")
-                        break  # Exit retry loop, moving to next page or ending
-    
-            except requests.exceptions.RequestException as e:
-                sonarr_logger.error(f"Request error for missing episodes page {page} (attempt {retry_count+1}): {e}")
-                if retry_count < retries_per_page:
-                    retry_count += 1
-                    time.sleep(retry_delay)
-                    continue
-                else:
-                    sonarr_logger.error(f"Giving up on request after {retries_per_page+1} failed attempts")
-                    break  # Exit retry loop
+                    break
+                all_missing_episodes.extend(records)
+                if total_records_on_page < page_size:
+                    success = True
+                    break
+                success = True
+                break
             except Exception as e:
-                sonarr_logger.error(f"Unexpected error for missing episodes page {page} (attempt {retry_count+1}): {e}")
                 if retry_count < retries_per_page:
                     retry_count += 1
                     time.sleep(retry_delay)
                     continue
                 else:
-                    sonarr_logger.error(f"Giving up after unexpected error and {retries_per_page+1} attempts")
-                    break  # Exit retry loop
-        
-        # If we didn't succeed after all retries or there are no more records, stop pagination
+                    break
         if not success or not records:
             break
-            
-        # Prepare for the next page
         page += 1
-    
-    sonarr_logger.info(f"Total missing episodes fetched across all pages: {len(all_missing_episodes)}")
-
-    # Apply monitored filter after fetching all pages
     if monitored_only:
-        original_count = len(all_missing_episodes)
-        filtered_missing = [
-            ep for ep in all_missing_episodes 
-            if ep.get('series', {}).get('monitored', False) and ep.get('monitored', False)
-        ]
-        sonarr_logger.debug(f"Filtered for monitored_only=True: {len(filtered_missing)} monitored episodes (out of {original_count} total)")
+        filtered_missing = [ep for ep in all_missing_episodes if ep.get('series', {}).get('monitored', False) and ep.get('monitored', False)]
         return filtered_missing
     else:
-        sonarr_logger.debug(f"Returning {len(all_missing_episodes)} episodes (monitored_only=False)")
         return all_missing_episodes
 
 def get_cutoff_unmet_episodes(api_url: str, api_key: str, api_timeout: int, monitored_only: bool) -> List[Dict[str, Any]]:
@@ -414,7 +362,7 @@ def get_cutoff_unmet_episodes(api_url: str, api_key: str, api_timeout: int, moni
             sonarr_logger.debug(f"Requesting cutoff unmet page {page} (attempt {retry_count+1}/{retries_per_page+1})")
 
             try:
-                response = requests.get(url, headers={"X-Api-Key": api_key}, params=params, timeout=api_timeout, verify=get_ssl_verify_setting())
+                response = arr_request(api_url, api_key, api_timeout, f"{endpoint}?" + "&".join(f"{k}={v}" for k,v in params.items()), verify_ssl=get_ssl_verify_setting())
                 sonarr_logger.debug(f"Sonarr API response status code for cutoff unmet page {page}: {response.status_code}")
                 response.raise_for_status() # Check for HTTP errors
                 
@@ -929,7 +877,7 @@ def get_cutoff_unmet_episodes_for_series(api_url: str, api_key: str, api_timeout
             sonarr_logger.debug(f"Requesting cutoff unmet page {page} for series {series_id} (attempt {retry_count+1}/{retries_per_page+1})")
             
             try:
-                response = requests.get(url, headers={"X-Api-Key": api_key}, params=params, timeout=api_timeout, verify=get_ssl_verify_setting())
+                response = arr_request(api_url, api_key, api_timeout, f"{endpoint}?" + "&".join(f"{k}={v}" for k,v in params.items()), verify_ssl=get_ssl_verify_setting())
                 sonarr_logger.debug(f"Sonarr API response status code for cutoff unmet page {page}: {response.status_code}")
                 response.raise_for_status() # Check for HTTP errors
                 
