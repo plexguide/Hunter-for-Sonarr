@@ -154,6 +154,31 @@
             text-align: left;
             justify-content: flex-start;
             opacity: 0.95; /* Subtle contrast with the title */
+            margin-top: -2px; /* Negative margin to reduce space */
+            padding-top: 0;
+            line-height: 1.2; /* Tighter line height */
+        }
+        
+        /* Sponsor title link styling */
+        .sponsor-title-link {
+            color: #ffb700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .sponsor-title-link:hover {
+            color: #ffd700;
+            text-decoration: underline;
+        }
+        
+        /* Full title styling */
+        .full-title {
+            font-size: 14px; /* Reduced to match other button titles */
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0; /* Removed bottom margin completely */
+            line-height: 1.2; /* Tighter line height */
         }
         
         /* Sponsor name styling */
@@ -216,7 +241,7 @@
                             <!-- Initially hidden until content is loaded -->
                         </div>
                         <div class="link-details">
-                            <span class="link-title">Thank You Sponsors!</span>
+                            <a href="https://github.com/sponsors/plexguide" target="_blank" class="sponsor-title-link full-title">Daughter's College Sponsors</a>
                             <span id="rotating-sponsor-content" class="link-description" style="visibility: hidden;">
                                 <!-- JavaScript will inject sponsor name here -->
                                 <!-- Initially hidden until content is loaded -->
@@ -1763,9 +1788,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentSponsorIndex = randomIndex;
                 displaySponsor(sponsors[randomIndex]);
                 
-                // Set up rotation every 5 seconds
+                // Set up rotation every 10 seconds
                 if (intervalId) clearInterval(intervalId);
-                intervalId = setInterval(rotateSponsor, 5000);
+                intervalId = setInterval(rotateSponsor, 10000);
             } else {
                 // If no sponsors, show a fallback message
                 sponsorContainer.textContent = 'Support us on GitHub!';
