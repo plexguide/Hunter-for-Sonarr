@@ -37,19 +37,23 @@ let huntarrUI = {
     
     // Initialize the application
     init: function() {
-        // Cache DOM elements
+        console.log('[huntarrUI] Initializing UI...');
+        
+        // Cache frequently used DOM elements
         this.cacheElements();
         
-        // Set up event listeners
+        // Register event handlers
         this.setupEventListeners();
-        
-        // Setup logo handling to prevent flashing during navigation
         this.setupLogoHandling();
+        this.registerGlobalUnsavedChangesHandler();
         
-        // Connect to logs if we're on logs page
-        if (window.location.hash === '#logs') {
-            this.connectToLogs();
+        // Initialize media stats
+        if (window.location.pathname === '/') {
+            this.loadMediaStats();
         }
+        
+        // Check if Low Usage Mode is enabled
+        this.checkLowUsageMode();
         
         // Remove setupStatefulResetButton references that are causing errors
         // this.setupStatefulResetButton();
@@ -1324,6 +1328,11 @@ let huntarrUI = {
             // Update original settings state with the full config returned from backend
             if (typeof savedConfig === 'object' && savedConfig !== null) {
                 this.originalSettings = JSON.parse(JSON.stringify(savedConfig));
+                
+                // Check if low usage mode setting has changed and apply it immediately
+                if (app === 'general' && 'low_usage_mode' in settings) {
+                    this.applyLowUsageMode(settings.low_usage_mode);
+                }
             } else {
                 console.error('[huntarrUI] Invalid config received from backend after save:', savedConfig);
                 this.loadAllSettings();
@@ -2856,15 +2865,14 @@ let huntarrUI = {
     
     // Add a proper hasFormChanges function to compare form values with original values
     hasFormChanges: function(app) {
-        if (!app || !this.originalSettings || !this.originalSettings[app]) return false;
+        // If we don't have original settings or current app settings, we can't compare
+        if (!this.originalSettings || !this.originalSettings[app]) {
+            return false;
+        }
         
-        const form = document.getElementById(`${app}Settings`);
-        if (!form) return false;
-        
+        // Get current settings from the form
         const currentSettings = this.getFormSettings(app);
-        if (!currentSettings) return false;
         
-        // Deep comparison of current settings with original settings
         // For complex objects like instances, we need to stringify them for comparison
         const originalJSON = JSON.stringify(this.originalSettings[app]);
         const currentJSON = JSON.stringify(currentSettings);
@@ -2872,47 +2880,61 @@ let huntarrUI = {
         return originalJSON !== currentJSON;
     },
     
-    // Add resetAppCycle function to the huntarrUI object
-    resetAppCycle: function(app, button) {
-        // Show spinner and disable button
-        const originalButtonText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
-        button.classList.add('resetting');
-        
-        // Make API call to reset the app cycle
-        fetch(`/api/cycle/reset/${app}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+    // Check if Low Usage Mode is enabled in settings and apply it
+    checkLowUsageMode: function() {
+        HuntarrUtils.fetchWithTimeout('/api/settings/general', {
+            method: 'GET'
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                // Show success notification
-                this.showNotification(`${app.charAt(0).toUpperCase() + app.slice(1)} cycle reset triggered successfully`, 'success');
-            } else {
-                // Show error notification
-                this.showNotification(`Error: ${data.error || 'Failed to reset cycle'}`, 'error');
+        .then(response => response.json())
+        .then(config => {
+            if (config && config.low_usage_mode === true) {
+                this.applyLowUsageMode(true);
             }
         })
         .catch(error => {
-            // Show error notification
-            this.showNotification(`Error: ${error.message}`, 'error');
-        })
-        .finally(() => {
-            // Restore button state after 2 seconds for visual feedback
-            setTimeout(() => {
-                button.innerHTML = originalButtonText;
-                button.classList.remove('resetting');
-            }, 2000);
+            console.error('[huntarrUI] Error checking Low Usage Mode:', error);
         });
     },
+    
+    // Apply Low Usage Mode effects based on setting
+    applyLowUsageMode: function(enabled) {
+        console.log(`[huntarrUI] Setting Low Usage Mode: ${enabled ? 'Enabled' : 'Disabled'}`);
+        
+        // Check if the indicator already exists, if not create it
+        let indicator = document.getElementById('low-usage-mode-indicator');
+        
+        if (enabled) {
+            // Add CSS class to body to disable animations
+            document.body.classList.add('low-usage-mode');
+            
+            // Create or show the indicator
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'low-usage-mode-indicator';
+                indicator.innerHTML = '<i class="fas fa-battery-half"></i> Low Usage Mode';
+                indicator.style.position = 'fixed';
+                indicator.style.top = '10px';
+                indicator.style.right = '10px';
+                indicator.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                indicator.style.color = 'white';
+                indicator.style.padding = '5px 10px';
+                indicator.style.borderRadius = '4px';
+                indicator.style.fontSize = '12px';
+                indicator.style.zIndex = '9999';
+                document.body.appendChild(indicator);
+            } else {
+                indicator.style.display = 'block';
+            }
+        } else {
+            // Remove CSS class from body to enable animations
+            document.body.classList.remove('low-usage-mode');
+            
+            // Hide the indicator if it exists
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
+        }
+    }
 };
 
 // Initialize when document is ready

@@ -1,0 +1,79 @@
+/* 
+ * Low Usage Mode CSS
+ * Disables animations to reduce CPU/GPU usage on older devices
+ */
+
+/* Disable all animations when Low Usage Mode is active */
+.low-usage-mode * {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* Disable specific pulse effects in the sidebar */
+.low-usage-mode .sidebar-pulse,
+.low-usage-mode .pulse-effect,
+.low-usage-mode .pulse-animation,
+.low-usage-mode [class*="pulse"] {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+}
+
+/* Disable stat number animations on the homepage */
+.low-usage-mode .stat-number {
+    transition: none !important;
+}
+
+/* Disable any background animations or effects */
+.low-usage-mode .bg-animation,
+.low-usage-mode .animated-bg,
+.low-usage-mode [class*="animate"] {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Disable loading spinners, replace with static elements */
+.low-usage-mode .fa-spin {
+    animation: none !important;
+}
+
+/* Specifically target front page app icon glowing effects */
+.low-usage-mode .app-icon-wrapper::before,
+.low-usage-mode .app-icon-wrapper::after {
+    animation: none !important;
+    box-shadow: none !important;
+    opacity: 0.3 !important;
+}
+
+/* Target the specific glow pulse effects around app icons */
+.low-usage-mode [class*="glowPulse"],
+.low-usage-mode [class*="glow"] {
+    animation: none !important;
+    box-shadow: none !important;
+}
+
+/* Stop the glowing ring animations around app icons */
+.low-usage-mode [class*="glowing-ring"] {
+    animation: none !important;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Remove gradient animations in backgrounds */
+.low-usage-mode [class*="gradientShift"] {
+    animation: none !important;
+    background: var(--bg-secondary) !important;
+}
+
+/* Style for the Low Usage Mode indicator */
+#low-usage-mode-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#low-usage-mode-indicator i {
+    margin-right: 5px;
+}

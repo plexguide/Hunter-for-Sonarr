@@ -1054,6 +1054,7 @@ const SettingsForms = {
             settings.check_for_updates = getInputValue('#check_for_updates', true);
             settings.debug_mode = getInputValue('#debug_mode', false);
             settings.display_community_resources = getInputValue('#display_community_resources', true);
+            settings.low_usage_mode = getInputValue('#low_usage_mode', false);
             settings.api_timeout = getInputValue('#api_timeout', 120);
             settings.command_wait_delay = getInputValue('#command_wait_delay', 1);
             settings.command_wait_attempts = getInputValue('#command_wait_attempts', 600);
@@ -1251,6 +1252,14 @@ const SettingsForms = {
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
                     <p class="setting-help" style="margin-left: -3ch !important;">Show or hide the Resources section on the home page</p>
+                </div>
+                <div class="setting-item">
+                    <label for="low_usage_mode"><a href="#" class="info-icon" title="Learn more about Low Usage Mode" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Low Usage Mode:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="low_usage_mode" ${settings.low_usage_mode === true ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Disables animations to reduce CPU/GPU usage on older devices</p>
                 </div>
 
             </div>
