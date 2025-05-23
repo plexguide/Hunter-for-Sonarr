@@ -29,10 +29,6 @@ Keep in mind this is very early in program development. If you have a very speci
 - [Community](#community)
 - [Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
 - [Installation Methods](#installation-methods)
-  - [Docker Users](#docker-users)
-  - [macOS Installation](#macos-installation)
-  - [Unraid Users](#unraid-users)
-  - [Alternative Methods](#alternative-methods)
 - [How It Works](#how-it-works)
 - [Web Interface](#web-interface)
   - [How to Access](#how-to-access)
@@ -74,11 +70,13 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 ## Installation Methods
 
-- 🐋 **[Docker Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html)**
-- 🪟 **[Windows Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#windows-installation)**
-- 🍏 **[macOS Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#macos-installation)**
-- 🔵 **[Unraid Installation Guide](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#unraid-installation)**
-- 🔧 **[Alternative Installation Methods](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#alternative-methods)**
+🐋 **[Docker Installation](https://plexguide.github.io/Huntarr.io/getting-started/installation.html)**
+🪟 **[Windows Installation](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#windows-installation)**
+🍏 **[macOS Installation](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#macos-installation)**
+🔵 **[Unraid Installation](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#unraid-installation)**
+🔧 **[Alternative Methods](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#alternative-methods)**
+
+Special thanks to [Nwithan8](https://github.com/nwithan8) for maintaining the Unraid templates and helping Huntarr grow through the Unraid Community Applications repository.
 
 ## How It Works
 
