@@ -179,7 +179,8 @@ window.CycleCountdown = (function() {
                     if (timerElement) {
                         const timerValue = timerElement.querySelector('.timer-value');
                         if (timerValue) {
-                            timerValue.textContent = 'Refreshing...';
+                            timerValue.textContent = 'Refreshing';
+                            timerValue.classList.add('refreshing-state');
                         }
                     }
                     
@@ -421,7 +422,8 @@ window.CycleCountdown = (function() {
         
         if (timeRemaining <= 0) {
             // Time has passed, fetch updated data from sleep.json
-            timerValue.textContent = 'Refreshing...';
+            timerValue.textContent = 'Refreshing';
+            timerValue.classList.add('refreshing-state');
             
             // Fetch the latest data from sleep.json
             console.log(`[CycleCountdown] Timer expired for ${app}, fetching new data`);

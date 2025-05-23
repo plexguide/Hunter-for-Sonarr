@@ -155,13 +155,8 @@
 }
 
 /* Additional style for Whisparr V3 */
-.whisparrv3 .cycle-timer, div[data-app-type="whisparr-v3"], .whisparr-v3-timer {
-    border-left: 3px solid #ff45b7 !important;
-}
-
-/* Direct styling for Whisparr V3 timer */
-#whisparr-v3CycleTimer {
-    border-left: 3px solid #ff45b7 !important;
+.whisparrv3 .cycle-timer {
+    border-left: 2px solid var(--whisparr-color, #ff45b7);
 }
 
 /* Default timer value is white and smaller as requested */
@@ -169,6 +164,16 @@
     color: white;
     font-weight: 600;
     font-size: 80%; /* Make text 20% smaller */
+}
+
+/* Light blue color for Refreshing text */
+.timer-value:contains('Refreshing') {
+    color: #00c2ce !important; /* Light blue color */
+}
+
+/* Fallback approach since :contains is not standard CSS */
+.refreshing-state {
+    color: #00c2ce !important; /* Light blue color */
 }
 
 /* Make clock icon smaller too */
