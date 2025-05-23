@@ -164,6 +164,23 @@
     color: white;
 }
 
+/* Style Whisparr V3 card - normal state */
+.app-stats-card.eros {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease, border 0.3s ease;
+}
+
+/* Add pink/purple glow only on hover */
+.app-stats-card.eros:hover {
+    box-shadow: 0 0 15px rgba(255, 69, 183, 0.4) !important;
+    border: 1px solid rgba(255, 69, 183, 0.2) !important;
+}
+
+/* Ensure the timer in Whisparr V3 shows the pink/purple left border */
+.eros .cycle-timer, #erosCycleTimer {
+    border-left: 2px solid #ff45b7 !important;
+}
+
 /* Default timer value is white and smaller as requested */
 .timer-value {
     color: white;
