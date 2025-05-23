@@ -2035,6 +2035,11 @@ let huntarrUI = {
     
     // Media statistics handling
     loadMediaStats: function() {
+        // Add loading class to stats container to hide raw JSON
+        const statsContainer = document.querySelector('.media-stats-container');
+        if (statsContainer) {
+            statsContainer.classList.add('stats-loading');
+        }
         HuntarrUtils.fetchWithTimeout('/api/stats')
             .then(response => {
                 if (!response.ok) {
@@ -2049,6 +2054,12 @@ let huntarrUI = {
                     
                     // Update display
                     this.updateStatsDisplay(data.stats);
+                    
+                    // Remove loading class after stats are loaded
+                    const statsContainer = document.querySelector('.media-stats-container');
+                    if (statsContainer) {
+                        statsContainer.classList.remove('stats-loading');
+                    }
                 } else {
                     console.error('Failed to load statistics:', data.message || 'Unknown error');
                 }

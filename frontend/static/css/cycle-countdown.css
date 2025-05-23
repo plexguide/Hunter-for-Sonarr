@@ -202,3 +202,24 @@
 .cycle-timer i.fas.fa-clock {
     font-size: 80%; /* Make icon 20% smaller */
 }
+
+/* Prevent raw JSON from showing during initial load */
+.stat-number {
+    min-height: 1.5em;
+    visibility: visible;
+}
+
+/* Hide JSON content for stat numbers until properly loaded */
+.stats-loading .stat-number {
+    color: transparent;
+    position: relative;
+}
+
+.stats-loading .stat-number::after {
+    content: "0";
+    position: absolute;
+    left: 0;
+    right: 0;
+    color: white;
+    text-align: center;
+}

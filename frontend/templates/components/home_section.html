@@ -1696,13 +1696,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const avatarContainer = document.getElementById('sponsor-avatar-container');
     const descContainer = document.getElementById('rotating-sponsor-content');
     
-    // Add transition effects
-    avatarContainer.style.transition = 'opacity 0.3s ease';
-    descContainer.style.transition = 'opacity 0.3s ease';
+    // Add transition effects but keep them faster
+    avatarContainer.style.transition = 'opacity 0.15s ease';
+    descContainer.style.transition = 'opacity 0.15s ease';
     
-    // Initially set to hidden until content is loaded
-    avatarContainer.style.visibility = 'hidden';
-    descContainer.style.visibility = 'hidden';
+    // Set to visible with opacity 0 for smoother loading
+    avatarContainer.style.visibility = 'visible';
+    descContainer.style.visibility = 'visible';
+    avatarContainer.style.opacity = '0';
+    descContainer.style.opacity = '0';
+    
+    // Make the container visible immediately
+    document.getElementById('sponsor-widget-container').style.visibility = 'visible';
     
     // Function to get a random sponsor different from the current one
     function getRandomSponsor() {
@@ -1725,42 +1730,51 @@ document.addEventListener('DOMContentLoaded', function() {
     function displaySponsor(sponsor) {
         if (!sponsor) return;
         
-        // Add fade-out effect
+        // Get the containers
         const avatarContainer = document.getElementById('sponsor-avatar-container');
         const descContainer = sponsorContainer;
         
-        // Apply fade-out
+        // Faster transition - only apply fade-out if we're changing sponsors after initial load
+        if (!avatarContainer.classList.contains('sponsor-icon')) {
+            // First load - just add content without animations
+            updateSponsorContent(sponsor, avatarContainer, descContainer);
+            return;
+        }
+        
+        // Apply quick fade-out for transitions
         avatarContainer.style.opacity = '0';
         descContainer.style.opacity = '0';
         
-        // Wait for fade-out, then update content
+        // Very short wait for fade-out, then update content
         setTimeout(() => {
-            // Update avatar with enhanced styling
-            avatarContainer.innerHTML = `
-                <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
-                    <img src="${sponsor.avatarUrl}" alt="${sponsor.name}'s avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">
-                </a>
-            `;
-            
-            // Update name in the description area
-            descContainer.innerHTML = `
-                <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
-                    ${sponsor.name}
-                </a>
-            `;
-            
-            // Add sponsor-icon class only after content is loaded
-            avatarContainer.classList.add('sponsor-icon');
-            
-            // Make elements visible and fade in
-            avatarContainer.style.visibility = 'visible';
-            descContainer.style.visibility = 'visible';
-            avatarContainer.style.opacity = '1';
-            descContainer.style.opacity = '1';
-            
-            // Make the sponsor widget container visible once content is loaded
-            document.getElementById('sponsor-widget-container').style.visibility = 'visible';
-        }, 150);
+            updateSponsorContent(sponsor, avatarContainer, descContainer);
+        }, 75); // Much faster transition
+    }
+    
+    // Helper function to update sponsor content
+    function updateSponsorContent(sponsor, avatarContainer, descContainer) {
+        // Update avatar with enhanced styling
+        avatarContainer.innerHTML = `
+            <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
+                <img src="${sponsor.avatarUrl}" alt="${sponsor.name}'s avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">
+            </a>
+        `;
+        
+        // Update name in the description area
+        descContainer.innerHTML = `
+            <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
+                ${sponsor.name}
+            </a>
+        `;
+        
+        // Add sponsor-icon class
+        avatarContainer.classList.add('sponsor-icon');
+        
+        // Make elements visible and fade in
+        avatarContainer.style.visibility = 'visible';
+        descContainer.style.visibility = 'visible';
+        avatarContainer.style.opacity = '1';
+        descContainer.style.opacity = '1';
     }
     
     // Function to rotate to a new random sponsor
@@ -1769,9 +1783,45 @@ document.addEventListener('DOMContentLoaded', function() {
         displaySponsor(sponsor);
     }
 
+    // Create a placeholder sponsor while loading
+    function displayPlaceholderSponsor() {
+        const placeholderSponsor = {
+            name: "Daughter's College Fund",
+            url: "https://github.com/sponsors/plexguide"
+        };
+        
+        // Style the container directly and apply the styling immediately
+        document.getElementById('sponsor-widget-container').style.visibility = 'visible';
+        
+        // Create a solid orange-red circle with gold border exactly like image #2
+        avatarContainer.innerHTML = `
+            <a href="${placeholderSponsor.url}" target="_blank" title="Support ${placeholderSponsor.name}" class="sponsor-icon">
+                <div style="width: 100%; height: 100%; border-radius: 50%; background-color: #FF6347; border: 3px solid #ffb700; box-sizing: border-box;">
+                </div>
+            </a>
+        `;
+        
+        descContainer.innerHTML = `
+            <a href="${placeholderSponsor.url}" target="_blank" title="Support us">
+                ${placeholderSponsor.name}
+            </a>
+        `;
+        
+        // Add sponsor-icon class and show immediately
+        avatarContainer.classList.add('sponsor-icon');
+        avatarContainer.style.visibility = 'visible';
+        descContainer.style.visibility = 'visible';
+        avatarContainer.style.opacity = '1';
+        descContainer.style.opacity = '1';
+    }
+
+    // Show placeholder immediately
+    displayPlaceholderSponsor();
+
     // Fetch sponsors from the API
     async function fetchSponsors() {
         try {
+            // Fetch in the background without waiting for visual updates
             const response = await HuntarrUtils.fetchWithTimeout('/api/github_sponsors');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -1785,18 +1835,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     sponsors = sponsors.slice(0, 10);
                 }
                 
-                // Force a truly random initial display by shuffling multiple times
-                // This helps prevent any pattern in the API response ordering
+                // Shuffle sponsors for randomness
                 sponsors = shuffleArray([...sponsors]);
-                sponsors = shuffleArray([...sponsors]); // Shuffle twice for extra randomness
                 
-                // Use timestamp as additional entropy for initial selection
-                const timestamp = new Date().getTime();
-                const randomOffset = timestamp % sponsors.length;
-                const randomIndex = (Math.floor(Math.random() * sponsors.length) + randomOffset) % sponsors.length;
+                // Choose a random sponsor for initial display
+                currentSponsorIndex = Math.floor(Math.random() * sponsors.length);
                 
-                currentSponsorIndex = randomIndex;
-                displaySponsor(sponsors[randomIndex]);
+                // Show almost immediately with minimal delay
+                setTimeout(() => {
+                    displaySponsor(sponsors[currentSponsorIndex]);
+                }, 100); // Very short delay to avoid visual glitches
                 
                 // Set up rotation every 15 seconds
                 if (intervalId) clearInterval(intervalId);
