@@ -131,22 +131,34 @@
 }
 
 /* Specific app colorings to match app themes */
+/* Colors based on user preferences */
 .sonarr .cycle-timer {
     border-left: 2px solid var(--sonarr-color, #00c2ce);
+    color: #00c2ce;
 }
 
 .radarr .cycle-timer {
-    border-left: 2px solid var(--radarr-color, #5595ff);
+    border-left: 2px solid var(--radarr-color, #ffbe0b);
+    color: #ffbe0b;
 }
 
 .lidarr .cycle-timer {
-    border-left: 2px solid var(--lidarr-color, #9933ff);
+    border-left: 2px solid var(--lidarr-color, #40c057);
+    color: #40c057;
 }
 
 .readarr .cycle-timer {
-    border-left: 2px solid var(--readarr-color, #5d9bc7);
+    border-left: 2px solid var(--readarr-color, #ff5252);
+    color: #ff5252;
 }
 
 .whisparr .cycle-timer {
     border-left: 2px solid var(--whisparr-color, #ff8c00);
+    color: #ff8c00;
+}
+
+/* Additional style for Whisparr V3 */
+.whisparrv3 .cycle-timer {
+    border-left: 2px solid var(--whisparr-v3-color, #ff45b7);
+    color: #ff45b7;
 }

@@ -9,7 +9,7 @@ window.CycleCountdown = (function() {
     // Active timer intervals
     const timerIntervals = {};
     // List of apps to track
-    const trackedApps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros'];
+    const trackedApps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'whisparr-v3', 'eros'];
     
     // Get base URL for API calls, respecting subpath configuration
     function getBaseUrl() {
@@ -209,8 +209,11 @@ window.CycleCountdown = (function() {
     
     // Create timer display element in the app stats card
     function createTimerElement(app) {
-        // No need for special case handling since we're directly using the data-app values
+        // Handle special case for whisparr-v3 - convert hyphen to be CSS compatible
         const dataApp = app;
+        
+        // Get the CSS class name version of the app (replacing hyphens with nothing)
+        const cssClass = app.replace(/-/g, '');
         
         // Directly look for the reset cycle button by data-app attribute
         const resetButton = document.querySelector(`button.cycle-reset-button[data-app="${dataApp}"]`);
@@ -237,11 +240,29 @@ window.CycleCountdown = (function() {
         resetButton.parentNode.insertBefore(container, resetButton);
         container.appendChild(resetButton);
         
+        // Find the app card to get its parent for the app class
+        const appCard = resetButton.closest('.app-card');
+        
         // Create timer element
         timerElement = document.createElement('div');
         timerElement.id = `${app}CycleTimer`;
         timerElement.className = 'cycle-timer inline-timer';
         timerElement.innerHTML = '<i class="fas fa-clock"></i> <span class="timer-value">--:--:--</span>';
+        
+        // Always apply app-specific styling directly to the timer element
+        // This ensures the timer gets the right color regardless of its parent
+        timerElement.classList.add(cssClass);
+        
+        // Also add a custom data attribute for easier styling/debugging
+        timerElement.setAttribute('data-app-type', app);
+        
+        // Add a timer icon with app-specific color
+        const timerIcon = timerElement.querySelector('i');
+        if (timerIcon) {
+            timerIcon.classList.add(`${cssClass}-icon`);
+        }
+        
+        console.log(`[CycleCountdown] Applied app-specific styling class: ${cssClass}`);
         
         // Add the timer to our container
         container.appendChild(timerElement);
