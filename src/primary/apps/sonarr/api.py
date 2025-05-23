@@ -63,21 +63,21 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         sonarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
 
         # Get SSL verification setting - ALWAYS use global, ignore verify_ssl parameter
-        verify_ssl = get_ssl_verify_setting()
+        actual_verify_ssl_value = get_ssl_verify_setting()
         
-        if not verify_ssl:
-            # Updated log message to reflect that the global setting is used.
-            sonarr_logger.debug("SSL verification disabled by global user setting")
+        # Log the actual value of verify_ssl being used for this specific request
+        sonarr_logger.debug(f"arr_request: For URL {full_url}, verify_ssl is {actual_verify_ssl_value} (type: {type(actual_verify_ssl_value)})")
 
+        # THIS IS THE CRITICAL SECTION - Ensure actual_verify_ssl_value is used
         try:
             if method.upper() == "GET":
-                response = session.get(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
+                response = session.get(full_url, headers=headers, timeout=api_timeout, verify=actual_verify_ssl_value)
             elif method.upper() == "POST":
-                response = session.post(full_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
+                response = session.post(full_url, headers=headers, json=data, timeout=api_timeout, verify=actual_verify_ssl_value)
             elif method.upper() == "PUT":
-                response = session.put(full_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
+                response = session.put(full_url, headers=headers, json=data, timeout=api_timeout, verify=actual_verify_ssl_value)
             elif method.upper() == "DELETE":
-                response = session.delete(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
+                response = session.delete(full_url, headers=headers, timeout=api_timeout, verify=actual_verify_ssl_value)
             else:
                 sonarr_logger.error(f"Unsupported HTTP method: {method}")
                 return None
@@ -489,9 +489,9 @@ def get_cutoff_unmet_episodes_random_page(api_url: str, api_key: str, api_timeou
     """
     import random
     endpoint = "wanted/missing"
-    page_size = 100  # Smaller page size for better performance
-    retries = 2 # <--- ADDED THIS LINE BACK
-    retry_delay = 3 # <--- ADDED THIS LINE BACK
+    page_size = 1000
+    retries = 2
+    retry_delay = 3 
     
     # First, make a request to get just the total record count (page 1 with size=1)
     params = {
@@ -502,9 +502,6 @@ def get_cutoff_unmet_episodes_random_page(api_url: str, api_key: str, api_timeou
     param_str = "&".join(f"{k}={v}" for k, v in params.items())
     query_endpoint = f"{endpoint}?{param_str}"
     
-    # Import get_ssl_verify_setting here if not already available globally in this function
-    # from src.primary.settings_manager import get_ssl_verify_setting
-
     for attempt in range(retries + 1):
         try:
             # Get total record count from a minimal query
