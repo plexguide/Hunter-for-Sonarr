@@ -9,7 +9,7 @@ window.CycleCountdown = (function() {
     // Active timer intervals
     const timerIntervals = {};
     // List of apps to track
-    const trackedApps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr'];
+    const trackedApps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'whisparrv3'];
     
     // Get base URL for API calls, respecting subpath configuration
     function getBaseUrl() {
@@ -61,20 +61,16 @@ window.CycleCountdown = (function() {
         });
     }
     
-    // Create timer display element in the app status card
+    // Create timer display element in the app stats card
     function createTimerElement(app) {
-        // Find the app stats card for this app
-        const appCard = document.querySelector(`.app-stats-card.${app}`);
-        if (!appCard) {
-            console.log(`[CycleCountdown] App card not found for ${app}`);
-            return;
-        }
+        // Handle whisparrv3 as a special case
+        const dataApp = app === 'whisparrv3' ? 'whisparr-v3' : app;
         
-        // Find the API info element or just use the app icon as reference
-        const apiInfoArea = appCard.querySelector('.api-container') || 
-                             appCard.querySelector('.app-icon-wrapper');
-        if (!apiInfoArea) {
-            console.log(`[CycleCountdown] API info area not found for ${app}`);
+        // Directly look for the reset cycle button by data-app attribute
+        const resetButton = document.querySelector(`button.cycle-reset-button[data-app="${dataApp}"]`);
+        
+        if (!resetButton) {
+            console.log(`[CycleCountdown] Reset button not found for ${app}`);
             return;
         }
         
@@ -82,16 +78,29 @@ window.CycleCountdown = (function() {
         let timerElement = document.getElementById(`${app}CycleTimer`);
         if (timerElement) return;
         
+        // Create a container to hold both elements side by side
+        const container = document.createElement('div');
+        container.className = 'reset-and-timer-container';
+        container.style.display = 'flex';
+        container.style.justifyContent = 'space-between';
+        container.style.alignItems = 'center';
+        container.style.width = '100%';
+        container.style.marginTop = '8px';
+        
+        // Replace the button with our container
+        resetButton.parentNode.insertBefore(container, resetButton);
+        container.appendChild(resetButton);
+        
         // Create timer element
         timerElement = document.createElement('div');
         timerElement.id = `${app}CycleTimer`;
-        timerElement.className = 'cycle-timer';
+        timerElement.className = 'cycle-timer inline-timer';
         timerElement.innerHTML = '<i class="fas fa-clock"></i> <span class="timer-value">--:--:--</span>';
         
-        // Directly append to the app card - this is most reliable
-        appCard.appendChild(timerElement);
+        // Add the timer to our container
+        container.appendChild(timerElement);
         
-        console.log(`[CycleCountdown] Timer created for ${app}`);
+        console.log(`[CycleCountdown] Timer created for ${app} next to reset button`);
     }
     
     // Fetch cycle times for all tracked apps

@@ -21,6 +21,24 @@
     z-index: 1;
 }
 
+/* Special styling for inline timers next to reset buttons */
+.inline-timer {
+    margin: 0;
+    min-width: 95px;
+    background-color: rgba(0, 0, 0, 0.1);
+    font-size: 0.85rem;
+    border-radius: 4px;
+}
+
+/* Styling for the container that holds both reset button and timer */
+.reset-and-timer-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+}
+
 /* Icon styling */
 .cycle-timer i {
     margin-right: 5px;
