@@ -111,7 +111,7 @@ Special thanks to [Nwithan8](https://github.com/nwithan8) for maintaining the Un
 Huntarr's live homepage will provide you statics about how many hunts have been pursed regarding missing media and upgrade searches! Note: Numbers reflected are but all required for testing. 
 
 <p align="center">
-  <img width="100%" alt="image" src="https://github.com/user-attachments/assets/1ffeb7f1-7dec-484c-9073-02d460953f99" />
+  <img width="100%" alt="image" src="https://github.com/user-attachments/assets/c060962c-01ee-4f53-a5ee-c67f31432e40" />
   <br>
   <em>Homepage</em>
 </p>
