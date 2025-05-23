@@ -405,6 +405,14 @@ def app_specific_loop(app_type: str) -> None:
         next_cycle_time = datetime.datetime.now() + datetime.timedelta(seconds=sleep_seconds)
         next_cycle_time_str = next_cycle_time.strftime("%Y-%m-%d %H:%M:%S")
         app_logger.info(f"Next {app_type.upper()} cycle will begin at {next_cycle_time_str}")
+        
+        # Track cycle time for the countdown timer feature
+        try:
+            from src.primary.cycle_tracker import update_next_cycle
+            update_next_cycle(app_type, next_cycle_time)
+        except Exception as e:
+            app_logger.warning(f"Failed to update cycle tracker: {e}")
+            # Non-critical, continue execution
         app_logger.debug(f"Sleeping for {sleep_seconds} seconds before next cycle...")
                 
         # Use shorter sleep intervals and check for reset file

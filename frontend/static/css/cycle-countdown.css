@@ -1,0 +1,118 @@
+/* 
+ * Cycle Countdown Timer Styles
+ * Styling for app cycle countdown timers on the home page
+ */
+
+/* Base styling for all timer elements */
+.cycle-timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin: 8px auto 6px auto;
+    background-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    user-select: none;
+    max-width: 85%;
+    position: relative;
+    z-index: 1;
+}
+
+/* Icon styling */
+.cycle-timer i {
+    margin-right: 5px;
+    font-size: 0.9rem;
+}
+
+/* Timer value text */
+.timer-value {
+    font-family: monospace;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Timer states based on remaining time */
+.timer-normal {
+    color: var(--text-light, #ddd);
+}
+
+.timer-soon {
+    color: var(--warning-color, #ffc107);
+    animation: pulse-warn 1.5s infinite alternate;
+}
+
+.timer-imminent {
+    color: var(--secondary-color, #ff5722);
+    animation: pulse-imminent 0.8s infinite alternate;
+}
+
+.timer-error {
+    color: var(--error-color, #f44336);
+    opacity: 0.7;
+}
+
+/* Pulse animations for different timer states */
+@keyframes pulse-warn {
+    from {
+        opacity: 0.9;
+    }
+    to {
+        opacity: 1;
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+}
+
+@keyframes pulse-imminent {
+    from {
+        opacity: 0.9;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+        background-color: rgba(255, 87, 34, 0.15);
+    }
+}
+
+/* Low usage mode compatibility */
+.low-usage-mode .timer-soon,
+.low-usage-mode .timer-imminent {
+    animation: none !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .cycle-timer {
+        font-size: 0.75rem;
+        padding: 2px 6px;
+    }
+}
+
+/* Tooltip for more information on hover */
+.cycle-timer:hover {
+    cursor: help;
+}
+
+/* Specific app colorings to match app themes */
+.sonarr .cycle-timer {
+    border-left: 2px solid var(--sonarr-color, #00c2ce);
+}
+
+.radarr .cycle-timer {
+    border-left: 2px solid var(--radarr-color, #5595ff);
+}
+
+.lidarr .cycle-timer {
+    border-left: 2px solid var(--lidarr-color, #9933ff);
+}
+
+.readarr .cycle-timer {
+    border-left: 2px solid var(--readarr-color, #5d9bc7);
+}
+
+.whisparr .cycle-timer {
+    border-left: 2px solid var(--whisparr-color, #ff8c00);
+}

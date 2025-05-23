@@ -95,12 +95,22 @@ window.LowUsageMode = (function() {
         hideIndicator();
     }
     
+    // Safe wrapper for setTimeout to ensure correct context
+    function safeSetTimeout(callback, delay, ...args) {
+        return window.setTimeout.bind(window)(callback, delay, ...args);
+    }
+    
+    // Safe wrapper for setInterval to ensure correct context
+    function safeSetInterval(callback, delay, ...args) {
+        return window.setInterval.bind(window)(callback, delay, ...args);
+    }
+    
     // Throttle JavaScript timers to reduce CPU usage
     function throttleTimers() {
         // Only store original implementations if we haven't already
         if (!originalTimers.setTimeout) {
-            originalTimers.setTimeout = window.setTimeout;
-            originalTimers.setInterval = window.setInterval;
+            originalTimers.setTimeout = window.setTimeout.bind(window);
+            originalTimers.setInterval = window.setInterval.bind(window);
             
             // Override setTimeout with throttled version
             window.setTimeout = function(callback, delay, ...args) {
@@ -187,7 +197,10 @@ window.LowUsageMode = (function() {
     
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-        checkEnabledState();
+        // Use a slight delay to ensure DOM is fully loaded
+        safeSetTimeout(function() {
+            checkEnabledState();
+        }, 100);
     });
     
     // Public API
