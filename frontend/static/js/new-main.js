@@ -2934,6 +2934,48 @@ let huntarrUI = {
                 indicator.style.display = 'none';
             }
         }
+    },
+    
+    // Reset the app cycle for a specific app
+    resetAppCycle: function(app, button) {
+        // Make sure we have the app and button elements
+        if (!app || !button) {
+            console.error('[huntarrUI] Missing app or button for resetAppCycle');
+            return;
+        }
+        
+        // First, disable the button to prevent multiple clicks
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Resetting...';
+        
+        // API endpoint
+        const endpoint = `/api/cycle/reset/${app}`;
+        
+        HuntarrUtils.fetchWithTimeout(endpoint, {
+            method: 'POST'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to reset ${app} cycle`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            this.showNotification(`Successfully reset ${this.capitalizeFirst(app)} cycle`, 'success');
+            console.log(`[huntarrUI] Reset ${app} cycle response:`, data);
+            
+            // Re-enable the button with original text
+            button.disabled = false;
+            button.innerHTML = `<i class="fas fa-sync-alt"></i> Reset Cycle`;
+        })
+        .catch(error => {
+            console.error(`[huntarrUI] Error resetting ${app} cycle:`, error);
+            this.showNotification(`Error resetting ${this.capitalizeFirst(app)} cycle: ${error.message}`, 'error');
+            
+            // Re-enable the button with original text
+            button.disabled = false;
+            button.innerHTML = `<i class="fas fa-sync-alt"></i> Reset Cycle`;
+        });
     }
 };
 
