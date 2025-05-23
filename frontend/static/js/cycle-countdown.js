@@ -71,12 +71,12 @@ window.CycleCountdown = (function() {
         }, 10000); // 10 seconds
     }
     
-    // Fetch cycle data from sleep.json file via API endpoint
+    // Fetch cycle data from sleep.json file via direct access
     function fetchFromSleepJson() {
-        console.log('[CycleCountdown] Fetching cycle data from sleep.json API endpoint');
+        console.log('[CycleCountdown] Fetching cycle data from web-accessible sleep.json');
         
-        // Use a direct URL to the API endpoint - no subpath manipulation
-        const sleepJsonUrl = window.location.origin + '/api/sleep.json';
+        // Use a direct URL to the web-accessible version of sleep.json
+        const sleepJsonUrl = window.location.origin + '/static/data/sleep.json';
         
         // Add a timestamp to prevent caching
         const url = `${sleepJsonUrl}?t=${Date.now()}`;
@@ -112,16 +112,38 @@ window.CycleCountdown = (function() {
                 // Process the data for each app
                 for (const app in data) {
                     if (trackedApps.includes(app)) {
-                        // Store the next cycle time
-                        nextCycleTimes[app] = new Date(data[app].next_cycle);
-                        
-                        // Update the timer display
-                        updateTimerDisplay(app);
-                        
-                        // Set up countdown interval if not already set
-                        setupCountdown(app);
-                        
-                        dataProcessed = true;
+                        // Check if data format is valid
+                        if (data[app] && data[app].next_cycle) {
+                            console.log(`[CycleCountdown] Processing data for ${app}:`, data[app]);
+                            
+                            // Convert ISO date string to Date object
+                            const nextCycleTime = new Date(data[app].next_cycle);
+                            
+                            // Validate the date is in the future
+                            if (isNaN(nextCycleTime.getTime())) {
+                                console.error(`[CycleCountdown] Invalid date format for ${app}:`, data[app].next_cycle);
+                                continue;
+                            }
+                            
+                            // Store the next cycle time
+                            nextCycleTimes[app] = nextCycleTime;
+                            
+                            // Store remaining seconds if available for more accurate display
+                            if (data[app].remaining_seconds !== undefined) {
+                                console.log(`[CycleCountdown] Using remaining_seconds for ${app}:`, data[app].remaining_seconds);
+                                // Update the timer with exact seconds rather than calculating from next_cycle
+                            }
+                            
+                            // Update the timer display
+                            updateTimerDisplay(app);
+                            
+                            // Set up countdown interval if not already set
+                            setupCountdown(app);
+                            
+                            dataProcessed = true;
+                        } else {
+                            console.warn(`[CycleCountdown] Invalid data format for ${app}:`, data[app]);
+                        }
                     }
                 }
                 
@@ -178,7 +200,7 @@ window.CycleCountdown = (function() {
             if (timerElement) {
                 const timerValue = timerElement.querySelector('.timer-value');
                 if (timerValue) {
-                    timerValue.textContent = 'Error loading data';
+                    timerValue.textContent = 'Error Loading';
                     timerValue.classList.add('error');
                 }
             }
@@ -369,19 +391,19 @@ window.CycleCountdown = (function() {
         const timeRemaining = nextCycleTime - now;
         
         if (timeRemaining <= 0) {
-            // Time has passed, create a new cycle time
+            // Time has passed, fetch updated data from sleep.json
             timerValue.textContent = 'Refreshing...';
             
-            // Since API is not working, create a new mock timer
-            // In a real implementation, this would call the API
-            const newCycleTime = new Date(now.getTime() + Math.floor(Math.random() * 15 + 5) * 60000);
-            nextCycleTimes[app] = newCycleTime;
+            // Fetch the latest data from sleep.json
+            console.log(`[CycleCountdown] Timer expired for ${app}, fetching new data`);
+            fetchFromSleepJson()
+                .then(() => {
+                    console.log(`[CycleCountdown] Successfully refreshed data after timer expired`);
+                })
+                .catch(error => {
+                    console.error(`[CycleCountdown] Failed to refresh data after timer expired:`, error);
+                });
             
-            // Persist to localStorage
-            persistTimersToLocalStorage();
-            
-            // Update display
-            updateTimerDisplay(app);
             return;
         }
         

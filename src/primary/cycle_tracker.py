@@ -17,16 +17,20 @@ _CYCLE_DATA_PATH = os.path.join('/config', 'settings', 'cycle_data.json')
 
 # Additional path for direct frontend access - using absolute paths
 _SLEEP_DATA_PATH = os.path.join('/config', 'tally', 'sleep.json')
+_WEB_SLEEP_DATA_PATH = os.path.join('/app', 'frontend', 'static', 'data', 'sleep.json')  # Path accessible by web server
 
 # Ensure directories exist
 os.makedirs(os.path.dirname(_CYCLE_DATA_PATH), exist_ok=True)
 os.makedirs(os.path.dirname(_SLEEP_DATA_PATH), exist_ok=True)
+os.makedirs(os.path.dirname(_WEB_SLEEP_DATA_PATH), exist_ok=True)
 
 # Create empty sleep.json file if it doesn't exist
 if not os.path.exists(_SLEEP_DATA_PATH):
     try:
         print(f"Creating initial sleep.json at {_SLEEP_DATA_PATH}")
         with open(_SLEEP_DATA_PATH, 'w') as f:
+            json.dump({}, f, indent=2)
+        with open(_WEB_SLEEP_DATA_PATH, 'w') as f:
             json.dump({}, f, indent=2)
     except Exception as e:
         print(f"Error creating initial sleep.json: {e}")
@@ -173,13 +177,20 @@ def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime) -> None
             print(f"[DEBUG] Data: {sleep_data}")
         
         try:
+            # Write to the main sleep.json file
             with open(_SLEEP_DATA_PATH, 'w') as f:
                 json.dump(sleep_data, f, indent=2)
             
-            # Verify the file was created
-            if os.path.exists(_SLEEP_DATA_PATH):
+            # Also write to the web-accessible location
+            with open(_WEB_SLEEP_DATA_PATH, 'w') as f:
+                json.dump(sleep_data, f, indent=2)
+            
+            # Verify the files were created
+            if os.path.exists(_SLEEP_DATA_PATH) and os.path.exists(_WEB_SLEEP_DATA_PATH):
                 file_size = os.path.getsize(_SLEEP_DATA_PATH)
+                web_file_size = os.path.getsize(_WEB_SLEEP_DATA_PATH)
                 print(f"Successfully wrote sleep.json for {app_type} (size: {file_size} bytes)")
+                print(f"Successfully wrote web sleep.json for {app_type} (size: {web_file_size} bytes)")
                 print(f"  - Next cycle: {next_cycle_time.isoformat()}")
                 print(f"  - Remaining seconds: {remaining_seconds}")
             else:
