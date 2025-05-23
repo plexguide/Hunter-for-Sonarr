@@ -604,6 +604,10 @@ def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: in
         try:
             # Get total record count from a minimal query
             sonarr_logger.debug(f"Getting missing episodes count (attempt {attempt+1}/{retries+1})")
+            sonarr_logger.debug(f"Requesting missing episodes count with endpoint: {query_endpoint}")
+            sonarr_logger.debug(f"Sonarr API URL: {api_url}")
+            sonarr_logger.debug(f"Sonarr API Key: {api_key}")
+            sonarr_logger.debug(f"Sonarr API Timeout: {api_timeout}")
             response = arr_request(api_url, api_key, api_timeout, query_endpoint)
             if not response or "totalRecords" not in response:
                 sonarr_logger.warning(f"Empty or invalid response when getting missing count (attempt {attempt+1})")
