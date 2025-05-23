@@ -13,10 +13,25 @@ from typing import Dict, Any, Optional
 _lock = threading.Lock()
 
 # Path to the cycle data file
-_CYCLE_DATA_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'settings', 'cycle_data.json')
+_CYCLE_DATA_PATH = os.path.join('/config', 'settings', 'cycle_data.json')
 
-# Ensure directory exists
+# Additional path for direct frontend access - using absolute paths
+_SLEEP_DATA_PATH = os.path.join('/config', 'tally', 'sleep.json')
+
+# Ensure directories exist
 os.makedirs(os.path.dirname(_CYCLE_DATA_PATH), exist_ok=True)
+os.makedirs(os.path.dirname(_SLEEP_DATA_PATH), exist_ok=True)
+
+# Create empty sleep.json file if it doesn't exist
+if not os.path.exists(_SLEEP_DATA_PATH):
+    try:
+        print(f"Creating initial sleep.json at {_SLEEP_DATA_PATH}")
+        with open(_SLEEP_DATA_PATH, 'w') as f:
+            json.dump({}, f, indent=2)
+    except Exception as e:
+        print(f"Error creating initial sleep.json: {e}")
+        import traceback
+        traceback.print_exc()
 
 # In-memory cache of cycle times
 _cycle_data: Dict[str, Any] = {}
@@ -33,11 +48,150 @@ def _load_cycle_data() -> Dict[str, Any]:
 
 def _save_cycle_data(data: Dict[str, Any]) -> None:
     """Save cycle data to disk"""
+    # First save to the original path for API access
     try:
         with open(_CYCLE_DATA_PATH, 'w') as f:
             json.dump(data, f, indent=2)
-    except IOError as e:
-        print(f"Error saving cycle data: {e}")
+        print(f"Successfully saved cycle data to {_CYCLE_DATA_PATH}")
+    except Exception as e:
+        print(f"Error saving cycle data to {_CYCLE_DATA_PATH}: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    # Then save to the direct access path for frontend
+    try:
+        # Make sure the directory exists
+        os.makedirs(os.path.dirname(_SLEEP_DATA_PATH), exist_ok=True)
+        
+        # Convert to a simpler format for the frontend
+        frontend_data = {}
+        for app, app_data in data.items():
+            frontend_data[app] = {
+                "next_cycle": app_data["next_cycle"],
+                "remaining_seconds": _calculate_remaining_seconds(app_data["next_cycle"]),
+                "updated_at": app_data["updated_at"]
+            }
+        
+        # Debug output
+        print(f"Writing sleep data to {_SLEEP_DATA_PATH}")
+        print(f"Sleep data content: {frontend_data}")
+        
+        # Write the file
+        with open(_SLEEP_DATA_PATH, 'w') as f:
+            json.dump(frontend_data, f, indent=2)
+        
+        # Verify file was created
+        if os.path.exists(_SLEEP_DATA_PATH):
+            print(f"Successfully saved sleep data to {_SLEEP_DATA_PATH}")
+        else:
+            print(f"WARNING: sleep.json file not found after write attempt")
+    except Exception as e:
+        print(f"Error saving sleep data to {_SLEEP_DATA_PATH}: {e}")
+        import traceback
+        traceback.print_exc()
+
+def _calculate_remaining_seconds(next_cycle_iso: str) -> int:
+    """Calculate remaining seconds until the next cycle"""
+    try:
+        next_cycle = datetime.datetime.fromisoformat(next_cycle_iso)
+        now = datetime.datetime.now()
+        
+        # Calculate the time difference in seconds
+        delta = (next_cycle - now).total_seconds()
+        
+        # Return at least 0 (don't return negative values)
+        return max(0, int(delta))
+    except Exception as e:
+        print(f"Error calculating remaining seconds: {e}")
+        return 0
+
+def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime) -> None:
+    """
+    Update the sleep.json file directly for easier frontend access
+    
+    This function directly writes to sleep.json without using the _save_cycle_data function
+    
+    Args:
+        app_type: The type of app (sonarr, radarr, etc.)
+        next_cycle_time: When the next cycle will begin
+    """
+    # First check if we need to debug
+    debug_mode = True  # Set to True to help troubleshoot file creation issues
+    
+    try:
+        if debug_mode:
+            print(f"[DEBUG] update_sleep_json called for {app_type}")
+            print(f"[DEBUG] sleep.json path: {_SLEEP_DATA_PATH}")
+        
+        # Get the tally directory path
+        tally_dir = os.path.dirname(_SLEEP_DATA_PATH)
+        
+        # Make sure the tally directory exists
+        if not os.path.exists(tally_dir):
+            if debug_mode:
+                print(f"[DEBUG] Creating tally directory: {tally_dir}")
+            os.makedirs(tally_dir, exist_ok=True)
+            
+            # Check if the directory was created successfully
+            if os.path.exists(tally_dir):
+                print(f"Successfully created directory: {tally_dir}")
+            else:
+                print(f"FAILED to create directory: {tally_dir}")
+        
+        # Get current data if the file exists
+        sleep_data = {}
+        if os.path.exists(_SLEEP_DATA_PATH):
+            if debug_mode:
+                print(f"[DEBUG] sleep.json exists, reading content")
+            try:
+                with open(_SLEEP_DATA_PATH, 'r') as f:
+                    sleep_data = json.load(f)
+            except json.JSONDecodeError:
+                print(f"Warning: sleep.json exists but is not valid JSON, starting fresh")
+                sleep_data = {}
+            except Exception as e:
+                print(f"Error reading sleep.json: {e}")
+                sleep_data = {}
+        else:
+            if debug_mode:
+                print(f"[DEBUG] sleep.json does not exist, creating new file")
+        
+        # Calculate remaining seconds
+        now = datetime.datetime.now()
+        remaining_seconds = max(0, int((next_cycle_time - now).total_seconds()))
+        
+        # Update the app's data
+        sleep_data[app_type] = {
+            "next_cycle": next_cycle_time.isoformat(),
+            "remaining_seconds": remaining_seconds,
+            "updated_at": now.isoformat()
+        }
+        
+        # Write to the file
+        if debug_mode:
+            print(f"[DEBUG] Writing to sleep.json")
+            print(f"[DEBUG] Data: {sleep_data}")
+        
+        try:
+            with open(_SLEEP_DATA_PATH, 'w') as f:
+                json.dump(sleep_data, f, indent=2)
+            
+            # Verify the file was created
+            if os.path.exists(_SLEEP_DATA_PATH):
+                file_size = os.path.getsize(_SLEEP_DATA_PATH)
+                print(f"Successfully wrote sleep.json for {app_type} (size: {file_size} bytes)")
+                print(f"  - Next cycle: {next_cycle_time.isoformat()}")
+                print(f"  - Remaining seconds: {remaining_seconds}")
+            else:
+                print(f"WARNING: sleep.json not found after write operation")
+        except Exception as e:
+            print(f"Error writing to sleep.json: {e}")
+            import traceback
+            traceback.print_exc()
+    except Exception as e:
+        print(f"Unhandled error in update_sleep_json for {app_type}: {e}")
+        import traceback
+        traceback.print_exc()
 
 def update_next_cycle(app_type: str, next_cycle_time: datetime.datetime) -> None:
     """
@@ -59,8 +213,11 @@ def update_next_cycle(app_type: str, next_cycle_time: datetime.datetime) -> None
             "updated_at": datetime.datetime.now().isoformat()
         }
         
-        # Save to disk
+        # Save to disk (original method)
         _save_cycle_data(_cycle_data)
+        
+        # Also update sleep.json directly using the new function
+        update_sleep_json(app_type, next_cycle_time)
 
 def get_cycle_status(app_type: Optional[str] = None) -> Dict[str, Any]:
     """
@@ -121,5 +278,23 @@ def reset_cycle(app_type: str) -> bool:
         if app_type in _cycle_data:
             del _cycle_data[app_type]
             _save_cycle_data(_cycle_data)
+            
+            # If sleep.json exists, update it as well
+            try:
+                if os.path.exists(_SLEEP_DATA_PATH):
+                    with open(_SLEEP_DATA_PATH, 'r') as f:
+                        sleep_data = json.load(f)
+                    
+                    # Remove the app's data
+                    if app_type in sleep_data:
+                        del sleep_data[app_type]
+                    
+                    # Write back
+                    with open(_SLEEP_DATA_PATH, 'w') as f:
+                        json.dump(sleep_data, f, indent=2)
+            except Exception as e:
+                print(f"Error updating sleep.json during reset: {e}")
+                # Continue anyway - non-critical
+            
             return True
         return False
