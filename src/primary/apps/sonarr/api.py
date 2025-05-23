@@ -488,106 +488,10 @@ def get_cutoff_unmet_episodes_random_page(api_url: str, api_key: str, api_timeou
         A list of randomly selected cutoff unmet episodes
     """
     import random
-    endpoint = "wanted/cutoff"
-    page_size = 100  # Smaller page size to make the initial query faster
-    
-    # First, make a request to get just the total record count (page 1 with size=1)
-    params = {
-        "page": 1,
-        "pageSize": 1,
-        "includeSeries": "true"  # Include series info for filtering
-    }
-    param_str = "&".join(f"{k}={v}" for k, v in params.items())
-    query_endpoint = f"{endpoint}?{param_str}"
-    
-    try:
-        # Get total record count from a minimal query
-        response = arr_request(api_url, api_key, api_timeout, query_endpoint)
-        if not response or "totalRecords" not in response:
-            sonarr_logger.warning("Empty or invalid response when getting cutoff unmet count")
-            return []
-        total_records = response.get('totalRecords', 0)
-        
-        if total_records == 0:
-            sonarr_logger.info("No cutoff unmet episodes found in Sonarr.")
-            return []
-            
-        # Calculate total pages with our desired page size
-        total_pages = (total_records + page_size - 1) // page_size
-        sonarr_logger.info(f"Found {total_records} total cutoff unmet episodes across {total_pages} pages")
-        
-        if total_pages == 0:
-            return []
-            
-        # Select a random page
-        random_page = random.randint(1, total_pages)
-        sonarr_logger.info(f"Selected random page {random_page} of {total_pages} for quality upgrade selection")
-        
-        # Get episodes from the random page
-        params = {
-            "page": random_page,
-            "pageSize": page_size,
-            "includeSeries": "true"
-        }
-        param_str = "&".join(f"{k}={v}" for k, v in params.items())
-        page_endpoint = f"{endpoint}?{param_str}"
-        response = arr_request(api_url, api_key, api_timeout, page_endpoint)
-        if not response or "records" not in response:
-            sonarr_logger.warning(f"Empty or invalid response when getting cutoff unmet episodes page {random_page}")
-            return []
-        records = response.get('records', [])
-        sonarr_logger.info(f"Retrieved {len(records)} episodes from page {random_page}")
-        
-        # Apply monitored filter if requested
-        if monitored_only:
-            filtered_records = [
-                ep for ep in records
-                if ep.get('series', {}).get('monitored', False) and ep.get('monitored', False)
-            ]
-            sonarr_logger.debug(f"Filtered to {len(filtered_records)} monitored episodes")
-            records = filtered_records
-        
-        # Select random episodes from this page
-        if len(records) > count:
-            selected_records = random.sample(records, count)
-            sonarr_logger.debug(f"Randomly selected {len(selected_records)} episodes from page {random_page}")
-            return selected_records
-        else:
-            # If we have fewer episodes than requested, return all of them
-            sonarr_logger.debug(f"Returning all {len(records)} episodes from page {random_page} (fewer than requested {count})")
-            return records
-            
-    except requests.exceptions.RequestException as e:
-        sonarr_logger.error(f"Error getting random cutoff unmet episodes from Sonarr: {str(e)}")
-        return []
-    except json.JSONDecodeError as e:
-        sonarr_logger.error(f"Failed to decode JSON response for random cutoff selection: {str(e)}")
-        return []
-    except Exception as e:
-        sonarr_logger.error(f"Unexpected error in random cutoff selection: {str(e)}", exc_info=True)
-        return []
-
-def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, count: int, series_id: Optional[int] = None) -> List[Dict[str, Any]]:
-    """
-    Get a specified number of random missing episodes by selecting a random page.
-    This is more efficient for very large libraries.
-    
-    Args:
-        api_url: The base URL of the Sonarr API
-        api_key: The API key for authentication
-        api_timeout: Timeout for the API request
-        monitored_only: Whether to include only monitored episodes
-        count: How many episodes to return
-        series_id: Optional series ID to filter results for a specific series
-        
-    Returns:
-        A list of randomly selected missing episodes, up to the requested count
-    """
-    import random
     endpoint = "wanted/missing"
     page_size = 100  # Smaller page size for better performance
-    retries = 2
-    retry_delay = 3
+    retries = 2 # <--- ADDED THIS LINE BACK
+    retry_delay = 3 # <--- ADDED THIS LINE BACK
     
     # First, make a request to get just the total record count (page 1 with size=1)
     params = {
@@ -595,19 +499,24 @@ def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: in
         "pageSize": 1,
         "includeSeries": "true"  # Include series info for filtering
     }
-    if series_id is not None:
-        params["seriesId"] = series_id
     param_str = "&".join(f"{k}={v}" for k, v in params.items())
     query_endpoint = f"{endpoint}?{param_str}"
     
+    # Import get_ssl_verify_setting here if not already available globally in this function
+    # from src.primary.settings_manager import get_ssl_verify_setting
+
     for attempt in range(retries + 1):
         try:
             # Get total record count from a minimal query
             sonarr_logger.debug(f"Getting missing episodes count (attempt {attempt+1}/{retries+1})")
             sonarr_logger.debug(f"Requesting missing episodes count with endpoint: {query_endpoint}")
             sonarr_logger.debug(f"Sonarr API URL: {api_url}")
-            sonarr_logger.debug(f"Sonarr API Key: {api_key}")
             sonarr_logger.debug(f"Sonarr API Timeout: {api_timeout}")
+            
+            # Explicitly log the SSL verification setting just before the call
+            current_ssl_verify_setting = get_ssl_verify_setting()
+            sonarr_logger.debug(f"SSL verify setting before calling arr_request for count: {current_ssl_verify_setting}")
+            
             response = arr_request(api_url, api_key, api_timeout, query_endpoint)
             if not response or "totalRecords" not in response:
                 sonarr_logger.warning(f"Empty or invalid response when getting missing count (attempt {attempt+1})")
@@ -642,6 +551,11 @@ def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: in
                 params["seriesId"] = series_id
             param_str = "&".join(f"{k}={v}" for k, v in params.items())
             page_endpoint = f"{endpoint}?{param_str}"
+
+            # Explicitly log the SSL verification setting just before the call
+            current_ssl_verify_setting_page = get_ssl_verify_setting()
+            sonarr_logger.debug(f"SSL verify setting before calling arr_request for page {random_page}: {current_ssl_verify_setting_page}")
+
             response = arr_request(api_url, api_key, api_timeout, page_endpoint)
             if not response or "records" not in response:
                 sonarr_logger.warning(f"Empty or invalid response when getting missing episodes page {random_page}")
