@@ -57,8 +57,9 @@
                     <li><a href="#installation-methods">Installation Methods</a>
                         <ul>
                             <li><a href="#docker-installation">Docker Installation</a></li>
-                            <li><a href="#unraid-installation">Unraid Installation</a></li>
+                            <li><a href="#windows-installation">Windows Installation</a></li>
                             <li><a href="#macos-installation">macOS Installation</a></li>
+                            <li><a href="#unraid-installation">Unraid Installation</a></li>
                             <li><a href="#alternative-methods">Alternative Installation Methods</a></li>
                         </ul>
                     </li>
@@ -134,12 +135,45 @@
                     <pre class="terminal"><code class="command-prompt">docker-compose up -d huntarr</code></pre>
                 </div>
                 
+                <div id="windows">
+                    <h3 id="windows-installation">Windows Installation</h3>
+                    <p>Huntarr.io provides native Windows installers for easy setup on Windows systems.</p>
+                    
+                    <h4>Installation Steps</h4>
+                    <ol>
+                        <li>Download the Windows installer (.exe) from the <a href="https://github.com/plexguide/Huntarr.io/releases" target="_blank">GitHub Releases</a> page.</li>
+                        <li>Double-click the downloaded .exe file to start the installation process.</li>
+                        <li><strong>Important:</strong> When Windows Defender SmartScreen appears, you'll need to click "More info" in the upper left corner, and then click "Run anyway" to proceed with installation.</li>
+                        <li>Follow the on-screen instructions to complete the installation.</li>
+                    </ol>
+                    
+                    <div class="screenshot" style="text-align: center;">
+                        <img src="../images/windows-smartscreen.jpg" alt="Windows SmartScreen Warning" style="max-width: 50%; border: 1px solid #333; border-radius: 5px;">
+                        <p class="caption">Click "More info" and then "Run anyway" to proceed with installation</p>
+                    </div>
+                    
+                    <h4>Configuration</h4>
+                    <p>When first launched, Huntarr.io will create the necessary configuration directories in your user folder:</p>
+                    <pre><code>C:\Users\YourUsername\AppData\Roaming\Huntarr\config\</code></pre>
+                    
+                    <h4>Notes about Windows Version</h4>
+                    <ul>
+                        <li>The Windows version is provided as a convenience for users who prefer native applications</li>
+                        <li>The Docker version remains the primary supported deployment method</li>
+                    </ul>
+                </div>
+                
                 <div id="unraid">
                     <h3 id="unraid-installation">Unraid Installation</h3>
-                    <p>You can install Huntarr using the Unraid App Store.</p>
-                    <p>If not, you can run this from Command Line in Unraid:</p>
+                    <p>You can install Huntarr directly from the Unraid App Store. Special thanks to <a href="https://github.com/nwithan8" target="_blank">Nwithan8</a> for maintaining the Unraid templates and helping us grow by pushing Huntarr to the Unraid Community Applications repository.</p>
                     
-                    <h5>Option 1: DockerHub</h5>
+                    <h4>Option 1: Unraid App Store (Recommended)</h4>
+                    <p>Search for "Huntarr" in the Unraid Community Applications and install with a few clicks.</p>
+                    
+                    <h4>Option 2: Manual Docker Command</h4>
+                    <p>If you prefer to install manually, you can run this from Command Line in Unraid:</p>
+                    
+                    <h5>DockerHub Image</h5>
                     <pre class="terminal"><code>docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
@@ -147,7 +181,7 @@
   -e TZ=America/New_York \
   huntarr/huntarr:latest</code></pre>
 
-                    <h5>Option 2: GitHub Container Registry</h5>
+                    <h5>GitHub Container Registry</h5>
                     <pre class="terminal"><code>docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
