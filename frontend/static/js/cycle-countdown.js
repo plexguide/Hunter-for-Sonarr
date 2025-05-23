@@ -13,17 +13,22 @@ window.CycleCountdown = (function() {
     
     // Get base URL for API calls, respecting subpath configuration
     function getBaseUrl() {
-        return (window.HUNTARR_BASE_URL || '');
+        return window.location.origin + window.location.pathname.replace(/\/+$/, '');
     }
     
     // Build a complete URL with the correct base path
     function buildUrl(path) {
-        // For subpath deployment, we need to use relative paths
-        // So convert any absolute paths to relative
-        if (path.startsWith('/')) {
-            path = '.' + path;
+        // Replace relative paths with absolute paths
+        if (path.startsWith('./')) {
+            path = path.substring(1); // Remove the dot but keep the slash
         }
-        return path;
+        
+        // Make sure the path starts with a slash
+        if (!path.startsWith('/')) {
+            path = '/' + path;
+        }
+        
+        return getBaseUrl() + path;
     }
     
     // Initialize countdown timers for all apps
@@ -35,30 +40,77 @@ window.CycleCountdown = (function() {
             createTimerElement(app);
         });
         
-        // While API endpoints are being fixed, use mock data for display
+        // API calls are failing with 404, use mock data until resolved
         createMockTimers();
         
-        // For development - uncomment when API is ready
+        // Log the URLs that would be used
+        console.log(`[CycleCountdown] Would fetch all from: ${buildUrl('/api/cycle/status')}`);
+        trackedApps.forEach(app => {
+            console.log(`[CycleCountdown] Would fetch ${app} from: ${buildUrl('/api/cycle/status/' + app)}`);
+        });
+        
+        // Uncomment when API is working
         // fetchAllCycleTimes();
         // setInterval(fetchAllCycleTimes, 60000);
     }
     
     // Create mock timers with reasonable cycle times for display purposes
+    // This implementation will persist timer values in localStorage to simulate backend persistence
     function createMockTimers() {
         const now = new Date();
+        const storedTimers = localStorage.getItem('huntarr_cycle_timers');
+        let timersNeedInitializing = true;
         
-        // Set each app to a different countdown time for testing
-        nextCycleTimes['sonarr'] = new Date(now.getTime() + 15 * 60000); // 15 minutes
-        nextCycleTimes['radarr'] = new Date(now.getTime() + 8 * 60000);  // 8 minutes
-        nextCycleTimes['lidarr'] = new Date(now.getTime() + 22 * 60000); // 22 minutes
-        nextCycleTimes['readarr'] = new Date(now.getTime() + 5 * 60000); // 5 minutes
-        nextCycleTimes['whisparr'] = new Date(now.getTime() + 2 * 60000); // 2 minutes
+        // If we have stored timers, try to use them
+        if (storedTimers) {
+            try {
+                const parsedTimers = JSON.parse(storedTimers);
+                
+                // Check if any timers are still valid (in the future)
+                for (const app in parsedTimers) {
+                    const storedTime = new Date(parsedTimers[app]);
+                    if (storedTime > now) {
+                        // Still valid, use this time
+                        nextCycleTimes[app] = storedTime;
+                        timersNeedInitializing = false;
+                    }
+                }
+            } catch (e) {
+                console.error('[CycleCountdown] Error parsing stored timers:', e);
+                // Continue with initializing new timers
+            }
+        }
+        
+        // Initialize new timers if needed
+        if (timersNeedInitializing) {
+            // Set each app to a different countdown time for testing
+            nextCycleTimes['sonarr'] = new Date(now.getTime() + 15 * 60000); // 15 minutes
+            nextCycleTimes['radarr'] = new Date(now.getTime() + 8 * 60000);  // 8 minutes
+            nextCycleTimes['lidarr'] = new Date(now.getTime() + 22 * 60000); // 22 minutes
+            nextCycleTimes['readarr'] = new Date(now.getTime() + 5 * 60000); // 5 minutes
+            nextCycleTimes['whisparr'] = new Date(now.getTime() + 2 * 60000); // 2 minutes
+            nextCycleTimes['eros'] = new Date(now.getTime() + 12 * 60000); // 12 minutes
+            
+            // Store in localStorage
+            persistTimersToLocalStorage();
+        }
         
         // Set up countdown timers for all apps
         trackedApps.forEach(app => {
             updateTimerDisplay(app);
             setupCountdown(app);
         });
+    }
+    
+    // Persist timer values to localStorage
+    function persistTimersToLocalStorage() {
+        const timerValues = {};
+        
+        for (const app in nextCycleTimes) {
+            timerValues[app] = nextCycleTimes[app].toISOString();
+        }
+        
+        localStorage.setItem('huntarr_cycle_timers', JSON.stringify(timerValues));
     }
     
     // Create timer display element in the app stats card
@@ -105,8 +157,65 @@ window.CycleCountdown = (function() {
     
     // Fetch cycle times for all tracked apps
     function fetchAllCycleTimes() {
-        trackedApps.forEach(app => {
-            fetchCycleTime(app);
+        // First try to get data for all apps at once
+        fetchAllCycleData().catch(() => {
+            // If that fails, fetch individually
+            trackedApps.forEach(app => {
+                fetchCycleTime(app);
+            });
+        });
+    }
+    
+    // Fetch cycle data for all apps at once
+    function fetchAllCycleData() {
+        return new Promise((resolve, reject) => {
+            // Use a completely relative URL approach to avoid any subpath issues
+            const url = buildUrl('./api/cycle/status');
+            
+            console.log(`[CycleCountdown] Fetching all cycle times from URL: ${url}`);
+            
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Data format should be {sonarr: {next_cycle: "...", updated_at: "..."}, ...}
+                let updated = false;
+                
+                for (const app in data) {
+                    if (trackedApps.includes(app) && data[app].next_cycle) {
+                        // Store next cycle time
+                        nextCycleTimes[app] = new Date(data[app].next_cycle);
+                        
+                        // Update timer display immediately
+                        updateTimerDisplay(app);
+                        
+                        // Set up interval to update countdown
+                        setupCountdown(app);
+                        
+                        updated = true;
+                    }
+                }
+                
+                if (updated) {
+                    resolve(data);
+                } else {
+                    reject(new Error('No valid cycle data found'));
+                }
+            })
+            .catch(error => {
+                console.error('[CycleCountdown] Error fetching all cycle times:', error);
+                reject(error);
+            });
         });
     }
     
@@ -114,7 +223,7 @@ window.CycleCountdown = (function() {
     function fetchCycleTime(app) {
         try {
             // Use a completely relative URL approach to avoid any subpath issues
-            const url = `./api/cycle/status/${app}`;
+            const url = buildUrl(`./api/cycle/status/${app}`);
             
             console.log(`[CycleCountdown] Fetching cycle time for ${app} from URL: ${url}`);
             
@@ -188,9 +297,19 @@ window.CycleCountdown = (function() {
         const timeRemaining = nextCycleTime - now;
         
         if (timeRemaining <= 0) {
-            // Time has passed, fetch updated cycle time
+            // Time has passed, create a new cycle time
             timerValue.textContent = 'Refreshing...';
-            fetchCycleTime(app);
+            
+            // Since API is not working, create a new mock timer
+            // In a real implementation, this would call the API
+            const newCycleTime = new Date(now.getTime() + Math.floor(Math.random() * 15 + 5) * 60000);
+            nextCycleTimes[app] = newCycleTime;
+            
+            // Persist to localStorage
+            persistTimersToLocalStorage();
+            
+            // Update display
+            updateTimerDisplay(app);
             return;
         }
         
