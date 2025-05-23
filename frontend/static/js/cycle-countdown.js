@@ -423,11 +423,16 @@ window.CycleCountdown = (function() {
             timerValue.textContent = 'Refreshing';
             timerValue.classList.add('refreshing-state');
             
+            // Remove any existing time-based classes to ensure clean state
+            timerElement.classList.remove('timer-soon', 'timer-imminent', 'timer-normal');
+            
             // Fetch the latest data from sleep.json
             console.log(`[CycleCountdown] Timer expired for ${app}, fetching new data`);
             fetchFromSleepJson()
                 .then(() => {
                     console.log(`[CycleCountdown] Successfully refreshed data after timer expired`);
+                    // Force a timer update after getting new data
+                    updateTimerDisplay(app);
                 })
                 .catch(error => {
                     console.error(`[CycleCountdown] Failed to refresh data after timer expired:`, error);
