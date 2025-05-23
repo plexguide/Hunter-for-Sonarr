@@ -58,30 +58,61 @@ window.CycleCountdown = (function() {
                 displayLoadError();
             });
         
-        // Set up periodic refresh every 10 seconds
-        setInterval(() => {
-            fetchFromSleepJson().catch(error => {
-                console.warn('[CycleCountdown] Refresh failed:', error);
-                // Display error message if we've never successfully loaded data
-                if (Object.keys(nextCycleTimes).length === 0) {
-                    displayLoadError();
-                }
-                // Otherwise keep the existing timer data
-            });
-        }, 10000); // 10 seconds
+        // Use a much more controlled refresh approach
+        // Refresh every 30 seconds instead of 5 to reduce network traffic
+        if (refreshTimerId) {
+            clearTimeout(refreshTimerId);
+        }
+        
+        function performControlledRefresh() {
+            // Only refresh if we're not already fetching and no errors
+            if (!isFetchingData && fetchErrorCount < 10) {
+                fetchFromSleepJson()
+                    .catch(() => {
+                        // Error handling is done in fetchFromSleepJson
+                    });
+            }
+            
+            // Schedule next refresh with adaptive timing
+            const nextInterval = fetchErrorCount > 0 ? 60000 : 30000; // 60s if errors, 30s if good
+            refreshTimerId = safeSetTimeout(performControlledRefresh, nextInterval);
+        }
+        
+        // Start the refresh cycle with initial delay
+        refreshTimerId = safeSetTimeout(performControlledRefresh, 30000);
     }
+    
+    // Global lock to prevent concurrent fetches
+    let isFetchingData = false;
+    let lastFetchTime = 0;
+    let fetchErrorCount = 0;
+    let refreshTimerId = null;
     
     // Fetch cycle data from sleep.json file via direct access
     function fetchFromSleepJson() {
-        console.log('[CycleCountdown] Fetching cycle data from web-accessible sleep.json');
+        // Don't allow fetches if one is already in progress or if we've fetched recently
+        const now = Date.now();
+        const timeSinceLastFetch = now - lastFetchTime;
+        
+        // Enforce a minimum interval between fetches (1 second)
+        if (isFetchingData || timeSinceLastFetch < 1000) {
+            return Promise.resolve(nextCycleTimes); // Return existing data
+        }
+        
+        // Set the lock
+        isFetchingData = true;
+        lastFetchTime = now;
+        
+        // Only log the fetch attempt if we don't have too many errors
+        if (fetchErrorCount < 5) {
+            console.log('[CycleCountdown] Fetching cycle data from web-accessible sleep.json');
+        }
         
         // Use a direct URL to the web-accessible version of sleep.json
         const sleepJsonUrl = window.location.origin + '/static/data/sleep.json';
         
         // Add a timestamp to prevent caching
-        const url = `${sleepJsonUrl}?t=${Date.now()}`;
-        
-        console.log(`[CycleCountdown] Requesting from URL: ${url}`);
+        const url = `${sleepJsonUrl}?t=${now}`;
         
         return new Promise((resolve, reject) => {
             fetch(url, {
@@ -98,7 +129,19 @@ window.CycleCountdown = (function() {
                 return response.json();
             })
             .then(data => {
-                console.log('[CycleCountdown] Successfully fetched sleep.json:', data);
+                // Release the lock
+                isFetchingData = false;
+                
+                // Reset error count on success
+                if (fetchErrorCount > 0) {
+                    console.log(`[CycleCountdown] Successfully fetched sleep.json after ${fetchErrorCount} errors`);
+                    fetchErrorCount = 0;
+                } else if (fetchErrorCount === 0) {
+                    // Only log success occasionally to reduce spam
+                    if (Math.random() < 0.1) { // Only log ~10% of successful fetches
+                        console.log('[CycleCountdown] Successfully fetched sleep.json');
+                    }
+                }
                 
                 // Check if we got valid data
                 if (Object.keys(data).length === 0) {
@@ -155,10 +198,25 @@ window.CycleCountdown = (function() {
                 }
             })
             .catch(error => {
-                console.error('[CycleCountdown] Error fetching sleep.json:', error);
-                // Display error in the UI
-                displayLoadError();
-                reject(error);
+                // Release the lock
+                isFetchingData = false;
+                
+                // Count errors but limit logging
+                fetchErrorCount++;
+                
+                // Only log every 10th error to drastically reduce console spam
+                if (fetchErrorCount % 10 === 1) {
+                    console.warn(`[CycleCountdown] Error fetching sleep.json (${fetchErrorCount} errors)`); 
+                }
+                
+                // Display error in UI only if we have no existing data
+                if (Object.keys(nextCycleTimes).length === 0) {
+                    displayLoadError();
+                    reject(error);
+                } else {
+                    // If we have existing data, just use that
+                    resolve(nextCycleTimes);
+                }
             });
         });
     }
@@ -430,17 +488,47 @@ window.CycleCountdown = (function() {
             timerElement.classList.remove('timer-soon', 'timer-imminent', 'timer-normal');
             timerValue.classList.remove('timer-value-soon', 'timer-value-imminent', 'timer-value-normal');
             
-            // Fetch the latest data from sleep.json
-            console.log(`[CycleCountdown] Timer expired for ${app}, fetching new data`);
-            fetchFromSleepJson()
-                .then(() => {
-                    console.log(`[CycleCountdown] Successfully refreshed data after timer expired`);
-                    // Force a timer update after getting new data
+            // Prevent spamming when multiple timers expire at once
+            if (!isFetchingData) {
+                // Keep track of which timer triggered the refresh
+                const refreshingApp = app;
+                
+                // Set a timeout to return to normal state if refresh takes too long
+                const resetTimeout = safeSetTimeout(() => {
+                    if (timerValue.textContent === 'Refreshing') {
+                        timerValue.textContent = '--:--:--';
+                        timerValue.classList.remove('refreshing-state');
+                        timerValue.style.removeProperty('color');
+                    }
+                }, 5000);
+                
+                fetchFromSleepJson()
+                    .then(() => {
+                        clearTimeout(resetTimeout);
+                        
+                        // Only log occasionally to reduce spam
+                        if (Math.random() < 0.2) { // 20% chance to log
+                            console.log(`[CycleCountdown] Refreshed data for ${refreshingApp}`);
+                        }
+                        
+                        // Update all timers, not just the expired one
+                        trackedApps.forEach(updateTimerDisplay);
+                    })
+                    .catch(() => {
+                        clearTimeout(resetTimeout);
+                        timerValue.textContent = '--:--:--';
+                        timerValue.classList.remove('refreshing-state');
+                        timerValue.style.removeProperty('color');
+                    });
+            } else {
+                // If already fetching, just reset this timer
+                safeSetTimeout(() => {
+                    timerValue.textContent = '--:--:--';
+                    timerValue.classList.remove('refreshing-state');
+                    timerValue.style.removeProperty('color');
                     updateTimerDisplay(app);
-                })
-                .catch(error => {
-                    console.error(`[CycleCountdown] Failed to refresh data after timer expired:`, error);
-                });
+                }, 1000);
+            }
             
             return;
         }
