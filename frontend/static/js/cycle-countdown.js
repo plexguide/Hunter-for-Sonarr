@@ -251,12 +251,10 @@ window.CycleCountdown = (function() {
         timerElement.innerHTML = '<i class="fas fa-clock"></i> <span class="timer-value">--:--:--</span>';
         
         // Apply direct styling to ensure colors show correctly
-        if (app === 'whisparr-v3') {
-            // Apply direct styling for Whisparr V3 with !important to ensure it shows
-            timerElement.style.cssText = 'border-left: 3px solid #ff45b7 !important;';
-            // Add a debug class for easier inspection
-            timerElement.classList.add('whisparr-v3-timer');
-            console.log('[CycleCountdown] Applied extra Whisparr V3 styling');
+        if (app === 'eros') {
+            // Apply direct styling for Whisparr V3 (eros) with !important to ensure it shows
+            timerElement.style.cssText = 'border-left: 2px solid #ff45b7 !important;';
+            console.log('[CycleCountdown] Applied Whisparr V3 (eros) styling');
         }
         
         // Always apply app-specific styling class

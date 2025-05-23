@@ -154,9 +154,14 @@
     border-left: 2px solid var(--whisparr-color, #ff45b7);
 }
 
-/* Additional style for Whisparr V3 */
-.whisparrv3 .cycle-timer {
+/* Additional style for Whisparr V3 (which is actually 'eros' in the HTML) */
+.eros .cycle-timer {
     border-left: 2px solid var(--whisparr-color, #ff45b7);
+}
+
+/* Make sure Whisparr V3/eros timer values have the same color treatment */
+.eros .timer-value {
+    color: white;
 }
 
 /* Default timer value is white and smaller as requested */
