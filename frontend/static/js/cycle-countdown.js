@@ -423,8 +423,12 @@ window.CycleCountdown = (function() {
             timerValue.textContent = 'Refreshing';
             timerValue.classList.add('refreshing-state');
             
+            // Apply direct styling to ensure it's scoped to just this timer
+            timerValue.style.color = '#00c2ce'; // Light blue for 'Refreshing'
+            
             // Remove any existing time-based classes to ensure clean state
             timerElement.classList.remove('timer-soon', 'timer-imminent', 'timer-normal');
+            timerValue.classList.remove('timer-value-soon', 'timer-value-imminent', 'timer-value-normal');
             
             // Fetch the latest data from sleep.json
             console.log(`[CycleCountdown] Timer expired for ${app}, fetching new data`);
@@ -454,8 +458,15 @@ window.CycleCountdown = (function() {
         // Display formatted countdown
         timerValue.textContent = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
         
-        // Remove refreshing state class to restore proper color
+        // Remove refreshing state class and clear any inline styles to restore proper color
         timerValue.classList.remove('refreshing-state');
+        // Only clear color if we're not in a time-based state
+        if (!timerElement.classList.contains('timer-soon') && 
+            !timerElement.classList.contains('timer-imminent') && 
+            !timerElement.classList.contains('timer-normal')) {
+            // Reset to default white color when no classes are applied
+            timerValue.style.removeProperty('color');
+        }
         
         // Add visual indicator for remaining time
         updateTimerStyle(timerElement, timeRemaining);
@@ -463,16 +474,27 @@ window.CycleCountdown = (function() {
     
     // Update timer styling based on remaining time
     function updateTimerStyle(timerElement, timeRemaining) {
-        // Remove any existing time-based classes
+        // Get the timer value element
+        const timerValue = timerElement.querySelector('.timer-value');
+        if (!timerValue) return;
+        
+        // Remove any existing time-based classes from both elements
         timerElement.classList.remove('timer-soon', 'timer-imminent', 'timer-normal');
+        timerValue.classList.remove('timer-value-soon', 'timer-value-imminent', 'timer-value-normal');
         
         // Add class based on time remaining
         if (timeRemaining < 60000) { // Less than 1 minute
             timerElement.classList.add('timer-imminent');
+            timerValue.classList.add('timer-value-imminent');
+            timerValue.style.color = '#ff3333'; // Red - direct styling for immediate effect
         } else if (timeRemaining < 300000) { // Less than 5 minutes
             timerElement.classList.add('timer-soon');
+            timerValue.classList.add('timer-value-soon');
+            timerValue.style.color = '#ff8c00'; // Orange - direct styling for immediate effect
         } else {
             timerElement.classList.add('timer-normal');
+            timerValue.classList.add('timer-value-normal');
+            timerValue.style.color = 'white'; // White - direct styling for immediate effect
         }
     }
     
