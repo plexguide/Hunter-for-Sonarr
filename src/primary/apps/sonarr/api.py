@@ -32,7 +32,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         endpoint: The API endpoint to call
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data payload for POST/PUT requests
-        verify_ssl: Optional override for SSL verification (THIS PARAMETER IS NOW IGNORED in favor of global setting)
+        verify_ssl: Optional SSL verification flag. (THIS PARAMETER IS NOW IGNORED in favor of global setting)
     
     Returns:
         The parsed JSON response or None if the request failed
@@ -68,7 +68,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         if not verify_ssl:
             # Updated log message to reflect that the global setting is used.
             sonarr_logger.debug("SSL verification disabled by global user setting")
-            
+
         try:
             if method.upper() == "GET":
                 response = session.get(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
