@@ -249,8 +249,13 @@ window.CycleCountdown = (function() {
         timerElement.className = 'cycle-timer inline-timer';
         timerElement.innerHTML = '<i class="fas fa-clock"></i> <span class="timer-value">--:--:--</span>';
         
-        // Always apply app-specific styling directly to the timer element
-        // This ensures the timer gets the right color regardless of its parent
+        // Apply direct styling to ensure colors show correctly
+        if (app === 'whisparr-v3') {
+            // Apply direct styling for Whisparr V3
+            timerElement.style.borderLeft = '2px solid #ff45b7';
+        }
+        
+        // Always apply app-specific styling class
         timerElement.classList.add(cssClass);
         
         // Also add a custom data attribute for easier styling/debugging
