@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
  * Load hourly API cap data from the server
  */
 function loadHourlyCapData() {
-    fetch('/api/hourly-caps')
+    HuntarrUtils.fetchWithTimeout('/api/hourly-caps')
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');

@@ -69,7 +69,7 @@ def index():
 def user_page():
     """User settings page with UI switching capability"""
     if get_ui_preference():
-        return redirect('/user/new')
+        return redirect(url_for("user_page_new"))
     else:
         return render_template('user.html')
 

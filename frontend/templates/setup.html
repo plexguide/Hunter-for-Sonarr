@@ -11,8 +11,8 @@
         document.write('<style>body, html { background-color: #1a1d24 !important; color: #f8f9fa !important; } .login-container { background-color: #252a34 !important; } .login-header { background-color: #121212 !important; }</style>');
     </script>
     <!-- Preload logo -->
-    <link rel="preload" href="/static/logo/256.png" as="image" fetchpriority="high">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preload" href="./static/logo/256.png" as="image" fetchpriority="high">
+    <link rel="stylesheet" href="./static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Match the heart icon pulsing animation from the sidebar */
@@ -60,9 +60,9 @@
             margin-bottom: 5px;
         }
     </style>
-    <link rel="icon" href="/static/logo/16.png">
+    <link rel="icon" href="./static/logo/16.png">
     <!-- Preload script to prevent flashing -->
-    <script src="/static/js/theme-preload.js"></script>
+    <script src="./static/js/theme-preload.js"></script>
     <style>
         /* Modern setup page styles */
         .login-page {
@@ -449,7 +449,7 @@
 <body class="login-page dark-mode">
     <div class="login-container">
         <div class="login-header">
-            <img src="/static/logo/256.png" alt="Huntarr Logo" class="login-logo huntarr-logo">
+            <img src="./static/logo/256.png" alt="Huntarr Logo" class="login-logo huntarr-logo">
             <h1>Huntarr</h1>
         </div>
         <div class="login-form">
@@ -592,6 +592,10 @@
         </div>
     </div>
 
+    <!-- Pass base URL configuration to JavaScript -->
+    <script>window.HUNTARR_BASE_URL = '{{ base_url|default("", true) }}';</script>
+    <!-- Pass global scripts -->
+    {% include 'components/scripts.html' %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Elements
@@ -733,7 +737,7 @@
                 }
                 
                 // Create user account with improved error handling
-                fetch('/setup', { // Corrected endpoint from /api/setup to /setup
+                HuntarrUtils.fetchWithTimeout('/setup', { // Corrected endpoint from /api/setup to /setup
                     method: 'POST',
                     redirect: 'error', // Add this line to prevent following redirects
                     headers: {
@@ -770,7 +774,7 @@
                         console.log('Account created successfully. User credentials should be saved to credentials.json');
                         
                         // Generate 2FA setup - Use the correct endpoint and method
-                        fetch('/api/user/2fa/setup', { method: 'POST' }) // Specify POST method
+                        HuntarrUtils.fetchWithTimeout('/api/user/2fa/setup', { method: 'POST' }) // Specify POST method
                             .then(response => {
                                 // Check for unauthorized specifically
                                 if (response.status === 401) {
@@ -829,7 +833,7 @@
                 }
                 
                 // Verify 2FA code - Use the correct endpoint
-                fetch('/api/user/2fa/verify', { // Corrected endpoint
+                HuntarrUtils.fetchWithTimeout('/api/user/2fa/verify', { // Corrected endpoint
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -862,12 +866,13 @@
                 const selectedAuthMode = authModeSelect.value;
                 
                 // Save the authentication mode settings
-                fetch('/api/settings/general', {
+                HuntarrUtils.fetchWithTimeout('/api/settings/general', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
+                        base_url: window.HUNTARR_BASE_URL,
                         auth_mode: selectedAuthMode,
                         local_access_bypass: selectedAuthMode === 'local_bypass', 
                         proxy_auth_bypass: selectedAuthMode === 'no_login'

@@ -17,12 +17,12 @@
         })();
     </script>
     <!-- Preload logo -->
-    <link rel="preload" href="/static/logo/256.png" as="image" fetchpriority="high">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preload" href="./static/logo/256.png" as="image" fetchpriority="high">
+    <link rel="stylesheet" href="./static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="/static/logo/16.png">
+    <link rel="icon" href="./static/logo/16.png">
     <!-- Preload script to prevent flashing -->
-    <script src="/static/js/theme-preload.js"></script>
+    <script src="./static/js/theme-preload.js"></script>
     <!-- Modern login styles -->
     <style>
         .login-page {
@@ -215,7 +215,7 @@
 <body class="login-page">
     <div class="login-container">
         <div class="login-header">
-            <img src="/static/logo/256.png" alt="Huntarr Logo" class="login-logo" onload="this.classList.add('loaded')">
+            <img src="./static/logo/256.png" alt="Huntarr Logo" class="login-logo" onload="this.classList.add('loaded')">
             <h1>Huntarr</h1>
         </div>
         <div class="login-form">
@@ -252,6 +252,10 @@
         </div>
     </div>
 
+    <!-- Pass base URL configuration to JavaScript -->
+    <script>window.HUNTARR_BASE_URL = '{{ base_url|default("", true) }}';</script>
+    <!-- Pass global scripts -->
+    {% include 'components/scripts.html' %}
     <script>
         const loginForm = document.getElementById('loginForm');
         const usernameInput = document.getElementById('username');
@@ -318,7 +322,7 @@
             }
             
             // Submit the form data
-            fetch('/login', {
+            HuntarrUtils.fetchWithTimeout('/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

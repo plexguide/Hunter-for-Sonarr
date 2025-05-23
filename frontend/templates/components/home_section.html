@@ -335,7 +335,7 @@
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
-                                <img src="/static/images/app-icons/sonarr.png" alt="Sonarr Logo" class="app-logo">
+                                <img src="./static/images/app-icons/sonarr.png" alt="Sonarr Logo" class="app-logo">
                             </div>
                             <h4>Sonarr</h4>
                         </div>
@@ -367,7 +367,7 @@
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
-                                <img src="/static/images/app-icons/radarr.png" alt="Radarr Logo" class="app-logo">
+                                <img src="./static/images/app-icons/radarr.png" alt="Radarr Logo" class="app-logo">
                             </div>
                             <h4>Radarr</h4>
                         </div>
@@ -399,7 +399,7 @@
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
-                                <img src="/static/images/app-icons/lidarr.png" alt="Lidarr Logo" class="app-logo">
+                                <img src="./static/images/app-icons/lidarr.png" alt="Lidarr Logo" class="app-logo">
                             </div>
                             <h4>Lidarr</h4>
                         </div>
@@ -431,7 +431,7 @@
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
-                                <img src="/static/images/app-icons/readarr.png" alt="Readarr Logo" class="app-logo">
+                                <img src="./static/images/app-icons/readarr.png" alt="Readarr Logo" class="app-logo">
                             </div>
                             <h4>Readarr</h4>
                         </div>
@@ -463,7 +463,7 @@
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
-                                <img src="/static/images/app-icons/whisparr.png" alt="Whisparr Logo" class="app-logo">
+                                <img src="./static/images/app-icons/whisparr.png" alt="Whisparr Logo" class="app-logo">
                             </div>
                             <h4>Whisparr</h4>
                         </div>
@@ -495,7 +495,7 @@
                         </div>
                         <div class="app-content">
                             <div class="app-icon-wrapper">
-                                <img src="/static/images/app-icons/whisparr.png" alt="Whisparr V3 Logo" class="app-logo">
+                                <img src="./static/images/app-icons/whisparr.png" alt="Whisparr V3 Logo" class="app-logo">
                             </div>
                             <h4>Whisparr V3</h4>
                         </div>
@@ -1772,7 +1772,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fetch sponsors from the API
     async function fetchSponsors() {
         try {
-            const response = await fetch('/api/github_sponsors');
+            const response = await HuntarrUtils.fetchWithTimeout('/api/github_sponsors');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }

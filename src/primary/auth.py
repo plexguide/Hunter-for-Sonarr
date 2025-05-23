@@ -258,28 +258,26 @@ def get_username_from_session(session_id: str) -> Optional[str]:
 
 def authenticate_request():
     """Flask route decorator to check if user is authenticated"""
-    # If no user exists, redirect to setup
-    if not user_exists():
-        script_root = request.script_root
-        setup_path = f"{script_root}/setup"
-        static_path = f"{script_root}/static/"
-        api_setup_path = f"{script_root}/api/setup"
-        
-        if request.path != setup_path and not request.path.startswith((static_path, api_setup_path)):
-            return redirect(setup_path)
+
+    # Skip authentication for static files and the login/setup pages
+    static_path = "/static/"
+    login_path = "/login"
+    api_login_path = "/api/login"
+    setup_path = "/setup"
+    api_setup_path = "/api/setup"
+    favicon_path = "/favicon.ico"
+    health_check_path = "/api/health"
+
+    # Skip authentication for static files, setup pages and health check path
+    if request.path.startswith((static_path, setup_path, api_setup_path)) or request.path in (favicon_path, health_check_path):
         return None
     
-    # Skip authentication for static files and the login/setup pages
-    script_root = request.script_root
-    static_path = f"{script_root}/static/"
-    login_path = f"{script_root}/login"
-    api_login_path = f"{script_root}/api/login"
-    setup_path = f"{script_root}/setup"
-    api_setup_path = f"{script_root}/api/setup"
-    favicon_path = f"{script_root}/favicon.ico"
-    health_check_path = f"{script_root}/api/health"
+    # If no user exists, redirect to setup
+    if not user_exists():
+        return redirect(url_for("common.setup"))
     
-    if request.path.startswith((static_path, login_path, api_login_path, setup_path, api_setup_path)) or request.path in (favicon_path, health_check_path):
+    # Skip authentication for login pages
+    if request.path.startswith((login_path, api_login_path)):
         return None
     
     # Load general settings
@@ -378,12 +376,9 @@ def authenticate_request():
         return None
     
     # No valid session, redirect to login
-    script_root = request.script_root
-    login_path = f"{script_root}/login"
-    api_path = f"{script_root}/api/"
-    
-    if request.path != login_path and not request.path.startswith(api_path):
-        return redirect(login_path)
+    api_path = "/api/"
+    if not request.path.startswith(api_path):
+        return redirect(url_for("common.login_route"))
     
     # For API calls, return 401 Unauthorized
     if request.path.startswith("/api/"):

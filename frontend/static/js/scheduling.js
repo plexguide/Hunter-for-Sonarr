@@ -161,7 +161,7 @@ async function fetchAppInstances() {
         const listUrl = `/api/scheduling/list?nocache=${cacheBuster}`;
         
         console.debug(`Loading app instances from ${listUrl}`);
-        const response = await fetch(listUrl);
+        const response = await HuntarrUtils.fetchWithTimeout(listUrl);
         
         if (response.ok) {
             const data = await response.json();
@@ -320,7 +320,7 @@ function loadSchedules() {
     console.debug('Loading schedules from server'); // DEBUG level per user preference
     
     // Make API call to get schedules
-    fetch('/api/scheduler/load')
+    HuntarrUtils.fetchWithTimeout('/api/scheduler/load')
         .then(response => {
             if (!response.ok) {
                 throw new Error('Failed to load schedules');
@@ -463,7 +463,7 @@ function saveSchedules() {
         console.debug('Saving processed schedules:', schedulesCopy);
         
         // Make API call to save schedules
-        fetch('/api/scheduler/save', {
+        HuntarrUtils.fetchWithTimeout('/api/scheduler/save', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

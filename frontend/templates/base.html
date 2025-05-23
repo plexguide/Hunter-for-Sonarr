@@ -4,24 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My App</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="./static/css/styles.css">
 </head>
 <body>
+    <!-- Pass base URL configuration to JavaScript -->
+    <script>window.HUNTARR_BASE_URL = '{{ base_url|default("", true) }}';</script>
+    <!-- Pass global scripts -->
+    {% include 'components/scripts.html' %}
     <!-- ...existing code... -->
     <!-- Scripts -->
-    <!-- <script src="/static/js/settings_sync_utility.js"></script> Removed -->
-    <!-- <script src="/static/js/core.js"></script> Removed -->
-    <!-- <script src="/static/js/settings_loader.js"></script> Removed -->
-    <script src="/static/js/settings_forms.js"></script> <!-- Keep for now -->
-    <!-- <script src="/static/js/settings_initializer.js"></script> Removed -->
-    <!-- <script src="/static/js/settings_sync.js"></script> Removed -->
-    <script src="/static/js/new-main.js"></script> <!-- Consolidated main script -->
+    <!-- <script src="./static/js/settings_sync_utility.js"></script> Removed -->
+    <!-- <script src="./static/js/core.js"></script> Removed -->
+    <!-- <script src="./static/js/settings_loader.js"></script> Removed -->
+    <script src="./static/js/settings_forms.js"></script> <!-- Keep for now -->
+    <!-- <script src="./static/js/settings_initializer.js"></script> Removed -->
+    <!-- <script src="./static/js/settings_sync.js"></script> Removed -->
+    <script src="./static/js/new-main.js"></script> <!-- Consolidated main script -->
     <!-- App-specific scripts -->
-    <script src="/static/js/apps/sonarr.js"></script>
-    <script src="/static/js/apps/radarr.js"></script>
-    <script src="/static/js/apps/lidarr.js"></script>
-    <script src="/static/js/apps/readarr.js"></script>
-    <script src="/static/js/apps/swaparr.js"></script>
+    <script src="./static/js/apps/sonarr.js"></script>
+    <script src="./static/js/apps/radarr.js"></script>
+    <script src="./static/js/apps/lidarr.js"></script>
+    <script src="./static/js/apps/readarr.js"></script>
+    <script src="./static/js/apps/swaparr.js"></script>
     <!-- ...existing code... -->
 </body>
 </html>
