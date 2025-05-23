@@ -451,6 +451,9 @@ window.CycleCountdown = (function() {
         // Display formatted countdown
         timerValue.textContent = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
         
+        // Remove refreshing state class to restore proper color
+        timerValue.classList.remove('refreshing-state');
+        
         // Add visual indicator for remaining time
         updateTimerStyle(timerElement, timeRemaining);
     }
