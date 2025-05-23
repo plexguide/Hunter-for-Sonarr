@@ -48,71 +48,57 @@ window.CycleCountdown = (function() {
         
         // First try to fetch from sleep.json
         fetchFromSleepJson()
-            .then(data => {
-                console.log('[CycleCountdown] Successfully loaded data from sleep.json');
-                // Data is already processed in fetchFromSleepJson
+            .then(() => {
+                // Success - data is processed in fetchFromSleepJson
             })
-            .catch(error => {
-                console.error('[CycleCountdown] Could not load from sleep.json:', error);
-                // Instead of mock data, show error messages in the UI
+            .catch(() => {
+                // Show error messages in the UI if initial load fails
                 displayLoadError();
             });
         
-        // Use a much more controlled refresh approach
-        // Refresh every 30 seconds instead of 5 to reduce network traffic
-        if (refreshTimerId) {
-            clearTimeout(refreshTimerId);
-        }
+        // Simple refresh every 60 seconds with fixed interval
+        let refreshInterval = null;
         
-        function performControlledRefresh() {
-            // Only refresh if we're not already fetching and no errors
-            if (!isFetchingData && fetchErrorCount < 10) {
-                fetchFromSleepJson()
-                    .catch(() => {
-                        // Error handling is done in fetchFromSleepJson
-                    });
+        function startRefreshInterval() {
+            // Clear any existing interval
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
             }
             
-            // Schedule next refresh with adaptive timing
-            const nextInterval = fetchErrorCount > 0 ? 60000 : 30000; // 60s if errors, 30s if good
-            refreshTimerId = safeSetTimeout(performControlledRefresh, nextInterval);
+            // Set up a new fixed interval
+            refreshInterval = setInterval(() => {
+                // Only refresh if not already fetching
+                if (!isFetchingData) {
+                    fetchFromSleepJson()
+                        .catch(() => {
+                            // Error handling is done in fetchFromSleepJson
+                        });
+                }
+            }, 60000); // Fixed 60-second interval
         }
         
-        // Start the refresh cycle with initial delay
-        refreshTimerId = safeSetTimeout(performControlledRefresh, 30000);
+        // Start the refresh cycle
+        startRefreshInterval();
     }
     
-    // Global lock to prevent concurrent fetches
+    // Simple lock to prevent concurrent fetches
     let isFetchingData = false;
-    let lastFetchTime = 0;
-    let fetchErrorCount = 0;
-    let refreshTimerId = null;
     
     // Fetch cycle data from sleep.json file via direct access
     function fetchFromSleepJson() {
-        // Don't allow fetches if one is already in progress or if we've fetched recently
-        const now = Date.now();
-        const timeSinceLastFetch = now - lastFetchTime;
-        
-        // Enforce a minimum interval between fetches (1 second)
-        if (isFetchingData || timeSinceLastFetch < 1000) {
+        // If already fetching, don't start another fetch
+        if (isFetchingData) {
             return Promise.resolve(nextCycleTimes); // Return existing data
         }
         
         // Set the lock
         isFetchingData = true;
-        lastFetchTime = now;
-        
-        // Only log the fetch attempt if we don't have too many errors
-        if (fetchErrorCount < 5) {
-            console.log('[CycleCountdown] Fetching cycle data from web-accessible sleep.json');
-        }
         
         // Use a direct URL to the web-accessible version of sleep.json
         const sleepJsonUrl = window.location.origin + '/static/data/sleep.json';
         
         // Add a timestamp to prevent caching
-        const url = `${sleepJsonUrl}?t=${now}`;
+        const url = `${sleepJsonUrl}?t=${Date.now()}`;
         
         return new Promise((resolve, reject) => {
             fetch(url, {
@@ -131,17 +117,6 @@ window.CycleCountdown = (function() {
             .then(data => {
                 // Release the lock
                 isFetchingData = false;
-                
-                // Reset error count on success
-                if (fetchErrorCount > 0) {
-                    console.log(`[CycleCountdown] Successfully fetched sleep.json after ${fetchErrorCount} errors`);
-                    fetchErrorCount = 0;
-                } else if (fetchErrorCount === 0) {
-                    // Only log success occasionally to reduce spam
-                    if (Math.random() < 0.1) { // Only log ~10% of successful fetches
-                        console.log('[CycleCountdown] Successfully fetched sleep.json');
-                    }
-                }
                 
                 // Check if we got valid data
                 if (Object.keys(data).length === 0) {
@@ -201,12 +176,9 @@ window.CycleCountdown = (function() {
                 // Release the lock
                 isFetchingData = false;
                 
-                // Count errors but limit logging
-                fetchErrorCount++;
-                
-                // Only log every 10th error to drastically reduce console spam
-                if (fetchErrorCount % 10 === 1) {
-                    console.warn(`[CycleCountdown] Error fetching sleep.json (${fetchErrorCount} errors)`); 
+                // Only log errors occasionally to reduce console spam
+                if (Math.random() < 0.1) { // Only log 10% of errors
+                    console.warn('[CycleCountdown] Error fetching sleep.json'); 
                 }
                 
                 // Display error in UI only if we have no existing data
@@ -487,31 +459,19 @@ window.CycleCountdown = (function() {
             // Remove any existing time-based classes to ensure clean state
             timerElement.classList.remove('timer-soon', 'timer-imminent', 'timer-normal');
             timerValue.classList.remove('timer-value-soon', 'timer-value-imminent', 'timer-value-normal');
-            
-            // Prevent spamming when multiple timers expire at once
+                    // Simple refresh when timer expires
             if (!isFetchingData) {
-                // Keep track of which timer triggered the refresh
-                const refreshingApp = app;
-                
-                // Set a timeout to return to normal state if refresh takes too long
-                const resetTimeout = safeSetTimeout(() => {
-                    if (timerValue.textContent === 'Refreshing') {
-                        timerValue.textContent = '--:--:--';
-                        timerValue.classList.remove('refreshing-state');
-                        timerValue.style.removeProperty('color');
-                    }
-                }, 5000);
+                // Set a simple timeout to reset UI if refresh takes too long
+                const resetTimeout = setTimeout(() => {
+                    timerValue.textContent = '--:--:--';
+                    timerValue.classList.remove('refreshing-state');
+                    timerValue.style.removeProperty('color');
+                }, 5000); // 5 seconds
                 
                 fetchFromSleepJson()
                     .then(() => {
                         clearTimeout(resetTimeout);
-                        
-                        // Only log occasionally to reduce spam
-                        if (Math.random() < 0.2) { // 20% chance to log
-                            console.log(`[CycleCountdown] Refreshed data for ${refreshingApp}`);
-                        }
-                        
-                        // Update all timers, not just the expired one
+                        // Update all timers
                         trackedApps.forEach(updateTimerDisplay);
                     })
                     .catch(() => {
@@ -522,7 +482,7 @@ window.CycleCountdown = (function() {
                     });
             } else {
                 // If already fetching, just reset this timer
-                safeSetTimeout(() => {
+                setTimeout(() => {
                     timerValue.textContent = '--:--:--';
                     timerValue.classList.remove('refreshing-state');
                     timerValue.style.removeProperty('color');
@@ -631,8 +591,8 @@ window.CycleCountdown = (function() {
     }
     
     document.addEventListener('DOMContentLoaded', function() {
-        // Delay initialization to ensure DOM is fully loaded
-        safeSetTimeout(function() {
+        // Simple initialization with minimal delay
+        setTimeout(function() {
             // Initialize when user navigates to home section
             const observer = new MutationObserver((mutations) => {
                 for (const mutation of mutations) {
@@ -657,7 +617,7 @@ window.CycleCountdown = (function() {
                     initialize();
                 }
             }
-        }, 100);
+        }, 100); // 100ms delay is enough
     });
     
     // Public API
