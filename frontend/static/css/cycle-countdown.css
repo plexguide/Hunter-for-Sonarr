@@ -155,11 +155,23 @@
 }
 
 /* Additional style for Whisparr V3 */
-.whisparrv3 .cycle-timer {
-    border-left: 2px solid var(--whisparr-v3-color, #ff45b7);
+.whisparrv3 .cycle-timer, div[data-app-type="whisparr-v3"], .whisparr-v3-timer {
+    border-left: 3px solid #ff45b7 !important;
 }
 
-/* Default timer value is white */
+/* Direct styling for Whisparr V3 timer */
+#whisparr-v3CycleTimer {
+    border-left: 3px solid #ff45b7 !important;
+}
+
+/* Default timer value is white and smaller as requested */
 .timer-value {
-    color: var(--text-light, white);
+    color: white;
+    font-weight: 600;
+    font-size: 80%; /* Make text 20% smaller */
+}
+
+/* Make clock icon smaller too */
+.cycle-timer i.fas.fa-clock {
+    font-size: 80%; /* Make icon 20% smaller */
 }

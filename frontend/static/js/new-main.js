@@ -2966,7 +2966,7 @@ let huntarrUI = {
             
             // Re-enable the button with original text
             button.disabled = false;
-            button.innerHTML = `<i class="fas fa-sync-alt"></i> Reset Cycle`;
+            button.innerHTML = `<i class="fas fa-sync-alt"></i> Reset`;
         })
         .catch(error => {
             console.error(`[huntarrUI] Error resetting ${app} cycle:`, error);
@@ -2974,7 +2974,7 @@ let huntarrUI = {
             
             // Re-enable the button with original text
             button.disabled = false;
-            button.innerHTML = `<i class="fas fa-sync-alt"></i> Reset Cycle`;
+            button.innerHTML = `<i class="fas fa-sync-alt"></i> Reset`;
         });
     }
 };
