@@ -9,7 +9,7 @@ window.CycleCountdown = (function() {
     // Active timer intervals
     const timerIntervals = {};
     // List of apps to track
-    const trackedApps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'whisparrv3'];
+    const trackedApps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros'];
     
     // Get base URL for API calls, respecting subpath configuration
     function getBaseUrl() {
@@ -63,8 +63,8 @@ window.CycleCountdown = (function() {
     
     // Create timer display element in the app stats card
     function createTimerElement(app) {
-        // Handle whisparrv3 as a special case
-        const dataApp = app === 'whisparrv3' ? 'whisparr-v3' : app;
+        // No need for special case handling since we're directly using the data-app values
+        const dataApp = app;
         
         // Directly look for the reset cycle button by data-app attribute
         const resetButton = document.querySelector(`button.cycle-reset-button[data-app="${dataApp}"]`);
