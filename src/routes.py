@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, redirect, jsonify, url_for
+from flask import Flask, render_template, request, redirect, jsonify, url_for, send_file
 import os
 import json
 import datetime
 
 # Import the necessary functions
 from src.primary.stateful_manager import reset_stateful_management, get_stateful_management_info
-from src.primary.cycle_tracker import get_cycle_status, reset_cycle
+from src.primary.cycle_tracker import get_cycle_status, reset_cycle, _SLEEP_DATA_PATH
 from src.primary.utils.config_paths import get_reset_path
 
 # Configure Flask to use templates and static files from the frontend folder
@@ -35,6 +35,22 @@ def api_get_app_cycle_status(app_name):
     except Exception as e:
         app.logger.error(f"Error getting cycle status for {app_name}: {e}")
         return jsonify({"error": f"Failed to retrieve cycle status for {app_name}."}), 500
+
+@app.route('/api/sleep.json', methods=['GET'])
+def api_get_sleep_json():
+    """API endpoint to directly serve the sleep.json file for frontend access"""
+    try:
+        if os.path.exists(_SLEEP_DATA_PATH):
+            # Add CORS headers to allow any origin to access this resource
+            response = send_file(_SLEEP_DATA_PATH, mimetype='application/json')
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+        else:
+            # If file doesn't exist, return empty object
+            return jsonify({}), 200
+    except Exception as e:
+        app.logger.error(f"Error serving sleep.json: {e}")
+        return jsonify({"error": "Failed to serve sleep.json"}), 500
 
 @app.route('/api/cycle/reset/<app_name>', methods=['POST'])
 def api_reset_app_cycle(app_name):

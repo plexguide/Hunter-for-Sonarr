@@ -18,99 +18,171 @@ window.CycleCountdown = (function() {
     
     // Build a complete URL with the correct base path
     function buildUrl(path) {
-        // Replace relative paths with absolute paths
-        if (path.startsWith('./')) {
-            path = path.substring(1); // Remove the dot but keep the slash
-        }
-        
+        // Simply return path since we're using absolute paths
         // Make sure the path starts with a slash
         if (!path.startsWith('/')) {
             path = '/' + path;
         }
         
-        return getBaseUrl() + path;
+        // For API endpoints, use the current origin without any subpath manipulation
+        return window.location.origin + path;
+    }
+    
+    // Set up timer elements in the DOM
+    function setupTimerElements() {
+        // Create timer elements in each app status card
+        trackedApps.forEach(app => {
+            createTimerElement(app);
+        });
     }
     
     // Initialize countdown timers for all apps
     function initialize() {
         console.log('[CycleCountdown] Initializing countdown timers');
         
-        // Create timer elements in each app status card
-        trackedApps.forEach(app => {
-            createTimerElement(app);
-        });
+        // Get references to all HTML elements
+        setupTimerElements();
         
-        // API calls are failing with 404, use mock data until resolved
-        createMockTimers();
+        // Set up event listeners for reset buttons
+        setupResetButtonListeners();
         
-        // Log the URLs that would be used
-        console.log(`[CycleCountdown] Would fetch all from: ${buildUrl('/api/cycle/status')}`);
-        trackedApps.forEach(app => {
-            console.log(`[CycleCountdown] Would fetch ${app} from: ${buildUrl('/api/cycle/status/' + app)}`);
-        });
+        // First try to fetch from sleep.json
+        fetchFromSleepJson()
+            .then(data => {
+                console.log('[CycleCountdown] Successfully loaded data from sleep.json');
+                // Data is already processed in fetchFromSleepJson
+            })
+            .catch(error => {
+                console.error('[CycleCountdown] Could not load from sleep.json:', error);
+                // Instead of mock data, show error messages in the UI
+                displayLoadError();
+            });
         
-        // Uncomment when API is working
-        // fetchAllCycleTimes();
-        // setInterval(fetchAllCycleTimes, 60000);
+        // Set up periodic refresh every 10 seconds
+        setInterval(() => {
+            fetchFromSleepJson().catch(error => {
+                console.warn('[CycleCountdown] Refresh failed:', error);
+                // Display error message if we've never successfully loaded data
+                if (Object.keys(nextCycleTimes).length === 0) {
+                    displayLoadError();
+                }
+                // Otherwise keep the existing timer data
+            });
+        }, 10000); // 10 seconds
     }
     
-    // Create mock timers with reasonable cycle times for display purposes
-    // This implementation will persist timer values in localStorage to simulate backend persistence
-    function createMockTimers() {
-        const now = new Date();
-        const storedTimers = localStorage.getItem('huntarr_cycle_timers');
-        let timersNeedInitializing = true;
+    // Fetch cycle data from sleep.json file via API endpoint
+    function fetchFromSleepJson() {
+        console.log('[CycleCountdown] Fetching cycle data from sleep.json API endpoint');
         
-        // If we have stored timers, try to use them
-        if (storedTimers) {
-            try {
-                const parsedTimers = JSON.parse(storedTimers);
+        // Use a direct URL to the API endpoint - no subpath manipulation
+        const sleepJsonUrl = window.location.origin + '/api/sleep.json';
+        
+        // Add a timestamp to prevent caching
+        const url = `${sleepJsonUrl}?t=${Date.now()}`;
+        
+        console.log(`[CycleCountdown] Requesting from URL: ${url}`);
+        
+        return new Promise((resolve, reject) => {
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('[CycleCountdown] Successfully fetched sleep.json:', data);
                 
-                // Check if any timers are still valid (in the future)
-                for (const app in parsedTimers) {
-                    const storedTime = new Date(parsedTimers[app]);
-                    if (storedTime > now) {
-                        // Still valid, use this time
-                        nextCycleTimes[app] = storedTime;
-                        timersNeedInitializing = false;
+                // Check if we got valid data
+                if (Object.keys(data).length === 0) {
+                    console.warn('[CycleCountdown] Sleep.json contained no data');
+                    reject(new Error('No data in sleep.json'));
+                    return;
+                }
+                
+                let dataProcessed = false;
+                
+                // Process the data for each app
+                for (const app in data) {
+                    if (trackedApps.includes(app)) {
+                        // Store the next cycle time
+                        nextCycleTimes[app] = new Date(data[app].next_cycle);
+                        
+                        // Update the timer display
+                        updateTimerDisplay(app);
+                        
+                        // Set up countdown interval if not already set
+                        setupCountdown(app);
+                        
+                        dataProcessed = true;
                     }
                 }
-            } catch (e) {
-                console.error('[CycleCountdown] Error parsing stored timers:', e);
-                // Continue with initializing new timers
-            }
-        }
-        
-        // Initialize new timers if needed
-        if (timersNeedInitializing) {
-            // Set each app to a different countdown time for testing
-            nextCycleTimes['sonarr'] = new Date(now.getTime() + 15 * 60000); // 15 minutes
-            nextCycleTimes['radarr'] = new Date(now.getTime() + 8 * 60000);  // 8 minutes
-            nextCycleTimes['lidarr'] = new Date(now.getTime() + 22 * 60000); // 22 minutes
-            nextCycleTimes['readarr'] = new Date(now.getTime() + 5 * 60000); // 5 minutes
-            nextCycleTimes['whisparr'] = new Date(now.getTime() + 2 * 60000); // 2 minutes
-            nextCycleTimes['eros'] = new Date(now.getTime() + 12 * 60000); // 12 minutes
-            
-            // Store in localStorage
-            persistTimersToLocalStorage();
-        }
-        
-        // Set up countdown timers for all apps
-        trackedApps.forEach(app => {
-            updateTimerDisplay(app);
-            setupCountdown(app);
+                
+                if (dataProcessed) {
+                    resolve(data);
+                } else {
+                    console.warn('[CycleCountdown] No valid app data found in sleep.json');
+                    reject(new Error('No valid app data'));
+                }
+            })
+            .catch(error => {
+                console.error('[CycleCountdown] Error fetching sleep.json:', error);
+                // Display error in the UI
+                displayLoadError();
+                reject(error);
+            });
         });
     }
     
-    // Persist timer values to localStorage
-    function persistTimersToLocalStorage() {
-        const timerValues = {};
+    // Set up reset button click listeners
+    function setupResetButtonListeners() {
+        // Find all reset buttons
+        const resetButtons = document.querySelectorAll('button.cycle-reset-button');
         
-        for (const app in nextCycleTimes) {
-            timerValues[app] = nextCycleTimes[app].toISOString();
-        }
-        
-        localStorage.setItem('huntarr_cycle_timers', JSON.stringify(timerValues));
+        resetButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const app = this.getAttribute('data-app');
+                if (app) {
+                    console.log(`[CycleCountdown] Reset button clicked for ${app}, will update timer in 2 seconds`);
+                    
+                    // Add a loading state to the timer
+                    const timerElement = document.getElementById(`${app}CycleTimer`);
+                    if (timerElement) {
+                        const timerValue = timerElement.querySelector('.timer-value');
+                        if (timerValue) {
+                            timerValue.textContent = 'Refreshing...';
+                        }
+                    }
+                    
+                    // Wait a moment for the backend to process the reset
+                    setTimeout(() => {
+                        fetchFromSleepJson();
+                    }, 2000);
+                }
+            });
+        });
+    }
+    
+    // Display error message in the UI when sleep data can't be loaded
+    function displayLoadError() {
+        // For each app, display error message in timer elements
+        trackedApps.forEach(app => {
+            const timerElement = document.getElementById(`${app}CycleTimer`);
+            if (timerElement) {
+                const timerValue = timerElement.querySelector('.timer-value');
+                if (timerValue) {
+                    timerValue.textContent = 'Error loading data';
+                    timerValue.classList.add('error');
+                }
+            }
+        });
     }
     
     // Create timer display element in the app stats card

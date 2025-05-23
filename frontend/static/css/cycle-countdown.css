@@ -49,6 +49,22 @@
 .timer-value {
     font-family: monospace;
     font-weight: 600;
+}
+
+/* Error state styling */
+.timer-value.error {
+    color: #ff5252;
+    animation: pulse 2s infinite;
+}
+
+/* Pulse animation for errors */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.timer-value {
     letter-spacing: 0.5px;
 }
 
