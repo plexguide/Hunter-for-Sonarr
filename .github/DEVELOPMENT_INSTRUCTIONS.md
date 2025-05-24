@@ -348,13 +348,20 @@ docker logs -f huntarr
 4. **ALWAYS test subpath scenarios** - Reverse proxy setups (e.g., `/huntarr/` prefix)
 5. **Use relative URLs in frontend** - Avoid absolute `/api/` paths, use `./api/` instead
 6. **Hunt for ALL hard-coded paths** - Use `grep -r "/config\|/app\|/data" src/` before any release
-7. **Check for undefined variables** in JavaScript before deploying
-8. **Use environment detection** instead of hard-coded paths
-9. **Create memories** for significant fixes and features
-10. **Update version.txt** when making changes
-11. **Test API endpoints** after backend changes
-12. **Verify UI responsiveness** across different screen sizes
-13. **Check logs after every rebuild** - `docker logs huntarr`
+7. **Fix the actual file, don't create new ones** - When fixing bugs, modify the source file directly instead of creating correction/wrapper files
+8. **ALWAYS test in Docker, never execute local code** - Use Docker containers for all testing and development
+9. **Don't create local configs** - Check configurations inside the Docker container instead
+10. **Never modify files inside Docker container** - Update codebase then rebuild Docker to test changes
+11. **Always rebuild container to test changes** - `docker-compose down && docker-compose up --build`
+12. **Don't add to new-main.js** - Create new JS files and organize in subfolders for better structure
+13. **Don't add to main.css** - Create page-specific CSS files instead of modifying the main stylesheet
+14. **Check for undefined variables** in JavaScript before deploying
+15. **Use environment detection** instead of hard-coded paths
+16. **Create memories** for significant fixes and features
+17. **Update version.txt** when making changes
+18. **Test API endpoints** after backend changes
+19. **Verify UI responsiveness** across different screen sizes
+20. **Check logs after every rebuild** - `docker logs huntarr`
 
 ---
 
