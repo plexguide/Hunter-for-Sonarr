@@ -58,6 +58,17 @@
                             <li><a href="#display-resources">Display Resources</a></li>
                         </ul>
                     </li>
+                    <li><a href="#notifications">Notifications</a>
+                        <ul>
+                            <li><a href="#enable-notifications">Enable Notifications</a></li>
+                            <li><a href="#notification-level">Notification Level</a></li>
+                            <li><a href="#apprise-urls">Apprise URLs</a></li>
+                            <li><a href="#notify-on-missing">Notify on Missing</a></li>
+                            <li><a href="#notify-on-upgrade">Notify on Upgrade</a></li>
+                            <li><a href="#include-instance">Include Instance</a></li>
+                            <li><a href="#include-app-name">Include App Name</a></li>
+                        </ul>
+                    </li>
                     <li><a href="#stateful-management">Stateful Management</a>
                         <ul>
                             <li><a href="#emergency-reset">Emergency Reset</a></li>
@@ -106,6 +117,98 @@
                 <p>The Resources section displays helpful links like documentation, GitHub repository, and community forums. You may want to hide this once you're familiar with Huntarr to optimize screen space.</p>
                 
                 <p>New users should keep this enabled as it provides quick access to documentation and support resources. More experienced users might prefer to hide this section to focus on the core functionality of Huntarr.</p>
+            </section>
+            
+            <section id="notifications">
+                <h2>Notifications</h2>
+                <p>Configure how Huntarr sends notifications about media processing events. Huntarr uses the powerful <a href="https://github.com/caronc/apprise" target="_blank">Apprise library</a> to support notifications to virtually any service including Discord, Telegram, Slack, email, webhooks, and dozens more.</p>
+                
+                <h3 id="enable-notifications"><a href="#enable-notifications" class="info-icon"><i class="fas fa-info-circle"></i></a> Enable Notifications</h3>
+                <p>Master toggle to enable or disable all notifications from Huntarr.</p>
+                
+                <p>When enabled, Huntarr will send notifications based on your configured settings and Apprise URLs. When disabled, no notifications will be sent regardless of other settings.</p>
+                
+                <p>This is useful for temporarily silencing notifications during maintenance or testing without having to remove your Apprise URL configurations.</p>
+                
+                <h3 id="notification-level"><a href="#notification-level" class="info-icon"><i class="fas fa-info-circle"></i></a> Notification Level</h3>
+                <p>Sets the minimum severity level for events that will trigger notifications.</p>
+                
+                <ul>
+                    <li><strong>Info:</strong> All events including successful downloads, upgrades, and general status updates</li>
+                    <li><strong>Success:</strong> Only successful operations like completed downloads and upgrades</li>
+                    <li><strong>Warning:</strong> Warning-level events and above (includes errors)</li>
+                    <li><strong>Error:</strong> Only critical errors and failures</li>
+                </ul>
+                
+                <p>Most users should use "Info" to get comprehensive notifications about Huntarr's activities. Use "Error" if you only want to be notified about problems.</p>
+                
+                <h3 id="apprise-urls"><a href="#apprise-urls" class="info-icon"><i class="fas fa-info-circle"></i></a> Apprise URLs</h3>
+                <p>Configure one or more notification destinations using Apprise URL format. Enter one URL per line.</p>
+                
+                <p>Apprise supports an extensive list of notification services. Here are some popular examples:</p>
+                
+                <ul>
+                    <li><strong>Discord:</strong> <code>discord://webhook_id/webhook_token</code></li>
+                    <li><strong>Telegram:</strong> <code>tgram://bottoken/ChatID</code></li>
+                    <li><strong>Slack:</strong> <code>slack://TokenA/TokenB/TokenC/Channel</code></li>
+                    <li><strong>Email (SMTP):</strong> <code>mailto://user:pass@host:port/recipient</code></li>
+                    <li><strong>Pushover:</strong> <code>pover://user@token</code></li>
+                    <li><strong>Webhooks:</strong> <code>json://hostname/path</code></li>
+                </ul>
+                
+                <p>For complete documentation of supported services and their URL formats, visit the <a href="https://github.com/caronc/apprise#supported-notifications" target="_blank">official Apprise documentation</a>.</p>
+                
+                <p>You can configure multiple notification destinations by adding multiple URLs, one per line. Huntarr will send notifications to all configured services.</p>
+                
+                <h3 id="notify-on-missing"><a href="#notify-on-missing" class="info-icon"><i class="fas fa-info-circle"></i></a> Notify on Missing</h3>
+                <p>Send notifications when Huntarr processes missing media and requests downloads from your *arr apps.</p>
+                
+                <p>When enabled, you'll receive notifications like:</p>
+                <ul>
+                    <li>"Found 5 missing episodes for Breaking Bad Season 2"</li>
+                    <li>"Requested download for The Dark Knight (2008) from Radarr"</li>
+                </ul>
+                
+                <p>This helps you stay informed about what content Huntarr is actively working to acquire for your media library.</p>
+                
+                <h3 id="notify-on-upgrade"><a href="#notify-on-upgrade" class="info-icon"><i class="fas fa-info-circle"></i></a> Notify on Upgrade</h3>
+                <p>Send notifications when Huntarr processes media upgrades and requests better quality versions from your *arr apps.</p>
+                
+                <p>When enabled, you'll receive notifications like:</p>
+                <ul>
+                    <li>"Found upgrade opportunity for The Matrix (1999) - 1080p → 4K UHD"</li>
+                    <li>"Requested quality upgrade for Game of Thrones S01E01 from Sonarr"</li>
+                </ul>
+                
+                <p>This keeps you informed when Huntarr finds opportunities to improve the quality of your existing media collection.</p>
+                
+                <h3 id="include-instance"><a href="#include-instance" class="info-icon"><i class="fas fa-info-circle"></i></a> Include Instance</h3>
+                <p>Include the configured instance name in notification messages when you have multiple instances of the same app type.</p>
+                
+                <p>When enabled, notifications will include the instance name you configured, such as:</p>
+                <ul>
+                    <li>"[Movies-4K] Found missing media..." (instead of just "[Radarr] Found missing media...")</li>
+                    <li>"[TV-Anime] Requested upgrade..." (instead of just "[Sonarr] Requested upgrade...")</li>
+                </ul>
+                
+                <p>This is especially useful when running multiple Sonarr or Radarr instances (e.g., separate instances for 4K content, anime, or different quality profiles).</p>
+                
+                <h3 id="include-app-name"><a href="#include-app-name" class="info-icon"><i class="fas fa-info-circle"></i></a> Include App Name</h3>
+                <p>Include the application name (Sonarr, Radarr, etc.) in notification messages.</p>
+                
+                <p>When enabled, notifications will include the source app name, such as:</p>
+                <ul>
+                    <li>"[Sonarr] Found 3 missing episodes..."</li>
+                    <li>"[Radarr] Requested download for..."</li>
+                </ul>
+                
+                <p>When disabled, notifications will be more generic:</p>
+                <ul>
+                    <li>"Found 3 missing episodes..."</li>
+                    <li>"Requested download for..."</li>
+                </ul>
+                
+                <p>Most users should keep this enabled for clarity about which app triggered each notification.</p>
             </section>
             
             <section id="stateful-management">
