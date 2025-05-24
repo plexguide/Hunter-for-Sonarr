@@ -5,7 +5,7 @@ This document serves as a constant reminder and reference for common development
 ## 🚀 Version Update Workflow
 
 **When making changes:**
-1. Update `/version.txt` with new version number
+
 2. **ALWAYS rebuild and test with this command:**
    ```bash
    cd /Users/home/Huntarr/Huntarr.io && docker-compose down && COMPOSE_BAKE=true docker-compose up -d --build
