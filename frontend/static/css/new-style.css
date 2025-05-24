@@ -1231,6 +1231,32 @@ select.form-control {
     outline: none;
 }
 
+.setting-item select:hover {
+    border-color: rgba(90, 109, 137, 0.4);
+    background: linear-gradient(145deg, rgba(15, 23, 36, 0.8), rgba(22, 30, 45, 0.6));
+}
+
+/* Enhanced option styling for better visibility */
+.setting-item select option {
+    background-color: rgba(22, 30, 45, 0.95);
+    color: var(--text-primary);
+    padding: 10px 15px;
+    border: none;
+    font-size: 14px;
+}
+
+.setting-item select option:hover,
+.setting-item select option:focus {
+    background-color: rgba(52, 152, 219, 0.8);
+    color: #ffffff;
+}
+
+.setting-item select option:checked {
+    background-color: rgba(52, 152, 219, 0.9);
+    color: #ffffff;
+    font-weight: 600;
+}
+
 /* Improved help text */
 .setting-help {
     width: 100%;
@@ -1853,8 +1879,6 @@ input:checked + .toggle-slider:before {
 .log-dropdown-content {
     display: none;
     position: absolute;
-    top: 100%;
-    left: 0;
     background-color: var(--bg-secondary);
     min-width: 180px;
     z-index: 10;
@@ -1923,8 +1947,6 @@ input:checked + .toggle-slider:before {
 .settings-dropdown-content {
     display: none;
     position: absolute;
-    top: 100%;
-    left: 0;
     background-color: var(--bg-secondary);
     min-width: 180px;
     z-index: 10;
@@ -2273,6 +2295,13 @@ input:checked + .toggle-slider:before {
   background-position: right 10px center;
   background-size: 16px;
 }
+
+.styled-select option {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  padding: 8px 12px;
+}
+
 /* Define faster glowing animation for hover state */
 @keyframes glowing-ring-hover {
   0% { box-shadow: 0 0 20px #3498db, 0 0 10px rgba(52, 152, 219, 0.6); } /* Sonarr blue */
@@ -2307,10 +2336,6 @@ input:checked + .toggle-slider:before {
 
 .log-dropdown:hover .dropdown-helper {
   opacity: 1;
-}
-.styled-select option {
-  color: #222;
-  background: #fff;
 }
 
 /* Any container elements that might have overflow: hidden */
@@ -2450,21 +2475,4 @@ input#stateful_management_hours {
     min-width: 55px !important;
     max-width: 55px !important;
     font-size: 0.9rem;
-}
-
-/* Style for the Resources section header bar */
-.community-hub-card > .card-header {
-    background-color: #252a34; /* User preferred header blue */
-    padding: 10px 15px;       /* Consistent padding */
-    border-radius: 8px;       /* Round all corners */
-    display: flex;            /* For vertical centering of h3 if needed */
-    align-items: center;      /* For vertical centering of h3 if needed */
-    margin-bottom: 15px;      /* Space between this header and the resource items below */
-}
-
-.community-hub-card > .card-header h3 {
-    color: #ffffff;           /* White text on dark blue background */
-    margin: 0;                /* Remove default h3 margin */
-    font-size: 1.1em;         /* Adjust size as needed */
-    font-weight: 500;         /* Medium weight */
 }
