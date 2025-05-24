@@ -8,6 +8,7 @@ import json
 import datetime
 import threading
 from typing import Dict, Any, Optional
+from src.primary.utils.config_paths import CONFIG_DIR, get_path
 
 # Thread lock for updating cycle data
 _lock = threading.Lock()
@@ -17,17 +18,18 @@ def _detect_environment():
     return os.path.exists('/config') and os.path.exists('/app')
 
 def _get_paths():
-    """Get appropriate file paths based on environment"""
+    """Get appropriate file paths using centralized config_paths"""
+    # Use centralized path configuration for cross-platform compatibility
+    cycle_data_path = get_path('settings', 'cycle_data.json')
+    sleep_data_path = get_path('tally', 'sleep.json')
+    
+    # Web sleep data path - handle both Docker and bare metal
     if _detect_environment():
-        # Docker environment - use container paths
-        cycle_data_path = os.path.join('/config', 'settings', 'cycle_data.json')
-        sleep_data_path = os.path.join('/config', 'tally', 'sleep.json')
+        # Docker environment
         web_sleep_data_path = os.path.join('/app', 'frontend', 'static', 'data', 'sleep.json')
     else:
-        # Bare metal environment - use relative paths
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # Go up to project root
-        cycle_data_path = os.path.join(base_dir, 'data', 'settings', 'cycle_data.json')
-        sleep_data_path = os.path.join(base_dir, 'data', 'tally', 'sleep.json')
+        # Bare metal environment - use relative path from project root
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         web_sleep_data_path = os.path.join(base_dir, 'frontend', 'static', 'data', 'sleep.json')
     
     return cycle_data_path, sleep_data_path, web_sleep_data_path
@@ -36,6 +38,7 @@ def _get_paths():
 _CYCLE_DATA_PATH, _SLEEP_DATA_PATH, _WEB_SLEEP_DATA_PATH = _get_paths()
 
 print(f"[CycleTracker] Environment: {'Docker' if _detect_environment() else 'Bare Metal'}")
+print(f"[CycleTracker] Config dir: {CONFIG_DIR}")
 print(f"[CycleTracker] Sleep data path: {_SLEEP_DATA_PATH}")
 print(f"[CycleTracker] Web sleep data path: {_WEB_SLEEP_DATA_PATH}")
 

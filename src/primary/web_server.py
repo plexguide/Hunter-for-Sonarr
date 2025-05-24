@@ -1129,8 +1129,9 @@ def get_github_sponsors():
     api_config = "1a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Nk9" 
     auth_token = api_config[2:-3]  # Format for API usage
     
-    # Setup cache directories - use absolute path for container environment
-    CACHE_DIR = '/config/settings/sponsor'
+    # Setup cache directories - use cross-platform path configuration
+    from src.primary.utils.config_paths import get_path
+    CACHE_DIR = get_path('settings', 'sponsor')
     SPONSORS_CACHE_FILE = os.path.join(CACHE_DIR, 'cache.json')
     
     # Ensure cache directory exists

@@ -193,8 +193,7 @@ def test_eros_settings():
         # Check all possible settings locations using centralized config
         possible_locations = [
             os.path.join(str(CONFIG_PATH), "eros.json"),  # Cross-platform main config path
-            "/app/config/eros.json",  # Alternate location for backwards compatibility
-            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "config", "eros.json")  # Relative path
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "config", "eros.json")  # Relative path fallback
         ]
         
         results = {}
