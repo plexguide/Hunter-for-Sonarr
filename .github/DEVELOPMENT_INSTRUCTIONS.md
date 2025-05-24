@@ -142,6 +142,55 @@ getFormSettings: function() {
 - Template files in `/frontend/templates/components/`
 - CSS in template `<style>` sections
 
+## 🔍 Hard-Coded Path Detection & Systematic Hunting
+
+**LESSON LEARNED:** Even after fixing some hard-coded paths, others can remain hidden and cause cross-platform issues. Use this systematic approach:
+
+### Step 1: Comprehensive Path Search
+```bash
+# Search for ALL potential hard-coded path patterns
+grep -r "/config" src/ --include="*.py"
+grep -r "/app" src/ --include="*.py" 
+grep -r "/data" src/ --include="*.py"
+grep -r "/tmp" src/ --include="*.py"
+grep -r "C:\\" src/ --include="*.py"
+```
+
+### Step 2: Validate Each Result
+For each result, determine if it's:
+- ✅ **Legitimate:** Comments, environment detection logic, or Flask routes
+- ❌ **Problem:** Actual file/directory paths that should use `config_paths.py`
+
+### Step 3: Priority File Checklist
+**CRITICAL FILES** that commonly contain hard-coded paths:
+- [ ] `cycle_tracker.py` - Timer functionality (HIGH IMPACT)
+- [ ] `history_manager.py` - Data storage
+- [ ] `web_server.py` - Cache directories
+- [ ] `settings_manager.py` - Configuration files
+- [ ] Any app-specific routes (`*_routes.py`)
+
+### Step 4: Fix Pattern
+Replace hard-coded paths with centralized utilities:
+
+**❌ WRONG:**
+```python
+CACHE_DIR = '/config/settings/sponsor'
+data_path = '/config/tally/sleep.json'
+```
+
+**✅ CORRECT:**
+```python
+from src.primary.utils.config_paths import get_path
+CACHE_DIR = get_path('settings', 'sponsor')
+data_path = get_path('tally', 'sleep.json')
+```
+
+### Step 5: Post-Fix Verification
+1. Update `version.txt`
+2. Rebuild: `docker-compose down && COMPOSE_BAKE=true docker-compose up -d --build`
+3. Check logs: `docker logs huntarr`
+4. Verify path resolution in logs shows correct environment detection
+
 ## 🌐 Cross-Platform Compatibility Requirements
 
 **CRITICAL: All paths must work on Windows, Docker, and Mac with subpaths**
@@ -298,13 +347,14 @@ docker logs -f huntarr
 3. **ALWAYS test cross-platform** - Docker vs bare metal behavior differs significantly
 4. **ALWAYS test subpath scenarios** - Reverse proxy setups (e.g., `/huntarr/` prefix)
 5. **Use relative URLs in frontend** - Avoid absolute `/api/` paths, use `./api/` instead
-6. **Check for undefined variables** in JavaScript before deploying
-7. **Use environment detection** instead of hard-coded paths
-8. **Create memories** for significant fixes and features
-9. **Update version.txt** when making changes
-10. **Test API endpoints** after backend changes
-11. **Verify UI responsiveness** across different screen sizes
-12. **Check logs after every rebuild** - `docker logs huntarr`
+6. **Hunt for ALL hard-coded paths** - Use `grep -r "/config\|/app\|/data" src/` before any release
+7. **Check for undefined variables** in JavaScript before deploying
+8. **Use environment detection** instead of hard-coded paths
+9. **Create memories** for significant fixes and features
+10. **Update version.txt** when making changes
+11. **Test API endpoints** after backend changes
+12. **Verify UI responsiveness** across different screen sizes
+13. **Check logs after every rebuild** - `docker logs huntarr`
 
 ---
 
