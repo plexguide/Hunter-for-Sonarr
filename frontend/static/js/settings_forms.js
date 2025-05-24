@@ -224,9 +224,7 @@ const SettingsForms = {
         `;
         
         // Continue with the rest of the settings form
-        container.innerHTML = `
-            ${instancesHtml}
-            
+        let searchSettingsHtml = `
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
