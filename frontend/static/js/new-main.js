@@ -361,6 +361,13 @@ let huntarrUI = {
             this.elements.saveSettingsButton.addEventListener('click', () => this.saveSettings());
         }
         
+        // Test notification button (delegated event listener for dynamic content)
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'testNotificationBtn' || e.target.closest('#testNotificationBtn')) {
+                this.testNotification();
+            }
+        });
+        
         // Start hunt button
         if (this.elements.startHuntButton) {
             this.elements.startHuntButton.addEventListener('click', () => this.startHunt());
@@ -1596,6 +1603,60 @@ let huntarrUI = {
         return settings;
     },
 
+    // Test notification functionality
+    testNotification: function() {
+        console.log('[huntarrUI] Testing notification...');
+        
+        const statusElement = document.getElementById('testNotificationStatus');
+        const buttonElement = document.getElementById('testNotificationBtn');
+        
+        if (!statusElement || !buttonElement) {
+            console.error('[huntarrUI] Test notification elements not found');
+            return;
+        }
+        
+        // Disable button and show loading
+        buttonElement.disabled = true;
+        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        statusElement.innerHTML = '<span style="color: #fbbf24;">Sending test notification...</span>';
+        
+        HuntarrUtils.fetchWithTimeout('/api/test-notification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('[huntarrUI] Test notification response:', data);
+            
+            if (data.success) {
+                statusElement.innerHTML = '<span style="color: #10b981;">✓ Test notification sent successfully!</span>';
+                this.showNotification('Test notification sent! Check your Discord channel.', 'success');
+            } else {
+                statusElement.innerHTML = '<span style="color: #ef4444;">✗ Failed to send test notification</span>';
+                this.showNotification(data.error || 'Failed to send test notification', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('[huntarrUI] Test notification error:', error);
+            statusElement.innerHTML = '<span style="color: #ef4444;">✗ Error sending test notification</span>';
+            this.showNotification('Error sending test notification', 'error');
+        })
+        .finally(() => {
+            // Re-enable button
+            buttonElement.disabled = false;
+            buttonElement.innerHTML = '<i class="fas fa-bell"></i> Test Notification';
+            
+            // Clear status after 5 seconds
+            setTimeout(() => {
+                if (statusElement) {
+                    statusElement.innerHTML = '';
+                }
+            }, 5000);
+        });
+    },
+    
     // Handle instance management events
     setupInstanceEventHandlers: function() {
         console.log("DEBUG: setupInstanceEventHandlers called"); // Added logging

@@ -618,6 +618,34 @@ def save_general_settings():
     else:
         return jsonify({"success": False, "error": "Failed to save general settings"}), 500
 
+@app.route('/api/test-notification', methods=['POST'])
+def test_notification():
+    """Test notification endpoint"""
+    
+    # Require authentication for this endpoint  
+    auth_result = require_authentication()
+    if auth_result:
+        return auth_result
+    
+    try:
+        from src.primary.notification_manager import send_notification
+        
+        # Send a test notification
+        success = send_notification(
+            title="🧪 Huntarr Test Notification",
+            message="This is a test notification to verify your Apprise configuration is working correctly! If you see this, your notifications are set up properly. 🎉",
+            level="info"
+        )
+        
+        if success:
+            return jsonify({"success": True, "message": "Test notification sent successfully!"}), 200, {'Content-Type': 'application/json'}
+        else:
+            return jsonify({"success": False, "error": "Failed to send test notification. Check your Apprise URLs and settings."}), 500, {'Content-Type': 'application/json'}
+            
+    except Exception as e:
+        general_logger.error(f"Error sending test notification: {e}")
+        return jsonify({"success": False, "error": f"Error sending test notification: {str(e)}"}), 500, {'Content-Type': 'application/json'}
+
 @app.route('/api/settings/<app_name>', methods=['GET', 'POST'])
 def handle_app_settings(app_name):
     web_logger = get_logger("web_server")

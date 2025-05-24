@@ -282,6 +282,9 @@ const SettingsForms = {
             </div>
         `;
 
+        // Set the content
+        container.innerHTML = instancesHtml + searchSettingsHtml;
+
         // Add event listeners for the instance management
         SettingsForms.setupInstanceManagement(container, 'radarr', settings.instances.length);
         
@@ -1399,6 +1402,12 @@ const SettingsForms = {
                     <textarea id="apprise_urls" rows="4" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db;">${(settings.apprise_urls || []).join('\n')}</textarea>
                     <p class="setting-help" style="margin-left: -3ch !important;">Enter one Apprise URL per line (e.g., discord://, telegram://, etc)</p>
                     <p class="setting-help"><a href="https://github.com/caronc/apprise#supported-notifications" target="_blank">Click here for Apprise URL format documentation</a></p>
+                    <div style="margin-top: 10px;">
+                        <button type="button" id="testNotificationBtn" class="btn btn-secondary" style="background-color: #6366f1; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                            <i class="fas fa-bell"></i> Test Notification
+                        </button>
+                        <span id="testNotificationStatus" style="margin-left: 10px; font-size: 14px;"></span>
+                    </div>
                 </div>
                 <div class="setting-item">
                     <label for="notify_on_missing"><a href="#" class="info-icon" title="Send notifications for missing media" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Notify on Missing:</label>
