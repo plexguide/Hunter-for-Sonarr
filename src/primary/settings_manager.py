@@ -174,6 +174,11 @@ def save_settings(app_name: str, settings_data: Dict[str, Any]) -> bool:
     if app_name not in KNOWN_APP_TYPES:
          settings_logger.error(f"Attempted to save settings for unknown app type: {app_name}")
          return False
+    
+    # Debug: Log the data being saved, especially for general settings
+    if app_name == 'general':
+        settings_logger.info(f"Saving general settings: {settings_data}")
+        settings_logger.info(f"Apprise URLs being saved: {settings_data.get('apprise_urls', 'NOT_FOUND')}")
          
     settings_file = get_settings_file_path(app_name)
     try:

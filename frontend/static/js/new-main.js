@@ -1435,31 +1435,53 @@ let huntarrUI = {
             return null;
         }
 
-        // Special handling for Swaparr which has a different structure
-        if (app === 'swaparr') {
-            // Get all inputs directly without filtering for instance fields
-            const inputs = form.querySelectorAll('input, select');
+        // Special handling for general settings
+        if (app === 'general') {
+            console.log('[huntarrUI] Processing general settings');
+            console.log('[huntarrUI] Form:', form);
+            console.log('[huntarrUI] Form HTML (first 500 chars):', form.innerHTML.substring(0, 500));
+            
+            // Debug: Check if apprise_urls exists anywhere
+            const globalAppriseElement = document.querySelector('#apprise_urls');
+            console.log('[huntarrUI] Global apprise_urls element:', globalAppriseElement);
+            
+            // Get all inputs and select elements in the general form
+            const inputs = form.querySelectorAll('input, select, textarea');
             inputs.forEach(input => {
-                // Extract the field name without the app prefix
                 let key = input.id;
-                if (key.startsWith(`${app}_`)) {
-                    key = key.substring(app.length + 1);
+                let value;
+                
+                if (input.type === 'checkbox') {
+                    value = input.checked;
+                } else if (input.type === 'number') {
+                    value = input.value === '' ? null : parseInt(input.value, 10);
+                } else {
+                    value = input.value.trim();
                 }
                 
-                // Store the value based on input type
-                if (input.type === 'checkbox') {
-                    settings[key] = input.checked;
-                } else if (input.type === 'number') {
-                    settings[key] = input.value === '' ? null : parseInt(input.value, 10);
-                } else {
-                    settings[key] = input.value.trim();
+                console.log(`[huntarrUI] Processing input: ${key} = ${value}`);
+                
+                // Handle special cases
+                if (key === 'apprise_urls') {
+                    console.log('[huntarrUI] Processing Apprise URLs');
+                    console.log('[huntarrUI] Raw apprise_urls value:', input.value);
+                    
+                    // Split by newline and filter empty lines
+                    settings.apprise_urls = input.value.split('\n')
+                        .map(url => url.trim())
+                        .filter(url => url.length > 0);
+                    
+                    console.log('[huntarrUI] Processed apprise_urls:', settings.apprise_urls);
+                } else if (key && !key.includes('_instance_')) {
+                    // Only include non-instance fields
+                    settings[key] = value;
                 }
             });
             
-            console.log(`[huntarrUI] Collected Swaparr settings:`, settings);
+            console.log('[huntarrUI] Final general settings:', settings);
             return settings;
         }
-
+        
         // Handle apps that use instances (Sonarr, Radarr, etc.)
         // Get all instance items in the form
         const instanceItems = form.querySelectorAll('.instance-item');
@@ -1811,13 +1833,6 @@ let huntarrUI = {
         const statusElement = this.elements[`${app}HomeStatus`];
         if (!statusElement) return;
 
-        // Find the parent container for the whole app status box
-        const appBox = statusElement.closest('.app-stats-card'); // CORRECTED SELECTOR
-        if (!appBox) {
-            // If the card structure changes, this might fail. Log a warning.
-            console.warn(`[huntarrUI] Could not find parent '.app-stats-card' element for ${app}`);
-        }
-
         let isConfigured = false;
         let isConnected = false;
 
@@ -1840,10 +1855,14 @@ let huntarrUI = {
         // --- Visibility Logic --- 
         if (isConfigured) {
             // Ensure the box is visible
-            if (appBox) appBox.style.display = ''; 
+            if (this.elements[`${app}HomeStatus`].closest('.app-stats-card')) {
+                this.elements[`${app}HomeStatus`].closest('.app-stats-card').style.display = ''; 
+            }
         } else {
             // Not configured - HIDE the box
-            if (appBox) appBox.style.display = 'none';
+            if (this.elements[`${app}HomeStatus`].closest('.app-stats-card')) {
+                this.elements[`${app}HomeStatus`].closest('.app-stats-card').style.display = 'none';
+            }
             // Update badge even if hidden (optional, but good practice)
             statusElement.className = 'status-badge not-configured';
             statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Configured';

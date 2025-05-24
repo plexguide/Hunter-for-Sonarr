@@ -588,6 +588,13 @@ const appsModule = {
         
         // Send settings to the server
         console.log(`Sending ${appType} settings to server...`);
+        
+        // Debug: Log the settings being sent, especially for general
+        if (appType === 'general') {
+            console.log('General settings being sent:', settings);
+            console.log('Apprise URLs being sent:', settings.apprise_urls);
+        }
+        
         HuntarrUtils.fetchWithTimeout(`/api/settings/${appType}`, {
             method: 'POST',
             headers: {

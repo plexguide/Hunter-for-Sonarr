@@ -575,6 +575,10 @@ def save_general_settings():
     
     data = request.json
     
+    # Debug: Log the incoming data to see if apprise_urls is present
+    general_logger.info(f"Received general settings data: {data}")
+    general_logger.info(f"Apprise URLs in request: {data.get('apprise_urls', 'NOT_FOUND')}")
+    
     # Ensure auth_mode and bypass flags are consistent
     auth_mode = data.get('auth_mode')
     
