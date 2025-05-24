@@ -622,11 +622,6 @@ def save_general_settings():
 def test_notification():
     """Test notification endpoint"""
     
-    # Require authentication for this endpoint  
-    auth_result = require_authentication()
-    if auth_result:
-        return auth_result
-    
     try:
         from src.primary.notification_manager import send_notification
         
