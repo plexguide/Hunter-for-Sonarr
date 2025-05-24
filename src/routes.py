@@ -46,11 +46,16 @@ def api_get_sleep_json():
             response.headers.add('Access-Control-Allow-Origin', '*')
             return response
         else:
-            # If file doesn't exist, return empty object
+            # If file doesn't exist, create it and return empty object
+            print(f"[API] sleep.json not found at {_SLEEP_DATA_PATH}, creating it")
+            os.makedirs(os.path.dirname(_SLEEP_DATA_PATH), exist_ok=True)
+            with open(_SLEEP_DATA_PATH, 'w') as f:
+                json.dump({}, f, indent=2)
             return jsonify({}), 200
     except Exception as e:
-        app.logger.error(f"Error serving sleep.json: {e}")
-        return jsonify({"error": "Failed to serve sleep.json"}), 500
+        app.logger.error(f"Error serving sleep.json from {_SLEEP_DATA_PATH}: {e}")
+        # Return empty object instead of error to prevent UI breaking
+        return jsonify({}), 200
 
 @app.route('/api/cycle/reset/<app_name>', methods=['POST'])
 def api_reset_app_cycle(app_name):

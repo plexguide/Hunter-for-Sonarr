@@ -12,12 +12,32 @@ from typing import Dict, Any, Optional
 # Thread lock for updating cycle data
 _lock = threading.Lock()
 
-# Path to the cycle data file
-_CYCLE_DATA_PATH = os.path.join('/config', 'settings', 'cycle_data.json')
+def _detect_environment():
+    """Detect if we're running in Docker or bare metal environment"""
+    return os.path.exists('/config') and os.path.exists('/app')
 
-# Additional path for direct frontend access - using absolute paths
-_SLEEP_DATA_PATH = os.path.join('/config', 'tally', 'sleep.json')
-_WEB_SLEEP_DATA_PATH = os.path.join('/app', 'frontend', 'static', 'data', 'sleep.json')  # Path accessible by web server
+def _get_paths():
+    """Get appropriate file paths based on environment"""
+    if _detect_environment():
+        # Docker environment - use container paths
+        cycle_data_path = os.path.join('/config', 'settings', 'cycle_data.json')
+        sleep_data_path = os.path.join('/config', 'tally', 'sleep.json')
+        web_sleep_data_path = os.path.join('/app', 'frontend', 'static', 'data', 'sleep.json')
+    else:
+        # Bare metal environment - use relative paths
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # Go up to project root
+        cycle_data_path = os.path.join(base_dir, 'data', 'settings', 'cycle_data.json')
+        sleep_data_path = os.path.join(base_dir, 'data', 'tally', 'sleep.json')
+        web_sleep_data_path = os.path.join(base_dir, 'frontend', 'static', 'data', 'sleep.json')
+    
+    return cycle_data_path, sleep_data_path, web_sleep_data_path
+
+# Get paths based on environment
+_CYCLE_DATA_PATH, _SLEEP_DATA_PATH, _WEB_SLEEP_DATA_PATH = _get_paths()
+
+print(f"[CycleTracker] Environment: {'Docker' if _detect_environment() else 'Bare Metal'}")
+print(f"[CycleTracker] Sleep data path: {_SLEEP_DATA_PATH}")
+print(f"[CycleTracker] Web sleep data path: {_WEB_SLEEP_DATA_PATH}")
 
 # Ensure directories exist
 os.makedirs(os.path.dirname(_CYCLE_DATA_PATH), exist_ok=True)
@@ -30,6 +50,7 @@ if not os.path.exists(_SLEEP_DATA_PATH):
         print(f"Creating initial sleep.json at {_SLEEP_DATA_PATH}")
         with open(_SLEEP_DATA_PATH, 'w') as f:
             json.dump({}, f, indent=2)
+        print(f"Creating initial web sleep.json at {_WEB_SLEEP_DATA_PATH}")
         with open(_WEB_SLEEP_DATA_PATH, 'w') as f:
             json.dump({}, f, indent=2)
     except Exception as e:
