@@ -10,7 +10,8 @@
 2. **Countdown Timer Startup** - Changed "Error Loading" to "Waiting for Cycle" during startup
 3. **Reset Button Behavior** - Improved "Refreshing" feedback to stay until genuinely new data is available
 4. **Sonarr Season Packs API Fix** - Fixed double-counting of API calls in season packs mode
-5. **Development Guidelines** - Added version number management guidelines
+5. **History Page Tooltip Fix** - Fixed JSON popup tooltips being obscured after page refresh
+6. **Development Guidelines** - Added version number management guidelines
 
 **Files Modified:**
 - `frontend/static/js/new-main.js` - Low usage mode detection and stats display fixes
@@ -19,6 +20,8 @@
 - `src/primary/stats_manager.py` - Added stats-only increment function
 - `src/primary/apps/sonarr/missing.py` - Fixed season pack stats tracking
 - `src/primary/apps/sonarr/upgrade.py` - Fixed season pack stats tracking
+- `frontend/static/js/history.js` - Fixed tooltip positioning and z-index issues
+- `frontend/templates/components/history_section.html` - Simplified tooltip CSS
 - `.github/listen.MD` - Added version number management guidelines
 
 **Tags:** ["major_release", "ui_improvements", "low_usage_mode", "countdown_timers", "api_limits", "sonarr", "user_experience"]
@@ -205,5 +208,79 @@ for i in range(episode_count):
 **Testing:** Verified that container starts successfully and Sonarr is running in seasons_packs mode where the fix applies.
 
 **Tags:** ["bug_fix", "backend", "sonarr", "api_limits", "season_packs", "stats_tracking"]
+
+## Bug Fix: History Page Tooltip Obscured After Page Refresh (v7.3.10)
+
+**Date:** 2025-05-25  
+**Issue:** JSON popup tooltips in the History page get obscured by other menu items after a page refresh/reload. The tooltip displays correctly initially but becomes hidden behind other elements after refreshing the page.  
+**Root Cause:** The tooltip was using `position: absolute` and being appended as a child of the info icon, which created stacking context issues. After page refresh, the z-index wasn't being properly enforced, causing the tooltip to appear behind other page elements.
+
+**Solution:** 
+1. **Changed positioning approach** - Switched from `position: absolute` to `position: fixed` to escape stacking context issues
+2. **Moved tooltip to document body** - Instead of appending to the icon, append to `document.body` for proper positioning
+3. **Simplified CSS** - Removed complex background layers and animations that were causing conflicts
+4. **Enhanced JavaScript positioning** - Added proper viewport boundary detection and positioning logic
+5. **Removed CSS hover rules** - Handled all tooltip display logic through JavaScript for better control
+
+**Files Modified:**
+- `frontend/static/js/history.js` - Fixed tooltip positioning and event handling
+- `frontend/templates/components/history_section.html` - Simplified tooltip CSS
+
+**Code Changes:**
+```javascript
+// Before: Tooltip appended to icon with absolute positioning
+infoIcon.appendChild(tooltip);
+tooltip.style.position = 'absolute';
+
+// After: Tooltip appended to body with fixed positioning
+document.body.appendChild(tooltip);
+tooltip.style.position = 'fixed';
+
+// Enhanced positioning logic
+infoIcon.addEventListener('mouseenter', (e) => {
+    const iconRect = infoIcon.getBoundingClientRect();
+    
+    // Position tooltip near the icon using fixed positioning
+    tooltip.style.left = (iconRect.right + 10) + 'px';
+    tooltip.style.top = iconRect.top + 'px';
+    
+    // Adjust if tooltip would go off screen
+    const tooltipWidth = 350;
+    if (iconRect.right + tooltipWidth + 10 > window.innerWidth) {
+        tooltip.style.left = (iconRect.left - tooltipWidth - 10) + 'px';
+    }
+    
+    // Adjust if tooltip would go off bottom of screen
+    const tooltipHeight = 300;
+    if (iconRect.top + tooltipHeight > window.innerHeight) {
+        tooltip.style.top = (window.innerHeight - tooltipHeight - 10) + 'px';
+    }
+    
+    tooltip.style.display = 'block';
+});
+```
+
+**CSS Changes:**
+```css
+/* Before: Complex positioning with multiple layers */
+.json-tooltip {
+    position: absolute !important;
+    /* Complex background layers and animations */
+}
+
+/* After: Simple fixed positioning */
+.json-tooltip {
+    display: none;
+    position: fixed; /* Use fixed positioning to escape stacking context issues */
+    z-index: 999999; /* Very high z-index */
+    pointer-events: none; /* Prevent tooltip from interfering with mouse events */
+}
+```
+
+**Impact:** Tooltips now display correctly both on initial page load and after page refresh, with proper positioning that respects viewport boundaries.
+
+**Testing:** Verified that container starts successfully and tooltips work properly in all scenarios.
+
+**Tags:** ["bug_fix", "frontend", "history_page", "tooltips", "z_index", "positioning", "ui_improvement"]
 
 --- 

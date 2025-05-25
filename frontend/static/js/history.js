@@ -263,38 +263,7 @@ const historyModule = {
             // Create tooltip element for JSON data
             const tooltip = document.createElement('div');
             tooltip.className = 'json-tooltip';
-            
-            // Add a solid background backing div to ensure no transparency
-            const solidBackground = document.createElement('div');
-            solidBackground.style.position = 'absolute';
-            solidBackground.style.top = '0';
-            solidBackground.style.left = '0';
-            solidBackground.style.width = '100%';
-            solidBackground.style.height = '100%';
-            solidBackground.style.backgroundColor = '#121824'; // Solid dark background
-            solidBackground.style.zIndex = '1';
-            solidBackground.style.borderRadius = '5px';
-            tooltip.appendChild(solidBackground);
-            
-            // Add another solid layer for extra opacity
-            const extraLayer = document.createElement('div');
-            extraLayer.style.position = 'absolute';
-            extraLayer.style.top = '0';
-            extraLayer.style.left = '0';
-            extraLayer.style.width = '100%';
-            extraLayer.style.height = '100%';
-            extraLayer.style.backgroundColor = '#0c111d';
-            extraLayer.style.opacity = '0.9';
-            extraLayer.style.zIndex = '2';
-            extraLayer.style.borderRadius = '5px';
-            tooltip.appendChild(extraLayer);
-            
-            // Create a container for content that sits above the background
-            const contentContainer = document.createElement('div');
-            contentContainer.style.position = 'relative';
-            contentContainer.style.zIndex = '5'; // Higher z-index to ensure content is on top
-            contentContainer.style.pointerEvents = 'auto';
-            tooltip.appendChild(contentContainer);
+            tooltip.style.display = 'none';
             
             // Format the JSON data for display
             let jsonData = {};
@@ -318,41 +287,42 @@ const historyModule = {
             const pre = document.createElement('pre');
             pre.className = 'json-content';
             pre.textContent = JSON.stringify(jsonData, null, 2);
-            contentContainer.appendChild(pre);
+            tooltip.appendChild(pre);
             
-            // Add the tooltip to the icon
-            infoIcon.appendChild(tooltip);
+            // Add the tooltip to the document body for fixed positioning
+            document.body.appendChild(tooltip);
             
-            // Add positioning logic to prevent the tooltip from being cut off
-            infoIcon.addEventListener('mouseenter', () => {
-                setTimeout(() => {
-                    // Get positions
-                    const iconRect = infoIcon.getBoundingClientRect();
-                    const tooltipRect = tooltip.getBoundingClientRect();
-                    const viewportWidth = window.innerWidth;
-                    
-                    // Position the tooltip to the right of the icon by default
-                    let leftPos = 35; // Start with offset to the right
-                    let topPos = '100%';
-                    
-                    // If tooltip would go off the right edge
-                    if (iconRect.left + tooltipRect.width > viewportWidth) {
-                        // Move it to the left so it stays within the viewport
-                        const overflow = iconRect.left + tooltipRect.width - viewportWidth;
-                        leftPos = -overflow - 20; // 20px padding from edge
-                    }
-                    
-                    // Check if tooltip would go off the bottom edge
-                    const viewportHeight = window.innerHeight;
-                    if (iconRect.bottom + tooltipRect.height > viewportHeight) {
-                        // Position above the icon instead
-                        topPos = `-${tooltipRect.height}px`;
-                    }
-                    
-                    // Apply the calculated positions
-                    tooltip.style.left = `${leftPos}px`;
-                    tooltip.style.top = topPos;
-                }, 0);
+            // Add hover events with proper positioning
+            infoIcon.addEventListener('mouseenter', (e) => {
+                const iconRect = infoIcon.getBoundingClientRect();
+                
+                // Position tooltip near the icon using fixed positioning
+                tooltip.style.left = (iconRect.right + 10) + 'px';
+                tooltip.style.top = iconRect.top + 'px';
+                
+                // Adjust if tooltip would go off screen
+                const tooltipWidth = 350;
+                if (iconRect.right + tooltipWidth + 10 > window.innerWidth) {
+                    tooltip.style.left = (iconRect.left - tooltipWidth - 10) + 'px';
+                }
+                
+                // Adjust if tooltip would go off bottom of screen
+                const tooltipHeight = 300; // max-height from CSS
+                if (iconRect.top + tooltipHeight > window.innerHeight) {
+                    tooltip.style.top = (window.innerHeight - tooltipHeight - 10) + 'px';
+                }
+                
+                tooltip.style.display = 'block';
+            });
+            
+            // Add mouse leave event to hide tooltip
+            infoIcon.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+            });
+            
+            // Also hide tooltip when mouse enters the tooltip itself and then leaves
+            tooltip.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
             });
             
             // Create a container div to hold both icon and title on the same line
