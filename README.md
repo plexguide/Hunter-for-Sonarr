@@ -50,9 +50,7 @@ If Huntarr has been helpful to you and you appreciate the power of open-source s
 
 ## ℹ️ Overview
 
-<a href="https://discord.com/invite/PGJJjR5Cww" target="_blank">
-  <img src="https://img.shields.io/discord/1370922258247454821?color=5865F2&label=DISCORD&logo=discord&logoColor=white&style=for-the-badge" alt="Discord" />
-</a>
+[![Discord](https://img.shields.io/discord/1370922258247454821?color=7289DA&label=Discord&style=for-the-badge&logo=discord)](https://discord.com/invite/PGJJjR5Cww)
 
 This application continually searches your media libraries for missing content and items that need quality upgrades. It automatically triggers searches for both missing items and those below your quality cutoff. It's designed to run continuously while being gentle on your indexers, helping you gradually complete your media collection with the best available quality.
 
