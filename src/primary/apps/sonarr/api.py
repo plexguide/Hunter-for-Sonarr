@@ -21,7 +21,8 @@ sonarr_logger = get_logger("sonarr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, verify_ssl: Optional[bool] = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
+    sonarr_logger.critical("SONARR API MODULE: arr_request CALLED! THIS IS THE CORRECT FUNCTION.") # <--- NEW DISTINCT LOG
     """
     Make a request to the Sonarr API.
     
@@ -32,7 +33,6 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         endpoint: The API endpoint to call
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data payload for POST/PUT requests
-        verify_ssl: Optional SSL verification flag. (THIS PARAMETER IS NOW IGNORED in favor of global setting)
     
     Returns:
         The parsed JSON response or None if the request failed
@@ -44,12 +44,12 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         
         # Ensure api_url has a scheme
         if not (api_url.startswith('http://') or api_url.startswith('https://')):
+
             sonarr_logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
             return None
-            
         # Construct the full URL properly
         full_url = f"{api_url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
-        
+
         sonarr_logger.debug(f"Making {method} request to: {full_url}")
         
         # Set up headers with User-Agent to identify Huntarr
@@ -61,6 +61,8 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         
         # Log the User-Agent for debugging
         sonarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
+
+        sonarr_logger.debug(f"arr_request: About to call get_ssl_verify_setting() for {full_url}")
 
         # Get SSL verification setting - ALWAYS use global, ignore verify_ssl parameter
         verify_ssl = get_ssl_verify_setting()

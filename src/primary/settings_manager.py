@@ -316,7 +316,10 @@ def get_ssl_verify_setting():
     Returns:
         bool: True if SSL verification should be enabled (default), False otherwise
     """
-    return get_advanced_setting("ssl_verify", True)
+    settings_logger.debug("SETTINGS_MANAGER: get_ssl_verify_setting CALLED")
+    value = get_advanced_setting("ssl_verify", True)
+    settings_logger.debug(f"SETTINGS_MANAGER: get_ssl_verify_setting is returning: {value} (type: {type(value)})")
+    return value
 
 # Example usage (for testing purposes, remove later)
 if __name__ == "__main__":
