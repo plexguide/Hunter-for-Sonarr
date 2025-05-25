@@ -361,6 +361,24 @@ docker logs -f huntarr
 18. **Test API endpoints** after backend changes
 19. **Verify UI responsiveness** across different screen sizes
 20. **Check logs after every rebuild** - `docker logs huntarr`
+21. **For docs branches (docs-*):** Automatically commit and publish changes when working on documentation updates
+
+## 📚 Documentation Branch Workflow
+
+**When working on branches that start with `docs-`:**
+
+1. **Auto-commit and publish** - Changes to documentation should be committed and published automatically
+2. **Branch naming convention** - Use `docs-[issue-number]` or `docs-[feature-name]` format
+3. **Scope** - Documentation branches are for `/docs` directory changes only
+4. **Publishing** - Push changes to GitHub Pages automatically after commit
+
+**Example workflow:**
+```bash
+# Working on docs-106 branch (current)
+git add docs/
+git commit -m "Add comprehensive FAQ with categorized sections and return-to-top functionality"
+git push origin docs-106
+```
 
 ---
 
