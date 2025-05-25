@@ -65,12 +65,84 @@
 
             <section class="features-section">
                 <h2>What is Huntarr?</h2>
-                <p>Huntarr is a powerful media management solution designed to enhance your existing media stack. It works alongside popular applications like Sonarr, Radarr, and other *arr apps to optimize your media collection and fill the gaps in your library.</p>
+                <p>Huntarr is a specialized utility that solves a critical limitation in your *arr setup that most people don't realize exists. While Sonarr, Radarr, and other *arr applications are excellent at grabbing new releases as they appear on RSS feeds, <strong>they don't go back and actively search for missing content in your existing library</strong>.</p>
                 
-                <h3>Filling the Gaps</h3>
-                <p>Have you ever found that out of your 5,000 shows in Sonarr, about 1,700 are missing at least one episode? This is where Huntarr shines.</p>
-                <p>Huntarr intelligently identifies missing episodes in your Sonarr library and systematically works to fill those gaps over time. Instead of overwhelming your system with thousands of simultaneous requests, Huntarr schedules episode searches in manageable batches.</p>
-                <p>This methodical approach ensures your system resources remain balanced while progressively completing your collection. Whether you're missing single episodes from multiple series or have partially complete seasons, Huntarr will help you achieve a perfectly complete media library.</p>
+                <div class="alert alert-info">
+                    <strong>The Problem:</strong> Your *arr apps only monitor RSS feeds for new releases. They don't systematically search for older missing episodes, movies, or albums that you've added to your library but never downloaded.
+                </div>
+                
+                <p>This is where Huntarr becomes essential. It continuously scans your *arr libraries, identifies missing content, and automatically triggers searches to fill those gaps. Think of it as the missing piece that makes your media automation truly complete.</p>
+                
+                <h3>The Real Problem: Why You Need Huntarr</h3>
+                
+                <h4>Here's What Most People Don't Understand About *arr Apps:</h4>
+                <ul>
+                    <li><strong>Sonarr/Radarr only watch RSS feeds</strong> - They grab new releases as they're posted, but they don't go back and search for older content</li>
+                    <li><strong>Manual searches are tedious</strong> - You'd have to manually search every missing episode/movie individually</li>
+                    <li><strong>Bulk searches overwhelm indexers</strong> - Searching thousands of items at once gets you rate-limited or banned</li>
+                    <li><strong>No systematic approach</strong> - There's no built-in way to gradually and safely complete your collection</li>
+                </ul>
+                
+                <h3>Real-World Example: The Gap Problem</h3>
+                <p>Let's say you have 5,000 TV shows in Sonarr. You might think everything is working perfectly, but here's the reality:</p>
+                
+                <div class="issue-card">
+                    <h4>📊 Typical Sonarr Library Analysis</h4>
+                    <ul>
+                        <li><strong>Total Shows:</strong> 5,000</li>
+                        <li><strong>Shows with missing episodes:</strong> ~1,700 (34%)</li>
+                        <li><strong>Total missing episodes:</strong> ~8,500+</li>
+                        <li><strong>What Sonarr does:</strong> Waits for new episodes on RSS feeds</li>
+                        <li><strong>What Sonarr doesn't do:</strong> Search for those 8,500+ missing episodes</li>
+                    </ul>
+                </div>
+                
+                <p>Those missing episodes could be from:</p>
+                <ul>
+                    <li>Shows you added after they finished airing</li>
+                    <li>Episodes that failed to download initially</li>
+                    <li>Content that was available but your indexers missed</li>
+                    <li>Episodes that became available on different indexers over time</li>
+                    <li>Quality upgrades you want but Sonarr isn't actively seeking</li>
+                </ul>
+                
+                <h3>How Huntarr Solves This</h3>
+                <p>Huntarr systematically works through your missing content in a smart, indexer-friendly way:</p>
+                
+                <div class="alert alert-success">
+                    <strong>Huntarr's Approach:</strong>
+                    <ul>
+                        <li><strong>Identifies gaps:</strong> Scans your entire library to find missing content</li>
+                        <li><strong>Batch processing:</strong> Searches for missing items in small, manageable batches</li>
+                        <li><strong>Rate limiting:</strong> Respects indexer limits to avoid bans</li>
+                        <li><strong>Continuous operation:</strong> Runs 24/7 gradually completing your collection</li>
+                        <li><strong>Quality upgrades:</strong> Also searches for better quality versions of existing content</li>
+                    </ul>
+                </div>
+                
+                <h3>Why This Matters</h3>
+                <p>Without Huntarr, you're essentially running an incomplete media automation setup. You're only getting new content as it releases, but you're missing out on:</p>
+                
+                <ul>
+                    <li><strong>Completing existing series</strong> - Those missing episodes from shows you love</li>
+                    <li><strong>Filling movie collections</strong> - Movies you added but never downloaded</li>
+                    <li><strong>Quality improvements</strong> - Better versions of content you already have</li>
+                    <li><strong>True automation</strong> - Set it and forget it media completion</li>
+                </ul>
+                
+                <div class="alert alert-warning">
+                    <strong>Bottom Line:</strong> If you're only using Sonarr/Radarr without Huntarr, you're missing a huge portion of available content. Huntarr is the tool that actually completes your media automation by finding and downloading all the content your *arr apps aren't actively searching for.
+                </div>
+                
+                <h3>Perfect for Reddit Explanation</h3>
+                <p><em>Copy-paste this explanation:</em></p>
+                <div class="issue-card" style="background: #f8f9fa; border-left: 4px solid #007bff;">
+                    <p><strong>Think of it this way:</strong> Sonarr/Radarr are like having a mailman who only delivers new mail as it arrives, but never goes back to get mail that was missed or wasn't available when they first checked. Huntarr is like having someone systematically go through your entire wishlist and actually hunt down all the missing pieces.</p>
+                    
+                    <p>Your *arr apps only monitor RSS feeds for NEW releases. They don't go back and search for the thousands of missing episodes/movies already in your library. Huntarr does exactly that - it finds all your missing content and systematically searches for it without overwhelming your indexers.</p>
+                    
+                    <p>Most people don't realize they have thousands of missing episodes because their *arr setup "looks" like it's working. But check your stats - you probably have 30-40% of your shows missing at least one episode. Huntarr fixes that.</p>
+                </div>
             </section>
 
             <!-- 'Why Choose Huntarr?' and 'Supported Applications' sections removed as requested -->
