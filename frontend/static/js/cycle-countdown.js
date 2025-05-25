@@ -202,25 +202,86 @@ window.CycleCountdown = (function() {
             button.addEventListener('click', function() {
                 const app = this.getAttribute('data-app');
                 if (app) {
-                    console.log(`[CycleCountdown] Reset button clicked for ${app}, will update timer in 2 seconds`);
+                    console.log(`[CycleCountdown] Reset button clicked for ${app}, will keep refreshing until new timer data is available`);
                     
-                    // Add a loading state to the timer
+                    // Add a loading state to the timer and mark it as waiting for reset
                     const timerElement = document.getElementById(`${app}CycleTimer`);
                     if (timerElement) {
                         const timerValue = timerElement.querySelector('.timer-value');
                         if (timerValue) {
+                            // Store the original next cycle time before reset
+                            const originalNextCycle = nextCycleTimes[app] ? nextCycleTimes[app].getTime() : null;
+                            timerElement.setAttribute('data-original-cycle-time', originalNextCycle);
+                            
                             timerValue.textContent = 'Refreshing';
                             timerValue.classList.add('refreshing-state');
+                            timerValue.style.color = '#00c2ce';
+                            // Mark this timer as waiting for reset data
+                            timerElement.setAttribute('data-waiting-for-reset', 'true');
                         }
                     }
                     
-                    // Wait a moment for the backend to process the reset
-                    setTimeout(() => {
-                        fetchFromSleepJson();
-                    }, 2000);
+                    // Start polling for new data more frequently after reset
+                    startResetPolling(app);
                 }
             });
         });
+    }
+    
+    // Poll more frequently after a reset until new data is available
+    function startResetPolling(app) {
+        let pollAttempts = 0;
+        const maxPollAttempts = 60; // Poll for up to 5 minutes (60 * 5 seconds)
+        
+        const pollInterval = setInterval(() => {
+            pollAttempts++;
+            console.log(`[CycleCountdown] Polling attempt ${pollAttempts} for ${app} reset data`);
+            
+                         fetchFromSleepJson()
+                 .then(() => {
+                     // Check if we got new data for this specific app
+                     const timerElement = document.getElementById(`${app}CycleTimer`);
+                     if (timerElement && timerElement.getAttribute('data-waiting-for-reset') === 'true') {
+                         // Check if we have valid next cycle time for this app
+                         if (nextCycleTimes[app]) {
+                             const currentCycleTime = nextCycleTimes[app].getTime();
+                             const originalCycleTime = parseInt(timerElement.getAttribute('data-original-cycle-time'));
+                             
+                             // Only consider reset complete if we have a DIFFERENT cycle time
+                             // or if the original was null (no previous timer)
+                             if (originalCycleTime === null || currentCycleTime !== originalCycleTime) {
+                                 console.log(`[CycleCountdown] New reset data received for ${app} (original: ${originalCycleTime}, new: ${currentCycleTime}), stopping polling`);
+                                 timerElement.removeAttribute('data-waiting-for-reset');
+                                 timerElement.removeAttribute('data-original-cycle-time');
+                                 clearInterval(pollInterval);
+                                 updateTimerDisplay(app);
+                             } else {
+                                 console.log(`[CycleCountdown] Same cycle time for ${app} (${currentCycleTime}), continuing to poll for new data`);
+                             }
+                         }
+                     }
+                 })
+                .catch(() => {
+                    // Continue polling on error
+                });
+            
+                         // Stop polling after max attempts
+             if (pollAttempts >= maxPollAttempts) {
+                 console.log(`[CycleCountdown] Max polling attempts reached for ${app}, stopping`);
+                 const timerElement = document.getElementById(`${app}CycleTimer`);
+                 if (timerElement) {
+                     timerElement.removeAttribute('data-waiting-for-reset');
+                     timerElement.removeAttribute('data-original-cycle-time');
+                     const timerValue = timerElement.querySelector('.timer-value');
+                     if (timerValue) {
+                         timerValue.textContent = '--:--:--';
+                         timerValue.classList.remove('refreshing-state');
+                         timerValue.style.removeProperty('color');
+                     }
+                 }
+                 clearInterval(pollInterval);
+             }
+        }, 5000); // Poll every 5 seconds
     }
     
     // Display initial loading message in the UI when sleep data isn't available yet
@@ -439,6 +500,11 @@ window.CycleCountdown = (function() {
         
         const timerValue = timerElement.querySelector('.timer-value');
         if (!timerValue) return;
+        
+        // If this timer is waiting for reset data, don't update it
+        if (timerElement.getAttribute('data-waiting-for-reset') === 'true') {
+            return; // Keep showing "Refreshing" until reset data is available
+        }
         
         const nextCycleTime = nextCycleTimes[app];
         if (!nextCycleTime) {

@@ -357,7 +357,7 @@ docker logs -f huntarr
 14. **Check for undefined variables** in JavaScript before deploying
 15. **Use environment detection** instead of hard-coded paths
 16. **Create memories** for significant fixes and features
-17. **Update version.txt** when making changes
+17. **DO NOT update version.txt automatically** - Version numbers are manually managed by the user during publishing
 18. **Test API endpoints** after backend changes
 19. **Verify UI responsiveness** across different screen sizes
 20. **Check logs after every rebuild** - `docker logs huntarr`
