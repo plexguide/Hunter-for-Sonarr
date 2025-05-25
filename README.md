@@ -2,6 +2,10 @@
 
 <p align="center">
   <img src="frontend/static/logo/128.png" alt="Huntarr Logo" width="100" height="100">
+  <br>
+  <a href="https://github.com/sponsors/plexguide">
+    <img src="https://img.shields.io/github/sponsors/plexguide?style=for-the-badge&logo=github&logoColor=white&label=sponsors&color=ea4aaa" alt="GitHub Sponsors" />
+  </a>
 </p>
 
 ---
@@ -113,6 +117,16 @@ Special thanks to [Nwithan8](https://github.com/nwithan8) for maintaining the Un
 
 <i class="fas fa-5"></i> **Repeat & Rest** - Huntarr waits for your configured interval (adjustable in settings) before starting the next cycle, ensuring your indexers aren't overloaded while maintaining continuous improvement of your library.
 
+---
+
+## ❤️ Thank You
+
+A big thank you to these amazing contributors who've helped build and maintain this project:
+
+<a href="https://github.com/plexguide/Huntarr.io/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=plexguide/Huntarr.io" alt="Contributors" />
+</a>
+
 ## Web Interface
 
 Huntarr's live homepage will provide you statics about how many hunts have been pursed regarding missing media and upgrade searches! Note: Numbers reflected are but all required for testing. 
@@ -180,16 +194,6 @@ When combined, these tools create a powerful, self-sufficient media automation s
 - Together, they create a reliable, hands-off media management system
 
 Learn more about **Cleanuperr** at [https://github.com/flmorg/cleanuperr](https://github.com/flmorg/cleanuperr)
-
----
-
-## ❤️ Thank You
-
-A big thank you to these amazing contributors who've helped build and maintain this project:
-
-<a href="https://github.com/plexguide/Huntarr.io/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=plexguide/Huntarr.io" alt="Contributors" />
-</a>
 
 ## Change Log
 Visit: https://github.com/plexguide/Huntarr.io/releases/
