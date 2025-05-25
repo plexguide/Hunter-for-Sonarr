@@ -50,117 +50,165 @@
         <div class="container">
             <h1>Sonarr Documentation</h1>
             
-            <div class="app-icon sonarr" style="margin: 20px auto; width: 80px; height: 80px; font-size: 36px;">S</div>
+            <div style="text-align: center; margin: 20px auto;">
+                <img src="../images/arrs/sonarr.png" alt="Sonarr Logo" style="width: 80px; height: 80px; object-fit: contain;">
+            </div>
             
-            <p>Sonarr is an automated TV show downloading and management application. It works with various torrent and usenet clients to help you organize and manage your TV show collection.</p>
+            <p>Sonarr is an automated TV show downloading and management application. Huntarr integrates with your existing Sonarr instance to automatically search for missing episodes and quality upgrades that Sonarr doesn't actively hunt for.</p>
             
-            <h2>Getting Started with Sonarr</h2>
+            <h2 id="sonarr-instance-setup">Sonarr Instance Setup</h2>
             
-            <h3>Setup in Huntarr.io</h3>
-            <p>To set up Sonarr in Huntarr.io:</p>
+            <h3>Adding Your Sonarr Instance</h3>
+            <p>To connect your existing Sonarr instance to Huntarr:</p>
             <ol>
-                <li>Navigate to the Apps section in the Huntarr.io dashboard</li>
-                <li>Click on "Sonarr" in the application list</li>
-                <li>Click the "Install" button</li>
-                <li>Configure the required settings (see Configuration section below)</li>
-                <li>Click "Deploy" to start the Sonarr container</li>
+                <li>Navigate to the Sonarr section in Huntarr</li>
+                <li>Click "Add Sonarr Instance" if you don't have one configured</li>
+                <li>Fill in your Sonarr connection details</li>
+                <li>Test the connection to ensure Huntarr can communicate with Sonarr</li>
             </ol>
             
-            <h3>Configuration Options</h3>
-            <p>The following configuration options are available when setting up Sonarr:</p>
+            <h3 id="connection-settings">Connection Settings</h3>
+            <p>Configure these settings to connect Huntarr to your Sonarr instance:</p>
             
             <table>
                 <tr>
-                    <th>Option</th>
+                    <th>Setting</th>
                     <th>Description</th>
-                    <th>Default</th>
+                    <th>Example</th>
                     <th>Notes</th>
                 </tr>
                 <tr>
-                    <td>Port</td>
-                    <td>The port Sonarr will use</td>
-                    <td>8989</td>
-                    <td>Change if you have port conflicts</td>
+                    <td>Name</td>
+                    <td>Friendly name for this Sonarr instance</td>
+                    <td>Default, TV-4K, Anime</td>
+                    <td>Useful when running multiple Sonarr instances</td>
                 </tr>
                 <tr>
-                    <td>Media Path</td>
-                    <td>Location of your TV shows</td>
-                    <td>/mnt/unionfs/tv</td>
-                    <td>Should match your media server's TV library path</td>
+                    <td>URL</td>
+                    <td>Base URL for your Sonarr instance</td>
+                    <td>http://10.0.0.10:8989</td>
+                    <td>Include protocol (http/https) and port</td>
                 </tr>
                 <tr>
-                    <td>Download Path</td>
-                    <td>Where downloads are stored</td>
-                    <td>/mnt/downloads</td>
-                    <td>Should match your download client's completed download folder</td>
+                    <td>API Key</td>
+                    <td>Sonarr API key for authentication</td>
+                    <td>a03c86b6292c4bd48cd5e3b84e5a470</td>
+                    <td>Found in Sonarr Settings > General > Security</td>
                 </tr>
                 <tr>
-                    <td>Config Path</td>
-                    <td>Where Sonarr stores its config</td>
-                    <td>/opt/appdata/sonarr</td>
-                    <td>Usually best to leave as default</td>
+                    <td>Enabled</td>
+                    <td>Whether Huntarr should process this instance</td>
+                    <td>On/Off toggle</td>
+                    <td>Disable to temporarily stop processing</td>
                 </tr>
             </table>
             
-            <h2>Using Sonarr</h2>
+            <h2 id="search-settings">Search Settings</h2>
             
-            <h3>Adding a TV Show</h3>
-            <ol>
-                <li>Click the "Series" tab in the Sonarr interface</li>
-                <li>Click "Add New" button</li>
-                <li>Search for the TV show you want to add</li>
-                <li>Select the appropriate path, profile, and monitoring options</li>
-                <li>Click "Add" to add the series to Sonarr</li>
-            </ol>
+            <p>Configure how Huntarr searches for missing content and upgrades in your Sonarr instance. These settings control Huntarr's behavior when processing your TV show library.</p>
             
-            <h3>Managing Quality Profiles</h3>
-            <p>Quality profiles determine what quality of media files Sonarr will download:</p>
-            <ol>
-                <li>Go to Settings > Profiles</li>
-                <li>Click the "+" button to add a new profile or edit an existing one</li>
-                <li>Set your preferred qualities and cut-off point (minimum acceptable quality)</li>
-                <li>Save your changes</li>
-            </ol>
+            <h3 id="missing-search-mode">Missing Search Mode</h3>
+            <p>Determines how Huntarr searches for missing episodes:</p>
+            <ul>
+                <li><strong>Season Packs:</strong> Recommended for torrent users. Searches for entire season packs first, then individual episodes</li>
+                <li><strong>Episodes:</strong> Searches for individual episodes only. Better for Usenet users or when you prefer single episode files</li>
+            </ul>
             
-            <h3>Setting Up Indexers</h3>
-            <p>Indexers are how Sonarr finds content to download:</p>
-            <ol>
-                <li>Go to Settings > Indexers</li>
-                <li>Click the "+" button to add a new indexer</li>
-                <li>Select your indexer type (Newznab, Torznab, etc.)</li>
-                <li>Enter the required information (URL, API key, etc.)</li>
-                <li>Test the connection and save if successful</li>
-            </ol>
+            <h3 id="upgrade-mode">Upgrade Mode</h3>
+            <p>Controls how Huntarr handles quality upgrades:</p>
+            <ul>
+                <li><strong>Episodes:</strong> Upgrades individual episodes when better quality becomes available</li>
+                <li><strong>Seasons/Shows:</strong> Upgrades entire seasons or shows at once when better quality is found</li>
+            </ul>
             
-            <h3>Connecting Download Clients</h3>
-            <p>Download clients handle the actual downloading of content:</p>
-            <ol>
-                <li>Go to Settings > Download Clients</li>
-                <li>Click the "+" button to add a new download client</li>
-                <li>Select your client type (SABnzbd, NZBGet, qBittorrent, Deluge, etc.)</li>
-                <li>Enter the required connection information</li>
-                <li>Test the connection and save if successful</li>
-            </ol>
+            <h3 id="search-limits">Search Limits</h3>
+            <p>Control how many items Huntarr processes per cycle to avoid overwhelming your indexers:</p>
             
-            <h2>Troubleshooting</h2>
+            <table>
+                <tr>
+                    <th>Setting</th>
+                    <th>Description</th>
+                    <th>Recommended</th>
+                    <th>Notes</th>
+                </tr>
+                <tr>
+                    <td>Missing Search</td>
+                    <td>Number of missing items to search per cycle</td>
+                    <td>2-5</td>
+                    <td>Set to 0 to disable missing searches</td>
+                </tr>
+                <tr>
+                    <td>Upgrade Search</td>
+                    <td>Number of episodes to upgrade per cycle</td>
+                    <td>1-3</td>
+                    <td>Set to 0 to disable upgrade searches</td>
+                </tr>
+                <tr>
+                    <td>Sleep Duration</td>
+                    <td>Time in seconds between processing cycles</td>
+                    <td>900 (15 min)</td>
+                    <td>Longer intervals reduce indexer load</td>
+                </tr>
+                <tr>
+                    <td>API Cap - Hourly</td>
+                    <td>Maximum API requests per hour</td>
+                    <td>400 or less</td>
+                    <td>Prevents rate limiting from indexers</td>
+                </tr>
+            </table>
+            
+            <div class="alert alert-warning">
+                <strong>Important:</strong> Setting API limits too high can result in your accounts being banned from indexers. Start with conservative values and adjust based on your indexer limits.
+            </div>
+            
+            <h3 id="additional-options">Additional Options</h3>
+            <p>Fine-tune Huntarr's behavior with these additional settings:</p>
+            
+            <h4>Monitored Only</h4>
+            <p>When enabled, Huntarr will only search for content that is marked as "Monitored" in Sonarr. This prevents searches for shows you've intentionally unmonitored.</p>
+            
+            <h4>Skip Future Episodes</h4>
+            <p>When enabled, Huntarr will skip episodes with future air dates. This prevents unnecessary searches for content that hasn't been released yet.</p>
+            
+            <h2 id="troubleshooting">Troubleshooting</h2>
             
             <h3>Common Issues</h3>
             
-            <h4>Shows Not Being Downloaded</h4>
-            <p>Check the following:</p>
+            <h4>Connection Failed</h4>
+            <p>If Huntarr can't connect to your Sonarr instance:</p>
             <ul>
-                <li>Ensure your indexers are properly configured and working</li>
-                <li>Verify your download client is running and accessible</li>
-                <li>Check that your quality profile isn't too restrictive</li>
-                <li>Look at the "Wanted" tab to see if shows are in the queue</li>
+                <li>Verify the URL is correct and includes the protocol (http/https)</li>
+                <li>Check that the port number is correct (default: 8989)</li>
+                <li>Ensure the API key is copied correctly from Sonarr Settings > General > Security</li>
+                <li>Confirm Sonarr is running and accessible from Huntarr's network</li>
+                <li>Check firewall settings if Huntarr and Sonarr are on different machines</li>
             </ul>
             
-            <h4>Path Issues</h4>
-            <p>If Sonarr can't find or move files:</p>
+            <h4>No Missing Content Found</h4>
+            <p>If Huntarr reports no missing content but you know there are gaps:</p>
             <ul>
-                <li>Ensure the user running Sonarr has proper permissions</li>
-                <li>Verify your paths are consistent between Sonarr and your download client</li>
-                <li>Check for path mapping issues if running in Docker</li>
+                <li>Ensure "Monitored Only" is configured correctly for your needs</li>
+                <li>Check that shows are marked as "Monitored" in Sonarr</li>
+                <li>Verify "Skip Future Episodes" isn't preventing searches for available content</li>
+                <li>Review your Missing Search Mode setting (Season Packs vs Episodes)</li>
+            </ul>
+            
+            <h4>API Rate Limiting</h4>
+            <p>If you're getting rate limited by indexers:</p>
+            <ul>
+                <li>Reduce the "API Cap - Hourly" setting to a lower value</li>
+                <li>Increase the "Sleep Duration" between processing cycles</li>
+                <li>Lower the "Missing Search" and "Upgrade Search" limits</li>
+                <li>Check your indexer's specific rate limits and adjust accordingly</li>
+            </ul>
+            
+            <h4>Searches Not Triggering</h4>
+            <p>If Huntarr isn't searching for content:</p>
+            <ul>
+                <li>Ensure the Sonarr instance is enabled in Huntarr</li>
+                <li>Check that search limits aren't set to 0 (which disables searches)</li>
+                <li>Verify Huntarr is running and not paused</li>
+                <li>Review the logs for any error messages or API issues</li>
             </ul>
             
             <div class="section-nav">
