@@ -186,7 +186,6 @@ data_path = get_path('tally', 'sleep.json')
 ```
 
 ### Step 5: Post-Fix Verification
-1. Update `version.txt`
 2. Rebuild: `docker-compose down && COMPOSE_BAKE=true docker-compose up -d --build`
 3. Check logs: `docker logs huntarr`
 4. Verify path resolution in logs shows correct environment detection

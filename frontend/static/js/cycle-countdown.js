@@ -52,8 +52,8 @@ window.CycleCountdown = (function() {
                 // Success - data is processed in fetchFromSleepJson
             })
             .catch(() => {
-                // Show error messages in the UI if initial load fails
-                displayLoadError();
+                // Show waiting message in the UI if initial load fails
+                displayWaitingForCycle();
             });
         
         // Simple refresh every 60 seconds with fixed interval
@@ -181,9 +181,9 @@ window.CycleCountdown = (function() {
                     console.warn('[CycleCountdown] Error fetching sleep.json'); 
                 }
                 
-                // Display error in UI only if we have no existing data
+                // Display waiting message in UI only if we have no existing data
                 if (Object.keys(nextCycleTimes).length === 0) {
-                    displayLoadError();
+                    displayWaitingForCycle(); // Shows "Waiting for cycle..." during startup
                     reject(error);
                 } else {
                     // If we have existing data, just use that
@@ -223,16 +223,18 @@ window.CycleCountdown = (function() {
         });
     }
     
-    // Display error message in the UI when sleep data can't be loaded
-    function displayLoadError() {
-        // For each app, display error message in timer elements
+    // Display initial loading message in the UI when sleep data isn't available yet
+    function displayWaitingForCycle() {
+        // For each app, display waiting message in timer elements
         trackedApps.forEach(app => {
             const timerElement = document.getElementById(`${app}CycleTimer`);
             if (timerElement) {
                 const timerValue = timerElement.querySelector('.timer-value');
                 if (timerValue) {
-                    timerValue.textContent = 'Error Loading';
-                    timerValue.classList.add('error');
+                    timerValue.textContent = 'Waiting for Cycle';
+                    timerValue.classList.add('refreshing-state');
+                    // Apply the same light blue color as the refreshing state
+                    timerValue.style.color = '#00c2ce';
                 }
             }
         });
@@ -546,7 +548,7 @@ window.CycleCountdown = (function() {
         }
     }
     
-    // Show error state in timer
+    // Show error state in timer for actual errors (not startup waiting)
     function updateTimerError(app) {
         const timerElement = document.getElementById(`${app}CycleTimer`);
         if (!timerElement) return;
@@ -555,6 +557,7 @@ window.CycleCountdown = (function() {
         if (!timerValue) return;
         
         timerValue.textContent = 'Unavailable';
+        timerValue.style.color = '#ff6b6b'; // Light red for actual errors
         timerElement.classList.add('timer-error');
     }
     
