@@ -37,19 +37,22 @@ If Huntarr has been helpful to you and you appreciate the power of open-source s
 </div>
 
 ## Table of Contents
-- [ℹ️ Overview](#overview)
-- [❓ Why You Need Huntarr](#why-you-need-huntarr)
-- [🔀 Other Projects](#other-projects)
-- [👥 Community](#community)
-- [👍 Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
-- [⬇️ Installation Methods](#installation-methods)
-- [⚙️ How It Works](#how-it-works)
-- [❤️ Thank You](#thank-you)
-- [📸 Screenshots](#screenshots)
-- [🤝 The Perfect Pair: Huntarr & Cleanuperr](#the-perfect-pair-huntarr--cleanuperr)
-- [📜 Change Log](#change-log)
+- [Overview](#overview)
+- [Why You Need Huntarr](#why-you-need-huntarr)
+- [Other Projects](#other-projects)
+- [Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
+- [Installation Methods](#installation-methods)
+- [How It Works](#how-it-works)
+- [Thank You](#thank-you)
+- [Screenshots](#screenshots)
+- [The Perfect Pair: Huntarr & Cleanuperr](#the-perfect-pair-huntarr--cleanuperr)
+- [Change Log](#change-log)
 
 ## ℹ️ Overview
+
+<a href="https://discord.com/invite/PGJJjR5Cww" target="_blank">
+  <img src="https://img.shields.io/discord/1370922258247454821?color=5865F2&label=DISCORD&logo=discord&logoColor=white&style=for-the-badge" alt="Discord" />
+</a>
 
 This application continually searches your media libraries for missing content and items that need quality upgrades. It automatically triggers searches for both missing items and those below your quality cutoff. It's designed to run continuously while being gentle on your indexers, helping you gradually complete your media collection with the best available quality.
 
@@ -69,15 +72,7 @@ Think of it as the missing piece that actually completes your media automation s
 * [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
 * Visit [PlexGuide](https://plexguide.com) for more great scripts
 
-## 👥 Community
 
-<p align="center">
-  Join the community on Discord!
-  <br>
-  <a href="https://discord.com/invite/PGJJjR5Cww" target="_blank">
-    <img src="frontend/static/images/discord.png" alt="Discord" width="48" height="48">
-  </a>
-</p>
 
 ## PayPal Donations – For My Daughter's College Fund
 
