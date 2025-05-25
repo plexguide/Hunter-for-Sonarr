@@ -37,17 +37,17 @@ If Huntarr has been helpful to you and you appreciate the power of open-source s
 </div>
 
 ## Table of Contents
-- [Overview](#overview)
-- [Why You Need Huntarr](#why-you-need-huntarr)
-- [Other Projects](#other-projects)
-- [Community](#community)
-- [Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
-- [Installation Methods](#installation-methods)
-- [How It Works](#how-it-works)
-- [Thank You](#thank-you)
-- [Screenshots](#screenshots)
-- [The Perfect Pair: Huntarr & Cleanuperr](#the-perfect-pair-huntarr--cleanuperr)
-- [Change Log](#change-log)
+- [<i class="fas fa-info-circle"></i> Overview](#overview)
+- [<i class="fas fa-question-circle"></i> Why You Need Huntarr](#why-you-need-huntarr)
+- [<i class="fas fa-code-branch"></i> Other Projects](#other-projects)
+- [<i class="fas fa-users"></i> Community](#community)
+- [<i class="fas fa-thumbs-up"></i> Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
+- [<i class="fas fa-download"></i> Installation Methods](#installation-methods)
+- [<i class="fas fa-cogs"></i> How It Works](#how-it-works)
+- [<i class="fas fa-heart"></i> Thank You](#thank-you)
+- [<i class="fas fa-images"></i> Screenshots](#screenshots)
+- [<i class="fas fa-handshake"></i> The Perfect Pair: Huntarr & Cleanuperr](#the-perfect-pair-huntarr--cleanuperr)
+- [<i class="fas fa-history"></i> Change Log](#change-log)
 
 ## <i class="fas fa-info-circle"></i> Overview
 
