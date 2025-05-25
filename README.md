@@ -181,5 +181,15 @@ When combined, these tools create a powerful, self-sufficient media automation s
 
 Learn more about **Cleanuperr** at [https://github.com/flmorg/cleanuperr](https://github.com/flmorg/cleanuperr)
 
+---
+
+## ❤️ Thank You
+
+A big thank you to these amazing contributors who've helped build and maintain this project:
+
+<a href="https://github.com/plexguide/Huntarr.io/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=plexguide/Huntarr.io" alt="Contributors" />
+</a>
+
 ## Change Log
 Visit: https://github.com/plexguide/Huntarr.io/releases/
