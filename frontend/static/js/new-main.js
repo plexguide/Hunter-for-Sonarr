@@ -15,6 +15,7 @@ let huntarrUI = {
     currentLogApp: 'all', // Default log app
     currentHistoryApp: 'all', // Default history app
     autoScroll: true,
+    isLoadingStats: false, // Flag to prevent multiple simultaneous stats requests
     configuredApps: {
         sonarr: false,
         radarr: false,
@@ -87,7 +88,7 @@ let huntarrUI = {
         this.logoUrl = localStorage.getItem('huntarr-logo-url') || this.logoUrl;
         
         // Load media stats
-        this.loadMediaStats(); // Load media statistics
+        // this.loadMediaStats(); // Load media statistics
         
         // Load current version
         this.loadCurrentVersion(); // Load current version
@@ -611,8 +612,8 @@ let huntarrUI = {
             this.disconnectAllEventSources(); 
             // Check app connections when returning to home page to update status
             this.checkAppConnections();
-            // Also refresh media stats
-            this.loadMediaStats();
+            // Stats are already loaded, no need to reload unless data changed
+            // this.loadMediaStats();
         } else if (section === 'logs' && this.elements.logsSection) {
             this.elements.logsSection.classList.add('active');
             this.elements.logsSection.style.display = 'block';
@@ -2115,11 +2116,20 @@ let huntarrUI = {
     
     // Media statistics handling
     loadMediaStats: function() {
+        // Prevent multiple simultaneous stats loading
+        if (this.isLoadingStats) {
+            console.debug('Stats already loading, skipping duplicate request');
+            return;
+        }
+        
+        this.isLoadingStats = true;
+        
         // Add loading class to stats container to hide raw JSON
         const statsContainer = document.querySelector('.media-stats-container');
         if (statsContainer) {
             statsContainer.classList.add('stats-loading');
         }
+        
         HuntarrUtils.fetchWithTimeout('/api/stats')
             .then(response => {
                 if (!response.ok) {
@@ -2136,7 +2146,6 @@ let huntarrUI = {
                     this.updateStatsDisplay(data.stats);
                     
                     // Remove loading class after stats are loaded
-                    const statsContainer = document.querySelector('.media-stats-container');
                     if (statsContainer) {
                         statsContainer.classList.remove('stats-loading');
                     }
@@ -2146,6 +2155,14 @@ let huntarrUI = {
             })
             .catch(error => {
                 console.error('Error fetching statistics:', error);
+                // Remove loading class on error too
+                if (statsContainer) {
+                    statsContainer.classList.remove('stats-loading');
+                }
+            })
+            .finally(() => {
+                // Always clear the loading flag
+                this.isLoadingStats = false;
             });
     },
     
@@ -2879,7 +2896,7 @@ let huntarrUI = {
                 console.log('[huntarrUI] Stateful expiration updated successfully:', data);
                 
                 // Get updated info to show proper dates
-                this.loadStatefulInfo(0, true);
+                this.loadStatefulInfo();
                 
                 // Show a notification
                 this.showNotification(`Updated expiration to ${hours} hours (${(hours/24).toFixed(1)} days)`, 'success');
