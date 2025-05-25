@@ -16,7 +16,7 @@ If Huntarr has been helpful to you and you appreciate the power of open-source s
 
 <p align="center">
   <a href="https://github.com/plexguide/Huntarr.io/stargazers">
-    <img src="https://reporoster.com/stars/dark/plexguide/Huntarr.io?max=7" alt="Stargazers repo roster for @plexguide/Huntarr.io" style="border: 1px solid #30363d; border-radius: 6px;" />
+    <img src="https://reporoster.com/stars/dark/plexguide/Huntarr.io?max=6" alt="Stargazers repo roster for @plexguide/Huntarr.io" style="border: 1px solid #30363d; border-radius: 6px;" />
   </a>
 </p>
  
