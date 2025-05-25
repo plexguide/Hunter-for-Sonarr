@@ -93,29 +93,15 @@ Special thanks to [Nwithan8](https://github.com/nwithan8) for maintaining the Un
 
 ### 🔄 Continuous Automation Cycle
 
-#### 1️⃣ Connect & Analyze
-🔌 Huntarr connects to your Sonarr/Radarr/Lidarr/Readarr/Whisparr/Eros instances and analyzes your media libraries to identify both missing content and potential quality upgrades.
+<i class="fas fa-1"></i> **Connect & Analyze** - Huntarr connects to your Sonarr/Radarr/Lidarr/Readarr/Whisparr/Eros instances and analyzes your media libraries to identify both missing content and potential quality upgrades.
 
-#### 2️⃣ Hunt Missing Content
-- 🔍 **Efficient Refreshing:** Skip metadata refresh to reduce disk I/O and database load
-- 🔮 **Future-Aware:** Automatically skip content with future release dates
-- 🎯 **Precise Control:** Configure exactly how many items to process per cycle
-- 👀 **Monitored Only:** Focus only on content you've marked as monitored
+<i class="fas fa-2"></i> **Hunt Missing Content** - Efficiently refreshes by skipping metadata to reduce disk I/O and database load, automatically skips content with future release dates, provides precise control over how many items to process per cycle, and focuses only on content you've marked as monitored.
 
-#### 3️⃣ Hunt Quality Upgrades
-- ⬆️ **Quality Improvement:** Find content below your quality cutoff settings
-- 📦 **Batch Processing:** Set specific numbers of upgrades to process per cycle
-- 🚦 **Queue Management:** Automatically pauses when download queue exceeds your threshold
-- ⏱️ **Command Monitoring:** Waits for commands to complete with consistent timeouts
+<i class="fas fa-3"></i> **Hunt Quality Upgrades** - Finds content below your quality cutoff settings for improvement, uses batch processing to set specific numbers of upgrades per cycle, automatically pauses when download queue exceeds your threshold, and waits for commands to complete with consistent timeouts.
 
-#### 4️⃣ API Management
-- 🛡️ **Rate Protection:** Hourly caps prevent overloading your indexers
-- ⏲️ **Universal Timeouts:** Consistent API timeouts (120s) across all applications
-- 🔄 **Consistent Headers:** Identifies as Huntarr to all Arr applications
-- 📊 **Intelligent Monitoring:** Visual indicators show API usage limits
+<i class="fas fa-4"></i> **API Management** - Implements hourly caps to prevent overloading your indexers, uses consistent API timeouts (120s) across all applications, identifies as Huntarr to all Arr applications with consistent headers, and provides visual indicators showing API usage limits.
 
-#### 5️⃣ Repeat & Rest
-💤 Huntarr waits for your configured interval (adjustable in settings) before starting the next cycle, ensuring your indexers aren't overloaded while maintaining continuous improvement of your library.
+<i class="fas fa-5"></i> **Repeat & Rest** - Huntarr waits for your configured interval (adjustable in settings) before starting the next cycle, ensuring your indexers aren't overloaded while maintaining continuous improvement of your library.
 
 ## Web Interface
 
