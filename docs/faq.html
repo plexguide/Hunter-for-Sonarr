@@ -457,6 +457,223 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Pop-up windows are obscured or cut off</div>
+                    <div class="faq-answer">
+                        Some users experience issues where pop-up windows or dialogs appear behind other elements or are cut off at the bottom of the screen:
+                        <ul>
+                            <li>Try refreshing the page (F5 or Ctrl+R)</li>
+                            <li>Clear your browser cache and cookies for the Huntarr site</li>
+                            <li>Try using a different browser (Chrome, Firefox, Safari, Edge)</li>
+                            <li>Check your browser zoom level - try resetting to 100%</li>
+                            <li>Disable browser extensions temporarily to see if they're interfering</li>
+                        </ul>
+                        
+                        <div class="info-box">
+                            This is often a browser-specific rendering issue that can be resolved by clearing cache or trying a different browser.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Statistics showing negative numbers after update</div>
+                    <div class="faq-answer">
+                        If you see negative numbers in your statistics after updating Huntarr:
+                        <ul>
+                            <li>This is usually a temporary display issue that resolves itself</li>
+                            <li>Wait for the next processing cycle to complete</li>
+                            <li>Try refreshing the web interface</li>
+                            <li>Check if the issue persists after a few hours of operation</li>
+                            <li>If the problem continues, consider using the Emergency Reset in settings</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong>Note:</strong> Statistics are recalculated during each cycle, so temporary negative values may appear during processing.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">API limits are being ignored</div>
+                    <div class="faq-answer">
+                        If Huntarr seems to be ignoring your configured API limits:
+                        <ul>
+                            <li>Verify your hourly API caps are set correctly in settings</li>
+                            <li>Check that you're not running multiple instances of Huntarr</li>
+                            <li>Ensure your *arr applications aren't performing their own searches</li>
+                            <li>Review the logs to see actual API call counts</li>
+                            <li>Consider reducing batch sizes for missing items and upgrades</li>
+                        </ul>
+                        
+                        <div class="info-box">
+                            <strong>Remember:</strong> API limits are per hour, and the counter resets at the beginning of each hour.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Timers showing errors or not displaying</div>
+                    <div class="faq-answer">
+                        If countdown timers show "Error Loading" or don't display properly:
+                        <ul>
+                            <li>Check that Huntarr has proper permissions to write to the config directory</li>
+                            <li>Verify the timer files exist in the stateful directory</li>
+                            <li>Restart the Huntarr container: <code>docker restart huntarr</code></li>
+                            <li>Check the logs for any file permission errors</li>
+                            <li>Ensure sufficient disk space is available</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong>Common Cause:</strong> This often occurs when running on bare metal installations where Docker paths don't exist.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">History shows the same movie/show multiple times</div>
+                    <div class="faq-answer">
+                        If you see duplicate entries in your history:
+                        <ul>
+                            <li>This can happen when Huntarr processes the same item multiple times</li>
+                            <li>Check if you have multiple quality profiles that might trigger re-processing</li>
+                            <li>Verify your cutoff settings aren't causing repeated upgrade attempts</li>
+                            <li>Consider adjusting your state reset interval in settings</li>
+                            <li>Review your indexer settings to avoid duplicate releases</li>
+                        </ul>
+                        
+                        <div class="success-box">
+                            <strong>Normal Behavior:</strong> Some duplication is normal when Huntarr finds better quality versions or when items are re-monitored.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Huntarr downloads unknown quality ignoring profiles</div>
+                    <div class="faq-answer">
+                        If Huntarr seems to ignore your quality profiles:
+                        <ul>
+                            <li>Verify your quality profiles are correctly configured in your *arr apps</li>
+                            <li>Check that the cutoff quality is set appropriately</li>
+                            <li>Ensure your indexers are providing accurate quality information</li>
+                            <li>Review the logs to see what quality Huntarr thinks it's requesting</li>
+                            <li>Consider updating your *arr applications to the latest versions</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong>Important:</strong> Huntarr relies on your *arr applications' quality profiles - it doesn't override them.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Cannot save Apprise URL for notifications</div>
+                    <div class="faq-answer">
+                        If you're having trouble saving Apprise notification URLs:
+                        <ul>
+                            <li>Verify the Apprise URL format is correct for your service</li>
+                            <li>Check that there are no special characters causing parsing issues</li>
+                            <li>Try saving one URL at a time instead of multiple URLs</li>
+                            <li>Ensure the notification service is accessible from your network</li>
+                            <li>Test the URL manually using the Apprise documentation</li>
+                        </ul>
+                        
+                        <div class="info-box">
+                            <strong>Tip:</strong> Use the Apprise documentation to verify your URL format: <a href="https://github.com/caronc/apprise#supported-notifications" target="_blank">Apprise Supported Services</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Weird or excessive Docker logs</div>
+                    <div class="faq-answer">
+                        If you notice unusual or excessive logging in your Docker logs:
+                        <ul>
+                            <li>Check if debug mode is enabled and disable it if not needed</li>
+                            <li>Review your log refresh interval settings</li>
+                            <li>Ensure your *arr applications are responding properly</li>
+                            <li>Check for network connectivity issues</li>
+                            <li>Consider adjusting your sleep duration to reduce API calls</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong>Performance Impact:</strong> Excessive logging can impact performance and fill up disk space quickly.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Low FPS or lag in the web interface</div>
+                    <div class="faq-answer">
+                        If the Huntarr web interface feels slow or laggy:
+                        <ul>
+                            <li>Try using a different browser or clearing browser cache</li>
+                            <li>Check if your system is under heavy load</li>
+                            <li>Reduce the log refresh interval in settings</li>
+                            <li>Close other browser tabs or applications</li>
+                            <li>Ensure your network connection is stable</li>
+                            <li>Try accessing from a different device to isolate the issue</li>
+                        </ul>
+                        
+                        <div class="success-box">
+                            <strong>Optimization:</strong> Increasing the log refresh interval from 30 to 60 seconds can improve performance.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Critical security vulnerabilities in dependencies</div>
+                    <div class="faq-answer">
+                        If you receive notifications about security vulnerabilities:
+                        <ul>
+                            <li>Update to the latest version of Huntarr immediately</li>
+                            <li>Check the GitHub releases page for security updates</li>
+                            <li>Enable automatic updates if available in your environment</li>
+                            <li>Monitor the project's security advisories</li>
+                            <li>Consider using Watchtower for automatic Docker image updates</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong>Security:</strong> Always keep Huntarr updated to the latest version to ensure you have the latest security patches.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Timezone mismatch in stateful management</div>
+                    <div class="faq-answer">
+                        If you notice timing issues or incorrect timestamps:
+                        <ul>
+                            <li>Verify your timezone is correctly set in the Docker environment</li>
+                            <li>Check the <code>TZ</code> environment variable in your docker-compose.yml</li>
+                            <li>Ensure your host system timezone is correct</li>
+                            <li>Restart the container after timezone changes</li>
+                            <li>Check if your *arr applications have matching timezones</li>
+                        </ul>
+                        
+                        <div class="info-box">
+                            <strong>Example:</strong> Set <code>TZ=America/New_York</code> in your Docker environment variables to match your local timezone.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">State reset not happening automatically</div>
+                    <div class="faq-answer">
+                        If the automatic state reset isn't working as expected:
+                        <ul>
+                            <li>Check your state reset interval setting in the web interface</li>
+                            <li>Verify the state files exist in <code>/config/stateful/</code></li>
+                            <li>Ensure Huntarr has write permissions to the config directory</li>
+                            <li>Check the logs for any errors related to state management</li>
+                            <li>Consider manually triggering an emergency reset if needed</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong>Manual Reset:</strong> Use the Emergency Reset button in settings if automatic resets aren't working properly.
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <section id="features" class="faq-section">
