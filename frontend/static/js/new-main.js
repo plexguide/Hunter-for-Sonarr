@@ -48,13 +48,18 @@ let huntarrUI = {
         this.setupLogoHandling();
         this.registerGlobalUnsavedChangesHandler();
         
-        // Initialize media stats
-        if (window.location.pathname === '/') {
-            this.loadMediaStats();
-        }
-        
-        // Check if Low Usage Mode is enabled
-        this.checkLowUsageMode();
+        // Check if Low Usage Mode is enabled BEFORE loading stats to avoid race condition
+        this.checkLowUsageMode().then(() => {
+            // Initialize media stats after low usage mode is determined
+            if (window.location.pathname === '/') {
+                this.loadMediaStats();
+            }
+        }).catch(() => {
+            // If low usage mode check fails, still load stats
+            if (window.location.pathname === '/') {
+                this.loadMediaStats();
+            }
+        });
         
         // Remove setupStatefulResetButton references that are causing errors
         // this.setupStatefulResetButton();
@@ -2171,6 +2176,11 @@ let huntarrUI = {
         const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'];
         const statTypes = ['hunted', 'upgraded'];
         
+        // More robust low usage mode detection - check multiple sources
+        const isLowUsageMode = this.isLowUsageModeEnabled();
+        
+        console.log(`[huntarrUI] updateStatsDisplay - Low usage mode: ${isLowUsageMode}`);
+        
         apps.forEach(app => {
             if (stats[app]) {
                 statTypes.forEach(type => {
@@ -2181,18 +2191,23 @@ let huntarrUI = {
                         const currentValue = this.parseFormattedNumber(currentText);
                         const targetValue = Math.max(0, parseInt(stats[app][type]) || 0); // Ensure non-negative
                         
-                        // Only animate if values are different and both are valid
-                        if (currentValue !== targetValue && !isNaN(currentValue) && !isNaN(targetValue)) {
-                            // Cancel any existing animation for this element
-                            if (element.animationFrame) {
-                                cancelAnimationFrame(element.animationFrame);
-                            }
-                            
-                            // Animate the number change
-                            this.animateNumber(element, currentValue, targetValue);
-                        } else if (isNaN(currentValue) || currentValue < 0) {
-                            // If current value is invalid, set directly without animation
+                        // If low usage mode is enabled, skip animations and set values directly
+                        if (isLowUsageMode) {
                             element.textContent = this.formatLargeNumber(targetValue);
+                        } else {
+                            // Only animate if values are different and both are valid
+                            if (currentValue !== targetValue && !isNaN(currentValue) && !isNaN(targetValue)) {
+                                // Cancel any existing animation for this element
+                                if (element.animationFrame) {
+                                    cancelAnimationFrame(element.animationFrame);
+                                }
+                                
+                                // Animate the number change
+                                this.animateNumber(element, currentValue, targetValue);
+                            } else if (isNaN(currentValue) || currentValue < 0) {
+                                // If current value is invalid, set directly without animation
+                                element.textContent = this.formatLargeNumber(targetValue);
+                            }
                         }
                     }
                 });
@@ -3038,23 +3053,32 @@ let huntarrUI = {
     
     // Check if Low Usage Mode is enabled in settings and apply it
     checkLowUsageMode: function() {
-        HuntarrUtils.fetchWithTimeout('/api/settings/general', {
+        return HuntarrUtils.fetchWithTimeout('/api/settings/general', {
             method: 'GET'
         })
         .then(response => response.json())
         .then(config => {
             if (config && config.low_usage_mode === true) {
                 this.applyLowUsageMode(true);
+            } else {
+                this.applyLowUsageMode(false);
             }
+            return config;
         })
         .catch(error => {
             console.error('[huntarrUI] Error checking Low Usage Mode:', error);
+            // Default to disabled on error
+            this.applyLowUsageMode(false);
+            throw error;
         });
     },
     
     // Apply Low Usage Mode effects based on setting
     applyLowUsageMode: function(enabled) {
         console.log(`[huntarrUI] Setting Low Usage Mode: ${enabled ? 'Enabled' : 'Disabled'}`);
+        
+        // Store the previous state to detect changes
+        const wasEnabled = document.body.classList.contains('low-usage-mode');
         
         // Check if the indicator already exists, if not create it
         let indicator = document.getElementById('low-usage-mode-indicator');
@@ -3089,6 +3113,12 @@ let huntarrUI = {
             if (indicator) {
                 indicator.style.display = 'none';
             }
+        }
+        
+        // If low usage mode state changed and we have stats data, update the display
+        if (wasEnabled !== enabled && window.mediaStats) {
+            console.log(`[huntarrUI] Low usage mode changed from ${wasEnabled} to ${enabled}, updating stats display`);
+            this.updateStatsDisplay(window.mediaStats);
         }
     },
     
@@ -3132,6 +3162,28 @@ let huntarrUI = {
             button.disabled = false;
             button.innerHTML = `<i class="fas fa-sync-alt"></i> Reset`;
         });
+    },
+
+    // More robust low usage mode detection
+    isLowUsageModeEnabled: function() {
+        // Check multiple sources to determine if low usage mode is enabled
+        
+        // 1. Check CSS class on body (primary method)
+        const hasLowUsageClass = document.body.classList.contains('low-usage-mode');
+        
+        // 2. Check if the standalone low-usage-mode.js module is enabled
+        const standaloneModuleEnabled = window.LowUsageMode && window.LowUsageMode.isEnabled && window.LowUsageMode.isEnabled();
+        
+        // 3. Check if the low usage mode indicator is visible
+        const indicator = document.getElementById('low-usage-mode-indicator');
+        const indicatorVisible = indicator && indicator.style.display !== 'none' && indicator.style.display !== '';
+        
+        // 4. Store the result for consistency during this update cycle
+        const isEnabled = hasLowUsageClass || standaloneModuleEnabled || indicatorVisible;
+        
+        console.log(`[huntarrUI] Low usage mode detection - CSS class: ${hasLowUsageClass}, Module: ${standaloneModuleEnabled}, Indicator: ${indicatorVisible}, Final: ${isEnabled}`);
+        
+        return isEnabled;
     }
 };
 
