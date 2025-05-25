@@ -25,6 +25,7 @@ Keep in mind this is very early in program development. If you have a very speci
 
 ## Table of Contents
 - [Overview](#overview)
+- [Why You Need Huntarr](#why-you-need-huntarr)
 - [Other Projects](#other-projects)
 - [Community](#community)
 - [Indexers Approving of Huntarr](#indexers-approving-of-huntarr)
@@ -34,8 +35,6 @@ Keep in mind this is very early in program development. If you have a very speci
   - [How to Access](#how-to-access)
   - [Web UI Settings](#web-ui-settings)
   - [Volume Mapping](#volume-mapping)
-- [Tips](#tips)
-- [Troubleshooting](#troubleshooting)
 - [Change Log](#change-log)
 
 ## Overview
@@ -185,38 +184,6 @@ When combined, these tools create a powerful, self-sufficient media automation s
 - Together, they create a reliable, hands-off media management system
 
 Learn more about **Cleanuperr** at [https://github.com/flmorg/cleanuperr](https://github.com/flmorg/cleanuperr)
-
-## Tips
-
-- **First-Time Setup**: Navigate to the web interface after installation to create your admin account with 2FA option
-- **API Connections**: Configure connections to your *Arr applications through the dedicated settings pages
-- **Search Frequency**: Adjust Sleep Duration (default: 900 seconds) based on your indexer's rate limits
-- **Batch Processing**: Set Hunt Missing and Upgrade values to control how many items are processed per cycle
-- **Queue Management**: Use Minimum Download Queue Size to pause searching when downloads are backed up
-- **Skip Processing**: Enable Skip Series/Movie/Artist Refresh to significantly reduce disk I/O and database load
-- **Future Content**: Keep Skip Future Items enabled to avoid searching for unreleased content
-- **Authentication**: Enable two-factor authentication for additional security on your Huntarr instance
-- **API Rate Limits**: Configure hourly API caps to prevent rate limiting by your indexers
-- **Universal Timeouts**: All apps use consistent 120s timeouts for reliable command completion
-- **Monitored Only**: Filter searches to focus only on content you've marked as monitored
-- **Notifications**: Configure Apprise notifications to get alerts when media is processed
-
-## Troubleshooting
-
-- **API Connection Issues**: Verify your API key and URL in the Settings page (check for missing http:// or https://)
-- **Config URLs**: It is best practice to omit the trailing slash (/) at the end of the URL for each service. For Sonarr, use http://10.10.10.1:8989 instead of http://10.10.10.1:8989/
-- **Authentication Problems**: If you forget your password, delete `/config/user/credentials.json` and restart
-- **Two-Factor Authentication**: If locked out of 2FA, remove credentials file to reset your account
-- **Web Interface Not Loading**: Confirm port 9705 is correctly mapped and not blocked by firewalls
-- **Logs Not Showing**: Check permissions on the `/config/logs/` directory inside your container
-- **Missing State Data**: State files in `/config/stateful/` track processed items; verify permissions
-- **Docker Volume Issues**: Ensure your volume mount for `/config` has correct permissions and ownership
-- **Command Timeouts**: Default values are now command_wait_delay=1s and command_wait_attempts=600
-- **Debug Information**: Enable Debug Mode temporarily to see detailed API responses in the logs
-- **API Timeout Errors**: All apps now use universal timeout settings (120s) from general.json
-- **Consistent Log Filtering**: If app-specific logs show mixed content, reduce historical data from 5KB to 1KB
-- **Swaparr Issues**: Ensure proper handling of non-dictionary records in queue data
-- **App-Specific Problems**: Check GitHub Issues for known problems and solutions
 
 ## Change Log
 Visit: https://github.com/plexguide/Huntarr.io/releases/
