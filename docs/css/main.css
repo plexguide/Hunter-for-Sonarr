@@ -164,6 +164,24 @@ a:hover {
     text-decoration: underline;
 }
 
+/* Anchor link styles */
+.anchor-link {
+    opacity: 0;
+    margin-left: 8px;
+    transition: opacity 0.3s;
+    color: var(--highlight-color);
+    text-decoration: none;
+}
+
+h3:hover .anchor-link {
+    opacity: 1;
+}
+
+.anchor-link:hover {
+    color: #217dbb;
+    text-decoration: none;
+}
+
 /* Hero Section */
 .hero-section {
     background-color: var(--card-bg);
