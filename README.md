@@ -48,7 +48,7 @@ If Huntarr has been helpful to you and you appreciate the power of open-source s
 - [The Perfect Pair: Huntarr & Cleanuperr](#the-perfect-pair-huntarr--cleanuperr)
 - [Change Log](#change-log)
 
-## ℹ️ Overview
+## Overview
 
 [![Discord](https://img.shields.io/discord/1370922258247454821?color=7289DA&label=Discord&style=for-the-badge&logo=discord)](https://discord.com/invite/PGJJjR5Cww)
 
@@ -56,7 +56,7 @@ This application continually searches your media libraries for missing content a
 
 For detailed documentation, please visit our <a href="https://plexguide.github.io/Huntarr.io/" target="_blank" rel="noopener noreferrer">Wiki</a>.
 
-## ❓ Why You Need Huntarr
+## Why You Need Huntarr
 
 Huntarr is an automatic missing content hunter for Sonarr, Radarr, Lidarr, Readarr, and Whisparr.  
 Think of it as the missing piece that actually completes your media automation setup by finding and downloading all the content your *arr apps aren't actively searching for.
@@ -65,12 +65,10 @@ Think of it as the missing piece that actually completes your media automation s
 
 **The solution**: Huntarr systematically scans your entire library, finds all missing content, and searches for it in small batches that won't overwhelm your indexers or get you banned. It's the difference between having a "mostly complete" library and actually having everything you want.
 
-## 🔀 Other Projects
+## Other Projects
 
 * [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
 * Visit [PlexGuide](https://plexguide.com) for more great scripts
-
-
 
 ## PayPal Donations – For My Daughter's College Fund
 
@@ -78,10 +76,10 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 [![Donate with PayPal button](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate?hosted_button_id=58AYJ68VVMGSC)
 
-## 👍 Indexers Approving of Huntarr:
+## Indexers Approving of Huntarr:
 * https://ninjacentral.co.za
 
-## ⬇️ Installation Methods
+## Installation Methods
 
 - 🐋 **[Docker Installation](https://plexguide.github.io/Huntarr.io/getting-started/installation.html)**
 - 🪟 **[Windows Installation](https://plexguide.github.io/Huntarr.io/getting-started/installation.html#windows-installation)**
@@ -91,7 +89,7 @@ My 12-year-old daughter is passionate about singing, dancing, and exploring STEM
 
 Special thanks to [Nwithan8](https://github.com/nwithan8) for maintaining the Unraid templates and helping Huntarr grow through the Unraid Community Applications repository.
 
-## ⚙️ How It Works
+## How It Works
 
 ### 🔄 Continuous Automation Cycle
 
@@ -107,7 +105,7 @@ Special thanks to [Nwithan8](https://github.com/nwithan8) for maintaining the Un
 
 ---
 
-## ❤️ Thank You
+## Thank You
 
 A big thank you to these amazing contributors who've helped build and maintain this project:
 
@@ -115,7 +113,7 @@ A big thank you to these amazing contributors who've helped build and maintain t
   <img src="https://contrib.rocks/image?repo=plexguide/Huntarr.io" alt="Contributors" />
 </a>
 
-## 📸 Screenshots
+## Screenshots
 
 <p align="center">
   <img width="100%" alt="Homepage" src="https://github.com/user-attachments/assets/c060962c-01ee-4f53-a5ee-c67f31432e40" style="border: 1px solid #30363d; border-radius: 6px; margin-bottom: 10px;" />
@@ -131,7 +129,7 @@ A big thank you to these amazing contributors who've helped build and maintain t
 
 ---
 
-## 🤝 The Perfect Pair: Huntarr & Cleanuperr
+## The Perfect Pair: Huntarr & Cleanuperr
 
 <p align="center">
   <img src="https://github.com/plexguide/Huntarr.io/blob/main/frontend/static/logo/128.png?raw=true" alt="Huntarr" width="64" height="64">
@@ -151,5 +149,5 @@ When combined, these tools create a powerful, self-sufficient media automation s
 
 Learn more about **Cleanuperr** at [https://github.com/flmorg/cleanuperr](https://github.com/flmorg/cleanuperr)
 
-## 📜 Change Log
+## Change Log
 Visit: https://github.com/plexguide/Huntarr.io/releases/
