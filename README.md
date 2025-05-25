@@ -9,6 +9,14 @@
 <h2 align="center">Want to Help? Click the Star in the Upper-Right Corner! ⭐</h2> 
 
 <img src="https://github.com/user-attachments/assets/1ea6ca9c-0909-4b6a-b573-f778b65af8b2" width="100%"/>
+
+#### ⭐ Show Your Support for Open Source!
+
+If Huntarr has been helpful to you and you appreciate the power of open-source software, please consider giving this repository a star. Your gesture will greatly support our efforts and help others discover Huntarr!
+
+<a href="https://github.com/plexguide/Huntarr.io/stargazers">
+  <img src="https://reporoster.com/stars/plexguide/Huntarr.io" alt="Stargazers repo roster for @plexguide/Huntarr.io" />
+</a>
  
 | Application | Status        |
 | :---------- | :------------ |
