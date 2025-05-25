@@ -7,154 +7,7 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="js/main.js" defer></script>
-    <style>
-        .faq-toc {
-            background: #2c3e50;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-left: 4px solid #3498db;
-        }
-        
-        .faq-toc h3 {
-            color: #3498db;
-            margin-bottom: 15px;
-            font-size: 1.2em;
-        }
-        
-        .faq-toc ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .faq-toc li {
-            margin-bottom: 8px;
-        }
-        
-        .faq-toc a {
-            color: #ecf0f1;
-            text-decoration: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            transition: background-color 0.3s;
-            display: block;
-        }
-        
-        .faq-toc a:hover {
-            background-color: #34495e;
-            color: #3498db;
-        }
-        
-        .faq-section {
-            margin-bottom: 40px;
-            padding: 20px;
-            background: #2c3e50;
-            border-radius: 8px;
-            border-left: 4px solid #e74c3c;
-        }
-        
-        .faq-section h2 {
-            color: #e74c3c;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #34495e;
-        }
-        
-        .faq-item {
-            margin-bottom: 25px;
-            padding: 15px;
-            background: #34495e;
-            border-radius: 6px;
-            border-left: 3px solid #3498db;
-        }
-        
-        .faq-question {
-            color: #3498db;
-            font-weight: bold;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-        
-        .faq-answer {
-            color: #ecf0f1;
-            line-height: 1.6;
-        }
-        
-        .faq-answer code {
-            background: #2c3e50;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-            color: #e67e22;
-        }
-        
-        .faq-answer pre {
-            background: #2c3e50;
-            padding: 15px;
-            border-radius: 6px;
-            overflow-x: auto;
-            margin: 10px 0;
-            border-left: 3px solid #e67e22;
-        }
-        
-        .return-to-top {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            cursor: pointer;
-            font-size: 18px;
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-            transition: all 0.3s ease;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-        }
-        
-        .return-to-top.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .return-to-top:hover {
-            background: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
-        }
-        
-        .warning-box {
-            background: #f39c12;
-            color: #2c3e50;
-            padding: 15px;
-            border-radius: 6px;
-            margin: 15px 0;
-            border-left: 4px solid #e67e22;
-        }
-        
-        .info-box {
-            background: #3498db;
-            color: white;
-            padding: 15px;
-            border-radius: 6px;
-            margin: 15px 0;
-            border-left: 4px solid #2980b9;
-        }
-        
-        .success-box {
-            background: #27ae60;
-            color: white;
-            padding: 15px;
-            border-radius: 6px;
-            margin: 15px 0;
-            border-left: 4px solid #229954;
-        }
-    </style>
+
 </head>
 <body>
     <div class="sidebar">
@@ -195,9 +48,13 @@
     <div class="main-content">
         <div class="container">
             <h1>Frequently Asked Questions</h1>
-
-            <div class="faq-toc">
-                <h3><i class="fas fa-list"></i> Table of Contents</h3>
+            
+            <section class="faq-overview">
+                <p>This comprehensive FAQ covers common questions and issues that users encounter when setting up and using Huntarr. Use the table of contents below to quickly find answers to your questions.</p>
+            </section>
+            
+            <section id="toc" class="toc">
+                <h3>Table of Contents</h3>
                 <ul>
                     <li><a href="#installation">Installation & Setup</a></li>
                     <li><a href="#configuration">Configuration & API Connections</a></li>
@@ -207,41 +64,35 @@
                     <li><a href="#security">Security & Authentication</a></li>
                     <li><a href="#compatibility">Compatibility & Requirements</a></li>
                 </ul>
-            </div>
+            </section>
 
-            <section id="installation" class="faq-section">
-                <h2><i class="fas fa-download"></i> Installation & Setup</h2>
+            <section id="installation" class="installation-methods">
+                <h2>Installation & Setup</h2>
 
-                <div class="faq-item">
-                    <div class="faq-question">What are the different ways to install Huntarr?</div>
-                    <div class="faq-answer">
-                        Huntarr can be installed using several methods:
-                        <ul>
-                            <li><strong>Docker (Recommended):</strong> Most reliable and consistent across platforms</li>
-                            <li><strong>Windows Installer:</strong> Native .exe installer for Windows users</li>
-                            <li><strong>macOS Installer:</strong> Native .pkg installer for Intel and Apple Silicon Macs</li>
-                            <li><strong>Unraid:</strong> Available through Community Applications</li>
-                            <li><strong>From Source:</strong> For advanced users and development</li>
-                        </ul>
-                        <div class="info-box">
-                            <strong>Recommendation:</strong> Docker is the primary supported method and ensures the most consistent experience across all platforms.
-                        </div>
-                    </div>
+                <h3>What are the different ways to install Huntarr?</h3>
+                <p>Huntarr can be installed using several methods:</p>
+                <ul>
+                    <li><strong>Docker (Recommended):</strong> Most reliable and consistent across platforms</li>
+                    <li><strong>Windows Installer:</strong> Native .exe installer for Windows users</li>
+                    <li><strong>macOS Installer:</strong> Native .pkg installer for Intel and Apple Silicon Macs</li>
+                    <li><strong>Unraid:</strong> Available through Community Applications</li>
+                    <li><strong>From Source:</strong> For advanced users and development</li>
+                </ul>
+                <div class="alert alert-info">
+                    <strong>Recommendation:</strong> Docker is the primary supported method and ensures the most consistent experience across all platforms.
                 </div>
 
-                <div class="faq-item">
-                    <div class="faq-question">How do I install Huntarr using Docker?</div>
-                    <div class="faq-answer">
-                        The simplest Docker installation command is:
-                        <pre><code>docker run -d --name huntarr \
+                <h3>How do I install Huntarr using Docker?</h3>
+                <p>The simplest Docker installation command is:</p>
+                <pre class="terminal"><code>docker run -d --name huntarr \
   --restart always \
   -p 9705:9705 \
   -v /your-path/huntarr:/config \
   -e TZ=America/New_York \
   huntarr/huntarr:latest</code></pre>
-                        
-                        For Docker Compose, add this to your <code>docker-compose.yml</code>:
-                        <pre><code>services:
+                
+                <p>For Docker Compose, add this to your <code>docker-compose.yml</code>:</p>
+                <pre class="terminal"><code>services:
   huntarr:
     image: huntarr/huntarr:latest
     container_name: huntarr
@@ -252,19 +103,13 @@
       - /your-path/huntarr:/config
     environment:
       - TZ=America/New_York</code></pre>
-                    </div>
-                </div>
 
-                <div class="faq-item">
-                    <div class="faq-question">Why does Windows Defender block the installer?</div>
-                    <div class="faq-answer">
-                        Windows Defender SmartScreen may show a warning because the installer isn't signed by Microsoft. This is normal for many open-source applications.
-                        <div class="warning-box">
-                            <strong>To proceed:</strong> Click "More info" in the upper left corner of the SmartScreen dialog, then click "Run anyway" to continue with installation.
-                        </div>
-                        The Docker version doesn't have this issue and is the recommended installation method.
-                    </div>
+                <h3>Why does Windows Defender block the installer?</h3>
+                <p>Windows Defender SmartScreen may show a warning because the installer isn't signed by Microsoft. This is normal for many open-source applications.</p>
+                <div class="alert alert-warning">
+                    <strong>To proceed:</strong> Click "More info" in the upper left corner of the SmartScreen dialog, then click "Run anyway" to continue with installation.
                 </div>
+                <p>The Docker version doesn't have this issue and is the recommended installation method.</p>
 
                 <div class="faq-item">
                     <div class="faq-question">How do I handle macOS security warnings?</div>
@@ -275,7 +120,7 @@
                             <li>When you see the security warning, go to <strong>System Settings → Privacy & Security</strong></li>
                             <li>Scroll down to the security section and click <strong>"Open Anyway"</strong></li>
                         </ol>
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             The installer will create configuration directories at: <code>~/Library/Application Support/Huntarr/config/</code>
                         </div>
                     </div>
@@ -286,15 +131,15 @@
                     <div class="faq-answer">
                         Huntarr uses port <strong>9705</strong> by default. You can access the web interface at <code>http://YOUR_SERVER_IP:9705</code>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Changing the port:</strong> If port 9705 is already in use, you can change it in your Docker run command or docker-compose.yml file by modifying the port mapping (e.g., <code>-p 8080:9705</code>).
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section id="configuration" class="faq-section">
-                <h2><i class="fas fa-cogs"></i> Configuration & API Connections</h2>
+            <section id="configuration" class="installation-methods">
+                <h2>Configuration & API Connections</h2>
 
                 <div class="faq-item">
                     <div class="faq-question">How do I connect Huntarr to my *arr applications?</div>
@@ -307,7 +152,7 @@
                             <li>Test the connection</li>
                         </ol>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Important:</strong> Omit the trailing slash (/) at the end of URLs. Use <code>http://10.10.10.1:8989</code> instead of <code>http://10.10.10.1:8989/</code>
                         </div>
                     </div>
@@ -326,7 +171,7 @@
                             <li>❌ <strong>Bazarr</strong> - Not yet supported</li>
                         </ul>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             Huntarr is actively developed, and support for additional applications may be added in future releases.
                         </div>
                     </div>
@@ -343,7 +188,7 @@
                             <li><strong>Minimum Download Queue Size:</strong> Pause searching when queue exceeds this number</li>
                         </ul>
                         
-                        <div class="success-box">
+                        <div class="alert alert-success">
                             <strong>Tip:</strong> Start with conservative values and adjust based on your indexer's rate limits and system performance.
                         </div>
                     </div>
@@ -361,15 +206,15 @@
                             <li>Enable "Skip Series/Movie/Artist Refresh" to reduce API calls</li>
                         </ul>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Remember:</strong> Huntarr uses consistent 120-second timeouts and identifies itself to all *arr applications to ensure reliable operation.
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section id="troubleshooting" class="faq-section">
-                <h2><i class="fas fa-wrench"></i> Troubleshooting</h2>
+            <section id="troubleshooting" class="installation-methods">
+                <h2>Troubleshooting</h2>
 
                 <div class="faq-item">
                     <div class="faq-question">Huntarr won't start or the web interface isn't loading</div>
@@ -382,7 +227,7 @@
                             <li><strong>Check volume permissions:</strong> Ensure the <code>/config</code> volume has correct permissions</li>
                         </ol>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             If using Docker, try rebuilding the container: <code>docker-compose down && docker-compose up -d --build</code>
                         </div>
                     </div>
@@ -400,7 +245,7 @@
                             <li>Check if your *arr apps are running and responsive</li>
                         </ul>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Network Issues:</strong> If running in Docker, ensure Huntarr can reach your *arr applications. Consider using Docker networking or host networking if needed.
                         </div>
                     </div>
@@ -417,7 +262,7 @@
                             <li>Access the web interface to create a new admin account</li>
                         </ol>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             <strong>Two-Factor Authentication:</strong> If locked out of 2FA, removing the credentials file will also reset your 2FA settings.
                         </div>
                     </div>
@@ -434,7 +279,7 @@
                             <li>Check available disk space on the host system</li>
                         </ul>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Permission Fix:</strong> You may need to adjust ownership: <code>sudo chown -R 1000:1000 /your-path/huntarr</code>
                         </div>
                     </div>
@@ -452,7 +297,7 @@
                             <li>Review the logs for any API errors or rate limiting</li>
                         </ul>
                         
-                        <div class="success-box">
+                        <div class="alert alert-success">
                             <strong>Debug Mode:</strong> Enable debug mode temporarily to see detailed API responses and understand what Huntarr is processing.
                         </div>
                     </div>
@@ -470,7 +315,7 @@
                             <li>Disable browser extensions temporarily to see if they're interfering</li>
                         </ul>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             This is often a browser-specific rendering issue that can be resolved by clearing cache or trying a different browser.
                         </div>
                     </div>
@@ -488,7 +333,7 @@
                             <li>If the problem continues, consider using the Emergency Reset in settings</li>
                         </ul>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Note:</strong> Statistics are recalculated during each cycle, so temporary negative values may appear during processing.
                         </div>
                     </div>
@@ -506,7 +351,7 @@
                             <li>Consider reducing batch sizes for missing items and upgrades</li>
                         </ul>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             <strong>Remember:</strong> API limits are per hour, and the counter resets at the beginning of each hour.
                         </div>
                     </div>
@@ -524,7 +369,7 @@
                             <li>Ensure sufficient disk space is available</li>
                         </ul>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Common Cause:</strong> This often occurs when running on bare metal installations where Docker paths don't exist.
                         </div>
                     </div>
@@ -542,7 +387,7 @@
                             <li>Review your indexer settings to avoid duplicate releases</li>
                         </ul>
                         
-                        <div class="success-box">
+                        <div class="alert alert-success">
                             <strong>Normal Behavior:</strong> Some duplication is normal when Huntarr finds better quality versions or when items are re-monitored.
                         </div>
                     </div>
@@ -560,7 +405,7 @@
                             <li>Consider updating your *arr applications to the latest versions</li>
                         </ul>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Important:</strong> Huntarr relies on your *arr applications' quality profiles - it doesn't override them.
                         </div>
                     </div>
@@ -578,7 +423,7 @@
                             <li>Test the URL manually using the Apprise documentation</li>
                         </ul>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             <strong>Tip:</strong> Use the Apprise documentation to verify your URL format: <a href="https://github.com/caronc/apprise#supported-notifications" target="_blank">Apprise Supported Services</a>
                         </div>
                     </div>
@@ -596,7 +441,7 @@
                             <li>Consider adjusting your sleep duration to reduce API calls</li>
                         </ul>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Performance Impact:</strong> Excessive logging can impact performance and fill up disk space quickly.
                         </div>
                     </div>
@@ -615,7 +460,7 @@
                             <li>Try accessing from a different device to isolate the issue</li>
                         </ul>
                         
-                        <div class="success-box">
+                        <div class="alert alert-success">
                             <strong>Optimization:</strong> Increasing the log refresh interval from 30 to 60 seconds can improve performance.
                         </div>
                     </div>
@@ -633,7 +478,7 @@
                             <li>Consider using Watchtower for automatic Docker image updates</li>
                         </ul>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Security:</strong> Always keep Huntarr updated to the latest version to ensure you have the latest security patches.
                         </div>
                     </div>
@@ -651,7 +496,7 @@
                             <li>Check if your *arr applications have matching timezones</li>
                         </ul>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             <strong>Example:</strong> Set <code>TZ=America/New_York</code> in your Docker environment variables to match your local timezone.
                         </div>
                     </div>
@@ -669,15 +514,15 @@
                             <li>Consider manually triggering an emergency reset if needed</li>
                         </ul>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Manual Reset:</strong> Use the Emergency Reset button in settings if automatic resets aren't working properly.
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section id="features" class="faq-section">
-                <h2><i class="fas fa-star"></i> Features & Functionality</h2>
+            <section id="features" class="installation-methods">
+                <h2>Features & Functionality</h2>
 
                 <div class="faq-item">
                     <div class="faq-question">What does Huntarr actually do?</div>
@@ -691,7 +536,7 @@
                             <li><strong>Queue Management:</strong> Pauses searching when download queues are full</li>
                         </ul>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             <strong>Example:</strong> If you have 5,000 shows in Sonarr and 1,700 are missing episodes, Huntarr will systematically work through them over time to complete your collection.
                         </div>
                     </div>
@@ -709,7 +554,7 @@
                             <li><strong>Queue Monitoring:</strong> Automatically pauses when download queues are full</li>
                         </ul>
                         
-                        <div class="success-box">
+                        <div class="alert alert-success">
                             <strong>Smart Design:</strong> Huntarr identifies itself to all *arr applications and uses consistent headers for reliable operation.
                         </div>
                     </div>
@@ -726,7 +571,7 @@
                             <li><strong>Non-intrusive:</strong> Doesn't modify your existing configurations</li>
                         </ul>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             <strong>Perfect Pair:</strong> Huntarr + Cleanuperr creates a powerful, self-sufficient media automation stack.
                         </div>
                     </div>
@@ -745,15 +590,15 @@
                             <li>And many more services supported by Apprise</li>
                         </ul>
                         
-                        <div class="success-box">
+                        <div class="alert alert-success">
                             Configure Apprise URLs in the settings to receive alerts when media is processed or when issues occur.
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section id="performance" class="faq-section">
-                <h2><i class="fas fa-tachometer-alt"></i> Performance & Optimization</h2>
+            <section id="performance" class="installation-methods">
+                <h2>Performance & Optimization</h2>
 
                 <div class="faq-item">
                     <div class="faq-question">How can I optimize Huntarr's performance?</div>
@@ -767,7 +612,7 @@
                             <li><strong>Use SSD Storage:</strong> Faster storage improves database operations</li>
                         </ul>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Resource Impact:</strong> Larger batch sizes and shorter sleep intervals will increase system load and API usage.
                         </div>
                     </div>
@@ -784,7 +629,7 @@
                             <li><strong>Network:</strong> API calls to *arr applications and indexers</li>
                         </ul>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             <strong>Scaling:</strong> Resource usage scales with library size and configured batch sizes. Larger libraries may require more memory and processing time.
                         </div>
                     </div>
@@ -802,15 +647,15 @@
                             <li><strong>Notifications:</strong> Configure Apprise for activity alerts</li>
                         </ul>
                         
-                        <div class="success-box">
+                        <div class="alert alert-success">
                             <strong>Real-time Monitoring:</strong> The web interface provides live updates on hunt progress and API usage.
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section id="security" class="faq-section">
-                <h2><i class="fas fa-shield-alt"></i> Security & Authentication</h2>
+            <section id="security" class="installation-methods">
+                <h2>Security & Authentication</h2>
 
                 <div class="faq-item">
                     <div class="faq-question">How do I secure my Huntarr installation?</div>
@@ -824,7 +669,7 @@
                             <li><strong>Regular Updates:</strong> Keep Huntarr updated to the latest version</li>
                         </ul>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Important:</strong> Never expose Huntarr directly to the internet without proper authentication and security measures.
                         </div>
                     </div>
@@ -841,7 +686,7 @@
                             <li>Future logins will require your password + authenticator code</li>
                         </ol>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             <strong>Recovery:</strong> If locked out of 2FA, delete the credentials file and restart Huntarr to reset authentication.
                         </div>
                     </div>
@@ -858,15 +703,15 @@
                             <li><strong>Logs:</strong> <code>/config/logs/</code> (may contain API responses)</li>
                         </ul>
                         
-                        <div class="warning-box">
+                        <div class="alert alert-warning">
                             <strong>Backup Security:</strong> Ensure your config directory backups are stored securely as they contain API keys and authentication data.
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section id="compatibility" class="faq-section">
-                <h2><i class="fas fa-puzzle-piece"></i> Compatibility & Requirements</h2>
+            <section id="compatibility" class="installation-methods">
+                <h2>Compatibility & Requirements</h2>
 
                 <div class="faq-item">
                     <div class="faq-question">What platforms does Huntarr support?</div>
@@ -880,7 +725,7 @@
                             <li><strong>Linux:</strong> Docker or from source</li>
                         </ul>
                         
-                        <div class="success-box">
+                        <div class="alert alert-success">
                             <strong>Cross-Platform:</strong> Docker ensures consistent behavior across all platforms and is the recommended deployment method.
                         </div>
                     </div>
@@ -898,7 +743,7 @@
                             <li><strong>Network:</strong> Internet access for API calls to *arr apps and indexers</li>
                         </ul>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             <strong>Scaling:</strong> Requirements increase with library size and number of configured applications.
                         </div>
                     </div>
@@ -915,7 +760,7 @@
                             <li><strong>TrueNAS:</strong> Use Docker or jail deployment</li>
                         </ul>
                         
-                        <div class="success-box">
+                        <div class="alert alert-success">
                             <strong>Efficiency:</strong> Huntarr is designed to be lightweight and efficient, making it perfect for NAS and low-power deployments.
                         </div>
                     </div>
@@ -932,7 +777,7 @@
                             <li><strong>Authentication:</strong> Can work with proxy-level auth</li>
                         </ul>
                         
-                        <div class="info-box">
+                        <div class="alert alert-info">
                             <strong>Configuration:</strong> Ensure your reverse proxy passes the correct headers and handles WebSocket connections for real-time features.
                         </div>
                     </div>
@@ -945,28 +790,35 @@
         </div>
     </div>
 
-    <button class="return-to-top" onclick="scrollToTop()" title="Return to Top">
-        <i class="fas fa-arrow-up"></i>
-    </button>
+    <a href="#toc" class="back-to-top" id="back-to-top" title="Back to Top">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path>
+        </svg>
+    </a>
 
     <script>
-        // Show/hide return to top button
+        // Show/hide back-to-top button based on scroll position
         window.addEventListener('scroll', function() {
-            const returnToTop = document.querySelector('.return-to-top');
+            var backToTopButton = document.getElementById('back-to-top');
             if (window.pageYOffset > 300) {
-                returnToTop.classList.add('visible');
+                backToTopButton.classList.add('visible');
             } else {
-                returnToTop.classList.remove('visible');
+                backToTopButton.classList.remove('visible');
             }
         });
-
-        // Smooth scroll to top
-        function scrollToTop() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
+        
+        // Smooth scroll to the target when clicking on table of contents links
+        document.querySelectorAll('.toc a').forEach(function(anchor) {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                var targetId = this.getAttribute('href');
+                var targetElement = document.querySelector(targetId);
+                window.scrollTo({
+                    top: targetElement.offsetTop - 20,
+                    behavior: 'smooth'
+                });
             });
-        }
+        });
 
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
