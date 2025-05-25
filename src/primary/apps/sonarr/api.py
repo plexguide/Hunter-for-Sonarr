@@ -63,21 +63,20 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         sonarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
 
         # Get SSL verification setting - ALWAYS use global, ignore verify_ssl parameter
-        actual_verify_ssl_value = get_ssl_verify_setting()
+        verify_ssl = get_ssl_verify_setting()
         
-        # Log the actual value of verify_ssl being used for this specific request
-        sonarr_logger.debug(f"arr_request: For URL {full_url}, verify_ssl is {actual_verify_ssl_value} (type: {type(actual_verify_ssl_value)})")
+        # Unconditionally log the SSL setting that will be used for this specific request
+        sonarr_logger.debug(f"arr_request: For URL {full_url}, effective SSL verification for requests call will be: {verify_ssl} (type: {type(verify_ssl)})")
 
-        # THIS IS THE CRITICAL SECTION - Ensure actual_verify_ssl_value is used
         try:
             if method.upper() == "GET":
-                response = session.get(full_url, headers=headers, timeout=api_timeout, verify=actual_verify_ssl_value)
+                response = session.get(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
             elif method.upper() == "POST":
-                response = session.post(full_url, headers=headers, json=data, timeout=api_timeout, verify=actual_verify_ssl_value)
+                response = session.post(full_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
             elif method.upper() == "PUT":
-                response = session.put(full_url, headers=headers, json=data, timeout=api_timeout, verify=actual_verify_ssl_value)
+                response = session.put(full_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
             elif method.upper() == "DELETE":
-                response = session.delete(full_url, headers=headers, timeout=api_timeout, verify=actual_verify_ssl_value)
+                response = session.delete(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
             else:
                 sonarr_logger.error(f"Unsupported HTTP method: {method}")
                 return None
@@ -511,9 +510,9 @@ def get_cutoff_unmet_episodes_random_page(api_url: str, api_key: str, api_timeou
             sonarr_logger.debug(f"Sonarr API Timeout: {api_timeout}")
             
             # Explicitly log the SSL verification setting just before the call
-            current_ssl_verify_setting = get_ssl_verify_setting()
-            sonarr_logger.debug(f"SSL verify setting before calling arr_request for count: {current_ssl_verify_setting}")
-            
+            ssl_verify = get_ssl_verify_setting()
+            sonarr_logger.debug(f"get_missing_episodes_random_page: SSL verify for '{query_endpoint}' will be: {ssl_verify}")
+
             response = arr_request(api_url, api_key, api_timeout, query_endpoint)
             if not response or "totalRecords" not in response:
                 sonarr_logger.warning(f"Empty or invalid response when getting missing count (attempt {attempt+1})")
