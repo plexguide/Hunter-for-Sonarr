@@ -28,11 +28,11 @@ If Huntarr has been helpful to you and you appreciate the power of open-source s
 
 | **Sonarr** | **Radarr** | **Lidarr** | **Readarr** |
 |:----------:|:----------:|:----------:|:-----------:|
-| <img src="https://img.shields.io/badge/Status-Ready-brightgreen?style=flat&logo=checkmarx&logoColor=white" alt="Ready" /> | <img src="https://img.shields.io/badge/Status-Ready-brightgreen?style=flat&logo=checkmarx&logoColor=white" alt="Ready" /> | <img src="https://img.shields.io/badge/Status-Ready-brightgreen?style=flat&logo=checkmarx&logoColor=white" alt="Ready" /> | <img src="https://img.shields.io/badge/Status-Ready-brightgreen?style=flat&logo=checkmarx&logoColor=white" alt="Ready" /> |
+| <img src="https://img.shields.io/badge/Status-Ready-green?style=flat" alt="Ready" /> | <img src="https://img.shields.io/badge/Status-Ready-green?style=flat" alt="Ready" /> | <img src="https://img.shields.io/badge/Status-Ready-green?style=flat" alt="Ready" /> | <img src="https://img.shields.io/badge/Status-Ready-green?style=flat" alt="Ready" /> |
 
-| **Whisparr v2** | **Whisparr v3** | **Bazarr** | |
-|:---------------:|:---------------:|:----------:|:-:|
-| <img src="https://img.shields.io/badge/Status-Ready-brightgreen?style=flat&logo=checkmarx&logoColor=white" alt="Ready" /> | <img src="https://img.shields.io/badge/Status-Ready-brightgreen?style=flat&logo=checkmarx&logoColor=white" alt="Ready" /> | <img src="https://img.shields.io/badge/Status-Not%20Ready-red?style=flat&logo=x&logoColor=white" alt="Not Ready" /> | |
+| **Whisparr v2** | **Whisparr v3** | **Bazarr** |
+|:---------------:|:---------------:|:----------:|
+| <img src="https://img.shields.io/badge/Status-Ready-green?style=flat" alt="Ready" /> | <img src="https://img.shields.io/badge/Status-Ready-green?style=flat" alt="Ready" /> | <img src="https://img.shields.io/badge/Status-Not%20Ready-red?style=flat" alt="Not Ready" /> |
 
 </div>
 
