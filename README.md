@@ -44,6 +44,18 @@ This application continually searches your media libraries for missing content a
 
 For detailed documentation, please visit our <a href="https://plexguide.github.io/Huntarr.io/" target="_blank" rel="noopener noreferrer">Wiki</a>.
 
+## Why You Need Huntarr
+
+Think of it this way: Sonarr/Radarr are like having a mailman who only delivers new mail as it arrives, but never goes back to get mail that was missed or wasn't available when they first checked. Huntarr is like having someone systematically go through your entire wishlist and actually hunt down all the missing pieces.
+
+Here's the key thing most people don't understand: Your *arr apps only monitor RSS feeds for NEW releases. They don't go back and search for the missing episodes/movies already in your library. This means if you have shows you added after they finished airing, episodes that failed to download initially, or content that wasn't available on your indexers when you first added it, your *arr apps will just ignore them forever.
+
+Huntarr solves this by continuously scanning your entire library, finding all the missing content, and systematically searching for it in small batches that won't overwhelm your indexers or get you banned. It's the difference between having a "mostly complete" library and actually having everything you want.
+
+Most people don't even realize they have missing content because their *arr setup "looks" like it's working perfectly - it's grabbing new releases just fine. But Huntarr will show you exactly how much you're actually missing, and then go get it all for you automatically.
+
+Without Huntarr, you're basically running incomplete automation. You're only getting new stuff as it releases, but missing out on completing existing series, filling gaps in movie collections, and getting quality upgrades when they become available. It's the tool that actually completes your media automation setup.
+
 ## Other Projects
 
 * [Unraid Intel ARC Deployment](https://github.com/plexguide/Unraid_Intel-ARC_Deployment) - Convert videos to AV1 Format (I've saved 325TB encoding to AV1)
