@@ -912,55 +912,6 @@ def apply_timezone_setting():
         return jsonify({"success": False, "error": f"Failed to apply timezone {timezone}"}), 500
     '''
 
-@app.route('/api/stats', methods=['GET'])
-def api_get_stats():
-    """Get the media statistics for all apps"""
-    try:
-        # Import the stats manager to get actual stats
-        from src.primary.stats_manager import get_stats
-        
-        # Get real stats from the stats file
-        stats = get_stats()
-        
-        web_logger = get_logger("web_server")
-        web_logger.info(f"Serving actual stats from file: {stats}")
-        
-        return jsonify({"success": True, "stats": stats})
-    except Exception as e:
-        web_logger = get_logger("web_server")
-        web_logger.error(f"Error fetching statistics: {str(e)}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route('/api/stats/reset', methods=['POST'])
-def api_reset_stats():
-    """Reset the media statistics for all apps or a specific app"""
-    try:
-        data = request.json or {}
-        app_type = data.get('app_type')
-        
-        # Get logger for logging the reset action
-        web_logger = get_logger("web_server")
-        
-        # Import the reset_stats function
-        from src.primary.stats_manager import reset_stats
-        
-        if app_type:
-            web_logger.info(f"Resetting statistics for app: {app_type}")
-            reset_success = reset_stats(app_type)
-        else:
-            web_logger.info("Resetting all media statistics")
-            reset_success = reset_stats(None)
-        
-        if reset_success:
-            return jsonify({"success": True, "message": "Statistics reset successfully"})
-        else:
-            return jsonify({"success": False, "error": "Failed to reset statistics"}), 500
-        
-    except Exception as e:
-        web_logger = get_logger("web_server")
-        web_logger.error(f"Error resetting statistics: {str(e)}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
 @app.route('/api/hourly-caps', methods=['GET'])
 def api_get_hourly_caps():
     """Get hourly API usage caps for each app"""

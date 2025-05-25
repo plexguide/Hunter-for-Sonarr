@@ -2159,12 +2159,87 @@ let huntarrUI = {
                 statTypes.forEach(type => {
                     const element = document.getElementById(`${app}-${type}`);
                     if (element) {
-                        // Animate the number change
-                        this.animateNumber(element, parseInt(element.textContent), stats[app][type] || 0);
+                        // Get current and target values, ensuring they're valid numbers
+                        const currentText = element.textContent || '0';
+                        const currentValue = this.parseFormattedNumber(currentText);
+                        const targetValue = Math.max(0, parseInt(stats[app][type]) || 0); // Ensure non-negative
+                        
+                        // Only animate if values are different and both are valid
+                        if (currentValue !== targetValue && !isNaN(currentValue) && !isNaN(targetValue)) {
+                            // Cancel any existing animation for this element
+                            if (element.animationFrame) {
+                                cancelAnimationFrame(element.animationFrame);
+                            }
+                            
+                            // Animate the number change
+                            this.animateNumber(element, currentValue, targetValue);
+                        } else if (isNaN(currentValue) || currentValue < 0) {
+                            // If current value is invalid, set directly without animation
+                            element.textContent = this.formatLargeNumber(targetValue);
+                        }
                     }
                 });
             }
         });
+    },
+
+    // Helper function to parse formatted numbers back to integers
+    parseFormattedNumber: function(formattedStr) {
+        if (!formattedStr || typeof formattedStr !== 'string') return 0;
+        
+        // Remove any formatting (K, M, commas, etc.)
+        const cleanStr = formattedStr.replace(/[^\d.-]/g, '');
+        const parsed = parseInt(cleanStr);
+        
+        // Handle K and M suffixes
+        if (formattedStr.includes('K')) {
+            return Math.floor(parsed * 1000);
+        } else if (formattedStr.includes('M')) {
+            return Math.floor(parsed * 1000000);
+        }
+        
+        return isNaN(parsed) ? 0 : Math.max(0, parsed);
+    },
+
+    animateNumber: function(element, start, end) {
+        // Ensure start and end are valid numbers
+        start = Math.max(0, parseInt(start) || 0);
+        end = Math.max(0, parseInt(end) || 0);
+        
+        // If start equals end, just set the value
+        if (start === end) {
+            element.textContent = this.formatLargeNumber(end);
+            return;
+        }
+        
+        const duration = 1000; // Animation duration in milliseconds
+        const startTime = performance.now();
+        
+        const updateNumber = (currentTime) => {
+            const elapsedTime = currentTime - startTime;
+            const progress = Math.min(elapsedTime / duration, 1);
+            
+            // Easing function for smooth animation
+            const easeOutQuad = progress * (2 - progress);
+            
+            const currentValue = Math.max(0, Math.floor(start + (end - start) * easeOutQuad));
+            
+            // Format number for display
+            element.textContent = this.formatLargeNumber(currentValue);
+            
+            if (progress < 1) {
+                // Store the animation frame ID to allow cancellation
+                element.animationFrame = requestAnimationFrame(updateNumber);
+            } else {
+                // Ensure we end with the exact formatted target number
+                element.textContent = this.formatLargeNumber(end);
+                // Clear the animation frame reference
+                element.animationFrame = null;
+            }
+        };
+        
+        // Store the animation frame ID to allow cancellation
+        element.animationFrame = requestAnimationFrame(updateNumber);
     },
     
     // Format large numbers with appropriate suffixes (K, M, B, T)  
@@ -2199,33 +2274,6 @@ let huntarrUI = {
         }
     },
 
-    animateNumber: function(element, start, end) {
-        const duration = 1000; // Animation duration in milliseconds
-        const startTime = performance.now();
-        
-        const updateNumber = (currentTime) => {
-            const elapsedTime = currentTime - startTime;
-            const progress = Math.min(elapsedTime / duration, 1);
-            
-            // Easing function for smooth animation
-            const easeOutQuad = progress * (2 - progress);
-            
-            const currentValue = Math.floor(start + (end - start) * easeOutQuad);
-            
-            // Format number for display
-            element.textContent = this.formatLargeNumber(currentValue);
-            
-            if (progress < 1) {
-                requestAnimationFrame(updateNumber);
-            } else {
-                // Ensure we end with the exact formatted target number
-                element.textContent = this.formatLargeNumber(end);
-            }
-        };
-        
-        requestAnimationFrame(updateNumber);
-    },
-    
     resetMediaStats: function(appType = null) {
         // Directly update the UI first to provide immediate feedback
         const stats = {
