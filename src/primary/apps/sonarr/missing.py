@@ -337,10 +337,12 @@ def process_missing_seasons_packs_mode(
             log_processed_media("sonarr", media_name, season_id, instance_name, "missing")
             sonarr_logger.debug(f"Logged history entry for season pack: {media_name}")
             
-            # Increment stats one by one instead of in a batch
+            # CRITICAL FIX: Use increment_stat_only to avoid double-counting API calls
+            # The API call is already tracked in search_season(), so we only increment stats here
+            from src.primary.stats_manager import increment_stat_only
             for i in range(episode_count):
-                increment_stat("sonarr", "hunted")
-            sonarr_logger.debug(f"Incremented sonarr hunted statistics for {episode_count} episodes in season pack")
+                increment_stat_only("sonarr", "hunted")
+            sonarr_logger.debug(f"Incremented sonarr hunted statistics for {episode_count} episodes in season pack (API call already tracked separately)")
             
             # Wait for command to complete if configured
             if command_wait_delay > 0 and command_wait_attempts > 0:

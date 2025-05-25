@@ -424,6 +424,53 @@ def increment_stat(app_type: str, stat_type: str, count: int = 1) -> bool:
         logger.info(f"Successfully incremented and verified {app_type} {stat_type}")
         return True
 
+def increment_stat_only(app_type: str, stat_type: str, count: int = 1) -> bool:
+    """
+    Increment a specific statistic WITHOUT incrementing API cap counter
+    
+    This function is specifically for season packs where the API call is already tracked
+    separately and we only want to increment the stats for each episode.
+    
+    Args:
+        app_type: The application type (sonarr, radarr, etc.)
+        stat_type: The type of statistic (hunted or upgraded)
+        count: The amount to increment by (default: 1)
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    if app_type not in ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros", "swaparr"]:
+        logger.error(f"Invalid app_type: {app_type}")
+        return False
+        
+    if stat_type not in ["hunted", "upgraded"]:
+        logger.error(f"Invalid stat_type: {stat_type}")
+        return False
+    
+    # CRITICAL: Do NOT increment hourly API cap - this is for season packs where
+    # the API call is already tracked separately in search_season()
+    
+    with stats_lock:
+        stats = load_stats()
+        prev_value = stats[app_type][stat_type]
+        stats[app_type][stat_type] += count
+        new_value = stats[app_type][stat_type]
+        logger.info(f"*** STATS ONLY INCREMENT *** {app_type} {stat_type} by {count}: {prev_value} -> {new_value} (API cap NOT incremented)")
+        save_success = save_stats(stats)
+        
+        if not save_success:
+            logger.error(f"Failed to save stats after incrementing {app_type} {stat_type}")
+            return False
+            
+        # Add debug verification that stats were actually saved
+        verification_stats = load_stats()
+        if verification_stats[app_type][stat_type] != new_value:
+            logger.error(f"Stats verification failed! Expected {new_value} but got {verification_stats[app_type][stat_type]} for {app_type} {stat_type}")
+            return False
+            
+        logger.info(f"Successfully incremented and verified {app_type} {stat_type} (stats only)")
+        return True
+
 def get_stats() -> Dict[str, Dict[str, int]]:
     """
     Get the current statistics

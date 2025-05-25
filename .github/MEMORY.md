@@ -9,14 +9,19 @@
 1. **Low Usage Mode Stats Fix** - Fixed incorrect stats display when low usage mode is enabled
 2. **Countdown Timer Startup** - Changed "Error Loading" to "Waiting for Cycle" during startup
 3. **Reset Button Behavior** - Improved "Refreshing" feedback to stay until genuinely new data is available
-4. **Development Guidelines** - Added version number management guidelines
+4. **Sonarr Season Packs API Fix** - Fixed double-counting of API calls in season packs mode
+5. **Development Guidelines** - Added version number management guidelines
 
 **Files Modified:**
 - `frontend/static/js/new-main.js` - Low usage mode detection and stats display fixes
-- `frontend/static/js/cycle-countdown.js` - Startup messaging and reset behavior improvements  
+- `frontend/static/js/cycle-countdown.js` - Startup messaging and reset behavior improvements
+- `src/primary/apps/sonarr/api.py` - Added API call tracking to season search
+- `src/primary/stats_manager.py` - Added stats-only increment function
+- `src/primary/apps/sonarr/missing.py` - Fixed season pack stats tracking
+- `src/primary/apps/sonarr/upgrade.py` - Fixed season pack stats tracking
 - `.github/listen.MD` - Added version number management guidelines
 
-**Tags:** ["major_release", "ui_improvements", "low_usage_mode", "countdown_timers", "user_experience"]
+**Tags:** ["major_release", "ui_improvements", "low_usage_mode", "countdown_timers", "api_limits", "sonarr", "user_experience"]
 
 ---
 
@@ -143,5 +148,62 @@ function startResetPolling(app) {
 **User Experience:** Users now see "Refreshing" for the appropriate duration until the reset process actually completes and new countdown data is available, providing accurate feedback about the system state.
 
 **Tags:** ["ui_improvement", "frontend", "countdown_timer", "reset_behavior", "polling", "user_feedback"]
+
+## Bug Fix: Sonarr Season Packs API Limit Tracking Issue (v7.3.10)
+
+**Date:** 2025-05-25  
+**Issue:** When using Season Packs mode in Sonarr, API limit tracking was inaccurate. The system was double-counting API calls - once for the `search_season()` API call and again for each episode's stats increment, causing the hourly API cap to be exceeded much faster than it should be.  
+**Root Cause:** 
+1. `search_season()` function in `api.py` was not tracking its API call in the hourly cap counter
+2. Season pack processing in `missing.py` and `upgrade.py` was using `increment_stat()` which automatically increments both stats AND API cap counter for each episode
+3. This resulted in: 1 actual API call + N episode stat increments = 1 + N API cap increments (should only be 1)
+
+**Example:** A season with 10 episodes would count as 11 API calls instead of 1, causing users to hit their hourly limit 11x faster.
+
+**Solution:** 
+1. **Fixed `search_season()` function** - Added proper API call tracking using `increment_hourly_cap()`
+2. **Created new `increment_stat_only()` function** - Increments stats without touching API cap counter
+3. **Updated season pack logic** - Changed from `increment_stat()` to `increment_stat_only()` in both missing and upgrade season modes
+
+**Files Modified:**
+- `src/primary/apps/sonarr/api.py` - Added API call tracking to `search_season()` function
+- `src/primary/stats_manager.py` - Added `increment_stat_only()` function for season packs
+- `src/primary/apps/sonarr/missing.py` - Updated season pack stats to use `increment_stat_only()`
+- `src/primary/apps/sonarr/upgrade.py` - Updated season pack stats to use `increment_stat_only()`
+
+**Code Changes:**
+```python
+# In api.py - Added API tracking to search_season()
+def search_season(api_url, api_key, api_timeout, series_id, season_number):
+    # ... existing API call logic ...
+    
+    # CRITICAL FIX: Track the API call in hourly cap counter
+    try:
+        from src.primary.stats_manager import increment_hourly_cap
+        increment_hourly_cap("sonarr", 1)
+    except Exception as cap_error:
+        logger.error(f"Failed to increment hourly API cap: {cap_error}")
+
+# In stats_manager.py - New function for season packs
+def increment_stat_only(app_type, stat_type, count=1):
+    """Increment stats WITHOUT incrementing API cap counter"""
+    # CRITICAL: Do NOT increment hourly API cap - for season packs where
+    # the API call is already tracked separately in search_season()
+    
+# In missing.py and upgrade.py - Updated season pack logic
+# Before: Double-counted API calls
+for i in range(episode_count):
+    increment_stat("sonarr", "hunted")  # This increments BOTH stats AND API cap
+
+# After: Accurate API tracking
+for i in range(episode_count):
+    increment_stat_only("sonarr", "hunted")  # Only increments stats
+```
+
+**Impact:** This fix ensures that season pack searches are accurately tracked as 1 API call regardless of how many episodes are in the season, preventing premature API limit exhaustion.
+
+**Testing:** Verified that container starts successfully and Sonarr is running in seasons_packs mode where the fix applies.
+
+**Tags:** ["bug_fix", "backend", "sonarr", "api_limits", "season_packs", "stats_tracking"]
 
 --- 

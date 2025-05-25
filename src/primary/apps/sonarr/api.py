@@ -875,6 +875,16 @@ def search_season(api_url: str, api_key: str, api_timeout: int, series_id: int, 
         response.raise_for_status()
         command_id = response.json().get('id')
         sonarr_logger.info(f"Triggered Sonarr season search for series ID: {series_id}, season: {season_number}. Command ID: {command_id}")
+        
+        # CRITICAL FIX: Track the API call in hourly cap counter
+        # This was missing and causing API counter to be inaccurate for season packs
+        try:
+            from src.primary.stats_manager import increment_hourly_cap
+            increment_hourly_cap("sonarr", 1)
+            sonarr_logger.debug(f"Incremented Sonarr hourly API cap for season search (series: {series_id}, season: {season_number})")
+        except Exception as cap_error:
+            sonarr_logger.error(f"Failed to increment hourly API cap for season search: {cap_error}")
+        
         return command_id
     except requests.exceptions.RequestException as e:
         sonarr_logger.error(f"Error triggering Sonarr season search for series ID {series_id}, season {season_number}: {e}")
