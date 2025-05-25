@@ -24,18 +24,19 @@ If Huntarr has been helpful to you and you appreciate the power of open-source s
   </a>
 </p>
  
-| Application | Status        |
-| :---------- | :------------ |
-| Sonarr      | **✅ Ready**  |
-| Radarr      | **✅ Ready**  |
-| Lidarr      | **✅ Ready**  |
-| Readarr     | **✅ Ready**  |
-| Whisparr v2 | **✅ Ready**  |
-| Whisparr v3 | **✅ Ready**  |
-| Bazarr    | **❌ Not Ready** | 
+<div align="center">
 
+| Application | Status |
+|:-----------:|:------:|
+| **Sonarr** | <img src="https://img.shields.io/badge/Status-Ready-brightgreen?style=flat&logo=checkmarx&logoColor=white" alt="Ready" /> |
+| **Radarr** | <img src="https://img.shields.io/badge/Status-Ready-brightgreen?style=flat&logo=checkmarx&logoColor=white" alt="Ready" /> |
+| **Lidarr** | <img src="https://img.shields.io/badge/Status-Ready-brightgreen?style=flat&logo=checkmarx&logoColor=white" alt="Ready" /> |
+| **Readarr** | <img src="https://img.shields.io/badge/Status-Ready-brightgreen?style=flat&logo=checkmarx&logoColor=white" alt="Ready" /> |
+| **Whisparr v2** | <img src="https://img.shields.io/badge/Status-Ready-brightgreen?style=flat&logo=checkmarx&logoColor=white" alt="Ready" /> |
+| **Whisparr v3** | <img src="https://img.shields.io/badge/Status-Ready-brightgreen?style=flat&logo=checkmarx&logoColor=white" alt="Ready" /> |
+| **Bazarr** | <img src="https://img.shields.io/badge/Status-Not%20Ready-red?style=flat&logo=x&logoColor=white" alt="Not Ready" /> |
 
-Keep in mind this is very early in program development. If you have a very special hand picked collection (because some users are extra special), test before you deploy.
+</div>
 
 ## Table of Contents
 - [Overview](#overview)
