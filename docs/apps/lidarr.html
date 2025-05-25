@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sonarr Documentation - Huntarr.io</title>
+    <title>Lidarr Documentation - Huntarr.io</title>
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="../js/main.js" defer></script>
@@ -38,7 +38,6 @@
                 <h3 class="sidebar-section-title">Resources</h3>
                 <ul>
                     <li><a href="https://github.com/plexguide/Huntarr.io" target="_blank"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path></svg> GitHub</a></li>
-
                     <li><a href="https://discord.com/invite/PGJJjR5Cww" target="_blank"><i class="fab fa-discord" style="color: #5865F2; font-size: 18px; width: 24px; height: 24px; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center;"></i> Discord</a></li>
                     <li><a href="https://www.reddit.com/r/huntarr/" target="_blank"><i class="fab fa-reddit-alien" style="color: #FF4500; font-size: 18px; width: 24px; height: 24px; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center;"></i> Reddit</a></li>
                     <li><a href="https://donate.plex.one" target="_blank"><i class="fas fa-heart" style="color: #e91e63; font-size: 18px; width: 24px; height: 24px; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center;"></i> Donate</a></li>
@@ -49,27 +48,27 @@
 
     <div class="main-content">
         <div class="container">
-            <h1>Sonarr Documentation</h1>
+            <h1>Lidarr Documentation</h1>
             
             <div style="text-align: center; margin: 20px auto;">
-                <img src="../images/arrs/sonarr.png" alt="Sonarr Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                <img src="../images/arrs/lidarr.png" alt="Lidarr Logo" style="width: 80px; height: 80px; object-fit: contain;">
             </div>
             
-            <p>Sonarr is an automated TV show downloading and management application. Huntarr integrates with your existing Sonarr instance to automatically search for missing episodes and quality upgrades that Sonarr doesn't actively hunt for.</p>
+            <p>Lidarr is an automated music downloading and management application. Huntarr integrates with your existing Lidarr instance to automatically search for missing albums, tracks, and quality upgrades that Lidarr doesn't actively hunt for.</p>
             
-            <h2 id="sonarr-instance-setup">Sonarr Instance Setup</h2>
+            <h2 id="lidarr-instance-setup">Lidarr Instance Setup</h2>
             
-            <h3>Adding Your Sonarr Instance</h3>
-            <p>To connect your existing Sonarr instance to Huntarr:</p>
+            <h3>Adding Your Lidarr Instance</h3>
+            <p>To connect your existing Lidarr instance to Huntarr:</p>
             <ol>
-                <li>Navigate to the Sonarr section in Huntarr</li>
-                <li>Click "Add Sonarr Instance" if you don't have one configured</li>
-                <li>Fill in your Sonarr connection details</li>
-                <li>Test the connection to ensure Huntarr can communicate with Sonarr</li>
+                <li>Navigate to the Lidarr section in Huntarr</li>
+                <li>Click "Add Lidarr Instance" if you don't have one configured</li>
+                <li>Fill in your Lidarr connection details</li>
+                <li>Test the connection to ensure Huntarr can communicate with Lidarr</li>
             </ol>
             
             <h3 id="connection-settings">Connection Settings</h3>
-            <p>Configure these settings to connect Huntarr to your Sonarr instance:</p>
+            <p>Configure these settings to connect Huntarr to your Lidarr instance:</p>
             
             <table>
                 <tr>
@@ -80,21 +79,21 @@
                 </tr>
                 <tr>
                     <td>Name</td>
-                    <td>Friendly name for this Sonarr instance</td>
-                    <td>Default, TV-4K, Anime</td>
-                    <td>Useful when running multiple Sonarr instances</td>
+                    <td>Friendly name for this Lidarr instance</td>
+                    <td>Default, Music-FLAC, Podcasts</td>
+                    <td>Useful when running multiple Lidarr instances</td>
                 </tr>
                 <tr>
                     <td>URL</td>
-                    <td>Base URL for your Sonarr instance</td>
-                    <td>http://10.0.0.10:8989</td>
+                    <td>Base URL for your Lidarr instance</td>
+                    <td>http://10.0.0.10:8686</td>
                     <td>Include protocol (http/https) and port</td>
                 </tr>
                 <tr>
                     <td>API Key</td>
-                    <td>Sonarr API key for authentication</td>
-                    <td>a03c86b6292c4bd48cd5e3b84e5a470</td>
-                    <td>Found in Sonarr Settings > General > Security</td>
+                    <td>Lidarr API key for authentication</td>
+                    <td>c15f98d8403e6df5b7c9a86e4f2b580</td>
+                    <td>Found in Lidarr Settings > General > Security</td>
                 </tr>
                 <tr>
                     <td>Enabled</td>
@@ -106,20 +105,22 @@
             
             <h2 id="search-settings">Search Settings</h2>
             
-            <p>Configure how Huntarr searches for missing content and upgrades in your Sonarr instance. These settings control Huntarr's behavior when processing your TV show library.</p>
+            <p>Configure how Huntarr searches for missing music and upgrades in your Lidarr instance. These settings control Huntarr's behavior when processing your music library.</p>
             
-            <h3 id="missing-search-mode"><i class="fas fa-search" style="margin-right: 10px; color: #3498db;"></i>Missing Search Mode</h3>
-            <p>Determines how Huntarr searches for missing episodes:</p>
+            <h3 id="missing-search-mode"><i class="fas fa-search" style="margin-right: 10px; color: #2ecc71;"></i>Missing Search Mode</h3>
+            <p>Determines how Huntarr searches for missing music:</p>
             <ul>
-                <li><strong>Season Packs:</strong> Recommended for torrent users. Searches for entire season packs first, then individual episodes</li>
-                <li><strong>Episodes:</strong> Searches for individual episodes only. Better for Usenet users or when you prefer single episode files</li>
+                <li><strong>Albums:</strong> Searches for complete albums. Recommended for most music collections</li>
+                <li><strong>Tracks:</strong> Searches for individual tracks. Useful for compilation albums or singles</li>
+                <li><strong>Artists:</strong> Searches at the artist level for discographies</li>
             </ul>
             
             <h3 id="upgrade-mode"><i class="fas fa-arrow-up" style="margin-right: 10px; color: #2ecc71;"></i>Upgrade Mode</h3>
             <p>Controls how Huntarr handles quality upgrades:</p>
             <ul>
-                <li><strong>Episodes:</strong> Upgrades individual episodes when better quality becomes available</li>
-                <li><strong>Seasons/Shows:</strong> Upgrades entire seasons or shows at once when better quality is found</li>
+                <li><strong>Albums:</strong> Upgrades entire albums when better quality becomes available</li>
+                <li><strong>Tracks:</strong> Upgrades individual tracks for better quality</li>
+                <li><strong>Artists:</strong> Upgrades at the artist level for consistent quality across discography</li>
             </ul>
             
             <h3 id="search-limits"><i class="fas fa-sliders-h" style="margin-right: 10px; color: #f39c12;"></i>Search Limits</h3>
@@ -134,91 +135,106 @@
                 </tr>
                 <tr>
                     <td>Missing Search</td>
-                    <td>Number of missing items to search per cycle</td>
-                    <td>2-5</td>
+                    <td>Number of missing albums/tracks to search per cycle</td>
+                    <td>2-4</td>
                     <td>Set to 0 to disable missing searches</td>
                 </tr>
                 <tr>
                     <td>Upgrade Search</td>
-                    <td>Number of episodes to upgrade per cycle</td>
-                    <td>1-3</td>
+                    <td>Number of items to upgrade per cycle</td>
+                    <td>1-2</td>
                     <td>Set to 0 to disable upgrade searches</td>
                 </tr>
                 <tr>
                     <td>Sleep Duration</td>
                     <td>Time in seconds between processing cycles</td>
-                    <td>900 (15 min)</td>
-                    <td>Longer intervals reduce indexer load</td>
+                    <td>1800 (30 min)</td>
+                    <td>Music indexers often have stricter limits</td>
                 </tr>
                 <tr>
                     <td>API Cap - Hourly</td>
                     <td>Maximum API requests per hour</td>
-                    <td>400 or less</td>
-                    <td>Prevents rate limiting from indexers</td>
+                    <td>200 or less</td>
+                    <td>Music indexers typically have lower limits</td>
                 </tr>
             </table>
             
             <div class="alert alert-warning">
-                <strong>Important:</strong> Setting API limits too high can result in your accounts being banned from indexers. Start with conservative values and adjust based on your indexer limits.
+                <strong>Important:</strong> Music indexers often have stricter rate limits than movie/TV indexers. Use conservative settings to avoid being banned.
             </div>
             
             <h3 id="additional-options"><i class="fas fa-cogs" style="margin-right: 10px; color: #9b59b6;"></i>Additional Options</h3>
             <p>Fine-tune Huntarr's behavior with these additional settings:</p>
             
-            <h4><i class="fas fa-eye" style="margin-right: 8px; color: #3498db;"></i>Monitored Only</h4>
-            <p>When enabled, Huntarr will only search for content that is marked as "Monitored" in Sonarr. This prevents searches for shows you've intentionally unmonitored.</p>
+            <h4><i class="fas fa-eye" style="margin-right: 8px; color: #2ecc71;"></i>Monitored Only</h4>
+            <p>When enabled, Huntarr will only search for music that is marked as "Monitored" in Lidarr. This prevents searches for artists or albums you've intentionally unmonitored.</p>
             
-            <h4><i class="fas fa-clock" style="margin-right: 8px; color: #e74c3c;"></i>Skip Future Episodes</h4>
-            <p>When enabled, Huntarr will skip episodes with future air dates. This prevents unnecessary searches for content that hasn't been released yet.</p>
+            <h4><i class="fas fa-calendar" style="margin-right: 8px; color: #e74c3c;"></i>Skip Future Releases</h4>
+            <p>When enabled, Huntarr will skip albums with future release dates. This prevents unnecessary searches for content that hasn't been released yet.</p>
+            
+            <h4><i class="fas fa-music" style="margin-right: 8px; color: #f39c12;"></i>Quality Profiles</h4>
+            <p>Respects Lidarr's quality profile settings. Huntarr will only search for music that meets your configured quality requirements (MP3, FLAC, etc.).</p>
+            
+            <h4><i class="fas fa-microphone" style="margin-right: 8px; color: #9b59b6;"></i>Artist Monitoring</h4>
+            <p>When enabled, Huntarr will respect your artist monitoring settings in Lidarr, only searching for albums from artists you're actively monitoring.</p>
             
             <h2 id="troubleshooting">Troubleshooting</h2>
             
             <h3>Common Issues</h3>
             
             <h4>Connection Failed</h4>
-            <p>If Huntarr can't connect to your Sonarr instance:</p>
+            <p>If Huntarr can't connect to your Lidarr instance:</p>
             <ul>
                 <li>Verify the URL is correct and includes the protocol (http/https)</li>
-                <li>Check that the port number is correct (default: 8989)</li>
-                <li>Ensure the API key is copied correctly from Sonarr Settings > General > Security</li>
-                <li>Confirm Sonarr is running and accessible from Huntarr's network</li>
-                <li>Check firewall settings if Huntarr and Sonarr are on different machines</li>
+                <li>Check that the port number is correct (default: 8686)</li>
+                <li>Ensure the API key is copied correctly from Lidarr Settings > General > Security</li>
+                <li>Confirm Lidarr is running and accessible from Huntarr's network</li>
+                <li>Check firewall settings if Huntarr and Lidarr are on different machines</li>
             </ul>
             
-            <h4>No Missing Content Found</h4>
-            <p>If Huntarr reports no missing content but you know there are gaps:</p>
+            <h4>No Missing Music Found</h4>
+            <p>If Huntarr reports no missing music but you know there are gaps:</p>
             <ul>
                 <li>Ensure "Monitored Only" is configured correctly for your needs</li>
-                <li>Check that shows are marked as "Monitored" in Sonarr</li>
-                <li>Verify "Skip Future Episodes" isn't preventing searches for available content</li>
-                <li>Review your Missing Search Mode setting (Season Packs vs Episodes)</li>
+                <li>Check that artists and albums are marked as "Monitored" in Lidarr</li>
+                <li>Verify "Skip Future Releases" isn't preventing searches for available content</li>
+                <li>Review your quality profile settings in both Lidarr and Huntarr</li>
             </ul>
             
-            <h4>API Rate Limiting</h4>
-            <p>If you're getting rate limited by indexers:</p>
+            <h4>Music Indexer Rate Limiting</h4>
+            <p>If you're getting rate limited by music indexers:</p>
             <ul>
-                <li>Reduce the "API Cap - Hourly" setting to a lower value</li>
-                <li>Increase the "Sleep Duration" between processing cycles</li>
-                <li>Lower the "Missing Search" and "Upgrade Search" limits</li>
-                <li>Check your indexer's specific rate limits and adjust accordingly</li>
+                <li>Reduce the "API Cap - Hourly" setting significantly (try 100-200)</li>
+                <li>Increase the "Sleep Duration" to 30+ minutes between cycles</li>
+                <li>Lower the "Missing Search" and "Upgrade Search" limits to 1-2</li>
+                <li>Music indexers are typically more restrictive than movie/TV indexers</li>
             </ul>
             
-            <h4>Searches Not Triggering</h4>
-            <p>If Huntarr isn't searching for content:</p>
+            <h4>Metadata Issues</h4>
+            <p>If Huntarr isn't finding the right music:</p>
             <ul>
-                <li>Ensure the Sonarr instance is enabled in Huntarr</li>
-                <li>Check that search limits aren't set to 0 (which disables searches)</li>
-                <li>Verify Huntarr is running and not paused</li>
-                <li>Review the logs for any error messages or API issues</li>
+                <li>Verify your metadata provider settings in Lidarr (MusicBrainz, etc.)</li>
+                <li>Check that album and artist names are correctly matched</li>
+                <li>Review release group settings for proper album identification</li>
+                <li>Consider adjusting search criteria for international releases</li>
+            </ul>
+            
+            <h4>Quality and Format Issues</h4>
+            <p>If Huntarr isn't finding the right audio quality:</p>
+            <ul>
+                <li>Verify your quality profiles support the formats you want (FLAC, MP3, etc.)</li>
+                <li>Check that your indexers have the quality levels you're seeking</li>
+                <li>Review cutoff settings to ensure upgrades are allowed</li>
+                <li>Consider separate instances for different quality requirements</li>
             </ul>
             
             <div class="section-nav">
-                <a href="index.html">← Back to Apps</a>
-                <a href="radarr.html">Radarr Documentation →</a>
+                <a href="radarr.html">← Radarr Documentation</a>
+                <a href="readarr.html">Readarr Documentation →</a>
             </div>
             
             <footer>
-                Huntarr.io | Sonarr Documentation | Thanks 4 Using Huntarr - Admin9705
+                Huntarr.io | Lidarr Documentation | Thanks 4 Using Huntarr - Admin9705
             </footer>
         </div>
     </div>

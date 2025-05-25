@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sonarr Documentation - Huntarr.io</title>
+    <title>Readarr Documentation - Huntarr.io</title>
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="../js/main.js" defer></script>
@@ -38,7 +38,6 @@
                 <h3 class="sidebar-section-title">Resources</h3>
                 <ul>
                     <li><a href="https://github.com/plexguide/Huntarr.io" target="_blank"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path></svg> GitHub</a></li>
-
                     <li><a href="https://discord.com/invite/PGJJjR5Cww" target="_blank"><i class="fab fa-discord" style="color: #5865F2; font-size: 18px; width: 24px; height: 24px; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center;"></i> Discord</a></li>
                     <li><a href="https://www.reddit.com/r/huntarr/" target="_blank"><i class="fab fa-reddit-alien" style="color: #FF4500; font-size: 18px; width: 24px; height: 24px; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center;"></i> Reddit</a></li>
                     <li><a href="https://donate.plex.one" target="_blank"><i class="fas fa-heart" style="color: #e91e63; font-size: 18px; width: 24px; height: 24px; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center;"></i> Donate</a></li>
@@ -49,27 +48,27 @@
 
     <div class="main-content">
         <div class="container">
-            <h1>Sonarr Documentation</h1>
+            <h1>Readarr Documentation</h1>
             
             <div style="text-align: center; margin: 20px auto;">
-                <img src="../images/arrs/sonarr.png" alt="Sonarr Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                <img src="../images/arrs/readarr.png" alt="Readarr Logo" style="width: 80px; height: 80px; object-fit: contain;">
             </div>
             
-            <p>Sonarr is an automated TV show downloading and management application. Huntarr integrates with your existing Sonarr instance to automatically search for missing episodes and quality upgrades that Sonarr doesn't actively hunt for.</p>
+            <p>Readarr is an automated book and audiobook downloading and management application. Huntarr integrates with your existing Readarr instance to automatically search for missing books and quality upgrades that Readarr doesn't actively hunt for.</p>
             
-            <h2 id="sonarr-instance-setup">Sonarr Instance Setup</h2>
+            <h2 id="readarr-instance-setup">Readarr Instance Setup</h2>
             
-            <h3>Adding Your Sonarr Instance</h3>
-            <p>To connect your existing Sonarr instance to Huntarr:</p>
+            <h3>Adding Your Readarr Instance</h3>
+            <p>To connect your existing Readarr instance to Huntarr:</p>
             <ol>
-                <li>Navigate to the Sonarr section in Huntarr</li>
-                <li>Click "Add Sonarr Instance" if you don't have one configured</li>
-                <li>Fill in your Sonarr connection details</li>
-                <li>Test the connection to ensure Huntarr can communicate with Sonarr</li>
+                <li>Navigate to the Readarr section in Huntarr</li>
+                <li>Click "Add Readarr Instance" if you don't have one configured</li>
+                <li>Fill in your Readarr connection details</li>
+                <li>Test the connection to ensure Huntarr can communicate with Readarr</li>
             </ol>
             
             <h3 id="connection-settings">Connection Settings</h3>
-            <p>Configure these settings to connect Huntarr to your Sonarr instance:</p>
+            <p>Configure these settings to connect Huntarr to your Readarr instance:</p>
             
             <table>
                 <tr>
@@ -80,21 +79,21 @@
                 </tr>
                 <tr>
                     <td>Name</td>
-                    <td>Friendly name for this Sonarr instance</td>
-                    <td>Default, TV-4K, Anime</td>
-                    <td>Useful when running multiple Sonarr instances</td>
+                    <td>Friendly name for this Readarr instance</td>
+                    <td>Default, Audiobooks, Comics</td>
+                    <td>Useful when running multiple Readarr instances</td>
                 </tr>
                 <tr>
                     <td>URL</td>
-                    <td>Base URL for your Sonarr instance</td>
-                    <td>http://10.0.0.10:8989</td>
+                    <td>Base URL for your Readarr instance</td>
+                    <td>http://10.0.0.10:8787</td>
                     <td>Include protocol (http/https) and port</td>
                 </tr>
                 <tr>
                     <td>API Key</td>
-                    <td>Sonarr API key for authentication</td>
-                    <td>a03c86b6292c4bd48cd5e3b84e5a470</td>
-                    <td>Found in Sonarr Settings > General > Security</td>
+                    <td>Readarr API key for authentication</td>
+                    <td>d26g09e9514f7hf6c8d0b97f5e3c691</td>
+                    <td>Found in Readarr Settings > General > Security</td>
                 </tr>
                 <tr>
                     <td>Enabled</td>
@@ -106,20 +105,22 @@
             
             <h2 id="search-settings">Search Settings</h2>
             
-            <p>Configure how Huntarr searches for missing content and upgrades in your Sonarr instance. These settings control Huntarr's behavior when processing your TV show library.</p>
+            <p>Configure how Huntarr searches for missing books and upgrades in your Readarr instance. These settings control Huntarr's behavior when processing your book library.</p>
             
-            <h3 id="missing-search-mode"><i class="fas fa-search" style="margin-right: 10px; color: #3498db;"></i>Missing Search Mode</h3>
-            <p>Determines how Huntarr searches for missing episodes:</p>
+            <h3 id="missing-search-mode"><i class="fas fa-search" style="margin-right: 10px; color: #8b4513;"></i>Missing Search Mode</h3>
+            <p>Determines how Huntarr searches for missing books:</p>
             <ul>
-                <li><strong>Season Packs:</strong> Recommended for torrent users. Searches for entire season packs first, then individual episodes</li>
-                <li><strong>Episodes:</strong> Searches for individual episodes only. Better for Usenet users or when you prefer single episode files</li>
+                <li><strong>Books:</strong> Searches for individual books. Standard mode for most libraries</li>
+                <li><strong>Authors:</strong> Searches at the author level for complete works</li>
+                <li><strong>Series:</strong> Searches for book series when available</li>
             </ul>
             
             <h3 id="upgrade-mode"><i class="fas fa-arrow-up" style="margin-right: 10px; color: #2ecc71;"></i>Upgrade Mode</h3>
             <p>Controls how Huntarr handles quality upgrades:</p>
             <ul>
-                <li><strong>Episodes:</strong> Upgrades individual episodes when better quality becomes available</li>
-                <li><strong>Seasons/Shows:</strong> Upgrades entire seasons or shows at once when better quality is found</li>
+                <li><strong>Books:</strong> Upgrades individual books when better quality becomes available</li>
+                <li><strong>Authors:</strong> Upgrades at the author level for consistent quality</li>
+                <li><strong>Series:</strong> Upgrades entire book series at once when better quality is found</li>
             </ul>
             
             <h3 id="search-limits"><i class="fas fa-sliders-h" style="margin-right: 10px; color: #f39c12;"></i>Search Limits</h3>
@@ -134,91 +135,120 @@
                 </tr>
                 <tr>
                     <td>Missing Search</td>
-                    <td>Number of missing items to search per cycle</td>
-                    <td>2-5</td>
+                    <td>Number of missing books to search per cycle</td>
+                    <td>2-3</td>
                     <td>Set to 0 to disable missing searches</td>
                 </tr>
                 <tr>
                     <td>Upgrade Search</td>
-                    <td>Number of episodes to upgrade per cycle</td>
-                    <td>1-3</td>
+                    <td>Number of books to upgrade per cycle</td>
+                    <td>1-2</td>
                     <td>Set to 0 to disable upgrade searches</td>
                 </tr>
                 <tr>
                     <td>Sleep Duration</td>
                     <td>Time in seconds between processing cycles</td>
-                    <td>900 (15 min)</td>
-                    <td>Longer intervals reduce indexer load</td>
+                    <td>2400 (40 min)</td>
+                    <td>Book indexers often have limited content</td>
                 </tr>
                 <tr>
                     <td>API Cap - Hourly</td>
                     <td>Maximum API requests per hour</td>
-                    <td>400 or less</td>
-                    <td>Prevents rate limiting from indexers</td>
+                    <td>150 or less</td>
+                    <td>Book indexers typically have lower limits</td>
                 </tr>
             </table>
             
             <div class="alert alert-warning">
-                <strong>Important:</strong> Setting API limits too high can result in your accounts being banned from indexers. Start with conservative values and adjust based on your indexer limits.
+                <strong>Important:</strong> Book indexers often have limited content and stricter rate limits. Use conservative settings and longer intervals between searches.
             </div>
             
             <h3 id="additional-options"><i class="fas fa-cogs" style="margin-right: 10px; color: #9b59b6;"></i>Additional Options</h3>
             <p>Fine-tune Huntarr's behavior with these additional settings:</p>
             
-            <h4><i class="fas fa-eye" style="margin-right: 8px; color: #3498db;"></i>Monitored Only</h4>
-            <p>When enabled, Huntarr will only search for content that is marked as "Monitored" in Sonarr. This prevents searches for shows you've intentionally unmonitored.</p>
+            <h4><i class="fas fa-eye" style="margin-right: 8px; color: #8b4513;"></i>Monitored Only</h4>
+            <p>When enabled, Huntarr will only search for books that are marked as "Monitored" in Readarr. This prevents searches for authors or books you've intentionally unmonitored.</p>
             
-            <h4><i class="fas fa-clock" style="margin-right: 8px; color: #e74c3c;"></i>Skip Future Episodes</h4>
-            <p>When enabled, Huntarr will skip episodes with future air dates. This prevents unnecessary searches for content that hasn't been released yet.</p>
+            <h4><i class="fas fa-calendar" style="margin-right: 8px; color: #e74c3c;"></i>Skip Future Releases</h4>
+            <p>When enabled, Huntarr will skip books with future release dates. This prevents unnecessary searches for content that hasn't been published yet.</p>
+            
+            <h4><i class="fas fa-book" style="margin-right: 8px; color: #f39c12;"></i>Book Types</h4>
+            <p>Configure which types of books Huntarr should search for:</p>
+            <ul>
+                <li><strong>Ebooks:</strong> Digital book formats (EPUB, PDF, MOBI, etc.)</li>
+                <li><strong>Audiobooks:</strong> Audio versions of books (MP3, M4A, etc.)</li>
+                <li><strong>Both:</strong> Search for both ebooks and audiobooks</li>
+            </ul>
+            
+            <h4><i class="fas fa-user" style="margin-right: 8px; color: #9b59b6;"></i>Author Monitoring</h4>
+            <p>When enabled, Huntarr will respect your author monitoring settings in Readarr, only searching for books from authors you're actively monitoring.</p>
             
             <h2 id="troubleshooting">Troubleshooting</h2>
             
             <h3>Common Issues</h3>
             
             <h4>Connection Failed</h4>
-            <p>If Huntarr can't connect to your Sonarr instance:</p>
+            <p>If Huntarr can't connect to your Readarr instance:</p>
             <ul>
                 <li>Verify the URL is correct and includes the protocol (http/https)</li>
-                <li>Check that the port number is correct (default: 8989)</li>
-                <li>Ensure the API key is copied correctly from Sonarr Settings > General > Security</li>
-                <li>Confirm Sonarr is running and accessible from Huntarr's network</li>
-                <li>Check firewall settings if Huntarr and Sonarr are on different machines</li>
+                <li>Check that the port number is correct (default: 8787)</li>
+                <li>Ensure the API key is copied correctly from Readarr Settings > General > Security</li>
+                <li>Confirm Readarr is running and accessible from Huntarr's network</li>
+                <li>Check firewall settings if Huntarr and Readarr are on different machines</li>
             </ul>
             
-            <h4>No Missing Content Found</h4>
-            <p>If Huntarr reports no missing content but you know there are gaps:</p>
+            <h4>No Missing Books Found</h4>
+            <p>If Huntarr reports no missing books but you know there are gaps:</p>
             <ul>
                 <li>Ensure "Monitored Only" is configured correctly for your needs</li>
-                <li>Check that shows are marked as "Monitored" in Sonarr</li>
-                <li>Verify "Skip Future Episodes" isn't preventing searches for available content</li>
-                <li>Review your Missing Search Mode setting (Season Packs vs Episodes)</li>
+                <li>Check that authors and books are marked as "Monitored" in Readarr</li>
+                <li>Verify "Skip Future Releases" isn't preventing searches for available content</li>
+                <li>Review your book type settings (ebooks vs audiobooks)</li>
             </ul>
             
-            <h4>API Rate Limiting</h4>
-            <p>If you're getting rate limited by indexers:</p>
+            <h4>Limited Book Availability</h4>
+            <p>If Huntarr isn't finding books that should be available:</p>
             <ul>
-                <li>Reduce the "API Cap - Hourly" setting to a lower value</li>
-                <li>Increase the "Sleep Duration" between processing cycles</li>
-                <li>Lower the "Missing Search" and "Upgrade Search" limits</li>
-                <li>Check your indexer's specific rate limits and adjust accordingly</li>
+                <li>Book indexers have much more limited content than movie/TV indexers</li>
+                <li>Consider adding more book-specific indexers to Readarr</li>
+                <li>Check if your indexers support the book formats you're seeking</li>
+                <li>Verify your quality profiles match available content</li>
             </ul>
             
-            <h4>Searches Not Triggering</h4>
-            <p>If Huntarr isn't searching for content:</p>
+            <h4>Metadata and Search Issues</h4>
+            <p>If Huntarr isn't finding the right books:</p>
             <ul>
-                <li>Ensure the Sonarr instance is enabled in Huntarr</li>
-                <li>Check that search limits aren't set to 0 (which disables searches)</li>
-                <li>Verify Huntarr is running and not paused</li>
-                <li>Review the logs for any error messages or API issues</li>
+                <li>Verify your metadata provider settings in Readarr (Goodreads, etc.)</li>
+                <li>Check that book titles and author names are correctly matched</li>
+                <li>Review ISBN settings for proper book identification</li>
+                <li>Consider adjusting search criteria for international editions</li>
+            </ul>
+            
+            <h4>Format and Quality Issues</h4>
+            <p>If Huntarr isn't finding the right book formats:</p>
+            <ul>
+                <li>Verify your quality profiles support the formats you want (EPUB, PDF, MP3, etc.)</li>
+                <li>Check that your indexers have the formats you're seeking</li>
+                <li>Review cutoff settings to ensure upgrades are allowed</li>
+                <li>Consider separate instances for ebooks vs audiobooks</li>
+            </ul>
+            
+            <h4>Audiobook Specific Issues</h4>
+            <p>If you're having trouble with audiobook searches:</p>
+            <ul>
+                <li>Ensure your indexers support audiobook formats</li>
+                <li>Check that audiobook quality profiles are properly configured</li>
+                <li>Verify narrator information is correctly matched</li>
+                <li>Consider longer search intervals due to limited audiobook availability</li>
             </ul>
             
             <div class="section-nav">
-                <a href="index.html">← Back to Apps</a>
-                <a href="radarr.html">Radarr Documentation →</a>
+                <a href="lidarr.html">← Lidarr Documentation</a>
+                <a href="whisparr-v2.html">Whisparr V2 Documentation →</a>
             </div>
             
             <footer>
-                Huntarr.io | Sonarr Documentation | Thanks 4 Using Huntarr - Admin9705
+                Huntarr.io | Readarr Documentation | Thanks 4 Using Huntarr - Admin9705
             </footer>
         </div>
     </div>
