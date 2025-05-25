@@ -95,7 +95,7 @@ window.CycleCountdown = (function() {
         isFetchingData = true;
         
         // Use a direct URL to the web-accessible version of sleep.json
-        const sleepJsonUrl = window.location.origin + './static/data/sleep.json';
+        const sleepJsonUrl = window.location.origin + '/static/data/sleep.json';
         
         // Add a timestamp to prevent caching
         const url = `${sleepJsonUrl}?t=${Date.now()}`;
