@@ -123,51 +123,19 @@ A big thank you to these amazing contributors who've helped build and maintain t
   <img src="https://contrib.rocks/image?repo=plexguide/Huntarr.io" alt="Contributors" />
 </a>
 
-## Web Interface
-
-Huntarr's live homepage will provide you statics about how many hunts have been pursed regarding missing media and upgrade searches! Note: Numbers reflected are but all required for testing. 
+## Screenshots
 
 <p align="center">
-  <img width="100%" alt="image" src="https://github.com/user-attachments/assets/c060962c-01ee-4f53-a5ee-c67f31432e40" />
-  <br>
-  <em>Homepage</em>
+  <img width="100%" alt="Homepage" src="https://github.com/user-attachments/assets/c060962c-01ee-4f53-a5ee-c67f31432e40" style="border: 1px solid #30363d; border-radius: 6px; margin-bottom: 10px;" />
 </p>
-
-Huntarr includes a real-time log viewer and settings management web interface that allows you to monitor and configure its operation directly from your browser.
 
 <p align="center">
-  <img width="100%" alt="image" src="https://github.com/user-attachments/assets/93c1a5d3-e82a-416a-8d41-0379ea221d7a" />
-  <br>
-  <em>Logger UI</em>
+  <img width="100%" alt="Logger UI" src="https://github.com/user-attachments/assets/93c1a5d3-e82a-416a-8d41-0379ea221d7a" style="border: 1px solid #30363d; border-radius: 6px; margin-bottom: 10px;" />
 </p>
-
-### How to Access
-
-The web interface is available on port 9705. Simply navigate to:
-
-```
-http://YOUR_SERVER_IP:9705
-```
-
-The URL will be displayed in the logs when Huntarr starts, using the same hostname you configured for your API_URL.
-
-### Web UI Settings
-
-The web interface allows you to configure all of Huntarr's settings:
 
 <p align="center">
-  <img width="930" alt="image" src="https://github.com/user-attachments/assets/e87867f8-0a8c-48d8-b6ef-234caa33e41f" />
-  <br>
-  <em>Settings UI</em>
+  <img width="930" alt="Settings UI" src="https://github.com/user-attachments/assets/e87867f8-0a8c-48d8-b6ef-234caa33e41f" style="border: 1px solid #30363d; border-radius: 6px;" />
 </p>
-
-### Volume Mapping
-
-To ensure data persistence, make sure you map the `/config` directory to a persistent volume on your host system:
-
-```bash
--v /your-path/appdata/huntarr:/config
-```
 
 ---
 
