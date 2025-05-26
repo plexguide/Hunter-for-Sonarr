@@ -62,7 +62,7 @@ def login_route():
                 # User is authenticated (password correct, and 2FA if needed was correct)
                 session_token = create_session(username)
                 session[SESSION_COOKIE_NAME] = session_token # Store token in Flask session immediately
-                response = jsonify({"success": True, "redirect": "/"}) # Add redirect URL
+                response = jsonify({"success": True, "redirect": "./"}) # Add redirect URL
                 response.set_cookie(SESSION_COOKIE_NAME, session_token, httponly=True, samesite='Lax', path='/') # Add path
                 logger.info(f"User '{username}' logged in successfully.")
                 return response
@@ -95,7 +95,7 @@ def login_route():
         # If user already exists, show login, otherwise redirect to setup
         if not user_exists():
              logger.info("No user exists, redirecting to setup.")
-             return redirect(url_for('common.setup_route'))
+             return redirect(url_for('common.setup'))
         logger.debug("Displaying login page.")
         return render_template('login.html')
 

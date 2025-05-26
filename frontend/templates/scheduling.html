@@ -48,11 +48,11 @@
     
     {% include 'components/head.html' %}
     <title>Huntarr - Scheduling</title>
-    <link rel="stylesheet" href="/static/css/scheduler-history.css">
-    <link rel="stylesheet" href="/static/css/dropdown-overrides.css">
+    <link rel="stylesheet" href="./static/css/scheduler-history.css">
+    <link rel="stylesheet" href="./static/css/dropdown-overrides.css">
     <!-- Add scrolling fix stylesheet -->
-    <link rel="stylesheet" href="/static/css/scheduling-fix.css">
-    <link rel="stylesheet" href="/static/css/emergency-scroll-fix.css">
+    <link rel="stylesheet" href="./static/css/scheduling-fix.css">
+    <link rel="stylesheet" href="./static/css/emergency-scroll-fix.css">
     
     <style>
         /* Critical scrolling fixes applied directly to the page */
@@ -285,17 +285,20 @@
     
     {% include 'components/footer.html' %}
     
+    <!-- Pass base URL configuration to JavaScript -->
+    <script>window.HUNTARR_BASE_URL = '{{ base_url|default("", true) }}';</script>
+    <!-- Pass global scripts -->
     {% include 'components/scripts.html' %}
     
     <!-- Load scheduling script -->
-    <script src="/static/js/scheduling.js"></script>
+    <script src="./static/js/scheduling.js"></script>
     
     <!-- Add scrolling fix script -->
-    <script src="/static/js/scheduling-fix.js"></script>
+    <script src="./static/js/scheduling-fix.js"></script>
     
     <!-- Add emergency scrolling fixes -->
-    <link rel="stylesheet" href="/static/css/emergency-scroll-fix.css">
-    <script src="/static/js/scroll-fix-override.js"></script>
+    <link rel="stylesheet" href="./static/css/emergency-scroll-fix.css">
+    <script src="./static/js/scroll-fix-override.js"></script>
     
     <style>
         /* Scheduler Container */
@@ -596,6 +599,10 @@
         }
     </style>
     
+    <!-- Pass base URL configuration to JavaScript -->
+    <script>window.HUNTARR_BASE_URL = '{{ base_url|default("", true) }}';</script>
+    <!-- Pass global scripts -->
+    {% include 'components/scripts.html' %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Make sure the navigation link is active
@@ -672,7 +679,7 @@
     </style>
     
     <!-- Add beautification styles and scripts -->
-    <link rel="stylesheet" href="/static/css/scheduling-beautify.css">
-    <script src="/static/js/scheduling-beautify.js"></script>
+    <link rel="stylesheet" href="./static/css/scheduling-beautify.css">
+    <script src="./static/js/scheduling-beautify.js"></script>
 </body>
 </html>

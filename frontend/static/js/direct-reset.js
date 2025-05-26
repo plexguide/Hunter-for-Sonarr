@@ -53,7 +53,7 @@ window.lastStatefulHoursValue = null;
                 window.justCompletedStatefulReset = true;
                 
                 // Make direct API call
-                fetch('/api/stateful/reset', {
+                HuntarrUtils.fetchWithTimeout('/api/stateful/reset', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

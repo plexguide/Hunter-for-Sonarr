@@ -448,9 +448,12 @@
         </div>
     </div>
 
+    <!-- Pass base URL configuration to JavaScript -->
+    <script>window.HUNTARR_BASE_URL = '{{ base_url|default("", true) }}';</script>
+    <!-- Pass global scripts -->
     {% include 'components/scripts.html' %}
     <!-- Add specific reference to new-user.js -->
-    <script src="/static/js/new-user.js"></script>
+    <script src="./static/js/new-user.js"></script>
     <script>
         // Initialize dark mode
         document.addEventListener('DOMContentLoaded', function() {
@@ -459,7 +462,7 @@
             localStorage.setItem('huntarr-dark-mode', 'true');
             
             // Update server setting to dark mode
-            fetch('/api/settings/theme', {
+            HuntarrUtils.fetchWithTimeout('/api/settings/theme', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

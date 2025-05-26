@@ -369,9 +369,11 @@ def process_upgrade_seasons_mode(
                     add_processed_id("sonarr", instance_name, str(episode_id))
                     sonarr_logger.debug(f"Marked episode ID {episode_id} as processed for upgrades")
                     
-                    # Increment stats for this episode (consistent with Radarr's approach)
-                    increment_stat("sonarr", "upgraded")
-                    sonarr_logger.debug(f"Incremented sonarr upgraded statistic for episode {episode_id}")
+                    # CRITICAL FIX: Use increment_stat_only to avoid double-counting API calls
+                    # The API call is already tracked in search_season(), so we only increment stats here
+                    from src.primary.stats_manager import increment_stat_only
+                    increment_stat_only("sonarr", "upgraded")
+                    sonarr_logger.debug(f"Incremented sonarr upgraded statistic for episode {episode_id} (API call already tracked separately)")
                     
                     # Find the episode information for history logging
                     # We need to get the episode details from the API to include proper info in history

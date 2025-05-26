@@ -598,68 +598,27 @@
     /* Hide the tooltip by default */
     .json-tooltip {
         display: none;
-        position: absolute;
-        left: 35px; /* Move the tooltip to the right by default */
-        top: 100%;
-        /* Extra thick solid background with absolutely no transparency */
+        position: fixed; /* Use fixed positioning to escape stacking context issues */
+        left: 0;
+        top: 0;
         background-color: #121824;
-        /* Add a thick dark background behind content */
-        background-image: 
-            linear-gradient(to bottom, 
-                #121824 0%, 
-                #0c111d 100%);
-        /* Double border for better definition */
-        border: 3px solid #2185d0;
+        border: 2px solid #2185d0;
         border-radius: 8px;
         padding: 10px;
         width: 350px;
         max-height: 300px;
         overflow-y: auto;
-        z-index: 999999; /* Super high z-index */
+        z-index: 999999; /* Very high z-index */
         font-family: monospace;
         font-size: 12px;
-        color: #ffffff; /* Pure white text */
+        color: #ffffff;
         text-align: left;
         white-space: pre-wrap;
-        /* Force complete opacity */
-        opacity: 1 !important;
-        /* Strong glow effect similar to Huntarr logo - more pronounced */
-        box-shadow: 
-            0 0 0 4px #121824, /* Thick barrier */
-            0 0 0 5px #2185d0, /* Border highlight */
-            0 0 20px 5px #2185d0, /* Much stronger blue glow */
-            0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
-        /* Animation for the glow effect - faster to be more noticeable */
-        animation: tooltipGlow 2s ease-in-out infinite alternate;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+        pointer-events: none; /* Prevent tooltip from interfering with mouse events */
     }
     
-    /* Glowing border animation */
-    @keyframes tooltipGlow {
-        0% {
-            box-shadow: 
-                0 0 0 4px #121824, /* Solid barrier */
-                0 0 0 5px #2185d0, /* Blue border */
-                0 0 25px 8px #2185d0, /* Much stronger blue glow */
-                0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
-            border-color: #2185d0;
-        }
-        50% {
-            box-shadow: 
-                0 0 0 4px #121824, /* Solid barrier */
-                0 0 0 5px #9b59b6, /* Brighter purple border */
-                0 0 25px 8px #9b59b6, /* Much stronger purple glow */
-                0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
-            border-color: #9b59b6;
-        }
-        100% {
-            box-shadow: 
-                0 0 0 4px #121824, /* Solid barrier */
-                0 0 0 5px #2185d0, /* Blue border */
-                0 0 25px 8px #2185d0, /* Much stronger blue glow */
-                0 5px 15px rgba(0, 0, 0, 0.9); /* Deep shadow */
-            border-color: #2185d0;
-        }
-    }
+
     
     /* Style the JSON content */
     .json-content {
@@ -668,16 +627,7 @@
         word-break: break-word;
     }
     
-    /* Show tooltip on hover */
-    .info-hover-icon:hover .json-tooltip {
-        display: block;
-        animation: fadeIn 0.3s ease;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+
     
     /* Processed title styling */
     .processed-title {

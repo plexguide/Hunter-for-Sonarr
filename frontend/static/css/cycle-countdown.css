@@ -1,0 +1,225 @@
+/* 
+ * Cycle Countdown Timer Styles
+ * Styling for app cycle countdown timers on the home page
+ */
+
+/* Base styling for all timer elements */
+.cycle-timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin: 8px auto 6px auto;
+    background-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    user-select: none;
+    max-width: 85%;
+    position: relative;
+    z-index: 1;
+}
+
+/* Special styling for inline timers next to reset buttons */
+.inline-timer {
+    margin: 0;
+    min-width: 95px;
+    background-color: rgba(0, 0, 0, 0.1);
+    font-size: 0.85rem;
+    border-radius: 4px;
+}
+
+/* Styling for the container that holds both reset button and timer */
+.reset-and-timer-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+}
+
+/* Icon styling */
+.cycle-timer i {
+    margin-right: 5px;
+    font-size: 0.9rem;
+}
+
+/* Timer value text */
+.timer-value {
+    font-family: monospace;
+    font-weight: 600;
+}
+
+/* Error state styling */
+.timer-value.error {
+    color: #ff5252;
+    animation: pulse 2s infinite;
+}
+
+/* Pulse animation for errors */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.timer-value {
+    letter-spacing: 0.5px;
+}
+
+/* Timer states based on remaining time */
+.timer-normal {
+    color: var(--text-light, white);
+}
+
+/* Under 5 minutes - orange */
+.timer-soon {
+    color: #ff8c00 !important;
+    animation: pulse-warn 1.5s infinite alternate;
+}
+
+/* Under 1 minute - red */
+.timer-imminent {
+    color: #ff3333 !important;
+    animation: pulse-imminent 0.8s infinite alternate;
+}
+
+.timer-error {
+    color: var(--error-color, #f44336);
+    opacity: 0.7;
+}
+
+/* Pulse animations for different timer states */
+@keyframes pulse-warn {
+    from {
+        opacity: 0.9;
+    }
+    to {
+        opacity: 1;
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+}
+
+@keyframes pulse-imminent {
+    from {
+        opacity: 0.9;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+        background-color: rgba(255, 87, 34, 0.15);
+    }
+}
+
+/* Low usage mode compatibility */
+.low-usage-mode .timer-soon,
+.low-usage-mode .timer-imminent {
+    animation: none !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .cycle-timer {
+        font-size: 0.75rem;
+        padding: 2px 6px;
+    }
+}
+
+/* Tooltip for more information on hover */
+.cycle-timer:hover {
+    cursor: help;
+}
+
+/* Specific app colorings for borders only - numbers should be white by default */
+/* Colors based on user preferences */
+.sonarr .cycle-timer {
+    border-left: 2px solid var(--sonarr-color, #00c2ce);
+}
+
+.radarr .cycle-timer {
+    border-left: 2px solid var(--radarr-color, #ffbe0b);
+}
+
+.lidarr .cycle-timer {
+    border-left: 2px solid var(--lidarr-color, #40c057);
+}
+
+.readarr .cycle-timer {
+    border-left: 2px solid var(--readarr-color, #ff5252);
+}
+
+.whisparr .cycle-timer {
+    border-left: 2px solid var(--whisparr-color, #ff45b7);
+}
+
+/* Additional style for Whisparr V3 (which is actually 'eros' in the HTML) */
+.eros .cycle-timer {
+    border-left: 2px solid var(--whisparr-color, #ff45b7);
+}
+
+/* Make sure Whisparr V3/eros timer values have the same color treatment */
+.eros .timer-value {
+    color: white;
+}
+
+/* Style Whisparr V3 card - normal state */
+.app-stats-card.eros {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease, border 0.3s ease;
+}
+
+/* Add pink/purple glow only on hover */
+.app-stats-card.eros:hover {
+    box-shadow: 0 0 15px rgba(255, 69, 183, 0.4) !important;
+    border: 1px solid rgba(255, 69, 183, 0.2) !important;
+}
+
+/* Ensure the timer in Whisparr V3 shows the pink/purple left border */
+.eros .cycle-timer, #erosCycleTimer {
+    border-left: 2px solid #ff45b7 !important;
+}
+
+/* Default timer value is white and smaller as requested */
+.timer-value {
+    color: white;
+    font-weight: 600;
+    font-size: 80%; /* Make text 20% smaller */
+}
+
+/* Light blue color for Refreshing text */
+.timer-value:contains('Refreshing') {
+    color: #00c2ce !important; /* Light blue color */
+}
+
+/* Fallback approach since :contains is not standard CSS */
+.refreshing-state {
+    color: #00c2ce !important; /* Light blue color */
+}
+
+/* Make clock icon smaller too */
+.cycle-timer i.fas.fa-clock {
+    font-size: 80%; /* Make icon 20% smaller */
+}
+
+/* Prevent raw JSON from showing during initial load */
+.stat-number {
+    min-height: 1.5em;
+    visibility: visible;
+}
+
+/* Hide JSON content for stat numbers until properly loaded */
+.stats-loading .stat-number {
+    color: transparent;
+    position: relative;
+}
+
+.stats-loading .stat-number::after {
+    content: "0";
+    position: absolute;
+    left: 0;
+    right: 0;
+    color: white;
+    text-align: center;
+}

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radarr Documentation - Huntarr.io</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="../js/main.js" defer></script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="../images/huntarr-logo.png" alt="Huntarr Logo">
+            <h2>Huntarr.io</h2>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <div class="sidebar-section">
+                <h3 class="sidebar-section-title">Getting Started</h3>
+                <ul>
+                    <li><a href="../getting-started/installation.html"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg> Installation</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-section-title">Core</h3>
+                <ul>
+                    <li><a href="../index.html"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg> Home</a></li>
+                    <li class="active"><a href="index.html"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"></path></svg> Apps</a></li>
+                    <li><a href="../settings/settings.html"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg> Settings</a></li>
+                    <li><a href="../features/index.html"><i class="fas fa-star" style="width: 24px; height: 24px; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center;"></i> Features</a></li>
+                    <li><a href="../faq.html"><i class="fas fa-question-circle" style="width: 24px; height: 24px; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center;"></i> FAQ</a></li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3 class="sidebar-section-title">Resources</h3>
+                <ul>
+                    <li><a href="https://github.com/plexguide/Huntarr.io" target="_blank"><svg class="svg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path></svg> GitHub</a></li>
+                    <li><a href="https://discord.com/invite/PGJJjR5Cww" target="_blank"><i class="fab fa-discord" style="color: #5865F2; font-size: 18px; width: 24px; height: 24px; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center;"></i> Discord</a></li>
+                    <li><a href="https://www.reddit.com/r/huntarr/" target="_blank"><i class="fab fa-reddit-alien" style="color: #FF4500; font-size: 18px; width: 24px; height: 24px; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center;"></i> Reddit</a></li>
+                    <li><a href="https://donate.plex.one" target="_blank"><i class="fas fa-heart" style="color: #e91e63; font-size: 18px; width: 24px; height: 24px; margin-right: 8px; display: inline-flex; align-items: center; justify-content: center;"></i> Donate</a></li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <h1>Radarr Documentation</h1>
+            
+            <div style="text-align: center; margin: 20px auto;">
+                <img src="../images/arrs/radarr.png" alt="Radarr Logo" style="width: 80px; height: 80px; object-fit: contain;">
+            </div>
+            
+            <p>Radarr is an automated movie downloading and management application. Huntarr integrates with your existing Radarr instance to automatically search for missing movies and quality upgrades that Radarr doesn't actively hunt for.</p>
+            
+            <h2 id="radarr-instance-setup">Radarr Instance Setup</h2>
+            
+            <h3>Adding Your Radarr Instance</h3>
+            <p>To connect your existing Radarr instance to Huntarr:</p>
+            <ol>
+                <li>Navigate to the Radarr section in Huntarr</li>
+                <li>Click "Add Radarr Instance" if you don't have one configured</li>
+                <li>Fill in your Radarr connection details</li>
+                <li>Test the connection to ensure Huntarr can communicate with Radarr</li>
+            </ol>
+            
+            <h3 id="connection-settings">Connection Settings</h3>
+            <p>Configure these settings to connect Huntarr to your Radarr instance:</p>
+            
+            <table>
+                <tr>
+                    <th>Setting</th>
+                    <th>Description</th>
+                    <th>Example</th>
+                    <th>Notes</th>
+                </tr>
+                <tr>
+                    <td>Name</td>
+                    <td>Friendly name for this Radarr instance</td>
+                    <td>Default, Movies-4K, Foreign</td>
+                    <td>Useful when running multiple Radarr instances</td>
+                </tr>
+                <tr>
+                    <td>URL</td>
+                    <td>Base URL for your Radarr instance</td>
+                    <td>http://10.0.0.10:7878</td>
+                    <td>Include protocol (http/https) and port</td>
+                </tr>
+                <tr>
+                    <td>API Key</td>
+                    <td>Radarr API key for authentication</td>
+                    <td>b04d87c7392d5ce4f9a6b85f6c8e470</td>
+                    <td>Found in Radarr Settings > General > Security</td>
+                </tr>
+                <tr>
+                    <td>Enabled</td>
+                    <td>Whether Huntarr should process this instance</td>
+                    <td>On/Off toggle</td>
+                    <td>Disable to temporarily stop processing</td>
+                </tr>
+            </table>
+            
+            <h2 id="search-settings">Search Settings</h2>
+            
+            <p>Configure how Huntarr searches for missing movies and upgrades in your Radarr instance. These settings control Huntarr's behavior when processing your movie library.</p>
+            
+            <h3 id="missing-search-mode"><i class="fas fa-search" style="margin-right: 10px; color: #f1c40f;"></i>Missing Search Mode</h3>
+            <p>Determines how Huntarr searches for missing movies:</p>
+            <ul>
+                <li><strong>Movies:</strong> Standard mode that searches for individual movies. Recommended for most users</li>
+                <li><strong>Collections:</strong> Searches for movie collections when available. Useful for franchise collections</li>
+            </ul>
+            
+            <h3 id="upgrade-mode"><i class="fas fa-arrow-up" style="margin-right: 10px; color: #2ecc71;"></i>Upgrade Mode</h3>
+            <p>Controls how Huntarr handles quality upgrades:</p>
+            <ul>
+                <li><strong>Movies:</strong> Upgrades individual movies when better quality becomes available</li>
+                <li><strong>Collections:</strong> Upgrades entire movie collections at once when better quality is found</li>
+            </ul>
+            
+            <h3 id="search-limits"><i class="fas fa-sliders-h" style="margin-right: 10px; color: #f39c12;"></i>Search Limits</h3>
+            <p>Control how many items Huntarr processes per cycle to avoid overwhelming your indexers:</p>
+            
+            <table>
+                <tr>
+                    <th>Setting</th>
+                    <th>Description</th>
+                    <th>Recommended</th>
+                    <th>Notes</th>
+                </tr>
+                <tr>
+                    <td>Missing Search</td>
+                    <td>Number of missing movies to search per cycle</td>
+                    <td>3-5</td>
+                    <td>Set to 0 to disable missing searches</td>
+                </tr>
+                <tr>
+                    <td>Upgrade Search</td>
+                    <td>Number of movies to upgrade per cycle</td>
+                    <td>1-2</td>
+                    <td>Set to 0 to disable upgrade searches</td>
+                </tr>
+                <tr>
+                    <td>Sleep Duration</td>
+                    <td>Time in seconds between processing cycles</td>
+                    <td>1200 (20 min)</td>
+                    <td>Longer intervals reduce indexer load</td>
+                </tr>
+                <tr>
+                    <td>API Cap - Hourly</td>
+                    <td>Maximum API requests per hour</td>
+                    <td>300 or less</td>
+                    <td>Prevents rate limiting from indexers</td>
+                </tr>
+            </table>
+            
+            <div class="alert alert-warning">
+                <strong>Important:</strong> Movie files are typically larger than TV episodes, so consider lower search limits to avoid overwhelming your indexers and download clients.
+            </div>
+            
+            <h3 id="additional-options"><i class="fas fa-cogs" style="margin-right: 10px; color: #9b59b6;"></i>Additional Options</h3>
+            <p>Fine-tune Huntarr's behavior with these additional settings:</p>
+            
+            <h4><i class="fas fa-eye" style="margin-right: 8px; color: #f1c40f;"></i>Monitored Only</h4>
+            <p>When enabled, Huntarr will only search for movies that are marked as "Monitored" in Radarr. This prevents searches for movies you've intentionally unmonitored.</p>
+            
+            <h4><i class="fas fa-calendar" style="margin-right: 8px; color: #e74c3c;"></i>Skip Future Movies</h4>
+            <p>When enabled, Huntarr will skip movies with future release dates. This prevents unnecessary searches for content that hasn't been released yet.</p>
+            
+            <h4><i class="fas fa-star" style="margin-right: 8px; color: #f39c12;"></i>Minimum Availability</h4>
+            <p>Respects Radarr's minimum availability setting. Huntarr will only search for movies that meet your configured availability requirements (Announced, In Cinemas, Released, etc.).</p>
+            
+            <h2 id="troubleshooting">Troubleshooting</h2>
+            
+            <h3>Common Issues</h3>
+            
+            <h4>Connection Failed</h4>
+            <p>If Huntarr can't connect to your Radarr instance:</p>
+            <ul>
+                <li>Verify the URL is correct and includes the protocol (http/https)</li>
+                <li>Check that the port number is correct (default: 7878)</li>
+                <li>Ensure the API key is copied correctly from Radarr Settings > General > Security</li>
+                <li>Confirm Radarr is running and accessible from Huntarr's network</li>
+                <li>Check firewall settings if Huntarr and Radarr are on different machines</li>
+            </ul>
+            
+            <h4>No Missing Movies Found</h4>
+            <p>If Huntarr reports no missing movies but you know there are gaps:</p>
+            <ul>
+                <li>Ensure "Monitored Only" is configured correctly for your needs</li>
+                <li>Check that movies are marked as "Monitored" in Radarr</li>
+                <li>Verify "Skip Future Movies" isn't preventing searches for available content</li>
+                <li>Review your minimum availability settings in both Radarr and Huntarr</li>
+            </ul>
+            
+            <h4>Large File Downloads</h4>
+            <p>If movie downloads are overwhelming your system:</p>
+            <ul>
+                <li>Reduce the "Missing Search" and "Upgrade Search" limits</li>
+                <li>Increase the "Sleep Duration" between processing cycles</li>
+                <li>Consider setting up separate Radarr instances for different quality profiles</li>
+                <li>Monitor your download client's queue and disk space</li>
+            </ul>
+            
+            <h4>Quality Profile Issues</h4>
+            <p>If Huntarr isn't finding the right quality:</p>
+            <ul>
+                <li>Verify your quality profiles are properly configured in Radarr</li>
+                <li>Check that your indexers support the quality levels you're seeking</li>
+                <li>Review cutoff settings to ensure upgrades are allowed</li>
+                <li>Consider adjusting your upgrade search frequency</li>
+            </ul>
+            
+            <div class="section-nav">
+                <a href="sonarr.html">← Sonarr Documentation</a>
+                <a href="lidarr.html">Lidarr Documentation →</a>
+            </div>
+            
+            <footer>
+                Huntarr.io | Radarr Documentation | Thanks 4 Using Huntarr - Admin9705
+            </footer>
+        </div>
+    </div>
+</body>
+</html> 

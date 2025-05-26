@@ -15,6 +15,7 @@ let huntarrUI = {
     currentLogApp: 'all', // Default log app
     currentHistoryApp: 'all', // Default history app
     autoScroll: true,
+    isLoadingStats: false, // Flag to prevent multiple simultaneous stats requests
     configuredApps: {
         sonarr: false,
         radarr: false,
@@ -30,26 +31,35 @@ let huntarrUI = {
     suppressUnsavedChangesCheck: false, // Flag to suppress unsaved changes dialog
     
     // Logo URL
-    logoUrl: '/static/logo/256.png',
+    logoUrl: './static/logo/256.png',
     
     // Element references
     elements: {},
     
     // Initialize the application
     init: function() {
-        // Cache DOM elements
+        console.log('[huntarrUI] Initializing UI...');
+        
+        // Cache frequently used DOM elements
         this.cacheElements();
         
-        // Set up event listeners
+        // Register event handlers
         this.setupEventListeners();
-        
-        // Setup logo handling to prevent flashing during navigation
         this.setupLogoHandling();
+        this.registerGlobalUnsavedChangesHandler();
         
-        // Connect to logs if we're on logs page
-        if (window.location.hash === '#logs') {
-            this.connectToLogs();
-        }
+        // Check if Low Usage Mode is enabled BEFORE loading stats to avoid race condition
+        this.checkLowUsageMode().then(() => {
+            // Initialize media stats after low usage mode is determined
+            if (window.location.pathname === '/') {
+                this.loadMediaStats();
+            }
+        }).catch(() => {
+            // If low usage mode check fails, still load stats
+            if (window.location.pathname === '/') {
+                this.loadMediaStats();
+            }
+        });
         
         // Remove setupStatefulResetButton references that are causing errors
         // this.setupStatefulResetButton();
@@ -83,7 +93,7 @@ let huntarrUI = {
         this.logoUrl = localStorage.getItem('huntarr-logo-url') || this.logoUrl;
         
         // Load media stats
-        this.loadMediaStats(); // Load media statistics
+        // this.loadMediaStats(); // Load media statistics
         
         // Load current version
         this.loadCurrentVersion(); // Load current version
@@ -357,6 +367,13 @@ let huntarrUI = {
             this.elements.saveSettingsButton.addEventListener('click', () => this.saveSettings());
         }
         
+        // Test notification button (delegated event listener for dynamic content)
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'testNotificationBtn' || e.target.closest('#testNotificationBtn')) {
+                this.testNotification();
+            }
+        });
+        
         // Start hunt button
         if (this.elements.startHuntButton) {
             this.elements.startHuntButton.addEventListener('click', () => this.startHunt());
@@ -600,8 +617,8 @@ let huntarrUI = {
             this.disconnectAllEventSources(); 
             // Check app connections when returning to home page to update status
             this.checkAppConnections();
-            // Also refresh media stats
-            this.loadMediaStats();
+            // Stats are already loaded, no need to reload unless data changed
+            // this.loadMediaStats();
         } else if (section === 'logs' && this.elements.logsSection) {
             this.elements.logsSection.classList.add('active');
             this.elements.logsSection.style.display = 'block';
@@ -865,7 +882,7 @@ let huntarrUI = {
         
         try {
             // Append the app type to the URL
-            const eventSource = new EventSource(`/logs?app=${appType}`); 
+            const eventSource = new EventSource(`./logs?app=${appType}`); 
             
             eventSource.onopen = () => {
                 this.elements.logConnectionStatus.textContent = 'Connected';
@@ -1274,20 +1291,14 @@ let huntarrUI = {
 
         console.log(`[huntarrUI] Collected settings for ${app}:`, settings);
         
-        // Check if this is general settings and if auth bypass settings are changed
-        const isLocalAccessBypassChanged = app === 'general' && 
+        // Check if this is general settings and if the authentication mode has changed
+        const isAuthModeChanged = app === 'general' && 
             this.originalSettings && 
             this.originalSettings.general && 
-            this.originalSettings.general.local_access_bypass !== settings.local_access_bypass;
-        
-        const isProxyAuthBypassChanged = app === 'general' && 
-            this.originalSettings && 
-            this.originalSettings.general && 
-            this.originalSettings.general.proxy_auth_bypass !== settings.proxy_auth_bypass;
+            this.originalSettings.general.auth_mode !== settings.auth_mode;
             
         // Log changes to authentication settings
-        console.log(`[huntarrUI] Local access bypass changed: ${isLocalAccessBypassChanged}`);
-        console.log(`[huntarrUI] Proxy auth bypass changed: ${isProxyAuthBypassChanged}`);
+        console.log(`[huntarrUI] Authentication mode changed: ${isAuthModeChanged}`);
 
         console.log(`[huntarrUI] Sending settings payload for ${app}:`, settings);
 
@@ -1316,8 +1327,8 @@ let huntarrUI = {
         .then(savedConfig => {
             console.log('[huntarrUI] Settings saved successfully. Full config received:', savedConfig);
             
-            // If any authentication bypass setting was changed, reload the page
-            if (isLocalAccessBypassChanged || isProxyAuthBypassChanged) {
+            // Only reload the page if Authentication Mode was changed
+            if (isAuthModeChanged) {
                 this.showNotification('Settings saved successfully. Reloading page to apply authentication changes...', 'success');
                 setTimeout(() => {
                     window.location.href = '/'; // Redirect to home page after a brief delay
@@ -1330,6 +1341,11 @@ let huntarrUI = {
             // Update original settings state with the full config returned from backend
             if (typeof savedConfig === 'object' && savedConfig !== null) {
                 this.originalSettings = JSON.parse(JSON.stringify(savedConfig));
+                
+                // Check if low usage mode setting has changed and apply it immediately
+                if (app === 'general' && 'low_usage_mode' in settings) {
+                    this.applyLowUsageMode(settings.low_usage_mode);
+                }
             } else {
                 console.error('[huntarrUI] Invalid config received from backend after save:', savedConfig);
                 this.loadAllSettings();
@@ -1432,31 +1448,53 @@ let huntarrUI = {
             return null;
         }
 
-        // Special handling for Swaparr which has a different structure
-        if (app === 'swaparr') {
-            // Get all inputs directly without filtering for instance fields
-            const inputs = form.querySelectorAll('input, select');
+        // Special handling for general settings
+        if (app === 'general') {
+            console.log('[huntarrUI] Processing general settings');
+            console.log('[huntarrUI] Form:', form);
+            console.log('[huntarrUI] Form HTML (first 500 chars):', form.innerHTML.substring(0, 500));
+            
+            // Debug: Check if apprise_urls exists anywhere
+            const globalAppriseElement = document.querySelector('#apprise_urls');
+            console.log('[huntarrUI] Global apprise_urls element:', globalAppriseElement);
+            
+            // Get all inputs and select elements in the general form
+            const inputs = form.querySelectorAll('input, select, textarea');
             inputs.forEach(input => {
-                // Extract the field name without the app prefix
                 let key = input.id;
-                if (key.startsWith(`${app}_`)) {
-                    key = key.substring(app.length + 1);
+                let value;
+                
+                if (input.type === 'checkbox') {
+                    value = input.checked;
+                } else if (input.type === 'number') {
+                    value = input.value === '' ? null : parseInt(input.value, 10);
+                } else {
+                    value = input.value.trim();
                 }
                 
-                // Store the value based on input type
-                if (input.type === 'checkbox') {
-                    settings[key] = input.checked;
-                } else if (input.type === 'number') {
-                    settings[key] = input.value === '' ? null : parseInt(input.value, 10);
-                } else {
-                    settings[key] = input.value.trim();
+                console.log(`[huntarrUI] Processing input: ${key} = ${value}`);
+                
+                // Handle special cases
+                if (key === 'apprise_urls') {
+                    console.log('[huntarrUI] Processing Apprise URLs');
+                    console.log('[huntarrUI] Raw apprise_urls value:', input.value);
+                    
+                    // Split by newline and filter empty lines
+                    settings.apprise_urls = input.value.split('\n')
+                        .map(url => url.trim())
+                        .filter(url => url.length > 0);
+                    
+                    console.log('[huntarrUI] Processed apprise_urls:', settings.apprise_urls);
+                } else if (key && !key.includes('_instance_')) {
+                    // Only include non-instance fields
+                    settings[key] = value;
                 }
             });
             
-            console.log(`[huntarrUI] Collected Swaparr settings:`, settings);
+            console.log('[huntarrUI] Final general settings:', settings);
             return settings;
         }
-
+        
         // Handle apps that use instances (Sonarr, Radarr, etc.)
         // Get all instance items in the form
         const instanceItems = form.querySelectorAll('.instance-item');
@@ -1571,6 +1609,60 @@ let huntarrUI = {
         return settings;
     },
 
+    // Test notification functionality
+    testNotification: function() {
+        console.log('[huntarrUI] Testing notification...');
+        
+        const statusElement = document.getElementById('testNotificationStatus');
+        const buttonElement = document.getElementById('testNotificationBtn');
+        
+        if (!statusElement || !buttonElement) {
+            console.error('[huntarrUI] Test notification elements not found');
+            return;
+        }
+        
+        // Disable button and show loading
+        buttonElement.disabled = true;
+        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        statusElement.innerHTML = '<span style="color: #fbbf24;">Sending test notification...</span>';
+        
+        HuntarrUtils.fetchWithTimeout('/api/test-notification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('[huntarrUI] Test notification response:', data);
+            
+            if (data.success) {
+                statusElement.innerHTML = '<span style="color: #10b981;">✓ Test notification sent successfully!</span>';
+                this.showNotification('Test notification sent! Check your Discord channel.', 'success');
+            } else {
+                statusElement.innerHTML = '<span style="color: #ef4444;">✗ Failed to send test notification</span>';
+                this.showNotification(data.error || 'Failed to send test notification', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('[huntarrUI] Test notification error:', error);
+            statusElement.innerHTML = '<span style="color: #ef4444;">✗ Error sending test notification</span>';
+            this.showNotification('Error sending test notification', 'error');
+        })
+        .finally(() => {
+            // Re-enable button
+            buttonElement.disabled = false;
+            buttonElement.innerHTML = '<i class="fas fa-bell"></i> Test Notification';
+            
+            // Clear status after 5 seconds
+            setTimeout(() => {
+                if (statusElement) {
+                    statusElement.innerHTML = '';
+                }
+            }, 5000);
+        });
+    },
+    
     // Handle instance management events
     setupInstanceEventHandlers: function() {
         console.log("DEBUG: setupInstanceEventHandlers called"); // Added logging
@@ -1808,13 +1900,6 @@ let huntarrUI = {
         const statusElement = this.elements[`${app}HomeStatus`];
         if (!statusElement) return;
 
-        // Find the parent container for the whole app status box
-        const appBox = statusElement.closest('.app-stats-card'); // CORRECTED SELECTOR
-        if (!appBox) {
-            // If the card structure changes, this might fail. Log a warning.
-            console.warn(`[huntarrUI] Could not find parent '.app-stats-card' element for ${app}`);
-        }
-
         let isConfigured = false;
         let isConnected = false;
 
@@ -1837,10 +1922,14 @@ let huntarrUI = {
         // --- Visibility Logic --- 
         if (isConfigured) {
             // Ensure the box is visible
-            if (appBox) appBox.style.display = ''; 
+            if (this.elements[`${app}HomeStatus`].closest('.app-stats-card')) {
+                this.elements[`${app}HomeStatus`].closest('.app-stats-card').style.display = ''; 
+            }
         } else {
             // Not configured - HIDE the box
-            if (appBox) appBox.style.display = 'none';
+            if (this.elements[`${app}HomeStatus`].closest('.app-stats-card')) {
+                this.elements[`${app}HomeStatus`].closest('.app-stats-card').style.display = 'none';
+            }
             // Update badge even if hidden (optional, but good practice)
             statusElement.className = 'status-badge not-configured';
             statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Configured';
@@ -2032,6 +2121,20 @@ let huntarrUI = {
     
     // Media statistics handling
     loadMediaStats: function() {
+        // Prevent multiple simultaneous stats loading
+        if (this.isLoadingStats) {
+            console.debug('Stats already loading, skipping duplicate request');
+            return;
+        }
+        
+        this.isLoadingStats = true;
+        
+        // Add loading class to stats container to hide raw JSON
+        const statsContainer = document.querySelector('.media-stats-container');
+        if (statsContainer) {
+            statsContainer.classList.add('stats-loading');
+        }
+        
         HuntarrUtils.fetchWithTimeout('/api/stats')
             .then(response => {
                 if (!response.ok) {
@@ -2046,12 +2149,25 @@ let huntarrUI = {
                     
                     // Update display
                     this.updateStatsDisplay(data.stats);
+                    
+                    // Remove loading class after stats are loaded
+                    if (statsContainer) {
+                        statsContainer.classList.remove('stats-loading');
+                    }
                 } else {
                     console.error('Failed to load statistics:', data.message || 'Unknown error');
                 }
             })
             .catch(error => {
                 console.error('Error fetching statistics:', error);
+                // Remove loading class on error too
+                if (statsContainer) {
+                    statsContainer.classList.remove('stats-loading');
+                }
+            })
+            .finally(() => {
+                // Always clear the loading flag
+                this.isLoadingStats = false;
             });
     },
     
@@ -2060,17 +2176,102 @@ let huntarrUI = {
         const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'];
         const statTypes = ['hunted', 'upgraded'];
         
+        // More robust low usage mode detection - check multiple sources
+        const isLowUsageMode = this.isLowUsageModeEnabled();
+        
+        console.log(`[huntarrUI] updateStatsDisplay - Low usage mode: ${isLowUsageMode}`);
+        
         apps.forEach(app => {
             if (stats[app]) {
                 statTypes.forEach(type => {
                     const element = document.getElementById(`${app}-${type}`);
                     if (element) {
-                        // Animate the number change
-                        this.animateNumber(element, parseInt(element.textContent), stats[app][type] || 0);
+                        // Get current and target values, ensuring they're valid numbers
+                        const currentText = element.textContent || '0';
+                        const currentValue = this.parseFormattedNumber(currentText);
+                        const targetValue = Math.max(0, parseInt(stats[app][type]) || 0); // Ensure non-negative
+                        
+                        // If low usage mode is enabled, skip animations and set values directly
+                        if (isLowUsageMode) {
+                            element.textContent = this.formatLargeNumber(targetValue);
+                        } else {
+                            // Only animate if values are different and both are valid
+                            if (currentValue !== targetValue && !isNaN(currentValue) && !isNaN(targetValue)) {
+                                // Cancel any existing animation for this element
+                                if (element.animationFrame) {
+                                    cancelAnimationFrame(element.animationFrame);
+                                }
+                                
+                                // Animate the number change
+                                this.animateNumber(element, currentValue, targetValue);
+                            } else if (isNaN(currentValue) || currentValue < 0) {
+                                // If current value is invalid, set directly without animation
+                                element.textContent = this.formatLargeNumber(targetValue);
+                            }
+                        }
                     }
                 });
             }
         });
+    },
+
+    // Helper function to parse formatted numbers back to integers
+    parseFormattedNumber: function(formattedStr) {
+        if (!formattedStr || typeof formattedStr !== 'string') return 0;
+        
+        // Remove any formatting (K, M, commas, etc.)
+        const cleanStr = formattedStr.replace(/[^\d.-]/g, '');
+        const parsed = parseInt(cleanStr);
+        
+        // Handle K and M suffixes
+        if (formattedStr.includes('K')) {
+            return Math.floor(parsed * 1000);
+        } else if (formattedStr.includes('M')) {
+            return Math.floor(parsed * 1000000);
+        }
+        
+        return isNaN(parsed) ? 0 : Math.max(0, parsed);
+    },
+
+    animateNumber: function(element, start, end) {
+        // Ensure start and end are valid numbers
+        start = Math.max(0, parseInt(start) || 0);
+        end = Math.max(0, parseInt(end) || 0);
+        
+        // If start equals end, just set the value
+        if (start === end) {
+            element.textContent = this.formatLargeNumber(end);
+            return;
+        }
+        
+        const duration = 1000; // Animation duration in milliseconds
+        const startTime = performance.now();
+        
+        const updateNumber = (currentTime) => {
+            const elapsedTime = currentTime - startTime;
+            const progress = Math.min(elapsedTime / duration, 1);
+            
+            // Easing function for smooth animation
+            const easeOutQuad = progress * (2 - progress);
+            
+            const currentValue = Math.max(0, Math.floor(start + (end - start) * easeOutQuad));
+            
+            // Format number for display
+            element.textContent = this.formatLargeNumber(currentValue);
+            
+            if (progress < 1) {
+                // Store the animation frame ID to allow cancellation
+                element.animationFrame = requestAnimationFrame(updateNumber);
+            } else {
+                // Ensure we end with the exact formatted target number
+                element.textContent = this.formatLargeNumber(end);
+                // Clear the animation frame reference
+                element.animationFrame = null;
+            }
+        };
+        
+        // Store the animation frame ID to allow cancellation
+        element.animationFrame = requestAnimationFrame(updateNumber);
     },
     
     // Format large numbers with appropriate suffixes (K, M, B, T)  
@@ -2105,33 +2306,6 @@ let huntarrUI = {
         }
     },
 
-    animateNumber: function(element, start, end) {
-        const duration = 1000; // Animation duration in milliseconds
-        const startTime = performance.now();
-        
-        const updateNumber = (currentTime) => {
-            const elapsedTime = currentTime - startTime;
-            const progress = Math.min(elapsedTime / duration, 1);
-            
-            // Easing function for smooth animation
-            const easeOutQuad = progress * (2 - progress);
-            
-            const currentValue = Math.floor(start + (end - start) * easeOutQuad);
-            
-            // Format number for display
-            element.textContent = this.formatLargeNumber(currentValue);
-            
-            if (progress < 1) {
-                requestAnimationFrame(updateNumber);
-            } else {
-                // Ensure we end with the exact formatted target number
-                element.textContent = this.formatLargeNumber(end);
-            }
-        };
-        
-        requestAnimationFrame(updateNumber);
-    },
-    
     resetMediaStats: function(appType = null) {
         // Directly update the UI first to provide immediate feedback
         const stats = {
@@ -2737,7 +2911,7 @@ let huntarrUI = {
                 console.log('[huntarrUI] Stateful expiration updated successfully:', data);
                 
                 // Get updated info to show proper dates
-                this.loadStatefulInfo(0, true);
+                this.loadStatefulInfo();
                 
                 // Show a notification
                 this.showNotification(`Updated expiration to ${hours} hours (${(hours/24).toFixed(1)} days)`, 'success');
@@ -2862,15 +3036,14 @@ let huntarrUI = {
     
     // Add a proper hasFormChanges function to compare form values with original values
     hasFormChanges: function(app) {
-        if (!app || !this.originalSettings || !this.originalSettings[app]) return false;
+        // If we don't have original settings or current app settings, we can't compare
+        if (!this.originalSettings || !this.originalSettings[app]) {
+            return false;
+        }
         
-        const form = document.getElementById(`${app}Settings`);
-        if (!form) return false;
-        
+        // Get current settings from the form
         const currentSettings = this.getFormSettings(app);
-        if (!currentSettings) return false;
         
-        // Deep comparison of current settings with original settings
         // For complex objects like instances, we need to stringify them for comparison
         const originalJSON = JSON.stringify(this.originalSettings[app]);
         const currentJSON = JSON.stringify(currentSettings);
@@ -2878,47 +3051,140 @@ let huntarrUI = {
         return originalJSON !== currentJSON;
     },
     
-    // Add resetAppCycle function to the huntarrUI object
-    resetAppCycle: function(app, button) {
-        // Show spinner and disable button
-        const originalButtonText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
-        button.classList.add('resetting');
+    // Check if Low Usage Mode is enabled in settings and apply it
+    checkLowUsageMode: function() {
+        return HuntarrUtils.fetchWithTimeout('/api/settings/general', {
+            method: 'GET'
+        })
+        .then(response => response.json())
+        .then(config => {
+            if (config && config.low_usage_mode === true) {
+                this.applyLowUsageMode(true);
+            } else {
+                this.applyLowUsageMode(false);
+            }
+            return config;
+        })
+        .catch(error => {
+            console.error('[huntarrUI] Error checking Low Usage Mode:', error);
+            // Default to disabled on error
+            this.applyLowUsageMode(false);
+            throw error;
+        });
+    },
+    
+    // Apply Low Usage Mode effects based on setting
+    applyLowUsageMode: function(enabled) {
+        console.log(`[huntarrUI] Setting Low Usage Mode: ${enabled ? 'Enabled' : 'Disabled'}`);
         
-        // Make API call to reset the app cycle
-        fetch(`/api/cycle/reset/${app}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+        // Store the previous state to detect changes
+        const wasEnabled = document.body.classList.contains('low-usage-mode');
+        
+        // Check if the indicator already exists, if not create it
+        let indicator = document.getElementById('low-usage-mode-indicator');
+        
+        if (enabled) {
+            // Add CSS class to body to disable animations
+            document.body.classList.add('low-usage-mode');
+            
+            // Create or show the indicator
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'low-usage-mode-indicator';
+                indicator.innerHTML = '<i class="fas fa-battery-half"></i> Low Usage Mode';
+                indicator.style.position = 'fixed';
+                indicator.style.top = '10px';
+                indicator.style.right = '10px';
+                indicator.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                indicator.style.color = 'white';
+                indicator.style.padding = '5px 10px';
+                indicator.style.borderRadius = '4px';
+                indicator.style.fontSize = '12px';
+                indicator.style.zIndex = '9999';
+                document.body.appendChild(indicator);
+            } else {
+                indicator.style.display = 'block';
+            }
+        } else {
+            // Remove CSS class from body to enable animations
+            document.body.classList.remove('low-usage-mode');
+            
+            // Hide the indicator if it exists
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
+        }
+        
+        // If low usage mode state changed and we have stats data, update the display
+        if (wasEnabled !== enabled && window.mediaStats) {
+            console.log(`[huntarrUI] Low usage mode changed from ${wasEnabled} to ${enabled}, updating stats display`);
+            this.updateStatsDisplay(window.mediaStats);
+        }
+    },
+    
+    // Reset the app cycle for a specific app
+    resetAppCycle: function(app, button) {
+        // Make sure we have the app and button elements
+        if (!app || !button) {
+            console.error('[huntarrUI] Missing app or button for resetAppCycle');
+            return;
+        }
+        
+        // First, disable the button to prevent multiple clicks
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Resetting...';
+        
+        // API endpoint
+        const endpoint = `/api/cycle/reset/${app}`;
+        
+        HuntarrUtils.fetchWithTimeout(endpoint, {
+            method: 'POST'
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                throw new Error(`Failed to reset ${app} cycle`);
             }
             return response.json();
         })
         .then(data => {
-            if (data.success) {
-                // Show success notification
-                this.showNotification(`${app.charAt(0).toUpperCase() + app.slice(1)} cycle reset triggered successfully`, 'success');
-            } else {
-                // Show error notification
-                this.showNotification(`Error: ${data.error || 'Failed to reset cycle'}`, 'error');
-            }
+            this.showNotification(`Successfully reset ${this.capitalizeFirst(app)} cycle`, 'success');
+            console.log(`[huntarrUI] Reset ${app} cycle response:`, data);
+            
+            // Re-enable the button with original text
+            button.disabled = false;
+            button.innerHTML = `<i class="fas fa-sync-alt"></i> Reset`;
         })
         .catch(error => {
-            // Show error notification
-            this.showNotification(`Error: ${error.message}`, 'error');
-        })
-        .finally(() => {
-            // Restore button state after 2 seconds for visual feedback
-            setTimeout(() => {
-                button.innerHTML = originalButtonText;
-                button.classList.remove('resetting');
-            }, 2000);
+            console.error(`[huntarrUI] Error resetting ${app} cycle:`, error);
+            this.showNotification(`Error resetting ${this.capitalizeFirst(app)} cycle: ${error.message}`, 'error');
+            
+            // Re-enable the button with original text
+            button.disabled = false;
+            button.innerHTML = `<i class="fas fa-sync-alt"></i> Reset`;
         });
     },
+
+    // More robust low usage mode detection
+    isLowUsageModeEnabled: function() {
+        // Check multiple sources to determine if low usage mode is enabled
+        
+        // 1. Check CSS class on body (primary method)
+        const hasLowUsageClass = document.body.classList.contains('low-usage-mode');
+        
+        // 2. Check if the standalone low-usage-mode.js module is enabled
+        const standaloneModuleEnabled = window.LowUsageMode && window.LowUsageMode.isEnabled && window.LowUsageMode.isEnabled();
+        
+        // 3. Check if the low usage mode indicator is visible
+        const indicator = document.getElementById('low-usage-mode-indicator');
+        const indicatorVisible = indicator && indicator.style.display !== 'none' && indicator.style.display !== '';
+        
+        // 4. Store the result for consistency during this update cycle
+        const isEnabled = hasLowUsageClass || standaloneModuleEnabled || indicatorVisible;
+        
+        console.log(`[huntarrUI] Low usage mode detection - CSS class: ${hasLowUsageClass}, Module: ${standaloneModuleEnabled}, Indicator: ${indicatorVisible}, Final: ${isEnabled}`);
+        
+        return isEnabled;
+    }
 };
 
 // Initialize when document is ready

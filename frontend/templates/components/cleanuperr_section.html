@@ -12,7 +12,7 @@
         <div class="cleanuperr-info-box">
             <div class="cleanuperr-header">
                 <div class="cleanuperr-logo">
-                    <img src="/static/logo/apps/cleanuperr.png" alt="Cleanuperr Logo" class="app-logo">
+                    <img src="./static/logo/apps/cleanuperr.png" alt="Cleanuperr Logo" class="app-logo">
                 </div>
                 <div class="cleanuperr-title">
                     <h3>Cleanuperr by <a href="https://github.com/Flaminel" target="_blank">Flaminel</a></h3>
@@ -392,7 +392,7 @@
     
     // Load GitHub star count for Cleanuperr
     function loadCleanuperrStarCount() {
-        fetch('https://api.github.com/repos/flmorg/cleanuperr')
+        HuntarrUtils.fetchWithTimeout('https://api.github.com/repos/flmorg/cleanuperr')
             .then(response => {
                 if (!response.ok) {
                     // Handle rate limiting or other errors

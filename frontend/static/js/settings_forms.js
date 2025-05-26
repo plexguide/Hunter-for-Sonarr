@@ -46,7 +46,7 @@ const SettingsForms = {
                             <p class="setting-help">Friendly name for this Sonarr instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="sonarr-url-${index}"><a href="/Huntarr.io/docs/#/installation?id=api-setup" class="info-icon" title="Learn more about Sonarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;URL:</label>
+                            <label for="sonarr-url-${index}"><a href="https://huntarr.io/threads/sonarr-missing-search-mode.16/" class="info-icon" title="Learn more about Sonarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;URL:</label>
                             <input type="text" id="sonarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Sonarr (e.g., http://localhost:8989)">
                             <p class="setting-help">Base URL for Sonarr (e.g., http://localhost:8989)</p>
                         </div>
@@ -211,7 +211,7 @@ const SettingsForms = {
                 </div>
             `;
         });
-        
+
         // Add a button to add new instances (limit to 9 total)
         instancesHtml += `
                 </div> <!-- instances-container -->
@@ -224,9 +224,7 @@ const SettingsForms = {
         `;
         
         // Continue with the rest of the settings form
-        container.innerHTML = `
-            ${instancesHtml}
-            
+        let searchSettingsHtml = `
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
@@ -281,7 +279,10 @@ const SettingsForms = {
                 </div>
             </div>
         `;
-        
+
+        // Set the content
+        container.innerHTML = instancesHtml + searchSettingsHtml;
+
         // Add event listeners for the instance management
         SettingsForms.setupInstanceManagement(container, 'radarr', settings.instances.length);
         
@@ -635,7 +636,7 @@ const SettingsForms = {
                 </div>
             </div> <!-- settings-group -->
         `;
-
+        
         // Search Settings
         let searchSettingsHtml = `
             <div class="settings-group">
@@ -766,7 +767,7 @@ const SettingsForms = {
                 </div>
             </div> <!-- settings-group -->
         `;
-
+        
         // Search Mode dropdown
         let searchSettingsHtml = `
             <div class="settings-group">
@@ -908,7 +909,7 @@ const SettingsForms = {
         const resetStrikesBtn = container.querySelector('#reset_swaparr_strikes');
         const statusContainer = container.querySelector('#swaparr_status');
         
-        fetch('/api/swaparr/status')
+        HuntarrUtils.fetchWithTimeout('/api/swaparr/status')
             .then(response => response.json())
             .then(data => {
                 let statusHTML = '';
@@ -944,7 +945,7 @@ const SettingsForms = {
                 if (confirm('Are you sure you want to reset all Swaparr strikes? This will clear the strike history for all apps.')) {
                     statusContainer.innerHTML = '<p>Resetting strikes...</p>';
                     
-                    fetch('/api/swaparr/reset', {
+                    HuntarrUtils.fetchWithTimeout('/api/swaparr/reset', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -957,7 +958,7 @@ const SettingsForms = {
                             statusContainer.innerHTML = `<p>Success: ${data.message}</p>`;
                             // Reload status after a short delay
                             setTimeout(() => {
-                                fetch('/api/swaparr/status')
+                                HuntarrUtils.fetchWithTimeout('/api/swaparr/status')
                                     .then(response => response.json())
                                     .then(data => {
                                         let statusHTML = '';
@@ -1051,9 +1052,28 @@ const SettingsForms = {
         
         // For the general settings form, collect settings including advanced settings
         if (appType === 'general') {
+            console.log('Processing general settings');
+            console.log('Container:', container);
+            console.log('Container HTML (first 500 chars):', container.innerHTML.substring(0, 500));
+            
+            // Debug: Check if apprise_urls exists anywhere
+            const globalAppriseElement = document.querySelector('#apprise_urls');
+            console.log('Global apprise_urls element:', globalAppriseElement);
+            
+            settings.instances = [];
             settings.check_for_updates = getInputValue('#check_for_updates', true);
             settings.debug_mode = getInputValue('#debug_mode', false);
             settings.display_community_resources = getInputValue('#display_community_resources', true);
+            settings.low_usage_mode = getInputValue('#low_usage_mode', false);
+            settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);
+            
+            // Auth mode handling
+            const authModeElement = container.querySelector('#auth_mode');
+            if (authModeElement) {
+                settings.auth_mode = authModeElement.value;
+            }
+            
+            settings.ssl_verify = getInputValue('#ssl_verify', true);
             settings.api_timeout = getInputValue('#api_timeout', 120);
             settings.command_wait_delay = getInputValue('#command_wait_delay', 1);
             settings.command_wait_attempts = getInputValue('#command_wait_attempts', 600);
@@ -1067,10 +1087,14 @@ const SettingsForms = {
             settings.notification_level = container.querySelector('#notification_level')?.value || 'info';
             
             // Process apprise URLs (split by newline)
-            const appriseUrlsText = container.querySelector('#apprise_urls')?.value || '';
+            const appriseUrlsElement = container.querySelector('#apprise_urls');
+            console.log('Container apprise_urls element found:', appriseUrlsElement);
+            const appriseUrlsText = appriseUrlsElement?.value || '';
+            console.log('Apprise URLs raw text:', appriseUrlsText);
             settings.apprise_urls = appriseUrlsText.split('\n')
                 .map(url => url.trim())
                 .filter(url => url.length > 0);
+            console.log('Apprise URLs processed:', settings.apprise_urls);
                 
             settings.notify_on_missing = getInputValue('#notify_on_missing', true);
             settings.notify_on_upgrade = getInputValue('#notify_on_upgrade', true);
@@ -1252,6 +1276,14 @@ const SettingsForms = {
                     </label>
                     <p class="setting-help" style="margin-left: -3ch !important;">Show or hide the Resources section on the home page</p>
                 </div>
+                <div class="setting-item">
+                    <label for="low_usage_mode"><a href="#" class="info-icon" title="Learn more about Low Usage Mode" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Low Usage Mode:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="low_usage_mode" ${settings.low_usage_mode === true ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Disables animations to reduce CPU/GPU usage on older devices</p>
+                </div>
 
             </div>
             
@@ -1287,7 +1319,7 @@ const SettingsForms = {
                 <h3>Security</h3>
                 <div class="setting-item">
                     <label for="auth_mode"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#authentication-mode" class="info-icon" title="Learn more about authentication modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Authentication Mode:</label>
-                    <select id="auth_mode" name="auth_mode" style="width: 300px; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db; background-image: url('data:image/svg+xml;utf8,<svg fill=\'white\' height=\'24\' viewBox=\'0 0 24 24\' width=\'24\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/><path d=\'M0 0h24v24H0z\' fill=\'none\'/></svg>'); background-repeat: no-repeat; background-position: right 8px center; -webkit-appearance: none; -moz-appearance: none; appearance: none;">
+                    <select id="auth_mode" name="auth_mode" style="width: 300px; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db;">
                         <option value="login" ${(settings.auth_mode === 'login' || (!settings.auth_mode && !settings.local_access_bypass && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Login Mode</option>
                         <option value="local_bypass" ${(settings.auth_mode === 'local_bypass' || (!settings.auth_mode && settings.local_access_bypass === true && !settings.proxy_auth_bypass)) ? 'selected' : ''}>Local Bypass Mode</option>
                         <option value="no_login" ${(settings.auth_mode === 'no_login' || (!settings.auth_mode && settings.proxy_auth_bypass === true)) ? 'selected' : ''}>No Login Mode</option>
@@ -1339,22 +1371,22 @@ const SettingsForms = {
                 <div class="setting-item">
                     <label for="base_url"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#base-url" class="info-icon" title="Learn more about reverse proxy base URL settings" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Base URL:</label>
                     <input type="text" id="base_url" value="${settings.base_url || ''}" placeholder="/huntarr">
-                    <p class="setting-help" style="margin-left: -3ch !important;">Base URL path for reverse proxy (e.g., '/huntarr'). Leave empty for root path. Requires restart.</p>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Base URL path for reverse proxy (e.g., '/huntarr'). Leave empty for root path. Requires restart. Credit <a href="https://github.com/scr4tchy" target="_blank">scr4tchy</a>.</p>
                 </div>
             </div>
 
             <div class="settings-group">
-                <h3>Notifications</h3>
+                <h3>Apprise Notifications</h3>
                 <div class="setting-item">
-                    <label for="enable_notifications"><a href="#" class="info-icon" title="Enable or disable notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enable Notifications:</label>
+                    <label for="enable_notifications"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#enable-notifications" class="info-icon" title="Enable or disable notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Enable Notifications:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="enable_notifications" ${settings.enable_notifications === true ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
-                    <p class="setting-help" style="margin-left: -3ch !important;">Enable sending notifications via Apprise</p>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Enable sending notifications via Apprise for media processing events</p>
                 </div>
                 <div class="setting-item">
-                    <label for="notification_level"><a href="#" class="info-icon" title="Set minimum notification level" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Notification Level:</label>
+                    <label for="notification_level"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#notification-level" class="info-icon" title="Set minimum notification level" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Notification Level:</label>
                     <select id="notification_level" name="notification_level" style="width: 200px; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db;">
                         <option value="info" ${settings.notification_level === 'info' || !settings.notification_level ? 'selected' : ''}>Info</option>
                         <option value="success" ${settings.notification_level === 'success' ? 'selected' : ''}>Success</option>
@@ -1364,13 +1396,19 @@ const SettingsForms = {
                     <p class="setting-help" style="margin-left: -3ch !important;">Minimum level of events that will trigger notifications</p>
                 </div>
                 <div class="setting-item">
-                    <label for="apprise_urls"><a href="https://github.com/caronc/apprise#supported-notifications" class="info-icon" title="Learn about Apprise URL formats" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Apprise URLs:</label>
+                    <label for="apprise_urls"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#apprise-urls" class="info-icon" title="Learn about Apprise URL formats" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Apprise URLs:</label>
                     <textarea id="apprise_urls" rows="4" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db;">${(settings.apprise_urls || []).join('\n')}</textarea>
                     <p class="setting-help" style="margin-left: -3ch !important;">Enter one Apprise URL per line (e.g., discord://, telegram://, etc)</p>
-                    <p class="setting-help"><a href="https://github.com/caronc/apprise#supported-notifications" target="_blank">Click here for Apprise URL format documentation</a></p>
+                    <p class="setting-help"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#apprise-urls" target="_blank">Click here for detailed Apprise URL documentation</a></p>
+                    <div style="margin-top: 10px;">
+                        <button type="button" id="testNotificationBtn" class="btn btn-secondary" style="background-color: #6366f1; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                            <i class="fas fa-bell"></i> Test Notification
+                        </button>
+                        <span id="testNotificationStatus" style="margin-left: 10px; font-size: 14px;"></span>
+                    </div>
                 </div>
                 <div class="setting-item">
-                    <label for="notify_on_missing"><a href="#" class="info-icon" title="Send notifications for missing media" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Notify on Missing:</label>
+                    <label for="notify_on_missing"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#notify-on-missing" class="info-icon" title="Send notifications for missing media" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Notify on Missing:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="notify_on_missing" ${settings.notify_on_missing !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -1378,7 +1416,7 @@ const SettingsForms = {
                     <p class="setting-help" style="margin-left: -3ch !important;">Send notifications when missing media is processed</p>
                 </div>
                 <div class="setting-item">
-                    <label for="notify_on_upgrade"><a href="#" class="info-icon" title="Send notifications for upgrades" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Notify on Upgrade:</label>
+                    <label for="notify_on_upgrade"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#notify-on-upgrade" class="info-icon" title="Learn more about upgrade notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Notify on Upgrade:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="notify_on_upgrade" ${settings.notify_on_upgrade !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -1386,7 +1424,7 @@ const SettingsForms = {
                     <p class="setting-help" style="margin-left: -3ch !important;">Send notifications when media is upgraded</p>
                 </div>
                 <div class="setting-item">
-                    <label for="notification_include_instance"><a href="#" class="info-icon" title="Include instance name in notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Include Instance:</label>
+                    <label for="notification_include_instance"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#include-instance" class="info-icon" title="Include instance name in notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Include Instance:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="notification_include_instance" ${settings.notification_include_instance !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -1394,7 +1432,7 @@ const SettingsForms = {
                     <p class="setting-help" style="margin-left: -3ch !important;">Include instance name in notification messages</p>
                 </div>
                 <div class="setting-item">
-                    <label for="notification_include_app"><a href="#" class="info-icon" title="Include app name in notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Include App Name:</label>
+                    <label for="notification_include_app"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#include-app-name" class="info-icon" title="Include app name in notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>&nbsp;&nbsp;&nbsp;Include App Name:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="notification_include_app" ${settings.notification_include_app !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -1464,7 +1502,7 @@ const SettingsForms = {
             }
         }
 
-        fetch('/api/stateful/info', {
+        HuntarrUtils.fetchWithTimeout('/api/stateful/info', {
             cache: 'no-cache',
             headers: {
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -1541,7 +1579,7 @@ const SettingsForms = {
             
         // Helper function to fetch data silently without updating UI
         function fetchStatefulInfoSilently() {
-            fetch('/api/stateful/info', {
+            HuntarrUtils.fetchWithTimeout('/api/stateful/info', {
                 cache: 'no-cache',
                 headers: {
                     'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -1656,7 +1694,7 @@ const SettingsForms = {
                 button.disabled = true;
                 
                 // Make the API request
-                fetch(`/api/${appType}/test-connection`, {
+                HuntarrUtils.fetchWithTimeout(`/api/${appType}/test-connection`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1941,7 +1979,7 @@ const SettingsForms = {
         }
         
         // Make the API request
-        fetch(`/api/${app}/test-connection`, {
+        HuntarrUtils.fetchWithTimeout(`/api/${app}/test-connection`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
