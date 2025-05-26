@@ -1331,7 +1331,7 @@ let huntarrUI = {
             if (isAuthModeChanged) {
                 this.showNotification('Settings saved successfully. Reloading page to apply authentication changes...', 'success');
                 setTimeout(() => {
-                    window.location.href = '/'; // Redirect to home page after a brief delay
+                    window.location.href = './'; // Redirect to home page after a brief delay
                 }, 1500);
                 return;
             }
