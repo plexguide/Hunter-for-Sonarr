@@ -218,6 +218,76 @@ def get_cutoff_unmet_movies(api_url: str, api_key: str, api_timeout: int, monito
     radarr_logger.debug(f"Found {len(all_cutoff_movies)} cutoff unmet movies (monitored_only={monitored_only}).")
     return all_cutoff_movies
 
+def get_cutoff_unmet_movies_random_page(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, count: int = 50) -> Optional[List[Dict]]:
+    """
+    Get a random sample of cutoff unmet movies from a random page instead of fetching all pages.
+    This dramatically reduces API calls while still providing fair movie selection.
+    
+    Args:
+        api_url: Radarr API URL
+        api_key: Radarr API key
+        api_timeout: Request timeout in seconds
+        monitored_only: Only return monitored movies
+        count: Maximum number of movies to return (default: 50)
+        
+    Returns:
+        List of movie dictionaries representing cutoff unmet movies, or None if error
+    """
+    import random
+    
+    radarr_logger.debug(f"Fetching random sample of cutoff unmet movies (monitored_only={monitored_only}, count={count})...")
+    
+    # First, get the first page to determine total pages/records
+    params = {
+        'page': 1,
+        'pageSize': count,  # Use requested count as page size
+        'monitored': monitored_only
+    }
+    
+    # Use arr_request for proper API tracking and limit checking
+    response = arr_request(api_url, api_key, api_timeout, "wanted/cutoff", params=params)
+    
+    if response is None:
+        radarr_logger.error("Failed to retrieve cutoff unmet movies from Radarr API.")
+        return None
+        
+    records = response.get('records', [])
+    total_records = response.get('totalRecords', 0)
+    page_size = count
+    total_pages = max(1, (total_records + page_size - 1) // page_size)  # Calculate total pages
+    
+    radarr_logger.info(f"📊 Found {total_records} total cutoff unmet movies across {total_pages} pages")
+    
+    # If we have few enough records that they fit in one page, just return them
+    if total_records <= page_size:
+        radarr_logger.info(f"🎯 All {len(records)} movies fit in one page, returning them directly")
+        return records
+    
+    # Pick a random page (excluding page 1 since we already have it)
+    if total_pages > 1:
+        random_page = random.randint(1, total_pages)
+        radarr_logger.info(f"🎲 Randomly selected page {random_page} of {total_pages}")
+        
+        # If we didn't pick page 1, fetch the random page
+        if random_page != 1:
+            params['page'] = random_page
+            response = arr_request(api_url, api_key, api_timeout, "wanted/cutoff", params=params)
+            
+            if response is None:
+                radarr_logger.warning(f"Failed to fetch random page {random_page}, using page 1 data")
+                # Fall back to page 1 data we already have
+            else:
+                records = response.get('records', [])
+                radarr_logger.info(f"📄 Retrieved {len(records)} movies from page {random_page}")
+    
+    # Randomly sample from the page if we have more than requested
+    if len(records) > count:
+        records = random.sample(records, count)
+        radarr_logger.info(f"🎯 Randomly selected {len(records)} movies from the page")
+    
+    radarr_logger.info(f"✅ Returning {len(records)} cutoff unmet movies from random sampling")
+    return records
+
 def refresh_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int, 
                  command_wait_delay: int = 1, command_wait_attempts: int = 600) -> Optional[int]:
     """

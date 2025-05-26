@@ -51,7 +51,9 @@ def process_cutoff_upgrades(
     
     # Get movies eligible for upgrade
     radarr_logger.info("Retrieving movies eligible for cutoff upgrade...")
-    upgrade_eligible_data = radarr_api.get_cutoff_unmet_movies(api_url, api_key, api_timeout, monitored_only)
+    upgrade_eligible_data = radarr_api.get_cutoff_unmet_movies_random_page(
+        api_url, api_key, api_timeout, monitored_only, count=50
+    )
     
     if not upgrade_eligible_data:
         radarr_logger.info("No movies found eligible for upgrade or error retrieving them.")
