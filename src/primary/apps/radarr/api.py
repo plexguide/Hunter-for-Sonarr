@@ -20,7 +20,7 @@ radarr_logger = get_logger("radarr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, params: Dict = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, params: Dict = None, count_api: bool = True) -> Any:
     """
     Make a request to the Radarr API.
     
@@ -32,6 +32,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data payload for POST/PUT requests
         params: Optional query parameters for GET requests
+        count_api: Whether the request counts toward API tally
     
     Returns:
         The parsed JSON response or None if the request failed
@@ -82,7 +83,8 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         response.raise_for_status()
         
         # Increment API usage counter only after successful request
-        increment_hourly_cap("radarr")
+        if count_api:
+            increment_hourly_cap("radarr")
         
         # Parse JSON response
         if response.text:
@@ -185,7 +187,7 @@ def get_cutoff_unmet_movies(api_url: str, api_key: str, api_timeout: int, monito
         }
         
         # Use arr_request for proper API tracking and limit checking
-        response = arr_request(api_url, api_key, api_timeout, "wanted/cutoff", params=params)
+        response = arr_request(api_url, api_key, api_timeout, "wanted/cutoff", params=params, count_api=False)
         
         if response is None:
             radarr_logger.error("Failed to retrieve cutoff unmet movies from Radarr API.")
@@ -222,6 +224,7 @@ def get_cutoff_unmet_movies_random_page(api_url: str, api_key: str, api_timeout:
     """
     Get a random sample of cutoff unmet movies from a random page instead of fetching all pages.
     This dramatically reduces API calls while still providing fair movie selection.
+    Note: Uses count_api=False for page fetching so only upgrade requests count toward API tally.
     
     Args:
         api_url: Radarr API URL
@@ -245,7 +248,7 @@ def get_cutoff_unmet_movies_random_page(api_url: str, api_key: str, api_timeout:
     }
     
     # Use arr_request for proper API tracking and limit checking
-    response = arr_request(api_url, api_key, api_timeout, "wanted/cutoff", params=params)
+    response = arr_request(api_url, api_key, api_timeout, "wanted/cutoff", params=params, count_api=False)
     
     if response is None:
         radarr_logger.error("Failed to retrieve cutoff unmet movies from Radarr API.")
@@ -271,7 +274,7 @@ def get_cutoff_unmet_movies_random_page(api_url: str, api_key: str, api_timeout:
         # If we didn't pick page 1, fetch the random page
         if random_page != 1:
             params['page'] = random_page
-            response = arr_request(api_url, api_key, api_timeout, "wanted/cutoff", params=params)
+            response = arr_request(api_url, api_key, api_timeout, "wanted/cutoff", params=params, count_api=False)
             
             if response is None:
                 radarr_logger.warning(f"Failed to fetch random page {random_page}, using page 1 data")

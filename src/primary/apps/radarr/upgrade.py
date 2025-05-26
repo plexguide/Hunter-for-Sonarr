@@ -9,7 +9,7 @@ import random
 from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.radarr import api as radarr_api
-from src.primary.stats_manager import increment_stat
+from src.primary.stats_manager import increment_stat, increment_stat_only
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.settings_manager import get_advanced_setting
@@ -103,7 +103,7 @@ def process_cutoff_upgrades(
         if search_result:
             radarr_logger.info(f"  - Successfully triggered search for quality upgrade.")
             add_processed_id("radarr", instance_name, str(movie_id))
-            increment_stat("radarr", "upgraded")
+            increment_stat_only("radarr", "upgraded")
             
             # Log to history so the upgrade appears in the history UI
             media_name = f"{movie_title} ({movie_year})"
