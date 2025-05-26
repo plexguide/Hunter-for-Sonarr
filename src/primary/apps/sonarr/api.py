@@ -10,6 +10,7 @@ import sys
 import time
 import datetime
 import traceback
+import random
 from typing import List, Dict, Any, Optional, Union, Callable
 # Correct the import path
 from src.primary.utils.logger import get_logger
@@ -462,7 +463,7 @@ def get_cutoff_unmet_episodes(api_url: str, api_key: str, api_timeout: int, moni
         sonarr_logger.debug(f"Returning {len(all_cutoff_unmet)} cutoff unmet episodes (monitored_only=False).")
         return all_cutoff_unmet
 
-def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, count: int) -> List[Dict[str, Any]]:
+def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, count: int, series_id: Optional[int] = None) -> List[Dict[str, Any]]:
     """
     Get a specified number of random cutoff unmet episodes by selecting a random page.
     This is much more efficient for very large libraries.
@@ -473,11 +474,9 @@ def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: in
         api_timeout: Timeout for the API request
         monitored_only: Whether to include only monitored episodes
         count: How many episodes to return
-        
-    Returns:
+          Returns:
         A list of randomly selected cutoff unmet episodes
     """
-    import random
     endpoint = "wanted/missing"
     page_size = 1000
     retries = 2
@@ -892,10 +891,8 @@ def get_series_with_missing_episodes(api_url: str, api_key: str, api_timeout: in
         sonarr_logger.info(f"Filtered from {len(all_series)} total series to {len(filtered_series)} monitored series")
     else:
         filtered_series = all_series
-        
-    # Apply random selection if requested
+          # Apply random selection if requested
     if random_mode:
-        import random
         sonarr_logger.info(f"Using RANDOM selection mode for missing episodes")
         random.shuffle(filtered_series)
     else:

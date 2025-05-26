@@ -227,14 +227,7 @@ def app_specific_loop(app_type: str) -> None:
             try:
                 # Use instance details for connection check
                 app_logger.debug(f"Checking connection to {app_type} instance '{instance_name}' at {api_url} with timeout {api_timeout}s")
-                # Determine SSL verify setting: instance-level, app-level, or global
-                verify_ssl = instance_details.get("ssl_verify")
-                if verify_ssl is None:
-                    verify_ssl = app_settings.get("ssl_verify")
-                if verify_ssl is None:
-                    from src.primary.settings_manager import get_ssl_verify_setting
-                    verify_ssl = get_ssl_verify_setting()
-                connected = check_connection(api_url, api_key, api_timeout=api_timeout, verify_ssl=verify_ssl)
+                connected = check_connection(api_url, api_key, api_timeout=api_timeout)
                 if not connected:
                     app_logger.warning(f"Failed to connect to {app_type} instance '{instance_name}' at {api_url}. Skipping.")
                     continue
