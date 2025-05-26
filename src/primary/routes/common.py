@@ -11,7 +11,7 @@ import qrcode
 import pyotp
 import logging
 # Add render_template, send_from_directory, session
-from flask import Blueprint, request, jsonify, make_response, redirect, url_for, current_app, render_template, send_from_directory, session
+from flask import Blueprint, request, jsonify, make_response, redirect, url_for, current_app, render_template, send_from_directory, session, send_file
 from ..auth import (
     verify_user, create_session, get_username_from_session, SESSION_COOKIE_NAME,
     change_username as auth_change_username, change_password as auth_change_password,
@@ -20,6 +20,7 @@ from ..auth import (
 )
 from ..utils.logger import logger # Ensure logger is imported
 from .. import settings_manager # Import settings_manager
+from ..cycle_tracker import _SLEEP_DATA_PATH # Import sleep data path
 
 common_bp = Blueprint('common', __name__)
 
@@ -37,6 +38,29 @@ def favicon():
 def logo_files(filename):
     logo_dir = os.path.join(common_bp.static_folder, 'logo')
     return send_from_directory(logo_dir, filename)
+
+# --- API Routes --- #
+
+@common_bp.route('/api/sleep.json', methods=['GET'])
+def api_get_sleep_json():
+    """API endpoint to directly serve the sleep.json file for frontend access"""
+    try:
+        if os.path.exists(_SLEEP_DATA_PATH):
+            # Add CORS headers to allow any origin to access this resource
+            response = send_file(_SLEEP_DATA_PATH, mimetype='application/json')
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+        else:
+            # If file doesn't exist, create it and return empty object
+            logger.info(f"[API] sleep.json not found at {_SLEEP_DATA_PATH}, creating it")
+            os.makedirs(os.path.dirname(_SLEEP_DATA_PATH), exist_ok=True)
+            with open(_SLEEP_DATA_PATH, 'w') as f:
+                json.dump({}, f, indent=2)
+            return jsonify({}), 200
+    except Exception as e:
+        logger.error(f"Error serving sleep.json from {_SLEEP_DATA_PATH}: {e}")
+        # Return empty object instead of error to prevent UI breaking
+        return jsonify({}), 200
 
 # --- Authentication Routes --- #
 
