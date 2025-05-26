@@ -86,7 +86,7 @@ def process_missing_episodes_mode(
     
     # Always use random selection for missing episodes
     sonarr_logger.info(f"Using random selection for missing episodes")
-    sonarr_logger.debug(f"TESTING: Random selection mode for missing episodes with hunt_missing_items={hunt_missing_items}")
+    sonarr_logger.info(f"TESTING: Random selection mode for missing episodes with hunt_missing_items={hunt_missing_items}")
     episodes_to_search = sonarr_api.get_missing_episodes_random_page(
         api_url, api_key, api_timeout, monitored_only, hunt_missing_items)
 
