@@ -20,7 +20,7 @@ radarr_logger = get_logger("radarr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, params: Dict = None) -> Any:
     """
     Make a request to the Radarr API.
     
@@ -31,6 +31,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         endpoint: The API endpoint to call (without /api/v3/)
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data payload for POST/PUT requests
+        params: Optional query parameters for GET requests
     
     Returns:
         The parsed JSON response or None if the request failed
@@ -38,6 +39,12 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
     try:
         if not api_url or not api_key:
             radarr_logger.error("No URL or API key provided")
+            return None
+        
+        # Check API limit before making request
+        from src.primary.stats_manager import check_hourly_cap_exceeded, increment_hourly_cap
+        if check_hourly_cap_exceeded("radarr"):
+            radarr_logger.warning("\U0001F6D1 Radarr API hourly limit reached - skipping request")
             return None
         
         # Construct the full URL properly
@@ -60,7 +67,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         
         # Make the request based on the method
         if method.upper() == "GET":
-            response = session.get(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
+            response = session.get(full_url, headers=headers, params=params, timeout=api_timeout, verify=verify_ssl)
         elif method.upper() == "POST":
             response = session.post(full_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
         elif method.upper() == "PUT":
@@ -73,6 +80,9 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         
         # Check for errors
         response.raise_for_status()
+        
+        # Increment API usage counter only after successful request
+        increment_hourly_cap("radarr")
         
         # Parse JSON response
         if response.text:
@@ -147,7 +157,7 @@ def get_movies_with_missing(api_url: str, api_key: str, api_timeout: int, monito
 
 def get_cutoff_unmet_movies(api_url: str, api_key: str, api_timeout: int, monitored_only: bool) -> Optional[List[Dict]]:
     """
-    Get a list of movies that don't meet their quality profile cutoff.
+    Get a list of movies that don't meet their quality profile cutoff using the proper API endpoint.
 
     Args:
         api_url: The base URL of the Radarr API
@@ -158,54 +168,55 @@ def get_cutoff_unmet_movies(api_url: str, api_key: str, api_timeout: int, monito
     Returns:
         A list of movie objects that need quality upgrades, or None if the request failed.
     """
-    # Radarr API endpoint for cutoff unmet movies
-    # Note: Radarr's /api/v3/movie endpoint doesn't directly support a simple 'cutoffUnmet=true' like Sonarr's wanted/cutoff.
-    # We need to fetch all movies and filter locally, or use the /api/v3/movie/lookup endpoint if searching by TMDB/IMDB ID.
-    # Fetching all movies is simpler for now.
-    radarr_logger.debug("Fetching all movies to determine cutoff unmet status...")
-    movies = arr_request(api_url, api_key, api_timeout, "movie")
-    if movies is None:
-        radarr_logger.error("Failed to retrieve movies from Radarr API for cutoff check.")
-        return None
-
-    # Need quality profile information to determine cutoff unmet status.
-    # Fetch quality profiles first.
-    profiles = arr_request(api_url, api_key, api_timeout, "qualityprofile")
-    if profiles is None:
-        radarr_logger.error("Failed to retrieve quality profiles from Radarr API.")
-        return None
+    # Use Radarr's dedicated cutoff endpoint
+    radarr_logger.debug(f"Fetching cutoff unmet movies (monitored_only={monitored_only})...")
     
-    # Create a map for easy lookup: profile_id -> cutoff_format_score (or cutoff quality ID)
-    # Radarr profiles have 'cutoff' (quality ID) and potentially 'cutoffFormatScore'
-    profile_cutoff_map = {p['id']: p.get('cutoff') for p in profiles}
-    # TODO: Potentially incorporate cutoffFormatScore if needed for more complex logic
+    # Set up pagination parameters - start with reasonable page size
+    page = 1
+    page_size = 100  # Reasonable batch size for processing
+    all_cutoff_movies = []
+    
+    while True:
+        # Use the proper wanted/cutoff endpoint with pagination
+        params = {
+            'page': page,
+            'pageSize': page_size,
+            'monitored': monitored_only
+        }
+        
+        # Use arr_request for proper API tracking and limit checking
+        response = arr_request(api_url, api_key, api_timeout, "wanted/cutoff", params=params)
+        
+        if response is None:
+            radarr_logger.error("Failed to retrieve cutoff unmet movies from Radarr API.")
+            return None if page == 1 else all_cutoff_movies  # Return partial results if we got some data
+            
+        # Handle paginated response structure
+        records = response.get('records', [])
+        total_records = response.get('totalRecords', 0)
+        
+        if not records:
+            break  # No more records
+            
+        all_cutoff_movies.extend(records)
+        
+        # Log progress for large datasets
+        if total_records > page_size:
+            radarr_logger.debug(f"Retrieved {len(all_cutoff_movies)}/{total_records} cutoff unmet movies...")
+        
+        # Check if we've got all records
+        if len(all_cutoff_movies) >= total_records:
+            break
+            
+        page += 1
+        
+        # Safety check to prevent infinite loops
+        if page > 1000:  # Reasonable upper limit
+            radarr_logger.warning("Reached maximum page limit (1000) while fetching cutoff unmet movies")
+            break
 
-    unmet_movies = []
-    for movie in movies:
-        is_monitored = movie.get("monitored", False)
-        has_file = movie.get("hasFile", False)
-        profile_id = movie.get("qualityProfileId")
-        movie_file = movie.get("movieFile")
-
-        # Apply monitored_only filter if requested
-        if not monitored_only or is_monitored:
-            if has_file and movie_file and profile_id in profile_cutoff_map:
-                cutoff_quality_id = profile_cutoff_map[profile_id]
-                current_quality_id = movie_file.get("quality", {}).get("quality", {}).get("id")
-                
-                # Simple check: if current quality ID is less than cutoff quality ID
-                # This assumes quality IDs are ordered correctly (lower ID = lower quality)
-                # A more robust check might involve comparing quality *names* or *scores* if IDs aren't reliable order indicators.
-                if current_quality_id is not None and cutoff_quality_id is not None and current_quality_id < cutoff_quality_id:
-                    # TODO: Add check for cutoffFormatScore if necessary
-                    unmet_movies.append(movie)
-            # else: # Log why a movie wasn't considered unmet (optional)
-            #     if not has_file: radarr_logger.debug(f"Skipping {movie.get('title')} - no file.")
-            #     elif not movie_file: radarr_logger.debug(f"Skipping {movie.get('title')} - no movieFile info.")
-            #     elif profile_id not in profile_cutoff_map: radarr_logger.debug(f"Skipping {movie.get('title')} - profile ID {profile_id} not found.")
-
-    radarr_logger.debug(f"Found {len(unmet_movies)} cutoff unmet movies (monitored_only={monitored_only}).")
-    return unmet_movies
+    radarr_logger.debug(f"Found {len(all_cutoff_movies)} cutoff unmet movies (monitored_only={monitored_only}).")
+    return all_cutoff_movies
 
 def refresh_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int, 
                  command_wait_delay: int = 1, command_wait_attempts: int = 600) -> Optional[int]:
