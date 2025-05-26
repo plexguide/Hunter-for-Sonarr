@@ -141,7 +141,8 @@ def get_movies_with_missing(api_url: str, api_key: str, api_timeout: int, monito
         A list of movie objects with missing files, or None if the request failed.
     """
     # Use the updated arr_request with passed arguments
-    movies = arr_request(api_url, api_key, api_timeout, "movie")
+    # Use arr_request with count_api=False for data fetching (doesn't count toward API tally)
+    movies = arr_request(api_url, api_key, api_timeout, "movie", count_api=False)
     if movies is None: # Check for None explicitly, as an empty list is valid
         radarr_logger.error("Failed to retrieve movies from Radarr API.")
         return None
