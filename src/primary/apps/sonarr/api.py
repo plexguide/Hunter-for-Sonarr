@@ -64,7 +64,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         # Get SSL verification setting
         verify_ssl = get_ssl_verify_setting()
         sonarr_logger.debug(f"arr_request: For URL {full_url}, effective SSL verification for requests call will be: {verify_ssl} (type: {type(verify_ssl)})")
-
+        
         try:
             if method.upper() == "GET":
                 response = session.get(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
@@ -468,7 +468,7 @@ def get_cutoff_unmet_episodes(api_url: str, api_key: str, api_timeout: int, moni
         sonarr_logger.debug(f"Returning {len(all_cutoff_unmet)} cutoff unmet episodes (monitored_only=False).")
         return all_cutoff_unmet
 
-def get_cutoff_unmet_episodes_random_page(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, count: int) -> List[Dict[str, Any]]:
+def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, count: int) -> List[Dict[str, Any]]:
     """
     Get a specified number of random cutoff unmet episodes by selecting a random page.
     This is much more efficient for very large libraries.
@@ -577,159 +577,6 @@ def get_cutoff_unmet_episodes_random_page(api_url: str, api_key: str, api_timeou
                 
         except Exception as e:
             sonarr_logger.error(f"Unexpected error getting missing episodes (attempt {attempt+1}): {str(e)}", exc_info=True)
-            if attempt < retries:
-                time.sleep(retry_delay)
-                continue
-            return []
-    
-    # If we get here, all retries failed
-    sonarr_logger.error("All attempts to get missing episodes failed")
-    return []
-
-def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, count: int, series_id: Optional[int] = None) -> List[Dict[str, Any]]:
-    """
-    Get a specified number of random missing episodes by selecting a random page.
-    This is much more efficient for very large libraries.
-    
-    Args:
-        api_url: The base URL of the Sonarr API
-        api_key: The API key for authentication
-        api_timeout: Timeout for the API request
-        monitored_only: Whether to include only monitored episodes
-        count: How many episodes to return
-        series_id: Optional series ID to filter by
-        
-    Returns:
-        A list of randomly selected missing episodes
-    """
-    import random
-    endpoint = "wanted/missing"
-    page_size = 1000
-    retries = 2
-    retry_delay = 3 
-    
-    # Get SSL verification setting (important for the API requests)
-    verify_ssl = get_ssl_verify_setting()
-    if not verify_ssl:
-        sonarr_logger.debug("SSL verification disabled by user setting")
-    
-    # First, make a request to get just the total record count (page 1 with size=1)
-    params = {
-        "page": 1,
-        "pageSize": 1,
-        "includeSeries": "true"  # Include series info for filtering
-    }
-    if series_id is not None:
-        params["seriesId"] = series_id
-        
-    param_str = "&".join(f"{k}={v}" for k, v in params.items())
-    query_endpoint = f"{endpoint}?{param_str}"
-    
-    for attempt in range(retries + 1):
-        try:
-            # Get total record count from a minimal query
-            sonarr_logger.debug(f"Getting missing episodes count (attempt {attempt+1}/{retries+1})")
-            
-            # Make the request directly using requests to ensure SSL verify setting is used
-            full_url = f"{api_url.rstrip('/')}/api/v3/{query_endpoint.lstrip('/')}"
-            headers = {
-                "X-Api-Key": api_key,
-                "Content-Type": "application/json",
-                "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
-            }
-            
-            sonarr_logger.debug(f"Making GET request to: {full_url}")
-            sonarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
-            sonarr_logger.debug(f"SSL verification disabled by user setting")
-            
-            response = session.get(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
-            response.raise_for_status()
-            
-            if not response.content:
-                sonarr_logger.warning(f"Empty response when getting missing count (attempt {attempt+1})")
-                if attempt < retries:
-                    time.sleep(retry_delay)
-                    continue
-                return []
-                
-            response_data = response.json()
-            if "totalRecords" not in response_data:
-                sonarr_logger.warning(f"Invalid response format when getting missing count (attempt {attempt+1})")
-                if attempt < retries:
-                    time.sleep(retry_delay)
-                    continue
-                return []
-                
-            total_records = response_data.get('totalRecords', 0)
-            
-            if total_records == 0:
-                sonarr_logger.info("No missing episodes found in Sonarr.")
-                return []
-                
-            # Calculate total pages with our desired page size
-            total_pages = (total_records + page_size - 1) // page_size
-            sonarr_logger.info(f"Found {total_records} total missing episodes across {total_pages} pages")
-            
-            if total_pages == 0:
-                return []
-                
-            # Select a random page
-            random_page = random.randint(1, total_pages)
-            sonarr_logger.info(f"Selected random page {random_page} of {total_pages} for missing episodes")
-            
-            # Get episodes from the random page
-            params = {
-                "page": random_page,
-                "pageSize": page_size,
-                "includeSeries": "true"
-            }
-            if series_id is not None:
-                params["seriesId"] = series_id
-                
-            param_str = "&".join(f"{k}={v}" for k, v in params.items())
-            page_endpoint = f"{endpoint}?{param_str}"
-            
-            # Make another direct request using requests to ensure SSL verify setting is used
-            full_page_url = f"{api_url.rstrip('/')}/api/v3/{page_endpoint.lstrip('/')}"
-            
-            sonarr_logger.debug(f"Making GET request to: {full_page_url}")
-            
-            page_response = session.get(full_page_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
-            page_response.raise_for_status()
-            
-            if not page_response.content:
-                sonarr_logger.warning(f"Empty response when getting missing episodes page {random_page}")
-                return []
-                
-            page_response_data = page_response.json()
-            if "records" not in page_response_data:
-                sonarr_logger.warning(f"Invalid response format when getting missing episodes page {random_page}")
-                return []
-                
-            records = page_response_data.get('records', [])
-            sonarr_logger.info(f"Retrieved {len(records)} missing episodes from page {random_page}")
-            
-            # Apply monitored filter if requested
-            if monitored_only:
-                filtered_records = [
-                    ep for ep in records
-                    if ep.get('series', {}).get('monitored', False) and ep.get('monitored', False)
-                ]
-                sonarr_logger.debug(f"Filtered to {len(filtered_records)} monitored missing episodes")
-                records = filtered_records
-            
-            # Select random episodes from this page
-            if len(records) > count:
-                selected_records = random.sample(records, count)
-                sonarr_logger.debug(f"Randomly selected {len(selected_records)} missing episodes from page {random_page}")
-                return selected_records
-            else:
-                # If we have fewer episodes than requested, return all of them
-                sonarr_logger.debug(f"Returning all {len(records)} missing episodes from page {random_page} (fewer than requested {count})")
-                return records
-                
-        except Exception as e:
-            sonarr_logger.error(f"Error getting missing episodes (attempt {attempt+1}): {str(e)}", exc_info=True)
             if attempt < retries:
                 time.sleep(retry_delay)
                 continue
