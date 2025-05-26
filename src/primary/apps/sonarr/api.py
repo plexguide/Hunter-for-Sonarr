@@ -474,7 +474,8 @@ def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: in
         api_timeout: Timeout for the API request
         monitored_only: Whether to include only monitored episodes
         count: How many episodes to return
-          Returns:
+        
+    Returns:
         A list of randomly selected cutoff unmet episodes
     """
     endpoint = "wanted/missing"
@@ -891,7 +892,8 @@ def get_series_with_missing_episodes(api_url: str, api_key: str, api_timeout: in
         sonarr_logger.info(f"Filtered from {len(all_series)} total series to {len(filtered_series)} monitored series")
     else:
         filtered_series = all_series
-          # Apply random selection if requested
+        
+    # Apply random selection if requested
     if random_mode:
         sonarr_logger.info(f"Using RANDOM selection mode for missing episodes")
         random.shuffle(filtered_series)
