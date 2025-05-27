@@ -253,6 +253,119 @@ function fetchData() {
 }
 ```
 
+## 🚨 CRITICAL: Subpath Compatibility Lessons (PR #527)
+
+**PROBLEM:** Huntarr broke when deployed in subdirectories (e.g., `domain.com/huntarr/`) due to absolute URL references that failed in subpath environments.
+
+**SYMPTOMS:**
+- Application works at root domain (`domain.com`) but fails in subdirectories
+- Navigation redirects break (redirect to wrong URLs)
+- CSS/JS resources fail to load
+- API calls return 404 errors
+- Setup process gets stuck
+
+### 🔧 Critical Fix Patterns from PR #527
+
+#### 1. JavaScript Navigation URLs - HIGH PRIORITY
+**❌ BROKEN:**
+```javascript
+// Absolute URLs break in subpaths
+window.location.href = '/';  // Redirects to domain.com instead of domain.com/huntarr/
+```
+
+**✅ FIXED:**
+```javascript
+// Relative URLs work in all environments
+window.location.href = './';  // Correctly redirects to current subpath
+```
+
+**Files to Check:**
+- `/frontend/static/js/new-main.js` - Settings save redirects
+- `/frontend/templates/setup.html` - Setup completion redirects
+- Any JavaScript with `window.location.href = '/'`
+
+#### 2. CSS Resource Loading - HIGH PRIORITY
+**❌ BROKEN:**
+```html
+<!-- Multiple CSS files with incorrect names -->
+<link rel="stylesheet" href="./static/css/variables.css">
+<link rel="stylesheet" href="./static/css/styles.css">
+```
+
+**✅ FIXED:**
+```html
+<!-- Single consolidated CSS file -->
+<link rel="stylesheet" href="./static/css/style.css">
+```
+
+**Files to Check:**
+- `/frontend/templates/base.html` - Main CSS references
+- `/frontend/templates/components/head.html` - Head CSS includes
+- Any template with CSS `<link>` tags
+
+#### 3. API Endpoint URLs
+**✅ GOOD PATTERN (Already implemented):**
+```javascript
+// Relative API calls work in subpaths
+fetch('./api/sleep.json')  // ✅ Works
+fetch('/api/sleep.json')   // ❌ Breaks in subpaths
+```
+
+### 🔍 Subpath Testing Checklist
+
+**MANDATORY before any frontend changes:**
+- [ ] Test navigation from every page (all redirects work)
+- [ ] Test CSS/JS resources load correctly
+- [ ] Test API calls work from all pages
+- [ ] Test setup process completion
+- [ ] Test authentication flow redirects
+- [ ] Test with reverse proxy configuration: `domain.com/huntarr/`
+
+### 🚨 Subpath Anti-Patterns to AVOID
+
+1. **❌ NEVER use absolute URLs in JavaScript:**
+   ```javascript
+   window.location.href = '/';           // BREAKS subpaths
+   window.location.href = '/settings';   // BREAKS subpaths
+   fetch('/api/endpoint');               // BREAKS subpaths
+   ```
+
+2. **❌ NEVER hardcode root paths in templates:**
+   ```html
+   <link href="/static/css/style.css">   <!-- BREAKS subpaths -->
+   <script src="/static/js/app.js">      <!-- BREAKS subpaths -->
+   ```
+
+3. **❌ NEVER assume root deployment:**
+   ```python
+   redirect('/')  # BREAKS in Flask routes with subpaths
+   ```
+
+### 🎯 Subpath Prevention Strategy
+
+**Before committing any frontend changes:**
+
+1. **Search for absolute URL patterns:**
+   ```bash
+   grep -r "href=\"/" frontend/
+   grep -r "src=\"/" frontend/
+   grep -r "window.location.href = '/" frontend/
+   grep -r "fetch('/" frontend/
+   ```
+
+2. **Test deployment scenarios:**
+   - Root deployment: `http://localhost:9705/`
+   - Subpath deployment: `http://localhost:9705/huntarr/`
+   - Reverse proxy: `https://domain.com/huntarr/`
+
+3. **Verify all navigation works:**
+   - Home → Settings → Home
+   - Setup flow completion
+   - Authentication redirects
+   - Error page redirects
+
+**LESSON LEARNED:** Subpath compatibility issues are SILENT FAILURES that only surface in production reverse proxy environments. Always test with subpath configurations before deploying.
+
 ## 🔧 Development Workflows
 
 ### Environment Testing Checklist
