@@ -24,7 +24,7 @@ session = requests.Session()
 # Default API timeout in seconds - used as fallback only
 API_TIMEOUT = 30
 
-def check_connection(api_url: str, api_key: str, api_timeout: int, verify_ssl: Optional[bool] = None) -> bool:
+def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
     """Check the connection to Readarr API."""
     try:
         # Ensure api_url is properly formatted
@@ -47,9 +47,8 @@ def check_connection(api_url: str, api_key: str, api_timeout: int, verify_ssl: O
             "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
         }
         logger.debug(f"Using User-Agent: {headers['User-Agent']}")
-        if verify_ssl is None:
-            verify_ssl = get_ssl_verify_setting()
-        response = requests.get(full_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
+        
+        response = requests.get(full_url, headers=headers, timeout=api_timeout, verify=get_ssl_verify_setting())
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         logger.debug("Successfully connected to Readarr.")
         return True
@@ -84,9 +83,9 @@ def get_download_queue_size(api_url: str = None, api_key: str = None, timeout: i
                 "X-Api-Key": api_key,
                 "Content-Type": "application/json"
             }
-            
+            verify_ssl = get_ssl_verify_setting()
             # Make the request
-            response = session.get(url, headers=headers, timeout=timeout)
+            response = session.get(url, headers=headers, timeout=timeout, verify=verify_ssl)
             response.raise_for_status()
             
             # Parse JSON response
@@ -106,7 +105,7 @@ def get_download_queue_size(api_url: str = None, api_key: str = None, timeout: i
 
 def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type: str = "readarr",
                 api_url: str = None, api_key: str = None, api_timeout: int = None, 
-                params: Dict = None, instance_data: Dict = None, verify_ssl: Optional[bool] = None) -> Any:
+                params: Dict = None, instance_data: Dict = None) -> Any:
     """
     Make a request to the Readarr API.
     
@@ -123,7 +122,6 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type:
         api_timeout: Optional timeout override
         params: Optional query parameters
         instance_data: Optional specific instance data to use
-        verify_ssl: Optional override for SSL verification
         
     Returns:
         The parsed JSON response or None if the request failed
@@ -193,8 +191,7 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type:
     }
     
     # Get SSL verification setting
-    if verify_ssl is None:
-        verify_ssl = get_ssl_verify_setting()
+    verify_ssl = get_ssl_verify_setting()
     if not verify_ssl:
         logger.debug("SSL verification disabled by user setting")
     
@@ -389,7 +386,7 @@ def get_author_details(api_url: str, api_key: str, author_id: int, api_timeout: 
     endpoint = f"{api_url}/api/v1/author/{author_id}"
     headers = {'X-Api-Key': api_key}
     try:
-        response = requests.get(endpoint, headers=headers, timeout=api_timeout)
+        response = requests.get(endpoint, headers=headers, timeout=api_timeout, verify=get_ssl_verify_setting())
         response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         author_data = response.json()
         logger.debug(f"Successfully fetched details for author ID {author_id}.")

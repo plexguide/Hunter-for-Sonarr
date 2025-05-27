@@ -463,7 +463,7 @@ def get_cutoff_unmet_episodes(api_url: str, api_key: str, api_timeout: int, moni
         sonarr_logger.debug(f"Returning {len(all_cutoff_unmet)} cutoff unmet episodes (monitored_only=False).")
         return all_cutoff_unmet
 
-def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, count: int, series_id: Optional[int] = None) -> List[Dict[str, Any]]:
+def get_cutoff_unmet_episodes_random_page(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, count: int) -> List[Dict[str, Any]]:
     """
     Get a specified number of random cutoff unmet episodes by selecting a random page.
     This is much more efficient for very large libraries.
@@ -493,14 +493,6 @@ def get_missing_episodes_random_page(api_url: str, api_key: str, api_timeout: in
     for attempt in range(retries + 1):
         try:
             # Get total record count from a minimal query
-            sonarr_logger.debug(f"Getting missing episodes count (attempt {attempt+1}/{retries+1})")
-            sonarr_logger.debug(f"Requesting missing episodes count with endpoint: {endpoint} with params {params}")
-            sonarr_logger.debug(f"Sonarr API URL: {api_url}")
-            sonarr_logger.debug(f"Sonarr API Timeout: {api_timeout}")
-            
-            # Explicitly log the SSL verification setting just before the call
-            ssl_verify = get_ssl_verify_setting()
-            sonarr_logger.debug(f"get_missing_episodes_random_page: SSL verify for '{endpoint}' will be: {ssl_verify}")
 
             response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
             if not response or "totalRecords" not in response:

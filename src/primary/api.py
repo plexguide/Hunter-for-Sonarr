@@ -39,11 +39,10 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None) -> Option
         "Content-Type": "application/json"
     }
 
-    # Get SSL verification setting - ALWAYS use global, ignore verify_ssl parameter
+    # Get SSL verification setting
     verify_ssl = get_ssl_verify_setting()
     
     if not verify_ssl:
-        # Updated log message to reflect that the global setting is used.
         logger.debug("SSL verification disabled by global user setting")
     
     try:
@@ -119,10 +118,10 @@ def check_connection(app_type: str = None) -> bool:
         
         logger.debug(f"Testing connection with URL: {url}")
 
+        # Get SSL verification setting
         verify_ssl = get_ssl_verify_setting()
-
+        
         if not verify_ssl:
-            # Updated log message to reflect that the global setting is used.
             logger.debug("SSL verification disabled by global user setting")
 
         response = session.get(url, headers=headers, timeout=API_TIMEOUT, verify=verify_ssl)

@@ -21,7 +21,7 @@ lidarr_logger = get_logger("lidarr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, params: Dict = None, verify_ssl: Optional[bool] = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, params: Dict = None) -> Any:
     """
     Make a request to the Lidarr API.
     
@@ -33,7 +33,6 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data to send with the request
         params: Optional query parameters
-        verify_ssl: Optional override for SSL verification
         
     Returns:
         The JSON response from the API, or None if the request failed
@@ -60,8 +59,8 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
     lidarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
     
     # Get SSL verification setting
-    if verify_ssl is None:
-        verify_ssl = get_ssl_verify_setting()
+    verify_ssl = get_ssl_verify_setting()
+
     if not verify_ssl:
         lidarr_logger.debug("SSL verification disabled by user setting")
     
@@ -118,7 +117,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
 
 # --- Specific API Functions ---
 
-def get_system_status(api_url: str, api_key: str, api_timeout: int, verify_ssl: Optional[bool] = None) -> Dict:
+def get_system_status(api_url: str, api_key: str, api_timeout: int) -> Dict:
     """
     Get Lidarr system status.
     
@@ -126,27 +125,16 @@ def get_system_status(api_url: str, api_key: str, api_timeout: int, verify_ssl: 
         api_url: The base URL of the Lidarr API
         api_key: The API key for authentication
         api_timeout: Timeout for the API request
-        verify_ssl: Optional override for SSL verification
         
     Returns:
         System status information or empty dict if request failed
     """
-    # If verify_ssl is not provided, get it from settings
-    if verify_ssl is None:
-        verify_ssl = get_ssl_verify_setting()
-        
-    # Log whether SSL verification is being used
-    if not verify_ssl:
-        lidarr_logger.debug("SSL verification disabled for system status check")
-        
+
     try:
         # For Lidarr, use V1 API
         endpoint = f"{api_url.rstrip('/')}/api/v1/system/status"
-        headers = {"X-Api-Key": api_key}
         
-        # Execute the request with SSL verification setting
-        response = requests.get(endpoint, headers=headers, timeout=api_timeout, verify=verify_ssl)
-        response.raise_for_status()
+        response = arr_request(api_url, api_key, api_timeout, "system/status", method="GET")
         
         # Parse and return the result
         return response.json()
@@ -154,7 +142,7 @@ def get_system_status(api_url: str, api_key: str, api_timeout: int, verify_ssl: 
         lidarr_logger.error(f"Error getting system status: {str(e)}")
         return {}
 
-def check_connection(api_url: str, api_key: str, api_timeout: int, verify_ssl: Optional[bool] = None) -> bool:
+def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
     """Checks connection by fetching system status."""
     if not api_url:
         lidarr_logger.error("API URL is empty or not set")
@@ -166,11 +154,8 @@ def check_connection(api_url: str, api_key: str, api_timeout: int, verify_ssl: O
     try:
         # Use a shorter timeout for a quick connection check
         quick_timeout = min(api_timeout, 15) 
-        
-        if verify_ssl is None:
-            verify_ssl = get_ssl_verify_setting()
-        
-        status = get_system_status(api_url, api_key, quick_timeout, verify_ssl)
+
+        status = get_system_status(api_url, api_key, quick_timeout)
         if status and isinstance(status, dict) and 'version' in status:
              # Log success only if debug is enabled to avoid clutter
              lidarr_logger.debug(f"Connection check successful for {api_url}. Version: {status.get('version')}")

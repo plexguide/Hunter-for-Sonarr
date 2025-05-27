@@ -20,7 +20,7 @@ radarr_logger = get_logger("radarr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, verify_ssl: Optional[bool] = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
     """
     Make a request to the Radarr API.
     
@@ -31,7 +31,6 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         endpoint: The API endpoint to call (without /api/v3/)
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data payload for POST/PUT requests
-        verify_ssl: Optional SSL verification flag. (THIS PARAMETER IS NOW IGNORED in favor of global setting)
     
     Returns:
         The parsed JSON response or None if the request failed
@@ -53,11 +52,10 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
             "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
         }
         
-        # Get SSL verification setting - ALWAYS use global, ignore verify_ssl parameter
+        # Get SSL verification setting
         verify_ssl = get_ssl_verify_setting()
         
         if not verify_ssl:
-            # Updated log message to reflect that the global setting is used.
             radarr_logger.debug("SSL verification disabled by global user setting")
         
         # Make the request based on the method
@@ -102,13 +100,14 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int
         return -1
     try:
         # Radarr uses /api/v3/queue
-        endpoint = f"{api_url.rstrip('/')}/api/v3/queue?page=1&pageSize=1000" # Fetch a large page size
-        headers = {"X-Api-Key": api_key}
         verify_ssl = get_ssl_verify_setting()
         if not verify_ssl:
             radarr_logger.debug("SSL verification disabled by user setting for queue size check")
-        response = session.get(endpoint, headers=headers, timeout=api_timeout, verify=verify_ssl)
-        response.raise_for_status()
+        params = {
+            "page": 1,
+            "pageSize": 1000 # Fetch a large page size to get all items
+        }
+        response = arr_request(api_url, api_key, api_timeout, "queue", params=params)
         queue_data = response.json()
         queue_size = queue_data.get('totalRecords', 0)
         radarr_logger.debug(f"Radarr download queue size: {queue_size}")

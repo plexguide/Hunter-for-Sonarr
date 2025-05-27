@@ -22,7 +22,7 @@ whisparr_logger = get_logger("whisparr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, verify_ssl: Optional[bool] = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
     """
     Make a request to the Whisparr API.
     
@@ -33,7 +33,6 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         endpoint: The API endpoint to call
         method: HTTP method (GET, POST, PUT, DELETE)
         data: Optional data payload for POST/PUT requests
-        verify_ssl: Optional override for SSL verification
     
     Returns:
         The parsed JSON response or None if the request failed
@@ -61,8 +60,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         }
         
         # Get SSL verification setting
-        if verify_ssl is None:
-            verify_ssl = get_ssl_verify_setting()
+        verify_ssl = get_ssl_verify_setting()
         if not verify_ssl:
             whisparr_logger.debug("SSL verification disabled by user setting")
         
@@ -86,13 +84,13 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
                 whisparr_logger.debug(f"Standard path returned 404, trying with V3 path: {v3_url}")
                 
                 if method == "GET":
-                    response = session.get(v3_url, headers=headers, timeout=api_timeout)
+                    response = session.get(v3_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
                 elif method == "POST":
-                    response = session.post(v3_url, headers=headers, json=data, timeout=api_timeout)
+                    response = session.post(v3_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
                 elif method == "PUT":
-                    response = session.put(v3_url, headers=headers, json=data, timeout=api_timeout)
+                    response = session.put(v3_url, headers=headers, json=data, timeout=api_timeout, verify=verify_ssl)
                 elif method == "DELETE":
-                    response = session.delete(v3_url, headers=headers, timeout=api_timeout)
+                    response = session.delete(v3_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
                 
                 whisparr_logger.debug(f"V3 path request returned status code: {response.status_code}")
             
@@ -280,15 +278,18 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
             "X-Api-Key": api_key,
             "Content-Type": "application/json"
         }
+        verify_ssl = get_ssl_verify_setting()
+        if not verify_ssl:
+            whisparr_logger.debug("SSL verification disabled by user setting")
         
         # Try standard API path first
         whisparr_logger.debug(f"Attempting command with standard API path: {url}")
         try:
-            response = session.post(url, headers=headers, json=payload, timeout=api_timeout)
+            response = session.post(url, headers=headers, json=payload, timeout=api_timeout, verify=verify_ssl)
             # If we get a 404 or 405, try the v3 path
             if response.status_code in [404, 405]:
                 whisparr_logger.debug(f"Standard path returned {response.status_code}, trying with V3 path: {backup_url}")
-                response = session.post(backup_url, headers=headers, json=payload, timeout=api_timeout)
+                response = session.post(backup_url, headers=headers, json=payload, timeout=api_timeout, verify=verify_ssl)
                 
             response.raise_for_status()
             result = response.json()
@@ -339,15 +340,18 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
             "X-Api-Key": api_key,
             "Content-Type": "application/json"
         }
+        verify_ssl = get_ssl_verify_setting()
+        if not verify_ssl:
+            whisparr_logger.debug("SSL verification disabled by user setting")
         
         # Try standard API path first
         whisparr_logger.debug(f"Checking command status with standard API path: {url}")
         try:
-            response = session.get(url, headers=headers, timeout=api_timeout)
+            response = session.get(url, headers=headers, timeout=api_timeout, verify=verify_ssl)
             # If we get a 404, try the v3 path
             if response.status_code == 404:
                 whisparr_logger.debug(f"Standard path returned 404, trying with V3 path: {backup_url}")
-                response = session.get(backup_url, headers=headers, timeout=api_timeout)
+                response = session.get(backup_url, headers=headers, timeout=api_timeout, verify=verify_ssl)
                 
             response.raise_for_status()
             result = response.json()
@@ -366,7 +370,7 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
         whisparr_logger.error(f"Error getting command status for ID {command_id}: {e}")
         return None
 
-def check_connection(api_url: str, api_key: str, api_timeout: int, verify_ssl: Optional[bool] = None) -> bool:
+def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
     """
     Check the connection to Whisparr V2 API.
     
@@ -382,6 +386,9 @@ def check_connection(api_url: str, api_key: str, api_timeout: int, verify_ssl: O
     try:
         # For Whisparr V2, we need to handle both regular and v3 API formats
         whisparr_logger.debug(f"Checking connection to Whisparr V2 instance at {api_url}")
+        verify_ssl = get_ssl_verify_setting()
+        if not verify_ssl:
+            whisparr_logger.debug("SSL verification disabled by user setting")
         
         # First try with standard path
         endpoint = "system/status"
@@ -391,8 +398,6 @@ def check_connection(api_url: str, api_key: str, api_timeout: int, verify_ssl: O
             # Try direct HTTP request to v3 endpoint without using arr_request
             url = f"{api_url.rstrip('/')}/api/v3/system/status"
             headers = {'X-Api-Key': api_key}
-            if verify_ssl is None:
-                verify_ssl = get_ssl_verify_setting()
             try:
                 resp = session.get(url, headers=headers, timeout=api_timeout, verify=verify_ssl)
                 resp.raise_for_status()
