@@ -482,7 +482,8 @@ def get_cutoff_unmet_episodes_random_page(api_url: str, api_key: str, api_timeou
     page_size = 1000
     retries = 2
     retry_delay = 3 
-    
+    series_id = None
+
     # First, make a request to get just the total record count (page 1 with size=1)
     params = {
         "page": 1,
@@ -493,7 +494,6 @@ def get_cutoff_unmet_episodes_random_page(api_url: str, api_key: str, api_timeou
     for attempt in range(retries + 1):
         try:
             # Get total record count from a minimal query
-
             response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
             if not response or "totalRecords" not in response:
                 sonarr_logger.warning(f"Empty or invalid response when getting missing count (attempt {attempt+1})")
@@ -526,10 +526,6 @@ def get_cutoff_unmet_episodes_random_page(api_url: str, api_key: str, api_timeou
             }
             if series_id is not None:
                 params["seriesId"] = series_id
-
-            # Explicitly log the SSL verification setting just before the call
-            current_ssl_verify_setting_page = get_ssl_verify_setting()
-            sonarr_logger.debug(f"SSL verify setting before calling arr_request for page {random_page}: {current_ssl_verify_setting_page}")
 
             response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
             if not response or "records" not in response:
