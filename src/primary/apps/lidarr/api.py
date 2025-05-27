@@ -137,7 +137,7 @@ def get_system_status(api_url: str, api_key: str, api_timeout: int) -> Dict:
         response = arr_request(api_url, api_key, api_timeout, "system/status", method="GET")
         
         # Parse and return the result
-        return response.json()
+        return response
     except Exception as e:
         lidarr_logger.error(f"Error getting system status: {str(e)}")
         return {}
