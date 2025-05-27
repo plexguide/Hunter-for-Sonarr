@@ -50,9 +50,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
             
         # Construct the full URL properly
         full_url = f"{api_url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
-        
-        sonarr_logger.debug(f"Making {method} request to: {full_url}")
-        
+                
         # Set up headers with User-Agent to identify Huntarr
         headers = {
             "X-Api-Key": api_key,
@@ -65,7 +63,8 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
 
         # Get SSL verification setting
         verify_ssl = get_ssl_verify_setting()
-        sonarr_logger.debug(f"arr_request: For URL {full_url}, effective SSL verification for requests call will be: {verify_ssl} (type: {type(verify_ssl)})")
+        
+        sonarr_logger.debug(f"Making {method} request to: {full_url} with SSL verification: {verify_ssl}")
         
         try:
             if method.upper() == "GET":
