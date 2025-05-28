@@ -782,6 +782,7 @@ let huntarrUI = {
         let displayName = app.charAt(0).toUpperCase() + app.slice(1);
         if (app === 'whisparr') displayName = 'Whisparr V2';
         else if (app === 'eros') displayName = 'Whisparr V3';
+        else if (app === 'huntarr.hunting') displayName = 'Hunt Manager';
         if (this.elements.currentLogApp) this.elements.currentLogApp.textContent = displayName;
         // Switch to the selected app logs
         this.currentLogApp = app;
@@ -897,7 +898,7 @@ let huntarrUI = {
                     // Regex to parse log lines: Optional [APP], Timestamp, Logger, Level, Message
                     // Example: [SONARR] 2024-01-01 12:00:00 - huntarr.sonarr - INFO - Message content
                     // Example: 2024-01-01 12:00:00 - huntarr - DEBUG - System message
-                    const logRegex = /^(?:\\[(\\w+)\\]\\s)?([\\d\\-]+\\s[\\d:]+)\\s-\\s([\\w\\.]+)\\s-\\s(\\w+)\\s-\\s(.*)$/;
+                    const logRegex = /^(?:\[(\w+)\]\s)?([^\s]+\s[^\s]+)\s-\s([\w\.]+)\s-\s(\w+)\s-\s(.*)$/;
                     const match = logString.match(logRegex);
 
                     // First determine the app type for this log message
@@ -911,7 +912,7 @@ let huntarrUI = {
                         const loggerParts = match[3].split('.');
                         if (loggerParts.length > 1) {
                             const possibleApp = loggerParts[1].toLowerCase();
-                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'].includes(possibleApp)) {
+                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr', 'hunting'].includes(possibleApp)) {
                                 logAppType = possibleApp;
                             }
                         }
@@ -927,7 +928,8 @@ let huntarrUI = {
                             'readarr': ['book', 'author', 'readarr'],
                             'whisparr': ['scene', 'adult', 'whisparr'],
                             'eros': ['eros', 'whisparr v3', 'whisparrv3'],
-                            'swaparr': ['added strike', 'max strikes reached', 'would have removed', 'strikes, removing download', 'processing stalled downloads', 'swaparr']
+                            'swaparr': ['added strike', 'max strikes reached', 'would have removed', 'strikes, removing download', 'processing stalled downloads', 'swaparr'],
+                            'hunting': ['hunt manager', 'discovery tracker', 'hunting', 'hunt']
                         };
                         
                         // Check each app's patterns
@@ -940,9 +942,10 @@ let huntarrUI = {
                     }
 
                     // Determine if this log should be displayed based on the selected app tab
+                    const currentApp = this.currentLogApp === 'huntarr.hunting' ? 'hunting' : this.currentLogApp;
                     const shouldDisplay = 
                         this.currentLogApp === 'all' || 
-                        this.currentLogApp === logAppType;
+                        currentApp === logAppType;
 
                     if (!shouldDisplay) return;
 
@@ -2551,21 +2554,6 @@ let huntarrUI = {
                     starsElement.textContent = 'N/A';
                 }
             });
-    },
-
-    // Add or modify this function to handle enabling/disabling save/reset
-    updateSaveResetButtonState(enable) { // Changed signature
-        const saveButton = this.elements.saveSettingsButton;
-
-        if (saveButton) {
-            saveButton.disabled = !enable;
-            // Optional: Add/remove class for styling
-            if (enable) {
-                saveButton.classList.remove('disabled-button');
-            } else {
-                saveButton.classList.add('disabled-button');
-            }
-        }
     },
 
     // Add updateHomeConnectionStatus if it doesn't exist or needs adjustment

@@ -91,7 +91,8 @@ def add_history_entry(app_type, entry_data):
         "id": entry_data["id"],
         "instance_name": instance_name,  # Use the instance_name we extracted above
         "operation_type": entry_data.get("operation_type", "missing"),  # Default to "missing" if not specified
-        "app_type": app_type  # Include app_type in the entry for display in UI
+        "app_type": app_type,  # Include app_type in the entry for display in UI
+        "discovered": False  # Default to false - will be updated by discovery tracker
     }
     
     history_file = get_history_file_path(app_type, instance_name)
