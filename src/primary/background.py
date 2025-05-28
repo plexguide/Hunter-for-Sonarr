@@ -160,6 +160,14 @@ def app_specific_loop(app_type: str) -> None:
 
         app_logger.info(f"=== Starting {app_type.upper()} cycle ===")
 
+        # Mark cycle as started (set cyclelock to True)
+        try:
+            from src.primary.cycle_tracker import start_cycle
+            start_cycle(app_type)
+        except Exception as e:
+            app_logger.warning(f"Failed to mark cycle start for {app_type}: {e}")
+            # Non-critical, continue execution
+
         # Check if we need to use multi-instance mode
         instances_to_process = []
         
@@ -407,13 +415,22 @@ def app_specific_loop(app_type: str) -> None:
         next_cycle_time_str = next_cycle_time.strftime("%Y-%m-%d %H:%M:%S UTC")  # Indicate UTC
         app_logger.info(f"Next {app_type.upper()} cycle will begin at {next_cycle_time_str}")
         
-        # Track cycle time for the countdown timer feature
+        # Mark cycle as ended (set cyclelock to False) and update next cycle time
+        try:
+            from src.primary.cycle_tracker import end_cycle
+            end_cycle(app_type, next_cycle_time)
+        except Exception as e:
+            app_logger.warning(f"Failed to mark cycle end for {app_type}: {e}")
+            # Non-critical, continue execution
+        
+        # Track cycle time for the countdown timer feature (legacy support)
         try:
             from src.primary.cycle_tracker import update_next_cycle
             update_next_cycle(app_type, next_cycle_time)
         except Exception as e:
             app_logger.warning(f"Failed to update cycle tracker: {e}")
             # Non-critical, continue execution
+        
         app_logger.debug(f"Sleeping for {sleep_seconds} seconds before next cycle...")
                 
         # Use shorter sleep intervals and check for reset file

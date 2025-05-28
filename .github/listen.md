@@ -580,3 +580,67 @@ git push origin docs-106
 ---
 
 *This document should be referenced before starting any development work and updated when new patterns are discovered.*
+
+## Docker Development Workflow
+
+When making changes to the codebase, follow this workflow:
+
+1. **Make your changes** to the source code
+2. **Rebuild the container** with baking enabled:
+   ```bash
+   docker-compose down && COMPOSE_BAKE=true docker-compose up -d --build
+   ```
+3. **Test your changes** by checking logs and functionality
+4. **Check logs** if needed:
+   ```bash
+   docker logs huntarr -f
+   ```
+
+## Debugging Patterns
+
+### Log Streaming Issues
+If logs aren't showing in the frontend dropdown:
+1. Check the log file mapping in `KNOWN_LOG_FILES` (web_server.py)
+2. Verify the frontend regex patterns in `new-main.js` 
+3. **Important**: Avoid double backslashes in regex patterns - they break pattern matching
+4. Test with: `curl http://localhost:9705/api/logs/stream/huntarr.hunting`
+
+### Cycle Countdown Timer Issues
+The cycle countdown system uses a smart `cyclelock` field in sleep.json:
+
+**How cyclelock works:**
+- `cyclelock: true` = App is running a cycle → Shows "Running Cycle"
+- `cyclelock: false` = App is waiting → Shows countdown timer
+- Missing cyclelock = Defaults to `true` (Docker startup behavior)
+
+**State transitions:**
+- **Docker startup**: All apps start with `cyclelock: true`
+- **Cycle start**: `start_cycle()` sets `cyclelock: true` 
+- **Cycle end**: `end_cycle()` sets `cyclelock: false`
+- **Manual reset**: Reset API sets `cyclelock: true`
+
+**Benefits:**
+- No more complex stale data detection
+- No misleading "Refreshing" states
+- Explicit control over cycle states
+- Reliable across Docker restarts
+
+### Network/API Issues
+If countdown timers show network errors:
+1. Check if the web server is responding: `curl http://localhost:9705/api/sleep.json`
+2. Verify timezone consistency (backend uses UTC)
+3. Check for proper JSON format in sleep.json
+
+## Lessons Learned
+
+### 2025-05-28: Log Regex Pattern Issues
+- **Problem**: Hunting logs weren't showing in frontend despite working backend
+- **Root Cause**: Double backslashes in JavaScript regex patterns (`\\\\`) broke pattern matching
+- **Solution**: Use single backslashes in regex patterns
+- **Prevention**: Test regex patterns in browser console before deployment
+
+### 2025-05-28: Cycle State Management
+- **Problem**: Complex stale data detection was unreliable and confusing
+- **Root Cause**: Trying to guess cycle state from timestamps and remaining_seconds
+- **Solution**: Implemented explicit `cyclelock` field for definitive state control
+- **Benefits**: Cleaner logic, no "Refreshing" states, reliable Docker restart behavior

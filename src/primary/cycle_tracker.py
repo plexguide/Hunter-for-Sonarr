@@ -47,6 +47,44 @@ os.makedirs(os.path.dirname(_CYCLE_DATA_PATH), exist_ok=True)
 os.makedirs(os.path.dirname(_SLEEP_DATA_PATH), exist_ok=True)
 os.makedirs(os.path.dirname(_WEB_SLEEP_DATA_PATH), exist_ok=True)
 
+def ensure_all_apps_have_cyclelock():
+    """
+    Ensure all apps in sleep.json have the cyclelock field initialized.
+    This fixes apps that were created before the cyclelock system was implemented.
+    """
+    try:
+        if not os.path.exists(_SLEEP_DATA_PATH):
+            print("[CycleTracker] No sleep.json found, nothing to initialize")
+            return
+        
+        # Read current sleep data
+        with open(_SLEEP_DATA_PATH, 'r') as f:
+            sleep_data = json.load(f)
+        
+        updated = False
+        for app_type, app_data in sleep_data.items():
+            if 'cyclelock' not in app_data:
+                # Default to True (running cycle) for Docker startup behavior
+                app_data['cyclelock'] = True
+                app_data['updated_at'] = datetime.datetime.utcnow().isoformat() + "Z"
+                updated = True
+                print(f"[CycleTracker] Initialized cyclelock=True for {app_type}")
+        
+        if updated:
+            # Write back to both files
+            with open(_SLEEP_DATA_PATH, 'w') as f:
+                json.dump(sleep_data, f, indent=2)
+            with open(_WEB_SLEEP_DATA_PATH, 'w') as f:
+                json.dump(sleep_data, f, indent=2)
+            print("[CycleTracker] Updated sleep.json with missing cyclelock fields")
+        else:
+            print("[CycleTracker] All apps already have cyclelock fields")
+            
+    except Exception as e:
+        print(f"[CycleTracker] Error ensuring cyclelock fields: {e}")
+        import traceback
+        traceback.print_exc()
+
 # Create empty sleep.json file if it doesn't exist
 if not os.path.exists(_SLEEP_DATA_PATH):
     try:
@@ -60,6 +98,9 @@ if not os.path.exists(_SLEEP_DATA_PATH):
         print(f"Error creating initial sleep.json: {e}")
         import traceback
         traceback.print_exc()
+
+# Ensure all existing apps have cyclelock fields
+ensure_all_apps_have_cyclelock()
 
 # In-memory cache of cycle times
 _cycle_data: Dict[str, Any] = {}
@@ -91,13 +132,28 @@ def _save_cycle_data(data: Dict[str, Any]) -> None:
         # Make sure the directory exists
         os.makedirs(os.path.dirname(_SLEEP_DATA_PATH), exist_ok=True)
         
-        # Convert to a simpler format for the frontend
+        # Read existing sleep.json to preserve cyclelock fields
+        existing_sleep_data = {}
+        if os.path.exists(_SLEEP_DATA_PATH):
+            try:
+                with open(_SLEEP_DATA_PATH, 'r') as f:
+                    existing_sleep_data = json.load(f)
+            except (json.JSONDecodeError, Exception) as e:
+                print(f"Warning: Could not read existing sleep.json: {e}")
+                existing_sleep_data = {}
+        
+        # Convert to a simpler format for the frontend, preserving cyclelock
         frontend_data = {}
         for app, app_data in data.items():
+            # Get existing cyclelock value or default to True
+            existing_app_data = existing_sleep_data.get(app, {})
+            cyclelock = existing_app_data.get('cyclelock', True)
+            
             frontend_data[app] = {
                 "next_cycle": app_data["next_cycle"],
                 "remaining_seconds": _calculate_remaining_seconds(app_data["next_cycle"]),
-                "updated_at": app_data["updated_at"]
+                "updated_at": app_data["updated_at"],
+                "cyclelock": cyclelock  # Preserve existing cyclelock value
             }
         
         # Debug output
@@ -106,6 +162,10 @@ def _save_cycle_data(data: Dict[str, Any]) -> None:
         
         # Write the file
         with open(_SLEEP_DATA_PATH, 'w') as f:
+            json.dump(frontend_data, f, indent=2)
+        
+        # Also write to web-accessible location
+        with open(_WEB_SLEEP_DATA_PATH, 'w') as f:
             json.dump(frontend_data, f, indent=2)
         
         # Verify file was created
@@ -121,29 +181,32 @@ def _save_cycle_data(data: Dict[str, Any]) -> None:
 def _calculate_remaining_seconds(next_cycle_iso: str) -> int:
     """Calculate remaining seconds until the next cycle"""
     try:
-        next_cycle = datetime.datetime.fromisoformat(next_cycle_iso)
+        # Parse the ISO string - it should have 'Z' suffix indicating UTC
+        if next_cycle_iso.endswith('Z'):
+            # Remove the 'Z' and parse as UTC
+            next_cycle_str = next_cycle_iso[:-1]
+            next_cycle = datetime.datetime.fromisoformat(next_cycle_str)
+        else:
+            # Parse as-is and assume UTC
+            next_cycle = datetime.datetime.fromisoformat(next_cycle_iso)
+        
         # Use UTC time for consistency
         now = datetime.datetime.utcnow()
-        
-        # If next_cycle doesn't have timezone info, assume it's UTC
-        if next_cycle.tzinfo is None:
-            # Convert to UTC if no timezone info
-            pass
-        else:
-            # Convert to UTC if it has timezone info
-            next_cycle = next_cycle.utctimetuple()
-            next_cycle = datetime.datetime(*next_cycle[:6])
         
         # Calculate the time difference in seconds
         delta = (next_cycle - now).total_seconds()
         
         # Return at least 0 (don't return negative values)
-        return max(0, int(delta))
+        result = max(0, int(delta))
+        print(f"[DEBUG] Calculated remaining seconds for {next_cycle_iso}: {result} (now: {now.isoformat()}, next: {next_cycle.isoformat()})")
+        return result
     except Exception as e:
-        print(f"Error calculating remaining seconds: {e}")
+        print(f"Error calculating remaining seconds for {next_cycle_iso}: {e}")
+        import traceback
+        traceback.print_exc()
         return 0
 
-def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime) -> None:
+def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime, cyclelock: bool = None) -> None:
     """
     Update the sleep.json file directly for easier frontend access
     
@@ -152,13 +215,14 @@ def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime) -> None
     Args:
         app_type: The type of app (sonarr, radarr, etc.)
         next_cycle_time: When the next cycle will begin
+        cyclelock: If provided, sets the cycle lock state (True = running, False = waiting)
     """
     # First check if we need to debug
     debug_mode = True  # Set to True to help troubleshoot file creation issues
     
     try:
         if debug_mode:
-            print(f"[DEBUG] update_sleep_json called for {app_type}")
+            print(f"[DEBUG] update_sleep_json called for {app_type}, cyclelock: {cyclelock}")
             print(f"[DEBUG] sleep.json path: {_SLEEP_DATA_PATH}")
         
         # Get the tally directory path
@@ -198,11 +262,18 @@ def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime) -> None
         now = datetime.datetime.utcnow()  # Use UTC for consistency
         remaining_seconds = max(0, int((next_cycle_time - now).total_seconds()))
         
+        # Determine cyclelock value
+        if cyclelock is None:
+            # If not explicitly set, preserve existing value or default to True (cycle starting)
+            existing_cyclelock = sleep_data.get(app_type, {}).get('cyclelock', True)
+            cyclelock = existing_cyclelock
+        
         # Update the app's data - store times in UTC format
         sleep_data[app_type] = {
             "next_cycle": next_cycle_time.isoformat() + "Z",  # Add Z to indicate UTC
             "remaining_seconds": remaining_seconds,
-            "updated_at": now.isoformat() + "Z"  # Add Z to indicate UTC
+            "updated_at": now.isoformat() + "Z",  # Add Z to indicate UTC
+            "cyclelock": cyclelock  # True = running cycle, False = waiting for cycle
         }
         
         # Write to the file
@@ -227,6 +298,7 @@ def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime) -> None
                 print(f"Successfully wrote web sleep.json for {app_type} (size: {web_file_size} bytes)")
                 print(f"  - Next cycle: {next_cycle_time.isoformat()}")
                 print(f"  - Remaining seconds: {remaining_seconds}")
+                print(f"  - Cycle lock: {cyclelock}")
             else:
                 print(f"WARNING: sleep.json not found after write operation")
         except Exception as e:
@@ -303,9 +375,57 @@ def get_cycle_status(app_type: Optional[str] = None) -> Dict[str, Any]:
                 }
             return result
 
+def start_cycle(app_type: str) -> None:
+    """
+    Mark that a cycle has started for an app (set cyclelock to True)
+    
+    Args:
+        app_type: The app that is starting a cycle
+    """
+    try:
+        # Get current data if the file exists
+        sleep_data = {}
+        if os.path.exists(_SLEEP_DATA_PATH):
+            try:
+                with open(_SLEEP_DATA_PATH, 'r') as f:
+                    sleep_data = json.load(f)
+            except (json.JSONDecodeError, Exception) as e:
+                print(f"Error reading sleep.json for start_cycle: {e}")
+                sleep_data = {}
+        
+        # Update cyclelock to True for this app
+        if app_type in sleep_data:
+            sleep_data[app_type]['cyclelock'] = True
+            sleep_data[app_type]['updated_at'] = datetime.datetime.utcnow().isoformat() + "Z"
+            
+            # Write back to file
+            with open(_SLEEP_DATA_PATH, 'w') as f:
+                json.dump(sleep_data, f, indent=2)
+            with open(_WEB_SLEEP_DATA_PATH, 'w') as f:
+                json.dump(sleep_data, f, indent=2)
+            
+            print(f"[CycleTracker] Started cycle for {app_type} (cyclelock = True)")
+        else:
+            print(f"[CycleTracker] Warning: No existing data for {app_type} to start cycle")
+    except Exception as e:
+        print(f"Error in start_cycle for {app_type}: {e}")
+        import traceback
+        traceback.print_exc()
+
+def end_cycle(app_type: str, next_cycle_time: datetime.datetime) -> None:
+    """
+    Mark that a cycle has ended for an app (set cyclelock to False) and update next cycle time
+    
+    Args:
+        app_type: The app that finished its cycle
+        next_cycle_time: When the next cycle will begin
+    """
+    print(f"[CycleTracker] Ending cycle for {app_type}, next cycle at {next_cycle_time.isoformat()}")
+    update_sleep_json(app_type, next_cycle_time, cyclelock=False)
+
 def reset_cycle(app_type: str) -> bool:
     """
-    Reset the cycle for a specific app (delete its cycle data)
+    Reset the cycle for a specific app (delete its cycle data and set cyclelock to True)
     
     Args:
         app_type: The app to reset
@@ -323,23 +443,37 @@ def reset_cycle(app_type: str) -> bool:
         if app_type in _cycle_data:
             del _cycle_data[app_type]
             _save_cycle_data(_cycle_data)
-            
-            # If sleep.json exists, update it as well
-            try:
-                if os.path.exists(_SLEEP_DATA_PATH):
-                    with open(_SLEEP_DATA_PATH, 'r') as f:
-                        sleep_data = json.load(f)
-                    
-                    # Remove the app's data
-                    if app_type in sleep_data:
-                        del sleep_data[app_type]
-                    
-                    # Write back
-                    with open(_SLEEP_DATA_PATH, 'w') as f:
-                        json.dump(sleep_data, f, indent=2)
-            except Exception as e:
-                print(f"Error updating sleep.json during reset: {e}")
-                # Continue anyway - non-critical
-            
-            return True
-        return False
+        
+        # If sleep.json exists, update it to set cyclelock to True (cycle should start)
+        try:
+            if os.path.exists(_SLEEP_DATA_PATH):
+                with open(_SLEEP_DATA_PATH, 'r') as f:
+                    sleep_data = json.load(f)
+                
+                # Update the app's data to indicate cycle should start
+                if app_type in sleep_data:
+                    sleep_data[app_type]['cyclelock'] = True
+                    sleep_data[app_type]['updated_at'] = datetime.datetime.utcnow().isoformat() + "Z"
+                    print(f"[CycleTracker] Reset {app_type} - set cyclelock to True")
+                else:
+                    # Create new entry with cyclelock True
+                    now = datetime.datetime.utcnow()
+                    future_time = now + datetime.timedelta(minutes=15)  # Default 15 minutes
+                    sleep_data[app_type] = {
+                        "next_cycle": future_time.isoformat() + "Z",
+                        "remaining_seconds": 900,  # 15 minutes
+                        "updated_at": now.isoformat() + "Z",
+                        "cyclelock": True
+                    }
+                    print(f"[CycleTracker] Reset {app_type} - created new entry with cyclelock True")
+                
+                # Write back
+                with open(_SLEEP_DATA_PATH, 'w') as f:
+                    json.dump(sleep_data, f, indent=2)
+                with open(_WEB_SLEEP_DATA_PATH, 'w') as f:
+                    json.dump(sleep_data, f, indent=2)
+        except Exception as e:
+            print(f"Error updating sleep.json during reset: {e}")
+            # Continue anyway - non-critical
+        
+        return True

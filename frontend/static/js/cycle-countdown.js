@@ -180,20 +180,12 @@ window.CycleCountdown = (function() {
                                 // Calculate actual remaining seconds from current time
                                 const actualRemainingSeconds = Math.max(0, Math.floor((nextCycleTime - now) / 1000));
                                 
-                                // Check if current time has passed the next cycle time (cycle should be running)
-                                const cycleTimePassed = now >= nextCycleTime;
+                                // Check the cyclelock field to determine if app is running
+                                // Default to true if missing (Docker startup behavior)
+                                const cyclelock = data[app].cyclelock !== undefined ? data[app].cyclelock : true;
                                 
-                                // Check if the data is stale (updated_at is more than 2 minutes old for better detection)
-                                const updatedAt = new Date(data[app].updated_at);
-                                const dataAge = (now - updatedAt) / 1000; // seconds
-                                const dataIsStale = dataAge > 120; // 2 minutes (reduced from 5 minutes)
-                                
-                                // Also check if remaining_seconds is 0, which often indicates a cycle should be starting
-                                const shouldBeRunning = (data[app].remaining_seconds === 0);
-                                
-                                // Check if app is likely running based on multiple indicators
-                                if (actualRemainingSeconds <= 60 || cycleTimePassed || dataIsStale || shouldBeRunning) {
-                                    // Mark app as running and show "Running Cycle"
+                                if (cyclelock) {
+                                    // App is running a cycle - show "Running Cycle"
                                     runningCycles[app] = true;
                                     const timerElement = document.getElementById(`${app}CycleTimer`);
                                     if (timerElement) {
@@ -203,23 +195,15 @@ window.CycleCountdown = (function() {
                                             timerValue.classList.remove('refreshing-state');
                                             timerValue.classList.add('running-state');
                                             timerValue.style.color = '#00ff88'; // Green for active
-                                            if (cycleTimePassed) {
-                                                console.log(`[CycleCountdown] ${app} cycle time passed, showing running (cycle should be active)`);
-                                            } else if (dataIsStale) {
-                                                console.log(`[CycleCountdown] ${app} data is stale (${Math.floor(dataAge)}s old), showing running`);
-                                            } else if (shouldBeRunning) {
-                                                console.log(`[CycleCountdown] ${app} remaining_seconds is 0, showing running (cycle should be starting)`);
-                                            } else {
-                                                console.log(`[CycleCountdown] ${app} marked as running (${actualRemainingSeconds}s remaining)`);
-                                            }
+                                            console.log(`[CycleCountdown] ${app} cyclelock is true, showing Running Cycle`);
                                         }
                                     }
                                 } else {
-                                    // App has significant time remaining - clear running state and show countdown
+                                    // App is waiting for next cycle - clear running state and show countdown
                                     if (runningCycles[app]) {
-                                        console.log(`[CycleCountdown] ${app} cycle finished, switching to countdown (${actualRemainingSeconds}s remaining)`);
+                                        console.log(`[CycleCountdown] ${app} cyclelock is false, switching to countdown`);
                                     }
-                                    runningCycles[app] = false; // Always clear running state for apps with future cycles
+                                    runningCycles[app] = false;
                                     // Update the timer display immediately for normal countdown
                                     updateTimerDisplay(app);
                                 }
@@ -616,32 +600,14 @@ window.CycleCountdown = (function() {
         const timeRemaining = nextCycleTime - now;
         
         if (timeRemaining <= 0) {
-            // Time has passed, show refreshing and fetch updated data
-            timerValue.textContent = 'Refreshing';
-            timerValue.classList.add('refreshing-state');
-            timerValue.classList.remove('running-state');
-            timerValue.style.color = '#00c2ce'; // Light blue for 'Refreshing'
-            
-            // Remove any existing time-based classes
-            timerElement.classList.remove('timer-soon', 'timer-imminent', 'timer-normal');
-            timerValue.classList.remove('timer-value-soon', 'timer-value-imminent', 'timer-value-normal');
-            
+            // Time has passed, fetch updated data but don't show "Refreshing"
             // Clear the old next cycle time to prevent infinite refreshing
             delete nextCycleTimes[app];
-            
-            // Set a timeout to reset if fetch takes too long
-            const resetTimeout = setTimeout(() => {
-                timerValue.textContent = '--:--:--';
-                timerValue.classList.remove('refreshing-state', 'running-state');
-                timerValue.style.removeProperty('color');
-                console.log(`[CycleCountdown] Reset timeout triggered for ${app}`);
-            }, 10000); // 10 seconds timeout
             
             // Fetch new data only if not already fetching
             if (!isFetchingData) {
                 fetchFromSleepJson()
                     .then(() => {
-                        clearTimeout(resetTimeout);
                         // Force update this specific timer
                         if (nextCycleTimes[app]) {
                             updateTimerDisplay(app);
@@ -653,7 +619,6 @@ window.CycleCountdown = (function() {
                         }
                     })
                     .catch(() => {
-                        clearTimeout(resetTimeout);
                         timerValue.textContent = '--:--:--';
                         timerValue.classList.remove('refreshing-state', 'running-state');
                         timerValue.style.removeProperty('color');
@@ -661,7 +626,6 @@ window.CycleCountdown = (function() {
                     });
             } else {
                 // If already fetching, just wait and reset after timeout
-                clearTimeout(resetTimeout);
                 setTimeout(() => {
                     if (nextCycleTimes[app]) {
                         updateTimerDisplay(app);
