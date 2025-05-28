@@ -8,6 +8,8 @@ window.CycleCountdown = (function() {
     const nextCycleTimes = {};
     // Active timer intervals
     const timerIntervals = {};
+    // Track apps that are currently running cycles
+    const runningCycles = {};
     // List of apps to track
     const trackedApps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'whisparr-v3', 'eros'];
     
@@ -41,6 +43,11 @@ window.CycleCountdown = (function() {
     // Initialize countdown timers for all apps
     function initialize() {
         console.log('[CycleCountdown] Initializing countdown timers');
+        
+        // Clear any existing running cycle states
+        Object.keys(runningCycles).forEach(app => {
+            runningCycles[app] = false;
+        });
         
         // Get references to all HTML elements
         setupTimerElements();
@@ -170,10 +177,21 @@ window.CycleCountdown = (function() {
                                     }
                                 }
                                 
-                                // Check if app is likely running based on remaining_seconds
-                                const remainingSeconds = data[app].remaining_seconds || 0;
-                                if (remainingSeconds <= 60) { // If 60 seconds or less remaining, likely running
-                                    // Show "Running Cycle" for apps that should be starting/running
+                                // Calculate actual remaining seconds from current time
+                                const actualRemainingSeconds = Math.max(0, Math.floor((nextCycleTime - now) / 1000));
+                                
+                                // Check if current time has passed the next cycle time (cycle should be running)
+                                const cycleTimePassed = now >= nextCycleTime;
+                                
+                                // Check if the data is stale (updated_at is more than 5 minutes old)
+                                const updatedAt = new Date(data[app].updated_at);
+                                const dataAge = (now - updatedAt) / 1000; // seconds
+                                const dataIsStale = dataAge > 300; // 5 minutes
+                                
+                                // Check if app is likely running based on calculated remaining seconds, cycle time passed, or stale data
+                                if (actualRemainingSeconds <= 60 || cycleTimePassed || dataIsStale) { 
+                                    // Mark app as running and show "Running Cycle"
+                                    runningCycles[app] = true;
                                     const timerElement = document.getElementById(`${app}CycleTimer`);
                                     if (timerElement) {
                                         const timerValue = timerElement.querySelector('.timer-value');
@@ -182,10 +200,21 @@ window.CycleCountdown = (function() {
                                             timerValue.classList.remove('refreshing-state');
                                             timerValue.classList.add('running-state');
                                             timerValue.style.color = '#00ff88'; // Green for active
-                                            console.log(`[CycleCountdown] ${app} likely running (${remainingSeconds}s remaining)`);
+                                            if (cycleTimePassed) {
+                                                console.log(`[CycleCountdown] ${app} cycle time passed, showing running (cycle should be active)`);
+                                            } else if (dataIsStale) {
+                                                console.log(`[CycleCountdown] ${app} data is stale (${Math.floor(dataAge)}s old), showing running`);
+                                            } else {
+                                                console.log(`[CycleCountdown] ${app} marked as running (${actualRemainingSeconds}s remaining)`);
+                                            }
                                         }
                                     }
                                 } else {
+                                    // App has significant time remaining - clear running state and show countdown
+                                    if (runningCycles[app]) {
+                                        console.log(`[CycleCountdown] ${app} cycle finished, switching to countdown (${actualRemainingSeconds}s remaining)`);
+                                    }
+                                    runningCycles[app] = false; // Always clear running state for apps with future cycles
                                     // Update the timer display immediately for normal countdown
                                     updateTimerDisplay(app);
                                 }
@@ -560,6 +589,15 @@ window.CycleCountdown = (function() {
         // If this timer is waiting for reset data, don't update it
         if (timerElement.getAttribute('data-waiting-for-reset') === 'true') {
             return; // Keep showing "Refreshing" until reset data is available
+        }
+        
+        // If app is marked as running a cycle, keep showing "Running Cycle"
+        if (runningCycles[app]) {
+            timerValue.textContent = 'Running Cycle';
+            timerValue.classList.remove('refreshing-state');
+            timerValue.classList.add('running-state');
+            timerValue.style.color = '#00ff88'; // Green for active
+            return; // Don't override with countdown
         }
         
         const nextCycleTime = nextCycleTimes[app];
