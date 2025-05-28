@@ -955,17 +955,63 @@ let huntarrUI = {
                     if (match) {
                         const [, appName, timestamp, loggerName, level, message] = match;
                         
-                        logEntry.innerHTML = ` 
-                            <span class="log-timestamp" title="${timestamp}">${timestamp.split(' ')[1]}</span> 
-                            ${appName ? `<span class="log-app" title="Source: ${appName}">[${appName}]</span>` : ''}
-                            <span class="log-level log-level-${level.toLowerCase()}" title="Level: ${level}">${level}</span>
-                            <span class="log-logger" title="Logger: ${loggerName}">(${loggerName.replace('huntarr.', '')})</span>
-                            <span class="log-message">${message}</span>
+                        // Use full timestamp instead of just time
+                        const fullTimestamp = timestamp;
+                        
+                        // Create level badge with proper styling to match second image
+                        const levelClass = level.toLowerCase();
+                        let levelBadge = '';
+                        
+                        switch(levelClass) {
+                            case 'error':
+                                levelBadge = `<span class="log-level-badge log-level-error">Error</span>`;
+                                break;
+                            case 'warning':
+                            case 'warn':
+                                levelBadge = `<span class="log-level-badge log-level-warning">Warning</span>`;
+                                break;
+                            case 'info':
+                                levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
+                                break;
+                            case 'debug':
+                                levelBadge = `<span class="log-level-badge log-level-debug">Debug</span>`;
+                                break;
+                            case 'fatal':
+                            case 'critical':
+                                levelBadge = `<span class="log-level-badge log-level-fatal">Fatal</span>`;
+                                break;
+                            default:
+                                levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
+                        }
+                        
+                        // Determine app source for display
+                        let appSource = 'SYSTEM';
+                        if (loggerName.includes('.')) {
+                            const parts = loggerName.split('.');
+                            if (parts.length > 1) {
+                                appSource = parts[1].toUpperCase();
+                            }
+                        }
+                        
+                        logEntry.innerHTML = `
+                            <div class="log-entry-row">
+                                <span class="log-timestamp">${fullTimestamp}</span>
+                                ${levelBadge}
+                                <span class="log-source">${appSource}</span>
+                                <span class="log-message">${message}</span>
+                            </div>
                         `;
-                        logEntry.classList.add(`log-${level.toLowerCase()}`);
+                        logEntry.classList.add(`log-${levelClass}`);
                     } else {
                         // Fallback for lines that don't match the expected format
-                        logEntry.innerHTML = `<span class="log-message">${logString}</span>`;
+                        logEntry.innerHTML = `
+                            <div class="log-entry-content">
+                                <span class="log-timestamp">--:--:--</span>
+                                <span class="log-level-badge log-level-info">Information</span>
+                                <span class="log-source">SYSTEM</span>
+                                <span class="log-message">${logString}</span>
+                            </div>
+                        `;
                         
                         // Basic level detection for fallback
                         if (logString.includes('ERROR')) logEntry.classList.add('log-error');
