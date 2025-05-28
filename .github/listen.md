@@ -20,7 +20,91 @@ This document serves as a constant reminder and reference for common development
 
 ## 🐛 Common Issue Patterns & Solutions
 
-### 1. Timer Loading Errors ("Error Loading" on Dashboard)
+### 1. Frontend Log Regex Issues (Logs Not Showing for Specific Apps)
+
+**Symptoms:**
+- Logs are being generated and written to log files correctly
+- Backend log streaming endpoint serves logs properly (e.g., `/logs?app=huntarr.hunting`, `/logs?app=sonarr`, etc.)
+- Frontend shows "Connected" status but no logs appear when specific app is selected
+- Other app logs work fine, but one or more specific apps show no logs
+- Issue affects any app type (huntarr.hunting, sonarr, radarr, new custom apps, etc.)
+
+**Root Cause:**
+- Malformed regex pattern in frontend JavaScript with double backslashes
+- Regex fails to parse log messages, preventing proper app type categorization
+- Logs exist but aren't displayed due to failed pattern matching
+- Affects any app whose logs don't match the broken regex pattern
+
+**Debugging Steps:**
+1. **Check if logs exist in container for the affected app:**
+   ```bash
+   # Replace 'hunting' with the actual app log file name
+   docker exec huntarr cat /config/logs/hunting.log
+   docker exec huntarr cat /config/logs/sonarr.log
+   docker exec huntarr cat /config/logs/[app_name].log
+   ```
+
+2. **Test backend log streaming for the affected app:**
+   ```bash
+   # Test with the specific app parameter that's not working
+   curl -N -s "http://localhost:9705/logs?app=huntarr.hunting" | head -10
+   curl -N -s "http://localhost:9705/logs?app=sonarr" | head -10
+   curl -N -s "http://localhost:9705/logs?app=[app_name]" | head -10
+   ```
+
+3. **Check browser console** for JavaScript regex errors
+
+4. **Test log format compatibility:**
+   ```bash
+   # Check the actual log format to ensure it matches expected pattern
+   docker exec huntarr tail -5 /config/logs/[app_name].log
+   ```
+
+**Fix Pattern:**
+```javascript
+// ❌ BROKEN - Double backslashes break regex matching for ALL apps
+const logRegex = /^(?:\\[(\\w+)\\]\\s)?([\\d\\-]+\\s[\\d:]+)\\s-\\s([\\w\\.]+)\\s-\\s(\\w+)\\s-\\s(.*)$/;
+
+// ✅ FIXED - Proper regex escaping works for ALL app log formats
+const logRegex = /^(?:\[(\w+)\]\s)?([^\s]+\s[^\s]+)\s-\s([\w\.]+)\s-\s(\w+)\s-\s(.*)$/;
+```
+
+**Files to Check:**
+- `/frontend/static/js/new-main.js` - `connectEventSource()` method
+- Look for `logRegex` variable and `logString.match(logRegex)` usage
+- Check app type categorization logic in the same function
+
+**App Type Categorization Check:**
+Ensure the affected app is included in the categorization logic:
+```javascript
+// Verify the app is in the known apps list
+if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr', 'hunting', 'your_new_app'].includes(possibleApp)) {
+    logAppType = possibleApp;
+}
+
+// And in the pattern matching for system logs
+const patterns = {
+    'sonarr': ['episode', 'series', 'tv show', 'sonarr'],
+    'radarr': ['movie', 'film', 'radarr'],
+    'lidarr': ['album', 'artist', 'track', 'music', 'lidarr'],
+    'readarr': ['book', 'author', 'readarr'],
+    'whisparr': ['scene', 'adult', 'whisparr'],
+    'eros': ['eros', 'whisparr v3', 'whisparrv3'],
+    'swaparr': ['added strike', 'max strikes reached', 'swaparr'],
+    'hunting': ['hunt manager', 'discovery tracker', 'hunting', 'hunt'],
+    'your_new_app': ['keyword1', 'keyword2', 'your_new_app']  // Add patterns for new apps
+};
+```
+
+**Verification:**
+1. Rebuild container: `docker-compose down && COMPOSE_BAKE=true docker-compose up -d --build`
+2. Check frontend logs display correctly for ALL app types
+3. Verify log categorization works (logs appear when each specific app is selected)
+4. Test with multiple apps to ensure the fix is universal
+
+**LESSON LEARNED:** Always test regex patterns with actual log data from ALL app types. Double backslashes in JavaScript regex literals cause pattern matching failures that silently prevent log categorization without obvious error messages. This issue can affect any app (existing or newly added) whose logs don't match the malformed regex pattern. When adding new apps, always verify their logs display correctly in the frontend.
+
+### 2. Timer Loading Errors ("Error Loading" on Dashboard)
 
 **Symptoms:**
 - Countdown timers show "Error Loading" 
@@ -58,7 +142,7 @@ def _get_paths():
 - `/src/primary/cycle_tracker.py` - Path constants
 - `/src/routes.py` - API error handling
 
-### 2. JavaScript "Variable Not Defined" Errors in Settings
+### 3. JavaScript "Variable Not Defined" Errors in Settings
 
 **Symptoms:**
 - Error: `ReferenceError: searchSettingsHtml is not defined`
@@ -85,7 +169,7 @@ generateAppForm: function(container, settings = {}) {
 **Files to Check:**
 - `/frontend/static/js/settings_forms.js` - All `generate*Form` functions
 
-### 3. Settings Save Issues
+### 4. Settings Save Issues
 
 **Symptoms:**
 - Settings appear to save but don't persist
@@ -111,7 +195,7 @@ getFormSettings: function() {
 - `/frontend/static/js/new-main.js` - `getFormSettings()` method
 - `/frontend/static/js/settings_forms.js` - Form generation
 
-### 4. UI Element Visibility Issues
+### 5. UI Element Visibility Issues
 
 **Symptoms:**
 - Buttons cut off at bottom of screen
