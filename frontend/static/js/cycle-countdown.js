@@ -170,8 +170,25 @@ window.CycleCountdown = (function() {
                                     }
                                 }
                                 
-                                // Update the timer display immediately
-                                updateTimerDisplay(app);
+                                // Check if app is likely running based on remaining_seconds
+                                const remainingSeconds = data[app].remaining_seconds || 0;
+                                if (remainingSeconds <= 60) { // If 60 seconds or less remaining, likely running
+                                    // Show "Running Cycle" for apps that should be starting/running
+                                    const timerElement = document.getElementById(`${app}CycleTimer`);
+                                    if (timerElement) {
+                                        const timerValue = timerElement.querySelector('.timer-value');
+                                        if (timerValue) {
+                                            timerValue.textContent = 'Running Cycle';
+                                            timerValue.classList.remove('refreshing-state');
+                                            timerValue.classList.add('running-state');
+                                            timerValue.style.color = '#00ff88'; // Green for active
+                                            console.log(`[CycleCountdown] ${app} likely running (${remainingSeconds}s remaining)`);
+                                        }
+                                    }
+                                } else {
+                                    // Update the timer display immediately for normal countdown
+                                    updateTimerDisplay(app);
+                                }
                                 
                                 // Set up countdown interval if not already set
                                 setupCountdown(app);
@@ -330,11 +347,10 @@ window.CycleCountdown = (function() {
                 if (timerElement) {
                     const timerValue = timerElement.querySelector('.timer-value');
                     if (timerValue && timerValue.textContent === '--:--:--') {
-                        // Only update if it's currently showing the default state
+                        // Show "Waiting for Cycle" for apps without cycle data
                         timerValue.textContent = 'Waiting for Cycle';
                         timerValue.classList.add('refreshing-state');
-                        // Apply the same light blue color as the refreshing state
-                        timerValue.style.color = '#00c2ce';
+                        timerValue.style.color = '#00c2ce'; // Light blue for waiting
                     }
                 }
             }
@@ -560,6 +576,7 @@ window.CycleCountdown = (function() {
             // Time has passed, show refreshing and fetch updated data
             timerValue.textContent = 'Refreshing';
             timerValue.classList.add('refreshing-state');
+            timerValue.classList.remove('running-state');
             timerValue.style.color = '#00c2ce'; // Light blue for 'Refreshing'
             
             // Remove any existing time-based classes
@@ -572,7 +589,7 @@ window.CycleCountdown = (function() {
             // Set a timeout to reset if fetch takes too long
             const resetTimeout = setTimeout(() => {
                 timerValue.textContent = '--:--:--';
-                timerValue.classList.remove('refreshing-state');
+                timerValue.classList.remove('refreshing-state', 'running-state');
                 timerValue.style.removeProperty('color');
                 console.log(`[CycleCountdown] Reset timeout triggered for ${app}`);
             }, 10000); // 10 seconds timeout
@@ -588,14 +605,14 @@ window.CycleCountdown = (function() {
                         } else {
                             // If no new data for this app, reset to default
                             timerValue.textContent = '--:--:--';
-                            timerValue.classList.remove('refreshing-state');
+                            timerValue.classList.remove('refreshing-state', 'running-state');
                             timerValue.style.removeProperty('color');
                         }
                     })
                     .catch(() => {
                         clearTimeout(resetTimeout);
                         timerValue.textContent = '--:--:--';
-                        timerValue.classList.remove('refreshing-state');
+                        timerValue.classList.remove('refreshing-state', 'running-state');
                         timerValue.style.removeProperty('color');
                         console.log(`[CycleCountdown] Fetch failed for ${app}, reset to default`);
                     });
@@ -607,7 +624,7 @@ window.CycleCountdown = (function() {
                         updateTimerDisplay(app);
                     } else {
                         timerValue.textContent = '--:--:--';
-                        timerValue.classList.remove('refreshing-state');
+                        timerValue.classList.remove('refreshing-state', 'running-state');
                         timerValue.style.removeProperty('color');
                     }
                 }, 2000);
@@ -629,8 +646,8 @@ window.CycleCountdown = (function() {
         // Display formatted countdown
         timerValue.textContent = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
         
-        // Remove refreshing state class and clear any inline styles to restore proper color
-        timerValue.classList.remove('refreshing-state');
+        // Remove refreshing and running state classes and clear any inline styles to restore proper color
+        timerValue.classList.remove('refreshing-state', 'running-state');
         
         // Add visual indicator for remaining time
         updateTimerStyle(timerElement, timeRemaining);
