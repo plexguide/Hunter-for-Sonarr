@@ -403,8 +403,8 @@ def app_specific_loop(app_type: str) -> None:
                 
         # Sleep with periodic checks for reset file
         # Calculate and format the time when the next cycle will begin
-        next_cycle_time = datetime.datetime.now() + datetime.timedelta(seconds=sleep_seconds)
-        next_cycle_time_str = next_cycle_time.strftime("%Y-%m-%d %H:%M:%S")
+        next_cycle_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=sleep_seconds)  # Use UTC
+        next_cycle_time_str = next_cycle_time.strftime("%Y-%m-%d %H:%M:%S UTC")  # Indicate UTC
         app_logger.info(f"Next {app_type.upper()} cycle will begin at {next_cycle_time_str}")
         
         # Track cycle time for the countdown timer feature

@@ -122,7 +122,17 @@ def _calculate_remaining_seconds(next_cycle_iso: str) -> int:
     """Calculate remaining seconds until the next cycle"""
     try:
         next_cycle = datetime.datetime.fromisoformat(next_cycle_iso)
-        now = datetime.datetime.now()
+        # Use UTC time for consistency
+        now = datetime.datetime.utcnow()
+        
+        # If next_cycle doesn't have timezone info, assume it's UTC
+        if next_cycle.tzinfo is None:
+            # Convert to UTC if no timezone info
+            pass
+        else:
+            # Convert to UTC if it has timezone info
+            next_cycle = next_cycle.utctimetuple()
+            next_cycle = datetime.datetime(*next_cycle[:6])
         
         # Calculate the time difference in seconds
         delta = (next_cycle - now).total_seconds()
@@ -185,14 +195,14 @@ def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime) -> None
                 print(f"[DEBUG] sleep.json does not exist, creating new file")
         
         # Calculate remaining seconds
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()  # Use UTC for consistency
         remaining_seconds = max(0, int((next_cycle_time - now).total_seconds()))
         
-        # Update the app's data
+        # Update the app's data - store times in UTC format
         sleep_data[app_type] = {
-            "next_cycle": next_cycle_time.isoformat(),
+            "next_cycle": next_cycle_time.isoformat() + "Z",  # Add Z to indicate UTC
             "remaining_seconds": remaining_seconds,
-            "updated_at": now.isoformat()
+            "updated_at": now.isoformat() + "Z"  # Add Z to indicate UTC
         }
         
         # Write to the file
@@ -244,8 +254,8 @@ def update_next_cycle(app_type: str, next_cycle_time: datetime.datetime) -> None
         
         # Update the data
         _cycle_data[app_type] = {
-            "next_cycle": next_cycle_time.isoformat(),
-            "updated_at": datetime.datetime.now().isoformat()
+            "next_cycle": next_cycle_time.isoformat() + "Z",  # Add Z to indicate UTC
+            "updated_at": datetime.datetime.utcnow().isoformat() + "Z"  # Use UTC and add Z
         }
         
         # Save to disk (original method)

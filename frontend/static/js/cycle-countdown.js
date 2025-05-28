@@ -30,8 +30,10 @@ window.CycleCountdown = (function() {
     
     // Set up timer elements in the DOM
     function setupTimerElements() {
+        console.log('[CycleCountdown] Setting up timer elements for apps:', trackedApps);
         // Create timer elements in each app status card
         trackedApps.forEach(app => {
+            console.log(`[CycleCountdown] Creating timer element for ${app}`);
             createTimerElement(app);
         });
     }
@@ -47,11 +49,14 @@ window.CycleCountdown = (function() {
         setupResetButtonListeners();
         
         // First try to fetch from sleep.json
+        console.log('[CycleCountdown] Fetching initial data from sleep.json...');
         fetchFromSleepJson()
             .then(() => {
+                console.log('[CycleCountdown] Initial data fetch successful');
                 // Success - data is processed in fetchFromSleepJson
             })
-            .catch(() => {
+            .catch((error) => {
+                console.warn('[CycleCountdown] Initial data fetch failed:', error.message);
                 // Show waiting message in the UI if initial load fails
                 displayWaitingForCycle();
             });
@@ -69,12 +74,15 @@ window.CycleCountdown = (function() {
             refreshInterval = setInterval(() => {
                 // Only refresh if not already fetching
                 if (!isFetchingData) {
+                    console.log('[CycleCountdown] Periodic refresh...');
                     fetchFromSleepJson()
                         .catch(() => {
                             // Error handling is done in fetchFromSleepJson
                         });
                 }
             }, 60000); // Fixed 60-second interval
+            
+            console.log('[CycleCountdown] Refresh interval started');
         }
         
         // Start the refresh cycle
@@ -137,28 +145,56 @@ window.CycleCountdown = (function() {
                             // Convert ISO date string to Date object
                             const nextCycleTime = new Date(data[app].next_cycle);
                             
-                            // Validate the date is in the future
+                            // Validate the date is in the future or very recent past (within 30 seconds)
+                            const now = new Date();
+                            const timeDiff = nextCycleTime.getTime() - now.getTime();
+                            
                             if (isNaN(nextCycleTime.getTime())) {
                                 console.error(`[CycleCountdown] Invalid date format for ${app}:`, data[app].next_cycle);
                                 continue;
                             }
                             
-                            // Store the next cycle time
-                            nextCycleTimes[app] = nextCycleTime;
-                            
-                            // Store remaining seconds if available for more accurate display
-                            if (data[app].remaining_seconds !== undefined) {
-                                console.log(`[CycleCountdown] Using remaining_seconds for ${app}:`, data[app].remaining_seconds);
-                                // Update the timer with exact seconds rather than calculating from next_cycle
+                            // Only update if the time is in the future or very recent past
+                            if (timeDiff > -30000) { // Allow 30 seconds in the past
+                                // Store the next cycle time
+                                nextCycleTimes[app] = nextCycleTime;
+                                
+                                // Clear any waiting state before updating
+                                const timerElement = document.getElementById(`${app}CycleTimer`);
+                                if (timerElement) {
+                                    const timerValue = timerElement.querySelector('.timer-value');
+                                    if (timerValue) {
+                                        // Clear waiting/refreshing state
+                                        timerValue.classList.remove('refreshing-state');
+                                        timerValue.style.removeProperty('color');
+                                    }
+                                }
+                                
+                                // Update the timer display immediately
+                                updateTimerDisplay(app);
+                                
+                                // Set up countdown interval if not already set
+                                setupCountdown(app);
+                                
+                                dataProcessed = true;
+                                console.log(`[CycleCountdown] Updated ${app} with next cycle: ${nextCycleTime.toISOString()}`);
+                            } else {
+                                console.log(`[CycleCountdown] Skipping old cycle time for ${app}: ${nextCycleTime.toISOString()}`);
+                                
+                                // For old cycle times, clear the timer and show default state
+                                const timerElement = document.getElementById(`${app}CycleTimer`);
+                                if (timerElement) {
+                                    const timerValue = timerElement.querySelector('.timer-value');
+                                    if (timerValue) {
+                                        timerValue.textContent = '--:--:--';
+                                        timerValue.classList.remove('refreshing-state');
+                                        timerValue.style.removeProperty('color');
+                                    }
+                                }
+                                
+                                // Clear any stored cycle time for this app
+                                delete nextCycleTimes[app];
                             }
-                            
-                            // Update the timer display
-                            updateTimerDisplay(app);
-                            
-                            // Set up countdown interval if not already set
-                            setupCountdown(app);
-                            
-                            dataProcessed = true;
                         } else {
                             console.warn(`[CycleCountdown] Invalid data format for ${app}:`, data[app]);
                         }
@@ -178,7 +214,7 @@ window.CycleCountdown = (function() {
                 
                 // Only log errors occasionally to reduce console spam
                 if (Math.random() < 0.1) { // Only log 10% of errors
-                    console.warn('[CycleCountdown] Error fetching sleep.json'); 
+                    console.warn('[CycleCountdown] Error fetching sleep.json:', error.message); 
                 }
                 
                 // Display waiting message in UI only if we have no existing data
@@ -286,16 +322,20 @@ window.CycleCountdown = (function() {
     
     // Display initial loading message in the UI when sleep data isn't available yet
     function displayWaitingForCycle() {
-        // For each app, display waiting message in timer elements
+        // For each app, display waiting message in timer elements only if they don't have valid data
         trackedApps.forEach(app => {
-            const timerElement = document.getElementById(`${app}CycleTimer`);
-            if (timerElement) {
-                const timerValue = timerElement.querySelector('.timer-value');
-                if (timerValue) {
-                    timerValue.textContent = 'Waiting for Cycle';
-                    timerValue.classList.add('refreshing-state');
-                    // Apply the same light blue color as the refreshing state
-                    timerValue.style.color = '#00c2ce';
+            // Only show waiting message if we don't already have valid cycle data for this app
+            if (!nextCycleTimes[app]) {
+                const timerElement = document.getElementById(`${app}CycleTimer`);
+                if (timerElement) {
+                    const timerValue = timerElement.querySelector('.timer-value');
+                    if (timerValue && timerValue.textContent === '--:--:--') {
+                        // Only update if it's currently showing the default state
+                        timerValue.textContent = 'Waiting for Cycle';
+                        timerValue.classList.add('refreshing-state');
+                        // Apply the same light blue color as the refreshing state
+                        timerValue.style.color = '#00c2ce';
+                    }
                 }
             }
         });
@@ -517,45 +557,60 @@ window.CycleCountdown = (function() {
         const timeRemaining = nextCycleTime - now;
         
         if (timeRemaining <= 0) {
-            // Time has passed, fetch updated data from sleep.json
+            // Time has passed, show refreshing and fetch updated data
             timerValue.textContent = 'Refreshing';
             timerValue.classList.add('refreshing-state');
-            
-            // Apply direct styling to ensure it's scoped to just this timer
             timerValue.style.color = '#00c2ce'; // Light blue for 'Refreshing'
             
-            // Remove any existing time-based classes to ensure clean state
+            // Remove any existing time-based classes
             timerElement.classList.remove('timer-soon', 'timer-imminent', 'timer-normal');
             timerValue.classList.remove('timer-value-soon', 'timer-value-imminent', 'timer-value-normal');
-                    // Simple refresh when timer expires
+            
+            // Clear the old next cycle time to prevent infinite refreshing
+            delete nextCycleTimes[app];
+            
+            // Set a timeout to reset if fetch takes too long
+            const resetTimeout = setTimeout(() => {
+                timerValue.textContent = '--:--:--';
+                timerValue.classList.remove('refreshing-state');
+                timerValue.style.removeProperty('color');
+                console.log(`[CycleCountdown] Reset timeout triggered for ${app}`);
+            }, 10000); // 10 seconds timeout
+            
+            // Fetch new data only if not already fetching
             if (!isFetchingData) {
-                // Set a simple timeout to reset UI if refresh takes too long
-                const resetTimeout = setTimeout(() => {
-                    timerValue.textContent = '--:--:--';
-                    timerValue.classList.remove('refreshing-state');
-                    timerValue.style.removeProperty('color');
-                }, 5000); // 5 seconds
-                
                 fetchFromSleepJson()
                     .then(() => {
                         clearTimeout(resetTimeout);
-                        // Update all timers
-                        trackedApps.forEach(updateTimerDisplay);
+                        // Force update this specific timer
+                        if (nextCycleTimes[app]) {
+                            updateTimerDisplay(app);
+                        } else {
+                            // If no new data for this app, reset to default
+                            timerValue.textContent = '--:--:--';
+                            timerValue.classList.remove('refreshing-state');
+                            timerValue.style.removeProperty('color');
+                        }
                     })
                     .catch(() => {
                         clearTimeout(resetTimeout);
                         timerValue.textContent = '--:--:--';
                         timerValue.classList.remove('refreshing-state');
                         timerValue.style.removeProperty('color');
+                        console.log(`[CycleCountdown] Fetch failed for ${app}, reset to default`);
                     });
             } else {
-                // If already fetching, just reset this timer
+                // If already fetching, just wait and reset after timeout
+                clearTimeout(resetTimeout);
                 setTimeout(() => {
-                    timerValue.textContent = '--:--:--';
-                    timerValue.classList.remove('refreshing-state');
-                    timerValue.style.removeProperty('color');
-                    updateTimerDisplay(app);
-                }, 1000);
+                    if (nextCycleTimes[app]) {
+                        updateTimerDisplay(app);
+                    } else {
+                        timerValue.textContent = '--:--:--';
+                        timerValue.classList.remove('refreshing-state');
+                        timerValue.style.removeProperty('color');
+                    }
+                }, 2000);
             }
             
             return;
@@ -576,13 +631,6 @@ window.CycleCountdown = (function() {
         
         // Remove refreshing state class and clear any inline styles to restore proper color
         timerValue.classList.remove('refreshing-state');
-        // Only clear color if we're not in a time-based state
-        if (!timerElement.classList.contains('timer-soon') && 
-            !timerElement.classList.contains('timer-imminent') && 
-            !timerElement.classList.contains('timer-normal')) {
-            // Reset to default white color when no classes are applied
-            timerValue.style.removeProperty('color');
-        }
         
         // Add visual indicator for remaining time
         updateTimerStyle(timerElement, timeRemaining);
@@ -660,18 +708,25 @@ window.CycleCountdown = (function() {
     }
     
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('[CycleCountdown] DOM loaded, initializing...');
+        
         // Simple initialization with minimal delay
         setTimeout(function() {
-            // Initialize when user navigates to home section
+            // Always initialize immediately on page load
+            initialize();
+            
+            // Also set up observer for home section visibility changes
             const observer = new MutationObserver((mutations) => {
                 for (const mutation of mutations) {
                     if (mutation.target.id === 'homeSection' && 
                         mutation.attributeName === 'class' && 
                         !mutation.target.classList.contains('hidden')) {
+                        console.log('[CycleCountdown] Home section became visible, reinitializing...');
                         initialize();
                     } else if (mutation.target.id === 'homeSection' && 
                                mutation.attributeName === 'class' && 
                                mutation.target.classList.contains('hidden')) {
+                        console.log('[CycleCountdown] Home section hidden, cleaning up...');
                         cleanup();
                     }
                 }
@@ -680,11 +735,9 @@ window.CycleCountdown = (function() {
             const homeSection = document.getElementById('homeSection');
             if (homeSection) {
                 observer.observe(homeSection, { attributes: true });
-                
-                // Initialize immediately if home section is visible
-                if (!homeSection.classList.contains('hidden')) {
-                    initialize();
-                }
+                console.log('[CycleCountdown] Observer set up for home section');
+            } else {
+                console.warn('[CycleCountdown] Home section not found');
             }
         }, 100); // 100ms delay is enough
     });
