@@ -121,6 +121,9 @@ let huntarrUI = {
         // Add global event handler for unsaved changes
         this.registerGlobalUnsavedChangesHandler();
         
+        // Make dashboard visible after initialization to prevent FOUC
+        this.showDashboard();
+        
         // Also call it again after a delay in case settings are loaded dynamically
         setTimeout(() => {
             // this.setupStatefulResetButton();
@@ -3226,6 +3229,17 @@ let huntarrUI = {
         console.log(`[huntarrUI] Low usage mode detection - CSS class: ${hasLowUsageClass}, Module: ${standaloneModuleEnabled}, Indicator: ${indicatorVisible}, Final: ${isEnabled}`);
         
         return isEnabled;
+    },
+
+    showDashboard: function() {
+        // Make the dashboard grid visible after initialization to prevent FOUC
+        const dashboardGrid = document.querySelector('.dashboard-grid');
+        if (dashboardGrid) {
+            dashboardGrid.style.opacity = '1';
+            console.log('[huntarrUI] Dashboard made visible after initialization');
+        } else {
+            console.warn('[huntarrUI] Dashboard grid not found');
+        }
     }
 };
 

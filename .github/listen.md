@@ -605,42 +605,25 @@ If logs aren't showing in the frontend dropdown:
 3. **Important**: Avoid double backslashes in regex patterns - they break pattern matching
 4. Test with: `curl http://localhost:9705/api/logs/stream/huntarr.hunting`
 
-### Cycle Countdown Timer Issues
-The cycle countdown system uses a smart `cyclelock` field in sleep.json:
+### Dashboard Flash Issue (FOUC)
+If the home page shows a flash of all apps before organizing correctly:
+1. **Root cause**: Dashboard grid starts with `opacity: 0` to prevent flash, but JavaScript doesn't make it visible
+2. **Solution**: Call `showDashboard()` in `huntarrUI.init()` to set `opacity: 1` after initialization
+3. **Location**: `frontend/static/js/new-main.js` - add `this.showDashboard()` after setup is complete
+4. **Key principle**: Always make hidden elements visible after JavaScript initialization is complete
 
-**How cyclelock works:**
-- `cyclelock: true` = App is running a cycle → Shows "Running Cycle"
-- `cyclelock: false` = App is waiting → Shows countdown timer
-- Missing cyclelock = Defaults to `true` (Docker startup behavior)
-
-**State transitions:**
-- **Docker startup**: All apps start with `cyclelock: true`
-- **Cycle start**: `start_cycle()` sets `cyclelock: true` 
-- **Cycle end**: `end_cycle()` sets `cyclelock: false`
-- **Manual reset**: Reset API sets `cyclelock: true`
-
-**Benefits:**
-- No more complex stale data detection
-- No misleading "Refreshing" states
-- Explicit control over cycle states
-- Reliable across Docker restarts
-
-### Network/API Issues
-If countdown timers show network errors:
-1. Check if the web server is responding: `curl http://localhost:9705/api/sleep.json`
-2. Verify timezone consistency (backend uses UTC)
-3. Check for proper JSON format in sleep.json
+### Cycle State Management
+The smart `cyclelock` system provides reliable cycle state tracking:
+1. **cyclelock: true** = App is running a cycle (shows "Running Cycle")
+2. **cyclelock: false** = App is waiting (shows countdown timer)  
+3. **Default on startup**: `cyclelock: true` (assumes cycles start immediately)
+4. **Reset behavior**: Sets `cyclelock: true` to trigger immediate cycle start
+5. **Automatic updates**: `start_cycle()` and `end_cycle()` functions manage state transitions
+6. **Data preservation**: `_save_cycle_data()` preserves cyclelock when updating sleep.json
 
 ## Lessons Learned
 
-### 2025-05-28: Log Regex Pattern Issues
-- **Problem**: Hunting logs weren't showing in frontend despite working backend
-- **Root Cause**: Double backslashes in JavaScript regex patterns (`\\\\`) broke pattern matching
-- **Solution**: Use single backslashes in regex patterns
-- **Prevention**: Test regex patterns in browser console before deployment
-
-### 2025-05-28: Cycle State Management
-- **Problem**: Complex stale data detection was unreliable and confusing
-- **Root Cause**: Trying to guess cycle state from timestamps and remaining_seconds
-- **Solution**: Implemented explicit `cyclelock` field for definitive state control
-- **Benefits**: Cleaner logic, no "Refreshing" states, reliable Docker restart behavior
+1. **Regex patterns**: Double backslashes in JavaScript regex break pattern matching
+2. **Timezone handling**: Always use UTC for consistent datetime calculations across containers
+3. **State management**: Explicit state fields (like cyclelock) are more reliable than inferring state from timestamps
+4. **FOUC prevention**: Hidden elements need explicit JavaScript to make them visible after initialization
