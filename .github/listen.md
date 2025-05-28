@@ -640,3 +640,4 @@ The smart `cyclelock` system provides reliable cycle state tracking:
    - "*** STATS INCREMENT ***" messages in `stats_manager.py`
    - "*** STATS ONLY INCREMENT ***" messages in `stats_manager.py`
    - "*** STATS INCREMENT ***" messages in app-specific files (e.g., `sonarr/missing.py`, `sonarr/upgrade.py`)
+   - "Successfully incremented and verified" messages in `stats_manager.py`

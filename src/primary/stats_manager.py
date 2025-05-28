@@ -421,7 +421,7 @@ def increment_stat(app_type: str, stat_type: str, count: int = 1) -> bool:
             logger.error(f"Stats verification failed! Expected {new_value} but got {verification_stats[app_type][stat_type]} for {app_type} {stat_type}")
             return False
             
-        logger.info(f"Successfully incremented and verified {app_type} {stat_type}")
+        logger.debug(f"Successfully incremented and verified {app_type} {stat_type}")
         return True
 
 def increment_stat_only(app_type: str, stat_type: str, count: int = 1) -> bool:
@@ -468,7 +468,7 @@ def increment_stat_only(app_type: str, stat_type: str, count: int = 1) -> bool:
             logger.error(f"Stats verification failed! Expected {new_value} but got {verification_stats[app_type][stat_type]} for {app_type} {stat_type}")
             return False
             
-        logger.info(f"Successfully incremented and verified {app_type} {stat_type} (stats only)")
+        logger.debug(f"Successfully incremented and verified {app_type} {stat_type} (stats only)")
         return True
 
 def get_stats() -> Dict[str, Dict[str, int]]:
