@@ -183,13 +183,16 @@ window.CycleCountdown = (function() {
                                 // Check if current time has passed the next cycle time (cycle should be running)
                                 const cycleTimePassed = now >= nextCycleTime;
                                 
-                                // Check if the data is stale (updated_at is more than 5 minutes old)
+                                // Check if the data is stale (updated_at is more than 2 minutes old for better detection)
                                 const updatedAt = new Date(data[app].updated_at);
                                 const dataAge = (now - updatedAt) / 1000; // seconds
-                                const dataIsStale = dataAge > 300; // 5 minutes
+                                const dataIsStale = dataAge > 120; // 2 minutes (reduced from 5 minutes)
                                 
-                                // Check if app is likely running based on calculated remaining seconds, cycle time passed, or stale data
-                                if (actualRemainingSeconds <= 60 || cycleTimePassed || dataIsStale) { 
+                                // Also check if remaining_seconds is 0, which often indicates a cycle should be starting
+                                const shouldBeRunning = (data[app].remaining_seconds === 0);
+                                
+                                // Check if app is likely running based on multiple indicators
+                                if (actualRemainingSeconds <= 60 || cycleTimePassed || dataIsStale || shouldBeRunning) {
                                     // Mark app as running and show "Running Cycle"
                                     runningCycles[app] = true;
                                     const timerElement = document.getElementById(`${app}CycleTimer`);
@@ -204,6 +207,8 @@ window.CycleCountdown = (function() {
                                                 console.log(`[CycleCountdown] ${app} cycle time passed, showing running (cycle should be active)`);
                                             } else if (dataIsStale) {
                                                 console.log(`[CycleCountdown] ${app} data is stale (${Math.floor(dataAge)}s old), showing running`);
+                                            } else if (shouldBeRunning) {
+                                                console.log(`[CycleCountdown] ${app} remaining_seconds is 0, showing running (cycle should be starting)`);
                                             } else {
                                                 console.log(`[CycleCountdown] ${app} marked as running (${actualRemainingSeconds}s remaining)`);
                                             }
