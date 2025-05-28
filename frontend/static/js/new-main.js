@@ -955,8 +955,10 @@ let huntarrUI = {
                     if (match) {
                         const [, appName, timestamp, loggerName, level, message] = match;
                         
-                        // Use full timestamp instead of just time
-                        const fullTimestamp = timestamp;
+                        // Split timestamp into date and time components
+                        const timestampParts = timestamp.split(' ');
+                        const date = timestampParts[0] || '';
+                        const time = timestampParts[1] || '';
                         
                         // Create level badge with proper styling to match second image
                         const levelClass = level.toLowerCase();
@@ -995,7 +997,10 @@ let huntarrUI = {
                         
                         logEntry.innerHTML = `
                             <div class="log-entry-row">
-                                <span class="log-timestamp">${fullTimestamp}</span>
+                                <span class="log-timestamp">
+                                    <span class="date">${date}</span>
+                                    <span class="time">${time}</span>
+                                </span>
                                 ${levelBadge}
                                 <span class="log-source">${appSource}</span>
                                 <span class="log-message">${message}</span>
@@ -1005,8 +1010,11 @@ let huntarrUI = {
                     } else {
                         // Fallback for lines that don't match the expected format
                         logEntry.innerHTML = `
-                            <div class="log-entry-content">
-                                <span class="log-timestamp">--:--:--</span>
+                            <div class="log-entry-row">
+                                <span class="log-timestamp">
+                                    <span class="date">--</span>
+                                    <span class="time">--:--:--</span>
+                                </span>
                                 <span class="log-level-badge log-level-info">Information</span>
                                 <span class="log-source">SYSTEM</span>
                                 <span class="log-message">${logString}</span>

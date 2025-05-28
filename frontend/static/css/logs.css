@@ -3,160 +3,209 @@
     margin-bottom: 1px;
     padding: 0;
     border-radius: 0;
-    background-color: rgba(40, 44, 52, 0.8);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(40, 44, 52, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     transition: background-color 0.2s ease;
 }
 
 .log-entry:hover {
-    background-color: rgba(60, 64, 72, 0.9);
+    background-color: rgba(60, 64, 72, 0.95);
 }
 
 .log-entry-row {
     display: flex;
     align-items: center;
-    padding: 8px 12px;
+    padding: 6px 10px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 14px;
-    line-height: 1.4;
-    gap: 16px;
+    font-size: 12px;
+    line-height: 1.3;
+    gap: 12px;
 }
 
 .log-timestamp {
     font-family: 'Courier New', monospace;
-    font-size: 13px;
-    color: #8b949e;
-    min-width: 140px;
+    font-size: 11px;
+    color: #9ca3af;
+    min-width: 120px;
     text-align: left;
     font-weight: 500;
     flex-shrink: 0;
+    line-height: 1.2;
+    display: flex;
+    flex-direction: column;
+}
+
+.log-timestamp .date {
+    font-size: 10px;
+    color: #6b7280;
+    margin-bottom: 1px;
+}
+
+.log-timestamp .time {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 600;
 }
 
 .log-level-badge {
     display: inline-flex;
     align-items: center;
-    padding: 4px 12px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    min-width: 90px;
+    letter-spacing: 0.3px;
+    min-width: 75px;
     justify-content: center;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
 .log-level-error {
-    background-color: #dc3545;
+    background-color: #dc2626;
     color: white;
+    box-shadow: 0 1px 2px rgba(220, 38, 38, 0.3);
 }
 
 .log-level-warning {
-    background-color: #fd7e14;
+    background-color: #d97706;
     color: white;
+    box-shadow: 0 1px 2px rgba(217, 119, 6, 0.3);
 }
 
 .log-level-info {
-    background-color: #0dcaf0;
+    background-color: #0284c7;
     color: white;
+    box-shadow: 0 1px 2px rgba(2, 132, 199, 0.3);
 }
 
 .log-level-debug {
-    background-color: #6c757d;
+    background-color: #4b5563;
     color: white;
+    box-shadow: 0 1px 2px rgba(75, 85, 99, 0.3);
 }
 
 .log-level-fatal {
-    background-color: #6f42c1;
+    background-color: #7c2d12;
     color: white;
+    box-shadow: 0 1px 2px rgba(124, 45, 18, 0.3);
 }
 
 .log-source {
     font-weight: 600;
-    color: #8b949e;
-    min-width: 80px;
+    color: #9ca3af;
+    min-width: 70px;
     text-align: left;
-    font-size: 13px;
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     flex-shrink: 0;
 }
 
 .log-message {
     flex: 1;
-    color: #e6edf3;
+    color: #f3f4f6;
     word-wrap: break-word;
-    line-height: 1.4;
-    padding-right: 12px;
+    line-height: 1.3;
+    padding-right: 8px;
+    font-size: 12px;
 }
 
 /* Dark theme adjustments */
 .dark-theme .log-entry {
-    background-color: rgba(40, 44, 52, 0.8);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(40, 44, 52, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dark-theme .log-entry:hover {
-    background-color: rgba(60, 64, 72, 0.9);
+    background-color: rgba(60, 64, 72, 0.95);
 }
 
 .dark-theme .log-timestamp {
-    color: #8b949e;
+    color: #9ca3af;
+}
+
+.dark-theme .log-timestamp .date {
+    color: #6b7280;
+}
+
+.dark-theme .log-timestamp .time {
+    color: #9ca3af;
 }
 
 .dark-theme .log-source {
-    color: #8b949e;
+    color: #9ca3af;
 }
 
 .dark-theme .log-message {
-    color: #e6edf3;
+    color: #f3f4f6;
 }
 
 /* Light theme adjustments */
 body:not(.dark-theme) .log-entry {
-    background-color: rgba(248, 249, 250, 0.8);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: rgba(248, 249, 250, 0.9);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 body:not(.dark-theme) .log-entry:hover {
-    background-color: rgba(233, 236, 239, 0.9);
+    background-color: rgba(229, 231, 235, 0.95);
 }
 
 body:not(.dark-theme) .log-timestamp {
-    color: #656d76;
+    color: #4b5563;
+}
+
+body:not(.dark-theme) .log-timestamp .date {
+    color: #6b7280;
+}
+
+body:not(.dark-theme) .log-timestamp .time {
+    color: #374151;
 }
 
 body:not(.dark-theme) .log-source {
-    color: #656d76;
+    color: #4b5563;
 }
 
 body:not(.dark-theme) .log-message {
-    color: #24292f;
+    color: #111827;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .log-entry-row {
-        gap: 12px;
-        padding: 6px 8px;
-        font-size: 13px;
+        gap: 8px;
+        padding: 5px 6px;
+        font-size: 11px;
     }
     
     .log-timestamp {
-        min-width: 120px;
-        font-size: 12px;
+        min-width: 100px;
+        font-size: 10px;
+    }
+    
+    .log-timestamp .date {
+        font-size: 9px;
+    }
+    
+    .log-timestamp .time {
+        font-size: 10px;
     }
     
     .log-level-badge {
-        min-width: 80px;
-        font-size: 10px;
-        padding: 3px 8px;
+        min-width: 65px;
+        font-size: 9px;
+        padding: 2px 6px;
     }
     
     .log-source {
-        min-width: 60px;
-        font-size: 12px;
+        min-width: 55px;
+        font-size: 10px;
+    }
+    
+    .log-message {
+        font-size: 11px;
     }
 }
 
@@ -164,8 +213,8 @@ body:not(.dark-theme) .log-message {
     .log-entry-row {
         flex-direction: column;
         align-items: flex-start;
-        gap: 4px;
-        padding: 8px;
+        gap: 3px;
+        padding: 6px;
     }
     
     .log-timestamp,
@@ -180,14 +229,14 @@ body:not(.dark-theme) .log-message {
     
     .log-message {
         width: 100%;
-        margin-top: 4px;
+        margin-top: 2px;
         padding-right: 0;
     }
 }
 
 /* Search highlighting */
 .search-highlight {
-    background-color: #ffd700;
+    background-color: #fbbf24;
     color: #000;
     padding: 1px 2px;
     border-radius: 2px;
