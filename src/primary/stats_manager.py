@@ -408,7 +408,7 @@ def increment_stat(app_type: str, stat_type: str, count: int = 1) -> bool:
         prev_value = stats[app_type][stat_type]
         stats[app_type][stat_type] += count
         new_value = stats[app_type][stat_type]
-        logger.info(f"*** STATS INCREMENT *** {app_type} {stat_type} by {count}: {prev_value} -> {new_value}")
+        logger.debug(f"*** STATS INCREMENT *** {app_type} {stat_type} by {count}: {prev_value} -> {new_value}")
         save_success = save_stats(stats)
         
         if not save_success:
@@ -455,7 +455,7 @@ def increment_stat_only(app_type: str, stat_type: str, count: int = 1) -> bool:
         prev_value = stats[app_type][stat_type]
         stats[app_type][stat_type] += count
         new_value = stats[app_type][stat_type]
-        logger.info(f"*** STATS ONLY INCREMENT *** {app_type} {stat_type} by {count}: {prev_value} -> {new_value} (API cap NOT incremented)")
+        logger.debug(f"*** STATS ONLY INCREMENT *** {app_type} {stat_type} by {count}: {prev_value} -> {new_value} (API cap NOT incremented)")
         save_success = save_stats(stats)
         
         if not save_success:

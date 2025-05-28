@@ -627,3 +627,16 @@ The smart `cyclelock` system provides reliable cycle state tracking:
 2. **Timezone handling**: Always use UTC for consistent datetime calculations across containers
 3. **State management**: Explicit state fields (like cyclelock) are more reliable than inferring state from timestamps
 4. **FOUC prevention**: Hidden elements need explicit JavaScript to make them visible after initialization
+5. **Log level optimization**: Move ALL verbose authentication, log streaming, and stats increment messages to DEBUG level to reduce log noise and improve readability. This includes:
+   - "Request IP address" messages in `auth.py`
+   - "Local Bypass Mode is DISABLED" messages in `auth.py`
+   - "Direct IP is a local network IP" messages in `auth.py`
+   - "Local network access - Authentication bypassed" messages in `auth.py`
+   - "Starting log stream" messages in `web_server.py`
+   - "Log stream generator started" messages in `web_server.py`
+   - "Client disconnected from log stream" messages in `web_server.py`
+   - "Successfully removed client from active log streams" messages in `web_server.py`
+   - "Log stream generator finished" messages in `web_server.py`
+   - "*** STATS INCREMENT ***" messages in `stats_manager.py`
+   - "*** STATS ONLY INCREMENT ***" messages in `stats_manager.py`
+   - "*** STATS INCREMENT ***" messages in app-specific files (e.g., `sonarr/missing.py`, `sonarr/upgrade.py`)

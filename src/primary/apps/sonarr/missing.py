@@ -186,7 +186,7 @@ def process_missing_episodes_mode(
                 for episode_id in episode_ids:
                     # Increment stat for each episode individually, just like Radarr
                     increment_stat("sonarr", "hunted")
-                    sonarr_logger.info(f"*** STATS INCREMENT *** sonarr hunted by 1 for episode ID {episode_id}")
+                    sonarr_logger.debug(f"*** STATS INCREMENT *** sonarr hunted by 1 for episode ID {episode_id}")
                 
                 # Log to history system
                 # Find the corresponding episode data for this ID
