@@ -223,21 +223,21 @@ button {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    margin-top: 20px;
+    margin-top: 24px; /* Increased from 22px by another 10% */
 }
 
 .nav-item {
     display: flex;
     align-items: center;
-    padding: 12px 20px;
+    padding: 14px 24px; /* Increased from 13px 22px by another 10% */
     color: var(--sidebar-text);
     transition: all 0.3s;
 }
 
 .nav-item i {
-    margin-right: 12px;
-    font-size: 18px;
-    width: 24px;
+    margin-right: 14px; /* Increased from 13px by another 10% */
+    font-size: 22px; /* Increased from 20px by another 10% */
+    width: 29px; /* Increased from 26px by another 10% */
     text-align: center;
 }
 
@@ -267,16 +267,16 @@ button {
 
 /* Theme Switch */
 .theme-switcher {
-    padding: 20px;
-    margin-top: 20px;
+    padding: 24px; /* Increased from 22px by another 10% */
+    margin-top: 24px; /* Increased from 22px by another 10% */
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .switch-label {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
-    font-size: 14px;
+    margin-bottom: 10px; /* Increased from 9px by another 10% */
+    font-size: 17px; /* Increased from 15px by another 10% */
 }
 
 .light-icon, .dark-icon {
