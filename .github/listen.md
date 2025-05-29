@@ -641,3 +641,10 @@ The smart `cyclelock` system provides reliable cycle state tracking:
    - Removed CSS styles for `#low-usage-mode-indicator` from `low-usage-mode.css`
    - Low Usage Mode now runs silently without any visual indicator for a cleaner interface
    - All performance optimizations (animation disabling, timer throttling) still work as intended
+
+8. **Settings Header Area Height Reduction**:
+   - Reduced the height free space in the settings header area by 50% for more compact layout
+   - Changed `.content-section.active` padding from `20px` to `10px 20px` in `new-style.css`
+   - This reduces vertical spacing (top/bottom padding) by 50% while maintaining horizontal spacing
+   - Applies to all content sections including Settings, Apps, Logs, History, and Scheduling
+   - Provides more screen real estate for content while maintaining proper visual hierarchy

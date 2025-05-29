@@ -632,7 +632,7 @@ select.form-control {
     overflow: auto !important; /* Allow scrolling when content is tall */
     opacity: 1;
     z-index: 1;
-    padding: 20px;
+    padding: 10px 20px; /* Reduced vertical padding by 50% (from 20px to 10px) while keeping horizontal padding at 20px */
 }
 
 /* Cards */
