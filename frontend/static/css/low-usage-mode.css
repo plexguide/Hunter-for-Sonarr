@@ -64,16 +64,3 @@
     animation: none !important;
     background: var(--bg-secondary) !important;
 }
-
-/* Style for the Low Usage Mode indicator */
-#low-usage-mode-indicator {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: 500;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-#low-usage-mode-indicator i {
-    margin-right: 5px;
-}

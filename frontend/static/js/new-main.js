@@ -3125,39 +3125,14 @@ let huntarrUI = {
         // Store the previous state to detect changes
         const wasEnabled = document.body.classList.contains('low-usage-mode');
         
-        // Check if the indicator already exists, if not create it
-        let indicator = document.getElementById('low-usage-mode-indicator');
-        
         if (enabled) {
             // Add CSS class to body to disable animations
             document.body.classList.add('low-usage-mode');
             
-            // Create or show the indicator
-            if (!indicator) {
-                indicator = document.createElement('div');
-                indicator.id = 'low-usage-mode-indicator';
-                indicator.innerHTML = '<i class="fas fa-battery-half"></i> Low Usage Mode';
-                indicator.style.position = 'fixed';
-                indicator.style.top = '10px';
-                indicator.style.right = '10px';
-                indicator.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-                indicator.style.color = 'white';
-                indicator.style.padding = '5px 10px';
-                indicator.style.borderRadius = '4px';
-                indicator.style.fontSize = '12px';
-                indicator.style.zIndex = '9999';
-                document.body.appendChild(indicator);
-            } else {
-                indicator.style.display = 'block';
-            }
+            // Low Usage Mode now runs without any visual indicator for a cleaner interface
         } else {
             // Remove CSS class from body to enable animations
             document.body.classList.remove('low-usage-mode');
-            
-            // Hide the indicator if it exists
-            if (indicator) {
-                indicator.style.display = 'none';
-            }
         }
         
         // If low usage mode state changed and we have stats data, update the display
@@ -3219,14 +3194,10 @@ let huntarrUI = {
         // 2. Check if the standalone low-usage-mode.js module is enabled
         const standaloneModuleEnabled = window.LowUsageMode && window.LowUsageMode.isEnabled && window.LowUsageMode.isEnabled();
         
-        // 3. Check if the low usage mode indicator is visible
-        const indicator = document.getElementById('low-usage-mode-indicator');
-        const indicatorVisible = indicator && indicator.style.display !== 'none' && indicator.style.display !== '';
+        // 3. Final determination based on reliable sources (no indicator checking needed)
+        const isEnabled = hasLowUsageClass || standaloneModuleEnabled;
         
-        // 4. Store the result for consistency during this update cycle
-        const isEnabled = hasLowUsageClass || standaloneModuleEnabled || indicatorVisible;
-        
-        console.log(`[huntarrUI] Low usage mode detection - CSS class: ${hasLowUsageClass}, Module: ${standaloneModuleEnabled}, Indicator: ${indicatorVisible}, Final: ${isEnabled}`);
+        console.log(`[huntarrUI] Low usage mode detection - CSS class: ${hasLowUsageClass}, Module: ${standaloneModuleEnabled}, Final: ${isEnabled}`);
         
         return isEnabled;
     },

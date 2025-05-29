@@ -508,7 +508,7 @@ def logs_stream():
                                     for line in new_lines:
                                         stripped = line.strip()
                                         if stripped:
-                                            prefix = f"[{name.upper()}] " if app_type == 'all' else ""
+                                            prefix = f"[{name.lower()}] " if app_type == 'all' else ""
                                             yield f"data: {prefix}{stripped}\n\n"
                         
                         except FileNotFoundError:

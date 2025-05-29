@@ -372,7 +372,7 @@ def save_stats(stats: Dict[str, Dict[str, int]]) -> bool:
         # Move the temp file to the actual file
         os.replace(temp_file, STATS_FILE)
         
-        logger.info(f"===> Successfully wrote stats to file: {STATS_FILE}")
+        logger.debug(f"===> Successfully wrote stats to file: {STATS_FILE}")
         logger.debug(f"Stats saved successfully: {stats}")
         return True
     except Exception as e:
