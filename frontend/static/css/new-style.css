@@ -2081,8 +2081,8 @@ input:checked + .toggle-slider:before {
 /* History Table Styles */
 .history-container {
     position: relative;
-    height: calc(100% - 120px); /* Adjust based on header and pagination height */
-    overflow: auto;
+    height: calc(85vh - 160px); /* Use fixed viewport height like logs page instead of percentage */
+    overflow-y: auto; /* Only vertical scrolling like logs page */
     background-color: var(--bg-secondary);
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -2478,4 +2478,14 @@ input#stateful_management_hours {
     min-width: 55px !important;
     max-width: 55px !important;
     font-size: 0.9rem;
+}
+
+/* Pagination controls above table - left aligned and compact */
+.pagination-controls.pagination-above-table {
+    display: flex;
+    justify-content: flex-start; /* Align to left instead of center */
+    align-items: center;
+    padding: 10px 0; /* Reduced padding for more compact spacing */
+    gap: 15px;
+    margin-bottom: 15px; /* Add margin below to separate from table */
 }

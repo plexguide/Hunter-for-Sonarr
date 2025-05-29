@@ -41,6 +41,13 @@
         </div>
     </div>
     
+    <!-- Pagination controls - moved above table -->
+    <div class="pagination-controls pagination-above-table">
+        <button id="historyPrevPage" class="pagination-button"><i class="fas fa-chevron-left"></i> Previous</button>
+        <span id="historyPageInfo">Page <span id="historyCurrentPage">1</span> of <span id="historyTotalPages">1</span></span>
+        <button id="historyNextPage" class="pagination-button">Next <i class="fas fa-chevron-right"></i></button>
+    </div>
+    
     <div class="history-container">
         <div class="modern-table-wrapper force-scrollbar">
             <table class="modern-table history-table">
@@ -70,13 +77,6 @@
             <i class="fas fa-spinner fa-spin fa-3x"></i>
             <p>Loading history...</p>
         </div>
-    </div>
-    
-    <!-- Pagination controls -->
-    <div class="pagination-controls mobile-sticky">
-        <button id="historyPrevPage" class="pagination-button"><i class="fas fa-chevron-left"></i> Previous</button>
-        <span id="historyPageInfo">Page <span id="historyCurrentPage">1</span> of <span id="historyTotalPages">1</span></span>
-        <button id="historyNextPage" class="pagination-button">Next <i class="fas fa-chevron-right"></i></button>
     </div>
 </section>
 

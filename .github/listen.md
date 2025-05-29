@@ -648,3 +648,16 @@ The smart `cyclelock` system provides reliable cycle state tracking:
    - This reduces vertical spacing (top/bottom padding) by 50% while maintaining horizontal spacing
    - Provides more screen real estate for content while maintaining proper visual hierarchy
    - Applies consistently to Settings, Apps, Logs, History, and Scheduling sections
+
+10. **History Table Pagination Overlay Fix**:
+   - Fixed issue where pagination controls ("Previous", "Next") appeared over table content when scrolling
+   - **Root cause**: Pagination controls were positioned below the table, causing them to overlay table content during scroll
+   - **User insight**: Comparison with logs page revealed different layout approaches for control positioning
+   - **Solution**: Moved pagination controls above the table in the HTML structure
+   - **Implementation**: 
+     - Moved `<div class="pagination-controls">` from bottom to above `<div class="history-container">` in `history_section.html`
+     - Added `pagination-above-table` class with left alignment: `justify-content: flex-start`
+     - Reduced padding to `10px 0` for more compact spacing
+     - Added `margin-bottom: 15px` to separate from table
+   - **Result**: Pagination controls now appear cleanly above the table without interfering with scrolling
+   - **Lesson**: When controls overlay content during scroll, consider repositioning in the layout hierarchy rather than adjusting z-index or scrolling behavior
