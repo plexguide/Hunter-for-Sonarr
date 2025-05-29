@@ -267,9 +267,10 @@ def authenticate_request():
     api_setup_path = "/api/setup"
     favicon_path = "/favicon.ico"
     health_check_path = "/api/health"
+    ping_path = "/ping"
 
-    # Skip authentication for static files, setup pages and health check path
-    if request.path.startswith((static_path, setup_path, api_setup_path)) or request.path in (favicon_path, health_check_path):
+    # Skip authentication for static files, setup pages, health check path, and ping
+    if request.path.startswith((static_path, setup_path, api_setup_path)) or request.path in (favicon_path, health_check_path, ping_path):
         return None
     
     # If no user exists, redirect to setup

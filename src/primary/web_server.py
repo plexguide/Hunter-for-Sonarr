@@ -1075,6 +1075,17 @@ def health_check():
     logger.debug("Health check endpoint accessed")
     return jsonify({"status": "OK"})
 
+@app.route('/api/health', methods=['GET'])
+def api_health_check():
+    """
+    API health check endpoint that bypasses authentication.
+    Returns a status OK response to indicate the application is running properly.
+    This endpoint is useful for monitoring tools and load balancers.
+    """
+    logger = get_logger("system")
+    logger.debug("API health check endpoint accessed")
+    return jsonify({"status": "OK", "message": "Huntarr is running"})
+
 @app.route('/api/github_sponsors', methods=['GET'])
 def get_github_sponsors():
     # API access configuration
