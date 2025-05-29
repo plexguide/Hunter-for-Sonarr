@@ -628,17 +628,16 @@ The smart `cyclelock` system provides reliable cycle state tracking:
 3. **State management**: Explicit state fields (like cyclelock) are more reliable than inferring state from timestamps
 4. **FOUC prevention**: Hidden elements need explicit JavaScript to make them visible after initialization
 5. **Log level optimization**: Move ALL verbose authentication, log streaming, and stats increment messages to DEBUG level to reduce log noise and improve readability. This includes:
-   - "Request IP address" messages in `auth.py`
-   - "Local Bypass Mode is DISABLED" messages in `auth.py`
-   - "Direct IP is a local network IP" messages in `auth.py`
-   - "Local network access - Authentication bypassed" messages in `auth.py`
-   - "Starting log stream" messages in `web_server.py`
-   - "Log stream generator started" messages in `web_server.py`
-   - "Client disconnected from log stream" messages in `web_server.py`
-   - "Successfully removed client from active log streams" messages in `web_server.py`
-   - "Log stream generator finished" messages in `web_server.py`
-   - "*** STATS INCREMENT ***" messages in `stats_manager.py`
-   - "*** STATS ONLY INCREMENT ***" messages in `stats_manager.py`
-   - "*** STATS INCREMENT ***" messages in app-specific files (e.g., `sonarr/missing.py`, `sonarr/upgrade.py`)
-   - "Successfully incremented and verified" messages in `stats_manager.py`
+   - Authentication messages: "Local Bypass Mode is DISABLED", "Request IP address", "Direct IP is a local network IP"
+   - Log streaming messages: "Starting log stream", "Client disconnected", "Log stream generator finished"  
+   - Stats messages: "STATS ONLY INCREMENT", "STATS INCREMENT", "Successfully incremented and verified", "Successfully wrote stats to file"
+   - "Attempt to get user info failed: Not authenticated" messages in `routes/common.py`
 6. **Logger name formatting consistency**: Use lowercase for logger name prefixes in log streaming. Change `name.upper()` to `name.lower()` in `web_server.py` log stream generator to ensure consistent formatting (e.g., "huntarr.hunting" instead of "HUNTARR.HUNTING").
+7. **Sidebar content sizing**: When resizing sidebar elements, reduce all related dimensions proportionally (fonts, padding, margins, icon containers) while preserving key elements like logo icons. For 20% reduction: reduce font-size from 14px to 11px, padding from 12px to 10px, icon wrapper from 38px to 30px, etc. Always maintain visual hierarchy and usability while achieving the desired size reduction.
+8. **Low Usage Mode Indicator Removal**:
+   - Completely removed the visual indicator that appeared when Low Usage Mode was enabled
+   - Modified `showIndicator()` function in `low-usage-mode.js` to not create any DOM elements
+   - Updated `applyLowUsageMode()` function in `new-main.js` to remove indicator creation logic
+   - Removed CSS styles for `#low-usage-mode-indicator` from `low-usage-mode.css`
+   - Low Usage Mode now runs silently without any visual indicator for a cleaner interface
+   - All performance optimizations (animation disabling, timer throttling) still work as intended

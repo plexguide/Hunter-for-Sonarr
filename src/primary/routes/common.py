@@ -226,7 +226,7 @@ def get_user_info_route():
     username = get_username_from_session(session_token) # Use auth function
 
     if not username:
-        logger.warning("Attempt to get user info failed: Not authenticated (no valid session).")
+        logger.debug("Attempt to get user info failed: Not authenticated (no valid session).")
         return jsonify({"error": "Not authenticated"}), 401
 
     # Pass username to is_2fa_enabled
