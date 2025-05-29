@@ -10,7 +10,7 @@ import datetime
 from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.radarr import api as radarr_api
-from src.primary.stats_manager import increment_stat
+from src.primary.stats_manager import increment_stat_only
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.settings_manager import load_settings, get_advanced_setting
@@ -185,7 +185,7 @@ def process_missing_movies(
             log_processed_media("radarr", media_name, movie_id, instance_name, "missing")
             radarr_logger.debug(f"Logged history entry for movie: {media_name}")
             
-            increment_stat("radarr", "hunted")
+            increment_stat_only("radarr", "hunted")
             movies_processed += 1
             processed_any = True
         else:

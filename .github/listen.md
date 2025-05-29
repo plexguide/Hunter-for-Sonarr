@@ -20,7 +20,91 @@ This document serves as a constant reminder and reference for common development
 
 ## 🐛 Common Issue Patterns & Solutions
 
-### 1. Timer Loading Errors ("Error Loading" on Dashboard)
+### 1. Frontend Log Regex Issues (Logs Not Showing for Specific Apps)
+
+**Symptoms:**
+- Logs are being generated and written to log files correctly
+- Backend log streaming endpoint serves logs properly (e.g., `/logs?app=huntarr.hunting`, `/logs?app=sonarr`, etc.)
+- Frontend shows "Connected" status but no logs appear when specific app is selected
+- Other app logs work fine, but one or more specific apps show no logs
+- Issue affects any app type (huntarr.hunting, sonarr, radarr, new custom apps, etc.)
+
+**Root Cause:**
+- Malformed regex pattern in frontend JavaScript with double backslashes
+- Regex fails to parse log messages, preventing proper app type categorization
+- Logs exist but aren't displayed due to failed pattern matching
+- Affects any app whose logs don't match the broken regex pattern
+
+**Debugging Steps:**
+1. **Check if logs exist in container for the affected app:**
+   ```bash
+   # Replace 'hunting' with the actual app log file name
+   docker exec huntarr cat /config/logs/hunting.log
+   docker exec huntarr cat /config/logs/sonarr.log
+   docker exec huntarr cat /config/logs/[app_name].log
+   ```
+
+2. **Test backend log streaming for the affected app:**
+   ```bash
+   # Test with the specific app parameter that's not working
+   curl -N -s "http://localhost:9705/logs?app=huntarr.hunting" | head -10
+   curl -N -s "http://localhost:9705/logs?app=sonarr" | head -10
+   curl -N -s "http://localhost:9705/logs?app=[app_name]" | head -10
+   ```
+
+3. **Check browser console** for JavaScript regex errors
+
+4. **Test log format compatibility:**
+   ```bash
+   # Check the actual log format to ensure it matches expected pattern
+   docker exec huntarr tail -5 /config/logs/[app_name].log
+   ```
+
+**Fix Pattern:**
+```javascript
+// ❌ BROKEN - Double backslashes break regex matching for ALL apps
+const logRegex = /^(?:\\[(\\w+)\\]\\s)?([\\d\\-]+\\s[\\d:]+)\\s-\\s([\\w\\.]+)\\s-\\s(\\w+)\\s-\\s(.*)$/;
+
+// ✅ FIXED - Proper regex escaping works for ALL app log formats
+const logRegex = /^(?:\[(\w+)\]\s)?([^\s]+\s[^\s]+)\s-\s([\w\.]+)\s-\s(\w+)\s-\s(.*)$/;
+```
+
+**Files to Check:**
+- `/frontend/static/js/new-main.js` - `connectEventSource()` method
+- Look for `logRegex` variable and `logString.match(logRegex)` usage
+- Check app type categorization logic in the same function
+
+**App Type Categorization Check:**
+Ensure the affected app is included in the categorization logic:
+```javascript
+// Verify the app is in the known apps list
+if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr', 'hunting', 'your_new_app'].includes(possibleApp)) {
+    logAppType = possibleApp;
+}
+
+// And in the pattern matching for system logs
+const patterns = {
+    'sonarr': ['episode', 'series', 'tv show', 'sonarr'],
+    'radarr': ['movie', 'film', 'radarr'],
+    'lidarr': ['album', 'artist', 'track', 'music', 'lidarr'],
+    'readarr': ['book', 'author', 'readarr'],
+    'whisparr': ['scene', 'adult', 'whisparr'],
+    'eros': ['eros', 'whisparr v3', 'whisparrv3'],
+    'swaparr': ['added strike', 'max strikes reached', 'swaparr'],
+    'hunting': ['hunt manager', 'discovery tracker', 'hunting', 'hunt'],
+    'your_new_app': ['keyword1', 'keyword2', 'your_new_app']  // Add patterns for new apps
+};
+```
+
+**Verification:**
+1. Rebuild container: `docker-compose down && COMPOSE_BAKE=true docker-compose up -d --build`
+2. Check frontend logs display correctly for ALL app types
+3. Verify log categorization works (logs appear when each specific app is selected)
+4. Test with multiple apps to ensure the fix is universal
+
+**LESSON LEARNED:** Always test regex patterns with actual log data from ALL app types. Double backslashes in JavaScript regex literals cause pattern matching failures that silently prevent log categorization without obvious error messages. This issue can affect any app (existing or newly added) whose logs don't match the malformed regex pattern. When adding new apps, always verify their logs display correctly in the frontend.
+
+### 2. Timer Loading Errors ("Error Loading" on Dashboard)
 
 **Symptoms:**
 - Countdown timers show "Error Loading" 
@@ -58,7 +142,7 @@ def _get_paths():
 - `/src/primary/cycle_tracker.py` - Path constants
 - `/src/routes.py` - API error handling
 
-### 2. JavaScript "Variable Not Defined" Errors in Settings
+### 3. JavaScript "Variable Not Defined" Errors in Settings
 
 **Symptoms:**
 - Error: `ReferenceError: searchSettingsHtml is not defined`
@@ -85,7 +169,7 @@ generateAppForm: function(container, settings = {}) {
 **Files to Check:**
 - `/frontend/static/js/settings_forms.js` - All `generate*Form` functions
 
-### 3. Settings Save Issues
+### 4. Settings Save Issues
 
 **Symptoms:**
 - Settings appear to save but don't persist
@@ -111,7 +195,7 @@ getFormSettings: function() {
 - `/frontend/static/js/new-main.js` - `getFormSettings()` method
 - `/frontend/static/js/settings_forms.js` - Form generation
 
-### 4. UI Element Visibility Issues
+### 5. UI Element Visibility Issues
 
 **Symptoms:**
 - Buttons cut off at bottom of screen
@@ -253,6 +337,119 @@ function fetchData() {
 }
 ```
 
+## 🚨 CRITICAL: Subpath Compatibility Lessons (PR #527)
+
+**PROBLEM:** Huntarr broke when deployed in subdirectories (e.g., `domain.com/huntarr/`) due to absolute URL references that failed in subpath environments.
+
+**SYMPTOMS:**
+- Application works at root domain (`domain.com`) but fails in subdirectories
+- Navigation redirects break (redirect to wrong URLs)
+- CSS/JS resources fail to load
+- API calls return 404 errors
+- Setup process gets stuck
+
+### 🔧 Critical Fix Patterns from PR #527
+
+#### 1. JavaScript Navigation URLs - HIGH PRIORITY
+**❌ BROKEN:**
+```javascript
+// Absolute URLs break in subpaths
+window.location.href = '/';  // Redirects to domain.com instead of domain.com/huntarr/
+```
+
+**✅ FIXED:**
+```javascript
+// Relative URLs work in all environments
+window.location.href = './';  // Correctly redirects to current subpath
+```
+
+**Files to Check:**
+- `/frontend/static/js/new-main.js` - Settings save redirects
+- `/frontend/templates/setup.html` - Setup completion redirects
+- Any JavaScript with `window.location.href = '/'`
+
+#### 2. CSS Resource Loading - HIGH PRIORITY
+**❌ BROKEN:**
+```html
+<!-- Multiple CSS files with incorrect names -->
+<link rel="stylesheet" href="./static/css/variables.css">
+<link rel="stylesheet" href="./static/css/styles.css">
+```
+
+**✅ FIXED:**
+```html
+<!-- Single consolidated CSS file -->
+<link rel="stylesheet" href="./static/css/style.css">
+```
+
+**Files to Check:**
+- `/frontend/templates/base.html` - Main CSS references
+- `/frontend/templates/components/head.html` - Head CSS includes
+- Any template with CSS `<link>` tags
+
+#### 3. API Endpoint URLs
+**✅ GOOD PATTERN (Already implemented):**
+```javascript
+// Relative API calls work in subpaths
+fetch('./api/sleep.json')  // ✅ Works
+fetch('/api/sleep.json')   // ❌ Breaks in subpaths
+```
+
+### 🔍 Subpath Testing Checklist
+
+**MANDATORY before any frontend changes:**
+- [ ] Test navigation from every page (all redirects work)
+- [ ] Test CSS/JS resources load correctly
+- [ ] Test API calls work from all pages
+- [ ] Test setup process completion
+- [ ] Test authentication flow redirects
+- [ ] Test with reverse proxy configuration: `domain.com/huntarr/`
+
+### 🚨 Subpath Anti-Patterns to AVOID
+
+1. **❌ NEVER use absolute URLs in JavaScript:**
+   ```javascript
+   window.location.href = '/';           // BREAKS subpaths
+   window.location.href = '/settings';   // BREAKS subpaths
+   fetch('/api/endpoint');               // BREAKS subpaths
+   ```
+
+2. **❌ NEVER hardcode root paths in templates:**
+   ```html
+   <link href="/static/css/style.css">   <!-- BREAKS subpaths -->
+   <script src="/static/js/app.js">      <!-- BREAKS subpaths -->
+   ```
+
+3. **❌ NEVER assume root deployment:**
+   ```python
+   redirect('/')  # BREAKS in Flask routes with subpaths
+   ```
+
+### 🎯 Subpath Prevention Strategy
+
+**Before committing any frontend changes:**
+
+1. **Search for absolute URL patterns:**
+   ```bash
+   grep -r "href=\"/" frontend/
+   grep -r "src=\"/" frontend/
+   grep -r "window.location.href = '/" frontend/
+   grep -r "fetch('/" frontend/
+   ```
+
+2. **Test deployment scenarios:**
+   - Root deployment: `http://localhost:9705/`
+   - Subpath deployment: `http://localhost:9705/huntarr/`
+   - Reverse proxy: `https://domain.com/huntarr/`
+
+3. **Verify all navigation works:**
+   - Home → Settings → Home
+   - Setup flow completion
+   - Authentication redirects
+   - Error page redirects
+
+**LESSON LEARNED:** Subpath compatibility issues are SILENT FAILURES that only surface in production reverse proxy environments. Always test with subpath configurations before deploying.
+
 ## 🔧 Development Workflows
 
 ### Environment Testing Checklist
@@ -383,3 +580,64 @@ git push origin docs-106
 ---
 
 *This document should be referenced before starting any development work and updated when new patterns are discovered.*
+
+## Docker Development Workflow
+
+When making changes to the codebase, follow this workflow:
+
+1. **Make your changes** to the source code
+2. **Rebuild the container** with baking enabled:
+   ```bash
+   docker-compose down && COMPOSE_BAKE=true docker-compose up -d --build
+   ```
+3. **Test your changes** by checking logs and functionality
+4. **Check logs** if needed:
+   ```bash
+   docker logs huntarr -f
+   ```
+
+## Debugging Patterns
+
+### Log Streaming Issues
+If logs aren't showing in the frontend dropdown:
+1. Check the log file mapping in `KNOWN_LOG_FILES` (web_server.py)
+2. Verify the frontend regex patterns in `new-main.js` 
+3. **Important**: Avoid double backslashes in regex patterns - they break pattern matching
+4. Test with: `curl http://localhost:9705/api/logs/stream/huntarr.hunting`
+
+### Dashboard Flash Issue (FOUC)
+If the home page shows a flash of all apps before organizing correctly:
+1. **Root cause**: Dashboard grid starts with `opacity: 0` to prevent flash, but JavaScript doesn't make it visible
+2. **Solution**: Call `showDashboard()` in `huntarrUI.init()` to set `opacity: 1` after initialization
+3. **Location**: `frontend/static/js/new-main.js` - add `this.showDashboard()` after setup is complete
+4. **Key principle**: Always make hidden elements visible after JavaScript initialization is complete
+
+### Cycle State Management
+The smart `cyclelock` system provides reliable cycle state tracking:
+1. **cyclelock: true** = App is running a cycle (shows "Running Cycle")
+2. **cyclelock: false** = App is waiting (shows countdown timer)  
+3. **Default on startup**: `cyclelock: true` (assumes cycles start immediately)
+4. **Reset behavior**: Sets `cyclelock: true` to trigger immediate cycle start
+5. **Automatic updates**: `start_cycle()` and `end_cycle()` functions manage state transitions
+6. **Data preservation**: `_save_cycle_data()` preserves cyclelock when updating sleep.json
+
+## Lessons Learned
+
+1. **Regex patterns**: Double backslashes in JavaScript regex break pattern matching
+2. **Timezone handling**: Always use UTC for consistent datetime calculations across containers
+3. **State management**: Explicit state fields (like cyclelock) are more reliable than inferring state from timestamps
+4. **FOUC prevention**: Hidden elements need explicit JavaScript to make them visible after initialization
+5. **Log level optimization**: Move ALL verbose authentication, log streaming, and stats increment messages to DEBUG level to reduce log noise and improve readability. This includes:
+   - Authentication messages: "Local Bypass Mode is DISABLED", "Request IP address", "Direct IP is a local network IP"
+   - Log streaming messages: "Starting log stream", "Client disconnected", "Log stream generator finished"  
+   - Stats messages: "STATS ONLY INCREMENT", "STATS INCREMENT", "Successfully incremented and verified", "Successfully wrote stats to file"
+   - "Attempt to get user info failed: Not authenticated" messages in `routes/common.py`
+6. **Logger name formatting consistency**: Use lowercase for logger name prefixes in log streaming. Change `name.upper()` to `name.lower()` in `web_server.py` log stream generator to ensure consistent formatting (e.g., "huntarr.hunting" instead of "HUNTARR.HUNTING").
+7. **Sidebar content sizing**: When resizing sidebar elements, reduce all related dimensions proportionally (fonts, padding, margins, icon containers) while preserving key elements like logo icons. For 20% reduction: reduce font-size from 14px to 11px, padding from 12px to 10px, icon wrapper from 38px to 30px, etc. Always maintain visual hierarchy and usability while achieving the desired size reduction.
+8. **Low Usage Mode Indicator Removal**:
+   - Completely removed the visual indicator that appeared when Low Usage Mode was enabled
+   - Modified `showIndicator()` function in `low-usage-mode.js` to not create any DOM elements
+   - Updated `applyLowUsageMode()` function in `new-main.js` to remove indicator creation logic
+   - Removed CSS styles for `#low-usage-mode-indicator` from `low-usage-mode.css`
+   - Low Usage Mode now runs silently without any visual indicator for a cleaner interface
+   - All performance optimizations (animation disabling, timer throttling) still work as intended

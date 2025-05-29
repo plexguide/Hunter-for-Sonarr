@@ -172,20 +172,11 @@ window.LowUsageMode = (function() {
         }
     }
     
-    // Create and show indicator when Low Usage Mode is active
+    // Remove indicator creation - Low Usage Mode runs without visual indicator
     function showIndicator() {
-        // Check if the indicator already exists
-        indicator = document.getElementById('low-usage-mode-indicator');
-        
-        if (!indicator) {
-            // Create indicator element
-            indicator = document.createElement('div');
-            indicator.id = 'low-usage-mode-indicator';
-            indicator.innerHTML = '<i class="fas fa-battery-half"></i> Low Usage Mode';
-            document.body.appendChild(indicator);
-        }
-        
-        indicator.style.display = 'flex';
+        // Low Usage Mode is now active without showing any visual indicator
+        // This provides a cleaner interface while still applying all performance optimizations
+        return;
     }
     
     // Hide the Low Usage Mode indicator

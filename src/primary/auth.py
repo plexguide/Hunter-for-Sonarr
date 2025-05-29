@@ -311,7 +311,7 @@ def authenticate_request():
         return None
     
     remote_addr = request.remote_addr
-    logger.info(f"Request IP address: {remote_addr}")
+    logger.debug(f"Request IP address: {remote_addr}")
     
     if local_access_bypass:
         # Common local network IP ranges
@@ -351,7 +351,7 @@ def authenticate_request():
             for network in local_networks:
                 if possible_client_ip == network or (network.endswith('.') and possible_client_ip.startswith(network)):
                     is_local = True
-                    logger.info(f"Forwarded IP {possible_client_ip} is a local network IP (matches {network})")
+                    logger.debug(f"Forwarded IP {possible_client_ip} is a local network IP (matches {network})")
                     break
         
         # Check if direct remote_addr is a local network IP if not already determined
@@ -359,16 +359,16 @@ def authenticate_request():
             for network in local_networks:
                 if remote_addr == network or (network.endswith('.') and remote_addr.startswith(network)):
                     is_local = True
-                    logger.info(f"Direct IP {remote_addr} is a local network IP (matches {network})")
+                    logger.debug(f"Direct IP {remote_addr} is a local network IP (matches {network})")
                     break
                     
         if is_local:
-            logger.info(f"Local network access from {remote_addr} - Authentication bypassed! (Local Bypass Mode)")
+            logger.debug(f"Local network access from {remote_addr} - Authentication bypassed! (Local Bypass Mode)")
             return None
         else:
             logger.warning(f"Access from {remote_addr} is not recognized as local network - Authentication required")
     else:
-        logger.info("Local Bypass Mode is DISABLED - Authentication required")
+        logger.debug("Local Bypass Mode is DISABLED - Authentication required")
     
     # Check for valid session
     session_id = session.get(SESSION_COOKIE_NAME)
