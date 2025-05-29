@@ -641,3 +641,4 @@ The smart `cyclelock` system provides reliable cycle state tracking:
    - "*** STATS ONLY INCREMENT ***" messages in `stats_manager.py`
    - "*** STATS INCREMENT ***" messages in app-specific files (e.g., `sonarr/missing.py`, `sonarr/upgrade.py`)
    - "Successfully incremented and verified" messages in `stats_manager.py`
+6. **Logger name formatting consistency**: Use lowercase for logger name prefixes in log streaming. Change `name.upper()` to `name.lower()` in `web_server.py` log stream generator to ensure consistent formatting (e.g., "huntarr.hunting" instead of "HUNTARR.HUNTING").
