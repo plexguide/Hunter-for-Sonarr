@@ -870,7 +870,7 @@ select.form-control {
     background: none !important;
     border: none !important;
     box-shadow: none !important;
-    padding: 15px 0 !important;
+    padding: 7px 0 !important; /* Reduced from 15px to 7px (50% reduction) */
 }
 
 .section-header {
