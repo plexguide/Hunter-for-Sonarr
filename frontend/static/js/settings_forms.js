@@ -1406,6 +1406,9 @@ const SettingsForms = {
                         </button>
                         <span id="testNotificationStatus" style="margin-left: 10px; font-size: 14px;"></span>
                     </div>
+                    <p class="setting-help" style="margin-left: -3ch !important; margin-top: 8px; font-style: italic; color: #9ca3af;">
+                        <i class="fas fa-magic" style="margin-right: 4px;"></i>Testing will automatically save your current settings first
+                    </p>
                 </div>
                 <div class="setting-item">
                     <label for="notify_on_missing"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#notify-on-missing" class="info-icon" title="Send notifications for missing media" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Notify on Missing:</label>

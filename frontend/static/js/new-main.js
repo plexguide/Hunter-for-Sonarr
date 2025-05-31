@@ -1683,43 +1683,108 @@ let huntarrUI = {
         
         // Disable button and show loading
         buttonElement.disabled = true;
-        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-        statusElement.innerHTML = '<span style="color: #fbbf24;">Sending test notification...</span>';
+        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Auto-saving...';
+        statusElement.innerHTML = '<span style="color: #fbbf24;">Auto-saving settings before testing...</span>';
         
-        HuntarrUtils.fetchWithTimeout('/api/test-notification', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('[huntarrUI] Test notification response:', data);
-            
-            if (data.success) {
-                statusElement.innerHTML = '<span style="color: #10b981;">✓ Test notification sent successfully!</span>';
-                this.showNotification('Test notification sent! Check your Discord channel.', 'success');
-            } else {
-                statusElement.innerHTML = '<span style="color: #ef4444;">✗ Failed to send test notification</span>';
-                this.showNotification(data.error || 'Failed to send test notification', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('[huntarrUI] Test notification error:', error);
-            statusElement.innerHTML = '<span style="color: #ef4444;">✗ Error sending test notification</span>';
-            this.showNotification('Error sending test notification', 'error');
-        })
-        .finally(() => {
-            // Re-enable button
-            buttonElement.disabled = false;
-            buttonElement.innerHTML = '<i class="fas fa-bell"></i> Test Notification';
-            
-            // Clear status after 5 seconds
-            setTimeout(() => {
-                if (statusElement) {
-                    statusElement.innerHTML = '';
+        // Auto-save general settings before testing
+        this.autoSaveGeneralSettings()
+            .then(() => {
+                // Update button text to show we're now testing
+                buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                statusElement.innerHTML = '<span style="color: #fbbf24;">Sending test notification...</span>';
+                
+                // Now test with the saved settings
+                return HuntarrUtils.fetchWithTimeout('/api/test-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('[huntarrUI] Test notification response:', data);
+                
+                if (data.success) {
+                    statusElement.innerHTML = '<span style="color: #10b981;">✓ Test notification sent successfully!</span>';
+                    this.showNotification('Test notification sent! Check your notification service.', 'success');
+                } else {
+                    statusElement.innerHTML = '<span style="color: #ef4444;">✗ Failed to send test notification</span>';
+                    this.showNotification(data.error || 'Failed to send test notification', 'error');
                 }
-            }, 5000);
+            })
+            .catch(error => {
+                console.error('[huntarrUI] Test notification error:', error);
+                statusElement.innerHTML = '<span style="color: #ef4444;">✗ Error during auto-save or testing</span>';
+                this.showNotification('Error during auto-save or testing: ' + error.message, 'error');
+            })
+            .finally(() => {
+                // Re-enable button
+                buttonElement.disabled = false;
+                buttonElement.innerHTML = '<i class="fas fa-bell"></i> Test Notification';
+                
+                // Clear status after 5 seconds
+                setTimeout(() => {
+                    if (statusElement) {
+                        statusElement.innerHTML = '';
+                    }
+                }, 5000);
+            });
+    },
+
+    // Auto-save general settings (used by test notification)
+    autoSaveGeneralSettings: function() {
+        console.log('[huntarrUI] Auto-saving general settings...');
+        
+        return new Promise((resolve, reject) => {
+            // Find the general settings form using the correct selectors
+            const generalForm = document.querySelector('#generalSettings') ||
+                              document.querySelector('.app-settings-panel[data-app-type="general"]') ||
+                              document.querySelector('.settings-form[data-app-type="general"]') ||
+                              document.querySelector('#general');
+            
+            if (!generalForm) {
+                console.error('[huntarrUI] Could not find general settings form for auto-save');
+                console.log('[huntarrUI] Available forms:', document.querySelectorAll('.app-settings-panel, .settings-form, [id*="general"], [id*="General"]'));
+                reject(new Error('Could not find general settings form'));
+                return;
+            }
+            
+            console.log('[huntarrUI] Found general form:', generalForm);
+            
+            // Get settings from the form using the correct app parameter
+            let settings = {};
+            try {
+                settings = this.getFormSettings('general');
+                console.log('[huntarrUI] Auto-save collected settings:', settings);
+            } catch (error) {
+                console.error('[huntarrUI] Error collecting settings for auto-save:', error);
+                reject(error);
+                return;
+            }
+            
+            // Save the settings
+            HuntarrUtils.fetchWithTimeout('/api/settings/general', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(settings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success !== false) {  // API returns all settings on success, not just success:true
+                    console.log('[huntarrUI] Auto-save successful');
+                    resolve();
+                } else {
+                    console.error('[huntarrUI] Auto-save failed:', data);
+                    reject(new Error(data.error || 'Failed to auto-save settings'));
+                }
+            })
+            .catch(error => {
+                console.error('[huntarrUI] Auto-save request failed:', error);
+                reject(error);
+            });
         });
     },
     
