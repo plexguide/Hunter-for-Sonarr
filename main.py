@@ -9,6 +9,7 @@ import threading
 import sys
 import signal
 import logging # Use standard logging for initial setup
+import atexit
 
 # Import path configuration early to set up environment
 try:
@@ -107,6 +108,9 @@ except Exception as e:
     root_logger.critical(f"Fatal Error: An unexpected error occurred during initial imports: {e}", exc_info=True)
     sys.exit(1)
 
+# Global variables for server management
+waitress_server = None
+shutdown_requested = threading.Event()
 
 def run_background_tasks():
     """Runs the Huntarr background processing."""
@@ -121,6 +125,7 @@ def run_background_tasks():
 
 def run_web_server():
     """Runs the Flask web server using Waitress in production."""
+    global waitress_server
     web_logger = get_logger("WebServer") # Use app's logger
     debug_mode = os.environ.get('DEBUG', 'false').lower() == 'true'
     host = os.environ.get('FLASK_HOST', '0.0.0.0')
@@ -140,12 +145,49 @@ def run_web_server():
             if not stop_event.is_set():
                 stop_event.set()
     else:
-        # Use Waitress for production
+        # Use Waitress for production with proper signal handling
         try:
             from waitress import serve
+            from waitress.server import create_server
+            import time
             web_logger.info("Running with Waitress production server.")
-            # Adjust threads as needed, default is 4
-            serve(app, host=host, port=port, threads=8)
+            
+            # Create the server instance so we can shut it down gracefully
+            waitress_server = create_server(app, host=host, port=port, threads=8)
+            
+            web_logger.info("Waitress server starting...")
+            
+            # Start the server in a separate thread
+            server_thread = threading.Thread(target=waitress_server.run, daemon=True)
+            server_thread.start()
+            
+            # Monitor for shutdown signal in the main thread
+            while not shutdown_requested.is_set() and not stop_event.is_set():
+                try:
+                    # Check both shutdown events
+                    if shutdown_requested.wait(timeout=0.5) or stop_event.wait(timeout=0.5):
+                        break
+                except KeyboardInterrupt:
+                    break
+            
+            # Shutdown sequence
+            web_logger.info("Shutdown signal received. Stopping Waitress server...")
+            try:
+                waitress_server.close()
+                web_logger.info("Waitress server close() called.")
+                
+                # Wait for server thread to finish
+                server_thread.join(timeout=3.0)
+                if server_thread.is_alive():
+                    web_logger.warning("Server thread did not stop within timeout.")
+                else:
+                    web_logger.info("Server thread stopped successfully.")
+                    
+            except Exception as e:
+                web_logger.exception(f"Error during Waitress server shutdown: {e}")
+            
+            web_logger.info("Waitress server has stopped.")
+            
         except ImportError:
             web_logger.error("Waitress not found. Falling back to Flask development server (NOT recommended for production).")
             web_logger.error("Install waitress ('pip install waitress') for production use.")
@@ -165,8 +207,29 @@ def run_web_server():
 def main_shutdown_handler(signum, frame):
     """Gracefully shut down the application."""
     huntarr_logger.info(f"Received signal {signum}. Initiating graceful shutdown...")
+    
+    # Set both shutdown events
     if not stop_event.is_set():
         stop_event.set()
+    if not shutdown_requested.is_set():
+        shutdown_requested.set()
+    
+    # Also shutdown the Waitress server directly if it exists
+    global waitress_server
+    if waitress_server:
+        try:
+            huntarr_logger.info("Signaling Waitress server to shutdown...")
+            waitress_server.close()
+        except Exception as e:
+            huntarr_logger.warning(f"Error closing Waitress server: {e}")
+
+def cleanup_handler():
+    """Cleanup function called at exit"""
+    huntarr_logger.info("Exit cleanup handler called")
+    if not stop_event.is_set():
+        stop_event.set()
+    if not shutdown_requested.is_set():
+        shutdown_requested.set()
 
 def main():
     """Main entry point function for Huntarr application.
@@ -175,6 +238,9 @@ def main():
     # Register signal handlers for graceful shutdown in the main process
     signal.signal(signal.SIGINT, main_shutdown_handler)
     signal.signal(signal.SIGTERM, main_shutdown_handler)
+    
+    # Register cleanup handler
+    atexit.register(cleanup_handler)
 
     background_thread = None
     try:
@@ -192,10 +258,14 @@ def main():
         huntarr_logger.info("KeyboardInterrupt received in main thread. Shutting down...")
         if not stop_event.is_set():
             stop_event.set()
+        if not shutdown_requested.is_set():
+            shutdown_requested.set()
     except Exception as e:
         huntarr_logger.exception(f"An unexpected error occurred in the main execution block: {e}")
         if not stop_event.is_set():
             stop_event.set() # Ensure shutdown is triggered on unexpected errors
+        if not shutdown_requested.is_set():
+            shutdown_requested.set()
     finally:
         # --- Cleanup ---
         huntarr_logger.info("Web server has stopped. Initiating final shutdown sequence...")
@@ -208,7 +278,7 @@ def main():
         # Wait for the background thread to finish cleanly
         if background_thread and background_thread.is_alive():
             huntarr_logger.info("Waiting for background tasks to complete...")
-            background_thread.join(timeout=30) # Wait up to 30 seconds
+            background_thread.join(timeout=5) # Reduced timeout for faster shutdown
 
             if background_thread.is_alive():
                 huntarr_logger.warning("Background thread did not stop gracefully within the timeout.")
