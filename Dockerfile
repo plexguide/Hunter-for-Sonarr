@@ -5,6 +5,9 @@ WORKDIR /app
 # Install system dependencies including net-tools for health checks
 RUN apt-get update && apt-get install -y --no-install-recommends \
     net-tools \
+    curl \
+    wget \
+    nano \
     && rm -rf /var/lib/apt/lists/*
 
 # Install required packages from the root requirements file
