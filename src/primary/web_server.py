@@ -1112,17 +1112,19 @@ def get_github_sponsors():
                 cache_data = json.load(f)
                 
             # Check if the cache is still valid based on its expiration
-            cached_time = datetime.fromisoformat(cache_data.get('timestamp', ''))
+            cached_time = datetime.datetime.fromisoformat(cache_data.get('timestamp', ''))
             expiry_days = cache_data.get('expiry_days', 1)  # Default to 1 day if not set
             
-            if datetime.datetime.now() - cached_time < timedelta(days=expiry_days):
+            if datetime.datetime.now() - cached_time < datetime.timedelta(days=expiry_days):
                 current_app.logger.info(f"Returning cached GitHub sponsors data (expires in {expiry_days} days from {cached_time})")
                 return jsonify(cache_data.get('sponsors', []))
             else:
                 current_app.logger.info(f"Cache expired after {expiry_days} days. Fetching fresh GitHub sponsors data.")
     except Exception as e:
         current_app.logger.error(f"Error reading sponsors cache: {e}")
-    
+        # Return empty list if cache reading fails to prevent 500 errors
+        return jsonify([])
+
     # Set up GraphQL query and headers
     headers = {
         'Authorization': f'bearer {auth_token}',
@@ -1186,23 +1188,30 @@ def get_github_sponsors():
         expiry_days = random.randint(4, 7)
         
         # Save to cache with timestamp and expiration
-        with open(SPONSORS_CACHE_FILE, 'w') as f:
-            cache_data = {
-                'timestamp': datetime.datetime.now().isoformat(),
-                'expiry_days': expiry_days,
-                'sponsors': sponsors_list
-            }
-            json.dump(cache_data, f)
-            
-        current_app.logger.info(f"Cached fresh GitHub sponsors data with {expiry_days} day expiration.")
+        try:
+            with open(SPONSORS_CACHE_FILE, 'w') as f:
+                cache_data = {
+                    'timestamp': datetime.datetime.now().isoformat(),
+                    'expiry_days': expiry_days,
+                    'sponsors': sponsors_list
+                }
+                json.dump(cache_data, f)
+                
+            current_app.logger.info(f"Cached fresh GitHub sponsors data with {expiry_days} day expiration.")
+        except Exception as cache_error:
+            current_app.logger.warning(f"Failed to cache sponsors data: {cache_error}")
+            # Continue without caching
+        
         return jsonify(sponsors_list)
 
     except requests.exceptions.RequestException as e:
         current_app.logger.error(f"Error fetching GitHub sponsors: {e}")
-        return jsonify({'error': f'Could not connect to GitHub API: {e}'}), 500
+        # Return empty list instead of 500 error to prevent UI issues
+        return jsonify([])
     except Exception as e:
         current_app.logger.error(f"An unexpected error occurred while fetching sponsors: {e}")
-        return jsonify({'error': 'An unexpected error occurred'}), 500
+        # Return empty list instead of 500 error to prevent UI issues
+        return jsonify([])
 
 # Start the web server in debug or production mode
 def start_web_server():
