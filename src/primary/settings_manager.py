@@ -138,32 +138,28 @@ def load_settings(app_type, use_cache=True):
                     current_settings[key] = value
                     updated = True
             
-            # HUNTARR 7.5.0+ MIGRATION: Auto-convert episodes mode to seasons_packs mode for Sonarr
+            # Apply Sonarr migration (episodes -> seasons_packs) for Huntarr 7.5.0+
             if app_type == "sonarr":
-                migration_updated = False
-                
-                # Check and migrate hunt_missing_mode
                 if current_settings.get("hunt_missing_mode") == "episodes":
+                    settings_logger.info("Migrating Sonarr hunt_missing_mode from 'episodes' to 'seasons_packs' (Huntarr 7.5.0+)")
                     current_settings["hunt_missing_mode"] = "seasons_packs"
-                    migration_updated = True
-                    settings_logger.info("MIGRATION: Converted hunt_missing_mode from 'episodes' to 'seasons_packs' for Huntarr 7.5.0+")
-                
-                # Check and migrate upgrade_mode
-                if current_settings.get("upgrade_mode") == "episodes":
-                    current_settings["upgrade_mode"] = "seasons_packs"
-                    migration_updated = True
-                    settings_logger.info("MIGRATION: Converted upgrade_mode from 'episodes' to 'seasons_packs' for Huntarr 7.5.0+")
-                
-                if migration_updated:
                     updated = True
-                    settings_logger.info("MIGRATION: Episodes mode has been deprecated in Huntarr 7.5.0+ in favor of more efficient seasons_packs mode")
+                
+                if current_settings.get("upgrade_mode") == "episodes":
+                    settings_logger.info("Migrating Sonarr upgrade_mode from 'episodes' to 'seasons_packs' (Huntarr 7.5.0+)")
+                    current_settings["upgrade_mode"] = "seasons_packs"
+                    updated = True
+            
+            # Apply Lidarr migration (artist -> album) for Huntarr 7.5.0+
+            if app_type == "lidarr":
+                if current_settings.get("hunt_missing_mode") == "artist":
+                    settings_logger.info("Migrating Lidarr hunt_missing_mode from 'artist' to 'album' (Huntarr 7.5.0+)")
+                    current_settings["hunt_missing_mode"] = "album"
+                    updated = True
             
             # If keys were added, save the updated file
             if updated:
-                if app_type == "sonarr" and migration_updated:
-                    settings_logger.info(f"Applied Huntarr 7.5.0+ migration and added missing default keys to {app_type}.json")
-                else:
-                    settings_logger.info(f"Added missing default keys to {app_type}.json")
+                settings_logger.info(f"Added missing default keys to {app_type}.json")
                 save_settings(app_type, current_settings) # Use save_settings to handle writing
             
             # Update cache

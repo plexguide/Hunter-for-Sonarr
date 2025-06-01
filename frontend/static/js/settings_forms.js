@@ -143,7 +143,7 @@ const SettingsForms = {
                         <input type="checkbox" id="sonarr_tag_processed_items" name="tag_processed_items" ${settings.tag_processed_items !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
-                    <p class="setting-help">Automatically tag series with "huntarr-processed" after successful searches</p>
+                    <p class="setting-help">Automatically tag series: "huntarr-s{season}" for season packs mode, "huntarr-show-processed" for shows mode</p>
                 </div>
             </div>
         `;
@@ -397,10 +397,9 @@ const SettingsForms = {
                 <div class="setting-item">
                     <label for="lidarr_hunt_missing_mode"><a href="https://huntarr.io" class="info-icon" title="Learn more about missing search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search Mode:</label>
                     <select id="lidarr_hunt_missing_mode" name="hunt_missing_mode">
-                        <option value="artist" ${settings.hunt_missing_mode === 'artist' ? 'selected' : ''}>Artist</option>
-                        <option value="album" ${settings.hunt_missing_mode === 'album' ? 'selected' : ''}>Album</option>
+                        <option value="album" selected>Album</option>
                     </select>
-                    <p class="setting-help">Whether to search by artist (all missing albums for artist) or individual albums</p>
+                    <p class="setting-help">Search for individual albums (Artist mode deprecated in Huntarr 7.5.0+)</p>
                 </div>
                 <div class="setting-item">
                     <label for="lidarr_hunt_missing_items"><a href="https://huntarr.io" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
@@ -443,6 +442,14 @@ const SettingsForms = {
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
                     <p class="setting-help">Skip searching for albums with future release dates</p>
+                </div>
+                <div class="setting-item">
+                    <label for="lidarr_tag_processed_items"><a href="https://github.com/plexguide/Huntarr.io/issues/382" class="info-icon" title="Learn more about tagging processed items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Tag Processed Items:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="lidarr_tag_processed_items" name="tag_processed_items" ${settings.tag_processed_items !== false ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Automatically tag artists with "huntarr-{albumname}" after successful searches</p>
                 </div>
             </div>
         `;
@@ -571,6 +578,14 @@ const SettingsForms = {
                     </label>
                     <p class="setting-help">Skip searching for books with future release dates</p>
                 </div>
+                <div class="setting-item">
+                    <label for="readarr_tag_processed_items"><a href="https://github.com/plexguide/Huntarr.io/issues/382" class="info-icon" title="Learn more about tagging processed items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Tag Processed Items:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="readarr_tag_processed_items" name="tag_processed_items" ${settings.tag_processed_items !== false ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Automatically tag authors with "huntarr-processed" after successful searches</p>
+                </div>
             </div>
         `;
 
@@ -695,6 +710,14 @@ const SettingsForms = {
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
                     <p class="setting-help">Skip searching for scenes with future release dates</p>
+                </div>
+                <div class="setting-item">
+                    <label for="whisparr_tag_processed_items"><a href="https://github.com/plexguide/Huntarr.io/issues/382" class="info-icon" title="Learn more about tagging processed items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Tag Processed Items:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="whisparr_tag_processed_items" name="tag_processed_items" ${settings.tag_processed_items !== false ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Automatically tag series with "huntarr-processed" after successful searches</p>
                 </div>
             </div>
         `;
@@ -834,6 +857,14 @@ const SettingsForms = {
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
                     <p class="setting-help">Skip searching for scenes with future release dates</p>
+                </div>
+                <div class="setting-item">
+                    <label for="eros_tag_processed_items"><a href="https://github.com/plexguide/Huntarr.io/issues/382" class="info-icon" title="Learn more about tagging processed items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Tag Processed Items:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="eros_tag_processed_items" name="tag_processed_items" ${settings.tag_processed_items !== false ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Automatically tag movies with "huntarr-processed" after successful searches</p>
                 </div>
             </div>
         `;
@@ -1212,16 +1243,18 @@ const SettingsForms = {
             else if (appType === 'lidarr') {
                 settings.hunt_missing_items = getInputValue('#lidarr_hunt_missing_items', 1);
                 settings.hunt_upgrade_items = getInputValue('#lidarr_hunt_upgrade_items', 0);
-                settings.hunt_missing_mode = getInputValue('#lidarr_hunt_missing_mode', 'artist');
+                settings.hunt_missing_mode = getInputValue('#lidarr_hunt_missing_mode', 'album');
                 settings.monitored_only = getInputValue('#lidarr_monitored_only', true);
                 settings.sleep_duration = getInputValue('#lidarr_sleep_duration', 900);
                 settings.hourly_cap = getInputValue('#lidarr_hourly_cap', 20);
+                settings.tag_processed_items = getInputValue('#lidarr_tag_processed_items', true);
             } 
             else if (appType === 'readarr') {
                 settings.hunt_missing_books = getInputValue('#readarr_hunt_missing_books', 1);
                 settings.hunt_upgrade_books = getInputValue('#readarr_hunt_upgrade_books', 0);
                 settings.monitored_only = getInputValue('#readarr_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#readarr_skip_future_releases', true);
+                settings.tag_processed_items = getInputValue('#readarr_tag_processed_items', true);
 
                 settings.sleep_duration = getInputValue('#readarr_sleep_duration', 900);
                 settings.hourly_cap = getInputValue('#readarr_hourly_cap', 20);
@@ -1232,6 +1265,7 @@ const SettingsForms = {
                 settings.monitored_only = getInputValue('#whisparr_monitored_only', true);
                 settings.whisparr_version = getInputValue('#whisparr-api-version', 'v3');
                 settings.skip_future_releases = getInputValue('#whisparr_skip_future_releases', true);
+                settings.tag_processed_items = getInputValue('#whisparr_tag_processed_items', true);
 
                 settings.sleep_duration = getInputValue('#whisparr_sleep_duration', 900);
                 settings.hourly_cap = getInputValue('#whisparr_hourly_cap', 20);
@@ -1242,6 +1276,7 @@ const SettingsForms = {
                 settings.hunt_upgrade_items = getInputValue('#eros_hunt_upgrade_items', 0);
                 settings.monitored_only = getInputValue('#eros_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#eros_skip_future_releases', true);
+                settings.tag_processed_items = getInputValue('#eros_tag_processed_items', true);
 
                 settings.sleep_duration = getInputValue('#eros_sleep_duration', 900);
                 settings.hourly_cap = getInputValue('#eros_hourly_cap', 20);
