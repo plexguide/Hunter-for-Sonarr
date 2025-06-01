@@ -418,3 +418,116 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
     except Exception as e:
         whisparr_logger.error(f"Error checking connection to Whisparr V2 API: {str(e)}")
         return False
+
+def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: str) -> Optional[int]:
+    """
+    Get existing tag ID or create a new tag in Whisparr.
+    
+    Args:
+        api_url: The base URL of the Whisparr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        tag_label: The label/name of the tag to create or find
+        
+    Returns:
+        The tag ID if successful, None otherwise
+    """
+    try:
+        # First, check if the tag already exists
+        response = arr_request(api_url, api_key, api_timeout, "tag")
+        if response:
+            for tag in response:
+                if tag.get('label') == tag_label:
+                    tag_id = tag.get('id')
+                    whisparr_logger.debug(f"Found existing tag '{tag_label}' with ID: {tag_id}")
+                    return tag_id
+        
+        # Tag doesn't exist, create it
+        tag_data = {"label": tag_label}
+        response = arr_request(api_url, api_key, api_timeout, "tag", method="POST", data=tag_data)
+        if response and 'id' in response:
+            tag_id = response['id']
+            whisparr_logger.info(f"Created new tag '{tag_label}' with ID: {tag_id}")
+            return tag_id
+        else:
+            whisparr_logger.error(f"Failed to create tag '{tag_label}'. Response: {response}")
+            return None
+            
+    except Exception as e:
+        whisparr_logger.error(f"Error managing tag '{tag_label}': {e}")
+        return None
+
+def add_tag_to_series(api_url: str, api_key: str, api_timeout: int, series_id: int, tag_id: int) -> bool:
+    """
+    Add a tag to a series in Whisparr.
+    
+    Args:
+        api_url: The base URL of the Whisparr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        series_id: The ID of the series to tag
+        tag_id: The ID of the tag to add
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # First get the current series data
+        series_data = arr_request(api_url, api_key, api_timeout, f"series/{series_id}")
+        if not series_data:
+            whisparr_logger.error(f"Failed to get series data for ID: {series_id}")
+            return False
+        
+        # Check if the tag is already present
+        current_tags = series_data.get('tags', [])
+        if tag_id in current_tags:
+            whisparr_logger.debug(f"Tag {tag_id} already exists on series {series_id}")
+            return True
+        
+        # Add the new tag to the list
+        current_tags.append(tag_id)
+        series_data['tags'] = current_tags
+        
+        # Update the series with the new tags
+        response = arr_request(api_url, api_key, api_timeout, f"series/{series_id}", method="PUT", data=series_data)
+        if response:
+            whisparr_logger.debug(f"Successfully added tag {tag_id} to series {series_id}")
+            return True
+        else:
+            whisparr_logger.error(f"Failed to update series {series_id} with tag {tag_id}")
+            return False
+            
+    except Exception as e:
+        whisparr_logger.error(f"Error adding tag {tag_id} to series {series_id}: {e}")
+        return False
+
+def tag_processed_series(api_url: str, api_key: str, api_timeout: int, series_id: int, tag_label: str = "huntarr-processed") -> bool:
+    """
+    Tag a series as processed by Huntarr.
+    
+    Args:
+        api_url: The base URL of the Whisparr API
+        api_key: The API key for authentication  
+        api_timeout: Timeout for the API request
+        series_id: The ID of the series to tag
+        tag_label: The label of the tag to add (default: "huntarr-processed")
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Get or create the tag
+        tag_id = get_or_create_tag(api_url, api_key, api_timeout, tag_label)
+        if not tag_id:
+            whisparr_logger.error(f"Failed to get or create tag '{tag_label}'")
+            return False
+        
+        # Add the tag to the series
+        success = add_tag_to_series(api_url, api_key, api_timeout, series_id, tag_id)
+        if success:
+            whisparr_logger.info(f"Successfully tagged series {series_id} with '{tag_label}'")
+        return success
+        
+    except Exception as e:
+        whisparr_logger.error(f"Error tagging series {series_id} with '{tag_label}': {e}")
+        return False

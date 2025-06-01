@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """
-Sonarr missing episodes processing module for Huntarr
+Sonarr missing episode processing
+Handles all missing episode operations for Sonarr
 """
 
+import os
 import time
 import random
-from typing import List, Dict, Any, Set, Callable
+import datetime
+from typing import List, Dict, Any, Optional, Callable
 from src.primary.utils.logger import get_logger
-from src.primary.apps.sonarr import api as sonarr_api
-from src.primary.stats_manager import increment_stat
-from src.primary.stateful_manager import is_processed, add_processed_id
-from src.primary.utils.history_utils import log_processed_media
 from src.primary.settings_manager import load_settings, get_advanced_setting
+from src.primary.utils.history_utils import log_processed_media
+from src.primary.stats_manager import increment_stat, increment_stat_only
+from src.primary.stateful_manager import is_processed, add_processed_id
+from src.primary.apps.sonarr import api as sonarr_api
 
 # Get logger for the Sonarr app
 sonarr_logger = get_logger("sonarr")
@@ -83,6 +86,10 @@ def process_missing_episodes_mode(
 ) -> bool:
     """Process missing episodes in episode mode (original implementation)."""
     processed_any = False
+    
+    # Load settings to check if tagging is enabled
+    sonarr_settings = load_settings("sonarr")
+    tag_processed_items = sonarr_settings.get("tag_processed_items", True)
     
     # Always use random selection for missing episodes
     sonarr_logger.info(f"Using random selection for missing episodes")
@@ -182,6 +189,14 @@ def process_missing_episodes_mode(
                 processed_any = True # Mark that we did something
                 sonarr_logger.info(f"Successfully processed and searched for {len(episode_ids)} episodes in series {series_id}.")
                 
+                # Tag the series if enabled
+                if tag_processed_items:
+                    try:
+                        sonarr_api.tag_processed_series(api_url, api_key, api_timeout, series_id)
+                        sonarr_logger.debug(f"Tagged series {series_id} as processed")
+                    except Exception as e:
+                        sonarr_logger.warning(f"Failed to tag series {series_id}: {e}")
+                
                 # Add stats incrementing right here - this is the code path that's actually being executed
                 for episode_id in episode_ids:
                     # Increment stat for each episode individually, just like Radarr
@@ -241,6 +256,10 @@ def process_missing_seasons_packs_mode(
     Uses a direct episode lookup approach which is much more efficient
     """
     processed_any = False
+    
+    # Load settings to check if tagging is enabled
+    sonarr_settings = load_settings("sonarr")
+    tag_processed_items = sonarr_settings.get("tag_processed_items", True)
     
     # Get all missing episodes in one call instead of per-series
     missing_episodes = sonarr_api.get_missing_episodes(api_url, api_key, api_timeout, monitored_only)
@@ -365,6 +384,14 @@ def process_missing_seasons_packs_mode(
             success = add_processed_id("sonarr", instance_name, season_id)
             sonarr_logger.debug(f"Added season ID {season_id} to processed list for {instance_name}, success: {success}")
             
+            # Tag the series if enabled
+            if tag_processed_items:
+                try:
+                    sonarr_api.tag_processed_series(api_url, api_key, api_timeout, series_id)
+                    sonarr_logger.debug(f"Tagged series {series_id} as processed")
+                except Exception as e:
+                    sonarr_logger.warning(f"Failed to tag series {series_id}: {e}")
+            
             # Log to history system
             media_name = f"{series_title} - Season {season_number} (contains {episode_count} missing episodes)"
             log_processed_media("sonarr", media_name, season_id, instance_name, "missing")
@@ -404,6 +431,10 @@ def process_missing_shows_mode(
 ) -> bool:
     """Process missing episodes in show mode - gets all missing episodes for entire shows."""
     processed_any = False
+    
+    # Load settings to check if tagging is enabled
+    sonarr_settings = load_settings("sonarr")
+    tag_processed_items = sonarr_settings.get("tag_processed_items", True)
     
     # Get series with missing episodes
     sonarr_logger.info("Retrieving series with missing episodes...")
@@ -503,6 +534,14 @@ def process_missing_shows_mode(
         if search_successful:
             processed_any = True
             sonarr_logger.info(f"Successfully processed {len(episode_ids)} missing episodes in {show_title}")
+            
+            # Tag the series if enabled
+            if tag_processed_items:
+                try:
+                    sonarr_api.tag_processed_series(api_url, api_key, api_timeout, show_id)
+                    sonarr_logger.debug(f"Tagged series {show_id} as processed")
+                except Exception as e:
+                    sonarr_logger.warning(f"Failed to tag series {show_id}: {e}")
             
             # Add episode IDs to stateful manager IMMEDIATELY after processing each batch
             for episode_id in episode_ids:

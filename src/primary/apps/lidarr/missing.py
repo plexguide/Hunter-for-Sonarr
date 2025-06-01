@@ -74,6 +74,10 @@ def process_missing_albums(
     processed_any = False
     processed_artists_or_albums = set()
     total_items_to_process = hunt_missing_items
+    
+    # Load settings to check if tagging is enabled
+    lidarr_settings = load_settings("lidarr")
+    tag_processed_items = lidarr_settings.get("tag_processed_items", True)
 
     try:
         # Fetch all missing albums first
@@ -256,6 +260,14 @@ def process_missing_albums(
                     processed_count += 1  # Count successful searches
                     processed_artists_or_albums.add(artist_id)
                 
+                    # Tag the artist if enabled
+                    if tag_processed_items:
+                        try:
+                            lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id)
+                            lidarr_logger.debug(f"Tagged artist {artist_id} as processed")
+                        except Exception as e:
+                            lidarr_logger.warning(f"Failed to tag artist {artist_id}: {e}")
+                
                 # Also mark all albums from this artist as processed
                 if artist_id in items_by_artist:
                     for album in items_by_artist[artist_id]:
@@ -331,6 +343,21 @@ def process_missing_albums(
                 increment_stat("lidarr", "hunted") # Changed from "missing" to "hunted"
                 processed_count += len(album_ids_to_search) # Count albums searched
                 processed_artists_or_albums.update(album_ids_to_search)
+                
+                # Tag artists if enabled (from albums)
+                if tag_processed_items:
+                    tagged_artists = set()  # Track which artists we've already tagged
+                    for album_id in album_ids_to_search:
+                        album_info = missing_items_dict.get(album_id)
+                        if album_info:
+                            artist_id = album_info.get('artistId')
+                            if artist_id and artist_id not in tagged_artists:
+                                try:
+                                    lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id)
+                                    lidarr_logger.debug(f"Tagged artist {artist_id} as processed (from album {album_id})")
+                                    tagged_artists.add(artist_id)
+                                except Exception as e:
+                                    lidarr_logger.warning(f"Failed to tag artist {artist_id}: {e}")
                 
                 # Log to history system
                 for album_id in album_ids_to_search:

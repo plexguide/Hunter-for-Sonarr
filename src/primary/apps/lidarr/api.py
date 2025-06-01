@@ -459,3 +459,116 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
 def get_artist_by_id(api_url: str, api_key: str, api_timeout: int, artist_id: int) -> Optional[Dict[str, Any]]:
     """Get artist details by ID from Lidarr."""
     return arr_request(api_url, api_key, api_timeout, f"artist/{artist_id}")
+
+def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: str) -> Optional[int]:
+    """
+    Get existing tag ID or create a new tag in Lidarr.
+    
+    Args:
+        api_url: The base URL of the Lidarr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        tag_label: The label/name of the tag to create or find
+        
+    Returns:
+        The tag ID if successful, None otherwise
+    """
+    try:
+        # First, check if the tag already exists
+        response = arr_request(api_url, api_key, api_timeout, "tag")
+        if response:
+            for tag in response:
+                if tag.get('label') == tag_label:
+                    tag_id = tag.get('id')
+                    lidarr_logger.debug(f"Found existing tag '{tag_label}' with ID: {tag_id}")
+                    return tag_id
+        
+        # Tag doesn't exist, create it
+        tag_data = {"label": tag_label}
+        response = arr_request(api_url, api_key, api_timeout, "tag", method="POST", data=tag_data)
+        if response and 'id' in response:
+            tag_id = response['id']
+            lidarr_logger.info(f"Created new tag '{tag_label}' with ID: {tag_id}")
+            return tag_id
+        else:
+            lidarr_logger.error(f"Failed to create tag '{tag_label}'. Response: {response}")
+            return None
+            
+    except Exception as e:
+        lidarr_logger.error(f"Error managing tag '{tag_label}': {e}")
+        return None
+
+def add_tag_to_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int, tag_id: int) -> bool:
+    """
+    Add a tag to an artist in Lidarr.
+    
+    Args:
+        api_url: The base URL of the Lidarr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        artist_id: The ID of the artist to tag
+        tag_id: The ID of the tag to add
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # First get the current artist data
+        artist_data = arr_request(api_url, api_key, api_timeout, f"artist/{artist_id}")
+        if not artist_data:
+            lidarr_logger.error(f"Failed to get artist data for ID: {artist_id}")
+            return False
+        
+        # Check if the tag is already present
+        current_tags = artist_data.get('tags', [])
+        if tag_id in current_tags:
+            lidarr_logger.debug(f"Tag {tag_id} already exists on artist {artist_id}")
+            return True
+        
+        # Add the new tag to the list
+        current_tags.append(tag_id)
+        artist_data['tags'] = current_tags
+        
+        # Update the artist with the new tags
+        response = arr_request(api_url, api_key, api_timeout, f"artist/{artist_id}", method="PUT", data=artist_data)
+        if response:
+            lidarr_logger.debug(f"Successfully added tag {tag_id} to artist {artist_id}")
+            return True
+        else:
+            lidarr_logger.error(f"Failed to update artist {artist_id} with tag {tag_id}")
+            return False
+            
+    except Exception as e:
+        lidarr_logger.error(f"Error adding tag {tag_id} to artist {artist_id}: {e}")
+        return False
+
+def tag_processed_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int, tag_label: str = "huntarr-processed") -> bool:
+    """
+    Tag an artist as processed by Huntarr.
+    
+    Args:
+        api_url: The base URL of the Lidarr API
+        api_key: The API key for authentication  
+        api_timeout: Timeout for the API request
+        artist_id: The ID of the artist to tag
+        tag_label: The label of the tag to add (default: "huntarr-processed")
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Get or create the tag
+        tag_id = get_or_create_tag(api_url, api_key, api_timeout, tag_label)
+        if not tag_id:
+            lidarr_logger.error(f"Failed to get or create tag '{tag_label}'")
+            return False
+        
+        # Add the tag to the artist
+        success = add_tag_to_artist(api_url, api_key, api_timeout, artist_id, tag_id)
+        if success:
+            lidarr_logger.info(f"Successfully tagged artist {artist_id} with '{tag_label}'")
+        return success
+        
+    except Exception as e:
+        lidarr_logger.error(f"Error tagging artist {artist_id} with '{tag_label}': {e}")
+        return False

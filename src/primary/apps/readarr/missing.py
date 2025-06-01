@@ -38,6 +38,10 @@ def process_missing_books(
     # Reset state files if enough time has passed
     check_state_reset("readarr")
     
+    # Load settings to check if tagging is enabled
+    readarr_settings = load_settings("readarr")
+    tag_processed_items = readarr_settings.get("tag_processed_items", True)
+    
     # Get the settings for the instance
     general_settings = readarr_api.load_settings('general')
     
@@ -144,6 +148,14 @@ def process_missing_books(
             command_id = search_command_result.get('id') if isinstance(search_command_result, dict) else search_command_result
             readarr_logger.info(f"Triggered book search command {command_id} for author {author_name}. Assuming success for now.") # Log only command ID
             increment_stat("readarr", "hunted")
+            
+            # Tag the author if enabled
+            if tag_processed_items:
+                try:
+                    readarr_api.tag_processed_author(api_url, api_key, api_timeout, author_id)
+                    readarr_logger.debug(f"Tagged author {author_id} as processed")
+                except Exception as e:
+                    readarr_logger.warning(f"Failed to tag author {author_id}: {e}")
             
             # Log multiple history entries - one for each book with author info
             for book in books_by_author[author_id]:

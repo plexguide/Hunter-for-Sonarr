@@ -41,6 +41,10 @@ def process_missing_items(
     # Reset state files if enough time has passed
     check_state_reset("eros")
     
+    # Load settings to check if tagging is enabled
+    eros_settings = load_settings("eros")
+    tag_processed_items = eros_settings.get("tag_processed_items", True)
+    
     # Extract necessary settings
     api_url = app_settings.get("api_url", "").strip()
     api_key = app_settings.get("api_key", "").strip()
@@ -190,6 +194,14 @@ def process_missing_items(
         search_command_id = eros_api.item_search(api_url, api_key, api_timeout, [item_id])
         if search_command_id:
             eros_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
+            
+            # Tag the movie if enabled
+            if tag_processed_items:
+                try:
+                    eros_api.tag_processed_movie(api_url, api_key, api_timeout, item_id)
+                    eros_logger.debug(f"Tagged movie {item_id} as processed")
+                except Exception as e:
+                    eros_logger.warning(f"Failed to tag movie {item_id}: {e}")
             
             # Log to history system
             log_processed_media("eros", item_info, item_id, instance_name, "missing")

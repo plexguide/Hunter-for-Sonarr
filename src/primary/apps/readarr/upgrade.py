@@ -43,6 +43,10 @@ def process_cutoff_upgrades(
     # Load general settings to get centralized timeout
     general_settings = load_settings('general')
     
+    # Load settings to check if tagging is enabled
+    readarr_settings = load_settings("readarr")
+    tag_processed_items = readarr_settings.get("tag_processed_items", True)
+    
     # Get the API credentials for this instance
     api_url = app_settings.get('api_url', '')
     api_key = app_settings.get('api_key', '')
@@ -152,6 +156,19 @@ def process_cutoff_upgrades(
         command_id = search_command_result
         readarr_logger.info(f"Triggered upgrade search command {command_id} for {len(book_ids_to_search)} books.")
         increment_stat("readarr", "upgraded")
+        
+        # Tag authors if enabled (from books)
+        if tag_processed_items:
+            tagged_authors = set()  # Track which authors we've already tagged
+            for book in books_to_process:
+                author_id = book.get('authorId')
+                if author_id and author_id not in tagged_authors:
+                    try:
+                        readarr_api.tag_processed_author(api_url, api_key, api_timeout, author_id)
+                        readarr_logger.debug(f"Tagged author {author_id} as processed for upgrades")
+                        tagged_authors.add(author_id)
+                    except Exception as e:
+                        readarr_logger.warning(f"Failed to tag author {author_id}: {e}")
             
         # Log to history system for each book
         for book in books_to_process:

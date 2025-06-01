@@ -4,6 +4,7 @@ Missing Movies Processing for Radarr
 Handles searching for missing movies in Radarr
 """
 
+import os
 import time
 import random
 import datetime
@@ -36,6 +37,10 @@ def process_missing_movies(
     
     # Get instance name - check for instance_name first, fall back to legacy "name" key if needed
     instance_name = app_settings.get("instance_name", app_settings.get("name", "Radarr Default"))
+    
+    # Load settings to check if tagging is enabled
+    radarr_settings = load_settings("radarr")
+    tag_processed_items = radarr_settings.get("tag_processed_items", True)
     
     # Log important settings
     radarr_logger.info("=== Radarr Missing Movies Settings ===")
@@ -190,6 +195,15 @@ def process_missing_movies(
         
         if search_success:
             radarr_logger.info(f"Successfully triggered search for movie '{movie_title}'")
+            
+            # Tag the movie if enabled
+            if tag_processed_items:
+                try:
+                    radarr_api.tag_processed_movie(api_url, api_key, api_timeout, movie_id)
+                    radarr_logger.debug(f"Tagged movie {movie_id} as processed")
+                except Exception as e:
+                    radarr_logger.warning(f"Failed to tag movie {movie_id}: {e}")
+            
             # Immediately add to processed IDs to prevent duplicate processing
             success = add_processed_id("radarr", instance_name, str(movie_id))
             radarr_logger.debug(f"Added processed ID: {movie_id}, success: {success}")

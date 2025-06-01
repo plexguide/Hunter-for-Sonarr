@@ -404,3 +404,116 @@ def wait_for_command(api_url: str, api_key: str, api_timeout: int, command_id: i
         attempts += 1
     radarr_logger.warning(f"Timed out waiting for command {command_id} to complete")
     return False
+
+def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: str) -> Optional[int]:
+    """
+    Get existing tag ID or create a new tag in Radarr.
+    
+    Args:
+        api_url: The base URL of the Radarr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        tag_label: The label/name of the tag to create or find
+        
+    Returns:
+        The tag ID if successful, None otherwise
+    """
+    try:
+        # First, check if the tag already exists
+        response = arr_request(api_url, api_key, api_timeout, "tag", count_api=False)
+        if response:
+            for tag in response:
+                if tag.get('label') == tag_label:
+                    tag_id = tag.get('id')
+                    radarr_logger.debug(f"Found existing tag '{tag_label}' with ID: {tag_id}")
+                    return tag_id
+        
+        # Tag doesn't exist, create it
+        tag_data = {"label": tag_label}
+        response = arr_request(api_url, api_key, api_timeout, "tag", method="POST", data=tag_data)
+        if response and 'id' in response:
+            tag_id = response['id']
+            radarr_logger.info(f"Created new tag '{tag_label}' with ID: {tag_id}")
+            return tag_id
+        else:
+            radarr_logger.error(f"Failed to create tag '{tag_label}'. Response: {response}")
+            return None
+            
+    except Exception as e:
+        radarr_logger.error(f"Error managing tag '{tag_label}': {e}")
+        return None
+
+def add_tag_to_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int, tag_id: int) -> bool:
+    """
+    Add a tag to a movie in Radarr.
+    
+    Args:
+        api_url: The base URL of the Radarr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        movie_id: The ID of the movie to tag
+        tag_id: The ID of the tag to add
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # First get the current movie data
+        movie_data = arr_request(api_url, api_key, api_timeout, f"movie/{movie_id}", count_api=False)
+        if not movie_data:
+            radarr_logger.error(f"Failed to get movie data for ID: {movie_id}")
+            return False
+        
+        # Check if the tag is already present
+        current_tags = movie_data.get('tags', [])
+        if tag_id in current_tags:
+            radarr_logger.debug(f"Tag {tag_id} already exists on movie {movie_id}")
+            return True
+        
+        # Add the new tag to the list
+        current_tags.append(tag_id)
+        movie_data['tags'] = current_tags
+        
+        # Update the movie with the new tags
+        response = arr_request(api_url, api_key, api_timeout, f"movie/{movie_id}", method="PUT", data=movie_data)
+        if response:
+            radarr_logger.debug(f"Successfully added tag {tag_id} to movie {movie_id}")
+            return True
+        else:
+            radarr_logger.error(f"Failed to update movie {movie_id} with tag {tag_id}")
+            return False
+            
+    except Exception as e:
+        radarr_logger.error(f"Error adding tag {tag_id} to movie {movie_id}: {e}")
+        return False
+
+def tag_processed_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int, tag_label: str = "huntarr-processed") -> bool:
+    """
+    Tag a movie as processed by Huntarr.
+    
+    Args:
+        api_url: The base URL of the Radarr API
+        api_key: The API key for authentication  
+        api_timeout: Timeout for the API request
+        movie_id: The ID of the movie to tag
+        tag_label: The label of the tag to add (default: "huntarr-processed")
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Get or create the tag
+        tag_id = get_or_create_tag(api_url, api_key, api_timeout, tag_label)
+        if not tag_id:
+            radarr_logger.error(f"Failed to get or create tag '{tag_label}'")
+            return False
+        
+        # Add the tag to the movie
+        success = add_tag_to_movie(api_url, api_key, api_timeout, movie_id, tag_id)
+        if success:
+            radarr_logger.info(f"Successfully tagged movie {movie_id} with '{tag_label}'")
+        return success
+        
+    except Exception as e:
+        radarr_logger.error(f"Error tagging movie {movie_id} with '{tag_label}': {e}")
+        return False

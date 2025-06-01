@@ -11,7 +11,7 @@ from src.primary.apps.sonarr import api as sonarr_api
 from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
-from src.primary.settings_manager import get_advanced_setting
+from src.primary.settings_manager import get_advanced_setting, load_settings
 
 # Get logger for the Sonarr app
 sonarr_logger = get_logger("sonarr")
@@ -67,6 +67,10 @@ def process_upgrade_episodes_mode(
 ) -> bool:
     """Process upgrades in episode mode (original implementation)."""
     processed_any = False
+    
+    # Load settings to check if tagging is enabled
+    sonarr_settings = load_settings("sonarr")
+    tag_processed_items = sonarr_settings.get("tag_processed_items", True)
     
     # For episodes mode, we want individual episode history entries
     skip_episode_history = False
@@ -173,8 +177,17 @@ def process_upgrade_episodes_mode(
             ):
                 # Mark episodes as processed if search command completed successfully
                 processed_any = True # Mark that we did something
-                sonarr_logger.info(f"Successfully processed and searched for {len(episode_ids)} episodes in series {series_id}.")
+                sonarr_logger.info(f"Successfully processed and searched for {len(episode_ids)} cutoff unmet episodes in series {series_id}.")
                 
+                # Tag the series if enabled
+                if tag_processed_items:
+                    try:
+                        sonarr_api.tag_processed_series(api_url, api_key, api_timeout, series_id)
+                        sonarr_logger.debug(f"Tagged series {series_id} as processed for upgrades")
+                    except Exception as e:
+                        sonarr_logger.warning(f"Failed to tag series {series_id}: {e}")
+                
+                # Add episode IDs to stateful manager IMMEDIATELY after processing each batch
                 # Add stats incrementing right here - this is the code path that's actually being executed
                 for episode_id in episode_ids:
                     # Increment stat for each episode individually, just like Radarr
@@ -250,7 +263,6 @@ def process_upgrade_seasons_mode(
     instance_name: str,
     api_timeout: int,
     monitored_only: bool,
-
     hunt_upgrade_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -258,6 +270,10 @@ def process_upgrade_seasons_mode(
 ) -> bool:
     """Process upgrades in season mode - groups episodes by season."""
     processed_any = False
+    
+    # Load settings to check if tagging is enabled
+    sonarr_settings = load_settings("sonarr")
+    tag_processed_items = sonarr_settings.get("tag_processed_items", True)
     
     # Flag to skip individual episode history logging since we log the whole season pack
     skip_episode_history = True
@@ -357,6 +373,14 @@ def process_upgrade_seasons_mode(
                 processed_any = True
                 sonarr_logger.info(f"Successfully triggered season pack search for {series_title} Season {season_number} with {len(episode_ids)} cutoff unmet episodes")
                 
+                # Tag the series if enabled
+                if tag_processed_items:
+                    try:
+                        sonarr_api.tag_processed_series(api_url, api_key, api_timeout, series_id)
+                        sonarr_logger.debug(f"Tagged series {series_id} as processed for upgrades")
+                    except Exception as e:
+                        sonarr_logger.warning(f"Failed to tag series {series_id}: {e}")
+                
                 # Log this as a season pack upgrade in the history
                 log_season_pack_upgrade(api_url, api_key, api_timeout, series_id, season_number, instance_name)
                 
@@ -412,7 +436,6 @@ def process_upgrade_shows_mode(
     instance_name: str,
     api_timeout: int,
     monitored_only: bool,
-
     hunt_upgrade_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -420,6 +443,10 @@ def process_upgrade_shows_mode(
 ) -> bool:
     """Process upgrades in show mode - gets all cutoff unmet episodes for entire shows."""
     processed_any = False
+    
+    # Load settings to check if tagging is enabled
+    sonarr_settings = load_settings("sonarr")
+    tag_processed_items = sonarr_settings.get("tag_processed_items", True)
     
     # For shows mode, we want individual episode history entries
     skip_episode_history = False
@@ -531,6 +558,14 @@ def process_upgrade_shows_mode(
                 # Mark as processed if search command completed successfully
                 processed_any = True
                 sonarr_logger.info(f"Successfully processed {len(episode_ids)} cutoff unmet episodes in {series_title}")
+                
+                # Tag the series if enabled
+                if tag_processed_items:
+                    try:
+                        sonarr_api.tag_processed_series(api_url, api_key, api_timeout, series_id)
+                        sonarr_logger.debug(f"Tagged series {series_id} as processed for upgrades")
+                    except Exception as e:
+                        sonarr_logger.warning(f"Failed to tag series {series_id}: {e}")
                 
                 # We'll increment stats individually for each episode instead of in batch
                 # increment_stat("sonarr", "upgraded", len(episode_ids))

@@ -41,6 +41,10 @@ def process_cutoff_upgrades(
     # Reset state files if enough time has passed
     check_state_reset("whisparr")
     
+    # Load settings to check if tagging is enabled
+    whisparr_settings = load_settings("whisparr")
+    tag_processed_items = whisparr_settings.get("tag_processed_items", True)
+    
     # Extract necessary settings
     api_url = app_settings.get("api_url", "").strip()
     api_key = app_settings.get("api_key", "").strip()
@@ -149,6 +153,16 @@ def process_cutoff_upgrades(
         search_command_id = whisparr_api.item_search(api_url, api_key, api_timeout, [item_id])
         if search_command_id:
             whisparr_logger.info(f"Triggered search command {search_command_id}. Assuming success for now.")
+            
+            # Tag the series if enabled
+            if tag_processed_items:
+                series_id = item.get('seriesId')
+                if series_id:
+                    try:
+                        whisparr_api.tag_processed_series(api_url, api_key, api_timeout, series_id)
+                        whisparr_logger.debug(f"Tagged series {series_id} as processed for upgrades")
+                    except Exception as e:
+                        whisparr_logger.warning(f"Failed to tag series {series_id}: {e}")
             
             # Log to history so the upgrade appears in the history UI
             series_title = item.get("series", {}).get("title", "Unknown Series")

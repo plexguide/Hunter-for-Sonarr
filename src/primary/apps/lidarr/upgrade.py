@@ -77,6 +77,10 @@ def process_cutoff_upgrades(
     processed_count = 0
     processed_any = False
 
+    # Load settings to check if tagging is enabled
+    lidarr_settings = load_settings("lidarr")
+    tag_processed_items = lidarr_settings.get("tag_processed_items", True)
+
     try:
         lidarr_logger.info(f"Fetching cutoff unmet albums for {instance_name}...")
         # Pass necessary details extracted above to the API function
@@ -155,6 +159,19 @@ def process_cutoff_upgrades(
         if command_id:
             lidarr_logger.debug(f"Upgrade album search command triggered with ID: {command_id} for albums: {album_ids_to_search}")
             increment_stat("lidarr", "upgraded") # Use appropriate stat key
+            
+            # Tag artists if enabled (from albums)
+            if tag_processed_items:
+                tagged_artists = set()  # Track which artists we've already tagged
+                for album in albums_to_search:
+                    artist_id = album.get('artistId')
+                    if artist_id and artist_id not in tagged_artists:
+                        try:
+                            lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id)
+                            lidarr_logger.debug(f"Tagged artist {artist_id} as processed for upgrades")
+                            tagged_artists.add(artist_id)
+                        except Exception as e:
+                            lidarr_logger.warning(f"Failed to tag artist {artist_id}: {e}")
             
             # Log to history
             for album_id in album_ids_to_search:

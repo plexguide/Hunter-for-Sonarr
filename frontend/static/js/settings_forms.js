@@ -139,6 +139,14 @@ const SettingsForms = {
                     </label>
                     <p class="setting-help">Skip searching for episodes with future air dates</p>
                 </div>
+                <div class="setting-item">
+                    <label for="sonarr_tag_processed_items"><a href="https://github.com/plexguide/Huntarr.io/issues/382" class="info-icon" title="Learn more about tagging processed items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Tag Processed Items:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="sonarr_tag_processed_items" name="tag_processed_items" ${settings.tag_processed_items !== false ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Automatically tag series with "huntarr-processed" after successful searches</p>
+                </div>
             </div>
         `;
 
@@ -276,6 +284,14 @@ const SettingsForms = {
                         <option value="cinema" ${settings.release_type === 'cinema' ? 'selected' : ''}>Cinema Release</option>
                     </select>
                     <p class="setting-help">Select which release date type to use when determining if a movie is considered a future release</p>
+                </div>
+                <div class="setting-item">
+                    <label for="radarr_tag_processed_items"><a href="https://github.com/plexguide/Huntarr.io/issues/382" class="info-icon" title="Learn more about tagging processed items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Tag Processed Items:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="radarr_tag_processed_items" name="tag_processed_items" ${settings.tag_processed_items !== false ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Automatically tag movies with "huntarr-processed" after successful searches</p>
                 </div>
             </div>
         `;
@@ -1181,6 +1197,7 @@ const SettingsForms = {
                 settings.hourly_cap = getInputValue('#sonarr_hourly_cap', 20);
                 settings.monitored_only = getInputValue('#sonarr_monitored_only', true);
                 settings.skip_future_episodes = getInputValue('#sonarr_skip_future_episodes', true);
+                settings.tag_processed_items = getInputValue('#sonarr_tag_processed_items', true);
 
             } 
             else if (appType === 'radarr') {
@@ -1190,6 +1207,7 @@ const SettingsForms = {
                 settings.hourly_cap = getInputValue('#radarr_hourly_cap', 20);
                 settings.monitored_only = getInputValue('#radarr_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#radarr_skip_future_releases', true);
+                settings.tag_processed_items = getInputValue('#radarr_tag_processed_items', true);
 
                 settings.release_type = getInputValue('#radarr_release_type', 'physical');
             } 

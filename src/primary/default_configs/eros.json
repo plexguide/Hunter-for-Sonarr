@@ -15,5 +15,6 @@
   "skip_future_releases": true,
 
   "search_mode": "movie",
-  "hourly_cap": 20
+  "hourly_cap": 20,
+  "tag_processed_items": true
 }

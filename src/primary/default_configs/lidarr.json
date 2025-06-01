@@ -13,5 +13,6 @@
   "sleep_duration": 900,
   "monitored_only": true,
   "hourly_cap": 20,
-  "skip_future_releases": true
+  "skip_future_releases": true,
+  "tag_processed_items": true
 }

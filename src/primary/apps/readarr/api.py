@@ -421,3 +421,116 @@ def search_books(api_url: str, api_key: str, book_ids: List[int], api_timeout: i
     except Exception as e:
         logger.error(f"An unexpected error occurred triggering BookSearch for book IDs {book_ids}: {e}")
         return None
+
+def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: str) -> Optional[int]:
+    """
+    Get existing tag ID or create a new tag in Readarr.
+    
+    Args:
+        api_url: The base URL of the Readarr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        tag_label: The label/name of the tag to create or find
+        
+    Returns:
+        The tag ID if successful, None otherwise
+    """
+    try:
+        # First, check if the tag already exists
+        response = arr_request("tag", api_url=api_url, api_key=api_key, api_timeout=api_timeout)
+        if response:
+            for tag in response:
+                if tag.get('label') == tag_label:
+                    tag_id = tag.get('id')
+                    logger.debug(f"Found existing tag '{tag_label}' with ID: {tag_id}")
+                    return tag_id
+        
+        # Tag doesn't exist, create it
+        tag_data = {"label": tag_label}
+        response = arr_request("tag", method="POST", data=tag_data, api_url=api_url, api_key=api_key, api_timeout=api_timeout)
+        if response and 'id' in response:
+            tag_id = response['id']
+            logger.info(f"Created new tag '{tag_label}' with ID: {tag_id}")
+            return tag_id
+        else:
+            logger.error(f"Failed to create tag '{tag_label}'. Response: {response}")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Error managing tag '{tag_label}': {e}")
+        return None
+
+def add_tag_to_author(api_url: str, api_key: str, api_timeout: int, author_id: int, tag_id: int) -> bool:
+    """
+    Add a tag to an author in Readarr.
+    
+    Args:
+        api_url: The base URL of the Readarr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        author_id: The ID of the author to tag
+        tag_id: The ID of the tag to add
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # First get the current author data
+        author_data = arr_request(f"author/{author_id}", api_url=api_url, api_key=api_key, api_timeout=api_timeout)
+        if not author_data:
+            logger.error(f"Failed to get author data for ID: {author_id}")
+            return False
+        
+        # Check if the tag is already present
+        current_tags = author_data.get('tags', [])
+        if tag_id in current_tags:
+            logger.debug(f"Tag {tag_id} already exists on author {author_id}")
+            return True
+        
+        # Add the new tag to the list
+        current_tags.append(tag_id)
+        author_data['tags'] = current_tags
+        
+        # Update the author with the new tags
+        response = arr_request(f"author/{author_id}", method="PUT", data=author_data, api_url=api_url, api_key=api_key, api_timeout=api_timeout)
+        if response:
+            logger.debug(f"Successfully added tag {tag_id} to author {author_id}")
+            return True
+        else:
+            logger.error(f"Failed to update author {author_id} with tag {tag_id}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error adding tag {tag_id} to author {author_id}: {e}")
+        return False
+
+def tag_processed_author(api_url: str, api_key: str, api_timeout: int, author_id: int, tag_label: str = "huntarr-processed") -> bool:
+    """
+    Tag an author as processed by Huntarr.
+    
+    Args:
+        api_url: The base URL of the Readarr API
+        api_key: The API key for authentication  
+        api_timeout: Timeout for the API request
+        author_id: The ID of the author to tag
+        tag_label: The label of the tag to add (default: "huntarr-processed")
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Get or create the tag
+        tag_id = get_or_create_tag(api_url, api_key, api_timeout, tag_label)
+        if not tag_id:
+            logger.error(f"Failed to get or create tag '{tag_label}'")
+            return False
+        
+        # Add the tag to the author
+        success = add_tag_to_author(api_url, api_key, api_timeout, author_id, tag_id)
+        if success:
+            logger.info(f"Successfully tagged author {author_id} with '{tag_label}'")
+        return success
+        
+    except Exception as e:
+        logger.error(f"Error tagging author {author_id} with '{tag_label}': {e}")
+        return False
