@@ -84,19 +84,17 @@ const SettingsForms = {
                 <div class="setting-item">
                     <label for="sonarr-hunt-missing-mode"><a href="https://huntarr.io/threads/sonarr-missing-search-mode.16/" class="info-icon" title="Learn more about missing search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search Mode:</label>
                     <select id="sonarr-hunt-missing-mode" name="hunt_missing_mode">
-                        <option value="episodes" ${settings.hunt_missing_mode === 'episodes' ? 'selected' : ''}>Episodes</option>
-                        <option value="seasons_packs" ${settings.hunt_missing_mode === 'seasons_packs' ? 'selected' : ''}>Season Packs</option>
+                        <option value="seasons_packs" ${settings.hunt_missing_mode === 'seasons_packs' || settings.hunt_missing_mode === 'episodes' || !settings.hunt_missing_mode ? 'selected' : ''}>Season Packs</option>
                         <option value="shows" ${settings.hunt_missing_mode === 'shows' ? 'selected' : ''}>Shows</option>
                     </select>
-                    <p class="setting-help">How to search for missing Sonarr content (Season Packs recommended for torrent users)</p>
+                    <p class="setting-help">How to search for missing Sonarr content (Season Packs recommended for all users, Episodes mode deprecated in Huntarr 7.5.0+)</p>
                 </div>
                 <div class="setting-item">
                     <label for="sonarr-upgrade-mode"><a href="/Huntarr.io/docs/#/configuration?id=upgrade-modes" class="info-icon" title="Learn more about upgrade modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Mode:</label>
                     <select id="sonarr-upgrade-mode" name="upgrade_mode">
-                        <option value="episodes" ${settings.upgrade_mode === 'episodes' || !settings.upgrade_mode ? 'selected' : ''}>Episodes</option>
-                        <option value="seasons_packs" ${settings.upgrade_mode === 'seasons_packs' ? 'selected' : ''}>Season Packs</option>
+                        <option value="seasons_packs" ${settings.upgrade_mode === 'seasons_packs' || settings.upgrade_mode === 'episodes' || !settings.upgrade_mode ? 'selected' : ''}>Season Packs</option>
                     </select>
-                    <p class="setting-help">How to search for Sonarr upgrades (Seasons/Shows modes upgrade entire seasons or shows at once)</p>
+                    <p class="setting-help">How to search for Sonarr upgrades (Episodes mode deprecated in Huntarr 7.5.0+, Season Packs mode recommended)</p>
                 </div>
                 <div class="setting-item">
                     <label for="sonarr-hunt-missing-items"><a href="/Huntarr.io/docs/#/configuration?id=missing-items-search" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
@@ -1189,8 +1187,8 @@ const SettingsForms = {
             
             // Add app-specific settings
             if (appType === 'sonarr') {
-                settings.hunt_missing_mode = getInputValue('#sonarr-hunt-missing-mode', 'episodes');
-                settings.upgrade_mode = getInputValue('#sonarr-upgrade-mode', 'episodes');
+                settings.hunt_missing_mode = getInputValue('#sonarr-hunt-missing-mode', 'seasons_packs');
+                settings.upgrade_mode = getInputValue('#sonarr-upgrade-mode', 'seasons_packs');
                 settings.hunt_missing_items = getInputValue('#sonarr-hunt-missing-items', 1);
                 settings.hunt_upgrade_items = getInputValue('#sonarr-hunt-upgrade-items', 0);
                 settings.sleep_duration = getInputValue('#sonarr_sleep_duration', 900);

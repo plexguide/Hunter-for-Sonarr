@@ -111,16 +111,24 @@
             <h3 id="missing-search-mode"><i class="fas fa-search" style="margin-right: 10px; color: #3498db;"></i>Missing Search Mode</h3>
             <p>Determines how Huntarr searches for missing episodes:</p>
             <ul>
-                <li><strong>Season Packs:</strong> Recommended for torrent users. Searches for entire season packs first, then individual episodes</li>
-                <li><strong>Episodes:</strong> Searches for individual episodes only. Better for Usenet users or when you prefer single episode files</li>
+                <li><strong>Season Packs (Default):</strong> Recommended for all users. Searches for entire season packs first, which is more efficient and better supported by most trackers</li>
+                <li><strong>Shows:</strong> Searches for all episodes in a show at once. Useful for comprehensive searches of entire series</li>
             </ul>
+            
+            <div class="alert alert-info">
+                <strong>Huntarr 7.5.0+ Migration:</strong> The "Episodes" mode has been deprecated and automatically migrated to "Season Packs" mode for improved efficiency and reliability. Season Packs mode provides better results with fewer API calls.
+            </div>
             
             <h3 id="upgrade-mode"><i class="fas fa-arrow-up" style="margin-right: 10px; color: #2ecc71;"></i>Upgrade Mode</h3>
             <p>Controls how Huntarr handles quality upgrades:</p>
             <ul>
-                <li><strong>Episodes:</strong> Upgrades individual episodes when better quality becomes available</li>
-                <li><strong>Seasons/Shows:</strong> Upgrades entire seasons or shows at once when better quality is found</li>
+                <li><strong>Season Packs (Default):</strong> Upgrades entire seasons at once when better quality becomes available. More efficient and recommended for most users</li>
+                <li><strong>Shows:</strong> Upgrades entire shows at once when better quality is found</li>
             </ul>
+            
+            <div class="alert alert-info">
+                <strong>Huntarr 7.5.0+ Migration:</strong> The "Episodes" upgrade mode has been deprecated and automatically migrated to "Season Packs" mode. This change improves search efficiency and provides better integration with modern torrent trackers.
+            </div>
             
             <h3 id="search-limits"><i class="fas fa-sliders-h" style="margin-right: 10px; color: #f39c12;"></i>Search Limits</h3>
             <p>Control how many items Huntarr processes per cycle to avoid overwhelming your indexers:</p>
