@@ -1107,7 +1107,6 @@ const SettingsForms = {
             
             settings.instances = [];
             settings.check_for_updates = getInputValue('#check_for_updates', true);
-            settings.log_level = getInputValue('#log_level', 'INFO');
             settings.display_community_resources = getInputValue('#display_community_resources', true);
             settings.low_usage_mode = getInputValue('#low_usage_mode', false);
             settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);

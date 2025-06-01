@@ -41,13 +41,8 @@ def setup_main_logger():
     log_name = "huntarr"
     log_file = MAIN_LOG_FILE
 
-    # Get log level from settings
-    try:
-        # Use the get_log_level_setting function to get the current log level
-        from src.primary.settings_manager import get_log_level_setting
-        use_log_level = get_log_level_setting()
-    except (ImportError, AttributeError):
-        use_log_level = logging.DEBUG  # Default to DEBUG if settings unavailable
+    # Always use DEBUG level - let frontend filter what users see
+    use_log_level = logging.DEBUG
 
     # Get or create the main logger instance
     current_logger = logging.getLogger(log_name)
@@ -74,8 +69,7 @@ def setup_main_logger():
     current_logger.addHandler(console_handler)
     current_logger.addHandler(file_handler)
 
-    if use_log_level <= logging.DEBUG:
-        current_logger.debug("Debug logging enabled for main logger")
+    current_logger.debug("Debug logging enabled for main logger")
 
     logger = current_logger # Assign to the global variable
     return current_logger
@@ -111,12 +105,8 @@ def get_logger(app_type: str) -> logging.Logger:
     # Prevent propagation to the main 'huntarr' logger or root logger
     app_logger.propagate = False
     
-    # Determine debug mode setting safely
-    try:
-        from src.primary.settings_manager import get_log_level_setting
-        log_level = get_log_level_setting()
-    except ImportError:
-        log_level = logging.INFO
+    # Always use DEBUG level - let frontend filter what users see
+    log_level = logging.DEBUG
         
     app_logger.setLevel(log_level)
     
@@ -127,12 +117,12 @@ def get_logger(app_type: str) -> logging.Logger:
 
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG if log_level <= logging.DEBUG else logging.INFO)
+    console_handler.setLevel(logging.DEBUG)
     
     # Create file handler for the specific app log file
     log_file = APP_LOG_FILES[app_type]
     file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(logging.DEBUG if log_level <= logging.DEBUG else logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
     
     # Set a distinct format for this app log
     log_format = f"%(asctime)s - huntarr.{app_type} - %(levelname)s - %(message)s"
@@ -148,22 +138,17 @@ def get_logger(app_type: str) -> logging.Logger:
     # Cache the configured logger
     app_loggers[log_name] = app_logger
 
-    if log_level <= logging.DEBUG:
-        app_logger.debug(f"Debug logging enabled for {app_type} logger")
+    app_logger.debug(f"Debug logging enabled for {app_type} logger")
         
     return app_logger
 
 def update_logging_levels():
     """
-    Update all logger levels based on the current log level setting.
-    Call this after settings are changed in the UI to apply changes immediately.
+    Update all logger levels to DEBUG level.
+    This function is kept for compatibility but now always sets DEBUG level.
     """
-    # Get log level from settings
-    try:
-        from src.primary.settings_manager import get_log_level_setting
-        level = get_log_level_setting()
-    except (ImportError, AttributeError):
-        level = logging.DEBUG  # Default to DEBUG if settings unavailable
+    # Always use DEBUG level - let frontend filter what users see
+    level = logging.DEBUG
     
     # Set level for main logger
     if logger:

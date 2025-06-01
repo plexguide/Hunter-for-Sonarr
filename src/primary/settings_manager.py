@@ -305,7 +305,6 @@ ADVANCED_SETTINGS = [
     "command_wait_attempts", 
     "minimum_download_queue_size",
     "log_refresh_interval_seconds",
-    "log_level",   # Log level setting
     "stateful_management_hours",
     "hourly_cap",
     "ssl_verify",  # Add SSL verification setting
@@ -342,29 +341,6 @@ def get_ssl_verify_setting():
         bool: True if SSL verification should be enabled (default), False otherwise
     """
     return get_advanced_setting("ssl_verify", True)
-
-def get_log_level_setting():
-    """
-    Get the log level setting and convert it to Python logging constants.
-    
-    Returns:
-        int: Python logging level constant (e.g., logging.INFO, logging.DEBUG)
-    """
-    import logging
-    
-    # Get log level from settings, default to DEBUG so all logs are generated
-    log_level_str = get_advanced_setting("log_level", "DEBUG")
-    
-    # Convert string to logging constant
-    level_map = {
-        "DEBUG": logging.DEBUG,
-        "INFO": logging.INFO,
-        "WARNING": logging.WARNING,
-        "ERROR": logging.ERROR,
-        "CRITICAL": logging.CRITICAL
-    }
-    
-    return level_map.get(log_level_str.upper(), logging.DEBUG)
 
 # Example usage (for testing purposes, remove later)
 if __name__ == "__main__":

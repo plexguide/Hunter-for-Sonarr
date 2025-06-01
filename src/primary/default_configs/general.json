@@ -1,5 +1,4 @@
 {
-  "log_level": "DEBUG",
   "display_community_resources": true,
   "log_refresh_interval_seconds": 30,
   "ui_theme": "dark",
