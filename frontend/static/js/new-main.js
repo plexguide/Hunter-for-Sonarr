@@ -180,6 +180,8 @@ let huntarrUI = {
         this.elements.logSearchButton = document.getElementById('logSearchButton');
         this.elements.clearSearchButton = document.getElementById('clearSearchButton');
         this.elements.logSearchResults = document.getElementById('logSearchResults');
+        // Log level filter element
+        this.elements.logLevelSelect = document.getElementById('logLevelSelect');
         
         // Settings
         this.elements.saveSettingsButton = document.getElementById('saveSettingsButton'); // Corrected ID
@@ -483,6 +485,15 @@ let huntarrUI = {
                 this.handleLogOptionChange(app);
             });
         }
+        
+        // LOG LEVEL FILTER: Listen for change on #logLevelSelect
+        const logLevelSelect = document.getElementById('logLevelSelect');
+        if (logLevelSelect) {
+            logLevelSelect.addEventListener('change', (e) => {
+                this.filterLogsByLevel(e.target.value);
+            });
+        }
+        
         // HISTORY: Listen for change on #historyAppSelect
         const historyAppSelect = document.getElementById('historyAppSelect');
         if (historyAppSelect) {
@@ -3276,6 +3287,84 @@ let huntarrUI = {
         } else {
             console.warn('[huntarrUI] Dashboard grid not found');
         }
+    },
+
+    filterLogsByLevel: function(selectedLevel) {
+        if (!this.elements.logsContainer) return;
+        
+        const allLogEntries = this.elements.logsContainer.querySelectorAll('.log-entry');
+        let visibleCount = 0;
+        let totalCount = allLogEntries.length;
+        
+        allLogEntries.forEach(entry => {
+            if (selectedLevel === 'all') {
+                // Show all entries
+                entry.style.display = '';
+                visibleCount++;
+            } else {
+                // Check if this entry matches the selected level - updated selector to include .log-level-badge
+                const levelBadge = entry.querySelector('.log-level-badge, .log-level, .log-level-error, .log-level-warning, .log-level-info, .log-level-debug');
+                
+                if (levelBadge) {
+                    // Get the level from the badge text or class name
+                    let entryLevel = '';
+                    
+                    // First try to get from text content and normalize it
+                    const badgeText = levelBadge.textContent.toLowerCase().trim();
+                    if (badgeText) {
+                        // Map badge text to filter values
+                        switch(badgeText) {
+                            case 'information':
+                                entryLevel = 'info';
+                                break;
+                            case 'warning':
+                                entryLevel = 'warning';
+                                break;
+                            case 'error':
+                                entryLevel = 'error';
+                                break;
+                            case 'debug':
+                                entryLevel = 'debug';
+                                break;
+                            case 'fatal':
+                            case 'critical':
+                                entryLevel = 'error'; // Map fatal/critical to error for filtering
+                                break;
+                            default:
+                                entryLevel = badgeText; // Use as-is for any other cases
+                        }
+                    } else {
+                        // Fallback to checking class names
+                        if (levelBadge.classList.contains('log-level-error')) entryLevel = 'error';
+                        else if (levelBadge.classList.contains('log-level-warning')) entryLevel = 'warning';
+                        else if (levelBadge.classList.contains('log-level-info')) entryLevel = 'info';
+                        else if (levelBadge.classList.contains('log-level-debug')) entryLevel = 'debug';
+                    }
+                    
+                    // Show/hide based on exact match with selected level
+                    if (entryLevel === selectedLevel) {
+                        entry.style.display = '';
+                        visibleCount++;
+                    } else {
+                        entry.style.display = 'none';
+                    }
+                } else {
+                    // If no level badge found, hide the entry when filtering
+                    entry.style.display = 'none';
+                }
+            }
+        });
+        
+        // Auto-scroll to bottom if auto-scroll is enabled and we're showing entries
+        if (this.autoScroll && this.elements.autoScrollCheckbox && this.elements.autoScrollCheckbox.checked && visibleCount > 0) {
+            setTimeout(() => {
+                if (this.elements.logsContainer) {
+                    this.elements.logsContainer.scrollTop = this.elements.logsContainer.scrollHeight;
+                }
+            }, 100);
+        }
+        
+        console.log(`[huntarrUI] Filtered logs by level '${selectedLevel}': showing ${visibleCount}/${totalCount} entries`);
     }
 };
 

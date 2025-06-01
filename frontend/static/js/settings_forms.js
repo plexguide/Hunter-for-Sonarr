@@ -1107,7 +1107,7 @@ const SettingsForms = {
             
             settings.instances = [];
             settings.check_for_updates = getInputValue('#check_for_updates', true);
-            settings.debug_mode = getInputValue('#debug_mode', false);
+            settings.log_level = getInputValue('#log_level', 'INFO');
             settings.display_community_resources = getInputValue('#display_community_resources', true);
             settings.low_usage_mode = getInputValue('#low_usage_mode', false);
             settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);
@@ -1124,8 +1124,7 @@ const SettingsForms = {
             settings.command_wait_attempts = getInputValue('#command_wait_attempts', 600);
             settings.minimum_download_queue_size = getInputValue('#minimum_download_queue_size', -1);
             settings.log_refresh_interval_seconds = getInputValue('#log_refresh_interval_seconds', 30);
-            settings.ssl_verify = getInputValue('#ssl_verify', true);
-            settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);
+            settings.base_url = getInputValue('#base_url', '');
             
             // Notification settings
             settings.enable_notifications = getInputValue('#enable_notifications', false);
@@ -1312,14 +1311,6 @@ const SettingsForms = {
                     <p class="setting-help" style="margin-left: -3ch !important;">Automatically check for Huntarr updates</p>
                 </div>
                 <div class="setting-item">
-                    <label for="debug_mode"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#debug-mode" class="info-icon" title="Learn more about debug mode" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Debug Mode:</label>
-                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
-                        <input type="checkbox" id="debug_mode" ${settings.debug_mode === true ? 'checked' : ''}>
-                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
-                    </label>
-                    <p class="setting-help" style="margin-left: -3ch !important;">Enable verbose logging for troubleshooting (applies to all apps)</p>
-                </div>
-                <div class="setting-item">
                     <label for="display_community_resources"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#display-resources" class="info-icon" title="Learn more about resources display options" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Display Resources:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="display_community_resources" ${settings.display_community_resources !== false ? 'checked' : ''}>
@@ -1423,6 +1414,16 @@ const SettingsForms = {
                     <label for="base_url"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#base-url" class="info-icon" title="Learn more about reverse proxy base URL settings" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Base URL:</label>
                     <input type="text" id="base_url" value="${settings.base_url || ''}" placeholder="/huntarr">
                     <p class="setting-help" style="margin-left: -3ch !important;">Base URL path for reverse proxy (e.g., '/huntarr'). Leave empty for root path. Requires restart. Credit <a href="https://github.com/scr4tchy" target="_blank">scr4tchy</a>.</p>
+                </div>
+                <div class="setting-item">
+                    <label for="log_level"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#log-level" class="info-icon" title="Learn more about log levels" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Log Level:</label>
+                    <select id="log_level" name="log_level" style="width: 200px; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db;">
+                        <option value="ERROR" ${settings.log_level === 'ERROR' ? 'selected' : ''}>ERROR - Only errors</option>
+                        <option value="WARNING" ${settings.log_level === 'WARNING' ? 'selected' : ''}>WARNING - Warnings and errors</option>
+                        <option value="INFO" ${settings.log_level === 'INFO' ? 'selected' : ''}>INFO - General information</option>
+                        <option value="DEBUG" ${settings.log_level === 'DEBUG' ? 'selected' : ''}>DEBUG - Detailed debugging</option>
+                    </select>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Control logging verbosity to reduce log spam or get more detailed information</p>
                 </div>
             </div>
 
@@ -2132,6 +2133,20 @@ styleEl.innerHTML = `
     /* Align setting help text 3 characters to the left */
     .setting-help {
         margin-left: -3ch !important;
+    }
+    
+    /* Mobile-friendly dropdown styling */
+    @media (max-width: 768px) {
+        select[name="log_level"], select#log_level {
+            width: 100% !important;
+            max-width: none !important;
+            font-size: 16px !important; /* Prevent zoom on iOS */
+        }
+        
+        .setting-item select {
+            width: 100% !important;
+            max-width: none !important;
+        }
     }
 `;
 document.head.appendChild(styleEl);

@@ -35,42 +35,34 @@ APP_LOG_FILES = {
 logger: Optional[logging.Logger] = None
 app_loggers: Dict[str, logging.Logger] = {}
 
-def setup_main_logger(debug_mode=None):
+def setup_main_logger():
     """Set up the main Huntarr logger."""
     global logger
     log_name = "huntarr"
     log_file = MAIN_LOG_FILE
 
-    # Determine debug mode safely
-    use_debug_mode = False
-    if debug_mode is None:
-        try:
-            # Use the get_debug_mode function to check general settings
-            from src.primary.config import get_debug_mode
-            use_debug_mode = get_debug_mode()
-        except (ImportError, AttributeError):
-            pass # Default to False
-    else:
-        use_debug_mode = debug_mode
+    # Get log level from settings
+    try:
+        # Use the get_log_level_setting function to get the current log level
+        from src.primary.settings_manager import get_log_level_setting
+        use_log_level = get_log_level_setting()
+    except (ImportError, AttributeError):
+        use_log_level = logging.DEBUG  # Default to DEBUG if settings unavailable
 
     # Get or create the main logger instance
     current_logger = logging.getLogger(log_name)
 
-    # Reset handlers each time setup is called to avoid duplicates
-    # This is important if setup might be called again (e.g., config reload)
-    for handler in current_logger.handlers[:]:
-        current_logger.removeHandler(handler)
-
-    current_logger.propagate = False # Prevent propagation to root logger
-    current_logger.setLevel(logging.DEBUG if use_debug_mode else logging.INFO)
+    # Reset handlers to avoid duplicates
+    current_logger.handlers.clear()
+    current_logger.setLevel(use_log_level)
 
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG if use_debug_mode else logging.INFO)
+    console_handler.setLevel(use_log_level)
 
     # Create file handler
     file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(logging.DEBUG if use_debug_mode else logging.INFO)
+    file_handler.setLevel(use_log_level)
 
     # Set format for the main logger
     log_format = "%(asctime)s - huntarr - %(levelname)s - %(message)s"
@@ -82,7 +74,7 @@ def setup_main_logger(debug_mode=None):
     current_logger.addHandler(console_handler)
     current_logger.addHandler(file_handler)
 
-    if use_debug_mode:
+    if use_log_level <= logging.DEBUG:
         current_logger.debug("Debug logging enabled for main logger")
 
     logger = current_logger # Assign to the global variable
@@ -121,12 +113,12 @@ def get_logger(app_type: str) -> logging.Logger:
     
     # Determine debug mode setting safely
     try:
-        from src.primary.config import get_debug_mode
-        debug_mode = get_debug_mode()
+        from src.primary.settings_manager import get_log_level_setting
+        log_level = get_log_level_setting()
     except ImportError:
-        debug_mode = False
+        log_level = logging.INFO
         
-    app_logger.setLevel(logging.DEBUG if debug_mode else logging.INFO)
+    app_logger.setLevel(log_level)
     
     # Reset handlers in case this logger existed before but wasn't cached
     # (e.g., across restarts without clearing logging._handlers)
@@ -135,12 +127,12 @@ def get_logger(app_type: str) -> logging.Logger:
 
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG if debug_mode else logging.INFO)
+    console_handler.setLevel(logging.DEBUG if log_level <= logging.DEBUG else logging.INFO)
     
     # Create file handler for the specific app log file
     log_file = APP_LOG_FILES[app_type]
     file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(logging.DEBUG if debug_mode else logging.INFO)
+    file_handler.setLevel(logging.DEBUG if log_level <= logging.DEBUG else logging.INFO)
     
     # Set a distinct format for this app log
     log_format = f"%(asctime)s - huntarr.{app_type} - %(levelname)s - %(message)s"
@@ -156,52 +148,32 @@ def get_logger(app_type: str) -> logging.Logger:
     # Cache the configured logger
     app_loggers[log_name] = app_logger
 
-    if debug_mode:
+    if log_level <= logging.DEBUG:
         app_logger.debug(f"Debug logging enabled for {app_type} logger")
         
     return app_logger
 
-def update_logging_levels(debug_mode=None):
+def update_logging_levels():
     """
-    Update all logger levels based on the current debug mode setting.
+    Update all logger levels based on the current log level setting.
     Call this after settings are changed in the UI to apply changes immediately.
-    
-    Args:
-        debug_mode: Force a specific debug mode, or None to read from settings
     """
-    # Determine debug mode from settings if not specified
-    if debug_mode is None:
-        try:
-            from src.primary.config import get_debug_mode
-            debug_mode = get_debug_mode()
-        except (ImportError, AttributeError):
-            debug_mode = False
+    # Get log level from settings
+    try:
+        from src.primary.settings_manager import get_log_level_setting
+        level = get_log_level_setting()
+    except (ImportError, AttributeError):
+        level = logging.DEBUG  # Default to DEBUG if settings unavailable
     
     # Set level for main logger
-    level = logging.DEBUG if debug_mode else logging.INFO
     if logger:
         logger.setLevel(level)
-        for handler in logger.handlers:
-            handler.setLevel(level)
     
     # Set level for all app loggers
-    for app_type, app_logger in app_loggers.items():
+    for app_logger in app_loggers.values():
         app_logger.setLevel(level)
-        for handler in app_logger.handlers:
-            handler.setLevel(level)
     
-    # Set root logger level too
-    root_logger = logging.getLogger()
-    root_logger.setLevel(level)
-    for handler in root_logger.handlers:
-        handler.setLevel(level)
-
-    # Force Python's logging module to respect the log level for all existing loggers
-    for name, logger_instance in logging.Logger.manager.loggerDict.items():
-        if isinstance(logger_instance, logging.Logger):
-            logger_instance.setLevel(level)
-    
-    return debug_mode
+    print(f"[Logger] Updated all logger levels to {logging.getLevelName(level)}")
 
 def debug_log(message: str, data: object = None, app_type: Optional[str] = None) -> None:
     """

@@ -28,6 +28,21 @@
                 </button>
             </div>
             
+            <!-- Log Level Filter -->
+            <div class="log-level-filter">
+                <label for="logLevelSelect">
+                    <i class="fas fa-filter"></i>
+                    <span>Level:</span>
+                </label>
+                <select id="logLevelSelect" class="styled-select">
+                    <option value="all">All Levels</option>
+                    <option value="debug">DEBUG</option>
+                    <option value="info">INFO</option>
+                    <option value="warning">WARNING</option>
+                    <option value="error">ERROR</option>
+                </select>
+            </div>
+            
             <div class="connection-status">
                 Status: <span id="logConnectionStatus" class="status-disconnected">Disconnected</span>
             </div>
@@ -594,6 +609,19 @@
             display: none !important;
         }
         
+        /* Keep log level filter visible on mobile but adjust styling */
+        .log-level-filter {
+            width: 100%;
+            justify-content: space-between;
+            padding: 8px 12px;
+        }
+        
+        .log-level-filter select {
+            min-width: 120px;
+            font-size: 14px; /* Prevent zoom on iOS */
+            padding: 6px 10px;
+        }
+        
         /* Mobile specific log container styling */
         .logs {
             height: calc(100vh - 300px); /* Adjusted height for mobile + account for header */
@@ -615,5 +643,71 @@
             margin-top: 0;
             margin-bottom: 5px;
         }
+    }
+    
+    /* Log Level Filter Styling */
+    .log-level-filter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 10px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(30, 39, 56, 0.6) 0%, rgba(14, 20, 32, 0.6) 100%);
+        border: 1px solid rgba(90, 109, 137, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .log-level-filter:hover {
+        background: linear-gradient(135deg, rgba(40, 49, 66, 0.7) 0%, rgba(24, 30, 42, 0.7) 100%);
+        border-color: rgba(90, 109, 137, 0.5);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    }
+    
+    .log-level-filter label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .log-level-filter label i {
+        color: rgba(52, 152, 219, 0.8);
+        font-size: 12px;
+    }
+    
+    .log-level-filter select {
+        background: linear-gradient(135deg, rgba(16, 20, 32, 0.8) 0%, rgba(12, 16, 28, 0.8) 100%);
+        border: 1px solid rgba(90, 109, 137, 0.3);
+        border-radius: 4px;
+        color: rgba(255, 255, 255, 0.9);
+        padding: 4px 8px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        outline: none;
+        transition: all 0.3s ease;
+        min-width: 90px;
+    }
+    
+    .log-level-filter select:hover {
+        background: linear-gradient(135deg, rgba(26, 30, 42, 0.9) 0%, rgba(22, 26, 38, 0.9) 100%);
+        border-color: rgba(52, 152, 219, 0.5);
+    }
+    
+    .log-level-filter select:focus {
+        border-color: rgba(52, 152, 219, 0.7);
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+    
+    .log-level-filter select option {
+        background: #1a1e2a;
+        color: rgba(255, 255, 255, 0.9);
+        padding: 4px 8px;
     }
 </style>
