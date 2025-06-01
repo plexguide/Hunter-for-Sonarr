@@ -121,6 +121,9 @@ let huntarrUI = {
         // Add global event handler for unsaved changes
         this.registerGlobalUnsavedChangesHandler();
         
+        // Make dashboard visible after initialization to prevent FOUC
+        this.showDashboard();
+        
         // Also call it again after a delay in case settings are loaded dynamically
         setTimeout(() => {
             // this.setupStatefulResetButton();
@@ -782,6 +785,7 @@ let huntarrUI = {
         let displayName = app.charAt(0).toUpperCase() + app.slice(1);
         if (app === 'whisparr') displayName = 'Whisparr V2';
         else if (app === 'eros') displayName = 'Whisparr V3';
+        else if (app === 'huntarr.hunting') displayName = 'Hunt Manager';
         if (this.elements.currentLogApp) this.elements.currentLogApp.textContent = displayName;
         // Switch to the selected app logs
         this.currentLogApp = app;
@@ -897,7 +901,7 @@ let huntarrUI = {
                     // Regex to parse log lines: Optional [APP], Timestamp, Logger, Level, Message
                     // Example: [SONARR] 2024-01-01 12:00:00 - huntarr.sonarr - INFO - Message content
                     // Example: 2024-01-01 12:00:00 - huntarr - DEBUG - System message
-                    const logRegex = /^(?:\\[(\\w+)\\]\\s)?([\\d\\-]+\\s[\\d:]+)\\s-\\s([\\w\\.]+)\\s-\\s(\\w+)\\s-\\s(.*)$/;
+                    const logRegex = /^(?:\[(\w+)\]\s)?([^\s]+\s[^\s]+)\s-\s([\w\.]+)\s-\s(\w+)\s-\s(.*)$/;
                     const match = logString.match(logRegex);
 
                     // First determine the app type for this log message
@@ -911,7 +915,7 @@ let huntarrUI = {
                         const loggerParts = match[3].split('.');
                         if (loggerParts.length > 1) {
                             const possibleApp = loggerParts[1].toLowerCase();
-                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'].includes(possibleApp)) {
+                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr', 'hunting'].includes(possibleApp)) {
                                 logAppType = possibleApp;
                             }
                         }
@@ -927,7 +931,8 @@ let huntarrUI = {
                             'readarr': ['book', 'author', 'readarr'],
                             'whisparr': ['scene', 'adult', 'whisparr'],
                             'eros': ['eros', 'whisparr v3', 'whisparrv3'],
-                            'swaparr': ['added strike', 'max strikes reached', 'would have removed', 'strikes, removing download', 'processing stalled downloads', 'swaparr']
+                            'swaparr': ['added strike', 'max strikes reached', 'would have removed', 'strikes, removing download', 'processing stalled downloads', 'swaparr'],
+                            'hunting': ['hunt manager', 'discovery tracker', 'hunting', 'hunt']
                         };
                         
                         // Check each app's patterns
@@ -940,9 +945,10 @@ let huntarrUI = {
                     }
 
                     // Determine if this log should be displayed based on the selected app tab
+                    const currentApp = this.currentLogApp === 'huntarr.hunting' ? 'hunting' : this.currentLogApp;
                     const shouldDisplay = 
                         this.currentLogApp === 'all' || 
-                        this.currentLogApp === logAppType;
+                        currentApp === logAppType;
 
                     if (!shouldDisplay) return;
 
@@ -952,17 +958,71 @@ let huntarrUI = {
                     if (match) {
                         const [, appName, timestamp, loggerName, level, message] = match;
                         
-                        logEntry.innerHTML = ` 
-                            <span class="log-timestamp" title="${timestamp}">${timestamp.split(' ')[1]}</span> 
-                            ${appName ? `<span class="log-app" title="Source: ${appName}">[${appName}]</span>` : ''}
-                            <span class="log-level log-level-${level.toLowerCase()}" title="Level: ${level}">${level}</span>
-                            <span class="log-logger" title="Logger: ${loggerName}">(${loggerName.replace('huntarr.', '')})</span>
-                            <span class="log-message">${message}</span>
+                        // Split timestamp into date and time components
+                        const timestampParts = timestamp.split(' ');
+                        const date = timestampParts[0] || '';
+                        const time = timestampParts[1] || '';
+                        
+                        // Create level badge with proper styling to match second image
+                        const levelClass = level.toLowerCase();
+                        let levelBadge = '';
+                        
+                        switch(levelClass) {
+                            case 'error':
+                                levelBadge = `<span class="log-level-badge log-level-error">Error</span>`;
+                                break;
+                            case 'warning':
+                            case 'warn':
+                                levelBadge = `<span class="log-level-badge log-level-warning">Warning</span>`;
+                                break;
+                            case 'info':
+                                levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
+                                break;
+                            case 'debug':
+                                levelBadge = `<span class="log-level-badge log-level-debug">Debug</span>`;
+                                break;
+                            case 'fatal':
+                            case 'critical':
+                                levelBadge = `<span class="log-level-badge log-level-fatal">Fatal</span>`;
+                                break;
+                            default:
+                                levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
+                        }
+                        
+                        // Determine app source for display
+                        let appSource = 'SYSTEM';
+                        if (loggerName.includes('.')) {
+                            const parts = loggerName.split('.');
+                            if (parts.length > 1) {
+                                appSource = parts[1].toUpperCase();
+                            }
+                        }
+                        
+                        logEntry.innerHTML = `
+                            <div class="log-entry-row">
+                                <span class="log-timestamp">
+                                    <span class="date">${date}</span>
+                                    <span class="time">${time}</span>
+                                </span>
+                                ${levelBadge}
+                                <span class="log-source">${appSource}</span>
+                                <span class="log-message">${message}</span>
+                            </div>
                         `;
-                        logEntry.classList.add(`log-${level.toLowerCase()}`);
+                        logEntry.classList.add(`log-${levelClass}`);
                     } else {
                         // Fallback for lines that don't match the expected format
-                        logEntry.innerHTML = `<span class="log-message">${logString}</span>`;
+                        logEntry.innerHTML = `
+                            <div class="log-entry-row">
+                                <span class="log-timestamp">
+                                    <span class="date">--</span>
+                                    <span class="time">--:--:--</span>
+                                </span>
+                                <span class="log-level-badge log-level-info">Information</span>
+                                <span class="log-source">SYSTEM</span>
+                                <span class="log-message">${logString}</span>
+                            </div>
+                        `;
                         
                         // Basic level detection for fallback
                         if (logString.includes('ERROR')) logEntry.classList.add('log-error');
@@ -1331,7 +1391,7 @@ let huntarrUI = {
             if (isAuthModeChanged) {
                 this.showNotification('Settings saved successfully. Reloading page to apply authentication changes...', 'success');
                 setTimeout(() => {
-                    window.location.href = '/'; // Redirect to home page after a brief delay
+                    window.location.href = './'; // Redirect to home page after a brief delay
                 }, 1500);
                 return;
             }
@@ -2553,21 +2613,6 @@ let huntarrUI = {
             });
     },
 
-    // Add or modify this function to handle enabling/disabling save/reset
-    updateSaveResetButtonState(enable) { // Changed signature
-        const saveButton = this.elements.saveSettingsButton;
-
-        if (saveButton) {
-            saveButton.disabled = !enable;
-            // Optional: Add/remove class for styling
-            if (enable) {
-                saveButton.classList.remove('disabled-button');
-            } else {
-                saveButton.classList.add('disabled-button');
-            }
-        }
-    },
-
     // Add updateHomeConnectionStatus if it doesn't exist or needs adjustment
     updateHomeConnectionStatus: function() {
         console.log('[huntarrUI] Updating home connection statuses...');
@@ -3080,39 +3125,14 @@ let huntarrUI = {
         // Store the previous state to detect changes
         const wasEnabled = document.body.classList.contains('low-usage-mode');
         
-        // Check if the indicator already exists, if not create it
-        let indicator = document.getElementById('low-usage-mode-indicator');
-        
         if (enabled) {
             // Add CSS class to body to disable animations
             document.body.classList.add('low-usage-mode');
             
-            // Create or show the indicator
-            if (!indicator) {
-                indicator = document.createElement('div');
-                indicator.id = 'low-usage-mode-indicator';
-                indicator.innerHTML = '<i class="fas fa-battery-half"></i> Low Usage Mode';
-                indicator.style.position = 'fixed';
-                indicator.style.top = '10px';
-                indicator.style.right = '10px';
-                indicator.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-                indicator.style.color = 'white';
-                indicator.style.padding = '5px 10px';
-                indicator.style.borderRadius = '4px';
-                indicator.style.fontSize = '12px';
-                indicator.style.zIndex = '9999';
-                document.body.appendChild(indicator);
-            } else {
-                indicator.style.display = 'block';
-            }
+            // Low Usage Mode now runs without any visual indicator for a cleaner interface
         } else {
             // Remove CSS class from body to enable animations
             document.body.classList.remove('low-usage-mode');
-            
-            // Hide the indicator if it exists
-            if (indicator) {
-                indicator.style.display = 'none';
-            }
         }
         
         // If low usage mode state changed and we have stats data, update the display
@@ -3174,16 +3194,23 @@ let huntarrUI = {
         // 2. Check if the standalone low-usage-mode.js module is enabled
         const standaloneModuleEnabled = window.LowUsageMode && window.LowUsageMode.isEnabled && window.LowUsageMode.isEnabled();
         
-        // 3. Check if the low usage mode indicator is visible
-        const indicator = document.getElementById('low-usage-mode-indicator');
-        const indicatorVisible = indicator && indicator.style.display !== 'none' && indicator.style.display !== '';
+        // 3. Final determination based on reliable sources (no indicator checking needed)
+        const isEnabled = hasLowUsageClass || standaloneModuleEnabled;
         
-        // 4. Store the result for consistency during this update cycle
-        const isEnabled = hasLowUsageClass || standaloneModuleEnabled || indicatorVisible;
-        
-        console.log(`[huntarrUI] Low usage mode detection - CSS class: ${hasLowUsageClass}, Module: ${standaloneModuleEnabled}, Indicator: ${indicatorVisible}, Final: ${isEnabled}`);
+        console.log(`[huntarrUI] Low usage mode detection - CSS class: ${hasLowUsageClass}, Module: ${standaloneModuleEnabled}, Final: ${isEnabled}`);
         
         return isEnabled;
+    },
+
+    showDashboard: function() {
+        // Make the dashboard grid visible after initialization to prevent FOUC
+        const dashboardGrid = document.querySelector('.dashboard-grid');
+        if (dashboardGrid) {
+            dashboardGrid.style.opacity = '1';
+            console.log('[huntarrUI] Dashboard made visible after initialization');
+        } else {
+            console.warn('[huntarrUI] Dashboard grid not found');
+        }
     }
 };
 

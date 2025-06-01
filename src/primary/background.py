@@ -22,6 +22,7 @@ __version__ = "1.0.0" # Consider updating this based on changes
 # Set up logging first
 from src.primary.utils.logger import setup_main_logger, get_logger # Import get_logger
 logger = setup_main_logger()
+hunting_logger = get_logger("hunting")  # Add hunting logger for Hunt Manager logs
 
 # Import necessary modules
 from src.primary import config, settings_manager
@@ -158,6 +159,14 @@ def app_specific_loop(app_type: str) -> None:
         check_state_reset(app_type)
 
         app_logger.info(f"=== Starting {app_type.upper()} cycle ===")
+
+        # Mark cycle as started (set cyclelock to True)
+        try:
+            from src.primary.cycle_tracker import start_cycle
+            start_cycle(app_type)
+        except Exception as e:
+            app_logger.warning(f"Failed to mark cycle start for {app_type}: {e}")
+            # Non-critical, continue execution
 
         # Check if we need to use multi-instance mode
         instances_to_process = []
@@ -402,17 +411,26 @@ def app_specific_loop(app_type: str) -> None:
                 
         # Sleep with periodic checks for reset file
         # Calculate and format the time when the next cycle will begin
-        next_cycle_time = datetime.datetime.now() + datetime.timedelta(seconds=sleep_seconds)
-        next_cycle_time_str = next_cycle_time.strftime("%Y-%m-%d %H:%M:%S")
+        next_cycle_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=sleep_seconds)  # Use UTC
+        next_cycle_time_str = next_cycle_time.strftime("%Y-%m-%d %H:%M:%S UTC")  # Indicate UTC
         app_logger.info(f"Next {app_type.upper()} cycle will begin at {next_cycle_time_str}")
         
-        # Track cycle time for the countdown timer feature
+        # Mark cycle as ended (set cyclelock to False) and update next cycle time
+        try:
+            from src.primary.cycle_tracker import end_cycle
+            end_cycle(app_type, next_cycle_time)
+        except Exception as e:
+            app_logger.warning(f"Failed to mark cycle end for {app_type}: {e}")
+            # Non-critical, continue execution
+        
+        # Track cycle time for the countdown timer feature (legacy support)
         try:
             from src.primary.cycle_tracker import update_next_cycle
             update_next_cycle(app_type, next_cycle_time)
         except Exception as e:
             app_logger.warning(f"Failed to update cycle tracker: {e}")
             # Non-critical, continue execution
+        
         app_logger.debug(f"Sleeping for {sleep_seconds} seconds before next cycle...")
                 
         # Use shorter sleep intervals and check for reset file
@@ -671,6 +689,14 @@ def start_huntarr():
         logger.info("Schedule action engine started successfully")
     except Exception as e:
         logger.error(f"Failed to start schedule action engine: {e}")
+        
+    # Start the discovery tracker for hunt management
+    try:
+        from src.primary.discovery_tracker import run_discovery_tracker_background
+        run_discovery_tracker_background()
+        hunting_logger.info("Hunt Manager (discovery tracker) started successfully")
+    except Exception as e:
+        hunting_logger.error(f"Failed to start Hunt Manager (discovery tracker): {e}")
         
     # Instance list generator has been removed
     logger.debug("Instance list generator has been removed and is no longer needed")

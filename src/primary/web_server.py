@@ -289,6 +289,7 @@ KNOWN_LOG_FILES = {
     "whisparr": APP_LOG_FILES.get("whisparr"),
     "eros": APP_LOG_FILES.get("eros"),  # Added Eros to known log files
     "swaparr": APP_LOG_FILES.get("swaparr"),  # Added Swaparr to known log files
+    "huntarr.hunting": APP_LOG_FILES.get("hunting"),  # Added Hunt Manager to known log files - fixed key
     "system": MAIN_LOG_FILE, # Map 'system' to the main huntarr log
 }
 # Filter out None values if an app log file doesn't exist
@@ -341,7 +342,7 @@ def logs_stream():
     client_id = request.remote_addr 
     current_time_str = datetime.datetime.now().strftime("%H:%M:%S") # Renamed variable
 
-    web_logger.info(f"Starting log stream for app type: {app_type} (client: {client_id}, time: {current_time_str})")
+    web_logger.debug(f"Starting log stream for app type: {app_type} (client: {client_id}, time: {current_time_str})")
 
     # Track active connections to limit resource usage
     if not hasattr(app, 'active_log_streams'):
@@ -376,7 +377,7 @@ def logs_stream():
     def generate():
         """Generate log events for the SSE stream."""
         client_ip = request.remote_addr
-        web_logger.info(f"Log stream generator started for {app_type} (Client: {client_ip})")
+        web_logger.debug(f"Log stream generator started for {app_type} (Client: {client_ip})")
         try:
             # Initialize last activity time
             last_activity = time.time()
@@ -507,7 +508,7 @@ def logs_stream():
                                     for line in new_lines:
                                         stripped = line.strip()
                                         if stripped:
-                                            prefix = f"[{name.upper()}] " if app_type == 'all' else ""
+                                            prefix = f"[{name.lower()}] " if app_type == 'all' else ""
                                             yield f"data: {prefix}{stripped}\n\n"
                         
                         except FileNotFoundError:
@@ -533,7 +534,7 @@ def logs_stream():
 
         except GeneratorExit:
             # Clean up when client disconnects
-            web_logger.info(f"Client {client_id} disconnected from log stream for {app_type}. Cleaning up.")
+            web_logger.debug(f"Client {client_id} disconnected from log stream for {app_type}. Cleaning up.")
         except Exception as e:
             web_logger.error(f"Unhandled error in log stream generator for {app_type} (Client: {client_ip}): {e}", exc_info=True)
             try:
@@ -546,10 +547,10 @@ def logs_stream():
             with app.log_stream_lock:
                 removed_client = app.active_log_streams.pop(client_id, None)
                 if removed_client:
-                     web_logger.info(f"Successfully removed client {client_id} from active log streams.")
+                     web_logger.debug(f"Successfully removed client {client_id} from active log streams.")
                 else:
                      web_logger.debug(f"Client {client_id} was already removed from active log streams before finally block.")
-            web_logger.info(f"Log stream generator finished for {app_type} (Client: {client_id})")
+            web_logger.debug(f"Log stream generator finished for {app_type} (Client: {client_id})")
 
     # Return the SSE response with appropriate headers for better streaming
     response = Response(stream_with_context(generate()), mimetype='text/event-stream') # Use stream_with_context
@@ -892,7 +893,7 @@ def apply_timezone_setting():
     data = request.json
     timezone = data.get('timezone')
     web_logger = get_logger("web_server")
-    
+
     if not timezone:
         return jsonify({"success": False, "error": "No timezone specified"}), 400
         
