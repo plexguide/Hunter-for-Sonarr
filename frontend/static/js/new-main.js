@@ -3314,7 +3314,7 @@ let huntarrUI = {
                     // First try to get from text content and normalize it
                     const badgeText = levelBadge.textContent.toLowerCase().trim();
                     if (badgeText) {
-                        // Map badge text to filter values - FIXED mapping
+                        // Map badge text to filter values - FIXED mapping for case sensitivity
                         switch(badgeText) {
                             case 'information':
                             case 'info':
@@ -3335,12 +3335,17 @@ let huntarrUI = {
                                 entryLevel = 'error'; // Map fatal/critical to error for filtering
                                 break;
                             default:
-                                // If no text match, try to extract from class names
+                                // If no text match, try to extract from class names as fallback
                                 if (levelBadge.classList.contains('log-level-error')) entryLevel = 'error';
                                 else if (levelBadge.classList.contains('log-level-warning')) entryLevel = 'warning';
                                 else if (levelBadge.classList.contains('log-level-info')) entryLevel = 'info';
                                 else if (levelBadge.classList.contains('log-level-debug')) entryLevel = 'debug';
-                                else entryLevel = 'info'; // Default fallback
+                                else {
+                                    // Last resort - check the original badge text before lowercasing
+                                    const originalText = levelBadge.textContent.trim();
+                                    console.log(`[huntarrUI] Unmapped badge text: "${originalText}" (lowercase: "${badgeText}")`);
+                                    entryLevel = 'info'; // Default fallback
+                                }
                         }
                     } else {
                         // Fallback to checking class names
