@@ -3296,6 +3296,8 @@ let huntarrUI = {
         let visibleCount = 0;
         let totalCount = allLogEntries.length;
         
+        console.log(`[huntarrUI] Filtering logs by level: ${selectedLevel}, total entries: ${totalCount}`);
+        
         allLogEntries.forEach(entry => {
             if (selectedLevel === 'all') {
                 // Show all entries
@@ -3312,12 +3314,14 @@ let huntarrUI = {
                     // First try to get from text content and normalize it
                     const badgeText = levelBadge.textContent.toLowerCase().trim();
                     if (badgeText) {
-                        // Map badge text to filter values
+                        // Map badge text to filter values - FIXED mapping
                         switch(badgeText) {
                             case 'information':
+                            case 'info':
                                 entryLevel = 'info';
                                 break;
                             case 'warning':
+                            case 'warn':
                                 entryLevel = 'warning';
                                 break;
                             case 'error':
@@ -3331,7 +3335,12 @@ let huntarrUI = {
                                 entryLevel = 'error'; // Map fatal/critical to error for filtering
                                 break;
                             default:
-                                entryLevel = badgeText; // Use as-is for any other cases
+                                // If no text match, try to extract from class names
+                                if (levelBadge.classList.contains('log-level-error')) entryLevel = 'error';
+                                else if (levelBadge.classList.contains('log-level-warning')) entryLevel = 'warning';
+                                else if (levelBadge.classList.contains('log-level-info')) entryLevel = 'info';
+                                else if (levelBadge.classList.contains('log-level-debug')) entryLevel = 'debug';
+                                else entryLevel = 'info'; // Default fallback
                         }
                     } else {
                         // Fallback to checking class names
@@ -3339,6 +3348,7 @@ let huntarrUI = {
                         else if (levelBadge.classList.contains('log-level-warning')) entryLevel = 'warning';
                         else if (levelBadge.classList.contains('log-level-info')) entryLevel = 'info';
                         else if (levelBadge.classList.contains('log-level-debug')) entryLevel = 'debug';
+                        else entryLevel = 'info'; // Default fallback
                     }
                     
                     // Show/hide based on exact match with selected level
@@ -3349,8 +3359,13 @@ let huntarrUI = {
                         entry.style.display = 'none';
                     }
                 } else {
-                    // If no level badge found, hide the entry when filtering
-                    entry.style.display = 'none';
+                    // If no level badge found, show the entry when 'all' is selected or hide when filtering
+                    if (selectedLevel === 'all') {
+                        entry.style.display = '';
+                        visibleCount++;
+                    } else {
+                        entry.style.display = 'none';
+                    }
                 }
             }
         });
