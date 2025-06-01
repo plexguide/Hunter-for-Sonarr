@@ -22,7 +22,7 @@ eros_logger = get_logger("eros")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET",  data: Optional[Dict] = None, params: Optional[Dict] = None) -> Any:
     """
     Make a request to the Eros API.
     
@@ -60,8 +60,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         }
         
         # Get SSL verification setting
-        if verify_ssl is None:
-            verify_ssl = get_ssl_verify_setting()
+        verify_ssl = get_ssl_verify_setting()
         
         if not verify_ssl:
             eros_logger.debug("SSL verification disabled by user setting")
