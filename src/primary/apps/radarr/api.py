@@ -20,11 +20,7 @@ radarr_logger = get_logger("radarr")
 # Use a session for better performance
 session = requests.Session()
 
-<<<<<<< HEAD
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Optional[Dict] = None, params: Optional[Dict] = None) -> Any:
-=======
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, params: Dict = None, count_api: bool = True) -> Any:
->>>>>>> 846c1e310d492976e406d1c5ce6bb520470a6eef
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET",  data: Optional[Dict] = None, params: Optional[Dict] = None, count_api: bool = True) -> Any:
     """
     Make a request to the Radarr API.
     
