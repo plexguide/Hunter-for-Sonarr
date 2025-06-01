@@ -20,7 +20,7 @@ radarr_logger = get_logger("radarr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Optional[Dict] = None, params: Optional[Dict] = None) -> Any:
     """
     Make a request to the Radarr API.
     
@@ -100,15 +100,12 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int
         return -1
     try:
         # Radarr uses /api/v3/queue
-        verify_ssl = get_ssl_verify_setting()
-        if not verify_ssl:
-            radarr_logger.debug("SSL verification disabled by user setting for queue size check")
         params = {
             "page": 1,
             "pageSize": 1000 # Fetch a large page size to get all items
         }
-        response = arr_request(api_url, api_key, api_timeout, "queue", params=params)
-        queue_data = response.json()
+
+        queue_data = arr_request(api_url, api_key, api_timeout, "queue", params=params)
         queue_size = queue_data.get('totalRecords', 0)
         radarr_logger.debug(f"Radarr download queue size: {queue_size}")
         return queue_size
