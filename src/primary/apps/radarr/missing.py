@@ -110,11 +110,26 @@ def process_missing_movies(
         now = datetime.datetime.now(datetime.timezone.utc)
         original_count = len(missing_movies)
         
-        missing_movies = [
-            movie for movie in missing_movies
-            if movie.get(release_type_field) and datetime.datetime.fromisoformat(movie[release_type_field].replace('Z', '+00:00')) < now
-        ]
-        skipped_count = original_count - len(missing_movies)
+        filtered_movies = []
+        skipped_count = 0
+        for movie in missing_movies:
+            release_date_str = movie.get(release_type_field)
+            if release_date_str:
+                try:
+                    # Parse the release date
+                    release_date = datetime.datetime.fromisoformat(release_date_str.replace('Z', '+00:00'))
+                    if release_date <= now:
+                        filtered_movies.append(movie)
+                    else:
+                        radarr_logger.debug(f"Skipping future movie ID {movie.get('id')} ('{movie.get('title')}') with {release_type} release date: {release_date_str}")
+                        skipped_count += 1
+                except ValueError as e:
+                    radarr_logger.warning(f"Could not parse {release_type} release date '{release_date_str}' for movie ID {movie.get('id')}. Error: {e}. Including it.")
+                    filtered_movies.append(movie)  # Keep if date is invalid
+            else:
+                filtered_movies.append(movie)  # Keep if no release date
+        
+        missing_movies = filtered_movies
         if skipped_count > 0:
             radarr_logger.info(f"Skipped {skipped_count} future movie releases based on {release_type} release date.")
 
