@@ -22,7 +22,7 @@ sonarr_logger = get_logger("sonarr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, params: Dict = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET",  data: Optional[Dict] = None, params: Optional[Dict] = None) -> Any:
     """
     Make a request to the Sonarr API.
     
@@ -620,8 +620,12 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int
     for attempt in range(retries + 1):
         try:
             # Use arr_request to get queue info (page=1, pageSize=1 for just the count)
-            endpoint = "queue?page=1&pageSize=1&includeSeries=false"
-            response = arr_request(api_url, api_key, api_timeout, endpoint)
+            params = {
+                'page': '1',
+                'pageSize': '1',
+                'includeSeries': 'false'
+            }
+            response = arr_request(api_url, api_key, api_timeout, "queue", params=params)
             if not response:
                 sonarr_logger.warning(f"Empty response when getting queue size (attempt {attempt+1}/{retries+1})")
                 if attempt < retries:
@@ -630,7 +634,7 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int
                 return -1
                 
             try:
-                queue_data = response.json()
+                queue_data = response
                 queue_size = queue_data.get('totalRecords', 0)
                 sonarr_logger.debug(f"Sonarr download queue size: {queue_size}")
                 return queue_size
