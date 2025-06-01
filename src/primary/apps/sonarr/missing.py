@@ -54,7 +54,7 @@ def process_missing_episodes(
         sonarr_logger.info("Season [Packs] mode selected - searching for complete season packs")
         return process_missing_seasons_packs_mode(
             api_url, api_key, instance_name, api_timeout, monitored_only, 
-            hunt_missing_items,
+            skip_future_episodes, hunt_missing_items,
             command_wait_delay, command_wait_attempts, stop_check
         )
     elif hunt_missing_mode == "shows":
@@ -229,6 +229,7 @@ def process_missing_seasons_packs_mode(
     instance_name: str,
     api_timeout: int,
     monitored_only: bool,
+    skip_future_episodes: bool,
     hunt_missing_items: int,
     command_wait_delay: int,
     command_wait_attempts: int,
@@ -245,6 +246,38 @@ def process_missing_seasons_packs_mode(
     missing_episodes = sonarr_api.get_missing_episodes(api_url, api_key, api_timeout, monitored_only)
     if not missing_episodes:
         sonarr_logger.info("No missing episodes found")
+        return False
+    
+    # Filter out future episodes if configured
+    if skip_future_episodes:
+        now_unix = time.time()
+        original_count = len(missing_episodes)
+        filtered_episodes = []
+        skipped_count = 0
+        
+        for episode in missing_episodes:
+            air_date_str = episode.get('airDateUtc')
+            if air_date_str:
+                try:
+                    # Parse the air date and check if it's in the past
+                    air_date_unix = time.mktime(time.strptime(air_date_str, '%Y-%m-%dT%H:%M:%SZ'))
+                    if air_date_unix < now_unix:
+                        filtered_episodes.append(episode)
+                    else:
+                        skipped_count += 1
+                        sonarr_logger.debug(f"Skipping future episode ID {episode.get('id')} with air date: {air_date_str}")
+                except (ValueError, TypeError) as e:
+                    sonarr_logger.warning(f"Could not parse air date '{air_date_str}' for episode ID {episode.get('id')}. Error: {e}. Including it.")
+                    filtered_episodes.append(episode)  # Keep if date is invalid
+            else:
+                filtered_episodes.append(episode)  # Keep if no air date
+        
+        missing_episodes = filtered_episodes
+        if skipped_count > 0:
+            sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date.")
+    
+    if not missing_episodes:
+        sonarr_logger.info("No missing episodes left to process after filtering future episodes.")
         return False
     
     # Group episodes by series and season
