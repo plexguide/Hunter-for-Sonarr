@@ -84,6 +84,10 @@
         max-height: none !important;
         overflow-y: visible !important;
         overflow: visible !important;
+        
+        /* Display logs in reverse order - newest first */
+        display: flex !important;
+        flex-direction: column-reverse !important;
     }
     
     /* Modern Logs Section Styling */
@@ -889,3 +893,44 @@
         transform: none !important;
     }
 </style>
+
+<script>
+// Fix auto-scroll to work with natural page flow
+document.addEventListener('DOMContentLoaded', function() {
+    const autoScrollCheckbox = document.getElementById('autoScrollCheckbox');
+    
+    if (autoScrollCheckbox) {
+        // Override the auto-scroll behavior for natural page flow
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    // Check if new log entries were added
+                    const hasLogEntry = Array.from(mutation.addedNodes).some(node => 
+                        node.nodeType === Node.ELEMENT_NODE && 
+                        (node.classList?.contains('log-entry') || node.querySelector?.('.log-entry'))
+                    );
+                    
+                    if (hasLogEntry && autoScrollCheckbox.checked) {
+                        // Auto-scroll to top of page since logs are in reverse order (newest first)
+                        setTimeout(() => {
+                            window.scrollTo({
+                                top: 0,
+                                behavior: 'smooth'
+                            });
+                        }, 100);
+                    }
+                }
+            });
+        });
+        
+        // Observe the logs container for new entries
+        const logsContainer = document.getElementById('logsContainer');
+        if (logsContainer) {
+            observer.observe(logsContainer, {
+                childList: true,
+                subtree: true
+            });
+        }
+    }
+});
+</script>
