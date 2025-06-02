@@ -95,6 +95,14 @@
         padding-bottom: 0 !important;
     }
     
+    /* CRITICAL: Make table header part of the natural page flow instead of sticky */
+    #historySection .modern-table thead,
+    #historySection .history-table thead {
+        position: static !important;
+        top: auto !important;
+        z-index: auto !important;
+    }
+    
     /* Scope all styles to this section only */
     #historySection {
         width: 100%;
