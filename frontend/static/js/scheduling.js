@@ -100,20 +100,18 @@ function initScheduler() {
  * Set up event listeners for the scheduler UI
  */
 function setupEventListeners() {
-    // Add Schedule button (edit functionality removed for simplicity)
-    const addScheduleButton = document.getElementById('addScheduleButton');
-    if (addScheduleButton) {
-        addScheduleButton.addEventListener('click', function() {
-            // Always treat as a new schedule - edit functionality removed
-            addSchedule();
-        });
-    }
-    
-    // Save button functionality removed since we're using auto-save
-    
-    // Only set up the event handler during initialization, not on every page render
-    // Use a closure to ensure event listener is registered only once
+    // Only set up the event handlers during initialization, not on every page render
+    // Use a closure to ensure event listeners are registered only once
     if (!window.huntarrSchedulerInitialized) {
+        // Add Schedule button (edit functionality removed for simplicity)
+        const addScheduleButton = document.getElementById('addScheduleButton');
+        if (addScheduleButton) {
+            addScheduleButton.addEventListener('click', function() {
+                // Always treat as a new schedule - edit functionality removed
+                addSchedule();
+            });
+        }
+        
         // Document level listener to catch delete actions regardless of when items are added
         document.addEventListener('click', function(e) {
             // Only react to delete buttons
