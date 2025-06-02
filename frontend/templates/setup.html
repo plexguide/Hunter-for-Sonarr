@@ -343,25 +343,91 @@
             border-left: 4px solid #28a745;
         }
         
-        /* QR code styling */
-        .qr-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 20px 0;
-        }
-        
         .qr-code {
             background: white;
             padding: 10px;
             border-radius: 8px;
             margin-bottom: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            width: 64px;
-            height: 64px;
+            width: 164px;
+            height: 164px;
             margin: 0 auto 15px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
         }
-        
+
+        .qr-code:hover {
+            transform: scale(1.05);
+        }
+
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .qr-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: pointer;
+        }
+
+        .qr-modal.active {
+            display: flex;
+        }
+
+        .qr-modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+            cursor: default;
+            animation: modalZoomIn 0.3s ease;
+        }
+
+        @keyframes modalZoomIn {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .qr-modal-content img {
+            width: 400px;
+            height: 400px;
+            display: block;
+        }
+
+        .qr-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+
+        .qr-close:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
         .qr-code img {
             width: 100%;
             height: 100%;
@@ -591,6 +657,13 @@
             </div>
         </div>
     </div>
+    <!-- Modal for enlarged QR code -->
+<div class="qr-modal" id="qrModal">
+    <div class="qr-close" id="qrClose">&times;</div>
+    <div class="qr-modal-content">
+        <img src="" alt="Enlarged QR Code" id="qrModalImg">
+    </div>
+</div>
 
     <!-- Pass base URL configuration to JavaScript -->
     <script>window.HUNTARR_BASE_URL = '{{ base_url|default("", true) }}';</script>
@@ -615,6 +688,10 @@
             const verificationCodeInput = document.getElementById('verificationCode');
             const skip2FALink = document.getElementById('skip2FALink');
             const twoFactorNextButton = document.getElementById('twoFactorNextButton');
+            const qrCode = document.getElementById('qrCode');
+            const qrModal = document.getElementById('qrModal');
+            const qrModalImg = document.getElementById('qrModalImg');
+            const qrClose = document.getElementById('qrClose');
             
             // Auth Mode setup elements
             const authModeSelect = document.getElementById('auth_mode');
@@ -900,6 +977,36 @@
                         authModeErrorMessage.style.display = 'none';
                     }, 5000);
                 });
+            });
+
+            function openQRModal() {
+                const qrImg = qrCode.querySelector('img');
+                if (qrImg && qrImg.src) {
+                    qrModalImg.src = qrImg.src;
+                    qrModal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+
+            function closeQRModal() {
+                qrModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            // Event listeners for QR modal
+            if (qrCode) qrCode.addEventListener('click', openQRModal);
+            if (qrClose) qrClose.addEventListener('click', closeQRModal);
+
+            if (qrModal) {
+                qrModal.addEventListener('click', function(e) {
+                    if (e.target === qrModal) closeQRModal();
+                });
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && qrModal && qrModal.classList.contains('active')) {
+                    closeQRModal();
+                }
             });
             
             // Complete setup navigation
