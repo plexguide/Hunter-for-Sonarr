@@ -16,6 +16,21 @@
             </select>
         </div>
         <div class="log-controls">
+            <!-- Log Level Filter - Moved to the left -->
+            <div class="log-level-filter">
+                <label for="logLevelSelect">
+                    <i class="fas fa-filter"></i>
+                    <span>Level:</span>
+                </label>
+                <select id="logLevelSelect" class="styled-select">
+                    <option value="all">All Levels</option>
+                    <option value="debug">DEBUG</option>
+                    <option value="info" selected>INFO</option>
+                    <option value="warning">WARNING</option>
+                    <option value="error">ERROR</option>
+                </select>
+            </div>
+            
             <!-- Add search functionality -->  
             <div class="log-search">
                 <div class="search-results-info" id="logSearchResults"></div>
@@ -26,21 +41,6 @@
                 <button id="clearSearchButton" class="clear-search-button" style="display: none;">
                     <i class="fas fa-times"></i>
                 </button>
-            </div>
-            
-            <!-- Log Level Filter -->
-            <div class="log-level-filter">
-                <label for="logLevelSelect">
-                    <i class="fas fa-filter"></i>
-                    <span>Level:</span>
-                </label>
-                <select id="logLevelSelect" class="styled-select">
-                    <option value="all">All Levels</option>
-                    <option value="debug">DEBUG</option>
-                    <option value="info">INFO</option>
-                    <option value="warning">WARNING</option>
-                    <option value="error">ERROR</option>
-                </select>
             </div>
             
             <div class="connection-status">
