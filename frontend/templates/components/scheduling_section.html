@@ -1,19 +1,9 @@
 <section id="schedulingSection" class="content-section">
     <div class="section-header">
-        <div class="scheduling-app-filter">
-            <label for="schedulingAppSelect">
-                <i class="fas fa-calendar-alt"></i>
-                <span>Schedule:</span>
-            </label>
-            <select id="schedulingAppSelect" class="styled-select">
-                <option value="add">Add New</option>
-                <option value="view">View All</option>
-            </select>
+        <div class="scheduling-header-label">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Schedule</span>
         </div>
-
-        <button id="saveSchedulingButton" class="save-button" disabled>
-            <i class="fas fa-save"></i> Save
-        </button>
     </div>
     
     <!-- Single scrollable container for all content -->
@@ -187,89 +177,19 @@
 </section>
 
 <style>
-    /* Scheduling Section Header Styling - Match Apps/History/Logs Pattern */
-    .scheduling-app-filter {
+    /* Scheduling Section Header Styling - Simplified */
+    .scheduling-header-label {
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 5px 10px;
-        border-radius: 8px;
-        background: linear-gradient(135deg, rgba(30, 39, 56, 0.6) 0%, rgba(14, 20, 32, 0.6) 100%);
-        border: 1px solid rgba(90, 109, 137, 0.3);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        position: relative;
-    }
-    
-    .scheduling-app-filter:hover {
-        background: linear-gradient(135deg, rgba(40, 49, 66, 0.7) 0%, rgba(24, 30, 42, 0.7) 100%);
-        border-color: rgba(90, 109, 137, 0.5);
-        transform: translateY(-1px);
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-    }
-    
-    .scheduling-app-filter label {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        user-select: none;
-    }
-    
-    .scheduling-app-filter label i {
-        color: rgba(52, 152, 219, 0.8);
-        font-size: 12px;
-    }
-    
-    .scheduling-app-filter select {
-        background: linear-gradient(135deg, rgba(52, 152, 219, 0.8) 0%, rgba(41, 128, 185, 0.9) 100%);
-        border: 1px solid rgba(52, 152, 219, 0.6);
-        border-radius: 4px;
-        color: rgba(255, 255, 255, 0.95);
-        padding: 4px 8px;
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        outline: none;
-        transition: all 0.3s ease;
-        min-width: 120px;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 8px center;
-        background-size: 12px;
-        padding-right: 28px;
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-    }
-    
-    .scheduling-app-filter select:hover {
-        background: linear-gradient(135deg, rgba(52, 152, 219, 0.9) 0%, rgba(41, 128, 185, 1.0) 100%);
-        border-color: rgba(52, 152, 219, 0.8);
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 8px center;
-        background-size: 12px;
-    }
-    
-    .scheduling-app-filter select:focus {
-        border-color: rgba(52, 152, 219, 1.0);
-        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 8px center;
-        background-size: 12px;
-    }
-    
-    .scheduling-app-filter select option {
-        background: #1a1e2a;
         color: rgba(255, 255, 255, 0.9);
-        padding: 4px 8px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    .scheduling-header-label i {
+        color: rgba(52, 152, 219, 0.8);
+        font-size: 14px;
     }
 
     /* Scheduling Section Layout */
@@ -640,42 +560,10 @@
         /* Mobile header adjustments */
         #schedulingSection .section-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             padding: 10px 5px;
-            flex-wrap: wrap;
-            gap: 10px;
         }
-        
-        .scheduling-app-filter {
-            flex: 1;
-            min-width: 150px;
-        }
-        
-        .scheduling-app-filter select {
-            font-size: 14px;
-            min-width: 100px;
-        }
-        
-        #saveSchedulingButton {
-            flex-shrink: 0;
-        }
-    }
-    
-    /* Disable animations on scheduling dropdowns */
-    #schedulingAppSelect.styled-select,
-    #schedulingSection .styled-select {
-        animation: none !important;
-        box-shadow: none !important;
-    }
-    
-    #schedulingAppSelect.styled-select:focus,
-    #schedulingAppSelect.styled-select:hover,
-    #schedulingSection .styled-select:focus,
-    #schedulingSection .styled-select:hover {
-        animation: none !important;
-        box-shadow: 0 0 5px rgba(255, 255, 255, 0.2) !important;
-        transform: none !important;
     }
     
     /* Optgroup styling */
@@ -696,28 +584,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Scheduling section elements
-        const schedulingAppSelect = document.getElementById('schedulingAppSelect');
-        const addScheduleForm = document.getElementById('addScheduleForm');
-        const schedulesListPanel = document.getElementById('schedulesListPanel');
         const addScheduleButton = document.getElementById('addScheduleButton');
-        const saveSchedulingButton = document.getElementById('saveSchedulingButton');
-        
-        // Handle dropdown change to show/hide panels
-        if (schedulingAppSelect) {
-            schedulingAppSelect.addEventListener('change', function() {
-                const selectedValue = this.value;
-                
-                if (selectedValue === 'add') {
-                    addScheduleForm.style.display = 'block';
-                    schedulesListPanel.style.display = 'none';
-                } else if (selectedValue === 'view') {
-                    addScheduleForm.style.display = 'none';
-                    schedulesListPanel.style.display = 'block';
-                }
-                
-                console.debug('Scheduling view changed to: ' + selectedValue);
-            });
-        }
         
         // Add schedule button handler
         if (addScheduleButton) {
@@ -750,9 +617,10 @@
                 // For now, just show a success message
                 alert('Schedule added successfully!');
                 
-                // Switch to view mode to show the schedules
-                schedulingAppSelect.value = 'view';
-                schedulingAppSelect.dispatchEvent(new Event('change'));
+                // Clear the form
+                document.querySelectorAll('.day-input:checked').forEach(input => {
+                    input.checked = false;
+                });
             });
         }
         
@@ -761,9 +629,8 @@
             if (e.target.closest('.edit-schedule')) {
                 const scheduleId = e.target.closest('.edit-schedule').getAttribute('data-id');
                 console.debug('Edit schedule:', scheduleId);
-                // Switch to add form with pre-filled data
-                schedulingAppSelect.value = 'add';
-                schedulingAppSelect.dispatchEvent(new Event('change'));
+                // Here you would load the schedule data into the form
+                alert('Edit functionality would load schedule data into the form above.');
             }
             
             if (e.target.closest('.delete-schedule')) {
@@ -775,19 +642,5 @@
                 }
             }
         });
-        
-        // Save button handler
-        if (saveSchedulingButton) {
-            saveSchedulingButton.addEventListener('click', function() {
-                console.debug('Saving scheduling configuration');
-                // Here you would save all scheduling data
-                alert('Scheduling configuration saved!');
-            });
-        }
-        
-        // Initialize with add form visible by default
-        if (schedulingAppSelect && schedulingAppSelect.value === 'add') {
-            schedulingAppSelect.dispatchEvent(new Event('change'));
-        }
     });
 </script>
