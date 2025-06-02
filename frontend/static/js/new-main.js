@@ -936,6 +936,15 @@ let huntarrUI = {
                                 logAppType = possibleApp;
                             }
                         }
+                    } else {
+                        // Fallback: Check for app tags in malformed log lines (like JSON fragments)
+                        const appTagMatch = logString.match(/^\[(\w+)\]/);
+                        if (appTagMatch) {
+                            const possibleApp = appTagMatch[1].toLowerCase();
+                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr', 'hunting'].includes(possibleApp)) {
+                                logAppType = possibleApp;
+                            }
+                        }
                     }
                     
                     // Special case for system logs that may contain app-specific patterns
