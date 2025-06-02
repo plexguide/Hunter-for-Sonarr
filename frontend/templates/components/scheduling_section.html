@@ -30,6 +30,14 @@
                     <!-- Frequency/Days -->
                     <div class="form-group">
                         <label>Frequency</label>
+                        <!-- Daily toggle button -->
+                        <div class="daily-toggle">
+                            <div class="day-checkbox daily-checkbox">
+                                <input type="checkbox" id="day-daily" class="day-input daily-input">
+                                <label for="day-daily"><i class="fas fa-calendar-week"></i> Daily (All Days)</label>
+                            </div>
+                        </div>
+                        
                         <div class="days-selection">
                             <div class="day-checkbox">
                                 <input type="checkbox" id="day-monday" class="day-input">
@@ -270,6 +278,56 @@
         gap: 12px;
     }
     
+    /* Daily toggle styling */
+    .daily-toggle {
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: flex-start;
+    }
+    
+    .daily-checkbox {
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.15) 0%, rgba(155, 89, 182, 0.15) 100%);
+        border: 2px solid rgba(52, 152, 219, 0.4);
+        padding: 12px 20px;
+        border-radius: 8px;
+        min-width: 200px;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .daily-checkbox:hover {
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.25) 0%, rgba(155, 89, 182, 0.25) 100%);
+        border-color: rgba(52, 152, 219, 0.6);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    }
+    
+    .daily-checkbox.checked {
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.3) 0%, rgba(155, 89, 182, 0.3) 100%);
+        border-color: rgba(52, 152, 219, 0.8);
+        box-shadow: 0 0 15px rgba(52, 152, 219, 0.4);
+    }
+    
+    .daily-checkbox label {
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .daily-checkbox label i {
+        color: rgba(52, 152, 219, 0.9);
+        font-size: 16px;
+    }
+    
+    .daily-input {
+        width: 18px;
+        height: 18px;
+        accent-color: rgba(52, 152, 219, 0.9);
+    }
+    
     .day-checkbox {
         display: flex;
         align-items: center;
@@ -485,22 +543,38 @@
             gap: 8px;
         }
         
+        /* Mobile daily toggle */
+        .daily-toggle {
+            margin-bottom: 12px;
+            justify-content: flex-start;
+        }
+        
+        .daily-checkbox {
+            min-width: unset;
+            width: auto;
+            max-width: 280px;
+            margin: 0;
+            padding: 10px 16px;
+        }
+        
+        .daily-checkbox label {
+            font-size: 13px;
+        }
+        
+        .daily-checkbox label i {
+            font-size: 14px;
+        }
+        
+        .daily-input {
+            width: 16px;
+            height: 16px;
+        }
+        
         .day-checkbox {
             padding: 12px 15px;
             justify-content: flex-start;
         }
         
-        .day-input {
-            width: 16px;
-            height: 16px;
-        }
-        
-        /* Mobile container spacing */
-        .scheduling-container {
-            padding: 0 15px;
-        }
-        
-        /* Mobile schedule items - stack vertically */
         .schedule-item {
             flex-direction: column;
             align-items: stretch;
@@ -556,7 +630,9 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Scheduling section elements
         const addScheduleButton = document.getElementById('addScheduleButton');
-        const dayInputs = document.querySelectorAll('.day-input');
+        const dayInputs = document.querySelectorAll('.day-input:not(.daily-input)'); // Individual day inputs only
+        const dailyInput = document.getElementById('day-daily');
+        const dailyCheckboxDiv = document.querySelector('.daily-checkbox');
         
         // Function to check if any days are selected and enable/disable button
         function updateButtonState() {
@@ -564,15 +640,57 @@
             addScheduleButton.disabled = !anyDaySelected;
         }
         
-        // Add event listeners to all day checkboxes
+        // Function to update daily checkbox state based on individual day selections
+        function updateDailyState() {
+            const allDaysSelected = Array.from(dayInputs).every(input => input.checked);
+            const anyDaySelected = Array.from(dayInputs).some(input => input.checked);
+            
+            // Update daily checkbox state
+            if (allDaysSelected && anyDaySelected) {
+                dailyInput.checked = true;
+                dailyCheckboxDiv.classList.add('checked');
+            } else {
+                dailyInput.checked = false;
+                dailyCheckboxDiv.classList.remove('checked');
+            }
+        }
+        
+        // Function to handle daily checkbox toggle
+        function handleDailyToggle() {
+            const isChecked = dailyInput.checked;
+            
+            // Set all individual day checkboxes to match daily state
+            dayInputs.forEach(input => {
+                input.checked = isChecked;
+            });
+            
+            // Update visual state
+            if (isChecked) {
+                dailyCheckboxDiv.classList.add('checked');
+            } else {
+                dailyCheckboxDiv.classList.remove('checked');
+            }
+            
+            // Update button state
+            updateButtonState();
+        }
+        
+        // Add event listeners to individual day checkboxes
         dayInputs.forEach(input => {
-            input.addEventListener('change', updateButtonState);
+            input.addEventListener('change', function() {
+                updateDailyState();
+                updateButtonState();
+            });
         });
         
-        // Initial button state check
+        // Add event listener to daily checkbox
+        dailyInput.addEventListener('change', handleDailyToggle);
+        
+        // Initial state checks
+        updateDailyState();
         updateButtonState();
         
         // Note: Add schedule functionality is handled by scheduling.js
-        // This script only handles the button state management
+        // This script only handles the button state management and daily toggle
     });
 </script>

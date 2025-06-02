@@ -866,6 +866,18 @@ function resetDayCheckboxes() {
     document.getElementById('day-friday').checked = false;
     document.getElementById('day-saturday').checked = false;
     document.getElementById('day-sunday').checked = false;
+    
+    // Also reset the Daily checkbox and its visual state
+    const dailyInput = document.getElementById('day-daily');
+    const dailyCheckboxDiv = document.querySelector('.daily-checkbox');
+    
+    if (dailyInput) {
+        dailyInput.checked = false;
+    }
+    
+    if (dailyCheckboxDiv) {
+        dailyCheckboxDiv.classList.remove('checked');
+    }
 }
 
 // Close the IIFE that wraps the script
