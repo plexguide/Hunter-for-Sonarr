@@ -909,6 +909,12 @@ let huntarrUI = {
                 
                 try {
                     const logString = event.data;
+                    
+                    // Filter out broken JSON fragments and other non-log content
+                    if (this.isJsonFragment(logString) || this.isInvalidLogLine(logString)) {
+                        return; // Skip processing this line
+                    }
+                    
                     // Regex to parse log lines: Optional [APP], Timestamp, Logger, Level, Message
                     // Example: [SONARR] 2024-01-01 12:00:00 - huntarr.sonarr - INFO - Message content
                     // Example: 2024-01-01 12:00:00 - huntarr - DEBUG - System message
@@ -3556,6 +3562,48 @@ let huntarrUI = {
         }
         
         console.log(`[huntarrUI] Filtered logs by level '${selectedLevel}': showing ${visibleCount}/${totalCount} entries`);
+    },
+    
+    // Helper method to detect JSON fragments that shouldn't be displayed as log entries
+    isJsonFragment: function(logString) {
+        if (!logString || typeof logString !== 'string') return false;
+        
+        const trimmed = logString.trim();
+        
+        // Check for common JSON fragment patterns
+        const jsonPatterns = [
+            /^"[^"]*":\s*"[^"]*",?$/,           // "key": "value",
+            /^"[^"]*":\s*\d+,?$/,                // "key": 123,
+            /^"[^"]*":\s*true|false,?$/,         // "key": true,
+            /^"[^"]*":\s*null,?$/,               // "key": null,
+            /^"[^"]*":\s*\[[^\]]*\],?$/,         // "key": [...],
+            /^"[^"]*":\s*\{[^}]*\},?$/,          // "key": {...},
+            /^\s*\{?\s*$/,                       // Just opening brace or whitespace
+            /^\s*\}?,?\s*$/,                     // Just closing brace
+            /^\s*\[?\s*$/,                       // Just opening bracket
+            /^\s*\]?,?\s*$/,                     // Just closing bracket
+            /^,?\s*$/                            // Just comma or whitespace
+        ];
+        
+        return jsonPatterns.some(pattern => pattern.test(trimmed));
+    },
+    
+    // Helper method to detect other invalid log lines
+    isInvalidLogLine: function(logString) {
+        if (!logString || typeof logString !== 'string') return true;
+        
+        const trimmed = logString.trim();
+        
+        // Skip empty lines or lines with only whitespace
+        if (trimmed.length === 0) return true;
+        
+        // Skip lines that are clearly not log entries
+        if (trimmed.length < 10) return true; // Too short to be a meaningful log
+        
+        // Skip lines that look like HTTP headers or other metadata
+        if (/^(HTTP\/|Content-|Connection:|Host:|User-Agent:)/i.test(trimmed)) return true;
+        
+        return false;
     }
 };
 
