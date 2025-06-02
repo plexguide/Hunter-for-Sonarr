@@ -945,6 +945,11 @@ let huntarrUI = {
                                 logAppType = possibleApp;
                             }
                         }
+                        
+                        // Special fallback for huntarr.hunting logs
+                        if (logString.includes('[huntarr.hunting]')) {
+                            logAppType = 'hunting';
+                        }
                     }
                     
                     // Special case for system logs that may contain app-specific patterns
@@ -1298,9 +1303,6 @@ let huntarrUI = {
         // Update search results info
         if (this.elements.logSearchResults) {
             let resultsText = `Found ${matchCount} matching log entries`;
-            if (remainingCount > 0) {
-                resultsText += ` (highlighting limited to first ${MAX_ENTRIES_TO_PROCESS})`;
-            }
             this.elements.logSearchResults.textContent = resultsText;
             this.elements.logSearchResults.style.display = 'block';
         }
