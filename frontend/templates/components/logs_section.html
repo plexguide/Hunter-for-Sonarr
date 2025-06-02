@@ -67,6 +67,25 @@
 </section>
 
 <style>
+    /* CRITICAL: Override sticky positioning from apps-double-scroll-fix.css for logs section */
+    #logsSection .section-header {
+        position: static !important;
+        top: auto !important;
+        z-index: auto !important;
+        background-color: transparent !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* CRITICAL: Make logs container flow naturally instead of fixed height with internal scrolling */
+    #logsSection .logs {
+        height: auto !important;
+        min-height: 400px !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+        overflow: visible !important;
+    }
+    
     /* Modern Logs Section Styling */
     #logsSection {
         padding: 20px;
