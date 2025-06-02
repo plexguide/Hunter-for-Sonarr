@@ -85,6 +85,16 @@
 </section>
 
 <style>
+    /* CRITICAL: Override sticky positioning from apps-double-scroll-fix.css for history section */
+    #historySection .section-header {
+        position: static !important;
+        top: auto !important;
+        z-index: auto !important;
+        background-color: transparent !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
     /* Scope all styles to this section only */
     #historySection {
         width: 100%;
