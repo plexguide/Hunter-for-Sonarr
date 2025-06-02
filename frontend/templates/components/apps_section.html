@@ -70,6 +70,22 @@
         color: rgba(255, 255, 255, 0.9);
         padding: 4px 8px;
     }
+    
+    /* DISABLE GLOWING RING ANIMATIONS - Apps Section */
+    #appsAppSelect.styled-select,
+    #appsSection .styled-select {
+        animation: none !important;
+        box-shadow: none !important;
+    }
+    
+    #appsAppSelect.styled-select:focus,
+    #appsAppSelect.styled-select:hover,
+    #appsSection .styled-select:focus,
+    #appsSection .styled-select:hover {
+        animation: none !important;
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.2) !important;
+        transform: none !important;
+    }
 </style>
 <section id="appsSection" class="content-section">
     <div class="section-header">
@@ -79,14 +95,14 @@
                 <span>App:</span>
             </label>
             <select id="appsAppSelect" class="styled-select">
-                <option value="sonarr">📺 Sonarr</option>
-                <option value="radarr">🎬 Radarr</option>
-                <option value="lidarr">🎵 Lidarr</option>
-                <option value="readarr">📚 Readarr</option>
-                <option value="whisparr">💜 Whisparr V2</option>
-                <option value="eros">💜 Whisparr V3</option>
-                <option value="swaparr">🔄 Swaparr</option>
-                <option value="cleanuperr">🧹 Cleanuperr</option>
+                <option value="sonarr">Sonarr</option>
+                <option value="radarr">Radarr</option>
+                <option value="lidarr">Lidarr</option>
+                <option value="readarr">Readarr</option>
+                <option value="whisparr">Whisparr V2</option>
+                <option value="eros">Whisparr V3</option>
+                <option value="swaparr">Swaparr</option>
+                <option value="cleanuperr">Cleanuperr</option>
             </select>
         </div>
 

@@ -7,16 +7,16 @@
                 <span>App:</span>
             </label>
             <select id="logAppSelect" class="styled-select">
-                <option value="all">📊 All</option>
-                <option value="sonarr">📺 Sonarr</option>
-                <option value="radarr">🎬 Radarr</option>
-                <option value="lidarr">🎵 Lidarr</option>
-                <option value="readarr">📚 Readarr</option>
-                <option value="whisparr">💜 Whisparr V2</option>
-                <option value="eros">💜 Whisparr V3</option>
-                <option value="swaparr">🔄 Swaparr</option>
-                <option value="huntarr.hunting">🎯 Hunt Manager</option>
-                <option value="system">⚙️ System</option>
+                <option value="all">All</option>
+                <option value="sonarr">Sonarr</option>
+                <option value="radarr">Radarr</option>
+                <option value="lidarr">Lidarr</option>
+                <option value="readarr">Readarr</option>
+                <option value="whisparr">Whisparr V2</option>
+                <option value="eros">Whisparr V3</option>
+                <option value="swaparr">Swaparr</option>
+                <option value="huntarr.hunting">Hunt Manager</option>
+                <option value="system">System</option>
             </select>
         </div>
         <div class="log-controls">
@@ -807,5 +807,24 @@
         background: #1a1e2a;
         color: rgba(255, 255, 255, 0.9);
         padding: 4px 8px;
+    }
+    
+    /* DISABLE GLOWING RING ANIMATIONS - Logs Section */
+    #logAppSelect.styled-select,
+    #logLevelSelect.styled-select,
+    #logsSection .styled-select {
+        animation: none !important;
+        box-shadow: none !important;
+    }
+    
+    #logAppSelect.styled-select:focus,
+    #logAppSelect.styled-select:hover,
+    #logLevelSelect.styled-select:focus,
+    #logLevelSelect.styled-select:hover,
+    #logsSection .styled-select:focus,
+    #logsSection .styled-select:hover {
+        animation: none !important;
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.2) !important;
+        transform: none !important;
     }
 </style>

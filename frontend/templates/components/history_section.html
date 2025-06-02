@@ -7,13 +7,13 @@
                 <span>App:</span>
             </label>
             <select id="historyAppSelect" class="styled-select">
-                <option value="all">📊 All</option>
-                <option value="sonarr">📺 Sonarr</option>
-                <option value="radarr">🎬 Radarr</option>
-                <option value="lidarr">🎵 Lidarr</option>
-                <option value="readarr">📚 Readarr</option>
-                <option value="whisparr">💜 Whisparr V2</option>
-                <option value="eros">💜 Whisparr V3</option>
+                <option value="all">All</option>
+                <option value="sonarr">Sonarr</option>
+                <option value="radarr">Radarr</option>
+                <option value="lidarr">Lidarr</option>
+                <option value="readarr">Readarr</option>
+                <option value="whisparr">Whisparr V2</option>
+                <option value="eros">Whisparr V3</option>
             </select>
         </div>
         
@@ -228,6 +228,22 @@
         background: #1a1e2a;
         color: rgba(255, 255, 255, 0.9);
         padding: 4px 8px;
+    }
+    
+    /* DISABLE GLOWING RING ANIMATIONS - History Section */
+    #historyAppSelect.styled-select,
+    #historySection .styled-select {
+        animation: none !important;
+        box-shadow: none !important;
+    }
+    
+    #historyAppSelect.styled-select:focus,
+    #historyAppSelect.styled-select:hover,
+    #historySection .styled-select:focus,
+    #historySection .styled-select:hover {
+        animation: none !important;
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.2) !important;
+        transform: none !important;
     }
     
     .history-dropdown-btn {
