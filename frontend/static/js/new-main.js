@@ -640,6 +640,34 @@ let huntarrUI = {
             newTitle = 'Logs';
             this.currentSection = 'logs';
             this.connectToLogs();
+            
+            // Reset logs section to defaults when navigating to it
+            setTimeout(() => {
+                // Reset log app to 'all'
+                this.currentLogApp = 'all';
+                
+                // Reset UI elements to defaults
+                const logAppSelect = document.getElementById('logAppSelect');
+                if (logAppSelect && logAppSelect.value !== 'all') {
+                    logAppSelect.value = 'all';
+                }
+                
+                const logLevelSelect = document.getElementById('logLevelSelect');
+                if (logLevelSelect && logLevelSelect.value !== 'info') {
+                    logLevelSelect.value = 'info';
+                    // Trigger the filter function to apply INFO level filtering
+                    this.filterLogsByLevel('info');
+                }
+                
+                // Clear any search
+                const logSearchInput = document.getElementById('logSearchInput');
+                if (logSearchInput && logSearchInput.value) {
+                    logSearchInput.value = '';
+                    this.clearLogSearch();
+                }
+                
+                console.log('[huntarrUI] Reset logs to defaults: All apps, INFO level, cleared search');
+            }, 300);
         } else if (section === 'history' && this.elements.historySection) {
             this.elements.historySection.classList.add('active');
             this.elements.historySection.style.display = 'block';
@@ -3556,15 +3584,7 @@ let huntarrUI = {
             }
         });
         
-        // Hide pagination if filtering (since pagination doesn't work with filtering)
-        const paginationControls = document.querySelector('.pagination-controls');
-        if (paginationControls) {
-            if (selectedLevel === 'all') {
-                paginationControls.style.display = '';
-            } else {
-                paginationControls.style.display = 'none';
-            }
-        }
+        // Pagination controls remain visible at all times - removed hiding logic
         
         // Auto-scroll to top to show newest entries (logs are in reverse order)
         if (this.autoScroll && this.elements.autoScrollCheckbox && this.elements.autoScrollCheckbox.checked && visibleCount > 0) {

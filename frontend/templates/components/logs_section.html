@@ -7,7 +7,7 @@
                 <span>App:</span>
             </label>
             <select id="logAppSelect" class="styled-select">
-                <option value="all">All</option>
+                <option value="all" selected>All</option>
                 <option value="sonarr">Sonarr</option>
                 <option value="radarr">Radarr</option>
                 <option value="lidarr">Lidarr</option>
@@ -72,9 +72,9 @@
         <div class="page-size-selector">
             <label for="logsPageSize">Show:</label>
             <select id="logsPageSize">
-                <option value="20">20</option>
+                <option value="20" selected>20</option>
                 <option value="50">50</option>
-                <option value="100" selected>100</option>
+                <option value="100">100</option>
                 <option value="200">200</option>
             </select>
         </div>
@@ -1091,8 +1091,68 @@ if (logsPrevPage) logsPrevPage.disabled = true;
 if (logsNextPage) logsNextPage.disabled = true;
 
 // Simple pagination functionality that works with displayed logs
-let pageSize = 100; // Default page size
+let pageSize = 20; // Default page size
 let currentPage = 1;
+
+// Function to reset logs section to default values
+function resetLogsToDefaults() {
+    // Reset app filter to "all"
+    const logAppSelect = document.getElementById('logAppSelect');
+    if (logAppSelect) {
+        logAppSelect.value = 'all';
+        // Trigger change event to update the UI
+        logAppSelect.dispatchEvent(new Event('change'));
+    }
+    
+    // Reset log level to "info"
+    const logLevelSelect = document.getElementById('logLevelSelect');
+    if (logLevelSelect) {
+        logLevelSelect.value = 'info';
+        // Trigger change event to update filtering
+        logLevelSelect.dispatchEvent(new Event('change'));
+    }
+    
+    // Reset page size to 20
+    const logsPageSize = document.getElementById('logsPageSize');
+    if (logsPageSize) {
+        logsPageSize.value = '20';
+        pageSize = 20;
+    }
+    
+    // Reset to first page
+    currentPage = 1;
+    
+    // Update pagination display
+    setTimeout(() => {
+        updateLogsPagination();
+    }, 100);
+    
+    console.log('[LogsSection] Reset to defaults: All apps, INFO level, 20 entries per page');
+}
+
+// Watch for when logs section becomes active and reset to defaults
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const logsSection = document.getElementById('logsSection');
+            if (logsSection && logsSection.classList.contains('active')) {
+                // Small delay to ensure all elements are ready
+                setTimeout(() => {
+                    resetLogsToDefaults();
+                }, 200);
+            }
+        }
+    });
+});
+
+// Start observing the logs section for class changes
+const logsSection = document.getElementById('logsSection');
+if (logsSection) {
+    observer.observe(logsSection, {
+        attributes: true,
+        attributeFilter: ['class']
+    });
+}
 
 function updateLogsPagination() {
     if (!logsContainer) return;
