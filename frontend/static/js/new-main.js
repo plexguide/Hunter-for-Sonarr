@@ -1045,6 +1045,12 @@ let huntarrUI = {
                     // Add to logs container
                     this.elements.logsContainer.appendChild(logEntry);
                     
+                    // Apply current log level filter to the new entry
+                    const currentLogLevel = this.elements.logLevelSelect ? this.elements.logLevelSelect.value : 'all';
+                    if (currentLogLevel !== 'all') {
+                        this.applyFilterToSingleEntry(logEntry, currentLogLevel);
+                    }
+                    
                     // Special event dispatching for Swaparr logs
                     if (logAppType === 'swaparr' && this.currentLogApp === 'swaparr') {
                         // Dispatch a custom event for swaparr.js to process
@@ -3286,6 +3292,65 @@ let huntarrUI = {
             console.log('[huntarrUI] Dashboard made visible after initialization');
         } else {
             console.warn('[huntarrUI] Dashboard grid not found');
+        }
+    },
+
+    applyFilterToSingleEntry: function(logEntry, selectedLevel) {
+        // Apply the same filtering logic used in filterLogsByLevel to a single entry
+        const levelBadge = logEntry.querySelector('.log-level-badge, .log-level, .log-level-error, .log-level-warning, .log-level-info, .log-level-debug');
+        
+        if (levelBadge) {
+            // Get the level from the badge text
+            let entryLevel = '';
+            
+            // Get badge text and normalize it
+            const badgeText = levelBadge.textContent.toLowerCase().trim();
+            
+            // Strict mapping - only map known values, no fallbacks
+            switch(badgeText) {
+                case 'information':
+                case 'info':
+                    entryLevel = 'info';
+                    break;
+                case 'warning':
+                case 'warn':
+                    entryLevel = 'warning';
+                    break;
+                case 'error':
+                    entryLevel = 'error';
+                    break;
+                case 'debug':
+                    entryLevel = 'debug';
+                    break;
+                case 'fatal':
+                case 'critical':
+                    entryLevel = 'error'; // Map fatal/critical to error for filtering
+                    break;
+                default:
+                    // Try class-based detection as secondary method
+                    if (levelBadge.classList.contains('log-level-error')) {
+                        entryLevel = 'error';
+                    } else if (levelBadge.classList.contains('log-level-warning')) {
+                        entryLevel = 'warning';
+                    } else if (levelBadge.classList.contains('log-level-info')) {
+                        entryLevel = 'info';
+                    } else if (levelBadge.classList.contains('log-level-debug')) {
+                        entryLevel = 'debug';
+                    } else {
+                        // NO FALLBACK - if we can't determine the level, hide it
+                        entryLevel = null;
+                    }
+            }
+            
+            // Show or hide based on filter match
+            if (entryLevel && entryLevel === selectedLevel) {
+                logEntry.style.display = '';
+            } else {
+                logEntry.style.display = 'none';
+            }
+        } else {
+            // If no level badge found, hide the entry when filtering
+            logEntry.style.display = 'none';
         }
     },
 
