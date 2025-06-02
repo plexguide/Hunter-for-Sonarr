@@ -3582,7 +3582,14 @@ let huntarrUI = {
             /^\s*\}?,?\s*$/,                     // Just closing brace
             /^\s*\[?\s*$/,                       // Just opening bracket
             /^\s*\]?,?\s*$/,                     // Just closing bracket
-            /^,?\s*$/                            // Just comma or whitespace
+            /^,?\s*$/,                           // Just comma or whitespace
+            /^[^"]*':\s*[^,]*,.*'.*':/,          // Mid-object fragments like "g_items': 1, 'hunt_upgrade_items': 0"
+            /^[a-zA-Z_][a-zA-Z0-9_]*':\s*\d+,/,  // Property names starting without quotes
+            /^[a-zA-Z_][a-zA-Z0-9_]*':\s*True|False,/, // Boolean properties without opening quotes
+            /^[a-zA-Z_][a-zA-Z0-9_]*':\s*'[^']*',/, // String properties without opening quotes
+            /.*':\s*\d+,.*':\s*\d+,/,            // Multiple numeric properties in sequence
+            /.*':\s*True,.*':\s*False,/,         // Multiple boolean properties in sequence
+            /.*':\s*'[^']*',.*':\s*'[^']*',/     // Multiple string properties in sequence
         ];
         
         return jsonPatterns.some(pattern => pattern.test(trimmed));
