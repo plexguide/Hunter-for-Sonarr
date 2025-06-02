@@ -63,6 +63,23 @@
         </div>
     </div>
     
+    <!-- Pagination controls like history section -->
+    <div class="pagination-controls">
+        <button id="logsPrevPage" class="pagination-button"><i class="fas fa-chevron-left"></i> Previous</button>
+        <span id="logsPageInfo">Page <span id="logsCurrentPage">1</span> of <span id="logsTotalPages">1</span></span>
+        <button id="logsNextPage" class="pagination-button">Next <i class="fas fa-chevron-right"></i></button>
+        
+        <div class="page-size-selector">
+            <label for="logsPageSize">Show:</label>
+            <select id="logsPageSize">
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100" selected>100</option>
+                <option value="200">200</option>
+            </select>
+        </div>
+    </div>
+    
     <div id="logsContainer" class="logs"></div>
 </section>
 
@@ -660,6 +677,20 @@
         #logsSection {
             padding-bottom: 80px;
         }
+        
+        /* Mobile pagination controls */
+        .pagination-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 0;
+        }
+        
+        .page-size-selector {
+            margin-left: 0;
+            margin-top: 5px;
+        }
     }
     
     /* For dropdowns with many items, position upward if near bottom of screen */
@@ -892,15 +923,114 @@
         box-shadow: 0 0 5px rgba(255, 255, 255, 0.2) !important;
         transform: none !important;
     }
+    
+    /* Pagination controls styling to match history section */
+    .pagination-controls {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 15px;
+        margin: 20px 0;
+        padding: 0;
+    }
+    
+    .pagination-button {
+        background: linear-gradient(135deg, rgba(30, 39, 56, 0.8) 0%, rgba(14, 20, 32, 0.8) 100%);
+        border: 1px solid rgba(90, 109, 137, 0.3);
+        border-radius: 6px;
+        color: rgba(255, 255, 255, 0.9);
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .pagination-button:hover:not(:disabled) {
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.8) 0%, rgba(41, 128, 185, 0.9) 100%);
+        border-color: rgba(52, 152, 219, 0.6);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+    }
+    
+    .pagination-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    #logsPageInfo {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+        font-weight: 500;
+        padding: 0 10px;
+    }
+    
+    .page-size-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 20px;
+    }
+    
+    .page-size-selector label {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .page-size-selector select {
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.8) 0%, rgba(41, 128, 185, 0.9) 100%);
+        border: 1px solid rgba(52, 152, 219, 0.6);
+        border-radius: 4px;
+        color: rgba(255, 255, 255, 0.95);
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        outline: none;
+        transition: all 0.3s ease;
+        min-width: 60px;
+    }
+    
+    .page-size-selector select:hover {
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.9) 0%, rgba(41, 128, 185, 1.0) 100%);
+        border-color: rgba(52, 152, 219, 0.8);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+    }
+    
+    .page-size-selector select option {
+        background: #1a1e2a;
+        color: rgba(255, 255, 255, 0.9);
+        padding: 4px 8px;
+    }
 </style>
 
 <script>
 // Fix auto-scroll to work with natural page flow
 document.addEventListener('DOMContentLoaded', function() {
     const autoScrollCheckbox = document.getElementById('autoScrollCheckbox');
+    const logsContainer = document.getElementById('logsContainer');
+    
+    // Simple pagination controls (non-functional for now to not interfere with streaming)
+    const logsPrevPage = document.getElementById('logsPrevPage');
+    const logsNextPage = document.getElementById('logsNextPage');
+    const logsCurrentPage = document.getElementById('logsCurrentPage');
+    const logsTotalPages = document.getElementById('logsTotalPages');
+    const logsPageSize = document.getElementById('logsPageSize');
+    
+    // Set default values
+    if (logsCurrentPage) logsCurrentPage.textContent = '1';
+    if (logsTotalPages) logsTotalPages.textContent = '1';
+    if (logsPrevPage) logsPrevPage.disabled = true;
+    if (logsNextPage) logsNextPage.disabled = true;
     
     if (autoScrollCheckbox) {
-        // Override the auto-scroll behavior for natural page flow
+        // Simple auto-scroll behavior for natural page flow - don't interfere with streaming
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
                 if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
@@ -924,7 +1054,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Observe the logs container for new entries
-        const logsContainer = document.getElementById('logsContainer');
         if (logsContainer) {
             observer.observe(logsContainer, {
                 childList: true,
@@ -933,4 +1062,184 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+// Set default values
+if (logsCurrentPage) logsCurrentPage.textContent = '1';
+if (logsTotalPages) logsTotalPages.textContent = '1';
+if (logsPrevPage) logsPrevPage.disabled = true;
+if (logsNextPage) logsNextPage.disabled = true;
+
+// Simple pagination functionality that works with displayed logs
+let pageSize = 100; // Default page size
+let currentPage = 1;
+
+function updateLogsPagination() {
+    if (!logsContainer) return;
+    
+    // First, clear any pagination hiding to see what's naturally visible  
+    const allLogEntries = logsContainer.querySelectorAll('.log-entry');
+    allLogEntries.forEach(entry => {
+        if (entry.hasAttribute('data-hidden-by-pagination')) {
+            entry.removeAttribute('data-hidden-by-pagination');
+            entry.style.display = '';
+        }
+    });
+    
+    // Get entries that are visible after log level filtering
+    const visibleLogEntries = Array.from(allLogEntries).filter(entry => {
+        const style = window.getComputedStyle(entry);
+        return style.display !== 'none';
+    });
+    
+    const totalLogs = visibleLogEntries.length;
+    const totalPages = Math.max(1, Math.ceil(totalLogs / pageSize));
+    
+    // Update pagination display
+    if (logsCurrentPage) logsCurrentPage.textContent = currentPage;
+    if (logsTotalPages) logsTotalPages.textContent = totalPages;
+    
+    // Update button states
+    if (logsPrevPage) logsPrevPage.disabled = currentPage <= 1;
+    if (logsNextPage) logsNextPage.disabled = currentPage >= totalPages;
+    
+    // Apply pagination to visible entries only
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    
+    visibleLogEntries.forEach((logEntry, index) => {
+        if (index < startIndex || index >= endIndex) {
+            logEntry.style.display = 'none';
+            logEntry.setAttribute('data-hidden-by-pagination', 'true');
+        }
+    });
+}
+
+// Handle page size change
+function handlePageSizeChange() {
+    if (logsPageSize) {
+        pageSize = parseInt(logsPageSize.value);
+        currentPage = 1; // Reset to first page
+        updateLogsPagination();
+    }
+}
+
+// Handle page navigation
+function goToLogsPage(page) {
+    const allLogEntries = logsContainer.querySelectorAll('.log-entry');
+    const totalLogs = allLogEntries.length;
+    const totalPages = Math.max(1, Math.ceil(totalLogs / pageSize));
+    
+    if (page >= 1 && page <= totalPages) {
+        currentPage = page;
+        updateLogsPagination();
+        
+        // Scroll to top when changing pages
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// Event listeners for pagination
+if (logsPrevPage) {
+    logsPrevPage.addEventListener('click', () => goToLogsPage(currentPage - 1));
+}
+
+if (logsNextPage) {
+    logsNextPage.addEventListener('click', () => goToLogsPage(currentPage + 1));
+}
+
+if (logsPageSize) {
+    logsPageSize.addEventListener('change', handlePageSizeChange);
+}
+
+// Add event listener to log level selector to update pagination when filter changes
+const logLevelSelect = document.getElementById('logLevelSelect');
+if (logLevelSelect) {
+    logLevelSelect.addEventListener('change', function() {
+        currentPage = 1; // Reset to first page when filter changes
+        // Use a small delay to let the filtering complete before updating pagination
+        setTimeout(() => {
+            updateLogsPagination();
+        }, 100);
+    });
+}
+
+// Add event listener to app selector to update pagination when filter changes
+const logAppSelect = document.getElementById('logAppSelect');
+if (logAppSelect) {
+    logAppSelect.addEventListener('change', function() {
+        currentPage = 1; // Reset to first page when filter changes
+        // Use a small delay to let the filtering complete before updating pagination
+        setTimeout(() => {
+            updateLogsPagination();
+        }, 100);
+    });
+}
+
+// Add event listeners for search functionality
+const logSearchInput = document.getElementById('logSearchInput');
+const logSearchButton = document.getElementById('logSearchButton');
+const clearSearchButton = document.getElementById('clearSearchButton');
+
+if (logSearchInput) {
+    logSearchInput.addEventListener('input', function() {
+        currentPage = 1; // Reset to first page when search changes
+        setTimeout(() => {
+            updateLogsPagination();
+        }, 100);
+    });
+}
+
+if (logSearchButton) {
+    logSearchButton.addEventListener('click', function() {
+        currentPage = 1; // Reset to first page when search is performed
+        setTimeout(() => {
+            updateLogsPagination();
+        }, 100);
+    });
+}
+
+if (clearSearchButton) {
+    clearSearchButton.addEventListener('click', function() {
+        currentPage = 1; // Reset to first page when search is cleared
+        setTimeout(() => {
+            updateLogsPagination();
+        }, 100);
+    });
+}
+
+// Update pagination whenever new logs are added
+const logObserver = new MutationObserver(function(mutations) {
+    let hasNewLogs = false;
+    
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+            const hasLogEntry = Array.from(mutation.addedNodes).some(node => 
+                node.nodeType === Node.ELEMENT_NODE && 
+                node.classList?.contains('log-entry')
+            );
+            if (hasLogEntry) {
+                hasNewLogs = true;
+            }
+        }
+    });
+    
+    if (hasNewLogs) {
+        // Update pagination when new logs arrive
+        updateLogsPagination();
+    }
+});
+
+// Observe logs container for new entries
+if (logsContainer) {
+    logObserver.observe(logsContainer, {
+        childList: true,
+        subtree: true
+    });
+}
+
+// Initial pagination update
+updateLogsPagination();
 </script>
