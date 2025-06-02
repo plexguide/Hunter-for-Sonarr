@@ -1081,12 +1081,22 @@ function updateLogsPagination() {
     allLogEntries.forEach(entry => {
         if (entry.hasAttribute('data-hidden-by-pagination')) {
             entry.removeAttribute('data-hidden-by-pagination');
-            entry.style.display = '';
+            // Only restore display if it wasn't hidden by log level filtering
+            if (!entry.hasAttribute('data-hidden-by-filter')) {
+                entry.style.display = '';
+            }
         }
     });
     
     // Get entries that are visible after log level filtering
+    // Check both computed style AND our filter attribute to avoid race conditions
     const visibleLogEntries = Array.from(allLogEntries).filter(entry => {
+        // Skip if explicitly hidden by log level filter
+        if (entry.hasAttribute('data-hidden-by-filter')) {
+            return false;
+        }
+        
+        // Also check computed style as fallback
         const style = window.getComputedStyle(entry);
         return style.display !== 'none';
     });
@@ -1125,8 +1135,16 @@ function handlePageSizeChange() {
 
 // Handle page navigation
 function goToLogsPage(page) {
+    if (!logsContainer) return;
+    
     const allLogEntries = logsContainer.querySelectorAll('.log-entry');
-    const totalLogs = allLogEntries.length;
+    
+    // Only count entries not hidden by log level filtering
+    const visibleLogEntries = Array.from(allLogEntries).filter(entry => {
+        return !entry.hasAttribute('data-hidden-by-filter');
+    });
+    
+    const totalLogs = visibleLogEntries.length;
     const totalPages = Math.max(1, Math.ceil(totalLogs / pageSize));
     
     if (page >= 1 && page <= totalPages) {
@@ -1159,10 +1177,10 @@ const logLevelSelect = document.getElementById('logLevelSelect');
 if (logLevelSelect) {
     logLevelSelect.addEventListener('change', function() {
         currentPage = 1; // Reset to first page when filter changes
-        // Use a small delay to let the filtering complete before updating pagination
+        // Use a longer delay to let the filtering complete before updating pagination
         setTimeout(() => {
             updateLogsPagination();
-        }, 100);
+        }, 300);
     });
 }
 
@@ -1171,10 +1189,10 @@ const logAppSelect = document.getElementById('logAppSelect');
 if (logAppSelect) {
     logAppSelect.addEventListener('change', function() {
         currentPage = 1; // Reset to first page when filter changes
-        // Use a small delay to let the filtering complete before updating pagination
+        // Use a longer delay to let the filtering complete before updating pagination
         setTimeout(() => {
             updateLogsPagination();
-        }, 100);
+        }, 300);
     });
 }
 
@@ -1188,7 +1206,7 @@ if (logSearchInput) {
         currentPage = 1; // Reset to first page when search changes
         setTimeout(() => {
             updateLogsPagination();
-        }, 100);
+        }, 300);
     });
 }
 
@@ -1197,7 +1215,7 @@ if (logSearchButton) {
         currentPage = 1; // Reset to first page when search is performed
         setTimeout(() => {
             updateLogsPagination();
-        }, 100);
+        }, 300);
     });
 }
 
@@ -1206,7 +1224,7 @@ if (clearSearchButton) {
         currentPage = 1; // Reset to first page when search is cleared
         setTimeout(() => {
             updateLogsPagination();
-        }, 100);
+        }, 300);
     });
 }
 
@@ -1227,8 +1245,10 @@ const logObserver = new MutationObserver(function(mutations) {
     });
     
     if (hasNewLogs) {
-        // Update pagination when new logs arrive
-        updateLogsPagination();
+        // Use a delay to avoid interfering with real-time log streaming
+        setTimeout(() => {
+            updateLogsPagination();
+        }, 500);
     }
 });
 
@@ -1241,5 +1261,7 @@ if (logsContainer) {
 }
 
 // Initial pagination update
-updateLogsPagination();
+setTimeout(() => {
+    updateLogsPagination();
+}, 1000);
 </script>

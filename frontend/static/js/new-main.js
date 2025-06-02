@@ -3383,6 +3383,9 @@ let huntarrUI = {
         // Apply the same filtering logic used in filterLogsByLevel to a single entry
         const levelBadge = logEntry.querySelector('.log-level-badge, .log-level, .log-level-error, .log-level-warning, .log-level-info, .log-level-debug');
         
+        // Clear any existing filter attribute first
+        logEntry.removeAttribute('data-hidden-by-filter');
+        
         if (levelBadge) {
             // Get the level from the badge text
             let entryLevel = '';
@@ -3390,7 +3393,7 @@ let huntarrUI = {
             // Get badge text and normalize it
             const badgeText = levelBadge.textContent.toLowerCase().trim();
             
-            // Strict mapping - only map known values, no fallbacks
+            // Fixed mapping - match the actual badge text created in log entries
             switch(badgeText) {
                 case 'information':
                 case 'info':
@@ -3426,15 +3429,17 @@ let huntarrUI = {
                     }
             }
             
-            // Show or hide based on filter match
+            // Show or hide based on filter match, using data attributes for pagination cooperation
             if (entryLevel && entryLevel === selectedLevel) {
                 logEntry.style.display = '';
             } else {
                 logEntry.style.display = 'none';
+                logEntry.setAttribute('data-hidden-by-filter', 'true');
             }
         } else {
             // If no level badge found, hide the entry when filtering
             logEntry.style.display = 'none';
+            logEntry.setAttribute('data-hidden-by-filter', 'true');
         }
     },
 
@@ -3447,9 +3452,24 @@ let huntarrUI = {
         
         console.log(`[huntarrUI] Filtering logs by level: ${selectedLevel}, total entries: ${totalCount}`);
         
+        // Debug: Log first few badge texts to see what we're working with
+        allLogEntries.forEach((entry, index) => {
+            if (index < 5) { // Log first 5 entries for debugging
+                const levelBadge = entry.querySelector('.log-level-badge, .log-level, .log-level-error, .log-level-warning, .log-level-info, .log-level-debug');
+                if (levelBadge) {
+                    console.log(`[huntarrUI] Entry ${index}: Badge text = "${levelBadge.textContent.trim()}", Classes = ${levelBadge.className}`);
+                }
+            }
+        });
+        
+        // Clear any existing filter attributes first
+        allLogEntries.forEach(entry => {
+            entry.removeAttribute('data-hidden-by-filter');
+        });
+        
         allLogEntries.forEach(entry => {
             if (selectedLevel === 'all') {
-                // Show all entries
+                // Show all entries - remove any filter hiding
                 entry.style.display = '';
                 visibleCount++;
             } else {
@@ -3463,7 +3483,7 @@ let huntarrUI = {
                     // Get badge text and normalize it
                     const badgeText = levelBadge.textContent.toLowerCase().trim();
                     
-                    // Strict mapping - only map known values, no fallbacks
+                    // Fixed mapping - match the actual badge text created in log entries
                     switch(badgeText) {
                         case 'information':
                         case 'info':
@@ -3494,25 +3514,37 @@ let huntarrUI = {
                             } else if (levelBadge.classList.contains('log-level-debug')) {
                                 entryLevel = 'debug';
                             } else {
-                                // NO FALLBACK - if we can't determine the level, don't show it
+                                // Log unmapped badge text for debugging
                                 console.log(`[huntarrUI] Unmapped badge text: "${badgeText}" - hiding entry`);
                                 entryLevel = null; // Set to null to indicate unmapped
                             }
                     }
                     
-                    // Only show if we have a valid level match
+                    // Show or hide based on filter match, using data attributes for pagination cooperation
                     if (entryLevel && entryLevel === selectedLevel) {
                         entry.style.display = '';
                         visibleCount++;
                     } else {
                         entry.style.display = 'none';
+                        entry.setAttribute('data-hidden-by-filter', 'true');
                     }
                 } else {
                     // If no level badge found, hide the entry when filtering
                     entry.style.display = 'none';
+                    entry.setAttribute('data-hidden-by-filter', 'true');
                 }
             }
         });
+        
+        // Hide pagination if filtering (since pagination doesn't work with filtering)
+        const paginationControls = document.querySelector('.pagination-controls');
+        if (paginationControls) {
+            if (selectedLevel === 'all') {
+                paginationControls.style.display = '';
+            } else {
+                paginationControls.style.display = 'none';
+            }
+        }
         
         // Auto-scroll to bottom if auto-scroll is enabled and we're showing entries
         if (this.autoScroll && this.elements.autoScrollCheckbox && this.elements.autoScrollCheckbox.checked && visibleCount > 0) {
