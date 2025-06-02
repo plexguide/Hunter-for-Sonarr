@@ -604,60 +604,7 @@
         // Initial button state check
         updateButtonState();
         
-        // Add schedule button handler
-        if (addScheduleButton) {
-            addScheduleButton.addEventListener('click', function() {
-                // Button is only clickable when days are selected, so no need to check again
-                const hour = document.getElementById('scheduleHour').value;
-                const minute = document.getElementById('scheduleMinute').value;
-                const action = document.getElementById('scheduleAction').value;
-                const app = document.getElementById('scheduleApp').value;
-                
-                // Get selected days
-                const days = [];
-                document.querySelectorAll('.day-input:checked').forEach(input => {
-                    const day = input.id.replace('day-', '');
-                    days.push(day);
-                });
-                
-                console.debug('Creating schedule:', {
-                    time: `${hour}:${minute}`,
-                    days: days,
-                    action: action,
-                    app: app
-                });
-                
-                // Here you would normally send this data to the backend
-                // For now, just show a success message
-                alert('Schedule added successfully!');
-                
-                // Clear the form
-                document.querySelectorAll('.day-input:checked').forEach(input => {
-                    input.checked = false;
-                });
-                
-                // Update button state after clearing
-                updateButtonState();
-            });
-        }
-        
-        // Edit schedule buttons
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.edit-schedule')) {
-                const scheduleId = e.target.closest('.edit-schedule').getAttribute('data-id');
-                console.debug('Edit schedule:', scheduleId);
-                // Here you would load the schedule data into the form
-                alert('Edit functionality would load schedule data into the form above.');
-            }
-            
-            if (e.target.closest('.delete-schedule')) {
-                const scheduleId = e.target.closest('.delete-schedule').getAttribute('data-id');
-                if (confirm('Are you sure you want to delete this schedule?')) {
-                    console.debug('Delete schedule:', scheduleId);
-                    // Here you would delete the schedule
-                    e.target.closest('.schedule-item').remove();
-                }
-            }
-        });
+        // Note: Add schedule functionality is handled by scheduling.js
+        // This script only handles the button state management
     });
 </script>

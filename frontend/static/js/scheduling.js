@@ -743,13 +743,8 @@ function addSchedule() {
     }
     
     if (!anyDaySelected) {
-        // Assuming huntarrUI is globally available
-        if (window.huntarrUI && typeof window.huntarrUI.showNotification === 'function') {
-            huntarrUI.showNotification('Please select at least one day to save the schedule.', 'error');
-        } else {
-            alert('Please select at least one day to save the schedule.'); // Fallback
-        }
-        console.error('Validation Error: No day selected for the new schedule.');
+        // Validation is now handled by button state management - no need for warnings
+        console.debug('No day selected - this should be prevented by disabled button state');
         return; 
     }
     
@@ -797,8 +792,8 @@ function addSchedule() {
     // Update UI
     renderSchedules();
     
-    // Reset day checkboxes
-    resetDayCheckboxes();
+    // Don't reset day checkboxes - let user add multiple schedules with same days if needed
+    // resetDayCheckboxes(); // Removed to prevent automatic unchecking
 }
 
 // Execution history functionality has been removed as requested
