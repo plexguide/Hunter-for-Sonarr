@@ -138,18 +138,6 @@ def load_settings(app_type, use_cache=True):
                     current_settings[key] = value
                     updated = True
             
-            # Apply Sonarr migration (episodes -> seasons_packs) for Huntarr 7.5.0+
-            if app_type == "sonarr":
-                if current_settings.get("hunt_missing_mode") == "episodes":
-                    settings_logger.info("Migrating Sonarr hunt_missing_mode from 'episodes' to 'seasons_packs' (Huntarr 7.5.0+)")
-                    current_settings["hunt_missing_mode"] = "seasons_packs"
-                    updated = True
-                
-                if current_settings.get("upgrade_mode") == "episodes":
-                    settings_logger.info("Migrating Sonarr upgrade_mode from 'episodes' to 'seasons_packs' (Huntarr 7.5.0+)")
-                    current_settings["upgrade_mode"] = "seasons_packs"
-                    updated = True
-            
             # Apply Lidarr migration (artist -> album) for Huntarr 7.5.0+
             if app_type == "lidarr":
                 if current_settings.get("hunt_missing_mode") == "artist":
