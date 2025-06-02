@@ -53,16 +53,35 @@
         outline: none;
         transition: all 0.3s ease;
         min-width: 120px;
+        /* Add dropdown arrow */
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 12px;
+        padding-right: 28px;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
     }
     
     .apps-app-filter select:hover {
         background: linear-gradient(135deg, rgba(26, 30, 42, 0.9) 0%, rgba(22, 26, 38, 0.9) 100%);
         border-color: rgba(52, 152, 219, 0.5);
+        /* Maintain dropdown arrow on hover */
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 12px;
     }
     
     .apps-app-filter select:focus {
         border-color: rgba(52, 152, 219, 0.7);
         box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        /* Maintain dropdown arrow on focus */
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 12px;
     }
     
     .apps-app-filter select option {
