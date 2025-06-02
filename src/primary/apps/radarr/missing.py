@@ -121,22 +121,42 @@ def process_missing_movies(
             release_date_str = movie.get(release_type_field)
             if release_date_str:
                 try:
+                    # Improved date parsing logic to handle various ISO formats
+                    # Remove any milliseconds and normalize timezone
+                    clean_date_str = release_date_str
+                    
+                    # Handle milliseconds (e.g., "2024-01-01T00:00:00.000Z")
+                    if '.' in clean_date_str and 'Z' in clean_date_str:
+                        clean_date_str = clean_date_str.split('.')[0] + 'Z'
+                    
+                    # Handle different timezone formats
+                    if clean_date_str.endswith('Z'):
+                        clean_date_str = clean_date_str[:-1] + '+00:00'
+                    elif '+' not in clean_date_str and '-' not in clean_date_str[-6:]:
+                        # No timezone info, assume UTC
+                        clean_date_str += '+00:00'
+                    
                     # Parse the release date
-                    release_date = datetime.datetime.fromisoformat(release_date_str.replace('Z', '+00:00'))
+                    release_date = datetime.datetime.fromisoformat(clean_date_str)
+                    
                     if release_date <= now:
                         filtered_movies.append(movie)
                     else:
-                        radarr_logger.debug(f"Skipping future movie ID {movie.get('id')} ('{movie.get('title')}') with {release_type} release date: {release_date_str}")
+                        radarr_logger.debug(f"Skipping future movie ID {movie.get('id')} ('{movie.get('title')}') with {release_type} release date: {release_date_str} (parsed as: {release_date})")
                         skipped_count += 1
                 except ValueError as e:
-                    radarr_logger.warning(f"Could not parse {release_type} release date '{release_date_str}' for movie ID {movie.get('id')}. Error: {e}. Including it.")
+                    radarr_logger.warning(f"Could not parse {release_type} release date '{release_date_str}' for movie ID {movie.get('id')}. Error: {e}. Including it in search to be safe.")
                     filtered_movies.append(movie)  # Keep if date is invalid
             else:
-                filtered_movies.append(movie)  # Keep if no release date
+                # No release date available - include it in search
+                radarr_logger.debug(f"Movie ID {movie.get('id')} ('{movie.get('title')}') has no {release_type_field} date, including in search")
+                filtered_movies.append(movie)
         
         missing_movies = filtered_movies
         if skipped_count > 0:
             radarr_logger.info(f"Skipped {skipped_count} future movie releases based on {release_type} release date.")
+        
+        radarr_logger.debug(f"After future release filtering: {len(missing_movies)} movies remaining from {original_count} original")
 
     if not missing_movies:
         radarr_logger.info("No missing movies left to process after filtering future releases.")

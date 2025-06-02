@@ -12,6 +12,7 @@
   "sleep_duration": 900,
   "monitored_only": true,
   "skip_future_releases": true,
+  "release_type": "physical",
   "tag_processed_items": true,
 
   "hourly_cap": 20
