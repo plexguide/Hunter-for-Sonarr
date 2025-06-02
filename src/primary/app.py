@@ -16,13 +16,17 @@ def configure_logging():
     try:
         # Create a custom formatter that includes timezone information
         class TimezoneFormatter(logging.Formatter):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.converter = time.localtime  # Use local time instead of UTC
+                
             def formatTime(self, record, datefmt=None):
                 ct = self.converter(record.created)
                 if datefmt:
                     return time.strftime(datefmt, ct)
                 else:
-                    # Include timezone in the timestamp
-                    return time.strftime("%Y-%m-%d %H:%M:%S %z", ct)
+                    # Use local time without timezone suffix for consistency
+                    return time.strftime("%Y-%m-%d %H:%M:%S", ct)
         
         # Configure the formatter for all handlers
         formatter = TimezoneFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')

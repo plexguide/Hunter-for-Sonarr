@@ -8,8 +8,8 @@ services:
       - "9705:9705"
     volumes:
       - huntarr-config:/config
-    environment:
-      - TZ=America/New_York
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
 
 volumes:

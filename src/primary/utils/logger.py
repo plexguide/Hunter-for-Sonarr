@@ -8,6 +8,7 @@ import logging
 import sys
 import os
 import pathlib
+import time
 from typing import Dict, Optional
 
 # Use the centralized path configuration
@@ -35,6 +36,21 @@ APP_LOG_FILES = {
 logger: Optional[logging.Logger] = None
 app_loggers: Dict[str, logging.Logger] = {}
 
+# Custom formatter that uses local time instead of UTC
+class LocalTimeFormatter(logging.Formatter):
+    """Custom formatter that uses local time instead of UTC for log timestamps"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.converter = time.localtime  # Use local time instead of UTC
+    
+    def formatTime(self, record, datefmt=None):
+        ct = self.converter(record.created)
+        if datefmt:
+            return time.strftime(datefmt, ct)
+        else:
+            # Use local time format
+            return time.strftime("%Y-%m-%d %H:%M:%S", ct)
+
 def setup_main_logger():
     """Set up the main Huntarr logger."""
     global logger
@@ -61,7 +77,7 @@ def setup_main_logger():
 
     # Set format for the main logger
     log_format = "%(asctime)s - huntarr - %(levelname)s - %(message)s"
-    formatter = logging.Formatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
+    formatter = LocalTimeFormatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
     console_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
 
@@ -126,7 +142,7 @@ def get_logger(app_type: str) -> logging.Logger:
     
     # Set a distinct format for this app log
     log_format = f"%(asctime)s - huntarr.{app_type} - %(levelname)s - %(message)s"
-    formatter = logging.Formatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
+    formatter = LocalTimeFormatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
     
     console_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)

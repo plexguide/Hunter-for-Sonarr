@@ -99,7 +99,7 @@ def process_missing_items(
     
     # Filter out future releases if configured
     if skip_future_releases:
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = datetime.datetime.now().replace(tzinfo=datetime.timezone.utc)
         original_count = len(missing_items)
         # Whisparr item object has 'airDateUtc' for release dates
         missing_items = [

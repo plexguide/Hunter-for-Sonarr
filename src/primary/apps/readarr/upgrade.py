@@ -81,7 +81,7 @@ def process_cutoff_upgrades(
     # Filter out future releases if configured
     skip_future_releases = app_settings.get("skip_future_releases", True)
     if skip_future_releases:
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = datetime.datetime.now().replace(tzinfo=datetime.timezone.utc)
         original_count = len(upgrade_eligible_data)
         filtered_books = []
         for book in upgrade_eligible_data:

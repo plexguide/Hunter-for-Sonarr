@@ -102,7 +102,7 @@ def process_missing_albums(
         # --- Filter Future Releases --- #
         original_count = len(missing_items)
         if skip_future_releases:
-            now = datetime.datetime.now(datetime.timezone.utc)
+            now = datetime.datetime.now().replace(tzinfo=datetime.timezone.utc)
             valid_missing_items = []
             skipped_count = 0
             for item in missing_items:

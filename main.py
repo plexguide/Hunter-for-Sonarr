@@ -10,6 +10,7 @@ import sys
 import signal
 import logging # Use standard logging for initial setup
 import atexit
+import time
 
 # Import path configuration early to set up environment
 try:
@@ -26,7 +27,21 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src'
 # --- Early Logging Setup (Before importing app components) ---
 # Basic logging to capture early errors during import or setup
 log_level = logging.DEBUG if os.environ.get('DEBUG', 'false').lower() == 'true' else logging.INFO
+
+# Create a custom formatter that uses local time
+class LocalTimeFormatter(logging.Formatter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.converter = time.localtime  # Use local time instead of UTC
+
+# Set up logging with local time formatter
 logging.basicConfig(level=log_level, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+# Apply local time converter to all existing handlers
+for handler in logging.root.handlers:
+    if hasattr(handler, 'formatter') and handler.formatter:
+        handler.formatter.converter = time.localtime
+
 root_logger = logging.getLogger("HuntarrRoot") # Specific logger for this entry point
 root_logger.info("--- Huntarr Main Process Starting ---")
 root_logger.info(f"Python sys.path: {sys.path}")

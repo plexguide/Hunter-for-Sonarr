@@ -1023,11 +1023,16 @@ let huntarrUI = {
                         logEntry.classList.add(`log-${levelClass}`);
                     } else {
                         // Fallback for lines that don't match the expected format
+                        // Generate current timestamp for logs without timestamps
+                        const now = new Date();
+                        const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+                        const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS format
+                        
                         logEntry.innerHTML = `
                             <div class="log-entry-row">
                                 <span class="log-timestamp">
-                                    <span class="date">--</span>
-                                    <span class="time">--:--:--</span>
+                                    <span class="date">${currentDate}</span>
+                                    <span class="time">${currentTime}</span>
                                 </span>
                                 <span class="log-level-badge log-level-info">Information</span>
                                 <span class="log-source">SYSTEM</span>
@@ -1042,8 +1047,8 @@ let huntarrUI = {
                         else logEntry.classList.add('log-info');
                     }
                     
-                    // Add to logs container
-                    this.elements.logsContainer.appendChild(logEntry);
+                    // Add to logs container in chronological order
+                    this.insertLogInChronologicalOrder(logEntry);
                     
                     // Apply current log level filter to the new entry
                     const currentLogLevel = this.elements.logLevelSelect ? this.elements.logLevelSelect.value : 'all';
@@ -1135,6 +1140,85 @@ let huntarrUI = {
     clearLogs: function() {
         if (this.elements.logsContainer) {
             this.elements.logsContainer.innerHTML = '';
+        }
+    },
+    
+    // Insert log entry in chronological order to maintain proper reverse time sorting
+    insertLogInChronologicalOrder: function(newLogEntry) {
+        if (!this.elements.logsContainer || !newLogEntry) return;
+        
+        // Parse timestamp from the new log entry
+        const newTimestamp = this.parseLogTimestamp(newLogEntry);
+        
+        // If we can't parse the timestamp, just append to the end
+        if (!newTimestamp) {
+            this.elements.logsContainer.appendChild(newLogEntry);
+            return;
+        }
+        
+        // Get all existing log entries
+        const existingEntries = Array.from(this.elements.logsContainer.children);
+        
+        // If no existing entries, just add the new one
+        if (existingEntries.length === 0) {
+            this.elements.logsContainer.appendChild(newLogEntry);
+            return;
+        }
+        
+        // Find the correct position to insert (maintaining chronological order)
+        // Since CSS will reverse the order, we want older entries first in DOM
+        let insertPosition = null;
+        
+        for (let i = 0; i < existingEntries.length; i++) {
+            const existingTimestamp = this.parseLogTimestamp(existingEntries[i]);
+            
+            // If we can't parse existing timestamp, skip it
+            if (!existingTimestamp) continue;
+            
+            // If new log is newer than existing log, insert before it
+            if (newTimestamp > existingTimestamp) {
+                insertPosition = existingEntries[i];
+                break;
+            }
+        }
+        
+        // Insert in the correct position
+        if (insertPosition) {
+            this.elements.logsContainer.insertBefore(newLogEntry, insertPosition);
+        } else {
+            // If no position found, append to the end (oldest)
+            this.elements.logsContainer.appendChild(newLogEntry);
+        }
+    },
+    
+    // Parse timestamp from log entry DOM element
+    parseLogTimestamp: function(logEntry) {
+        if (!logEntry) return null;
+        
+        try {
+            // Look for timestamp elements
+            const dateSpan = logEntry.querySelector('.log-timestamp .date');
+            const timeSpan = logEntry.querySelector('.log-timestamp .time');
+            
+            if (!dateSpan || !timeSpan) return null;
+            
+            const dateText = dateSpan.textContent.trim();
+            const timeText = timeSpan.textContent.trim();
+            
+            // Skip invalid timestamps
+            if (!dateText || !timeText || dateText === '--' || timeText === '--:--:--') {
+                return null;
+            }
+            
+            // Combine date and time into a proper timestamp
+            const timestampString = `${dateText} ${timeText}`;
+            const timestamp = new Date(timestampString);
+            
+            // Return timestamp if valid, null otherwise
+            return isNaN(timestamp.getTime()) ? null : timestamp;
+        } catch (error) {
+            console.warn('[huntarrUI] Error parsing log timestamp:', error);
+            return null;
         }
     },
     
