@@ -84,17 +84,21 @@ const SettingsForms = {
                 <div class="setting-item">
                     <label for="sonarr-hunt-missing-mode"><a href="https://huntarr.io/threads/sonarr-missing-search-mode.16/" class="info-icon" title="Learn more about missing search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search Mode:</label>
                     <select id="sonarr-hunt-missing-mode" name="hunt_missing_mode">
-                        <option value="seasons_packs" ${settings.hunt_missing_mode === 'seasons_packs' || settings.hunt_missing_mode === 'episodes' || !settings.hunt_missing_mode ? 'selected' : ''}>Season Packs</option>
+                        <option value="seasons_packs" ${settings.hunt_missing_mode === 'seasons_packs' || !settings.hunt_missing_mode ? 'selected' : ''}>Season Packs</option>
                         <option value="shows" ${settings.hunt_missing_mode === 'shows' ? 'selected' : ''}>Shows</option>
+                        <option value="episodes" ${settings.hunt_missing_mode === 'episodes' ? 'selected' : ''}>Episodes (Not Recommended - High API Usage)</option>
                     </select>
-                    <p class="setting-help">How to search for missing Sonarr content (Season Packs recommended for all users, Episodes mode deprecated in Huntarr 7.5.0+)</p>
+                    <p class="setting-help">How to search for missing Sonarr content (Season Packs recommended for all users)</p>
+                    <p class="setting-help" style="color: #cc7a00; font-weight: bold; display: ${settings.hunt_missing_mode === 'episodes' ? 'block' : 'none'};" id="episodes-missing-warning">⚠️ Episodes mode makes excessive API calls and does not support tagging. Use only for targeting specific episodes. Season Packs mode is strongly recommended.</p>
                 </div>
                 <div class="setting-item">
                     <label for="sonarr-upgrade-mode"><a href="/Huntarr.io/docs/#/configuration?id=upgrade-modes" class="info-icon" title="Learn more about upgrade modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Mode:</label>
                     <select id="sonarr-upgrade-mode" name="upgrade_mode">
-                        <option value="seasons_packs" ${settings.upgrade_mode === 'seasons_packs' || settings.upgrade_mode === 'episodes' || !settings.upgrade_mode ? 'selected' : ''}>Season Packs</option>
+                        <option value="seasons_packs" ${settings.upgrade_mode === 'seasons_packs' || !settings.upgrade_mode ? 'selected' : ''}>Season Packs</option>
+                        <option value="episodes" ${settings.upgrade_mode === 'episodes' ? 'selected' : ''}>Episodes (Not Recommended - High API Usage)</option>
                     </select>
-                    <p class="setting-help">How to search for Sonarr upgrades (Episodes mode deprecated in Huntarr 7.5.0+, Season Packs mode recommended)</p>
+                    <p class="setting-help">How to search for Sonarr upgrades (Season Packs mode recommended)</p>
+                    <p class="setting-help" style="color: #cc7a00; font-weight: bold; display: ${settings.upgrade_mode === 'episodes' ? 'block' : 'none'};" id="episodes-upgrade-warning">⚠️ Episodes mode makes excessive API calls and does not support tagging. Use only for targeting specific episodes. Season Packs mode is strongly recommended.</p>
                 </div>
                 <div class="setting-item">
                     <label for="sonarr-hunt-missing-items"><a href="/Huntarr.io/docs/#/configuration?id=missing-items-search" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
@@ -153,6 +157,32 @@ const SettingsForms = {
 
         // Setup instance management (add/remove/test)
         SettingsForms.setupInstanceManagement(container, 'sonarr', settings.instances.length);
+        
+        // Add event listeners for episode mode warnings
+        const huntMissingModeSelect = container.querySelector('#sonarr-hunt-missing-mode');
+        const upgradeModelSelect = container.querySelector('#sonarr-upgrade-mode');
+        const episodesMissingWarning = container.querySelector('#episodes-missing-warning');
+        const episodesUpgradeWarning = container.querySelector('#episodes-upgrade-warning');
+        
+        if (huntMissingModeSelect && episodesMissingWarning) {
+            huntMissingModeSelect.addEventListener('change', function() {
+                if (this.value === 'episodes') {
+                    episodesMissingWarning.style.display = 'block';
+                } else {
+                    episodesMissingWarning.style.display = 'none';
+                }
+            });
+        }
+        
+        if (upgradeModelSelect && episodesUpgradeWarning) {
+            upgradeModelSelect.addEventListener('change', function() {
+                if (this.value === 'episodes') {
+                    episodesUpgradeWarning.style.display = 'block';
+                } else {
+                    episodesUpgradeWarning.style.display = 'none';
+                }
+            });
+        }
     },
     
     // Generate Radarr settings form

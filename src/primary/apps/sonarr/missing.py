@@ -35,8 +35,8 @@ def process_missing_episodes(
 ) -> bool:
     """
     Process missing episodes for Sonarr.
-    Supports seasons_packs and shows modes.
-    Episodes mode has been deprecated in Huntarr 7.5.0+ for efficiency.
+    Supports seasons_packs, shows, and episodes modes.
+    Episodes mode has been reinstated in 7.5.1+ as a non-default option with limitations.
     """
     if hunt_missing_items <= 0:
         sonarr_logger.info("'hunt_missing_items' setting is 0 or less. Skipping missing processing.")
@@ -61,8 +61,16 @@ def process_missing_episodes(
             skip_future_episodes, hunt_missing_items,
             command_wait_delay, command_wait_attempts, stop_check
         )
+    elif hunt_missing_mode == "episodes":
+        # Handle individual episode processing (reinstated with warnings)
+        sonarr_logger.warning("Episodes mode selected - WARNING: This mode makes excessive API calls and does not support tagging. Consider using Season Packs mode instead.")
+        return process_missing_episodes_mode(
+            api_url, api_key, instance_name, api_timeout, monitored_only, 
+            skip_future_episodes, hunt_missing_items,
+            command_wait_delay, command_wait_attempts, stop_check
+        )
     else:
-        sonarr_logger.error(f"Invalid hunt_missing_mode: {hunt_missing_mode}. Valid options are 'seasons_packs' or 'shows'. Episodes mode has been deprecated in Huntarr 7.5.0+.")
+        sonarr_logger.error(f"Invalid hunt_missing_mode: {hunt_missing_mode}. Valid options are 'seasons_packs', 'shows', or 'episodes'.")
         return False
 
 def process_missing_seasons_packs_mode(
@@ -410,6 +418,144 @@ def process_missing_shows_mode(
             sonarr_logger.error(f"Failed to trigger search for {show_title}.")
     
     sonarr_logger.info("Show-based missing episode processing complete.")
+    return processed_any
+
+def process_missing_episodes_mode(
+    api_url: str,
+    api_key: str,
+    instance_name: str,
+    api_timeout: int,
+    monitored_only: bool,
+    skip_future_episodes: bool,
+    hunt_missing_items: int,
+    command_wait_delay: int,
+    command_wait_attempts: int,
+    stop_check: Callable[[], bool]
+) -> bool:
+    """
+    Process missing episodes in individual episode mode.
+    
+    WARNING: This mode is less efficient than season packs mode and makes more API calls.
+    It does not support tagging functionality due to the way it processes individual episodes.
+    
+    This mode searches for individual missing episodes rather than complete seasons,
+    which can be useful for targeting specific episodes but is not recommended for most users.
+    """
+    processed_any = False
+    
+    sonarr_logger.warning("Using Episodes mode - This will make more API calls and does not support tagging")
+    
+    # Get missing episodes using random page selection for efficiency
+    missing_episodes = sonarr_api.get_missing_episodes_random_page(
+        api_url, api_key, api_timeout, monitored_only, hunt_missing_items * 2
+    )
+    
+    if not missing_episodes:
+        sonarr_logger.info("No missing episodes found for individual processing.")
+        return False
+    
+    # Filter out future episodes if configured
+    if skip_future_episodes:
+        now_unix = time.time()
+        original_count = len(missing_episodes)
+        filtered_episodes = []
+        skipped_count = 0
+        
+        for episode in missing_episodes:
+            air_date_str = episode.get('airDateUtc')
+            if air_date_str:
+                try:
+                    # Parse the air date and check if it's in the past
+                    air_date_unix = time.mktime(time.strptime(air_date_str, '%Y-%m-%dT%H:%M:%SZ'))
+                    if air_date_unix < now_unix:
+                        filtered_episodes.append(episode)
+                    else:
+                        skipped_count += 1
+                        sonarr_logger.debug(f"Skipping future episode ID {episode.get('id')} with air date: {air_date_str}")
+                except (ValueError, TypeError) as e:
+                    sonarr_logger.warning(f"Could not parse air date '{air_date_str}' for episode ID {episode.get('id')}. Error: {e}. Including it.")
+                    filtered_episodes.append(episode)  # Keep if date is invalid
+            else:
+                filtered_episodes.append(episode)  # Keep if no air date
+        
+        missing_episodes = filtered_episodes
+        if skipped_count > 0:
+            sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date.")
+    
+    if not missing_episodes:
+        sonarr_logger.info("No missing episodes left to process after filtering future episodes.")
+        return False
+    
+    # Filter out already processed episodes
+    unprocessed_episodes = []
+    for episode in missing_episodes:
+        episode_id = str(episode.get('id'))
+        if not is_processed("sonarr", instance_name, episode_id):
+            unprocessed_episodes.append(episode)
+        else:
+            sonarr_logger.debug(f"Skipping already processed episode ID: {episode_id}")
+    
+    sonarr_logger.info(f"Found {len(unprocessed_episodes)} unprocessed episodes out of {len(missing_episodes)} total.")
+    
+    if not unprocessed_episodes:
+        sonarr_logger.info("All missing episodes have been processed.")
+        return False
+    
+    # Apply randomization and limit
+    random.shuffle(unprocessed_episodes)
+    episodes_to_process = unprocessed_episodes[:hunt_missing_items]
+    
+    sonarr_logger.info(f"Processing {len(episodes_to_process)} individual missing episodes...")
+    
+    # Process each episode individually
+    processed_count = 0
+    for episode in episodes_to_process:
+        if stop_check():
+            sonarr_logger.info("Stop requested. Aborting episode processing.")
+            break
+        
+        episode_id = episode.get('id')
+        series_info = episode.get('series', {})
+        series_title = series_info.get('title', 'Unknown Series')
+        season_number = episode.get('seasonNumber', 'Unknown')
+        episode_number = episode.get('episodeNumber', 'Unknown')
+        episode_title = episode.get('title', 'Unknown Episode')
+        
+        try:
+            season_episode = f"S{season_number:02d}E{episode_number:02d}"
+        except (ValueError, TypeError):
+            season_episode = f"S{season_number}E{episode_number}"
+        
+        sonarr_logger.info(f"Processing episode: {series_title} - {season_episode} - {episode_title}")
+        
+        # Search for this specific episode
+        search_successful = sonarr_api.search_episode(api_url, api_key, api_timeout, [episode_id])
+        
+        if search_successful:
+            processed_any = True
+            processed_count += 1
+            
+            # Mark episode as processed
+            success = add_processed_id("sonarr", instance_name, str(episode_id))
+            sonarr_logger.debug(f"Added episode ID {episode_id} to processed list, success: {success}")
+            
+            # Log to history system
+            media_name = f"{series_title} - {season_episode} - {episode_title}"
+            log_processed_media("sonarr", media_name, str(episode_id), instance_name, "missing")
+            sonarr_logger.debug(f"Logged history entry for episode: {media_name}")
+            
+            # Increment statistics
+            increment_stat("sonarr", "hunted")
+            sonarr_logger.debug(f"Incremented sonarr hunted statistics for episode {episode_id}")
+            
+            # Note: No tagging is performed in episodes mode as it would be inefficient
+            # and could overwhelm the API with individual episode tag operations
+            
+        else:
+            sonarr_logger.error(f"Failed to trigger search for episode: {series_title} - {season_episode}")
+    
+    sonarr_logger.info(f"Processed {processed_count} individual missing episodes for Sonarr.")
+    sonarr_logger.warning("Episodes mode processing complete - consider using Season Packs mode for better efficiency")
     return processed_any
 
 def wait_for_command(

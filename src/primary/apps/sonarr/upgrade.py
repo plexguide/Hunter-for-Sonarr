@@ -31,7 +31,7 @@ def process_cutoff_upgrades(
 ) -> bool:
     """
     Process quality cutoff upgrades for Sonarr.
-    Uses seasons_packs mode for upgrades. Episodes mode has been deprecated in Huntarr 7.5.0+.
+    Supports seasons_packs and episodes modes. Episodes mode has been reinstated in 7.5.1+ as a non-default option with limitations.
     """
     if hunt_upgrade_items <= 0:
         sonarr_logger.info("'hunt_upgrade_items' setting is 0 or less. Skipping upgrade processing.")
@@ -41,14 +41,21 @@ def process_cutoff_upgrades(
     
     sonarr_logger.info(f"Using {upgrade_mode.upper()} mode for quality upgrades")
 
-    # Use seasons_packs mode only
+    # Use seasons_packs mode or episodes mode
     if upgrade_mode == "seasons_packs":
         return process_upgrade_seasons_mode(
             api_url, api_key, instance_name, api_timeout, monitored_only, 
             hunt_upgrade_items, command_wait_delay, command_wait_attempts, stop_check
         )
+    elif upgrade_mode == "episodes":
+        # Handle individual episode upgrades (reinstated with warnings)
+        sonarr_logger.warning("Episodes mode selected for upgrades - WARNING: This mode makes excessive API calls and does not support tagging. Consider using Season Packs mode instead.")
+        return process_upgrade_episodes_mode(
+            api_url, api_key, instance_name, api_timeout, monitored_only, 
+            hunt_upgrade_items, command_wait_delay, command_wait_attempts, stop_check
+        )
     else:
-        sonarr_logger.error(f"Invalid upgrade_mode: {upgrade_mode}. Only 'seasons_packs' mode is supported. Episodes mode has been deprecated in Huntarr 7.5.0+.")
+        sonarr_logger.error(f"Invalid upgrade_mode: {upgrade_mode}. Valid options are 'seasons_packs' or 'episodes'.")
         return False
 
 def log_season_pack_upgrade(api_url: str, api_key: str, api_timeout: int, series_id: int, season_number: int, instance_name: str):
@@ -430,6 +437,153 @@ def process_upgrade_shows_mode(
             sonarr_logger.error(f"Failed to trigger upgrade search command for {series_title}")
     
     sonarr_logger.info("Finished quality cutoff upgrades processing cycle (show mode) for Sonarr.")
+    return processed_any
+
+def process_upgrade_episodes_mode(
+    api_url: str,
+    api_key: str,
+    instance_name: str,
+    api_timeout: int,
+    monitored_only: bool,
+    hunt_upgrade_items: int,
+    command_wait_delay: int,
+    command_wait_attempts: int,
+    stop_check: Callable[[], bool]
+) -> bool:
+    """
+    Process upgrades in individual episode mode.
+    
+    WARNING: This mode is less efficient than season packs mode and makes more API calls.
+    It does not support tagging functionality due to the way it processes individual episodes.
+    
+    This mode searches for individual episode upgrades rather than complete seasons,
+    which can be useful for targeting specific episodes but is not recommended for most users.
+    """
+    processed_any = False
+    
+    sonarr_logger.warning("Using Episodes mode for upgrades - This will make more API calls and does not support tagging")
+    
+    # Use the efficient random page selection method to get a sample of cutoff unmet episodes
+    sonarr_logger.debug(f"Using random page selection for cutoff unmet episodes in episodes mode")
+    cutoff_unmet_episodes = sonarr_api.get_cutoff_unmet_episodes_random_page(
+        api_url, api_key, api_timeout, monitored_only, hunt_upgrade_items * 2)
+    
+    sonarr_logger.info(f"Received {len(cutoff_unmet_episodes)} cutoff unmet episodes from random page (before filtering).")
+    
+    if not cutoff_unmet_episodes:
+        sonarr_logger.info("No cutoff unmet episodes found in Sonarr for individual processing.")
+        return False
+        
+    # Always filter out future episodes
+    now_unix = time.time()
+    original_count = len(cutoff_unmet_episodes)
+    # Ensure airDateUtc exists and is not None before parsing
+    cutoff_unmet_episodes = [
+        ep for ep in cutoff_unmet_episodes
+        if ep.get('airDateUtc') and time.mktime(time.strptime(ep['airDateUtc'], '%Y-%m-%dT%H:%M:%SZ')) < now_unix
+    ]
+    skipped_count = original_count - len(cutoff_unmet_episodes)
+    if skipped_count > 0:
+        sonarr_logger.info(f"Skipped {skipped_count} future episodes based on air date for upgrades.")
+    
+    if stop_check(): 
+        sonarr_logger.info("Stop requested during upgrade processing.")
+        return processed_any
+    
+    # Filter out already processed episodes
+    unprocessed_episodes = []
+    for episode in cutoff_unmet_episodes:
+        episode_id = str(episode.get('id'))
+        if not is_processed("sonarr", instance_name, episode_id):
+            unprocessed_episodes.append(episode)
+        else:
+            sonarr_logger.debug(f"Skipping already processed episode ID: {episode_id}")
+    
+    sonarr_logger.info(f"Found {len(unprocessed_episodes)} unprocessed episodes needing upgrades out of {len(cutoff_unmet_episodes)} total.")
+    
+    if not unprocessed_episodes:
+        sonarr_logger.info("All cutoff unmet episodes have been processed.")
+        return False
+    
+    # Apply randomization and limit
+    random.shuffle(unprocessed_episodes)
+    episodes_to_process = unprocessed_episodes[:hunt_upgrade_items]
+    
+    sonarr_logger.info(f"Processing {len(episodes_to_process)} individual episodes for quality upgrades...")
+    
+    # Process each episode individually
+    processed_count = 0
+    for episode in episodes_to_process:
+        if stop_check():
+            sonarr_logger.info("Stop requested. Aborting episode upgrade processing.")
+            break
+        
+        episode_id = episode.get('id')
+        series_info = episode.get('series', {})
+        series_title = series_info.get('title', 'Unknown Series')
+        season_number = episode.get('seasonNumber', 'Unknown')
+        episode_number = episode.get('episodeNumber', 'Unknown')
+        episode_title = episode.get('title', 'Unknown Episode')
+        
+        try:
+            season_episode = f"S{season_number:02d}E{episode_number:02d}"
+        except (ValueError, TypeError):
+            season_episode = f"S{season_number}E{episode_number}"
+        
+        sonarr_logger.info(f"Processing upgrade for episode: {series_title} - {season_episode} - {episode_title}")
+        
+        # Search for this specific episode upgrade
+        search_successful = sonarr_api.search_episode(api_url, api_key, api_timeout, [episode_id])
+        
+        if search_successful:
+            # Wait for command to complete if configured
+            if command_wait_delay > 0 and command_wait_attempts > 0:
+                if wait_for_command(
+                    api_url, api_key, api_timeout, search_successful,
+                    command_wait_delay, command_wait_attempts, "Episode Upgrade Search", stop_check
+                ):
+                    processed_any = True
+                    processed_count += 1
+                    
+                    # Mark episode as processed
+                    success = add_processed_id("sonarr", instance_name, str(episode_id))
+                    sonarr_logger.debug(f"Added episode ID {episode_id} to processed list for upgrades, success: {success}")
+                    
+                    # Log to history system
+                    media_name = f"{series_title} - {season_episode} - {episode_title}"
+                    log_processed_media("sonarr", media_name, str(episode_id), instance_name, "upgrade")
+                    sonarr_logger.debug(f"Logged upgrade to history for episode: {media_name}")
+                    
+                    # Increment statistics
+                    increment_stat("sonarr", "upgraded")
+                    sonarr_logger.debug(f"Incremented sonarr upgraded statistics for episode {episode_id}")
+                    
+                    # Note: No tagging is performed in episodes mode as it would be inefficient
+                    # and could overwhelm the API with individual episode tag operations
+                else:
+                    sonarr_logger.warning(f"Episode upgrade search command for {series_title} - {season_episode} did not complete successfully")
+            else:
+                # No command waiting configured, consider it successful
+                processed_any = True
+                processed_count += 1
+                
+                # Mark episode as processed
+                success = add_processed_id("sonarr", instance_name, str(episode_id))
+                sonarr_logger.debug(f"Added episode ID {episode_id} to processed list for upgrades, success: {success}")
+                
+                # Log to history system
+                media_name = f"{series_title} - {season_episode} - {episode_title}"
+                log_processed_media("sonarr", media_name, str(episode_id), instance_name, "upgrade")
+                sonarr_logger.debug(f"Logged upgrade to history for episode: {media_name}")
+                
+                # Increment statistics
+                increment_stat("sonarr", "upgraded")
+                sonarr_logger.debug(f"Incremented sonarr upgraded statistics for episode {episode_id}")
+        else:
+            sonarr_logger.error(f"Failed to trigger upgrade search for episode: {series_title} - {season_episode}")
+    
+    sonarr_logger.info(f"Processed {processed_count} individual episode upgrades for Sonarr.")
+    sonarr_logger.warning("Episodes mode upgrade processing complete - consider using Season Packs mode for better efficiency")
     return processed_any
 
 def wait_for_command(
