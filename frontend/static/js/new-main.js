@@ -1073,9 +1073,12 @@ let huntarrUI = {
                         document.dispatchEvent(swaparrEvent);
                     }
                     
-                    // Auto-scroll to bottom if enabled
+                    // Auto-scroll to top to show newest entries (logs are in reverse order)
                     if (this.autoScroll) {
-                        this.elements.logsContainer.scrollTop = this.elements.logsContainer.scrollHeight;
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
                     }
                 } catch (error) {
                     console.error('[huntarrUI] Error processing log message:', error, 'Data:', event.data);
@@ -3552,12 +3555,13 @@ let huntarrUI = {
             }
         }
         
-        // Auto-scroll to bottom if auto-scroll is enabled and we're showing entries
+        // Auto-scroll to top to show newest entries (logs are in reverse order)
         if (this.autoScroll && this.elements.autoScrollCheckbox && this.elements.autoScrollCheckbox.checked && visibleCount > 0) {
             setTimeout(() => {
-                if (this.elements.logsContainer) {
-                    this.elements.logsContainer.scrollTop = this.elements.logsContainer.scrollHeight;
-                }
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
             }, 100);
         }
         
