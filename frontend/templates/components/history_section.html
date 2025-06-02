@@ -53,7 +53,7 @@
     </div>
     
     <div class="history-container">
-        <div class="modern-table-wrapper force-scrollbar">
+        <div class="modern-table-wrapper">
             <table class="modern-table history-table">
                 <thead>
                     <tr>
@@ -455,13 +455,9 @@
     /* Modern-table-wrapper for scrollable tables - using the same approach as logs */
     .modern-table-wrapper {
         width: 100%;
-        height: calc(100vh - 200px); /* Same method used in logs section */
-        overflow-y: auto;
-        overflow-x: auto;
         position: relative;
         border-radius: 8px;
         box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
-        padding-right: 5px;
         background: linear-gradient(135deg, rgba(30, 39, 56, 0.95) 0%, rgba(14, 20, 32, 0.95) 50%, rgba(16, 24, 36, 0.95) 100%);
         border: 1px solid rgba(90, 109, 137, 0.15);
         /* Add gradient glow border effect */
@@ -798,10 +794,8 @@
         justify-content: center;
         align-items: center;
         gap: 15px;
-        margin-top: 20px;
-        padding: 10px;
-        background: rgba(22, 26, 34, 0.9);
-        z-index: 1000;
+        margin: 20px 0;
+        padding: 0;
     }
     
     /* Mobile-specific styling */
@@ -899,12 +893,10 @@
         
         .pagination-controls {
             flex-wrap: wrap;
-            margin: 0;
-            display: flex;
             justify-content: center;
-            width: 100%;
-            padding: 10px 30px; /* Add horizontal padding to move buttons inward */
-            z-index: 1000;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 0;
         }
         
         .pagination-button {
@@ -920,18 +912,6 @@
         
         /* Ensure the table wrapper doesn't overflow in mobile */
         .modern-table-wrapper {
-            max-height: calc(100vh - 300px);
-            padding-bottom: 60px; /* Add padding to ensure content isn't hidden under pagination */
-        }
-        
-        /* Fix for small screen height */
-        @media (max-height: 700px) {
-            .pagination-controls {
-                position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important;
-                width: 100% !important;
-            }
         }
     }
 </style>
@@ -939,77 +919,13 @@
 <script>
     // Fixes for formatting the history items
     document.addEventListener('DOMContentLoaded', function() {
-        // Simplified scrollbar setup for history section - matches logs approach
-        const fixHistoryScrolling = function() {
-            // Apply minimal CSS needed for proper table scrolling
-            const style = document.createElement('style');
-            style.id = 'history-scrollbar-fix';
-            style.innerHTML = `
-                /* Ensure the history container allows proper scrolling */
-                .history-container {
-                    overflow: visible !important;
-                }
-                
-                /* Ensure the table wrapper has proper scrolling */
-                .modern-table-wrapper {
-                    height: calc(100vh - 200px) !important;
-                    overflow-y: auto !important;
-                    overflow-x: auto !important;
-                }
-                
-                /* Prevent text from wrapping in table cells except for the second column */
-                .modern-table td:not(:nth-child(2)), .history-table td:not(:nth-child(2)) {
-                    white-space: nowrap !important;
-                    overflow: hidden !important;
-                    text-overflow: ellipsis !important;
-                }
-            `;
-            document.head.appendChild(style);
-            
-            // Keep the table wrapper reference for potential future use
-            const tableWrapper = document.querySelector('.modern-table-wrapper');
-            if (tableWrapper) {
-                // Remove any inline styles that could be interfering
-                tableWrapper.style.removeProperty('overflow-y');
-                tableWrapper.style.removeProperty('overflow-x');
-                tableWrapper.style.removeProperty('height');
-                tableWrapper.style.removeProperty('max-height');
-                tableWrapper.style.removeProperty('min-height');
-                
-                // Let the CSS handle the scrollbar
-                tableWrapper.classList.remove('force-scrollbar');
-            }
-        };
-        
-        // Run immediately for history page
-        if (huntarrUI && huntarrUI.currentSection === 'history') {
-            setTimeout(fixHistoryScrolling, 100);
-        }
-        
-        // Add event listener for section changes
+        // Enhanced section switching for history
         document.addEventListener('sectionChanged', function(e) {
             if (e.detail.section === 'history') {
-                setTimeout(fixHistoryScrolling, 100);
-            } else {
-                // Remove existing style if it exists
-                const existingStyle = document.getElementById('history-scrollbar-fix');
-                if (existingStyle) {
-                    existingStyle.remove();
+                // Load history data when section becomes active
+                if (typeof historyModule !== 'undefined') {
+                    historyModule.loadHistory();
                 }
-                
-                // Force the table wrapper to have a fixed height to ensure scrollbar appears
-                const tableWrapper = document.querySelector('.modern-table-wrapper');
-                if (tableWrapper) {
-                    // Add a class to force scrollbars to be visible
-                    tableWrapper.classList.add('force-scrollbar');
-                }
-                
-                // Also clear inline styles
-                document.querySelectorAll('#app, .main-content, body, #main, .main-content > .inner, .section-content').forEach(container => {
-                    if (container) {
-                        container.style.overflow = '';
-                    }
-                });
             }
         });
         
@@ -1023,7 +939,7 @@
                 originalRenderHistoryData.call(this, data);
                 
                 // After the data is rendered, format the operation status columns
-                const operationCells = document.querySelectorAll('#historyTableBody tr td:nth-child(3)');
+                const operationCells = document.querySelectorAll('#historyTableBody tr td:nth-child(2)');
                 operationCells.forEach(cell => {
                     const operationText = cell.textContent.trim();
                     const statusClass = operationText.toLowerCase() === 'success' ? 'success' : 
