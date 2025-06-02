@@ -360,12 +360,74 @@
             width: 64px;
             height: 64px;
             margin: 0 auto 15px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .qr-code:hover {
+            transform: scale(1.05);
         }
         
         .qr-code img {
             width: 100%;
             height: 100%;
             display: block;
+        }
+        
+        /* QR Code Modal for enlargement */
+        .qr-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            cursor: pointer;
+        }
+        
+        .qr-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+        
+        .qr-modal img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            min-width: 256px;
+            min-height: 256px;
+        }
+        
+        .qr-modal-close {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .qr-modal-close:hover {
+            background: #c82333;
         }
         
         /* Responsive QR code for mobile */
@@ -498,9 +560,10 @@
                 <h2>Setup Two-Factor Authentication</h2>
                 <div class="qr-container">
                     <p>Scan this QR code with your auth app:</p>
-                    <div class="qr-code" id="qrCode">
+                    <div class="qr-code" id="qrCode" title="Click to enlarge">
                         <img src="" alt="QR Code" style="display: none;"> <!-- Add img tag, initially hidden -->
                     </div>
+                    <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: -10px;">Click QR code to enlarge</p>
                     <p>Or enter this code manually in your app:</p>
                     <div class="secret-key" id="secretKey">Generating...</div>
                     
@@ -589,6 +652,14 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="qr-modal">
+        <div class="qr-modal-content">
+            <button class="qr-modal-close" onclick="closeQRModal()">&times;</button>
+            <img id="qrModalImage" src="" alt="Enlarged QR Code">
         </div>
     </div>
 
@@ -798,9 +869,19 @@
                                     if (qrCodeImg) {
                                          qrCodeImg.src = twoFactorData.qr_code_url; // Set src directly
                                          qrCodeImg.style.display = 'block'; // Ensure it's visible
+                                         
+                                         // Add click event listener for modal
+                                         qrCodeElement.addEventListener('click', function() {
+                                             openQRModal(twoFactorData.qr_code_url);
+                                         });
                                     } else {
                                         // Fallback if img tag wasn't there initially
                                         qrCodeElement.innerHTML = `<img src="${twoFactorData.qr_code_url}" alt="QR Code" style="display: block; max-width: 100%; height: auto;">`;
+                                        
+                                        // Add click event listener for modal (fallback)
+                                        qrCodeElement.addEventListener('click', function() {
+                                            openQRModal(twoFactorData.qr_code_url);
+                                        });
                                     }
                                     secretKeyElement.textContent = twoFactorData.secret;
                                     showStep(2);
@@ -926,6 +1007,34 @@
             // Always use dark mode
             document.body.classList.add('dark-mode');
             localStorage.setItem('huntarr-dark-mode', 'true');
+        });
+        
+        // QR Code Modal Functions
+        function openQRModal(imageSrc) {
+            const modal = document.getElementById('qrModal');
+            const modalImage = document.getElementById('qrModalImage');
+            modalImage.src = imageSrc;
+            modal.style.display = 'block';
+        }
+        
+        function closeQRModal() {
+            const modal = document.getElementById('qrModal');
+            modal.style.display = 'none';
+        }
+        
+        // Close modal when clicking outside of it
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('qrModal');
+            if (event.target === modal) {
+                closeQRModal();
+            }
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeQRModal();
+            }
         });
     </script>
 </body>
