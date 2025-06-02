@@ -3304,73 +3304,63 @@ let huntarrUI = {
                 entry.style.display = '';
                 visibleCount++;
             } else {
-                // Check if this entry matches the selected level - updated selector to include .log-level-badge
+                // Check if this entry matches the selected level
                 const levelBadge = entry.querySelector('.log-level-badge, .log-level, .log-level-error, .log-level-warning, .log-level-info, .log-level-debug');
                 
                 if (levelBadge) {
-                    // Get the level from the badge text or class name
+                    // Get the level from the badge text
                     let entryLevel = '';
                     
-                    // First try to get from text content and normalize it
+                    // Get badge text and normalize it
                     const badgeText = levelBadge.textContent.toLowerCase().trim();
-                    if (badgeText) {
-                        // Map badge text to filter values - FIXED mapping for case sensitivity
-                        switch(badgeText) {
-                            case 'information':
-                            case 'info':
-                                entryLevel = 'info';
-                                break;
-                            case 'warning':
-                            case 'warn':
-                                entryLevel = 'warning';
-                                break;
-                            case 'error':
+                    
+                    // Strict mapping - only map known values, no fallbacks
+                    switch(badgeText) {
+                        case 'information':
+                        case 'info':
+                            entryLevel = 'info';
+                            break;
+                        case 'warning':
+                        case 'warn':
+                            entryLevel = 'warning';
+                            break;
+                        case 'error':
+                            entryLevel = 'error';
+                            break;
+                        case 'debug':
+                            entryLevel = 'debug';
+                            break;
+                        case 'fatal':
+                        case 'critical':
+                            entryLevel = 'error'; // Map fatal/critical to error for filtering
+                            break;
+                        default:
+                            // Try class-based detection as secondary method
+                            if (levelBadge.classList.contains('log-level-error')) {
                                 entryLevel = 'error';
-                                break;
-                            case 'debug':
+                            } else if (levelBadge.classList.contains('log-level-warning')) {
+                                entryLevel = 'warning';
+                            } else if (levelBadge.classList.contains('log-level-info')) {
+                                entryLevel = 'info';
+                            } else if (levelBadge.classList.contains('log-level-debug')) {
                                 entryLevel = 'debug';
-                                break;
-                            case 'fatal':
-                            case 'critical':
-                                entryLevel = 'error'; // Map fatal/critical to error for filtering
-                                break;
-                            default:
-                                // If no text match, try to extract from class names as fallback
-                                if (levelBadge.classList.contains('log-level-error')) entryLevel = 'error';
-                                else if (levelBadge.classList.contains('log-level-warning')) entryLevel = 'warning';
-                                else if (levelBadge.classList.contains('log-level-info')) entryLevel = 'info';
-                                else if (levelBadge.classList.contains('log-level-debug')) entryLevel = 'debug';
-                                else {
-                                    // Last resort - check the original badge text before lowercasing
-                                    const originalText = levelBadge.textContent.trim();
-                                    console.log(`[huntarrUI] Unmapped badge text: "${originalText}" (lowercase: "${badgeText}")`);
-                                    entryLevel = 'info'; // Default fallback
-                                }
-                        }
-                    } else {
-                        // Fallback to checking class names
-                        if (levelBadge.classList.contains('log-level-error')) entryLevel = 'error';
-                        else if (levelBadge.classList.contains('log-level-warning')) entryLevel = 'warning';
-                        else if (levelBadge.classList.contains('log-level-info')) entryLevel = 'info';
-                        else if (levelBadge.classList.contains('log-level-debug')) entryLevel = 'debug';
-                        else entryLevel = 'info'; // Default fallback
+                            } else {
+                                // NO FALLBACK - if we can't determine the level, don't show it
+                                console.log(`[huntarrUI] Unmapped badge text: "${badgeText}" - hiding entry`);
+                                entryLevel = null; // Set to null to indicate unmapped
+                            }
                     }
                     
-                    // Show/hide based on exact match with selected level
-                    if (entryLevel === selectedLevel) {
+                    // Only show if we have a valid level match
+                    if (entryLevel && entryLevel === selectedLevel) {
                         entry.style.display = '';
                         visibleCount++;
                     } else {
                         entry.style.display = 'none';
                     }
                 } else {
-                    // If no level badge found, show the entry when 'all' is selected or hide when filtering
-                    if (selectedLevel === 'all') {
-                        entry.style.display = '';
-                        visibleCount++;
-                    } else {
-                        entry.style.display = 'none';
-                    }
+                    // If no level badge found, hide the entry when filtering
+                    entry.style.display = 'none';
                 }
             }
         });

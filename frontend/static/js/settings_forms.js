@@ -1415,15 +1415,6 @@ const SettingsForms = {
                     <p class="setting-help" style="margin-left: -3ch !important;">Base URL path for reverse proxy (e.g., '/huntarr'). Leave empty for root path. Requires restart. Credit <a href="https://github.com/scr4tchy" target="_blank">scr4tchy</a>.</p>
                 </div>
                 <div class="setting-item">
-                    <label for="log_level"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#log-level" class="info-icon" title="Learn more about log levels" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Log Level:</label>
-                    <select id="log_level" name="log_level" style="width: 200px; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db;">
-                        <option value="ERROR" ${settings.log_level === 'ERROR' ? 'selected' : ''}>ERROR - Only errors</option>
-                        <option value="WARNING" ${settings.log_level === 'WARNING' ? 'selected' : ''}>WARNING - Warnings and errors</option>
-                        <option value="INFO" ${settings.log_level === 'INFO' ? 'selected' : ''}>INFO - General information</option>
-                        <option value="DEBUG" ${settings.log_level === 'DEBUG' ? 'selected' : ''}>DEBUG - Detailed debugging</option>
-                    </select>
-                    <p class="setting-help" style="margin-left: -3ch !important;">Control logging verbosity to reduce log spam or get more detailed information</p>
-                </div>
             </div>
 
             <div class="settings-group">
@@ -2136,11 +2127,6 @@ styleEl.innerHTML = `
     
     /* Mobile-friendly dropdown styling */
     @media (max-width: 768px) {
-        select[name="log_level"], select#log_level {
-            width: 100% !important;
-            max-width: none !important;
-            font-size: 16px !important; /* Prevent zoom on iOS */
-        }
         
         .setting-item select {
             width: 100% !important;
