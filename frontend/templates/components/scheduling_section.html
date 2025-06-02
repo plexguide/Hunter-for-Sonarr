@@ -112,7 +112,7 @@
                     
                     <!-- Add Button -->
                     <div class="form-actions">
-                        <button id="addScheduleButton" class="action-button">
+                        <button id="addScheduleButton" class="action-button" disabled>
                             <i class="fas fa-plus"></i> Add Schedule
                         </button>
                     </div>
@@ -203,6 +203,9 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
     }
     
     /* Schedule Form Panel */
@@ -361,6 +364,20 @@
         box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
     }
     
+    .action-button:disabled {
+        background: linear-gradient(135deg, rgba(90, 109, 137, 0.5) 0%, rgba(70, 89, 117, 0.5) 100%);
+        color: rgba(255, 255, 255, 0.5);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .action-button:disabled:hover {
+        background: linear-gradient(135deg, rgba(90, 109, 137, 0.5) 0%, rgba(70, 89, 117, 0.5) 100%);
+        transform: none;
+        box-shadow: none;
+    }
+    
     /* Current Schedules List */
     .schedules-list {
         border: 1px solid rgba(90, 109, 137, 0.2);
@@ -505,6 +522,16 @@
             justify-content: flex-start;
         }
         
+        .day-input {
+            width: 16px;
+            height: 16px;
+        }
+        
+        /* Mobile container spacing */
+        .scheduling-container {
+            padding: 0 15px;
+        }
+        
         /* Mobile schedule items - stack vertically */
         .schedule-item {
             flex-direction: column;
@@ -561,10 +588,26 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Scheduling section elements
         const addScheduleButton = document.getElementById('addScheduleButton');
+        const dayInputs = document.querySelectorAll('.day-input');
+        
+        // Function to check if any days are selected and enable/disable button
+        function updateButtonState() {
+            const anyDaySelected = Array.from(dayInputs).some(input => input.checked);
+            addScheduleButton.disabled = !anyDaySelected;
+        }
+        
+        // Add event listeners to all day checkboxes
+        dayInputs.forEach(input => {
+            input.addEventListener('change', updateButtonState);
+        });
+        
+        // Initial button state check
+        updateButtonState();
         
         // Add schedule button handler
         if (addScheduleButton) {
             addScheduleButton.addEventListener('click', function() {
+                // Button is only clickable when days are selected, so no need to check again
                 const hour = document.getElementById('scheduleHour').value;
                 const minute = document.getElementById('scheduleMinute').value;
                 const action = document.getElementById('scheduleAction').value;
@@ -576,11 +619,6 @@
                     const day = input.id.replace('day-', '');
                     days.push(day);
                 });
-                
-                if (days.length === 0) {
-                    alert('Please select at least one day for the schedule.');
-                    return;
-                }
                 
                 console.debug('Creating schedule:', {
                     time: `${hour}:${minute}`,
@@ -597,6 +635,9 @@
                 document.querySelectorAll('.day-input:checked').forEach(input => {
                     input.checked = false;
                 });
+                
+                // Update button state after clearing
+                updateButtonState();
             });
         }
         
