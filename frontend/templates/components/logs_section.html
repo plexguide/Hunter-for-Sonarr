@@ -12,7 +12,7 @@
                 <option value="radarr">🎬 Radarr</option>
                 <option value="lidarr">🎵 Lidarr</option>
                 <option value="readarr">📚 Readarr</option>
-                <option value="whisparr">🔞 Whisparr V2</option>
+                <option value="whisparr">💜 Whisparr V2</option>
                 <option value="eros">💜 Whisparr V3</option>
                 <option value="swaparr">🔄 Swaparr</option>
                 <option value="huntarr.hunting">🎯 Hunt Manager</option>
@@ -35,6 +35,10 @@
                 </select>
             </div>
             
+            <div class="connection-status">
+                Status: <span id="logConnectionStatus" class="status-disconnected">Disconnected</span>
+            </div>
+            
             <!-- Add search functionality -->  
             <div class="log-search">
                 <div class="search-results-info" id="logSearchResults"></div>
@@ -45,10 +49,6 @@
                 <button id="clearSearchButton" class="clear-search-button" style="display: none;">
                     <i class="fas fa-times"></i>
                 </button>
-            </div>
-            
-            <div class="connection-status">
-                Status: <span id="logConnectionStatus" class="status-disconnected">Disconnected</span>
             </div>
             
             <div class="log-options">
@@ -726,6 +726,34 @@
         border: 1px solid rgba(90, 109, 137, 0.3);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    /* Glowing ring around app filter - only visible when not in low usage mode */
+    body:not(.low-usage-mode) .log-app-filter::before {
+        content: '';
+        position: absolute;
+        top: -3px;
+        left: -3px;
+        right: -3px;
+        bottom: -3px;
+        border-radius: 12px;
+        background: linear-gradient(45deg, rgba(52, 152, 219, 0.4), rgba(155, 89, 182, 0.4), rgba(46, 204, 113, 0.4), rgba(52, 152, 219, 0.4));
+        background-size: 300% 300%;
+        animation: glowPulse 3s ease-in-out infinite;
+        z-index: -1;
+        opacity: 0.7;
+    }
+    
+    @keyframes glowPulse {
+        0%, 100% {
+            background-position: 0% 50%;
+            opacity: 0.5;
+        }
+        50% {
+            background-position: 100% 50%;
+            opacity: 0.8;
+        }
     }
     
     .log-app-filter:hover {
