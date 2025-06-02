@@ -946,7 +946,7 @@ let huntarrUI = {
                             'radarr': ['movie', 'film', 'radarr'],
                             'lidarr': ['album', 'artist', 'track', 'music', 'lidarr'],
                             'readarr': ['book', 'author', 'readarr'],
-                            'whisparr': ['scene', 'adult', 'whisparr'],
+                            'whisparr': ['scene', 'adult', 'whisparr', 'starting log stream for whisparr', 'configured and enabled whisparr', 'whisparr instances', 'whisparr logger'],
                             'eros': ['eros', 'whisparr v3', 'whisparrv3'],
                             'swaparr': ['added strike', 'max strikes reached', 'would have removed', 'strikes, removing download', 'processing stalled downloads', 'swaparr'],
                             'hunting': ['hunt manager', 'discovery tracker', 'hunting', 'hunt']
@@ -3589,7 +3589,16 @@ let huntarrUI = {
             /^[a-zA-Z_][a-zA-Z0-9_]*':\s*'[^']*',/, // String properties without opening quotes
             /.*':\s*\d+,.*':\s*\d+,/,            // Multiple numeric properties in sequence
             /.*':\s*True,.*':\s*False,/,         // Multiple boolean properties in sequence
-            /.*':\s*'[^']*',.*':\s*'[^']*',/     // Multiple string properties in sequence
+            /.*':\s*'[^']*',.*':\s*'[^']*',/,    // Multiple string properties in sequence
+            /^"[^"]*":\s*\[$/,                   // JSON key with opening bracket: "global": [
+            /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*\[$/,  // Property key with opening bracket: global: [
+            /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*\{$/,  // Property key with opening brace: config: {
+            /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*(True|False)$/i, // Property key with boolean: debug: false
+            /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*\d+$/,  // Property key with number: port: 9705
+            /^[a-zA-Z_]+\s+(Mode|Setting|Config|Option):\s*(True|False|\d+)$/i, // Config fragments: "ug Mode: False"
+            /^[a-zA-Z_]+\s*Mode:\s*(True|False)$/i, // Mode fragments: "Debug Mode: False"
+            /^[a-zA-Z_]+\s*Setting:\s*.*$/i,     // Setting fragments
+            /^[a-zA-Z_]+\s*Config:\s*.*$/i       // Config fragments
         ];
         
         return jsonPatterns.some(pattern => pattern.test(trimmed));
@@ -3609,6 +3618,15 @@ let huntarrUI = {
         
         // Skip lines that look like HTTP headers or other metadata
         if (/^(HTTP\/|Content-|Connection:|Host:|User-Agent:)/i.test(trimmed)) return true;
+        
+        // Skip partial words or fragments that don't form complete sentences
+        if (/^[a-zA-Z]{1,5}\s+(Mode|Setting|Config|Debug|Info|Error|Warning):/i.test(trimmed)) return true;
+        
+        // Skip single words that are clearly fragments
+        if (/^[a-zA-Z]{1,8}$/i.test(trimmed)) return true;
+        
+        // Skip lines that start with partial words and contain colons (config fragments)
+        if (/^[a-z]{1,8}\s*[A-Z]/i.test(trimmed) && trimmed.includes(':')) return true;
         
         return false;
     }
