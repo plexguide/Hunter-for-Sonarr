@@ -12,8 +12,8 @@ import datetime
 import traceback
 import logging
 from typing import List, Dict, Any, Optional, Union
-from src.primary.utils.logger import get_logger
-from src.primary.settings_manager import get_ssl_verify_setting
+from src.primary.utils.logger import get_logger, debug_log
+from src.primary import settings_manager
 
 # Get logger for the Lidarr app
 lidarr_logger = get_logger("lidarr")
@@ -21,9 +21,18 @@ lidarr_logger = get_logger("lidarr")
 # Use a session for better performance
 session = requests.Session()
 
+def get_ssl_verify_setting() -> bool:
+    """Get SSL verification setting from general configuration."""
+    try:
+        general_settings = settings_manager.load_settings("general")
+        return general_settings.get("ssl_verify", True)  # Default to True for security
+    except Exception as e:
+        lidarr_logger.warning(f"Error getting SSL verify setting: {e}. Using default (True).")
+        return True
+
 def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, params: Dict = None) -> Any:
     """
-    Make a request to the Lidarr API.
+    Generic function to make requests to Lidarr API (V1).
     
     Args:
         api_url: The base URL of the Lidarr API
@@ -31,58 +40,58 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         api_timeout: Timeout for the API request
         endpoint: The API endpoint to call
         method: HTTP method (GET, POST, PUT, DELETE)
-        data: Optional data to send with the request
-        params: Optional query parameters
+        data: Data to send in the request body (for POST/PUT)
+        params: Query parameters
         
     Returns:
-        The JSON response from the API, or None if the request failed
+        JSON response data, True for successful non-JSON responses, or None on error
     """
-    if not api_url or not api_key:
-        lidarr_logger.error("API URL or API key is missing. Check your settings.")
-        return None
-        
-    # Ensure api_url has a scheme
-    if not (api_url.startswith('http://') or api_url.startswith('https://')):
-        lidarr_logger.error(f"Invalid URL format: {api_url} - URL must start with http:// or https://")
-        return None
-        
-    # Make sure URL is properly formed
-    full_url = f"{api_url.rstrip('/')}/api/v1/{endpoint.lstrip('/')}"
-        
-    # Set up headers with User-Agent to identify Huntarr
-    headers = {
-        "X-Api-Key": api_key,
-        "Content-Type": "application/json",
-        "User-Agent": "Huntarr/1.0 (https://github.com/plexguide/Huntarr.io)"
-    }
-    
-    lidarr_logger.debug(f"Using User-Agent: {headers['User-Agent']}")
-    
-    # Get SSL verification setting
-    verify_ssl = get_ssl_verify_setting()
-    
-    if not verify_ssl:
-        lidarr_logger.debug("SSL verification disabled by user setting")
-    
-    lidarr_logger.debug(f"Lidarr API Request: {method} {full_url} Params: {params} Data: {data}")
-
     try:
-        response = session.request(
-            method=method.upper(),
-            url=full_url,
+        # Clean up the URL - ensure no double slashes
+        base_url = api_url.rstrip('/')
+        clean_endpoint = endpoint.lstrip('/')
+        
+        # Construct full URL with V1 API prefix for Lidarr
+        full_url = f"{base_url}/api/v1/{clean_endpoint}"
+        
+        # Setup headers
+        headers = {
+            "X-Api-Key": api_key,
+            "Content-Type": "application/json"
+        }
+        
+        # Get SSL verification setting
+        verify_ssl = get_ssl_verify_setting()
+        
+        # Log the request details
+        lidarr_logger.debug(f"Making {method} request to Lidarr: {full_url}")
+        if params:
+            lidarr_logger.debug(f"Request params: {params}")
+        if data:
+            debug_log("Lidarr API request payload", data, "lidarr")
+        
+        # Make the request
+        response = requests.request(
+            method.upper(),
+            full_url,
             headers=headers,
-            json=data if method.upper() in ["POST", "PUT"] else None,
+            json=data if data else None,
             params=params if method.upper() == "GET" else None,
             timeout=api_timeout,
             verify=verify_ssl
         )
             
         lidarr_logger.debug(f"Lidarr API Response Status: {response.status_code}")
-        # Log response body only in debug mode and if small enough
-        if lidarr_logger.level == logging.DEBUG and len(response.content) < 1000:
-             lidarr_logger.debug(f"Lidarr API Response Body: {response.text}")
-        elif lidarr_logger.level == logging.DEBUG:
-             lidarr_logger.debug(f"Lidarr API Response Body (truncated): {response.text[:500]}...")
+        # Use the improved debug_log function to safely log response data
+        if response.content and len(response.content) < 2000:
+            try:
+                response_data = response.json()
+                debug_log(f"Lidarr API Response from {endpoint}", response_data, "lidarr")
+            except json.JSONDecodeError:
+                # If it's not JSON, log safely as text but truncated
+                debug_log(f"Lidarr API Response (non-JSON) from {endpoint}", response.text[:500], "lidarr")
+        elif response.content:
+            lidarr_logger.debug(f"Lidarr API Response: Large response ({len(response.content)} bytes) - not logging content")
 
         # Check for successful response
         response.raise_for_status()
