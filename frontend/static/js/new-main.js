@@ -824,7 +824,7 @@ let huntarrUI = {
         let displayName = app.charAt(0).toUpperCase() + app.slice(1);
         if (app === 'whisparr') displayName = 'Whisparr V2';
         else if (app === 'eros') displayName = 'Whisparr V3';
-        else if (app === 'huntarr.hunting') displayName = 'Hunt Manager';
+        else if (app === 'hunting') displayName = 'Hunt Manager';
         if (this.elements.currentLogApp) this.elements.currentLogApp.textContent = displayName;
         // Switch to the selected app logs
         this.currentLogApp = app;
@@ -974,8 +974,8 @@ let huntarrUI = {
                             }
                         }
                         
-                        // Special fallback for huntarr.hunting logs
-                        if (logString.includes('[huntarr.hunting]')) {
+                        // Special fallback for hunting logs
+                        if (logString.includes('[hunting]')) {
                             logAppType = 'hunting';
                         }
                     }
@@ -1004,7 +1004,7 @@ let huntarrUI = {
                     }
 
                     // Determine if this log should be displayed based on the selected app tab
-                    const currentApp = this.currentLogApp === 'huntarr.hunting' ? 'hunting' : this.currentLogApp;
+                    const currentApp = this.currentLogApp === 'hunting' ? 'hunting' : this.currentLogApp;
                     const shouldDisplay = 
                         this.currentLogApp === 'all' || 
                         currentApp === logAppType;

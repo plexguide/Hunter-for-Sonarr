@@ -146,7 +146,9 @@ def check_episode_in_wanted(episode_info: Dict[str, Any], wanted_episodes: List[
                     break
         
         if season_num is None or episode_num is None:
-            logger.debug(f"Could not extract season/episode numbers from: {episode_title} or {series_title}")
+            # Only log debug message if there's actual content to work with
+            if episode_title.strip() or series_title.strip():
+                logger.debug(f"Could not extract season/episode numbers from: {episode_title} or {series_title}")
             return False
         
         # Look for matching episode in wanted list

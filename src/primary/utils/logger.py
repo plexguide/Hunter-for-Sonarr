@@ -188,19 +188,22 @@ def debug_log(message: str, data: object = None, app_type: Optional[str] = None)
     current_logger = get_logger(app_type) if app_type else logger
     
     if current_logger.level <= logging.DEBUG:
-        current_logger.debug(f"{message}")
         if data is not None:
             try:
                 import json
                 as_json = json.dumps(data)
                 if len(as_json) > 500:
                     as_json = as_json[:500] + "..."
-                current_logger.debug(as_json)
+                # Combine message and data in single log entry to prevent fragmentation
+                current_logger.debug(f"{message} | Data: {as_json}")
             except:
                 data_str = str(data)
                 if len(data_str) > 500:
                     data_str = data_str[:500] + "..."
-                current_logger.debug(data_str)
+                # Combine message and data in single log entry to prevent fragmentation
+                current_logger.debug(f"{message} | Data: {data_str}")
+        else:
+            current_logger.debug(f"{message}")
 
 # Initialize the main logger instance when the module is imported
 logger = setup_main_logger()
