@@ -10,9 +10,7 @@
 
 let huntarrUI = {
     // Current state
-    eventSources: {},
     currentSection: 'home', // Default section
-    currentLogApp: 'all', // Default log app
     currentHistoryApp: 'all', // Default history app
     autoScroll: true,
     isLoadingStats: false, // Flag to prevent multiple simultaneous stats requests
@@ -61,9 +59,6 @@ let huntarrUI = {
             }
         });
         
-        // Remove setupStatefulResetButton references that are causing errors
-        // this.setupStatefulResetButton();
-        
         // Initial navigation based on hash
         this.handleHashNavigation(window.location.hash);
         
@@ -72,9 +67,6 @@ let huntarrUI = {
         
         // Load username
         this.loadUsername();
-        
-        // When all elements are ready, call the method
-        // this.setupStatefulResetButton();
         
         // Apply any preloaded theme immediately to avoid flashing
         const prefersDarkMode = localStorage.getItem('huntarr-dark-mode') === 'true';
@@ -91,9 +83,6 @@ let huntarrUI = {
         }
         // Ensure logo is visible immediately
         this.logoUrl = localStorage.getItem('huntarr-logo-url') || this.logoUrl;
-        
-        // Load media stats
-        // this.loadMediaStats(); // Load media statistics
         
         // Load current version
         this.loadCurrentVersion(); // Load current version
@@ -123,11 +112,6 @@ let huntarrUI = {
         
         // Make dashboard visible after initialization to prevent FOUC
         this.showDashboard();
-        
-        // Also call it again after a delay in case settings are loaded dynamically
-        setTimeout(() => {
-            // this.setupStatefulResetButton();
-        }, 1000);
     },
     
     // Cache DOM elements for better performance
@@ -148,13 +132,6 @@ let huntarrUI = {
         this.elements.settingsSection = document.getElementById('settingsSection');
         this.elements.schedulingSection = document.getElementById('schedulingSection');
         
-        // App tabs & Settings Tabs
-        this.elements.appTabs = document.querySelectorAll('.app-tab'); // For logs section
-        this.elements.logOptions = document.querySelectorAll('.log-option'); // New: replaced logTabs with logOptions
-        this.elements.currentLogApp = document.getElementById('current-log-app'); // New: dropdown current selection text
-        this.elements.logDropdownBtn = document.querySelector('.log-dropdown-btn'); // New: dropdown toggle button
-        this.elements.logDropdownContent = document.querySelector('.log-dropdown-content'); // New: dropdown content
-        
         // History dropdown elements
         this.elements.historyOptions = document.querySelectorAll('.history-option'); // History dropdown options
         this.elements.currentHistoryApp = document.getElementById('current-history-app'); // Current history app text
@@ -169,19 +146,6 @@ let huntarrUI = {
         this.elements.settingsDropdownContent = document.querySelector('.settings-dropdown-content'); // New: dropdown content
         
         this.elements.appSettingsPanels = document.querySelectorAll('.app-settings-panel');
-        
-        // Logs
-        this.elements.logsContainer = document.getElementById('logsContainer');
-        this.elements.autoScrollCheckbox = document.getElementById('autoScrollCheckbox');
-        this.elements.clearLogsButton = document.getElementById('clearLogsButton');
-        this.elements.logConnectionStatus = document.getElementById('logConnectionStatus');
-        // Log search elements
-        this.elements.logSearchInput = document.getElementById('logSearchInput');
-        this.elements.logSearchButton = document.getElementById('logSearchButton');
-        this.elements.clearSearchButton = document.getElementById('clearSearchButton');
-        this.elements.logSearchResults = document.getElementById('logSearchResults');
-        // Log level filter element
-        this.elements.logLevelSelect = document.getElementById('logLevelSelect');
         
         // Settings
         this.elements.saveSettingsButton = document.getElementById('saveSettingsButton'); // Corrected ID
@@ -198,26 +162,12 @@ let huntarrUI = {
         this.elements.startHuntButton = document.getElementById('startHuntButton');
         this.elements.stopHuntButton = document.getElementById('stopHuntButton');
         
-        // Theme
-        // this.elements.themeToggle = document.getElementById('themeToggle'); // Removed theme toggle
-        
         // Logout
         this.elements.logoutLink = document.getElementById('logoutLink'); // Added logout link
     },
     
     // Set up event listeners
     setupEventListeners: function() {
-        // Global dropdown handling - close all dropdowns when clicking on any option
-        document.addEventListener('click', (e) => {
-            // If the clicked element is a dropdown option (has class 'log-option')
-            if (e.target.classList.contains('log-option')) {
-                // Find all dropdown content elements and close them
-                document.querySelectorAll('.log-dropdown-content').forEach(dropdown => {
-                    dropdown.classList.remove('show');
-                });
-            }
-        });
-        
         // Navigation
         document.addEventListener('click', (e) => {
             // Navigation link handling
@@ -237,86 +187,11 @@ let huntarrUI = {
             }
         });
         
-        // Log auto-scroll setting
-        if (this.elements.autoScrollCheckbox) {
-            this.elements.autoScrollCheckbox.addEventListener('change', (e) => {
-                this.autoScroll = e.target.checked;
-            });
-        }
-        
-        // Clear logs button
-        if (this.elements.clearLogsButton) {
-            this.elements.clearLogsButton.addEventListener('click', () => this.clearLogs());
-        }
-        
-        // Log search functionality
-        if (this.elements.logSearchButton) {
-            this.elements.logSearchButton.addEventListener('click', () => this.searchLogs());
-        }
-        
-        if (this.elements.logSearchInput) {
-            this.elements.logSearchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    this.searchLogs();
-                }
-            });
-            
-            // Clear search when input is emptied
-            this.elements.logSearchInput.addEventListener('input', (e) => {
-                if (e.target.value.trim() === '') {
-                    this.clearLogSearch();
-                }
-            });
-        }
-        
-        // Clear search button
-        if (this.elements.clearSearchButton) {
-            this.elements.clearSearchButton.addEventListener('click', () => this.clearLogSearch());
-        }
-        
-        // App tabs in logs section
-        this.elements.appTabs.forEach(tab => {
-            tab.addEventListener('click', (e) => this.handleAppTabChange(e));
-        });
-        
-        // Log options dropdown
-        this.elements.logOptions.forEach(option => {
-            option.addEventListener('click', (e) => this.handleLogOptionChange(e));
-        });
-        
-        // Log dropdown toggle
-        if (this.elements.logDropdownBtn) {
-            this.elements.logDropdownBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation(); // Prevent event bubbling
-                
-                // Close any other open dropdowns first
-                if (this.elements.historyDropdownContent && this.elements.historyDropdownContent.classList.contains('show')) {
-                    this.elements.historyDropdownContent.classList.remove('show');
-                }
-                
-                // Toggle this dropdown
-                this.elements.logDropdownContent.classList.toggle('show');
-            });
-            
-            // Close dropdown when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.log-dropdown') && this.elements.logDropdownContent.classList.contains('show')) {
-                    this.elements.logDropdownContent.classList.remove('show');
-                }
-            });
-        }
-        
         // History dropdown toggle
         if (this.elements.historyDropdownBtn) {
             this.elements.historyDropdownBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation(); // Prevent event bubbling
-                
-                // Close any other open dropdowns first
-                if (this.elements.logDropdownContent && this.elements.logDropdownContent.classList.contains('show')) {
-                    this.elements.logDropdownContent.classList.remove('show');
-                }
                 
                 // Toggle this dropdown
                 this.elements.historyDropdownContent.classList.toggle('show');
@@ -340,15 +215,6 @@ let huntarrUI = {
             this.elements.settingsDropdownBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation(); // Prevent event bubbling
-                
-                // Close any other open dropdowns first
-                if (this.elements.logDropdownContent && this.elements.logDropdownContent.classList.contains('show')) {
-                    this.elements.logDropdownContent.classList.remove('show');
-                }
-                
-                if (this.elements.historyDropdownContent && this.elements.historyDropdownContent.classList.contains('show')) {
-                    this.elements.historyDropdownContent.classList.remove('show');
-                }
                 
                 // Toggle this dropdown
                 this.elements.settingsDropdownContent.classList.toggle('show');
@@ -477,23 +343,6 @@ let huntarrUI = {
         const initialHash = window.location.hash || '#home';
         this.handleHashNavigation(initialHash);
 
-        // LOGS: Listen for change on #logAppSelect
-        const logAppSelect = document.getElementById('logAppSelect');
-        if (logAppSelect) {
-            logAppSelect.addEventListener('change', (e) => {
-                const app = e.target.value;
-                this.handleLogOptionChange(app);
-            });
-        }
-        
-        // LOG LEVEL FILTER: Listen for change on #logLevelSelect
-        const logLevelSelect = document.getElementById('logLevelSelect');
-        if (logLevelSelect) {
-            logLevelSelect.addEventListener('change', (e) => {
-                this.filterLogsByLevel(e.target.value);
-            });
-        }
-        
         // HISTORY: Listen for change on #historyAppSelect
         const historyAppSelect = document.getElementById('historyAppSelect');
         if (historyAppSelect) {
@@ -639,51 +488,28 @@ let huntarrUI = {
             if (this.elements.logsNav) this.elements.logsNav.classList.add('active');
             newTitle = 'Logs';
             this.currentSection = 'logs';
-            this.connectToLogs();
             
-            // Reset logs section to defaults when navigating to it
-            setTimeout(() => {
-                // Reset log app to 'all'
-                this.currentLogApp = 'all';
-                
-                // Reset UI elements to defaults
-                const logAppSelect = document.getElementById('logAppSelect');
-                if (logAppSelect && logAppSelect.value !== 'all') {
-                    logAppSelect.value = 'all';
-                }
-                
-                const logLevelSelect = document.getElementById('logLevelSelect');
-                if (logLevelSelect && logLevelSelect.value !== 'info') {
-                    logLevelSelect.value = 'info';
-                    // Trigger the filter function to apply INFO level filtering
-                    this.filterLogsByLevel('info');
-                }
-                
-                // Clear any search
-                const logSearchInput = document.getElementById('logSearchInput');
-                if (logSearchInput && logSearchInput.value) {
-                    logSearchInput.value = '';
-                    this.clearLogSearch();
-                }
-                
-                console.log('[huntarrUI] Reset logs to defaults: All apps, INFO level, cleared search');
-            }, 300);
+            // Use LogsModule for logs functionality
+            if (window.LogsModule) {
+                window.LogsModule.connectToLogs();
+                // Reset logs section to defaults when navigating to it
+                setTimeout(() => {
+                    window.LogsModule.resetToDefaults();
+                    console.log('[huntarrUI] Reset logs to defaults using LogsModule');
+                }, 300);
+            }
         } else if (section === 'history' && this.elements.historySection) {
             this.elements.historySection.classList.add('active');
             this.elements.historySection.style.display = 'block';
             if (this.elements.historyNav) this.elements.historyNav.classList.add('active');
             newTitle = 'History';
             this.currentSection = 'history';
-            // Disconnect logs if switching away from logs
-            this.disconnectAllEventSources(); 
         } else if (section === 'apps' && document.getElementById('appsSection')) {
             document.getElementById('appsSection').classList.add('active');
             document.getElementById('appsSection').style.display = 'block';
             if (document.getElementById('appsNav')) document.getElementById('appsNav').classList.add('active');
             newTitle = 'Apps';
             this.currentSection = 'apps';
-            // Disconnect logs if switching away from logs
-            this.disconnectAllEventSources();
             
             // Load apps if the apps module exists
             if (typeof appsModule !== 'undefined') {
@@ -727,9 +553,6 @@ let huntarrUI = {
             
             // Load all settings after stateful info has started loading
             this.loadAllSettings();
-            
-            // Disconnect logs if switching away from logs
-            this.disconnectAllEventSources(); 
         } else if (section === 'sponsors' && sponsorsSection) { // ADDED sponsors case
             sponsorsSection.classList.add('active');
             sponsorsSection.style.display = 'block';
@@ -741,8 +564,6 @@ let huntarrUI = {
             if (sponsorsFrame && (!sponsorsFrame.src || sponsorsFrame.src === 'about:blank')) { // Set src only if not already set or blank
                 sponsorsFrame.src = 'https://github.com/sponsors/plexguide';
             }
-            // Disconnect logs if switching away from logs
-            this.disconnectAllEventSources();
         } else if (section === 'scheduling' && this.elements.schedulingSection) {
             // Hide all sections
             this.elements.sections.forEach(s => {
@@ -767,9 +588,6 @@ let huntarrUI = {
             newTitle = 'Scheduling';
             this.currentSection = 'scheduling';
             
-            // Disconnect logs if switching away from logs
-            this.disconnectAllEventSources();
-            
             console.debug('Scheduling section activated');
         } else {
             // Default to home if section is unknown or element missing
@@ -780,8 +598,11 @@ let huntarrUI = {
             if (this.elements.homeNav) this.elements.homeNav.classList.add('active');
             newTitle = 'Home';
             this.currentSection = 'home';
-            // Disconnect logs if switching away from logs
-            this.disconnectAllEventSources(); 
+        }
+
+        // Disconnect logs when switching away from logs section
+        if (this.currentSection !== 'logs' && window.LogsModule) {
+            window.LogsModule.disconnectAllEventSources();
         }
 
         // Update the page title
@@ -1053,7 +874,12 @@ let huntarrUI = {
                         if (loggerName.includes('.')) {
                             const parts = loggerName.split('.');
                             if (parts.length > 1) {
-                                appSource = parts[1].toUpperCase();
+                                // When filtering by specific app, don't show redundant app name
+                                if (this.currentLogApp !== 'all' && this.currentLogApp !== 'system') {
+                                    appSource = 'SYSTEM'; // Just show SYSTEM when filtering by app
+                                } else {
+                                    appSource = parts[1].toUpperCase(); // Show app name only in 'all' view
+                                }
                             }
                         }
                         
@@ -1071,16 +897,13 @@ let huntarrUI = {
                         logEntry.classList.add(`log-${levelClass}`);
                     } else {
                         // Fallback for lines that don't match the expected format
-                        // Generate current timestamp for logs without timestamps
-                        const now = new Date();
-                        const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
-                        const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS format
+                        // Don't generate browser timestamps - just use dashes for unknown timestamps
                         
                         logEntry.innerHTML = `
                             <div class="log-entry-row">
                                 <span class="log-timestamp">
-                                    <span class="date">${currentDate}</span>
-                                    <span class="time">${currentTime}</span>
+                                    <span class="date">--</span>
+                                    <span class="time">--:--:--</span>
                                 </span>
                                 <span class="log-level-badge log-level-info">Information</span>
                                 <span class="log-source">SYSTEM</span>
