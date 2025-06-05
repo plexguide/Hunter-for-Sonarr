@@ -459,16 +459,9 @@
         width: 10px;
     }
     
-    /* Add subtle colored accent to the logs container */
+    /* Remove the colored accent line from the logs container */
     .logs::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, rgba(52, 152, 219, 0.5), rgba(155, 89, 182, 0.5)); /* Sonarr blue to Whisparr purple */
-        z-index: 1;
+        display: none !important;
     }
     
     .logs::-webkit-scrollbar-track {
