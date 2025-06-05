@@ -238,9 +238,9 @@ def _calculate_remaining_seconds(next_cycle_iso: str) -> int:
             next_cycle_iso = next_cycle_iso[:-1]
             print(f"[DEBUG] Removed trailing Z from ISO string with offset: {original_iso} -> {next_cycle_iso}")
         
-        # Parse the ISO string more reliably
+        # Parse the ISO string - handle both old UTC and new timezone-aware formats
         if next_cycle_iso.endswith('Z'):
-            # Remove the 'Z' and parse as UTC, then convert to user timezone
+            # Old UTC format (e.g., "2025-06-04T23:59:31Z")
             next_cycle_str = next_cycle_iso[:-1]
             next_cycle = datetime.datetime.fromisoformat(next_cycle_str)
             # Make it timezone-aware UTC first, then convert to user timezone
@@ -248,12 +248,17 @@ def _calculate_remaining_seconds(next_cycle_iso: str) -> int:
                 import pytz
                 next_cycle = pytz.UTC.localize(next_cycle)
             next_cycle = next_cycle.astimezone(user_tz)
+            print(f"[DEBUG] Converted old UTC format to user timezone: {original_iso} -> {next_cycle.isoformat()}")
         else:
-            # Parse as-is and convert to user timezone
+            # New timezone-aware format (e.g., "2025-06-04T23:59:37-05:00") or naive
             next_cycle = datetime.datetime.fromisoformat(next_cycle_iso)
             if next_cycle.tzinfo is None:
                 # If naive datetime, assume it's in user timezone
                 next_cycle = user_tz.localize(next_cycle)
+            elif next_cycle.tzinfo != user_tz:
+                # Convert to user timezone if it's in a different timezone
+                next_cycle = next_cycle.astimezone(user_tz)
+            print(f"[DEBUG] Using timezone-aware format: {original_iso}")
         
         # Get current time in user's timezone for consistent comparison
         now = datetime.datetime.now(user_tz)
