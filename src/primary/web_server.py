@@ -386,9 +386,7 @@ def logs_stream():
             # Determine which log files to follow
             log_files_to_follow = []
             if app_type == 'all':
-                # Follow all log files for 'all' type
                 log_files_to_follow = list(KNOWN_LOG_FILES.items())
-                print(f"[DEBUG] Following log files for 'all': {[name for name, path in log_files_to_follow]}")
             elif app_type == 'system':
                 # For system, only follow main log
                 system_log = KNOWN_LOG_FILES.get('system')

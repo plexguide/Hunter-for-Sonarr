@@ -257,8 +257,10 @@ window.LogsModule = {
                     
                     // Updated regex for clean log format with pipe separators
                     // Format: timestamp|level|app_type|message
+                    // For 'all' view: [app] timestamp|level|app_type|message  
                     // Example: 2025-06-05 09:24:44|DEBUG|system|Request IP address: 192.168.65.1
-                    const logRegex = /^([^|]+)\|([^|]+)\|([^|]+)\|(.*)$/;
+                    // Example: [sonarr] 2025-06-05 09:24:44|INFO|sonarr|Retrieved 100 episodes
+                    const logRegex = /^(?:\[[\w]+\]\s+)?([^|]+)\|([^|]+)\|([^|]+)\|(.*)$/;
                     const match = logString.match(logRegex);
 
                     // Determine the app type for this log message
