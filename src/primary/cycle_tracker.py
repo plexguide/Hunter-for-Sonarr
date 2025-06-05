@@ -6,6 +6,7 @@ Cycle Tracker - Module for tracking application cycle times
 import os
 import json
 import datetime
+import time
 import threading
 from typing import Dict, Any, Optional
 from src.primary.utils.config_paths import CONFIG_DIR, get_path
@@ -89,15 +90,39 @@ def ensure_all_apps_have_cyclelock():
 if not os.path.exists(_SLEEP_DATA_PATH):
     try:
         print(f"Creating initial sleep.json at {_SLEEP_DATA_PATH}")
+        # Create initial empty structure
+        initial_data = {}
         with open(_SLEEP_DATA_PATH, 'w') as f:
-            json.dump({}, f, indent=2)
+            json.dump(initial_data, f, indent=2)
         print(f"Creating initial web sleep.json at {_WEB_SLEEP_DATA_PATH}")
         with open(_WEB_SLEEP_DATA_PATH, 'w') as f:
-            json.dump({}, f, indent=2)
+            json.dump(initial_data, f, indent=2)
     except Exception as e:
         print(f"Error creating initial sleep.json: {e}")
         import traceback
         traceback.print_exc()
+else:
+    # Check if existing file is valid JSON
+    try:
+        with open(_SLEEP_DATA_PATH, 'r') as f:
+            test_data = json.load(f)
+        print(f"[CycleTracker] Existing sleep.json is valid JSON with {len(test_data)} entries")
+    except (json.JSONDecodeError, Exception) as e:
+        print(f"[CycleTracker] Existing sleep.json is corrupted, recreating: {e}")
+        try:
+            # Backup corrupted file
+            backup_path = f"{_SLEEP_DATA_PATH}.backup.{int(time.time())}"
+            os.rename(_SLEEP_DATA_PATH, backup_path)
+            print(f"[CycleTracker] Backed up corrupted file to {backup_path}")
+            
+            # Create new empty file
+            with open(_SLEEP_DATA_PATH, 'w') as f:
+                json.dump({}, f, indent=2)
+            with open(_WEB_SLEEP_DATA_PATH, 'w') as f:
+                json.dump({}, f, indent=2)
+            print(f"[CycleTracker] Created new sleep.json files")
+        except Exception as recreate_e:
+            print(f"[CycleTracker] Error recreating sleep.json: {recreate_e}")
 
 # Ensure all existing apps have cyclelock fields
 ensure_all_apps_have_cyclelock()
@@ -178,27 +203,67 @@ def _save_cycle_data(data: Dict[str, Any]) -> None:
         import traceback
         traceback.print_exc()
 
+def _get_user_timezone():
+    """Get the user's selected timezone from general settings"""
+    try:
+        from src.primary import settings_manager
+        general_settings = settings_manager.load_settings("general")
+        timezone_name = general_settings.get("timezone", "UTC")
+        
+        # Import timezone handling
+        import pytz
+        try:
+            user_tz = pytz.timezone(timezone_name)
+            print(f"[CycleTracker] Using user timezone: {timezone_name}")
+            return user_tz
+        except pytz.UnknownTimeZoneError:
+            print(f"[CycleTracker] Unknown timezone '{timezone_name}', falling back to UTC")
+            return pytz.UTC
+    except Exception as e:
+        print(f"[CycleTracker] Error getting user timezone: {e}, using UTC")
+        import pytz
+        return pytz.UTC
+
 def _calculate_remaining_seconds(next_cycle_iso: str) -> int:
     """Calculate remaining seconds until the next cycle"""
     try:
-        # Parse the ISO string - it should have 'Z' suffix indicating UTC
+        # Get user's selected timezone
+        user_tz = _get_user_timezone()
+        
+        # Clean up the ISO string to handle various malformed formats
+        original_iso = next_cycle_iso
+        
+        # Remove any trailing 'Z' if there's already a timezone offset
+        if '+' in next_cycle_iso and next_cycle_iso.endswith('Z'):
+            next_cycle_iso = next_cycle_iso[:-1]
+            print(f"[DEBUG] Removed trailing Z from ISO string with offset: {original_iso} -> {next_cycle_iso}")
+        
+        # Parse the ISO string more reliably
         if next_cycle_iso.endswith('Z'):
-            # Remove the 'Z' and parse as UTC
+            # Remove the 'Z' and parse as UTC, then convert to user timezone
             next_cycle_str = next_cycle_iso[:-1]
             next_cycle = datetime.datetime.fromisoformat(next_cycle_str)
+            # Make it timezone-aware UTC first, then convert to user timezone
+            if next_cycle.tzinfo is None:
+                import pytz
+                next_cycle = pytz.UTC.localize(next_cycle)
+            next_cycle = next_cycle.astimezone(user_tz)
         else:
-            # Parse as-is and assume UTC
+            # Parse as-is and convert to user timezone
             next_cycle = datetime.datetime.fromisoformat(next_cycle_iso)
+            if next_cycle.tzinfo is None:
+                # If naive datetime, assume it's in user timezone
+                next_cycle = user_tz.localize(next_cycle)
         
-        # Use UTC time for consistency
-        now = datetime.datetime.utcnow()
+        # Get current time in user's timezone for consistent comparison
+        now = datetime.datetime.now(user_tz)
         
         # Calculate the time difference in seconds
         delta = (next_cycle - now).total_seconds()
         
         # Return at least 0 (don't return negative values)
         result = max(0, int(delta))
-        print(f"[DEBUG] Calculated remaining seconds for {next_cycle_iso}: {result} (now: {now.isoformat()}, next: {next_cycle.isoformat()})")
+        print(f"[DEBUG] Calculated remaining seconds for {original_iso}: {result} (now: {now.isoformat()}, next: {next_cycle.isoformat()})")
         return result
     except Exception as e:
         print(f"Error calculating remaining seconds for {next_cycle_iso}: {e}")
@@ -258,9 +323,22 @@ def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime, cyclelo
             if debug_mode:
                 print(f"[DEBUG] sleep.json does not exist, creating new file")
         
-        # Calculate remaining seconds
-        now = datetime.datetime.utcnow()  # Use UTC for consistency
-        remaining_seconds = max(0, int((next_cycle_time - now).total_seconds()))
+        # Ensure next_cycle_time is timezone-aware and in user's selected timezone
+        user_tz = _get_user_timezone()
+        
+        if next_cycle_time.tzinfo is None:
+            # If naive datetime, assume it's in user's timezone
+            next_cycle_time = user_tz.localize(next_cycle_time)
+        elif next_cycle_time.tzinfo != user_tz:
+            # Convert to user's timezone if it's in a different timezone
+            next_cycle_time = next_cycle_time.astimezone(user_tz)
+        
+        # Remove microseconds for clean timestamps
+        next_cycle_time = next_cycle_time.replace(microsecond=0)
+        
+        # Calculate remaining seconds based on user's timezone
+        now_user_tz = datetime.datetime.now(user_tz).replace(microsecond=0)
+        remaining_seconds = max(0, int((next_cycle_time - now_user_tz).total_seconds()))
         
         # Determine cyclelock value
         if cyclelock is None:
@@ -268,11 +346,22 @@ def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime, cyclelo
             existing_cyclelock = sleep_data.get(app_type, {}).get('cyclelock', True)
             cyclelock = existing_cyclelock
         
-        # Update the app's data - store times in UTC format
+        # Update the app's data - store times in user's timezone format
+        # Convert to naive datetime for clean JSON serialization
+        next_cycle_naive = next_cycle_time.replace(tzinfo=None, microsecond=0)
+        updated_at_naive = now_user_tz.replace(tzinfo=None, microsecond=0)
+        
+        # Generate ISO format with timezone info for clarity
+        # Store timezone name for reference
+        timezone_name = str(next_cycle_time.tzinfo)
+        next_cycle_clean = next_cycle_time.isoformat()
+        updated_at_clean = now_user_tz.isoformat()
+        
         sleep_data[app_type] = {
-            "next_cycle": next_cycle_time.isoformat() + "Z",  # Add Z to indicate UTC
+            "next_cycle": next_cycle_clean,
             "remaining_seconds": remaining_seconds,
-            "updated_at": now.isoformat() + "Z",  # Add Z to indicate UTC
+            "updated_at": updated_at_clean,
+            "timezone": timezone_name,  # Store timezone info for frontend
             "cyclelock": cyclelock  # True = running cycle, False = waiting for cycle
         }
         

@@ -15,6 +15,7 @@ import threading
 from typing import Dict, List, Optional, Callable, Union, Tuple
 import datetime
 import traceback
+import pytz
 
 # Define the version number
 __version__ = "1.0.0" # Consider updating this based on changes
@@ -43,6 +44,21 @@ hourly_cap_scheduler_thread = None
 
 # Instance list generator has been removed
 
+def _get_user_timezone():
+    """Get the user's selected timezone from general settings"""
+    try:
+        general_settings = settings_manager.load_settings("general")
+        timezone_name = general_settings.get("timezone", "UTC")
+        
+        # Import timezone handling
+        try:
+            user_tz = pytz.timezone(timezone_name)
+            return user_tz
+        except pytz.UnknownTimeZoneError:
+            return pytz.UTC
+    except Exception:
+        return pytz.UTC
+
 def app_specific_loop(app_type: str) -> None:
     """
     Main processing loop for a specific Arr application.
@@ -50,6 +66,8 @@ def app_specific_loop(app_type: str) -> None:
     Args:
         app_type: The type of Arr application (sonarr, radarr, lidarr, readarr)
     """
+    from src.primary.cycle_tracker import update_next_cycle
+    
     app_logger = get_logger(app_type)
     app_logger.info(f"=== [{app_type.upper()}] Thread starting ===")
 
@@ -411,24 +429,34 @@ def app_specific_loop(app_type: str) -> None:
                 
         # Sleep with periodic checks for reset file
         # Calculate and format the time when the next cycle will begin
-        next_cycle_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=sleep_seconds)  # Use UTC
-        next_cycle_time_str = next_cycle_time.strftime("%Y-%m-%d %H:%M:%S UTC")  # Indicate UTC
-        app_logger.info(f"Next {app_type.upper()} cycle will begin at {next_cycle_time_str}")
+        # Use user's selected timezone for all time operations
+        
+        # Get user's selected timezone
+        user_tz = _get_user_timezone()
+        
+        # Get current time in user's timezone - remove microseconds for clean timestamps
+        now_user_tz = datetime.datetime.now(user_tz).replace(microsecond=0)
+        
+        # Calculate next cycle time in user's timezone without microseconds
+        next_cycle_time = now_user_tz + datetime.timedelta(seconds=sleep_seconds)
+        
+        app_logger.info(f"Current time ({user_tz}): {now_user_tz.strftime('%Y-%m-%d %H:%M:%S')}")
+        app_logger.info(f"Next cycle will begin at {next_cycle_time.strftime('%Y-%m-%d %H:%M:%S')} ({user_tz})")
+        app_logger.info(f"Sleep duration: {sleep_seconds} seconds")
+        
+        # Update cycle tracking with user timezone time
+        next_cycle_naive = next_cycle_time.replace(tzinfo=None) if next_cycle_time.tzinfo else next_cycle_time
+        update_next_cycle(app_type, next_cycle_naive)
         
         # Mark cycle as ended (set cyclelock to False) and update next cycle time
+        # Use user's timezone for internal storage consistency
         try:
             from src.primary.cycle_tracker import end_cycle
-            end_cycle(app_type, next_cycle_time)
+            # Convert timezone-aware datetime to naive for clean timestamp generation
+            next_cycle_naive = next_cycle_time.replace(tzinfo=None) if next_cycle_time.tzinfo else next_cycle_time
+            end_cycle(app_type, next_cycle_naive)
         except Exception as e:
             app_logger.warning(f"Failed to mark cycle end for {app_type}: {e}")
-            # Non-critical, continue execution
-        
-        # Track cycle time for the countdown timer feature (legacy support)
-        try:
-            from src.primary.cycle_tracker import update_next_cycle
-            update_next_cycle(app_type, next_cycle_time)
-        except Exception as e:
-            app_logger.warning(f"Failed to update cycle tracker: {e}")
             # Non-critical, continue execution
         
         app_logger.debug(f"Sleeping for {sleep_seconds} seconds before next cycle...")

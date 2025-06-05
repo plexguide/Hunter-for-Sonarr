@@ -2,12 +2,13 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Install system dependencies including net-tools for health checks
+# Install system dependencies including net-tools for health checks and tzdata for timezone support
 RUN apt-get update && apt-get install -y --no-install-recommends \
     net-tools \
     curl \
     wget \
     nano \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Install required packages from the root requirements file
@@ -23,6 +24,7 @@ RUN chmod -R 755 /config
 
 # Set environment variables
 ENV PYTHONPATH=/app
+ENV TZ=UTC
 # ENV APP_TYPE=sonarr # APP_TYPE is likely managed via config now, remove if not needed
 
 # Expose port

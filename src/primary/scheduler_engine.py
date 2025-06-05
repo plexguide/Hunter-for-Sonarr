@@ -42,6 +42,23 @@ execution_history = collections.deque(maxlen=max_history_entries)
 stop_event = threading.Event()
 scheduler_thread = None
 
+def _get_user_timezone():
+    """Get the user's selected timezone from general settings"""
+    try:
+        from src.primary import settings_manager
+        general_settings = settings_manager.load_settings("general")
+        timezone_name = general_settings.get("timezone", "UTC")
+        
+        import pytz
+        try:
+            user_tz = pytz.timezone(timezone_name)
+            return user_tz
+        except pytz.UnknownTimeZoneError:
+            return pytz.UTC
+    except Exception:
+        import pytz
+        return pytz.UTC
+
 def load_schedule():
     """Load the schedule configuration from file"""
     try:
@@ -95,11 +112,18 @@ def load_schedule():
 
 def add_to_history(action_entry, status, message):
     """Add an action execution to the history log"""
-    now = datetime.datetime.now()
+    # Use user's selected timezone for display
+    user_tz = _get_user_timezone()
+    now = datetime.datetime.now(user_tz)
     time_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Add timezone information to the timestamp for clarity
+    timezone_name = str(user_tz)
+    time_str_with_tz = f"{time_str} {timezone_name}"
     
     history_entry = {
         "timestamp": time_str,
+        "timestamp_tz": time_str_with_tz,  # Include timezone-aware timestamp
         "id": action_entry.get("id", "unknown"),
         "action": action_entry.get("action", "unknown"),
         "app": action_entry.get("app", "unknown"),
@@ -108,7 +132,7 @@ def add_to_history(action_entry, status, message):
     }
     
     execution_history.appendleft(history_entry)
-    scheduler_logger.debug(f"Scheduler history: {time_str} - {action_entry.get('action')} for {action_entry.get('app')} - {status} - {message}")
+    scheduler_logger.debug(f"Scheduler history: {time_str_with_tz} - {action_entry.get('action')} for {action_entry.get('app')} - {status} - {message}")
 
 def execute_action(action_entry):
     """Execute a scheduled action"""
@@ -320,9 +344,14 @@ def should_execute_schedule(schedule_entry):
     # Debug log the schedule we're checking
     scheduler_logger.debug(f"Checking if schedule {schedule_id} should be executed")
     
-    # Log exact system time for debugging
-    exact_time = datetime.datetime.now()
-    scheduler_logger.info(f"EXACT CURRENT TIME: {exact_time.strftime('%Y-%m-%d %H:%M:%S.%f')}")
+    # Get user's selected timezone for consistent timing
+    user_tz = _get_user_timezone()
+    
+    # Log exact system time for debugging with timezone info
+    exact_time = datetime.datetime.now(user_tz)
+    timezone_name = str(user_tz)
+    time_with_tz = f"{exact_time.strftime('%Y-%m-%d %H:%M:%S.%f')} {timezone_name}"
+    scheduler_logger.info(f"EXACT CURRENT TIME: {time_with_tz}")
     
     if not schedule_entry.get("enabled", True):
         scheduler_logger.debug(f"Schedule {schedule_id} is disabled, skipping")
@@ -332,7 +361,7 @@ def should_execute_schedule(schedule_entry):
     days = schedule_entry.get("days", [])
     scheduler_logger.debug(f"Schedule {schedule_id} days: {days}")
     
-    # Get today's day of week in lowercase
+    # Get today's day of week in lowercase (respects TZ environment variable)
     current_day = datetime.datetime.now().strftime("%A").lower()  # e.g., 'monday'
     
     # Debug what's being compared
@@ -353,7 +382,7 @@ def should_execute_schedule(schedule_entry):
             scheduler_logger.info(f"SUCCESS: Schedule {schedule_id} IS configured to run on {current_day}")
 
     
-    # Get current time with second-level precision for accurate timing
+    # Get current time with second-level precision for accurate timing (respects TZ)
     current_time = datetime.datetime.now()
     
     # Extract scheduled time from different possible formats
@@ -375,8 +404,12 @@ def should_execute_schedule(schedule_entry):
         return False
     
     # Add detailed logging for time debugging
+    time_debug_str = f"{current_time.hour:02d}:{current_time.minute:02d}:{current_time.second:02d}"
+    if timezone_name:
+        time_debug_str += f" {timezone_name}"
+    
     scheduler_logger.info(f"Schedule {schedule_id} time: {schedule_hour:02d}:{schedule_minute:02d}, " 
-                         f"current time: {current_time.hour:02d}:{current_time.minute:02d}:{current_time.second:02d}")
+                         f"current time: {time_debug_str}")
     
     # ===== STRICT TIME COMPARISON - PREVENT EARLY EXECUTION =====
     

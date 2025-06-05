@@ -576,9 +576,10 @@ def save_general_settings():
     
     data = request.json
     
-    # Debug: Log the incoming data to see if apprise_urls is present
+    # Debug: Log the incoming data to see if timezone is present
     general_logger.info(f"Received general settings data: {data}")
-    general_logger.info(f"Apprise URLs in request: {data.get('apprise_urls', 'NOT_FOUND')}")
+    if 'timezone' in data:
+        general_logger.info(f"Timezone setting found: {data.get('timezone')}")
     
     # Ensure auth_mode and bypass flags are consistent
     auth_mode = data.get('auth_mode')
@@ -595,10 +596,35 @@ def save_general_settings():
             data['local_access_bypass'] = False
             data['proxy_auth_bypass'] = False
     
+    # Handle timezone changes automatically
+    timezone_changed = False
+    if 'timezone' in data:
+        # Get current timezone setting to check if it changed
+        current_settings = settings_manager.load_settings('general')
+        current_timezone = current_settings.get('timezone', 'UTC')
+        new_timezone = data.get('timezone', 'UTC')
+        
+        if current_timezone != new_timezone:
+            timezone_changed = True
+            general_logger.info(f"Timezone changed from {current_timezone} to {new_timezone}")
+    
     # Save general settings
     success = settings_manager.save_settings('general', data)
     
     if success:
+        # Apply timezone change if needed
+        if timezone_changed:
+            try:
+                general_logger.info(f"Applying timezone change to {new_timezone}")
+                timezone_success = settings_manager.apply_timezone(new_timezone)
+                if timezone_success:
+                    general_logger.info(f"Successfully applied timezone {new_timezone}")
+                else:
+                    general_logger.warning(f"Failed to apply timezone {new_timezone}, but settings saved")
+            except Exception as e:
+                general_logger.error(f"Error applying timezone: {e}")
+                # Continue anyway - settings were still saved
+        
         # Update expiration timing from general settings if applicable
         try:
             new_hours = int(data.get('stateful_management_hours'))
@@ -882,14 +908,6 @@ def api_stop_hunt():
 @app.route('/api/settings/apply-timezone', methods=['POST'])
 def apply_timezone_setting():
     """Apply timezone setting to the container."""
-    # This functionality has been disabled as per user request
-    return jsonify({
-        "success": False, 
-        "message": "Timezone settings have been disabled. This feature may be available in future updates."
-    })
-    
-    # Original implementation commented out
-    '''
     data = request.json
     timezone = data.get('timezone')
     web_logger = get_logger("web_server")
@@ -911,7 +929,6 @@ def apply_timezone_setting():
         return jsonify({"success": True, "message": f"Timezone set to {timezone}. Container restart may be required for full effect."})
     else:
         return jsonify({"success": False, "error": f"Failed to apply timezone {timezone}"}), 500
-    '''
 
 @app.route('/api/hourly-caps', methods=['GET'])
 def api_get_hourly_caps():

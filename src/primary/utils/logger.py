@@ -36,20 +36,61 @@ APP_LOG_FILES = {
 logger: Optional[logging.Logger] = None
 app_loggers: Dict[str, logging.Logger] = {}
 
-# Custom formatter that uses local time instead of UTC
+# Custom formatter that uses user's selected timezone instead of UTC
 class LocalTimeFormatter(logging.Formatter):
-    """Custom formatter that uses local time instead of UTC for log timestamps"""
+    """Custom formatter that uses user's selected timezone for log timestamps"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.converter = time.localtime  # Use local time instead of UTC
+        self.converter = time.localtime  # Still use local time as fallback
+    
+    def _get_user_timezone(self):
+        """Get the user's selected timezone from general settings"""
+        try:
+            from src.primary import settings_manager
+            general_settings = settings_manager.load_settings("general")
+            timezone_name = general_settings.get("timezone", "UTC")
+            
+            import pytz
+            try:
+                return pytz.timezone(timezone_name)
+            except pytz.UnknownTimeZoneError:
+                return pytz.UTC
+        except Exception:
+            import pytz
+            return pytz.UTC
     
     def formatTime(self, record, datefmt=None):
-        ct = self.converter(record.created)
-        if datefmt:
-            return time.strftime(datefmt, ct)
-        else:
-            # Use local time format
-            return time.strftime("%Y-%m-%d %H:%M:%S", ct)
+        try:
+            # Try to use user's selected timezone
+            user_tz = self._get_user_timezone()
+            import datetime
+            ct = datetime.datetime.fromtimestamp(record.created, tz=user_tz)
+            
+            if datefmt:
+                s = ct.strftime(datefmt)
+            else:
+                # Use timezone-aware format
+                s = ct.strftime("%Y-%m-%d %H:%M:%S")
+                
+            # Add timezone information for clarity
+            timezone_name = str(user_tz)
+            s += f" {timezone_name}"
+            
+            return s
+        except Exception:
+            # Fallback to system local time if timezone handling fails
+            ct = self.converter(record.created)
+            if datefmt:
+                s = time.strftime(datefmt, ct)
+            else:
+                s = time.strftime("%Y-%m-%d %H:%M:%S", ct)
+                
+            # Add timezone information to help identify which timezone logs are in
+            tz_name = time.tzname[time.daylight] if time.daylight else time.tzname[0]
+            if tz_name:
+                s += f" {tz_name}"
+                
+            return s
 
 def setup_main_logger():
     """Set up the main Huntarr logger."""

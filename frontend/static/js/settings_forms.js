@@ -1136,6 +1136,7 @@ const SettingsForms = {
             console.log('Global apprise_urls element:', globalAppriseElement);
             
             settings.instances = [];
+            settings.timezone = getInputValue('#timezone', 'UTC');
             settings.check_for_updates = getInputValue('#check_for_updates', true);
             settings.display_community_resources = getInputValue('#display_community_resources', true);
             settings.low_usage_mode = getInputValue('#low_usage_mode', false);
@@ -1355,7 +1356,31 @@ const SettingsForms = {
                     </label>
                     <p class="setting-help" style="margin-left: -3ch !important;">Disables animations to reduce CPU/GPU usage on older devices</p>
                 </div>
-
+                <div class="setting-item">
+                    <label for="timezone"><a href="#" class="info-icon" title="Set your timezone for accurate time display" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Timezone:</label>
+                    <select id="timezone" name="timezone" style="width: 300px; padding: 8px 12px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); background-color: #1f2937; color: #d1d5db;">
+                        <option value="UTC" ${settings.timezone === 'UTC' || !settings.timezone ? 'selected' : ''}>UTC (Coordinated Universal Time)</option>
+                        <option value="America/New_York" ${settings.timezone === 'America/New_York' ? 'selected' : ''}>Eastern Time (America/New_York)</option>
+                        <option value="America/Chicago" ${settings.timezone === 'America/Chicago' ? 'selected' : ''}>Central Time (America/Chicago)</option>
+                        <option value="America/Denver" ${settings.timezone === 'America/Denver' ? 'selected' : ''}>Mountain Time (America/Denver)</option>
+                        <option value="America/Los_Angeles" ${settings.timezone === 'America/Los_Angeles' ? 'selected' : ''}>Pacific Time (America/Los_Angeles)</option>
+                        <option value="America/Toronto" ${settings.timezone === 'America/Toronto' ? 'selected' : ''}>Eastern Canada (America/Toronto)</option>
+                        <option value="America/Vancouver" ${settings.timezone === 'America/Vancouver' ? 'selected' : ''}>Pacific Canada (America/Vancouver)</option>
+                        <option value="Europe/London" ${settings.timezone === 'Europe/London' ? 'selected' : ''}>UK Time (Europe/London)</option>
+                        <option value="Europe/Paris" ${settings.timezone === 'Europe/Paris' ? 'selected' : ''}>Central Europe (Europe/Paris)</option>
+                        <option value="Europe/Berlin" ${settings.timezone === 'Europe/Berlin' ? 'selected' : ''}>Germany (Europe/Berlin)</option>
+                        <option value="Europe/Amsterdam" ${settings.timezone === 'Europe/Amsterdam' ? 'selected' : ''}>Netherlands (Europe/Amsterdam)</option>
+                        <option value="Europe/Rome" ${settings.timezone === 'Europe/Rome' ? 'selected' : ''}>Italy (Europe/Rome)</option>
+                        <option value="Europe/Madrid" ${settings.timezone === 'Europe/Madrid' ? 'selected' : ''}>Spain (Europe/Madrid)</option>
+                        <option value="Asia/Tokyo" ${settings.timezone === 'Asia/Tokyo' ? 'selected' : ''}>Japan (Asia/Tokyo)</option>
+                        <option value="Asia/Shanghai" ${settings.timezone === 'Asia/Shanghai' ? 'selected' : ''}>China (Asia/Shanghai)</option>
+                        <option value="Asia/Kolkata" ${settings.timezone === 'Asia/Kolkata' ? 'selected' : ''}>India (Asia/Kolkata)</option>
+                        <option value="Australia/Sydney" ${settings.timezone === 'Australia/Sydney' ? 'selected' : ''}>Australia East (Australia/Sydney)</option>
+                        <option value="Australia/Perth" ${settings.timezone === 'Australia/Perth' ? 'selected' : ''}>Australia West (Australia/Perth)</option>
+                        <option value="Pacific/Auckland" ${settings.timezone === 'Pacific/Auckland' ? 'selected' : ''}>New Zealand (Pacific/Auckland)</option>
+                    </select>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Set your timezone for accurate time display in logs and scheduling. Changes are applied when you save settings.</p>
+                </div>
             </div>
             
             <div class="settings-group">
@@ -1529,154 +1554,8 @@ const SettingsForms = {
             });
         }
         
-        // Load stateful management info
-        const createdDateEl = document.getElementById('stateful_initial_state');
-        const expiresDateEl = document.getElementById('stateful_expires_date');
-
-        // Skip loading if huntarrUI has already loaded this data to prevent flashing
-        if (window.huntarrUI && window.huntarrUI._cachedStatefulData) {
-            console.log('[SettingsForms] Using existing huntarrUI cached stateful data');
-            return; // Exit early - main.js already has this covered
-        }
-        
-        // Only set to Loading if not already populated
-        if (createdDateEl && (!createdDateEl.textContent || createdDateEl.textContent === 'N/A')) {
-            createdDateEl.textContent = 'Loading...';
-        }
-        if (expiresDateEl && (!expiresDateEl.textContent || expiresDateEl.textContent === 'N/A')) {
-            expiresDateEl.textContent = 'Loading...';
-        }
-
-        // Check if data is already cached in localStorage
-        const cachedStatefulData = localStorage.getItem('huntarr-stateful-data');
-        if (cachedStatefulData) {
-            try {
-                const parsedData = JSON.parse(cachedStatefulData);
-                const cacheAge = Date.now() - parsedData.timestamp;
-                
-                // Use cache if it's less than 5 minutes old
-                if (cacheAge < 300000) {
-                    console.log('[SettingsForms] Using cached stateful data');
-                    
-                    if (createdDateEl && parsedData.created_at_ts) {
-                        const createdDate = new Date(parsedData.created_at_ts * 1000);
-                        createdDateEl.textContent = this.formatDate(createdDate);
-                    }
-                    
-                    if (expiresDateEl && parsedData.expires_at_ts) {
-                        const expiresDate = new Date(parsedData.expires_at_ts * 1000);
-                        expiresDateEl.textContent = this.formatDate(expiresDate);
-                    }
-                    
-                    // Still fetch fresh data in the background, but don't update UI
-                    fetchStatefulInfoSilently();
-                    return;
-                }
-            } catch (e) {
-                console.warn('[SettingsForms] Error parsing cached stateful data:', e);
-            }
-        }
-
-        HuntarrUtils.fetchWithTimeout('/api/stateful/info', {
-            cache: 'no-cache',
-            headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-             })
-            .then(data => {
-                // Cache the response with a timestamp for future use
-                localStorage.setItem('huntarr-stateful-data', JSON.stringify({
-                    ...data,
-                    timestamp: Date.now()
-                }));
-                
-                if (createdDateEl) {
-                    if (data.created_at_ts) {
-                        const createdDate = new Date(data.created_at_ts * 1000);
-                        createdDateEl.textContent = this.formatDate(createdDate);
-                    } else {
-                        createdDateEl.textContent = 'Not yet created';
-                    }
-                }
-                
-                if (expiresDateEl) {
-                    if (data.expires_at_ts) {
-                        const expiresDate = new Date(data.expires_at_ts * 1000);
-                        expiresDateEl.textContent = this.formatDate(expiresDate);
-                    } else {
-                        expiresDateEl.textContent = 'Not set';
-                    }
-                }
-                
-                // Store data for other components to use
-                if (window.huntarrUI) {
-                    window.huntarrUI._cachedStatefulData = data;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading stateful info:', error);
-                
-                // Try using cached data as fallback
-                if (cachedStatefulData) {
-                    try {
-                        const parsedData = JSON.parse(cachedStatefulData);
-                        
-                        if (createdDateEl && parsedData.created_at_ts) {
-                            const createdDate = new Date(parsedData.created_at_ts * 1000);
-                            createdDateEl.textContent = this.formatDate(createdDate) + ' (cached)';
-                        } else if (createdDateEl) {
-                            createdDateEl.textContent = 'Not available';
-                        }
-                        
-                        if (expiresDateEl && parsedData.expires_at_ts) {
-                            const expiresDate = new Date(parsedData.expires_at_ts * 1000);
-                            expiresDateEl.textContent = this.formatDate(expiresDate) + ' (cached)';
-                        } else if (expiresDateEl) {
-                            expiresDateEl.textContent = 'Not available';
-                        }
-                    } catch (e) {
-                        if (createdDateEl) createdDateEl.textContent = 'Not available';
-                        if (expiresDateEl) expiresDateEl.textContent = 'Not available';
-                    }
-                } else {
-                    if (createdDateEl) createdDateEl.textContent = 'Not available';
-                    if (expiresDateEl) expiresDateEl.textContent = 'Not available';
-                }
-            });
-            
-        // Helper function to fetch data silently without updating UI
-        function fetchStatefulInfoSilently() {
-            HuntarrUtils.fetchWithTimeout('/api/stateful/info', {
-                cache: 'no-cache',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
-            })
-                .then(response => response.ok ? response.json() : null)
-                .then(data => {
-                    if (data && data.success) {
-                        localStorage.setItem('huntarr-stateful-data', JSON.stringify({
-                            ...data,
-                            timestamp: Date.now()
-                        }));
-                        
-                        if (window.huntarrUI) {
-                            window.huntarrUI._cachedStatefulData = data;
-                        }
-                    }
-                })
-                .catch(error => console.warn('Silent stateful info fetch failed:', error));
-        }
+        // Update duration display - e.g., convert seconds to hours
+        SettingsForms.updateDurationDisplay();
     },
     
     // Update duration display - e.g., convert seconds to hours
@@ -1836,170 +1715,6 @@ const SettingsForms = {
                         button.classList.remove('test-failed');
                     }, 3000);
                 });
-            });
-        });
-        
-        // Add a button to add new instances (limit to 9 total)
-        const addBtn = container.querySelector(`.add-${appType}-instance-btn`);
-        if (addBtn) {
-            // Function to update the button text with current instance count
-            const updateAddButtonText = () => {
-                const instancesContainer = container.querySelector('.instances-container');
-                if (!instancesContainer) return;
-                const currentCount = instancesContainer.querySelectorAll('.instance-item').length;
-                addBtn.innerHTML = `<i class="fas fa-plus"></i> Add ${appType.charAt(0).toUpperCase() + appType.slice(1)} Instance (${currentCount}/9)`;
-                
-                // Disable button if we've reached the maximum
-                if (currentCount >= 9) {
-                    addBtn.disabled = true;
-                    addBtn.title = "Maximum number of instances reached";
-                } else {
-                    addBtn.disabled = false;
-                    addBtn.title = "";
-                }
-            };
-            
-            // Initialize button text
-            updateAddButtonText();
-            
-            addBtn.addEventListener('click', function() {
-                const instancesContainer = container.querySelector('.instances-container');
-                if (!instancesContainer) return;
-                
-                // Count current instances
-                const currentCount = instancesContainer.querySelectorAll('.instance-item').length;
-                
-                // Don't add more if we have 9 already
-                if (currentCount >= 9) {
-                    alert("Maximum of 9 instances allowed");
-                    return;
-                }
-                
-                // Create new instance div
-                const newInstanceDiv = document.createElement('div');
-                newInstanceDiv.className = 'instance-item'; // Use instance-item
-                newInstanceDiv.dataset.instanceId = currentCount;
-                
-                // Set content for the new instance using the updated structure
-                newInstanceDiv.innerHTML = `
-                    <div class="instance-header">
-                        <h4>Instance ${currentCount + 1}: Instance ${currentCount + 1}</h4>
-                        <div class="instance-actions">
-                             <button type="button" class="remove-instance-btn">Remove</button>
-                             <button type="button" class="test-connection-btn" data-instance="${currentCount}" style="margin-left: 10px;">
-                                <i class="fas fa-plug"></i> Test Connection
-                            </button>
-                        </div>
-                    </div>
-                    <div class="instance-content">
-                        <div class="setting-item">
-                            <label for="${appType}-name-${currentCount}">Name:</label>
-                            <input type="text" id="${appType}-name-${currentCount}" name="name" value="Instance ${currentCount + 1}" placeholder="Friendly name for this instance">
-                            <p class="setting-help">Friendly name for this ${appType} instance</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="${appType}-url-${currentCount}">URL:</label>
-                            <input type="text" id="${appType}-url-${currentCount}" name="api_url" value="" placeholder="Base URL (e.g., http://localhost:8989)">
-                             <p class="setting-help">Base URL for ${appType} (e.g., http://localhost:8989)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="${appType}-key-${currentCount}">API Key:</label>
-                            <input type="text" id="${appType}-key-${currentCount}" name="api_key" value="" placeholder="API key">
-                             <p class="setting-help">API key for ${appType}</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="${appType}-enabled-${currentCount}">Enabled:</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="${appType}-enabled-${currentCount}" name="enabled" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                `;
-                
-                // Add the new instance to the container
-                instancesContainer.appendChild(newInstanceDiv);
-                
-                // Update the button text with new count
-                updateAddButtonText();
-                
-                // Add event listener for the remove button
-                const removeBtn = newInstanceDiv.querySelector('.remove-instance-btn');
-                if (removeBtn) {
-                    removeBtn.addEventListener('click', function() {
-                        instancesContainer.removeChild(newInstanceDiv);
-                        
-                        // Update the add button text after removing
-                        updateAddButtonText();
-                        
-                        // Trigger change event to update save button state
-                        const changeEvent = new Event('change');
-                        container.dispatchEvent(changeEvent);
-                    });
-                }
-                
-                // Add event listener for test connection button
-                const testBtn = newInstanceDiv.querySelector('.test-connection-btn');
-                if (testBtn) {
-                    testBtn.addEventListener('click', function() {
-                        // Get the URL and API key inputs from the parent instance item
-                        const instanceContainer = testBtn.closest('.instance-item') || testBtn.closest('.instance-panel');
-                        if (!instanceContainer) {
-                            alert('Error: Could not find instance container');
-                            return;
-                        }
-                        
-                        const urlInput = instanceContainer.querySelector('input[name="api_url"]');
-                        const keyInput = instanceContainer.querySelector('input[name="api_key"]');
-                        
-                        if (!urlInput || !keyInput) {
-                            alert('Error: Could not find URL or API key inputs');
-                            return;
-                        }
-                        
-                        const url = urlInput.value.trim();
-                        const apiKey = keyInput.value.trim();
-                        
-                        if (!url) {
-                            alert('Please enter a valid URL');
-                            urlInput.focus();
-                            return;
-                        }
-                        
-                        if (!apiKey) {
-                            alert('Please enter a valid API key');
-                            keyInput.focus();
-                            return;
-                        }
-                        
-                        // Call the test connection function
-                        SettingsForms.testConnection(appType, url, apiKey, testBtn);
-                    });
-                }
-                
-                // Trigger change event to update save button state
-                const changeEvent = new Event('change');
-                container.dispatchEvent(changeEvent);
-            });
-        }
-        
-        // Set up remove buttons for existing instances
-        const removeButtons = container.querySelectorAll('.remove-instance-btn');
-        removeButtons.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const instancePanel = btn.closest('.instance-item') || btn.closest('.instance-panel');
-                if (instancePanel && instancePanel.parentNode) {
-                    instancePanel.parentNode.removeChild(instancePanel);
-                    
-                    // Update the button text with new count if updateAddButtonText exists
-                    if (typeof updateAddButtonText === 'function') {
-                        updateAddButtonText();
-                    }
-                    
-                    // Trigger change event to update save button state
-                    const changeEvent = new Event('change');
-                    container.dispatchEvent(changeEvent);
-                }
             });
         });
     },
