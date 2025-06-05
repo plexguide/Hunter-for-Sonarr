@@ -111,9 +111,15 @@ try:
     import logging
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
     from primary.utils.logger import setup_main_logger, get_logger
+    from primary.utils.clean_logger import setup_clean_logging
     
     # Initialize main logger
     huntarr_logger = setup_main_logger()
+    
+    # Initialize clean logging for frontend consumption
+    setup_clean_logging()
+    huntarr_logger.info("Clean logging system initialized for frontend consumption.")
+    
     huntarr_logger.info("Successfully imported application components.")
 except ImportError as e:
     root_logger.critical(f"Fatal Error: Failed to import application components: {e}", exc_info=True)

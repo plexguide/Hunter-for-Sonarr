@@ -27,6 +27,7 @@ from flask import Flask, render_template, request, jsonify, Response, send_from_
 # Use only settings_manager
 from src.primary import settings_manager
 from src.primary.utils.logger import setup_main_logger, get_logger, LOG_DIR, update_logging_levels # Import get_logger, LOG_DIR, and update_logging_levels
+from src.primary.utils.clean_logger import CLEAN_LOG_FILES # Import clean log files
 from src.primary.auth import (
     authenticate_request, user_exists, create_user, verify_user, create_session,
     logout, SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret,
@@ -280,17 +281,17 @@ def inject_base_url():
 # Lock for accessing the log files
 log_lock = Lock()
 
-# Define known log files based on logger config
+# Define known log files based on clean logger config
 KNOWN_LOG_FILES = {
-    "sonarr": APP_LOG_FILES.get("sonarr"),
-    "radarr": APP_LOG_FILES.get("radarr"),
-    "lidarr": APP_LOG_FILES.get("lidarr"),
-    "readarr": APP_LOG_FILES.get("readarr"),
-    "whisparr": APP_LOG_FILES.get("whisparr"),
-    "eros": APP_LOG_FILES.get("eros"),  # Added Eros to known log files
-    "swaparr": APP_LOG_FILES.get("swaparr"),  # Added Swaparr to known log files
-    "hunting": APP_LOG_FILES.get("hunting"),  # Added Hunt Manager to known log files - fixed key
-    "system": MAIN_LOG_FILE, # Map 'system' to the main huntarr log
+    "sonarr": CLEAN_LOG_FILES.get("sonarr"),
+    "radarr": CLEAN_LOG_FILES.get("radarr"),
+    "lidarr": CLEAN_LOG_FILES.get("lidarr"),
+    "readarr": CLEAN_LOG_FILES.get("readarr"),
+    "whisparr": CLEAN_LOG_FILES.get("whisparr"),
+    "eros": CLEAN_LOG_FILES.get("eros"),  # Added Eros to known log files
+    "swaparr": CLEAN_LOG_FILES.get("swaparr"),  # Added Swaparr to known log files
+    "hunting": CLEAN_LOG_FILES.get("hunting"),  # Added Hunt Manager to known log files - fixed key
+    "system": CLEAN_LOG_FILES.get("system"), # Map 'system' to the clean huntarr log
 }
 # Filter out None values if an app log file doesn't exist
 KNOWN_LOG_FILES = {k: v for k, v in KNOWN_LOG_FILES.items() if v}

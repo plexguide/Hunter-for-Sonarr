@@ -193,26 +193,20 @@ window.LogsModule = {
                         return; // Skip processing this line
                     }
                     
-                    // Updated regex to handle timezone-aware timestamps
-                    // Example: 2025-06-05 01:28:03 America/New_York - huntarr.radarr - INFO - Message
-                    const logRegex = /^(?:\[(\w+)\]\s)?([^\s]+\s[^\s:]+(?:\s[^\s-]+)?)\s*-\s+([\w\.]+)\s+-\s+(\w+)\s+-\s+(.*)$/;
+                    // Updated regex for clean log format (timestamp - level - message)
+                    // Example: 2025-06-05 09:23:09,898 - DEBUG - Request IP address: 192.168.65.1
+                    const logRegex = /^(?:\[(\w+)\]\s)?([^\s]+\s[^\s,]+(?:,\d+)?)\s*-\s+(\w+)\s+-\s+(.*)$/;
                     const match = logString.match(logRegex);
 
                     // Determine the app type for this log message
                     let logAppType = 'system';
                     
                     if (match && match[1]) {
+                        // App type from prefix like [sonarr] 
                         logAppType = match[1].toLowerCase();
-                    } else if (match && match[3]) {
-                        const loggerParts = match[3].split('.');
-                        if (loggerParts.length > 1) {
-                            const possibleApp = loggerParts[1].toLowerCase();
-                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr', 'hunting'].includes(possibleApp)) {
-                                logAppType = possibleApp;
-                            }
-                        }
                     } else {
-                        // Fallback detection patterns
+                        // For clean logs, we rely on the app parameter from the streaming endpoint
+                        // or detect from content patterns as fallback
                         const appTagMatch = logString.match(/^\[(\w+)\]/);
                         if (appTagMatch) {
                             const possibleApp = appTagMatch[1].toLowerCase();
@@ -236,7 +230,7 @@ window.LogsModule = {
                     logEntry.className = 'log-entry';
 
                     if (match) {
-                        const [, appName, timestamp, loggerName, level, originalMessage] = match;
+                        const [, appName, timestamp, level, originalMessage] = match;
                         
                         // Parse timestamp to extract date and time (ignore timezone for display)
                         let date = '';
@@ -248,19 +242,14 @@ window.LogsModule = {
                             time = parts[1] || '';
                         }
                         
-                        // Clean the message to remove any redundant timestamp information
+                        // Clean the message - since we're now receiving clean logs from backend,
+                        // minimal processing should be needed
                         let cleanMessage = originalMessage;
                         
-                        // Remove any leading timestamp patterns from the message
-                        // Pattern: YYYY-MM-DD HH:MM:SS [Timezone] - rest of message
-                        cleanMessage = cleanMessage.replace(/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\s+[^\s-]+)?\s*-\s*/, '');
-                        
-                        // Remove any remaining duplicate app tags or logger names from start of message
-                        cleanMessage = cleanMessage.replace(/^(huntarr\.[a-zA-Z]+\s*-\s*)?/, '');
-                        cleanMessage = cleanMessage.replace(/^\[[a-zA-Z]+\]\s*/, '');
-                        
-                        // Trim any extra whitespace
-                        cleanMessage = cleanMessage.trim();
+                        // The backend clean logging system should already provide clean messages,
+                        // but we'll keep a simple cleanup as a fallback for any edge cases
+                        cleanMessage = cleanMessage.replace(/^\s*-\s*/, ''); // Remove any leading dashes
+                        cleanMessage = cleanMessage.trim(); // Remove extra whitespace
                         
                         // Create level badge
                         const levelClass = level.toLowerCase();
