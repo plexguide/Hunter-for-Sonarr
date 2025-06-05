@@ -68,7 +68,7 @@ window.CycleCountdown = (function() {
                 displayWaitingForCycle();
             });
         
-        // Simple refresh every 60 seconds with fixed interval
+        // Simple refresh every 10 seconds with fixed interval
         let refreshInterval = null;
         
         function startRefreshInterval() {
@@ -77,19 +77,22 @@ window.CycleCountdown = (function() {
                 clearInterval(refreshInterval);
             }
             
-            // Set up a new fixed interval
+            // Set up API sync every 10 seconds (not for display, just for accuracy)
             refreshInterval = setInterval(() => {
                 // Only refresh if not already fetching
                 if (!isFetchingData) {
-                    console.log('[CycleCountdown] Periodic refresh...');
+                    console.log('[CycleCountdown] API sync (every 10s) to maintain accuracy...');
                     fetchAllCycleData()
+                        .then(() => {
+                            console.log('[CycleCountdown] API sync completed, timers will self-correct');
+                        })
                         .catch(() => {
-                            // Error handling is done in fetchAllCycleData
+                            console.log('[CycleCountdown] API sync failed, timers continue with last known data');
                         });
                 }
-            }, 60000); // Fixed 60-second interval
+            }, 10000); // API sync every 10 seconds
             
-            console.log('[CycleCountdown] Refresh interval started');
+            console.log('[CycleCountdown] API sync interval started (10s) - timers run independently at 1s');
         }
         
         // Start the refresh cycle
@@ -383,6 +386,8 @@ window.CycleCountdown = (function() {
                                         timerValue.style.color = '#00ff88'; // Green for active
                                         console.log(`[CycleCountdown] ${app} cyclelock is true, showing Running Cycle`);
                                     }
+                                } else {
+                                    console.warn(`[CycleCountdown] Timer element not found for ${app} when trying to show Running Cycle`);
                                 }
                             } else {
                                 // App is waiting for next cycle - clear running state and show countdown
@@ -394,7 +399,7 @@ window.CycleCountdown = (function() {
                                 updateTimerDisplay(app);
                             }
                             
-                            // Set up countdown interval if not already set
+                            // Set up 1-second countdown interval if not already set
                             setupCountdown(app);
                             
                             dataProcessed = true;
@@ -402,6 +407,8 @@ window.CycleCountdown = (function() {
                         } else {
                             console.warn(`[CycleCountdown] Invalid API data format for ${app}:`, data[app]);
                         }
+                    } else {
+                        console.log(`[CycleCountdown] Skipping ${app} - not in tracked apps list`);
                     }
                 }
                 
@@ -484,21 +491,30 @@ window.CycleCountdown = (function() {
         // Clear any existing interval
         if (timerIntervals[app]) {
             clearInterval(timerIntervals[app]);
+            console.log(`[CycleCountdown] Cleared existing 1-second timer for ${app}`);
         }
         
-        // Set up new interval to update every second
+        // Set up new interval to update every second for smooth countdown
         timerIntervals[app] = setInterval(() => {
             updateTimerDisplay(app);
-        }, 1000);
+        }, 1000); // 1-second interval for smooth countdown
+        
+        console.log(`[CycleCountdown] Set up 1-second countdown timer for ${app}`);
     }
     
     // Update the timer display for an app
     function updateTimerDisplay(app) {
         const timerElement = document.getElementById(`${app}CycleTimer`);
-        if (!timerElement) return;
+        if (!timerElement) {
+            console.warn(`[CycleCountdown] Timer element not found for ${app} - skipping display update`);
+            return;
+        }
         
         const timerValue = timerElement.querySelector('.timer-value');
-        if (!timerValue) return;
+        if (!timerValue) {
+            console.warn(`[CycleCountdown] Timer value element not found for ${app} - skipping display update`);
+            return;
+        }
         
         // If this timer is waiting for reset data, don't update it
         if (timerElement.getAttribute('data-waiting-for-reset') === 'true') {
@@ -517,6 +533,7 @@ window.CycleCountdown = (function() {
         const nextCycleTime = nextCycleTimes[app];
         if (!nextCycleTime) {
             timerValue.textContent = '--:--:--';
+            console.log(`[CycleCountdown] No next cycle time for ${app}, showing default`);
             return;
         }
         
@@ -524,44 +541,15 @@ window.CycleCountdown = (function() {
         const now = new Date();
         const timeRemaining = nextCycleTime - now;
         
+        console.log(`[CycleCountdown] ${app} - Next: ${nextCycleTime.toISOString()}, Now: ${now.toISOString()}, Remaining: ${Math.floor(timeRemaining/1000)}s`);
+        
         if (timeRemaining <= 0) {
-            // Time has passed, fetch updated data but don't show "Refreshing"
-            // Clear the old next cycle time to prevent infinite refreshing
+            // Time has passed, clear old data and wait for API sync to correct it
+            console.log(`[CycleCountdown] ${app} timer expired, clearing and waiting for API sync`);
             delete nextCycleTimes[app];
-            
-            // Fetch new data only if not already fetching
-            if (!isFetchingData) {
-                fetchAllCycleData()
-                    .then(() => {
-                        // Force update this specific timer
-                        if (nextCycleTimes[app]) {
-                            updateTimerDisplay(app);
-                        } else {
-                            // If no new data for this app, reset to default
-                            timerValue.textContent = '--:--:--';
-                            timerValue.classList.remove('refreshing-state', 'running-state');
-                            timerValue.style.removeProperty('color');
-                        }
-                    })
-                    .catch(() => {
-                        timerValue.textContent = '--:--:--';
-                        timerValue.classList.remove('refreshing-state', 'running-state');
-                        timerValue.style.removeProperty('color');
-                        console.log(`[CycleCountdown] Fetch failed for ${app}, reset to default`);
-                    });
-            } else {
-                // If already fetching, just wait and reset after timeout
-                setTimeout(() => {
-                    if (nextCycleTimes[app]) {
-                        updateTimerDisplay(app);
-                    } else {
-                        timerValue.textContent = '--:--:--';
-                        timerValue.classList.remove('refreshing-state', 'running-state');
-                        timerValue.style.removeProperty('color');
-                    }
-                }, 2000);
-            }
-            
+            timerValue.textContent = '--:--:--';
+            timerValue.classList.remove('refreshing-state', 'running-state');
+            timerValue.style.removeProperty('color');
             return;
         }
         
@@ -576,13 +564,19 @@ window.CycleCountdown = (function() {
         const formattedSeconds = String(seconds).padStart(2, '0');
         
         // Display formatted countdown
-        timerValue.textContent = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+        const formattedTime = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+        timerValue.textContent = formattedTime;
         
         // Remove refreshing and running state classes and clear any inline styles to restore proper color
         timerValue.classList.remove('refreshing-state', 'running-state');
         
         // Add visual indicator for remaining time
         updateTimerStyle(timerElement, timeRemaining);
+        
+        // Only log occasionally to avoid spam
+        if (seconds % 10 === 0) { // Log every 10 seconds
+            console.log(`[CycleCountdown] ${app} countdown: ${formattedTime}`);
+        }
     }
     
     // Update timer styling based on remaining time
@@ -641,19 +635,6 @@ window.CycleCountdown = (function() {
     function safeSetInterval(callback, delay) {
         // Make sure we're using the global window object for setInterval
         return window.setInterval.bind(window)(callback, delay);
-    }
-    
-    // Override the setupCountdown function to use safe timeout methods
-    function setupCountdown(app) {
-        // Clear any existing interval
-        if (timerIntervals[app]) {
-            window.clearInterval.bind(window)(timerIntervals[app]);
-        }
-        
-        // Set up new interval to update every second
-        timerIntervals[app] = safeSetInterval(() => {
-            updateTimerDisplay(app);
-        }, 1000);
     }
     
     document.addEventListener('DOMContentLoaded', function() {

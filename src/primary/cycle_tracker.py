@@ -414,10 +414,27 @@ def update_next_cycle(app_type: str, next_cycle_time: datetime.datetime) -> None
         # Load fresh data in case another process updated it
         _cycle_data = _load_cycle_data()
         
-        # Update the data
+        # Get user's timezone for consistent timestamp formatting
+        user_tz = _get_user_timezone()
+        
+        # Ensure next_cycle_time is timezone-aware and in user's timezone
+        if next_cycle_time.tzinfo is None:
+            # If naive datetime, assume it's in user's timezone
+            next_cycle_time = user_tz.localize(next_cycle_time)
+        elif next_cycle_time.tzinfo != user_tz:
+            # Convert to user's timezone if it's in a different timezone
+            next_cycle_time = next_cycle_time.astimezone(user_tz)
+        
+        # Remove microseconds for clean timestamps
+        next_cycle_time = next_cycle_time.replace(microsecond=0)
+        
+        # Calculate current time in user's timezone for consistency
+        now_user_tz = datetime.datetime.now(user_tz).replace(microsecond=0)
+        
+        # Update the data with timezone-aware timestamps (consistent with update_sleep_json)
         _cycle_data[app_type] = {
-            "next_cycle": next_cycle_time.isoformat() + "Z",  # Add Z to indicate UTC
-            "updated_at": datetime.datetime.utcnow().isoformat() + "Z"  # Use UTC and add Z
+            "next_cycle": next_cycle_time.isoformat(),  # Use timezone-aware format
+            "updated_at": now_user_tz.isoformat()  # Use timezone-aware format
         }
         
         # Save to disk (original method)

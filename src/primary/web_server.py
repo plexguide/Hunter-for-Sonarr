@@ -1016,6 +1016,30 @@ def version_txt():
         web_logger.error(f"Error serving version.txt: {e}")
         return "5.3.1", 200, {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache'}
 
+@app.route('/api/cycle/status', methods=['GET'])
+def api_get_all_cycle_status():
+    """API endpoint to get cycle status for all apps."""
+    try:
+        from src.primary.cycle_tracker import get_cycle_status
+        status = get_cycle_status()
+        return jsonify(status), 200
+    except Exception as e:
+        web_logger = get_logger("web_server")
+        web_logger.error(f"Error getting cycle status: {e}")
+        return jsonify({"error": "Failed to retrieve cycle status information."}), 500
+
+@app.route('/api/cycle/status/<app_name>', methods=['GET'])
+def api_get_app_cycle_status(app_name):
+    """API endpoint to get cycle status for a specific app."""
+    try:
+        from src.primary.cycle_tracker import get_cycle_status
+        status = get_cycle_status(app_name)
+        return jsonify(status), 200
+    except Exception as e:
+        web_logger = get_logger("web_server")
+        web_logger.error(f"Error getting cycle status for {app_name}: {e}")
+        return jsonify({"error": f"Failed to retrieve cycle status for {app_name}."}), 500
+
 @app.route('/api/cycle/reset/<app_name>', methods=['POST'])
 def reset_app_cycle(app_name):
     """
