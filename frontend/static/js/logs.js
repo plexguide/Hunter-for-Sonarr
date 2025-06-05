@@ -39,6 +39,56 @@ window.LogsModule = {
             });
     },
     
+    // Validate timestamp format and values
+    isValidTimestamp: function(timestamp) {
+        if (!timestamp || typeof timestamp !== 'string') return false;
+        
+        // Check for pipe-separated format: YYYY-MM-DD HH:MM:SS
+        const timestampRegex = /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}$/;
+        if (!timestampRegex.test(timestamp.trim())) return false;
+        
+        // Parse the components to validate ranges
+        const parts = timestamp.trim().split(' ');
+        if (parts.length !== 2) return false;
+        
+        const datePart = parts[0];
+        const timePart = parts[1];
+        
+        // Validate date part: YYYY-MM-DD
+        const dateMatch = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!dateMatch) return false;
+        
+        const year = parseInt(dateMatch[1]);
+        const month = parseInt(dateMatch[2]);
+        const day = parseInt(dateMatch[3]);
+        
+        // Basic range validation
+        if (year < 2020 || year > 2030) return false;
+        if (month < 1 || month > 12) return false;
+        if (day < 1 || day > 31) return false;
+        
+        // Validate time part: HH:MM:SS
+        const timeMatch = timePart.match(/^(\d{2}):(\d{2}):(\d{2})$/);
+        if (!timeMatch) return false;
+        
+        const hour = parseInt(timeMatch[1]);
+        const minute = parseInt(timeMatch[2]);
+        const second = parseInt(timeMatch[3]);
+        
+        // Validate time ranges
+        if (hour < 0 || hour > 23) return false;
+        if (minute < 0 || minute > 59) return false;
+        if (second < 0 || second > 59) return false;
+        
+        // Try to create a Date object to catch edge cases
+        try {
+            const testDate = new Date(`${datePart}T${timePart}Z`);
+            return !isNaN(testDate.getTime());
+        } catch (error) {
+            return false;
+        }
+    },
+    
     // Convert UTC timestamp to user's timezone
     convertToUserTimezone: function(utcTimestamp) {
         if (!utcTimestamp || !this.userTimezone) {
@@ -263,6 +313,12 @@ window.LogsModule = {
                     const level = match[2]; 
                     const logAppType = match[3].toLowerCase();
                     const originalMessage = match[4];
+                    
+                    // Validate timestamp
+                    if (!this.isValidTimestamp(timestamp)) {
+                        console.log('[LogsModule] Skipping log entry with invalid timestamp:', timestamp);
+                        return;
+                    }
                     
                     // Check if this log should be displayed based on the selected app
                     const currentApp = this.currentLogApp === 'hunting' ? 'hunting' : this.currentLogApp;
