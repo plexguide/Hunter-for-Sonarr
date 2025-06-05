@@ -317,6 +317,97 @@ def get_stateful_management_info() -> Dict[str, Any]:
         "interval_hours": expiration_hours
     }
 
+def get_state_management_summary(app_type: str, instance_name: str) -> Dict[str, Any]:
+    """
+    Get a summary of stateful management for an app instance.
+    
+    Args:
+        app_type: The type of app (sonarr, radarr, etc.)
+        instance_name: The name of the instance
+        
+    Returns:
+        Dict containing processed count, next reset time, and other useful info
+    """
+    try:
+        # Get processed IDs count
+        processed_ids = get_processed_ids(app_type, instance_name)
+        processed_count = len(processed_ids)
+        
+        # Get next reset time
+        next_reset_time = get_next_reset_time()
+        
+        # Get expiration hours setting
+        expiration_hours = get_advanced_setting("stateful_management_hours", DEFAULT_HOURS)
+        
+        return {
+            "processed_count": processed_count,
+            "next_reset_time": next_reset_time,
+            "expiration_hours": expiration_hours,
+            "has_processed_items": processed_count > 0
+        }
+    except Exception as e:
+        stateful_logger.error(f"Error getting state management summary for {app_type}/{instance_name}: {e}")
+        return {
+            "processed_count": 0,
+            "next_reset_time": None,
+            "expiration_hours": DEFAULT_HOURS,
+            "has_processed_items": False
+        }
+
+def _get_user_timezone():
+    """Get the user's selected timezone from general settings"""
+    try:
+        from src.primary.settings_manager import load_settings
+        import pytz
+        general_settings = load_settings("general")
+        timezone_name = general_settings.get("timezone", "UTC")
+        user_tz = pytz.timezone(timezone_name)
+        return user_tz
+    except Exception as e:
+        stateful_logger.warning(f"Could not get user timezone, defaulting to UTC: {e}")
+        import pytz
+        return pytz.UTC
+
+def get_next_reset_time() -> Optional[str]:
+    """
+    Get the next state management reset time as a formatted string in user's timezone.
+    
+    Returns:
+        Formatted reset time string or None if unable to calculate
+    """
+    try:
+        # Import here to avoid circular imports
+        from src.primary.state import get_last_reset_time
+        
+        # Get user's timezone
+        user_tz = _get_user_timezone()
+        
+        # Get reset interval in hours
+        reset_interval = get_advanced_setting("stateful_management_hours", DEFAULT_HOURS)
+        
+        # Get last reset time and calculate next reset
+        last_reset = get_last_reset_time()  # This returns a naive datetime
+        
+        # Check if last_reset is valid (not Unix epoch or too old)
+        unix_epoch = datetime.datetime(1970, 1, 1)
+        one_year_ago = datetime.datetime.now() - datetime.timedelta(days=365)
+        
+        if last_reset and last_reset > one_year_ago and last_reset != unix_epoch:
+            # Convert last reset to user timezone (assuming it was stored in UTC)
+            import pytz
+            last_reset_utc = pytz.UTC.localize(last_reset) if last_reset.tzinfo is None else last_reset
+            next_reset_user_tz = last_reset_utc.astimezone(user_tz) + datetime.timedelta(hours=reset_interval)
+            return next_reset_user_tz.strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            # If no valid last reset time, calculate from now
+            stateful_logger.info("No valid last reset time found, calculating next reset from current time")
+            now_user_tz = datetime.datetime.now(user_tz)
+            next_reset = now_user_tz + datetime.timedelta(hours=reset_interval)
+            return next_reset.strftime('%Y-%m-%d %H:%M:%S')
+    except Exception as e:
+        stateful_logger.error(f"Error calculating next reset time: {e}")
+        return None
+
 def initialize_stateful_system():
     """Perform a complete initialization of the stateful management system."""
     stateful_logger.info("Initializing stateful management system")

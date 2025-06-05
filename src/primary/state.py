@@ -54,11 +54,11 @@ def get_last_reset_time(app_type: str = None) -> datetime.datetime:
         app_type: The type of app to get last reset time for.
         
     Returns:
-        The datetime of the last reset, or a very old date if no reset has occurred or app_type is invalid.
+        The datetime of the last reset, or current time if no reset has occurred or app_type is invalid.
     """
     if not app_type:
         logger.error("get_last_reset_time called without app_type.")
-        return datetime.datetime.fromtimestamp(0)
+        return datetime.datetime.now()
         
     current_app_type = app_type
     reset_file = get_state_file_path(current_app_type, "last_reset")
@@ -71,7 +71,11 @@ def get_last_reset_time(app_type: str = None) -> datetime.datetime:
     except Exception as e:
         logger.error(f"Error reading last reset time for {current_app_type}: {e}")
     
-    return datetime.datetime.fromtimestamp(0)
+    # If no reset file exists, initialize it with current time and return current time
+    logger.info(f"No reset time found for {current_app_type}, initializing with current time")
+    current_time = datetime.datetime.now()
+    set_last_reset_time(current_time, current_app_type)
+    return current_time
 
 def set_last_reset_time(reset_time: datetime.datetime, app_type: str = None) -> None:
     """
@@ -173,6 +177,19 @@ def clear_processed_ids(app_type: str = None) -> None:
     except Exception as e:
         logger.error(f"Error clearing processed upgrade IDs for {current_app_type}: {e}")
 
+def _get_user_timezone():
+    """Get the user's selected timezone from general settings"""
+    try:
+        import pytz
+        general_settings = settings_manager.load_settings("general")
+        timezone_name = general_settings.get("timezone", "UTC")
+        user_tz = pytz.timezone(timezone_name)
+        return user_tz
+    except Exception as e:
+        logger.warning(f"Could not get user timezone, defaulting to UTC: {e}")
+        import pytz
+        return pytz.UTC
+
 def calculate_reset_time(app_type: str = None) -> str:
     """
     Calculate when the next state reset will occur.
@@ -192,13 +209,27 @@ def calculate_reset_time(app_type: str = None) -> str:
     reset_interval = settings_manager.get_advanced_setting("stateful_management_hours", 168)
     
     last_reset = get_last_reset_time(current_app_type)
-    next_reset = last_reset + datetime.timedelta(hours=reset_interval)
-    now = datetime.datetime.now()
     
-    if next_reset < now:
+    # Get user's timezone for consistent time display
+    user_tz = _get_user_timezone()
+    
+    # Convert last reset to user timezone (assuming it was stored as naive UTC)
+    import pytz
+    if last_reset.tzinfo is None:
+        last_reset_utc = pytz.UTC.localize(last_reset)
+    else:
+        last_reset_utc = last_reset
+    
+    next_reset = last_reset_utc + datetime.timedelta(hours=reset_interval)
+    now_user_tz = datetime.datetime.now(user_tz)
+    
+    # Convert next_reset to user timezone for comparison
+    next_reset_user_tz = next_reset.astimezone(user_tz)
+    
+    if next_reset_user_tz < now_user_tz:
         return "Next reset: at the start of the next cycle"
     
-    delta = next_reset - now
+    delta = next_reset_user_tz - now_user_tz
     hours = delta.total_seconds() / 3600
     
     if hours < 1:

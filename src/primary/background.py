@@ -233,6 +233,8 @@ def app_specific_loop(app_type: str) -> None:
             
         # Process each instance dictionary returned by get_configured_instances
         processed_any_items = False
+        enabled_instances = []
+        
         for instance_details in instances_to_process:
             if stop_event.is_set():
                 break
@@ -383,7 +385,7 @@ def app_specific_loop(app_type: str) -> None:
                     else:
                         # For other apps that still use the old signature
                         processed_upgrades = process_upgrades(app_settings=combined_settings, stop_check=stop_check_func)
-                    
+                        
                     if processed_upgrades:
                         processed_any_items = True
                 except Exception as e:
@@ -392,6 +394,7 @@ def app_specific_loop(app_type: str) -> None:
             # Small delay between instances if needed (optional)
             if not stop_event.is_set():
                  time.sleep(1) # Short pause
+            enabled_instances.append(instance_name)
 
         # --- Cycle End & Sleep --- #
         calculate_reset_time(app_type) # Pass app_type here if needed by the function
@@ -401,6 +404,39 @@ def app_specific_loop(app_type: str) -> None:
             app_logger.info(f"=== {app_type.upper()} cycle finished. Processed items across instances. ===")
         else:
             app_logger.info(f"=== {app_type.upper()} cycle finished. No items processed in any instance. ===")
+            
+        # Add state management summary logging for user clarity
+        try:
+            from src.primary.stateful_manager import get_state_management_summary
+            
+            # Get total summary across all instances
+            total_processed = 0
+            has_any_processed = False
+            
+            for instance_name in enabled_instances:
+                summary = get_state_management_summary(app_type, instance_name)
+                if summary["has_processed_items"]:
+                    total_processed += summary["processed_count"]
+                    has_any_processed = True
+            
+            # Log state management info based on processing results
+            if not processed_any_items and has_any_processed:
+                # Items were skipped due to state management
+                reset_time = get_state_management_summary(app_type, enabled_instances[0])["next_reset_time"] if enabled_instances else None
+                if reset_time:
+                    app_logger.info(f"STATE MANAGEMENT: {total_processed} items already processed and will not be reprocessed until state reset at {reset_time}.")
+                else:
+                    app_logger.info(f"STATE MANAGEMENT: {total_processed} items already processed and will not be reprocessed until state management reset.")
+            elif processed_any_items:
+                # Items were processed, show summary
+                reset_time = get_state_management_summary(app_type, enabled_instances[0])['next_reset_time'] if enabled_instances else 'Unknown'
+                app_logger.info(f"STATE MANAGEMENT: Total items tracked: {total_processed}. Next state reset: {reset_time}.")
+            else:
+                # No items processed and no state management blocking
+                app_logger.info(f"STATE MANAGEMENT: No items found to process. Items tracked: {total_processed}.")
+                
+        except Exception as e:
+            app_logger.warning(f"Could not generate state management summary: {e}")
             
         # Calculate sleep duration (use configured or default value)
         sleep_seconds = app_settings.get("sleep_duration", 900)  # Default to 15 minutes
