@@ -47,6 +47,7 @@ class CleanLogFormatter(logging.Formatter):
     """
     Custom formatter that creates clean log messages for frontend consumption.
     Uses pipe separators for easy parsing: timestamp|level|app_type|message
+    All timestamps are stored in UTC for consistency.
     """
     
     def __init__(self):
@@ -57,6 +58,7 @@ class CleanLogFormatter(logging.Formatter):
         """
         Format the log record as: timestamp|level|app_type|clean_message
         This format makes it easy for frontend to parse and display properly.
+        Timestamps are always stored in UTC.
         """
         # Get the original formatted message
         original_message = record.getMessage()
@@ -64,32 +66,14 @@ class CleanLogFormatter(logging.Formatter):
         # Clean the message by removing redundant information
         clean_message = self._clean_message(original_message, record.name, record.levelname)
         
-        # Format timestamp using user's configured timezone
-        timestamp = self._format_timestamp_with_user_timezone(record.created)
+        # Format timestamp in UTC (for consistent storage)
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(record.created))
         
         # Determine app type from logger name
         app_type = self._get_app_type(record.name)
         
         # Format as: timestamp|level|app_type|message
         return f"{timestamp}|{record.levelname}|{app_type}|{clean_message}"
-    
-    def _format_timestamp_with_user_timezone(self, timestamp):
-        """
-        Format timestamp using the user's configured timezone from settings.
-        """
-        try:
-            # Get user's configured timezone
-            user_tz = _get_user_timezone()
-            
-            # Convert UTC timestamp to user's timezone
-            utc_dt = datetime.fromtimestamp(timestamp, tz=pytz.UTC)
-            local_dt = utc_dt.astimezone(user_tz)
-            
-            # Format without timezone abbreviation for cleaner display
-            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-        except Exception:
-            # Fallback to UTC if anything goes wrong
-            return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(timestamp))
     
     def _clean_message(self, message: str, logger_name: str, level: str) -> str:
         """

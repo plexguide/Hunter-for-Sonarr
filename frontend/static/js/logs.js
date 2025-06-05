@@ -12,6 +12,7 @@ window.LogsModule = {
     currentLogApp: 'all',
     autoScroll: true,
     autoScrollWasEnabled: false,
+    userTimezone: null, // Cache for user's timezone setting
     
     // Element references
     elements: {},
@@ -20,7 +21,68 @@ window.LogsModule = {
     init: function() {
         console.log('[LogsModule] Initializing logs module...');
         this.cacheElements();
+        this.loadUserTimezone();
         this.setupEventListeners();
+    },
+    
+    // Load user's timezone setting from the backend
+    loadUserTimezone: function() {
+        fetch('/api/settings')
+            .then(response => response.json())
+            .then(settings => {
+                this.userTimezone = settings.general?.timezone || 'UTC';
+                console.log('[LogsModule] User timezone loaded:', this.userTimezone);
+            })
+            .catch(error => {
+                console.warn('[LogsModule] Failed to load user timezone, using UTC:', error);
+                this.userTimezone = 'UTC';
+            });
+    },
+    
+    // Convert UTC timestamp to user's timezone
+    convertToUserTimezone: function(utcTimestamp) {
+        if (!utcTimestamp || !this.userTimezone) {
+            console.warn('[LogsModule] Missing timestamp or timezone:', {utcTimestamp, userTimezone: this.userTimezone});
+            return { date: utcTimestamp?.split(' ')[0] || '', time: utcTimestamp?.split(' ')[1] || '' };
+        }
+        
+        try {
+            console.log('[LogsModule] Converting timestamp:', utcTimestamp, 'from UTC to', this.userTimezone);
+            
+            // Parse UTC timestamp - ensure it's treated as UTC
+            const utcDate = new Date(utcTimestamp + ' UTC');
+            console.log('[LogsModule] Parsed UTC date:', utcDate.toISOString());
+            
+            // Convert to user's timezone using toLocaleString
+            const userDateString = utcDate.toLocaleString("en-CA", {
+                timeZone: this.userTimezone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            
+            console.log('[LogsModule] Converted to user timezone:', userDateString);
+            
+            // Parse the formatted string "2025-06-05, 14:09:54"
+            const [datePart, timePart] = userDateString.split(', ');
+            
+            const result = {
+                date: datePart,
+                time: timePart
+            };
+            
+            console.log('[LogsModule] Final result:', result);
+            return result;
+            
+        } catch (error) {
+            console.warn('[LogsModule] Error converting timestamp to user timezone:', error);
+            // Fallback to original timestamp
+            return { date: utcTimestamp?.split(' ')[0] || '', time: utcTimestamp?.split(' ')[1] || '' };
+        }
     },
     
     // Cache DOM elements for better performance
@@ -242,6 +304,11 @@ window.LogsModule = {
                             time = parts[1] || '';
                         }
                         
+                        // Convert to user's timezone
+                        const userTime = this.convertToUserTimezone(timestamp);
+                        date = userTime.date;
+                        time = userTime.time;
+                        
                         // Clean the message - since we're now receiving clean logs from backend,
                         // minimal processing should be needed
                         let cleanMessage = originalMessage;
@@ -306,6 +373,11 @@ window.LogsModule = {
                             fallbackDate = timeMatch[1];
                             fallbackTime = timeMatch[2];
                         }
+                        
+                        // Convert to user's timezone
+                        const userTime = this.convertToUserTimezone(`${fallbackDate} ${fallbackTime}`);
+                        fallbackDate = userTime.date;
+                        fallbackTime = userTime.time;
                         
                         logEntry.innerHTML = `
                             <div class="log-entry-row">
