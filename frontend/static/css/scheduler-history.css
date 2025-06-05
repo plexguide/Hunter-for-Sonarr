@@ -79,3 +79,37 @@
     display: block;
     margin: 0 auto;
 }
+
+/* Timezone display styling */
+.timezone-info {
+    margin-top: 0;
+    padding: 4px 8px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    border-left: 3px solid #ffa500;
+}
+
+.timezone-display {
+    color: #ffa500;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.timezone-display i {
+    color: #ffa500;
+}
+
+.timezone-display span {
+    color: #ddd;
+    font-weight: normal;
+}
+
+#serverCurrentTime {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #90caf9;
+}
