@@ -99,6 +99,16 @@
     white-space: nowrap;
 }
 
+.timezone-label {
+    color: #ffa500;
+}
+
+.timezone-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .timezone-display i {
     color: #ffa500;
 }
@@ -112,4 +122,45 @@
     font-family: 'Courier New', monospace;
     font-weight: bold;
     color: #90caf9;
+}
+
+/* Mobile responsive adjustments for timezone display */
+@media (max-width: 768px) {
+    .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .timezone-info {
+        align-self: flex-end;
+        padding: 3px 6px;
+        margin-top: 0;
+    }
+    
+    .timezone-display {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+    }
+    
+    /* Hide the "Server Time:" label on mobile */
+    .timezone-label {
+        display: none;
+    }
+    
+    .timezone-content {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.7rem;
+    }
+    
+    .timezone-content i {
+        font-size: 0.7rem;
+    }
+    
+    .timezone-content span {
+        font-size: 0.7rem;
+    }
 }
