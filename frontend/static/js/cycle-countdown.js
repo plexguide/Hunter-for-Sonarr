@@ -55,12 +55,12 @@ window.CycleCountdown = (function() {
         // Set up event listeners for reset buttons
         setupResetButtonListeners();
         
-        // First try to fetch from sleep.json
-        console.log('[CycleCountdown] Fetching initial data from sleep.json...');
-        fetchFromSleepJson()
+        // First try to fetch from API
+        console.log('[CycleCountdown] Fetching initial data from API...');
+        fetchAllCycleData()
             .then(() => {
                 console.log('[CycleCountdown] Initial data fetch successful');
-                // Success - data is processed in fetchFromSleepJson
+                // Success - data is processed in fetchAllCycleData
             })
             .catch((error) => {
                 console.warn('[CycleCountdown] Initial data fetch failed:', error.message);
@@ -82,9 +82,9 @@ window.CycleCountdown = (function() {
                 // Only refresh if not already fetching
                 if (!isFetchingData) {
                     console.log('[CycleCountdown] Periodic refresh...');
-                    fetchFromSleepJson()
+                    fetchAllCycleData()
                         .catch(() => {
-                            // Error handling is done in fetchFromSleepJson
+                            // Error handling is done in fetchAllCycleData
                         });
                 }
             }, 60000); // Fixed 60-second interval
@@ -98,171 +98,6 @@ window.CycleCountdown = (function() {
     
     // Simple lock to prevent concurrent fetches
     let isFetchingData = false;
-    
-    // Fetch cycle data from sleep.json file via direct access
-    function fetchFromSleepJson() {
-        // If already fetching, don't start another fetch
-        if (isFetchingData) {
-            return Promise.resolve(nextCycleTimes); // Return existing data
-        }
-        
-        // Set the lock
-        isFetchingData = true;
-        
-        // Use the API endpoint to fetch sleep.json data
-        const sleepJsonUrl = window.location.origin + '/api/sleep.json';
-        
-        // Add a timestamp to prevent caching
-        const url = `${sleepJsonUrl}?t=${Date.now()}`;
-        
-        return new Promise((resolve, reject) => {
-            fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Release the lock
-                isFetchingData = false;
-                
-                // Check if we got valid data
-                if (Object.keys(data).length === 0) {
-                    console.warn('[CycleCountdown] Sleep.json contained no data');
-                    reject(new Error('No data in sleep.json'));
-                    return;
-                }
-                
-                let dataProcessed = false;
-                
-                // Process the data for each app
-                for (const app in data) {
-                    if (trackedApps.includes(app)) {
-                        // Check if data format is valid
-                        if (data[app] && data[app].next_cycle) {
-                            console.log(`[CycleCountdown] Processing data for ${app}:`, data[app]);
-                            
-                            // Convert ISO date string to Date object
-                            const nextCycleTime = new Date(data[app].next_cycle);
-                            
-                            // Validate the date is in the future or very recent past (within 30 seconds)
-                            const now = new Date();
-                            const timeDiff = nextCycleTime.getTime() - now.getTime();
-                            
-                            if (isNaN(nextCycleTime.getTime())) {
-                                console.error(`[CycleCountdown] Invalid date format for ${app}:`, data[app].next_cycle);
-                                continue;
-                            }
-                            
-                            // Only update if the time is in the future or very recent past
-                            if (timeDiff > -30000) { // Allow 30 seconds in the past
-                                // Store the next cycle time
-                                nextCycleTimes[app] = nextCycleTime;
-                                
-                                // Clear any waiting state before updating
-                                const timerElement = document.getElementById(`${app}CycleTimer`);
-                                if (timerElement) {
-                                    const timerValue = timerElement.querySelector('.timer-value');
-                                    if (timerValue) {
-                                        // Clear waiting/refreshing state
-                                        timerValue.classList.remove('refreshing-state');
-                                        timerValue.style.removeProperty('color');
-                                    }
-                                }
-                                
-                                // Calculate actual remaining seconds from current time
-                                const actualRemainingSeconds = Math.max(0, Math.floor((nextCycleTime - now) / 1000));
-                                
-                                // Check the cyclelock field to determine if app is running
-                                // Default to true if missing (Docker startup behavior)
-                                const cyclelock = data[app].cyclelock !== undefined ? data[app].cyclelock : true;
-                                
-                                if (cyclelock) {
-                                    // App is running a cycle - show "Running Cycle"
-                                    runningCycles[app] = true;
-                                    const timerElement = document.getElementById(`${app}CycleTimer`);
-                                    if (timerElement) {
-                                        const timerValue = timerElement.querySelector('.timer-value');
-                                        if (timerValue) {
-                                            timerValue.textContent = 'Running Cycle';
-                                            timerValue.classList.remove('refreshing-state');
-                                            timerValue.classList.add('running-state');
-                                            timerValue.style.color = '#00ff88'; // Green for active
-                                            console.log(`[CycleCountdown] ${app} cyclelock is true, showing Running Cycle`);
-                                        }
-                                    }
-                                } else {
-                                    // App is waiting for next cycle - clear running state and show countdown
-                                    if (runningCycles[app]) {
-                                        console.log(`[CycleCountdown] ${app} cyclelock is false, switching to countdown`);
-                                    }
-                                    runningCycles[app] = false;
-                                    // Update the timer display immediately for normal countdown
-                                    updateTimerDisplay(app);
-                                }
-                                
-                                // Set up countdown interval if not already set
-                                setupCountdown(app);
-                                
-                                dataProcessed = true;
-                                console.log(`[CycleCountdown] Updated ${app} with next cycle: ${nextCycleTime.toISOString()}`);
-                            } else {
-                                console.log(`[CycleCountdown] Skipping old cycle time for ${app}: ${nextCycleTime.toISOString()}`);
-                                
-                                // For old cycle times, clear the timer and show default state
-                                const timerElement = document.getElementById(`${app}CycleTimer`);
-                                if (timerElement) {
-                                    const timerValue = timerElement.querySelector('.timer-value');
-                                    if (timerValue) {
-                                        timerValue.textContent = '--:--:--';
-                                        timerValue.classList.remove('refreshing-state');
-                                        timerValue.style.removeProperty('color');
-                                    }
-                                }
-                                
-                                // Clear any stored cycle time for this app
-                                delete nextCycleTimes[app];
-                            }
-                        } else {
-                            console.warn(`[CycleCountdown] Invalid data format for ${app}:`, data[app]);
-                        }
-                    }
-                }
-                
-                if (dataProcessed) {
-                    resolve(data);
-                } else {
-                    console.warn('[CycleCountdown] No valid app data found in sleep.json');
-                    reject(new Error('No valid app data'));
-                }
-            })
-            .catch(error => {
-                // Release the lock
-                isFetchingData = false;
-                
-                // Only log errors occasionally to reduce console spam
-                if (Math.random() < 0.1) { // Only log 10% of errors
-                    console.warn('[CycleCountdown] Error fetching sleep.json:', error.message); 
-                }
-                
-                // Display waiting message in UI only if we have no existing data
-                if (Object.keys(nextCycleTimes).length === 0) {
-                    displayWaitingForCycle(); // Shows "Waiting for cycle..." during startup
-                    reject(error);
-                } else {
-                    // If we have existing data, just use that
-                    resolve(nextCycleTimes);
-                }
-            });
-        });
-    }
     
     // Set up reset button click listeners
     function setupResetButtonListeners() {
@@ -308,50 +143,50 @@ window.CycleCountdown = (function() {
             pollAttempts++;
             console.log(`[CycleCountdown] Polling attempt ${pollAttempts} for ${app} reset data`);
             
-                         fetchFromSleepJson()
-                 .then(() => {
-                     // Check if we got new data for this specific app
-                     const timerElement = document.getElementById(`${app}CycleTimer`);
-                     if (timerElement && timerElement.getAttribute('data-waiting-for-reset') === 'true') {
-                         // Check if we have valid next cycle time for this app
-                         if (nextCycleTimes[app]) {
-                             const currentCycleTime = nextCycleTimes[app].getTime();
-                             const originalCycleTime = parseInt(timerElement.getAttribute('data-original-cycle-time'));
-                             
-                             // Only consider reset complete if we have a DIFFERENT cycle time
-                             // or if the original was null (no previous timer)
-                             if (originalCycleTime === null || currentCycleTime !== originalCycleTime) {
-                                 console.log(`[CycleCountdown] New reset data received for ${app} (original: ${originalCycleTime}, new: ${currentCycleTime}), stopping polling`);
-                                 timerElement.removeAttribute('data-waiting-for-reset');
-                                 timerElement.removeAttribute('data-original-cycle-time');
-                                 clearInterval(pollInterval);
-                                 updateTimerDisplay(app);
-                             } else {
-                                 console.log(`[CycleCountdown] Same cycle time for ${app} (${currentCycleTime}), continuing to poll for new data`);
-                             }
-                         }
-                     }
-                 })
+            fetchAllCycleData()
+                .then(() => {
+                    // Check if we got new data for this specific app
+                    const timerElement = document.getElementById(`${app}CycleTimer`);
+                    if (timerElement && timerElement.getAttribute('data-waiting-for-reset') === 'true') {
+                        // Check if we have valid next cycle time for this app
+                        if (nextCycleTimes[app]) {
+                            const currentCycleTime = nextCycleTimes[app].getTime();
+                            const originalCycleTime = parseInt(timerElement.getAttribute('data-original-cycle-time'));
+                            
+                            // Only consider reset complete if we have a DIFFERENT cycle time
+                            // or if the original was null (no previous timer)
+                            if (originalCycleTime === null || currentCycleTime !== originalCycleTime) {
+                                console.log(`[CycleCountdown] New reset data received for ${app} (original: ${originalCycleTime}, new: ${currentCycleTime}), stopping polling`);
+                                timerElement.removeAttribute('data-waiting-for-reset');
+                                timerElement.removeAttribute('data-original-cycle-time');
+                                clearInterval(pollInterval);
+                                updateTimerDisplay(app);
+                            } else {
+                                console.log(`[CycleCountdown] Same cycle time for ${app} (${currentCycleTime}), continuing to poll for new data`);
+                            }
+                        }
+                    }
+                })
                 .catch(() => {
                     // Continue polling on error
                 });
             
-                         // Stop polling after max attempts
-             if (pollAttempts >= maxPollAttempts) {
-                 console.log(`[CycleCountdown] Max polling attempts reached for ${app}, stopping`);
-                 const timerElement = document.getElementById(`${app}CycleTimer`);
-                 if (timerElement) {
-                     timerElement.removeAttribute('data-waiting-for-reset');
-                     timerElement.removeAttribute('data-original-cycle-time');
-                     const timerValue = timerElement.querySelector('.timer-value');
-                     if (timerValue) {
-                         timerValue.textContent = '--:--:--';
-                         timerValue.classList.remove('refreshing-state');
-                         timerValue.style.removeProperty('color');
-                     }
-                 }
-                 clearInterval(pollInterval);
-             }
+            // Stop polling after max attempts
+            if (pollAttempts >= maxPollAttempts) {
+                console.log(`[CycleCountdown] Max polling attempts reached for ${app}, stopping`);
+                const timerElement = document.getElementById(`${app}CycleTimer`);
+                if (timerElement) {
+                    timerElement.removeAttribute('data-waiting-for-reset');
+                    timerElement.removeAttribute('data-original-cycle-time');
+                    const timerValue = timerElement.querySelector('.timer-value');
+                    if (timerValue) {
+                        timerValue.textContent = '--:--:--';
+                        timerValue.classList.remove('refreshing-state');
+                        timerValue.style.removeProperty('color');
+                    }
+                }
+                clearInterval(pollInterval);
+            }
         }, 5000); // Poll every 5 seconds
     }
     
@@ -457,6 +292,14 @@ window.CycleCountdown = (function() {
     
     // Fetch cycle data for all apps at once
     function fetchAllCycleData() {
+        // If already fetching, don't start another fetch
+        if (isFetchingData) {
+            return Promise.resolve(nextCycleTimes); // Return existing data
+        }
+        
+        // Set the lock
+        isFetchingData = true;
+        
         return new Promise((resolve, reject) => {
             // Use a completely relative URL approach to avoid any subpath issues
             const url = buildUrl('./api/cycle/status');
@@ -477,33 +320,115 @@ window.CycleCountdown = (function() {
                 return response.json();
             })
             .then(data => {
-                // Data format should be {sonarr: {next_cycle: "...", updated_at: "..."}, ...}
-                let updated = false;
+                // Release the lock
+                isFetchingData = false;
                 
+                // Check if we got valid data
+                if (Object.keys(data).length === 0) {
+                    console.warn('[CycleCountdown] API returned no data');
+                    reject(new Error('No data from API'));
+                    return;
+                }
+                
+                let dataProcessed = false;
+                
+                // Process the data for each app
                 for (const app in data) {
-                    if (trackedApps.includes(app) && data[app].next_cycle) {
-                        // Store next cycle time
-                        nextCycleTimes[app] = new Date(data[app].next_cycle);
-                        
-                        // Update timer display immediately
-                        updateTimerDisplay(app);
-                        
-                        // Set up interval to update countdown
-                        setupCountdown(app);
-                        
-                        updated = true;
+                    if (trackedApps.includes(app)) {
+                        // Check if data format is valid
+                        if (data[app] && data[app].next_cycle) {
+                            console.log(`[CycleCountdown] Processing API data for ${app}:`, data[app]);
+                            
+                            // Convert ISO date string to Date object
+                            const nextCycleTime = new Date(data[app].next_cycle);
+                            
+                            // Validate the date format first
+                            if (isNaN(nextCycleTime.getTime())) {
+                                console.error(`[CycleCountdown] Invalid date format for ${app}:`, data[app].next_cycle);
+                                continue;
+                            }
+                            
+                            // Skip timezone validation entirely - just use the timestamp as-is
+                            // The backend sends timezone-aware timestamps that are already correct
+                            console.log(`[CycleCountdown] ${app} timestamp: ${data[app].next_cycle}, parsed: ${nextCycleTime.toISOString()}`);
+                            
+                            // Store the next cycle time without timezone validation
+                            nextCycleTimes[app] = nextCycleTime;
+                            
+                            // Clear any waiting state before updating
+                            const timerElement = document.getElementById(`${app}CycleTimer`);
+                            if (timerElement) {
+                                const timerValue = timerElement.querySelector('.timer-value');
+                                if (timerValue) {
+                                    // Clear waiting/refreshing state
+                                    timerValue.classList.remove('refreshing-state');
+                                    timerValue.style.removeProperty('color');
+                                }
+                            }
+                            
+                            // Check the cyclelock field to determine if app is running
+                            // Default to true if missing (Docker startup behavior)
+                            const cyclelock = data[app].cyclelock !== undefined ? data[app].cyclelock : true;
+                            
+                            if (cyclelock) {
+                                // App is running a cycle - show "Running Cycle"
+                                runningCycles[app] = true;
+                                const timerElement = document.getElementById(`${app}CycleTimer`);
+                                if (timerElement) {
+                                    const timerValue = timerElement.querySelector('.timer-value');
+                                    if (timerValue) {
+                                        timerValue.textContent = 'Running Cycle';
+                                        timerValue.classList.remove('refreshing-state');
+                                        timerValue.classList.add('running-state');
+                                        timerValue.style.color = '#00ff88'; // Green for active
+                                        console.log(`[CycleCountdown] ${app} cyclelock is true, showing Running Cycle`);
+                                    }
+                                }
+                            } else {
+                                // App is waiting for next cycle - clear running state and show countdown
+                                if (runningCycles[app]) {
+                                    console.log(`[CycleCountdown] ${app} cyclelock is false, switching to countdown`);
+                                }
+                                runningCycles[app] = false;
+                                // Update the timer display immediately for normal countdown
+                                updateTimerDisplay(app);
+                            }
+                            
+                            // Set up countdown interval if not already set
+                            setupCountdown(app);
+                            
+                            dataProcessed = true;
+                            console.log(`[CycleCountdown] Updated ${app} with next cycle: ${nextCycleTime.toISOString()}`);
+                        } else {
+                            console.warn(`[CycleCountdown] Invalid API data format for ${app}:`, data[app]);
+                        }
                     }
                 }
                 
-                if (updated) {
+                if (dataProcessed) {
                     resolve(data);
                 } else {
-                    reject(new Error('No valid cycle data found'));
+                    console.warn('[CycleCountdown] No valid app data found in API response');
+                    reject(new Error('No valid app data'));
                 }
             })
             .catch(error => {
-                console.error('[CycleCountdown] Error fetching all cycle times:', error);
-                reject(error);
+                // Release the lock
+                isFetchingData = false;
+                
+                // Only log errors occasionally to reduce console spam
+                if (Math.random() < 0.1) { // Only log 10% of errors
+                    console.warn('[CycleCountdown] Error fetching from API:', error.message); 
+                }
+                
+                // Display waiting message in UI only if we have no existing data
+                if (Object.keys(nextCycleTimes).length === 0) {
+                    displayWaitingForCycle(); // Shows "Waiting for cycle..." during startup
+                    reject(error);
+                } else {
+                    // If we have existing data, just use that
+                    resolve(nextCycleTimes);
+                }
             });
         });
     }
@@ -606,7 +531,7 @@ window.CycleCountdown = (function() {
             
             // Fetch new data only if not already fetching
             if (!isFetchingData) {
-                fetchFromSleepJson()
+                fetchAllCycleData()
                     .then(() => {
                         // Force update this specific timer
                         if (nextCycleTimes[app]) {
@@ -773,3 +698,4 @@ window.CycleCountdown = (function() {
         cleanup: cleanup
     };
 })();
+

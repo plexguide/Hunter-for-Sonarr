@@ -176,7 +176,6 @@ def _save_cycle_data(data: Dict[str, Any]) -> None:
             
             frontend_data[app] = {
                 "next_cycle": app_data["next_cycle"],
-                "remaining_seconds": _calculate_remaining_seconds(app_data["next_cycle"]),
                 "updated_at": app_data["updated_at"],
                 "cyclelock": cyclelock  # Preserve existing cyclelock value
             }
@@ -341,9 +340,8 @@ def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime, cyclelo
         # Remove microseconds for clean timestamps
         next_cycle_time = next_cycle_time.replace(microsecond=0)
         
-        # Calculate remaining seconds based on user's timezone
+        # Calculate current time in user's timezone for consistency
         now_user_tz = datetime.datetime.now(user_tz).replace(microsecond=0)
-        remaining_seconds = max(0, int((next_cycle_time - now_user_tz).total_seconds()))
         
         # Determine cyclelock value
         if cyclelock is None:
@@ -364,7 +362,6 @@ def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime, cyclelo
         
         sleep_data[app_type] = {
             "next_cycle": next_cycle_clean,
-            "remaining_seconds": remaining_seconds,
             "updated_at": updated_at_clean,
             "timezone": timezone_name,  # Store timezone info for frontend
             "cyclelock": cyclelock  # True = running cycle, False = waiting for cycle
@@ -391,7 +388,6 @@ def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime, cyclelo
                 print(f"Successfully wrote sleep.json for {app_type} (size: {file_size} bytes)")
                 print(f"Successfully wrote web sleep.json for {app_type} (size: {web_file_size} bytes)")
                 print(f"  - Next cycle: {next_cycle_time.isoformat()}")
-                print(f"  - Remaining seconds: {remaining_seconds}")
                 print(f"  - Cycle lock: {cyclelock}")
             else:
                 print(f"WARNING: sleep.json not found after write operation")
@@ -438,7 +434,7 @@ def get_cycle_status(app_type: Optional[str] = None) -> Dict[str, Any]:
         app_type: Optional app type to filter for
     
     Returns:
-        Dict with cycle status information
+        Dict with cycle status information including cyclelock status
     """
     global _cycle_data
     
@@ -446,13 +442,28 @@ def get_cycle_status(app_type: Optional[str] = None) -> Dict[str, Any]:
         # Load fresh data
         _cycle_data = _load_cycle_data()
         
+        # Also load sleep.json data to get cyclelock status
+        sleep_data = {}
+        if os.path.exists(_SLEEP_DATA_PATH):
+            try:
+                with open(_SLEEP_DATA_PATH, 'r') as f:
+                    sleep_data = json.load(f)
+            except (json.JSONDecodeError, Exception) as e:
+                print(f"Error reading sleep.json in get_cycle_status: {e}")
+                sleep_data = {}
+        
         if app_type:
             # Return data for a specific app
             if app_type in _cycle_data:
+                # Get cyclelock from sleep.json if available
+                app_sleep_data = sleep_data.get(app_type, {})
+                cyclelock = app_sleep_data.get('cyclelock', True)  # Default to True
+                
                 return {
                     "app": app_type,
                     "next_cycle": _cycle_data[app_type]["next_cycle"],
-                    "updated_at": _cycle_data[app_type]["updated_at"]
+                    "updated_at": _cycle_data[app_type]["updated_at"],
+                    "cyclelock": cyclelock
                 }
             else:
                 return {
@@ -463,9 +474,14 @@ def get_cycle_status(app_type: Optional[str] = None) -> Dict[str, Any]:
             # Return data for all apps
             result = {}
             for app, data in _cycle_data.items():
+                # Get cyclelock from sleep.json if available
+                app_sleep_data = sleep_data.get(app, {})
+                cyclelock = app_sleep_data.get('cyclelock', True)  # Default to True
+                
                 result[app] = {
                     "next_cycle": data["next_cycle"],
-                    "updated_at": data["updated_at"]
+                    "updated_at": data["updated_at"],
+                    "cyclelock": cyclelock
                 }
             return result
 
@@ -555,7 +571,6 @@ def reset_cycle(app_type: str) -> bool:
                     future_time = now + datetime.timedelta(minutes=15)  # Default 15 minutes
                     sleep_data[app_type] = {
                         "next_cycle": future_time.isoformat() + "Z",
-                        "remaining_seconds": 900,  # 15 minutes
                         "updated_at": now.isoformat() + "Z",
                         "cyclelock": True
                     }
