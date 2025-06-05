@@ -615,8 +615,30 @@ let huntarrUI = {
     },
     
     // App tab switching
+    handleAppTabChange: function(e) {
+        const app = e.target.getAttribute('data-app');
+        if (!app) return;
+        
+        // Update active tab
+        this.elements.appTabs.forEach(tab => {
+            tab.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        // Switch to the selected app logs
+        this.currentApp = app;
+        this.connectToLogs();
+    },
+    
     // Log option dropdown handling
-        if (!app || app === // Update the select value
+    handleLogOptionChange: function(app) {
+        if (app && app.target && typeof app.target.value === 'string') {
+            app = app.target.value;
+        } else if (app && app.target && typeof app.target.getAttribute === 'function') {
+            app = app.target.getAttribute('data-app');
+        }
+        if (!app || app === this.currentLogApp) return;
+        // Update the select value
         const logAppSelect = document.getElementById('logAppSelect');
         if (logAppSelect) logAppSelect.value = app;
         // Update the current log app text with proper capitalization
@@ -626,6 +648,7 @@ let huntarrUI = {
         else if (app === 'hunting') displayName = 'Hunt Manager';
         if (this.elements.currentLogApp) this.elements.currentLogApp.textContent = displayName;
         // Switch to the selected app logs
+        this.currentLogApp = app;
         this.clearLogs();
         this.connectToLogs();
     },
@@ -705,8 +728,268 @@ let huntarrUI = {
     },
     
     // Logs handling
-disconnectAllEventSources: function() {
-        Object.keys(if (source) {
+    connectToLogs: function() {
+        // Disconnect any existing event sources
+        this.disconnectAllEventSources();
+        
+        // Connect to logs stream for the currentLogApp
+        this.connectEventSource(this.currentLogApp); // Pass the selected app
+        this.elements.logConnectionStatus.textContent = 'Connecting...';
+        this.elements.logConnectionStatus.className = '';
+    },
+    
+    connectEventSource: function(appType) {
+        // Close any existing event source
+        if (this.eventSources.logs) {
+            this.eventSources.logs.close();
+        }
+        
+        try {
+            // Append the app type to the URL
+            const eventSource = new EventSource(`./logs?app=${appType}`); 
+            
+            eventSource.onopen = () => {
+                this.elements.logConnectionStatus.textContent = 'Connected';
+                this.elements.logConnectionStatus.className = 'status-connected';
+            };
+            
+            eventSource.onmessage = (event) => {
+                if (!this.elements.logsContainer) return;
+                
+                try {
+                    const logString = event.data;
+                    
+                    // Filter out broken JSON fragments and other non-log content
+                    if (this.isJsonFragment(logString) || this.isInvalidLogLine(logString)) {
+                        return; // Skip processing this line
+                    }
+                    
+                    // Regex to parse log lines: Optional [APP], Timestamp, Logger, Level, Message
+                    // Example: [SONARR] 2024-01-01 12:00:00 - huntarr.sonarr - INFO - Message content
+                    // Example: 2024-01-01 12:00:00 - huntarr - DEBUG - System message
+                    const logRegex = /^(?:\[(\w+)\]\s)?([^\s]+\s[^\s]+)\s-\s([\w\.]+)\s-\s(\w+)\s-\s(.*)$/;
+                    const match = logString.match(logRegex);
+
+                    // First determine the app type for this log message
+                    let logAppType = 'system'; // Default to system
+                    
+                    if (match && match[1]) {
+                        // If we have a match with app tag like [SONARR], use that
+                        logAppType = match[1].toLowerCase();
+                    } else if (match && match[3]) {
+                        // Otherwise try to determine from the logger name (e.g., huntarr.sonarr)
+                        const loggerParts = match[3].split('.');
+                        if (loggerParts.length > 1) {
+                            const possibleApp = loggerParts[1].toLowerCase();
+                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr', 'hunting'].includes(possibleApp)) {
+                                logAppType = possibleApp;
+                            }
+                        }
+                    } else {
+                        // Fallback: Check for app tags in malformed log lines (like JSON fragments)
+                        const appTagMatch = logString.match(/^\[(\w+)\]/);
+                        if (appTagMatch) {
+                            const possibleApp = appTagMatch[1].toLowerCase();
+                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr', 'hunting'].includes(possibleApp)) {
+                                logAppType = possibleApp;
+                            }
+                        }
+                        
+                        // Special fallback for hunting logs
+                        if (logString.includes('[hunting]')) {
+                            logAppType = 'hunting';
+                        }
+                    }
+                    
+                    // Special case for system logs that may contain app-specific patterns
+                    if (logAppType === 'system') {
+                        // App-specific patterns that may appear in system logs
+                        const patterns = {
+                            'sonarr': ['episode', 'series', 'tv show', 'sonarr'],
+                            'radarr': ['movie', 'film', 'radarr'],
+                            'lidarr': ['album', 'artist', 'track', 'music', 'lidarr'],
+                            'readarr': ['book', 'author', 'readarr'],
+                            'whisparr': ['scene', 'adult', 'whisparr', 'starting log stream for whisparr', 'configured and enabled whisparr', 'whisparr instances', 'whisparr logger'],
+                            'eros': ['eros', 'whisparr v3', 'whisparrv3'],
+                            'swaparr': ['added strike', 'max strikes reached', 'would have removed', 'strikes, removing download', 'processing stalled downloads', 'swaparr'],
+                            'hunting': ['hunt manager', 'discovery tracker', 'hunting', 'hunt']
+                        };
+                        
+                        // Check each app's patterns
+                        for (const [app, appPatterns] of Object.entries(patterns)) {
+                            if (appPatterns.some(pattern => logString.toLowerCase().includes(pattern))) {
+                                logAppType = app;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Determine if this log should be displayed based on the selected app tab
+                    const currentApp = this.currentLogApp === 'hunting' ? 'hunting' : this.currentLogApp;
+                    const shouldDisplay = 
+                        this.currentLogApp === 'all' || 
+                        currentApp === logAppType;
+
+                    if (!shouldDisplay) return;
+
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+
+                    if (match) {
+                        const [, appName, timestamp, loggerName, level, message] = match;
+                        
+                        // Split timestamp into date and time components
+                        const timestampParts = timestamp.split(' ');
+                        const date = timestampParts[0] || '';
+                        const time = timestampParts[1] || '';
+                        
+                        // Create level badge with proper styling to match second image
+                        const levelClass = level.toLowerCase();
+                        let levelBadge = '';
+                        
+                        switch(levelClass) {
+                            case 'error':
+                                levelBadge = `<span class="log-level-badge log-level-error">Error</span>`;
+                                break;
+                            case 'warning':
+                            case 'warn':
+                                levelBadge = `<span class="log-level-badge log-level-warning">Warning</span>`;
+                                break;
+                            case 'info':
+                                levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
+                                break;
+                            case 'debug':
+                                levelBadge = `<span class="log-level-badge log-level-debug">Debug</span>`;
+                                break;
+                            case 'fatal':
+                            case 'critical':
+                                levelBadge = `<span class="log-level-badge log-level-fatal">Fatal</span>`;
+                                break;
+                            default:
+                                levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
+                        }
+                        
+                        // Determine app source for display
+                        let appSource = 'SYSTEM';
+                        if (loggerName.includes('.')) {
+                            const parts = loggerName.split('.');
+                            if (parts.length > 1) {
+                                // When filtering by specific app, don't show redundant app name
+                                if (this.currentLogApp !== 'all' && this.currentLogApp !== 'system') {
+                                    appSource = 'SYSTEM'; // Just show SYSTEM when filtering by app
+                                } else {
+                                    appSource = parts[1].toUpperCase(); // Show app name only in 'all' view
+                                }
+                            }
+                        }
+                        
+                        logEntry.innerHTML = `
+                            <div class="log-entry-row">
+                                <span class="log-timestamp">
+                                    <span class="date">${date}</span>
+                                    <span class="time">${time}</span>
+                                </span>
+                                ${levelBadge}
+                                <span class="log-source">${appSource}</span>
+                                <span class="log-message">${message}</span>
+                            </div>
+                        `;
+                        logEntry.classList.add(`log-${levelClass}`);
+                    } else {
+                        // Fallback for lines that don't match the expected format
+                        // Don't generate browser timestamps - just use dashes for unknown timestamps
+                        
+                        logEntry.innerHTML = `
+                            <div class="log-entry-row">
+                                <span class="log-timestamp">
+                                    <span class="date">--</span>
+                                    <span class="time">--:--:--</span>
+                                </span>
+                                <span class="log-level-badge log-level-info">Information</span>
+                                <span class="log-source">SYSTEM</span>
+                                <span class="log-message">${logString}</span>
+                            </div>
+                        `;
+                        
+                        // Basic level detection for fallback
+                        if (logString.includes('ERROR')) logEntry.classList.add('log-error');
+                        else if (logString.includes('WARN') || logString.includes('WARNING')) logEntry.classList.add('log-warning');
+                        else if (logString.includes('DEBUG')) logEntry.classList.add('log-debug');
+                        else logEntry.classList.add('log-info');
+                    }
+                    
+                    // Add to logs container in chronological order
+                    this.insertLogInChronologicalOrder(logEntry);
+                    
+                    // Apply current log level filter to the new entry
+                    const currentLogLevel = this.elements.logLevelSelect ? this.elements.logLevelSelect.value : 'all';
+                    if (currentLogLevel !== 'all') {
+                        this.applyFilterToSingleEntry(logEntry, currentLogLevel);
+                    }
+                    
+                    // Special event dispatching for Swaparr logs
+                    if (logAppType === 'swaparr' && this.currentLogApp === 'swaparr') {
+                        // Dispatch a custom event for swaparr.js to process
+                        const swaparrEvent = new CustomEvent('swaparrLogReceived', {
+                            detail: {
+                                logData: match && match[5] ? match[5] : logString
+                            }
+                        });
+                        document.dispatchEvent(swaparrEvent);
+                    }
+                    
+                    // Auto-scroll to top to show newest entries (logs are in reverse order)
+                    if (this.autoScroll) {
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    }
+                } catch (error) {
+                    console.error('[huntarrUI] Error processing log message:', error, 'Data:', event.data);
+                }
+            };
+            
+            eventSource.onerror = (err) => {
+                console.error(`[huntarrUI] EventSource error for app ${this.currentLogApp}:`, err);
+                if (this.elements.logConnectionStatus) {
+                    this.elements.logConnectionStatus.textContent = 'Error/Disconnected';
+                    this.elements.logConnectionStatus.className = 'status-error'; // Use a specific error class
+                }
+                // Close the potentially broken connection
+                if (this.eventSources.logs) {
+                    this.eventSources.logs.close();
+                    console.log(`[huntarrUI] Closed potentially broken log EventSource for ${this.currentLogApp}.`);
+                }
+                // Attempt to reconnect after a delay, but only if still on the logs page
+                if (this.currentSection === 'logs') {
+                    console.log(`[huntarrUI] Attempting to reconnect log stream for ${this.currentLogApp} in 5 seconds...`);
+                    setTimeout(() => {
+                        // Double-check if still on logs page before reconnecting
+                        if (this.currentSection === 'logs') {
+                             console.log(`[huntarrUI] Reconnecting log stream for ${this.currentLogApp}.`);
+                             this.connectToLogs(); // Re-initiate connection
+                        } else {
+                             console.log(`[huntarrUI] Log reconnect cancelled; user navigated away from logs section.`);
+                        }
+                    }, 5000); // 5-second delay
+                }
+            }; // Added missing semicolon
+            
+            this.eventSources.logs = eventSource; // Store the reference
+        } catch (e) {
+            console.error(`[huntarrUI] Failed to create EventSource for app ${appType}:`, e);
+            if (this.elements.logConnectionStatus) {
+                this.elements.logConnectionStatus.textContent = 'Failed to connect';
+                this.elements.logConnectionStatus.className = 'status-error';
+            }
+        }
+    },
+    
+    disconnectAllEventSources: function() {
+        Object.keys(this.eventSources).forEach(key => {
+            const source = this.eventSources[key];
+            if (source) {
                  try {
                      if (source.readyState !== EventSource.CLOSED) {
                          source.close();
@@ -719,7 +1002,7 @@ disconnectAllEventSources: function() {
                  }
             }
             // Clear the reference
-            delete // Use delete
+            delete this.eventSources[key]; // Use delete
         });
          // Reset status indicator if logs aren't the active section
          if (this.currentSection !== 'logs' && this.elements.logConnectionStatus) {
@@ -728,12 +1011,171 @@ disconnectAllEventSources: function() {
          }
     },
     
+    clearLogs: function() {
+        if (this.elements.logsContainer) {
+            this.elements.logsContainer.innerHTML = '';
+        }
     },
     
     // Insert log entry in chronological order to maintain proper reverse time sorting
-// Parse timestamp from log entry DOM element
-// Search logs functionality with performance optimization
-// New simplified highlighting method that's much more performant
+    insertLogInChronologicalOrder: function(newLogEntry) {
+        if (!this.elements.logsContainer || !newLogEntry) return;
+        
+        // Parse timestamp from the new log entry
+        const newTimestamp = this.parseLogTimestamp(newLogEntry);
+        
+        // If we can't parse the timestamp, just append to the end
+        if (!newTimestamp) {
+            this.elements.logsContainer.appendChild(newLogEntry);
+            return;
+        }
+        
+        // Get all existing log entries
+        const existingEntries = Array.from(this.elements.logsContainer.children);
+        
+        // If no existing entries, just add the new one
+        if (existingEntries.length === 0) {
+            this.elements.logsContainer.appendChild(newLogEntry);
+            return;
+        }
+        
+        // Find the correct position to insert (maintaining chronological order)
+        // Since CSS will reverse the order, we want older entries first in DOM
+        let insertPosition = null;
+        
+        for (let i = 0; i < existingEntries.length; i++) {
+            const existingTimestamp = this.parseLogTimestamp(existingEntries[i]);
+            
+            // If we can't parse existing timestamp, skip it
+            if (!existingTimestamp) continue;
+            
+            // If new log is newer than existing log, insert before it
+            if (newTimestamp > existingTimestamp) {
+                insertPosition = existingEntries[i];
+                break;
+            }
+        }
+        
+        // Insert in the correct position
+        if (insertPosition) {
+            this.elements.logsContainer.insertBefore(newLogEntry, insertPosition);
+        } else {
+            // If no position found, append to the end (oldest)
+            this.elements.logsContainer.appendChild(newLogEntry);
+        }
+    },
+    
+    // Parse timestamp from log entry DOM element
+    parseLogTimestamp: function(logEntry) {
+        if (!logEntry) return null;
+        
+        try {
+            // Look for timestamp elements
+            const dateSpan = logEntry.querySelector('.log-timestamp .date');
+            const timeSpan = logEntry.querySelector('.log-timestamp .time');
+            
+            if (!dateSpan || !timeSpan) return null;
+            
+            const dateText = dateSpan.textContent.trim();
+            const timeText = timeSpan.textContent.trim();
+            
+            // Skip invalid timestamps
+            if (!dateText || !timeText || dateText === '--' || timeText === '--:--:--') {
+                return null;
+            }
+            
+            // Combine date and time into a proper timestamp
+            const timestampString = `${dateText} ${timeText}`;
+            const timestamp = new Date(timestampString);
+            
+            // Return timestamp if valid, null otherwise
+            return isNaN(timestamp.getTime()) ? null : timestamp;
+        } catch (error) {
+            console.warn('[huntarrUI] Error parsing log timestamp:', error);
+            return null;
+        }
+    },
+    
+    // Search logs functionality with performance optimization
+    searchLogs: function() {
+        if (!this.elements.logsContainer || !this.elements.logSearchInput) return;
+        
+        const searchText = this.elements.logSearchInput.value.trim().toLowerCase();
+        
+        // If empty search, reset everything
+        if (!searchText) {
+            this.clearLogSearch();
+            return;
+        }
+        
+        // Show clear search button when searching
+        if (this.elements.clearSearchButton) {
+            this.elements.clearSearchButton.style.display = 'block';
+        }
+        
+        // Filter log entries based on search text - with performance optimization
+        const logEntries = Array.from(this.elements.logsContainer.querySelectorAll('.log-entry'));
+        let matchCount = 0;
+        
+        // Set a limit for highlighting to prevent browser lockup
+        const MAX_ENTRIES_TO_PROCESS = 300;
+        const processedLogEntries = logEntries.slice(0, MAX_ENTRIES_TO_PROCESS);
+        const remainingCount = Math.max(0, logEntries.length - MAX_ENTRIES_TO_PROCESS);
+        
+        // Process in batches to prevent UI lockup
+        processedLogEntries.forEach((entry, index) => {
+            const entryText = entry.textContent.toLowerCase();
+            
+            // Show/hide based on search match
+            if (entryText.includes(searchText)) {
+                entry.style.display = '';
+                matchCount++;
+                
+                // Simple highlight by replacing HTML - much more performant
+                this.simpleHighlightMatch(entry, searchText);
+            } else {
+                entry.style.display = 'none';
+            }
+        });
+        
+        // Handle any remaining entries - only for visibility, don't highlight
+        if (remainingCount > 0) {
+            logEntries.slice(MAX_ENTRIES_TO_PROCESS).forEach(entry => {
+                const entryText = entry.textContent.toLowerCase();
+                if (entryText.includes(searchText)) {
+                    entry.style.display = '';
+                    matchCount++;
+                } else {
+                    entry.style.display = 'none';
+                }
+            });
+        }
+        
+        // Update search results info
+        if (this.elements.logSearchResults) {
+            let resultsText = `Found ${matchCount} matching log entries`;
+            this.elements.logSearchResults.textContent = resultsText;
+            this.elements.logSearchResults.style.display = 'block';
+        }
+        
+        // Disable auto-scroll when searching
+        if (this.elements.autoScrollCheckbox && this.elements.autoScrollCheckbox.checked) {
+            // Save auto-scroll state to restore later if needed
+            this.autoScrollWasEnabled = true;
+            this.elements.autoScrollCheckbox.checked = false;
+        }
+    },
+    
+    // New simplified highlighting method that's much more performant
+    simpleHighlightMatch: function(logEntry, searchText) {
+        // Only proceed if the search text is meaningful
+        if (searchText.length < 2) return;
+        
+        // Store original HTML if not already stored
+        if (!logEntry.hasAttribute('data-original-html')) {
+            logEntry.setAttribute('data-original-html', logEntry.innerHTML);
+        }
+        
         const html = logEntry.getAttribute('data-original-html');
         const escapedSearchText = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape regex special chars
         
@@ -745,6 +1187,14 @@ disconnectAllEventSources: function() {
     },
     
     // Clear log search and reset to default view
+    clearLogSearch: function() {
+        if (!this.elements.logsContainer) return;
+        
+        // Clear search input
+        if (this.elements.logSearchInput) {
+            this.elements.logSearchInput.value = '';
+        }
+        
         // Hide clear search button
         if (this.elements.clearSearchButton) {
             this.elements.clearSearchButton.style.display = 'none';
