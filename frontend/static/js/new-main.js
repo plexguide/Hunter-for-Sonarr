@@ -12,7 +12,9 @@ let huntarrUI = {
     // Current state
     currentSection: 'home', // Default section
     currentHistoryApp: 'all', // Default history app
+    currentLogApp: 'all', // Default log app for compatibility
     autoScroll: true,
+    eventSources: {}, // Event sources for compatibility
     isLoadingStats: false, // Flag to prevent multiple simultaneous stats requests
     configuredApps: {
         sonarr: false,
@@ -614,9 +616,41 @@ let huntarrUI = {
         }
     },
     
+    // Simple event source disconnection for compatibility
+    disconnectAllEventSources: function() {
+        // Delegate to LogsModule if it exists
+        if (window.LogsModule && typeof window.LogsModule.disconnectAllEventSources === 'function') {
+            window.LogsModule.disconnectAllEventSources();
+        }
+        // Clear local references
+        this.eventSources = {};
+    },
+    
     // App tab switching
+    handleAppTabChange: function(e) {
+        const app = e.target.getAttribute('data-app');
+        if (!app) return;
+        
+        // Update active tab
+        this.elements.appTabs.forEach(tab => {
+            tab.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        // Switch to the selected app logs
+        this.currentApp = app;
+        this.connectToLogs();
+    },
+    
     // Log option dropdown handling
-        if (!app || app === // Update the select value
+    handleLogOptionChange: function(app) {
+        if (app && app.target && typeof app.target.value === 'string') {
+            app = app.target.value;
+        } else if (app && app.target && typeof app.target.getAttribute === 'function') {
+            app = app.target.getAttribute('data-app');
+        }
+        if (!app || app === this.currentLogApp) return;
+        // Update the select value
         const logAppSelect = document.getElementById('logAppSelect');
         if (logAppSelect) logAppSelect.value = app;
         // Update the current log app text with proper capitalization
@@ -626,6 +660,7 @@ let huntarrUI = {
         else if (app === 'hunting') displayName = 'Hunt Manager';
         if (this.elements.currentLogApp) this.elements.currentLogApp.textContent = displayName;
         // Switch to the selected app logs
+        this.currentLogApp = app;
         this.clearLogs();
         this.connectToLogs();
     },
@@ -705,35 +740,177 @@ let huntarrUI = {
     },
     
     // Logs handling
-disconnectAllEventSources: function() {
-        Object.keys(if (source) {
-                 try {
-                     if (source.readyState !== EventSource.CLOSED) {
-                         source.close();
-                         console.log(`[huntarrUI] Closed event source for ${key}.`);
-                     } else {
-                         console.log(`[huntarrUI] Event source for ${key} was already closed.`);
-                     }
-                 } catch (e) {
-                     console.error(`[huntarrUI] Error closing event source for ${key}:`, e);
-                 }
-            }
-            // Clear the reference
-            delete // Use delete
-        });
-         // Reset status indicator if logs aren't the active section
-         if (this.currentSection !== 'logs' && this.elements.logConnectionStatus) {
-             this.elements.logConnectionStatus.textContent = 'Disconnected';
-             this.elements.logConnectionStatus.className = 'status-disconnected';
-         }
+    connectToLogs: function() {
+        if (window.LogsModule && typeof window.LogsModule.connectToLogs === 'function') {
+            window.LogsModule.connectToLogs();
+        }
     },
     
+    clearLogs: function() {
+        if (window.LogsModule && typeof window.LogsModule.clearLogs === 'function') {
+            window.LogsModule.clearLogs();
+        }
     },
     
     // Insert log entry in chronological order to maintain proper reverse time sorting
-// Parse timestamp from log entry DOM element
-// Search logs functionality with performance optimization
-// New simplified highlighting method that's much more performant
+    insertLogInChronologicalOrder: function(newLogEntry) {
+        if (!this.elements.logsContainer || !newLogEntry) return;
+        
+        // Parse timestamp from the new log entry
+        const newTimestamp = this.parseLogTimestamp(newLogEntry);
+        
+        // If we can't parse the timestamp, just append to the end
+        if (!newTimestamp) {
+            this.elements.logsContainer.appendChild(newLogEntry);
+            return;
+        }
+        
+        // Get all existing log entries
+        const existingEntries = Array.from(this.elements.logsContainer.children);
+        
+        // If no existing entries, just add the new one
+        if (existingEntries.length === 0) {
+            this.elements.logsContainer.appendChild(newLogEntry);
+            return;
+        }
+        
+        // Find the correct position to insert (maintaining chronological order)
+        // Since CSS will reverse the order, we want older entries first in DOM
+        let insertPosition = null;
+        
+        for (let i = 0; i < existingEntries.length; i++) {
+            const existingTimestamp = this.parseLogTimestamp(existingEntries[i]);
+            
+            // If we can't parse existing timestamp, skip it
+            if (!existingTimestamp) continue;
+            
+            // If new log is newer than existing log, insert before it
+            if (newTimestamp > existingTimestamp) {
+                insertPosition = existingEntries[i];
+                break;
+            }
+        }
+        
+        // Insert in the correct position
+        if (insertPosition) {
+            this.elements.logsContainer.insertBefore(newLogEntry, insertPosition);
+        } else {
+            // If no position found, append to the end (oldest)
+            this.elements.logsContainer.appendChild(newLogEntry);
+        }
+    },
+    
+    // Parse timestamp from log entry DOM element
+    parseLogTimestamp: function(logEntry) {
+        if (!logEntry) return null;
+        
+        try {
+            // Look for timestamp elements
+            const dateSpan = logEntry.querySelector('.log-timestamp .date');
+            const timeSpan = logEntry.querySelector('.log-timestamp .time');
+            
+            if (!dateSpan || !timeSpan) return null;
+            
+            const dateText = dateSpan.textContent.trim();
+            const timeText = timeSpan.textContent.trim();
+            
+            // Skip invalid timestamps
+            if (!dateText || !timeText || dateText === '--' || timeText === '--:--:--') {
+                return null;
+            }
+            
+            // Combine date and time into a proper timestamp
+            const timestampString = `${dateText} ${timeText}`;
+            const timestamp = new Date(timestampString);
+            
+            // Return timestamp if valid, null otherwise
+            return isNaN(timestamp.getTime()) ? null : timestamp;
+        } catch (error) {
+            console.warn('[huntarrUI] Error parsing log timestamp:', error);
+            return null;
+        }
+    },
+    
+    // Search logs functionality with performance optimization
+    searchLogs: function() {
+        if (!this.elements.logsContainer || !this.elements.logSearchInput) return;
+        
+        const searchText = this.elements.logSearchInput.value.trim().toLowerCase();
+        
+        // If empty search, reset everything
+        if (!searchText) {
+            this.clearLogSearch();
+            return;
+        }
+        
+        // Show clear search button when searching
+        if (this.elements.clearSearchButton) {
+            this.elements.clearSearchButton.style.display = 'block';
+        }
+        
+        // Filter log entries based on search text - with performance optimization
+        const logEntries = Array.from(this.elements.logsContainer.querySelectorAll('.log-entry'));
+        let matchCount = 0;
+        
+        // Set a limit for highlighting to prevent browser lockup
+        const MAX_ENTRIES_TO_PROCESS = 300;
+        const processedLogEntries = logEntries.slice(0, MAX_ENTRIES_TO_PROCESS);
+        const remainingCount = Math.max(0, logEntries.length - MAX_ENTRIES_TO_PROCESS);
+        
+        // Process in batches to prevent UI lockup
+        processedLogEntries.forEach((entry, index) => {
+            const entryText = entry.textContent.toLowerCase();
+            
+            // Show/hide based on search match
+            if (entryText.includes(searchText)) {
+                entry.style.display = '';
+                matchCount++;
+                
+                // Simple highlight by replacing HTML - much more performant
+                this.simpleHighlightMatch(entry, searchText);
+            } else {
+                entry.style.display = 'none';
+            }
+        });
+        
+        // Handle any remaining entries - only for visibility, don't highlight
+        if (remainingCount > 0) {
+            logEntries.slice(MAX_ENTRIES_TO_PROCESS).forEach(entry => {
+                const entryText = entry.textContent.toLowerCase();
+                if (entryText.includes(searchText)) {
+                    entry.style.display = '';
+                    matchCount++;
+                } else {
+                    entry.style.display = 'none';
+                }
+            });
+        }
+        
+        // Update search results info
+        if (this.elements.logSearchResults) {
+            let resultsText = `Found ${matchCount} matching log entries`;
+            this.elements.logSearchResults.textContent = resultsText;
+            this.elements.logSearchResults.style.display = 'block';
+        }
+        
+        // Disable auto-scroll when searching
+        if (this.elements.autoScrollCheckbox && this.elements.autoScrollCheckbox.checked) {
+            // Save auto-scroll state to restore later if needed
+            this.autoScrollWasEnabled = true;
+            this.elements.autoScrollCheckbox.checked = false;
+        }
+    },
+    
+    // New simplified highlighting method that's much more performant
+    simpleHighlightMatch: function(logEntry, searchText) {
+        // Only proceed if the search text is meaningful
+        if (searchText.length < 2) return;
+        
+        // Store original HTML if not already stored
+        if (!logEntry.hasAttribute('data-original-html')) {
+            logEntry.setAttribute('data-original-html', logEntry.innerHTML);
+        }
+        
         const html = logEntry.getAttribute('data-original-html');
         const escapedSearchText = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape regex special chars
         
@@ -745,6 +922,14 @@ disconnectAllEventSources: function() {
     },
     
     // Clear log search and reset to default view
+    clearLogSearch: function() {
+        if (!this.elements.logsContainer) return;
+        
+        // Clear search input
+        if (this.elements.logSearchInput) {
+            this.elements.logSearchInput.value = '';
+        }
+        
         // Hide clear search button
         if (this.elements.clearSearchButton) {
             this.elements.clearSearchButton.style.display = 'none';
