@@ -7,8 +7,11 @@ Creates clean, stripped log messages without redundant information
 import logging
 import time
 import re
+import os
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
+import pytz
 
 # Use the centralized path configuration
 from src.primary.utils.config_paths import LOG_DIR
@@ -26,6 +29,20 @@ CLEAN_LOG_FILES = {
     "hunting": LOG_DIR / "clean_hunting.log"
 }
 
+def _get_user_timezone():
+    """Get the user's selected timezone from general settings"""
+    try:
+        from src.primary import settings_manager
+        general_settings = settings_manager.load_settings("general")
+        timezone_name = general_settings.get("timezone", "UTC")
+        
+        try:
+            return pytz.timezone(timezone_name)
+        except pytz.UnknownTimeZoneError:
+            return pytz.UTC
+    except Exception:
+        return pytz.UTC
+
 class CleanLogFormatter(logging.Formatter):
     """
     Custom formatter that creates clean log messages for frontend consumption.
@@ -35,7 +52,6 @@ class CleanLogFormatter(logging.Formatter):
     def __init__(self):
         # No format needed as we'll build it manually
         super().__init__()
-        self.converter = time.localtime
     
     def format(self, record):
         """
@@ -48,14 +64,32 @@ class CleanLogFormatter(logging.Formatter):
         # Clean the message by removing redundant information
         clean_message = self._clean_message(original_message, record.name, record.levelname)
         
-        # Format timestamp (without microseconds for cleaner display)
-        timestamp = time.strftime('%Y-%m-%d %H:%M:%S', self.converter(record.created))
+        # Format timestamp using user's configured timezone
+        timestamp = self._format_timestamp_with_user_timezone(record.created)
         
         # Determine app type from logger name
         app_type = self._get_app_type(record.name)
         
         # Format as: timestamp|level|app_type|message
         return f"{timestamp}|{record.levelname}|{app_type}|{clean_message}"
+    
+    def _format_timestamp_with_user_timezone(self, timestamp):
+        """
+        Format timestamp using the user's configured timezone from settings.
+        """
+        try:
+            # Get user's configured timezone
+            user_tz = _get_user_timezone()
+            
+            # Convert UTC timestamp to user's timezone
+            utc_dt = datetime.fromtimestamp(timestamp, tz=pytz.UTC)
+            local_dt = utc_dt.astimezone(user_tz)
+            
+            # Format without timezone abbreviation for cleaner display
+            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        except Exception:
+            # Fallback to UTC if anything goes wrong
+            return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(timestamp))
     
     def _clean_message(self, message: str, logger_name: str, level: str) -> str:
         """

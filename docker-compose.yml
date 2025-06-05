@@ -8,8 +8,6 @@ services:
       - "9705:9705"
     volumes: 
       - huntarr-config:/config
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     environment:
       - TZ=${TZ:-UTC}
     restart: unless-stopped
