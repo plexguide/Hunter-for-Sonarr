@@ -3,6 +3,9 @@
  * Handles all logging functionality including streaming, filtering, search, and display
  */
 
+console.log('[LOGS.JS] Script is loading and executing...');
+console.log('[LOGS.JS] About to define window.LogsModule');
+
 window.LogsModule = {
     // Current state
     eventSources: {},
@@ -808,9 +811,22 @@ window.LogsModule = {
     }
 };
 
+console.log('[LOGS.JS] window.LogsModule defined successfully:', typeof window.LogsModule);
+console.log('[LOGS.JS] LogsModule methods available:', Object.keys(window.LogsModule));
+
 // Auto-initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    if (window.LogsModule) {
+    if (window.LogsModule && typeof window.LogsModule.init === 'function') {
         window.LogsModule.init();
     }
-}); 
+});
+
+// Also initialize immediately if DOM is already ready
+if (document.readyState === 'loading') {
+    // DOM is still loading, wait for DOMContentLoaded
+} else {
+    // DOM is already ready, initialize now
+    if (window.LogsModule && typeof window.LogsModule.init === 'function') {
+        window.LogsModule.init();
+    }
+} 

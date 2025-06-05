@@ -491,15 +491,33 @@ let huntarrUI = {
             newTitle = 'Logs';
             this.currentSection = 'logs';
             
-            // Use LogsModule for logs functionality
+            // Comprehensive LogsModule debugging
+            console.log('[huntarrUI] === LOGS SECTION DEBUG START ===');
+            console.log('[huntarrUI] window object keys:', Object.keys(window).filter(k => k.includes('Log')));
+            console.log('[huntarrUI] window.LogsModule exists:', !!window.LogsModule);
+            console.log('[huntarrUI] window.LogsModule type:', typeof window.LogsModule);
+            
             if (window.LogsModule) {
-                window.LogsModule.connectToLogs();
-                // Reset logs section to defaults when navigating to it
-                setTimeout(() => {
-                    window.LogsModule.resetToDefaults();
-                    console.log('[huntarrUI] Reset logs to defaults using LogsModule');
-                }, 300);
+                console.log('[huntarrUI] LogsModule methods:', Object.keys(window.LogsModule));
+                console.log('[huntarrUI] LogsModule.init type:', typeof window.LogsModule.init);
+                console.log('[huntarrUI] LogsModule.connectToLogs type:', typeof window.LogsModule.connectToLogs);
+                
+                try {
+                    console.log('[huntarrUI] Calling LogsModule.init()...');
+                    window.LogsModule.init();
+                    console.log('[huntarrUI] LogsModule.init() completed successfully');
+                    
+                    console.log('[huntarrUI] Calling LogsModule.connectToLogs()...');
+                    window.LogsModule.connectToLogs();
+                    console.log('[huntarrUI] LogsModule.connectToLogs() completed successfully');
+                } catch (error) {
+                    console.error('[huntarrUI] Error during LogsModule calls:', error);
+                }
+            } else {
+                console.error('[huntarrUI] LogsModule not found - logs functionality unavailable');
+                console.log('[huntarrUI] Available window properties:', Object.keys(window).slice(0, 20));
             }
+            console.log('[huntarrUI] === LOGS SECTION DEBUG END ===');
         } else if (section === 'history' && this.elements.historySection) {
             this.elements.historySection.classList.add('active');
             this.elements.historySection.style.display = 'block';
@@ -739,7 +757,7 @@ let huntarrUI = {
         console.log(`[huntarrUI] Switched settings tab to: ${this.currentSettingsTab}`); // Added logging
     },
     
-    // Logs handling
+    // Compatibility methods that delegate to LogsModule
     connectToLogs: function() {
         if (window.LogsModule && typeof window.LogsModule.connectToLogs === 'function') {
             window.LogsModule.connectToLogs();
