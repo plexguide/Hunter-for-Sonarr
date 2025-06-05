@@ -388,7 +388,7 @@ def logs_stream():
             if app_type == 'all':
                 # Follow all log files for 'all' type
                 log_files_to_follow = list(KNOWN_LOG_FILES.items())
-                web_logger.debug(f"Following all log files for 'all' type")
+                print(f"[DEBUG] Following log files for 'all': {[name for name, path in log_files_to_follow]}")
             elif app_type == 'system':
                 # For system, only follow main log
                 system_log = KNOWN_LOG_FILES.get('system')
