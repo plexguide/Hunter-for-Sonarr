@@ -2612,13 +2612,17 @@ let huntarrUI = {
             return 'Invalid date';
         }
         
+        // Get the user's configured timezone from settings or default to UTC
+        const userTimezone = this.getUserTimezone();
+        
         const options = { 
             weekday: 'short',
             year: 'numeric', 
             month: 'short', 
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            timeZone: userTimezone
         };
         
         const formattedDate = date.toLocaleDateString(undefined, options);
@@ -2638,6 +2642,20 @@ let huntarrUI = {
         }
         
         return `${formattedDate}${relativeTime}`;
+    },
+    
+    // Helper function to get the user's configured timezone from settings
+    getUserTimezone: function() {
+        // Assume UTC as default if no timezone is set
+        const defaultTimezone = 'UTC';
+        
+        // Try to get the timezone from the general settings
+        if (this.originalSettings && this.originalSettings.general && this.originalSettings.general.timezone) {
+            return this.originalSettings.general.timezone;
+        }
+        
+        // If no timezone is set in settings, return the default
+        return defaultTimezone;
     },
     
     // Reset stateful management - clear all processed IDs
@@ -3203,7 +3221,6 @@ let huntarrUI = {
             /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*\[$/,  // Property key with opening bracket: global: [
             /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*\{$/,  // Property key with opening brace: config: {
             /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*(True|False)$/i, // Property key with boolean: debug: false
-            /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*\d+$/,  // Property key with number: port: 9705
             /^[a-zA-Z_]+\s+(Mode|Setting|Config|Option):\s*(True|False|\d+)$/i, // Config fragments: "ug Mode: False"
             /^[a-zA-Z_]+\s*Mode:\s*(True|False)$/i, // Mode fragments: "Debug Mode: False"
             /^[a-zA-Z_]+\s*Setting:\s*.*$/i,     // Setting fragments
