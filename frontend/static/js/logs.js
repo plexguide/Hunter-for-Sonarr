@@ -250,39 +250,19 @@ window.LogsModule = {
                 try {
                     const logString = event.data;
                     
-                    // Filter out broken JSON fragments and other non-log content
-                    if (this.isJsonFragment(logString) || this.isInvalidLogLine(logString)) {
-                        return; // Skip processing this line
-                    }
-                    
-                    // Updated regex for clean log format with pipe separators
-                    // Format: timestamp|level|app_type|message
-                    // For 'all' view: [app] timestamp|level|app_type|message  
-                    // Example: 2025-06-05 09:24:44|DEBUG|system|Request IP address: 192.168.65.1
-                    // Example: [sonarr] 2025-06-05 09:24:44|INFO|sonarr|Retrieved 100 episodes
+                    // ONLY process clean log format - reject anything that doesn't match the pipe-separated format
                     const logRegex = /^(?:\[[\w]+\]\s+)?([^|]+)\|([^|]+)\|([^|]+)\|(.*)$/;
                     const match = logString.match(logRegex);
 
-                    // Determine the app type for this log message
-                    let logAppType = 'system';
-                    
-                    if (match && match[3]) {
-                        // App type is directly provided in the third field
-                        logAppType = match[3].toLowerCase();
-                    } else {
-                        // Fallback detection for non-clean log formats
-                        const appTagMatch = logString.match(/^\[(\w+)\]/);
-                        if (appTagMatch) {
-                            const possibleApp = appTagMatch[1].toLowerCase();
-                            if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr', 'hunting'].includes(possibleApp)) {
-                                logAppType = possibleApp;
-                            }
-                        }
-                        
-                        if (logString.includes('[hunting]')) {
-                            logAppType = 'hunting';
-                        }
+                    if (!match) {
+                        return; // Skip non-clean log entries entirely
                     }
+                    
+                    // Extract log components from clean format
+                    const timestamp = match[1];
+                    const level = match[2]; 
+                    const logAppType = match[3].toLowerCase();
+                    const originalMessage = match[4];
                     
                     // Check if this log should be displayed based on the selected app
                     const currentApp = this.currentLogApp === 'hunting' ? 'hunting' : this.currentLogApp;
@@ -293,188 +273,150 @@ window.LogsModule = {
                     const logEntry = document.createElement('div');
                     logEntry.className = 'log-entry';
 
-                    if (match) {
-                        const [, timestamp, level, appType, originalMessage] = match;
-                        
-                        // Parse timestamp to extract date and time (ignore timezone for display)
-                        let date = '';
-                        let time = '';
-                        
-                        if (timestamp) {
-                            const parts = timestamp.split(' ');
-                            date = parts[0] || '';
-                            time = parts[1] || '';
-                        }
-                        
-                        // Convert to user's timezone
-                        const userTime = this.convertToUserTimezone(timestamp);
-                        date = userTime.date;
-                        time = userTime.time;
-                        
-                        // Clean the message - since we're now receiving clean logs from backend,
-                        // minimal processing should be needed
-                        let cleanMessage = originalMessage;
-                        
-                        // The backend clean logging system should already provide clean messages,
-                        // but we'll keep a simple cleanup as a fallback for any edge cases
-                        cleanMessage = cleanMessage.replace(/^\s*-\s*/, ''); // Remove any leading dashes
-                        cleanMessage = cleanMessage.trim(); // Remove extra whitespace
-                        
-                        // Create level badge
-                        const levelClass = level.toLowerCase();
-                        let levelBadge = '';
-                        
-                        switch(levelClass) {
-                            case 'error':
-                                levelBadge = `<span class="log-level-badge log-level-error">Error</span>`;
-                                break;
-                            case 'warning':
-                            case 'warn':
-                                levelBadge = `<span class="log-level-badge log-level-warning">Warning</span>`;
-                                break;
-                            case 'info':
-                                levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
-                                break;
-                            case 'debug':
-                                levelBadge = `<span class="log-level-badge log-level-debug">Debug</span>`;
-                                break;
-                            case 'fatal':
-                            case 'critical':
-                                levelBadge = `<span class="log-level-badge log-level-fatal">Fatal</span>`;
-                                break;
-                            default:
-                                levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
-                        }
-                        
-                        // Determine app source for display
-                        let appSource = 'SYSTEM';
-                        if (appType && appType !== 'system') {
-                            appSource = appType.toUpperCase();
-                        }
-                        
-                        logEntry.innerHTML = `
-                            <div class="log-entry-row">
-                                <span class="log-timestamp">
-                                    <span class="date">${date}</span>
-                                    <span class="time">${time}</span>
-                                </span>
-                                ${levelBadge}
-                                <span class="log-source">${appSource}</span>
-                                <span class="log-message">${cleanMessage}</span>
-                            </div>
-                        `;
-                        logEntry.classList.add(`log-${levelClass}`);
-                    } else {
-                        // Fallback for lines that don't match the expected format
-                        let fallbackTime = '--:--:--';
-                        let fallbackDate = '--';
-                        
-                        // Try to extract timestamp from raw string
-                        const timeMatch = logString.match(/(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})/);
-                        if (timeMatch) {
-                            fallbackDate = timeMatch[1];
-                            fallbackTime = timeMatch[2];
-                        }
-                        
-                        // Convert to user's timezone
-                        const userTime = this.convertToUserTimezone(`${fallbackDate} ${fallbackTime}`);
-                        fallbackDate = userTime.date;
-                        fallbackTime = userTime.time;
-                        
-                        logEntry.innerHTML = `
-                            <div class="log-entry-row">
-                                <span class="log-timestamp">
-                                    <span class="date">${fallbackDate}</span>
-                                    <span class="time">${fallbackTime}</span>
-                                </span>
-                                <span class="log-level-badge log-level-info">Information</span>
-                                <span class="log-source">SYSTEM</span>
-                                <span class="log-message">${logString}</span>
-                            </div>
-                        `;
-                        
-                        // Basic level detection
-                        if (logString.includes('ERROR')) logEntry.classList.add('log-error');
-                        else if (logString.includes('WARN') || logString.includes('WARNING')) logEntry.classList.add('log-warning');
-                        else if (logString.includes('DEBUG')) logEntry.classList.add('log-debug');
-                        else logEntry.classList.add('log-info');
+                    // Parse timestamp to extract date and time (ignore timezone for display)
+                    let date = '';
+                    let time = '';
+                    
+                    if (timestamp) {
+                        const parts = timestamp.split(' ');
+                        date = parts[0] || '';
+                        time = parts[1] || '';
                     }
                     
-                    // Add to logs container
-                    this.insertLogEntryInOrder(logEntry);
+                    // Convert to user's timezone
+                    const userTime = this.convertToUserTimezone(timestamp);
+                    date = userTime.date;
+                    time = userTime.time;
                     
-                    // Apply current log level filter
-                    const currentLogLevel = this.elements.logLevelSelect ? this.elements.logLevelSelect.value : 'all';
-                    if (currentLogLevel !== 'all') {
-                        this.applyFilterToSingleEntry(logEntry, currentLogLevel);
+                    // Clean the message - since we're now receiving clean logs from backend,
+                    // minimal processing should be needed
+                    let cleanMessage = originalMessage;
+                    
+                    // The backend clean logging system should already provide clean messages,
+                    // but we'll keep a simple cleanup as a fallback for any edge cases
+                    cleanMessage = cleanMessage.replace(/^\s*-\s*/, ''); // Remove any leading dashes
+                    cleanMessage = cleanMessage.trim(); // Remove extra whitespace
+                    
+                    // Create level badge
+                    const levelClass = level.toLowerCase();
+                    let levelBadge = '';
+                    
+                    switch(levelClass) {
+                        case 'error':
+                            levelBadge = `<span class="log-level-badge log-level-error">Error</span>`;
+                            break;
+                        case 'warning':
+                        case 'warn':
+                            levelBadge = `<span class="log-level-badge log-level-warning">Warning</span>`;
+                            break;
+                        case 'info':
+                            levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
+                            break;
+                        case 'debug':
+                            levelBadge = `<span class="log-level-badge log-level-debug">Debug</span>`;
+                            break;
+                        case 'fatal':
+                        case 'critical':
+                            levelBadge = `<span class="log-level-badge log-level-fatal">Fatal</span>`;
+                            break;
+                        default:
+                            levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
                     }
                     
-                    // Special event dispatching for Swaparr logs
-                    if (logAppType === 'swaparr' && this.currentLogApp === 'swaparr') {
-                        const swaparrEvent = new CustomEvent('swaparrLogReceived', {
-                            detail: {
-                                logData: match && match[5] ? match[5] : logString
-                            }
-                        });
-                        document.dispatchEvent(swaparrEvent);
+                    // Determine app source for display
+                    let appSource = 'SYSTEM';
+                    if (logAppType && logAppType !== 'system') {
+                        appSource = logAppType.toUpperCase();
                     }
                     
-                    // Auto-scroll to top
-                    if (this.autoScroll) {
-                        window.scrollTo({
-                            top: 0,
-                            behavior: 'smooth'
-                        });
-                    }
-                } catch (error) {
-                    console.error('[LogsModule] Error processing log message:', error, 'Data:', event.data);
-                }
-            };
-            
-            eventSource.onerror = (err) => {
-                console.warn(`[LogsModule] EventSource connection issue for app ${this.currentLogApp}:`, err);
-                if (this.elements.logConnectionStatus) {
-                    this.elements.logConnectionStatus.textContent = 'Reconnecting...';
-                    this.elements.logConnectionStatus.className = 'status-warning';
+                    logEntry.innerHTML = `
+                        <div class="log-entry-row">
+                            <span class="log-timestamp">
+                                <span class="date">${date}</span>
+                                <span class="time">${time}</span>
+                            </span>
+                            ${levelBadge}
+                            <span class="log-source">${appSource}</span>
+                            <span class="log-message">${cleanMessage}</span>
+                        </div>
+                    `;
+                    logEntry.classList.add(`log-${levelClass}`);
+                
+                // Add to logs container
+                this.insertLogEntryInOrder(logEntry);
+                
+                // Apply current log level filter
+                const currentLogLevel = this.elements.logLevelSelect ? this.elements.logLevelSelect.value : 'all';
+                if (currentLogLevel !== 'all') {
+                    this.applyFilterToSingleEntry(logEntry, currentLogLevel);
                 }
                 
-                // Only close if it's a permanent failure, not a temporary connection issue
-                if (eventSource.readyState === EventSource.CLOSED) {
-                    console.error(`[LogsModule] EventSource permanently closed for app ${this.currentLogApp}`);
-                    if (this.elements.logConnectionStatus) {
-                        this.elements.logConnectionStatus.textContent = 'Disconnected';
-                        this.elements.logConnectionStatus.className = 'status-error';
-                    }
+                // Special event dispatching for Swaparr logs
+                if (logAppType === 'swaparr' && this.currentLogApp === 'swaparr') {
+                    const swaparrEvent = new CustomEvent('swaparrLogReceived', {
+                        detail: {
+                            logData: match && match[5] ? match[5] : logString
+                        }
+                    });
+                    document.dispatchEvent(swaparrEvent);
                 }
                 
-                // Auto-reconnect after a delay if the connection was lost
-                if (eventSource.readyState === EventSource.CLOSED) {
-                    setTimeout(() => {
-                        if (this.currentLogApp === appType) {
-                            console.log(`[LogsModule] Attempting to reconnect to ${appType} logs...`);
-                            this.connectEventSource(appType);
-                        }
-                    }, 5000); // Reconnect after 5 seconds
+                // Auto-scroll to top
+                if (this.autoScroll) {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
                 }
-            };
+            } catch (error) {
+                console.error('[LogsModule] Error processing log message:', error, 'Data:', event.data);
+            }
+        };
+        
+        eventSource.onerror = (err) => {
+            console.warn(`[LogsModule] EventSource connection issue for app ${this.currentLogApp}:`, err);
+            if (this.elements.logConnectionStatus) {
+                this.elements.logConnectionStatus.textContent = 'Reconnecting...';
+                this.elements.logConnectionStatus.className = 'status-warning';
+            }
             
-            eventSource.onclose = () => {
-                console.log(`[LogsModule] EventSource closed for app ${this.currentLogApp}`);
+            // Only close if it's a permanent failure, not a temporary connection issue
+            if (eventSource.readyState === EventSource.CLOSED) {
+                console.error(`[LogsModule] EventSource permanently closed for app ${this.currentLogApp}`);
                 if (this.elements.logConnectionStatus) {
                     this.elements.logConnectionStatus.textContent = 'Disconnected';
-                    this.elements.logConnectionStatus.className = 'status-disconnected';
+                    this.elements.logConnectionStatus.className = 'status-error';
                 }
-            };
-            
-            this.eventSources.logs = eventSource;
-        } catch (e) {
-            console.error(`[LogsModule] Failed to create EventSource for app ${appType}:`, e);
-            if (this.elements.logConnectionStatus) {
-                this.elements.logConnectionStatus.textContent = 'Failed to connect';
-                this.elements.logConnectionStatus.className = 'status-error';
             }
+            
+            // Auto-reconnect after a delay if the connection was lost
+            if (eventSource.readyState === EventSource.CLOSED) {
+                setTimeout(() => {
+                    if (this.currentLogApp === appType) {
+                        console.log(`[LogsModule] Attempting to reconnect to ${appType} logs...`);
+                        this.connectEventSource(appType);
+                    }
+                }, 5000); // Reconnect after 5 seconds
+            }
+        };
+        
+        eventSource.onclose = () => {
+            console.log(`[LogsModule] EventSource closed for app ${this.currentLogApp}`);
+            if (this.elements.logConnectionStatus) {
+                this.elements.logConnectionStatus.textContent = 'Disconnected';
+                this.elements.logConnectionStatus.className = 'status-disconnected';
+            }
+        };
+        
+        this.eventSources.logs = eventSource;
+    } catch (e) {
+        console.error(`[LogsModule] Failed to create EventSource for app ${appType}:`, e);
+        if (this.elements.logConnectionStatus) {
+            this.elements.logConnectionStatus.textContent = 'Failed to connect';
+            this.elements.logConnectionStatus.className = 'status-error';
         }
-    },
+    }
+},
     
     // Disconnect all event sources
     disconnectAllEventSources: function() {
