@@ -28,7 +28,7 @@ from src.primary.utils.config_paths import SETTINGS_DIR
 DEFAULT_CONFIGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'default_configs'))
 
 # Update or add this as a class attribute or constant
-KNOWN_APP_TYPES = ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros", "general", "swaparr"]
+KNOWN_APP_TYPES = ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros", "general"]
 
 # Add a settings cache with timestamps to avoid excessive disk reads
 settings_cache = {}  # Format: {app_name: {'timestamp': timestamp, 'data': settings_dict}}

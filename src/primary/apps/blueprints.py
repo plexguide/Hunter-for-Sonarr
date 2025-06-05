@@ -10,7 +10,6 @@ from src.primary.apps.radarr_routes import radarr_bp
 from src.primary.apps.lidarr_routes import lidarr_bp
 from src.primary.apps.readarr_routes import readarr_bp
 from src.primary.apps.whisparr_routes import whisparr_bp
-from src.primary.apps.swaparr_routes import swaparr_bp
 from src.primary.apps.eros_routes import eros_bp
 
 __all__ = [
@@ -19,6 +18,5 @@ __all__ = [
     "lidarr_bp",
     "readarr_bp",
     "whisparr_bp",
-    "swaparr_bp",
     "eros_bp"
 ]

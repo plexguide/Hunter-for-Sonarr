@@ -351,16 +351,6 @@ window.LogsModule = {
                     this.applyFilterToSingleEntry(logEntry, currentLogLevel);
                 }
                 
-                // Special event dispatching for Swaparr logs
-                if (logAppType === 'swaparr' && this.currentLogApp === 'swaparr') {
-                    const swaparrEvent = new CustomEvent('swaparrLogReceived', {
-                        detail: {
-                            logData: match && match[5] ? match[5] : logString
-                        }
-                    });
-                    document.dispatchEvent(swaparrEvent);
-                }
-                
                 // Auto-scroll to top
                 if (this.autoScroll) {
                     window.scrollTo({

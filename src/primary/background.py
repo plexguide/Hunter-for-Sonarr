@@ -393,28 +393,6 @@ def app_specific_loop(app_type: str) -> None:
             if not stop_event.is_set():
                  time.sleep(1) # Short pause
 
-            # --- Process Swaparr (stalled downloads) --- #
-            try:
-                # Try to import Swaparr module
-                if not 'process_stalled_downloads' in locals():
-                    try:
-                        # Import directly from handler module to avoid circular imports
-                        from src.primary.apps.swaparr.handler import process_stalled_downloads
-                        swaparr_logger = get_logger("swaparr")
-                        swaparr_logger.debug(f"Successfully imported Swaparr module")
-                    except (ImportError, AttributeError) as e:
-                        app_logger.debug(f"Swaparr module not available or missing functions: {e}")
-                        process_stalled_downloads = None
-                
-                # Check if Swaparr is enabled
-                swaparr_settings = settings_manager.load_settings("swaparr")
-                if swaparr_settings and swaparr_settings.get("enabled", False) and process_stalled_downloads:
-                    app_logger.info(f"Running Swaparr on {app_type} instance: {instance_name}")
-                    process_stalled_downloads(app_type, combined_settings, swaparr_settings)
-                    app_logger.info(f"Completed Swaparr processing for {app_type} instance: {instance_name}")
-            except Exception as e:
-                app_logger.error(f"Error during Swaparr processing for {instance_name}: {e}", exc_info=True)
-
         # --- Cycle End & Sleep --- #
         calculate_reset_time(app_type) # Pass app_type here if needed by the function
 

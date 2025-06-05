@@ -127,8 +127,7 @@ def get_default_stats() -> Dict[str, Dict[str, int]]:
         "lidarr": {"hunted": 0, "upgraded": 0},
         "readarr": {"hunted": 0, "upgraded": 0},
         "whisparr": {"hunted": 0, "upgraded": 0},
-        "eros": {"hunted": 0, "upgraded": 0},
-        "swaparr": {"hunted": 0, "upgraded": 0}
+        "eros": {"hunted": 0, "upgraded": 0}
     }
 
 def get_default_hourly_caps() -> Dict[str, Dict[str, int]]:
@@ -391,7 +390,7 @@ def increment_stat(app_type: str, stat_type: str, count: int = 1) -> bool:
     Returns:
         True if successful, False otherwise
     """
-    if app_type not in ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros", "swaparr"]:
+    if app_type not in ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros"]:
         logger.error(f"Invalid app_type: {app_type}")
         return False
         
@@ -399,9 +398,8 @@ def increment_stat(app_type: str, stat_type: str, count: int = 1) -> bool:
         logger.error(f"Invalid stat_type: {stat_type}")
         return False
     
-    # Also increment the hourly API cap for this app, unless it's swaparr which doesn't have an API
-    if app_type != "swaparr":
-        increment_hourly_cap(app_type, count)
+    # Also increment the hourly API cap for this app
+    increment_hourly_cap(app_type, count)
     
     with stats_lock:
         stats = load_stats()
@@ -439,7 +437,7 @@ def increment_stat_only(app_type: str, stat_type: str, count: int = 1) -> bool:
     Returns:
         True if successful, False otherwise
     """
-    if app_type not in ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros", "swaparr"]:
+    if app_type not in ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros"]:
         logger.error(f"Invalid app_type: {app_type}")
         return False
         

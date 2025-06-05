@@ -23,8 +23,7 @@ history_locks = {
     "lidarr": threading.Lock(),
     "readarr": threading.Lock(),
     "whisparr": threading.Lock(),
-    "eros": threading.Lock(),
-    "swaparr": threading.Lock()
+    "eros": threading.Lock()
 }
 
 def ensure_history_dir():

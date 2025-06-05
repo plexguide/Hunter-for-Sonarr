@@ -1001,7 +1001,6 @@ let huntarrUI = {
                 if (data.readarr) this.populateSettingsForm('readarr', data.readarr);
                 if (data.whisparr) this.populateSettingsForm('whisparr', data.whisparr);
                 if (data.eros) this.populateSettingsForm('eros', data.eros);
-                if (data.swaparr) this.populateSettingsForm('swaparr', data.swaparr);
                 if (data.general) this.populateSettingsForm('general', data.general);
                 
                 // Update duration displays (like sleep durations)
@@ -2023,7 +2022,7 @@ let huntarrUI = {
     
     updateStatsDisplay: function(stats) {
         // Update each app's statistics
-        const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'];
+        const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros'];
         const statTypes = ['hunted', 'upgraded'];
         
         // More robust low usage mode detection - check multiple sources
@@ -2164,8 +2163,7 @@ let huntarrUI = {
             'lidarr': {'hunted': 0, 'upgraded': 0},
             'readarr': {'hunted': 0, 'upgraded': 0},
             'whisparr': {'hunted': 0, 'upgraded': 0},
-            'eros': {'hunted': 0, 'upgraded': 0},
-            'swaparr': {'hunted': 0, 'upgraded': 0}
+            'eros': {'hunted': 0, 'upgraded': 0}
         };
         
         // Immediately update UI before even showing the confirmation
@@ -3194,7 +3192,7 @@ let huntarrUI = {
             /^\s*\[?\s*$/,                       // Just opening bracket
             /^\s*\]?,?\s*$/,                     // Just closing bracket
             /^,?\s*$/,                           // Just comma or whitespace
-            /^[^"]*':\s*[^,]*,.*'.*':/,          // Mid-object fragments like "g_items': 1, 'hunt_upgrade_items': 0"
+            /^[^"]*':\s*[^,]*,.*':/,          // Mid-object fragments like "g_items': 1, 'hunt_upgrade_items': 0"
             /^[a-zA-Z_][a-zA-Z0-9_]*':\s*\d+,/,  // Property names starting without quotes
             /^[a-zA-Z_][a-zA-Z0-9_]*':\s*True|False,/, // Boolean properties without opening quotes
             /^[a-zA-Z_][a-zA-Z0-9_]*':\s*'[^']*',/, // String properties without opening quotes

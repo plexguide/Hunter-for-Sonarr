@@ -33,11 +33,11 @@ def migrate_json_configs():
         "eros.json", 
         "lidarr.json", 
         "readarr.json", 
-        "swaparr.json", 
         "general.json", 
         "radarr.json", 
         "sonarr.json", 
-        "whisparr.json"
+        "whisparr.json",
+        "eros.json"
     ]
     
     # Flag to track if any files were migrated
