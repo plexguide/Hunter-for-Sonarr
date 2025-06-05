@@ -236,7 +236,7 @@ window.LogsModule = {
                     logEntry.className = 'log-entry';
 
                     if (match) {
-                        const [, appName, timestamp, loggerName, level, message] = match;
+                        const [, appName, timestamp, loggerName, level, originalMessage] = match;
                         
                         // Parse timestamp to extract date and time (ignore timezone for display)
                         let date = '';
@@ -247,6 +247,20 @@ window.LogsModule = {
                             date = parts[0] || '';
                             time = parts[1] || '';
                         }
+                        
+                        // Clean the message to remove any redundant timestamp information
+                        let cleanMessage = originalMessage;
+                        
+                        // Remove any leading timestamp patterns from the message
+                        // Pattern: YYYY-MM-DD HH:MM:SS [Timezone] - rest of message
+                        cleanMessage = cleanMessage.replace(/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\s+[^\s-]+)?\s*-\s*/, '');
+                        
+                        // Remove any remaining duplicate app tags or logger names from start of message
+                        cleanMessage = cleanMessage.replace(/^(huntarr\.[a-zA-Z]+\s*-\s*)?/, '');
+                        cleanMessage = cleanMessage.replace(/^\[[a-zA-Z]+\]\s*/, '');
+                        
+                        // Trim any extra whitespace
+                        cleanMessage = cleanMessage.trim();
                         
                         // Create level badge
                         const levelClass = level.toLowerCase();
@@ -295,7 +309,7 @@ window.LogsModule = {
                                 </span>
                                 ${levelBadge}
                                 <span class="log-source">${appSource}</span>
-                                <span class="log-message">${message}</span>
+                                <span class="log-message">${cleanMessage}</span>
                             </div>
                         `;
                         logEntry.classList.add(`log-${levelClass}`);
