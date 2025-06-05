@@ -327,7 +327,7 @@ window.LogsModule = {
                     }
                     
                     // Add to logs container
-                    this.insertLogInChronologicalOrder(logEntry);
+                    this.insertLogEntryInOrder(logEntry);
                     
                     // Apply current log level filter
                     const currentLogLevel = this.elements.logLevelSelect ? this.elements.logLevelSelect.value : 'all';
@@ -358,22 +358,38 @@ window.LogsModule = {
             };
             
             eventSource.onerror = (err) => {
-                console.error(`[LogsModule] EventSource error for app ${this.currentLogApp}:`, err);
+                console.warn(`[LogsModule] EventSource connection issue for app ${this.currentLogApp}:`, err);
                 if (this.elements.logConnectionStatus) {
-                    this.elements.logConnectionStatus.textContent = 'Error/Disconnected';
-                    this.elements.logConnectionStatus.className = 'status-error';
+                    this.elements.logConnectionStatus.textContent = 'Reconnecting...';
+                    this.elements.logConnectionStatus.className = 'status-warning';
                 }
                 
-                if (this.eventSources.logs) {
-                    this.eventSources.logs.close();
-                }
-                
-                // Auto-reconnect logic
-                setTimeout(() => {
-                    if (window.huntarrUI && window.huntarrUI.currentSection === 'logs') {
-                        this.connectToLogs();
+                // Only close if it's a permanent failure, not a temporary connection issue
+                if (eventSource.readyState === EventSource.CLOSED) {
+                    console.error(`[LogsModule] EventSource permanently closed for app ${this.currentLogApp}`);
+                    if (this.elements.logConnectionStatus) {
+                        this.elements.logConnectionStatus.textContent = 'Disconnected';
+                        this.elements.logConnectionStatus.className = 'status-error';
                     }
-                }, 5000);
+                }
+                
+                // Auto-reconnect after a delay if the connection was lost
+                if (eventSource.readyState === EventSource.CLOSED) {
+                    setTimeout(() => {
+                        if (this.currentLogApp === appType) {
+                            console.log(`[LogsModule] Attempting to reconnect to ${appType} logs...`);
+                            this.connectEventSource(appType);
+                        }
+                    }, 5000); // Reconnect after 5 seconds
+                }
+            };
+            
+            eventSource.onclose = () => {
+                console.log(`[LogsModule] EventSource closed for app ${this.currentLogApp}`);
+                if (this.elements.logConnectionStatus) {
+                    this.elements.logConnectionStatus.textContent = 'Disconnected';
+                    this.elements.logConnectionStatus.className = 'status-disconnected';
+                }
             };
             
             this.eventSources.logs = eventSource;
@@ -416,14 +432,14 @@ window.LogsModule = {
         }
     },
     
-    // Insert log entry in chronological order
-    insertLogInChronologicalOrder: function(newLogEntry) {
+    // Insert log entry in reverse chronological order (newest first)
+    insertLogEntryInOrder: function(newLogEntry) {
         if (!this.elements.logsContainer || !newLogEntry) return;
         
         const newTimestamp = this.parseLogTimestamp(newLogEntry);
         
+        // If no timestamp or empty container, add at the top
         if (!newTimestamp) {
-            // If no timestamp, add at the top (newest first)
             if (this.elements.logsContainer.children.length === 0) {
                 this.elements.logsContainer.appendChild(newLogEntry);
             } else {
@@ -432,37 +448,33 @@ window.LogsModule = {
             return;
         }
         
-        const existingEntries = Array.from(this.elements.logsContainer.children);
-        
-        if (existingEntries.length === 0) {
+        if (this.elements.logsContainer.children.length === 0) {
             this.elements.logsContainer.appendChild(newLogEntry);
             return;
         }
         
+        const existingEntries = Array.from(this.elements.logsContainer.children);
         let insertPosition = null;
         
-        // For reverse chronological order (newest first), find where to insert
+        // Find the correct position - insert before the first entry that is older
         for (let i = 0; i < existingEntries.length; i++) {
             const existingTimestamp = this.parseLogTimestamp(existingEntries[i]);
             
             if (!existingTimestamp) continue;
             
-            // Insert before the first entry that is older than the new entry
-            if (newTimestamp >= existingTimestamp) {
+            // If new log is newer than this existing log, insert before it
+            if (newTimestamp > existingTimestamp) {
                 insertPosition = existingEntries[i];
                 break;
             }
         }
         
         if (insertPosition) {
+            // Insert before the older entry
             this.elements.logsContainer.insertBefore(newLogEntry, insertPosition);
         } else {
-            // If newer than all existing entries, add at the top (beginning)
-            if (this.elements.logsContainer.children.length === 0) {
-                this.elements.logsContainer.appendChild(newLogEntry);
-            } else {
-                this.elements.logsContainer.insertBefore(newLogEntry, this.elements.logsContainer.firstChild);
-            }
+            // If it's older than all existing entries, add at the end
+            this.elements.logsContainer.appendChild(newLogEntry);
         }
     },
     
