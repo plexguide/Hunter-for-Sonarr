@@ -141,7 +141,8 @@ def execute_action(action_entry):
     app_id = action_entry.get("id")
     
     # Generate a unique key for this action to track execution
-    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    user_tz = _get_user_timezone()
+    current_date = datetime.datetime.now(user_tz).strftime("%Y-%m-%d")
     execution_key = f"{app_id}_{current_date}"
     
     # Check if this action was already executed today
@@ -329,7 +330,7 @@ def execute_action(action_entry):
                 return False
         
         # Mark this action as executed for today
-        last_executed_actions[execution_key] = datetime.datetime.now()
+        last_executed_actions[execution_key] = datetime.datetime.now(user_tz)
         return True
     
     except Exception as e:
@@ -361,8 +362,8 @@ def should_execute_schedule(schedule_entry):
     days = schedule_entry.get("days", [])
     scheduler_logger.debug(f"Schedule {schedule_id} days: {days}")
     
-    # Get today's day of week in lowercase (respects TZ environment variable)
-    current_day = datetime.datetime.now().strftime("%A").lower()  # e.g., 'monday'
+    # Get today's day of week in lowercase (respects user timezone)
+    current_day = datetime.datetime.now(user_tz).strftime("%A").lower()  # e.g., 'monday'
     
     # Debug what's being compared
     scheduler_logger.info(f"CRITICAL DEBUG - Today: '{current_day}', Schedule days: {days}")
@@ -382,8 +383,8 @@ def should_execute_schedule(schedule_entry):
             scheduler_logger.info(f"SUCCESS: Schedule {schedule_id} IS configured to run on {current_day}")
 
     
-    # Get current time with second-level precision for accurate timing (respects TZ)
-    current_time = datetime.datetime.now()
+    # Get current time with second-level precision for accurate timing (in user's timezone)
+    current_time = datetime.datetime.now(user_tz)
     
     # Extract scheduled time from different possible formats
     try:
@@ -448,9 +449,12 @@ def should_execute_schedule(schedule_entry):
 def check_and_execute_schedules():
     """Check all schedules and execute those that should run now"""
     try:
-        # Format time
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        scheduler_logger.debug(f"Checking schedules at {current_time}")
+        # Get user timezone for consistent logging
+        user_tz = _get_user_timezone()
+        
+        # Format time in user timezone
+        current_time = datetime.datetime.now(user_tz).strftime("%Y-%m-%d %H:%M:%S")
+        scheduler_logger.debug(f"Checking schedules at {current_time} ({user_tz})")
         
         # Check if schedule file exists and log its status
         if not os.path.exists(SCHEDULE_FILE):
@@ -484,7 +488,7 @@ def check_and_execute_schedules():
                     entry_id = schedule_entry.get("id")
                     if entry_id and entry_id in last_executed_actions:
                         last_time = last_executed_actions[entry_id]
-                        now = datetime.datetime.now()
+                        now = datetime.datetime.now(user_tz)
                         delta = (now - last_time).total_seconds() / 60  # Minutes
                         
                         if delta < 5:  # Don't re-execute if less than 5 minutes have passed
@@ -502,7 +506,7 @@ def check_and_execute_schedules():
                     
                     # Update last executed time
                     if entry_id:
-                        last_executed_actions[entry_id] = datetime.datetime.now()
+                        last_executed_actions[entry_id] = datetime.datetime.now(user_tz)
         
         # No need to log anything when no schedules are found, as this is expected
     
