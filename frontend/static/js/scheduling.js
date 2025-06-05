@@ -701,6 +701,144 @@ function renderSchedules() {
 }
 
 /**
+ * Check if we're on a mobile device
+ */
+function isMobileDevice() {
+    return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+/**
+ * Update timezone display for mobile/desktop
+ */
+function updateTimezoneDisplay(serverTimezone) {
+    const timezoneLabel = document.querySelector('.timezone-label');
+    const timezoneSpan = document.getElementById('serverTimezone');
+    const timezoneSeparator = document.querySelector('.timezone-separator');
+    
+    if (timezoneLabel && timezoneSpan) {
+        if (isMobileDevice()) {
+            // Hide the "Server Time:" label on mobile
+            timezoneLabel.style.display = 'none';
+            // Hide the timezone name on mobile, show only clock and time
+            timezoneSpan.style.display = 'none';
+            // Hide the separator pipe on mobile
+            if (timezoneSeparator) {
+                timezoneSeparator.style.display = 'none';
+            }
+        } else {
+            // Show the label and timezone on desktop
+            timezoneLabel.style.display = 'inline';
+            timezoneSpan.style.display = 'inline';
+            // Show the separator pipe on desktop
+            if (timezoneSeparator) {
+                timezoneSeparator.style.display = 'inline';
+            }
+            
+            // Format timezone for display
+            const displayTimezone = serverTimezone.replace('_', ' ');
+            timezoneSpan.textContent = displayTimezone;
+        }
+    }
+}
+
+/**
+ * Load server timezone from API and update display
+ */
+function loadServerTimezone() {
+    console.debug('Loading server timezone from settings API');
+    
+    fetch('./api/settings')
+        .then(response => response.json())
+        .then(data => {
+            const serverTimezone = data.general?.timezone || 'UTC';
+            console.debug('Server timezone loaded:', serverTimezone);
+            
+            // Update timezone display with mobile handling
+            updateTimezoneDisplay(serverTimezone);
+            
+            // Update current time in server timezone
+            updateServerTime(serverTimezone);
+            
+            // Update time inputs to show server current time
+            updateTimeInputsWithServerTime(serverTimezone);
+            
+            // Update time every minute
+            setInterval(() => updateServerTime(serverTimezone), 60000);
+            
+            // Handle window resize to adjust mobile/desktop display
+            window.addEventListener('resize', () => {
+                updateTimezoneDisplay(serverTimezone);
+            });
+        })
+        .catch(error => {
+            console.error('Failed to load server timezone:', error);
+            updateTimezoneDisplay('UTC');
+            updateServerTime('UTC');
+        });
+}
+
+/**
+ * Update the displayed current server time
+ */
+function updateServerTime(timezone) {
+    const currentTimeSpan = document.getElementById('serverCurrentTime');
+    if (!currentTimeSpan) return;
+    
+    try {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', {
+            timeZone: timezone,
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        currentTimeSpan.textContent = timeString;
+    } catch (error) {
+        console.error('Error formatting server time:', error);
+        currentTimeSpan.textContent = '--:--';
+    }
+}
+
+/**
+ * Update time inputs with server current time
+ */
+function updateTimeInputsWithServerTime(timezone) {
+    const hourSelect = document.getElementById('scheduleHour');
+    const minuteSelect = document.getElementById('scheduleMinute');
+    
+    if (hourSelect && minuteSelect) {
+        try {
+            const now = new Date();
+            const serverTime = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+            const hour = serverTime.getHours();
+            const minute = serverTime.getMinutes();
+            
+            hourSelect.value = hour;
+            minuteSelect.value = minute;
+        } catch (error) {
+            console.error('Error updating time inputs with server time:', error);
+        }
+    }
+}
+
+/**
+ * Initialize time inputs with server current time (will be updated once timezone loads)
+ */
+function initializeTimeInputs() {
+    const now = new Date();
+    const hour = now.getHours();
+    const minute = Math.floor(now.getMinutes() / 5) * 5; // Round to nearest 5 minutes
+    
+    const hourSelect = document.getElementById('scheduleHour');
+    const minuteSelect = document.getElementById('scheduleMinute');
+    
+    if (hourSelect && minuteSelect) {
+        hourSelect.value = hour;
+        minuteSelect.value = minute;
+    }
+}
+
+/**
  * Add a new schedule
  */
 function addSchedule() {
@@ -787,8 +925,6 @@ function addSchedule() {
     // resetDayCheckboxes(); // Removed to prevent automatic unchecking
 }
 
-// Execution history functionality has been removed as requested
-
 /**
  * Format days from internal format to API format (array of day names)
  */
@@ -805,11 +941,6 @@ function formatDaysForAPI(days) {
     
     return apiDays;
 }
-
-/**
- * Edit functionality has been removed for simplicity
- * Users can now only add new schedules or delete existing ones
- */
 
 /**
  * Delete a schedule (no confirmations to prevent multiple dialog issues)
@@ -870,108 +1001,6 @@ function resetDayCheckboxes() {
     
     if (dailyCheckboxDiv) {
         dailyCheckboxDiv.classList.remove('checked');
-    }
-}
-
-/**
- * Load server timezone and display current time
- */
-function loadServerTimezone() {
-    console.debug('Loading server timezone from settings API');
-    
-    fetch('./api/settings')
-        .then(response => response.json())
-        .then(data => {
-            const serverTimezone = data.general?.timezone || 'UTC';
-            console.debug('Server timezone loaded:', serverTimezone);
-            
-            // Update timezone display
-            const timezoneSpan = document.getElementById('serverTimezone');
-            const currentTimeSpan = document.getElementById('serverCurrentTime');
-            
-            if (timezoneSpan) {
-                // Format timezone for display
-                const displayTimezone = serverTimezone.replace('_', ' ');
-                timezoneSpan.textContent = displayTimezone;
-            }
-            
-            // Update current time in server timezone
-            updateServerTime(serverTimezone);
-            
-            // Update time inputs to show server current time
-            updateTimeInputsWithServerTime(serverTimezone);
-            
-            // Update time every minute
-            setInterval(() => updateServerTime(serverTimezone), 60000);
-        })
-        .catch(error => {
-            console.error('Failed to load server timezone:', error);
-            const timezoneSpan = document.getElementById('serverTimezone');
-            if (timezoneSpan) {
-                timezoneSpan.textContent = 'UTC (default)';
-            }
-            updateServerTime('UTC');
-        });
-}
-
-/**
- * Update the displayed current server time
- */
-function updateServerTime(timezone) {
-    const currentTimeSpan = document.getElementById('serverCurrentTime');
-    if (!currentTimeSpan) return;
-    
-    try {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('en-US', {
-            timeZone: timezone,
-            hour12: false,
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        currentTimeSpan.textContent = timeString;
-    } catch (error) {
-        console.error('Error formatting server time:', error);
-        currentTimeSpan.textContent = '--:--';
-    }
-}
-
-/**
- * Update time inputs with server current time
- */
-function updateTimeInputsWithServerTime(timezone) {
-    const hourSelect = document.getElementById('scheduleHour');
-    const minuteSelect = document.getElementById('scheduleMinute');
-    
-    if (hourSelect && minuteSelect) {
-        try {
-            const now = new Date();
-            const serverTime = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
-            const hour = serverTime.getHours();
-            const minute = serverTime.getMinutes();
-            
-            hourSelect.value = hour;
-            minuteSelect.value = minute;
-        } catch (error) {
-            console.error('Error updating time inputs with server time:', error);
-        }
-    }
-}
-
-/**
- * Initialize time inputs with server current time (will be updated once timezone loads)
- */
-function initializeTimeInputs() {
-    const now = new Date();
-    const hour = now.getHours();
-    const minute = Math.floor(now.getMinutes() / 5) * 5; // Round to nearest 5 minutes
-    
-    const hourSelect = document.getElementById('scheduleHour');
-    const minuteSelect = document.getElementById('scheduleMinute');
-    
-    if (hourSelect && minuteSelect) {
-        hourSelect.value = hour;
-        minuteSelect.value = minute;
     }
 }
 

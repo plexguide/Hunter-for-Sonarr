@@ -127,40 +127,68 @@
 /* Mobile responsive adjustments for timezone display */
 @media (max-width: 768px) {
     .panel-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 6px !important;
     }
     
     .timezone-info {
-        align-self: flex-end;
-        padding: 3px 6px;
-        margin-top: 0;
+        align-self: stretch !important;
+        text-align: center !important;
+        padding: 4px 8px !important;
+        margin-top: 4px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     .timezone-display {
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 2px;
+        justify-content: center !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 4px !important;
+        white-space: nowrap !important;
     }
     
     /* Hide the "Server Time:" label on mobile */
     .timezone-label {
-        display: none;
+        display: none !important;
     }
     
     .timezone-content {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.7rem;
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        font-size: 0.75rem !important;
+        justify-content: center !important;
     }
     
     .timezone-content i {
-        font-size: 0.7rem;
+        font-size: 0.75rem !important;
     }
     
     .timezone-content span {
-        font-size: 0.7rem;
+        font-size: 0.75rem !important;
+    }
+}
+
+/* Even more aggressive mobile targeting */
+@media (max-width: 480px) {
+    .panel-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    
+    .panel-header h3 {
+        margin-bottom: 8px !important;
+    }
+    
+    .timezone-info {
+        align-self: center !important;
+        text-align: center !important;
+        width: 100% !important;
+    }
+    
+    .timezone-label {
+        display: none !important;
     }
 }
