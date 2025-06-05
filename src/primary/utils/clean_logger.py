@@ -29,18 +29,18 @@ CLEAN_LOG_FILES = {
 class CleanLogFormatter(logging.Formatter):
     """
     Custom formatter that creates clean log messages for frontend consumption.
-    Removes redundant timestamps, logger names, and other verbose information.
+    Uses pipe separators for easy parsing: timestamp|level|app_type|message
     """
     
     def __init__(self):
-        # Simple format for clean logs: timestamp - level - message
-        super().__init__(fmt='%(asctime)s - %(levelname)s - %(message)s')
+        # No format needed as we'll build it manually
+        super().__init__()
         self.converter = time.localtime
     
     def format(self, record):
         """
-        Format the log record to extract only essential information.
-        The frontend will handle timestamp and level display separately.
+        Format the log record as: timestamp|level|app_type|clean_message
+        This format makes it easy for frontend to parse and display properly.
         """
         # Get the original formatted message
         original_message = record.getMessage()
@@ -48,22 +48,14 @@ class CleanLogFormatter(logging.Formatter):
         # Clean the message by removing redundant information
         clean_message = self._clean_message(original_message, record.name, record.levelname)
         
-        # Create a clean record with the cleaned message
-        clean_record = logging.LogRecord(
-            name=record.name,
-            level=record.levelno,
-            pathname=record.pathname,
-            lineno=record.lineno,
-            msg=clean_message,
-            args=(),
-            exc_info=record.exc_info,
-            func=record.funcName,
-            stack_info=record.stack_info
-        )
-        clean_record.created = record.created
+        # Format timestamp (without microseconds for cleaner display)
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S', self.converter(record.created))
         
-        # Format using the parent formatter - this will create "TIMESTAMP - LEVEL - CLEAN_MESSAGE"
-        return super().format(clean_record)
+        # Determine app type from logger name
+        app_type = self._get_app_type(record.name)
+        
+        # Format as: timestamp|level|app_type|message
+        return f"{timestamp}|{record.levelname}|{app_type}|{clean_message}"
     
     def _clean_message(self, message: str, logger_name: str, level: str) -> str:
         """
@@ -121,6 +113,34 @@ class CleanLogFormatter(logging.Formatter):
             clean_msg = "Log message"
             
         return clean_msg
+    
+    def _get_app_type(self, logger_name: str) -> str:
+        """
+        Determine the app type from the logger name.
+        
+        Args:
+            logger_name: Name of the logger (e.g., 'huntarr.sonarr')
+            
+        Returns:
+            App type (e.g., 'sonarr', 'system')
+        """
+        # Remove 'huntarr.' prefix if present
+        if logger_name.startswith('huntarr.'):
+            logger_name = logger_name[8:]
+        
+        # Map logger name to app type
+        app_types = {
+            'sonarr': 'sonarr',
+            'radarr': 'radarr',
+            'lidarr': 'lidarr',
+            'readarr': 'readarr',
+            'whisparr': 'whisparr',
+            'eros': 'eros',
+            'swaparr': 'swaparr',
+            'hunting': 'hunting',
+        }
+        
+        return app_types.get(logger_name, 'system')
 
 
 class CleanLogHandler(logging.Handler):

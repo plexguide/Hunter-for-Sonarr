@@ -193,20 +193,20 @@ window.LogsModule = {
                         return; // Skip processing this line
                     }
                     
-                    // Updated regex for clean log format (timestamp - level - message)
-                    // Example: 2025-06-05 09:23:09,898 - DEBUG - Request IP address: 192.168.65.1
-                    const logRegex = /^(?:\[(\w+)\]\s)?([^\s]+\s[^\s,]+(?:,\d+)?)\s*-\s+(\w+)\s+-\s+(.*)$/;
+                    // Updated regex for clean log format with pipe separators
+                    // Format: timestamp|level|app_type|message
+                    // Example: 2025-06-05 09:24:44|DEBUG|system|Request IP address: 192.168.65.1
+                    const logRegex = /^([^|]+)\|([^|]+)\|([^|]+)\|(.*)$/;
                     const match = logString.match(logRegex);
 
                     // Determine the app type for this log message
                     let logAppType = 'system';
                     
-                    if (match && match[1]) {
-                        // App type from prefix like [sonarr] 
-                        logAppType = match[1].toLowerCase();
+                    if (match && match[3]) {
+                        // App type is directly provided in the third field
+                        logAppType = match[3].toLowerCase();
                     } else {
-                        // For clean logs, we rely on the app parameter from the streaming endpoint
-                        // or detect from content patterns as fallback
+                        // Fallback detection for non-clean log formats
                         const appTagMatch = logString.match(/^\[(\w+)\]/);
                         if (appTagMatch) {
                             const possibleApp = appTagMatch[1].toLowerCase();
@@ -230,7 +230,7 @@ window.LogsModule = {
                     logEntry.className = 'log-entry';
 
                     if (match) {
-                        const [, appName, timestamp, level, originalMessage] = match;
+                        const [, timestamp, level, appType, originalMessage] = match;
                         
                         // Parse timestamp to extract date and time (ignore timezone for display)
                         let date = '';
@@ -279,15 +279,8 @@ window.LogsModule = {
                         
                         // Determine app source for display
                         let appSource = 'SYSTEM';
-                        if (loggerName.includes('.')) {
-                            const parts = loggerName.split('.');
-                            if (parts.length > 1) {
-                                if (this.currentLogApp !== 'all' && this.currentLogApp !== 'system') {
-                                    appSource = 'SYSTEM';
-                                } else {
-                                    appSource = parts[1].toUpperCase();
-                                }
-                            }
+                        if (appType && appType !== 'system') {
+                            appSource = appType.toUpperCase();
                         }
                         
                         logEntry.innerHTML = `
@@ -752,7 +745,7 @@ window.LogsModule = {
             /^\s*\[?\s*$/,
             /^\s*\]?,?\s*$/,
             /^,?\s*$/,
-            /^[^"]*':\s*[^,]*,.*'.*':/,
+            /^[^"]*':\s*[^,]*,.*':/,
             /^[a-zA-Z_][a-zA-Z0-9_]*':\s*\d+,/,
             /^[a-zA-Z_][a-zA-Z0-9_]*':\s*True|False,/,
             /^[a-zA-Z_][a-zA-Z0-9_]*':\s*'[^']*',/,
