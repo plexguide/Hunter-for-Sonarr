@@ -1,4 +1,4 @@
-/**
+/*
  * Settings forms for Huntarr
  * This file handles generating HTML forms for each app's settings
  */
@@ -1190,11 +1190,6 @@ const SettingsForms = {
                         <option value="Australia/Perth" ${settings.timezone === 'Australia/Perth' ? 'selected' : ''}>Australia West (Australia/Perth)</option>
                         <option value="Pacific/Auckland" ${settings.timezone === 'Pacific/Auckland' ? 'selected' : ''}>New Zealand (Pacific/Auckland)</option>
                     </select>
-                    <div class="timezone-preview" style="margin-top: 8px; padding: 6px 8px; background-color: rgba(0, 0, 0, 0.2); border-radius: 4px; border-left: 3px solid #4caf50;">
-                        <small style="color: #4caf50; font-size: 0.9rem; font-weight: 500;">
-                            <i class="fas fa-clock"></i> Current time in selected timezone: <span id="timezonePreviewTime" style="color: #90caf9; font-family: 'Courier New', monospace; font-weight: bold;">--:--</span>
-                        </small>
-                    </div>
                     <p class="setting-help" style="margin-left: -3ch !important;">Set your timezone for accurate time display in logs and scheduling. Changes are applied when you save settings.</p>
                 </div>
             </div>
@@ -1378,11 +1373,11 @@ const SettingsForms = {
         if (timezoneSelect) {
             // Update preview on change
             timezoneSelect.addEventListener('change', function() {
-                updateTimezonePreview(this.value);
+                // Removed updateTimezonePreview function call
             });
             
             // Initialize with current timezone
-            updateTimezonePreview(timezoneSelect.value || 'UTC');
+            // Removed updateTimezonePreview function call
         }
     },
     
