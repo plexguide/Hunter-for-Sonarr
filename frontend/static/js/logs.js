@@ -423,7 +423,12 @@ window.LogsModule = {
         const newTimestamp = this.parseLogTimestamp(newLogEntry);
         
         if (!newTimestamp) {
-            this.elements.logsContainer.appendChild(newLogEntry);
+            // If no timestamp, add at the top (newest first)
+            if (this.elements.logsContainer.children.length === 0) {
+                this.elements.logsContainer.appendChild(newLogEntry);
+            } else {
+                this.elements.logsContainer.insertBefore(newLogEntry, this.elements.logsContainer.firstChild);
+            }
             return;
         }
         
@@ -436,12 +441,14 @@ window.LogsModule = {
         
         let insertPosition = null;
         
+        // For reverse chronological order (newest first), find where to insert
         for (let i = 0; i < existingEntries.length; i++) {
             const existingTimestamp = this.parseLogTimestamp(existingEntries[i]);
             
             if (!existingTimestamp) continue;
             
-            if (newTimestamp > existingTimestamp) {
+            // Insert before the first entry that is older than the new entry
+            if (newTimestamp >= existingTimestamp) {
                 insertPosition = existingEntries[i];
                 break;
             }
@@ -450,7 +457,12 @@ window.LogsModule = {
         if (insertPosition) {
             this.elements.logsContainer.insertBefore(newLogEntry, insertPosition);
         } else {
-            this.elements.logsContainer.appendChild(newLogEntry);
+            // If newer than all existing entries, add at the top (beginning)
+            if (this.elements.logsContainer.children.length === 0) {
+                this.elements.logsContainer.appendChild(newLogEntry);
+            } else {
+                this.elements.logsContainer.insertBefore(newLogEntry, this.elements.logsContainer.firstChild);
+            }
         }
     },
     
@@ -756,7 +768,6 @@ window.LogsModule = {
             /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*\[$/,
             /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*\{$/,
             /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*(True|False)$/i,
-            /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*\d+$/,
             /^[a-zA-Z_]+\s+(Mode|Setting|Config|Option):\s*(True|False|\d+)$/i,
             /^[a-zA-Z_]+\s*Mode:\s*(True|False)$/i,
             /^[a-zA-Z_]+\s*Setting:\s*.*$/i,
