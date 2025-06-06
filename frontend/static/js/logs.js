@@ -27,6 +27,9 @@ window.LogsModule = {
     
     // Load user's timezone setting from the backend
     loadUserTimezone: function() {
+        // Set immediate fallback to prevent warnings during loading
+        this.userTimezone = this.userTimezone || 'UTC';
+        
         fetch('/api/settings')
             .then(response => response.json())
             .then(settings => {
@@ -91,17 +94,23 @@ window.LogsModule = {
     
     // Convert UTC timestamp to user's timezone
     convertToUserTimezone: function(utcTimestamp) {
-        if (!utcTimestamp || !this.userTimezone) {
-            console.warn('[LogsModule] Missing timestamp or timezone:', {utcTimestamp, userTimezone: this.userTimezone});
-            return { date: utcTimestamp?.split(' ')[0] || '', time: utcTimestamp?.split(' ')[1] || '' };
+        if (!utcTimestamp) {
+            console.debug('[LogsModule] No timestamp provided for conversion');
+            return { date: '', time: '' };
+        }
+        
+        if (!this.userTimezone) {
+            // Set fallback if timezone not loaded yet
+            this.userTimezone = 'UTC';
+            console.debug('[LogsModule] Timezone not loaded yet, using UTC fallback');
         }
         
         try {
-            console.log('[LogsModule] Converting timestamp:', utcTimestamp, 'from UTC to', this.userTimezone);
+            console.debug('[LogsModule] Converting timestamp:', utcTimestamp, 'from UTC to', this.userTimezone);
             
             // Parse UTC timestamp - ensure it's treated as UTC
             const utcDate = new Date(utcTimestamp + ' UTC');
-            console.log('[LogsModule] Parsed UTC date:', utcDate.toISOString());
+            console.debug('[LogsModule] Parsed UTC date:', utcDate.toISOString());
             
             // Convert to user's timezone using toLocaleString
             const userDateString = utcDate.toLocaleString("en-CA", {
@@ -115,7 +124,7 @@ window.LogsModule = {
                 hour12: false
             });
             
-            console.log('[LogsModule] Converted to user timezone:', userDateString);
+            console.debug('[LogsModule] Converted to user timezone:', userDateString);
             
             // Parse the formatted string "2025-06-05, 14:09:54"
             const [datePart, timePart] = userDateString.split(', ');
@@ -125,7 +134,7 @@ window.LogsModule = {
                 time: timePart
             };
             
-            console.log('[LogsModule] Final result:', result);
+            console.debug('[LogsModule] Final result:', result);
             return result;
             
         } catch (error) {

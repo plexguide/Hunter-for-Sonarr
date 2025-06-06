@@ -454,7 +454,7 @@ def app_specific_loop(app_type: str) -> None:
         # Calculate next cycle time in user's timezone without microseconds
         next_cycle_time = now_user_tz + datetime.timedelta(seconds=sleep_seconds)
         
-        app_logger.info(f"Current time ({user_tz}): {now_user_tz.strftime('%Y-%m-%d %H:%M:%S')}")
+        app_logger.debug(f"Current time ({user_tz}): {now_user_tz.strftime('%Y-%m-%d %H:%M:%S')}")
         app_logger.info(f"Next cycle will begin at {next_cycle_time.strftime('%Y-%m-%d %H:%M:%S')} ({user_tz})")
         app_logger.info(f"Sleep duration: {sleep_seconds} seconds")
         
