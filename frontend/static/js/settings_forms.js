@@ -1365,6 +1365,76 @@ const SettingsForms = {
             });
         }
         
+        // Set up Apprise notifications toggle functionality
+        const enableNotificationsCheckbox = container.querySelector('#enable_notifications');
+        if (enableNotificationsCheckbox) {
+            // Function to toggle notification settings visibility
+            const toggleNotificationSettings = function(enabled) {
+                const settingsToToggle = [
+                    'notification_level',
+                    'apprise_urls', 
+                    'testNotificationBtn',
+                    'notify_on_missing',
+                    'notify_on_upgrade',
+                    'notification_include_instance',
+                    'notification_include_app'
+                ];
+                
+                // Find parent setting-item containers for each setting
+                settingsToToggle.forEach(settingId => {
+                    const element = container.querySelector(`#${settingId}`);
+                    if (element) {
+                        // Find the parent setting-item div
+                        const settingItem = element.closest('.setting-item');
+                        if (settingItem) {
+                            if (enabled) {
+                                settingItem.style.opacity = '1';
+                                settingItem.style.pointerEvents = '';
+                                // Re-enable form elements
+                                const inputs = settingItem.querySelectorAll('input, select, textarea, button');
+                                inputs.forEach(input => {
+                                    input.disabled = false;
+                                    input.style.cursor = '';
+                                });
+                            } else {
+                                settingItem.style.opacity = '0.4';
+                                settingItem.style.pointerEvents = 'none';
+                                // Disable form elements
+                                const inputs = settingItem.querySelectorAll('input, select, textarea, button');
+                                inputs.forEach(input => {
+                                    input.disabled = true;
+                                    input.style.cursor = 'not-allowed';
+                                });
+                            }
+                        }
+                    }
+                });
+                
+                // Special handling for test notification button and its container
+                const testBtn = container.querySelector('#testNotificationBtn');
+                if (testBtn) {
+                    testBtn.disabled = !enabled;
+                    testBtn.style.opacity = enabled ? '1' : '0.4';
+                    testBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+                    
+                    // Also handle the button container div
+                    const buttonContainer = testBtn.closest('div');
+                    if (buttonContainer) {
+                        buttonContainer.style.opacity = enabled ? '1' : '0.4';
+                        buttonContainer.style.pointerEvents = enabled ? '' : 'none';
+                    }
+                }
+            };
+            
+            // Set initial state
+            toggleNotificationSettings(enableNotificationsCheckbox.checked);
+            
+            // Add change event listener
+            enableNotificationsCheckbox.addEventListener('change', function() {
+                toggleNotificationSettings(this.checked);
+            });
+        }
+        
         // Update duration display - e.g., convert seconds to hours
         SettingsForms.updateDurationDisplay();
         
