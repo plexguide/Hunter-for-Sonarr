@@ -500,16 +500,13 @@ window.LogsModule = {
         
         const newTimestamp = this.parseLogTimestamp(newLogEntry);
         
-        // If no timestamp or empty container, add at the top
+        // If no timestamp, add at the top (newest entries go to top)
         if (!newTimestamp) {
-            if (this.elements.logsContainer.children.length === 0) {
-                this.elements.logsContainer.appendChild(newLogEntry);
-            } else {
-                this.elements.logsContainer.insertBefore(newLogEntry, this.elements.logsContainer.firstChild);
-            }
+            this.elements.logsContainer.insertBefore(newLogEntry, this.elements.logsContainer.firstChild);
             return;
         }
         
+        // If empty container, just add the entry
         if (this.elements.logsContainer.children.length === 0) {
             this.elements.logsContainer.appendChild(newLogEntry);
             return;
@@ -518,7 +515,8 @@ window.LogsModule = {
         const existingEntries = Array.from(this.elements.logsContainer.children);
         let insertPosition = null;
         
-        // Find the correct position - insert before the first entry that is older
+        // Find the correct position - newest entries should be at the top
+        // So we need to find the first entry that is older than our new entry
         for (let i = 0; i < existingEntries.length; i++) {
             const existingTimestamp = this.parseLogTimestamp(existingEntries[i]);
             
@@ -532,7 +530,7 @@ window.LogsModule = {
         }
         
         if (insertPosition) {
-            // Insert before the older entry
+            // Insert before the older entry (maintains newest-first order)
             this.elements.logsContainer.insertBefore(newLogEntry, insertPosition);
         } else {
             // If it's older than all existing entries, add at the end

@@ -105,19 +105,17 @@
         border: 1px solid rgba(90, 109, 137, 0.15);
         padding: 15px;
         font-family: 'Fira Code', 'Courier New', monospace;
-        line-height: 1.5;
-        font-size: 13px;
-        color: rgba(255, 255, 255, 0.9);
-        -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+        font-size: 12px;
+        line-height: 1.4;
         padding-bottom: 70px; /* Extra padding at bottom to ensure content isn't cut off */
         position: relative; /* For accent line positioning */
         z-index: 1; /* Ensure it's below the header */
         margin-top: 2px; /* Reduced from 5px to match header spacing reduction */
         
-        /* Flex properties for better content alignment */
+        /* Flex properties for better content alignment - REMOVED column-reverse */
         display: flex;
-        flex-direction: column-reverse;
-        justify-content: flex-start; /* Start from top when there are few logs */
+        flex-direction: column;
+        justify-content: flex-start; /* Start from top to show newest entries first */
     }
     
     /* Modern Logs Section Styling */
