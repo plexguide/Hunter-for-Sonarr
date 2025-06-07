@@ -32,10 +32,8 @@ window.CycleCountdown = (function() {
     
     // Set up timer elements in the DOM
     function setupTimerElements() {
-        console.log('[CycleCountdown] Setting up timer elements for apps:', trackedApps);
         // Create timer elements in each app status card
         trackedApps.forEach(app => {
-            console.log(`[CycleCountdown] Creating timer element for ${app}`);
             createTimerElement(app);
         });
     }
@@ -215,6 +213,8 @@ window.CycleCountdown = (function() {
     
     // Create timer display element in the app stats card
     function createTimerElement(app) {
+        console.log(`[CycleCountdown] Creating timer element for ${app}`);
+        
         // Handle special case for whisparr-v3 - convert hyphen to be CSS compatible
         const dataApp = app;
         
@@ -225,7 +225,7 @@ window.CycleCountdown = (function() {
         const resetButton = document.querySelector(`button.cycle-reset-button[data-app="${dataApp}"]`);
         
         if (!resetButton) {
-            console.log(`[CycleCountdown] Reset button not found for ${app}`);
+            // Silently skip if reset button doesn't exist on this page
             return;
         }
         
@@ -638,7 +638,19 @@ window.CycleCountdown = (function() {
     }
     
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('[CycleCountdown] DOM loaded, initializing...');
+        console.log('[CycleCountdown] DOM loaded, checking page...');
+        
+        // Only initialize if we're on a page that has app status cards
+        // Check for the home section or any app status elements
+        const homeSection = document.getElementById('homeSection');
+        const hasAppCards = document.querySelector('.app-status-card, .status-card, [id$="StatusCard"]');
+        
+        if (!homeSection && !hasAppCards) {
+            console.log('[CycleCountdown] Not on dashboard page, skipping initialization');
+            return;
+        }
+        
+        console.log('[CycleCountdown] Dashboard page detected, initializing...');
         
         // Simple initialization with minimal delay
         setTimeout(function() {
@@ -662,12 +674,11 @@ window.CycleCountdown = (function() {
                 }
             });
             
-            const homeSection = document.getElementById('homeSection');
             if (homeSection) {
                 observer.observe(homeSection, { attributes: true });
                 console.log('[CycleCountdown] Observer set up for home section');
             } else {
-                console.warn('[CycleCountdown] Home section not found');
+                console.log('[CycleCountdown] Home section not found, but app cards detected');
             }
         }, 100); // 100ms delay is enough
     });
@@ -679,4 +690,3 @@ window.CycleCountdown = (function() {
         cleanup: cleanup
     };
 })();
-
