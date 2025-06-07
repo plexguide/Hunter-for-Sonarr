@@ -591,9 +591,9 @@
                 <p>PIN Code:</p>
                 <p id="plexLinkPinCode" class="plex-pin-code"></p>
             </div>
-            <div class="plex-status" id="plexLinkStatus"></div>
-            <div class="modal-actions">
-                <button class="action-button secondary-button" id="cancelPlexLink">Cancel</button>
+            <!-- Ensure status is always visible -->
+            <div class="plex-status waiting" id="plexLinkStatus" style="display: block;">
+                <i class="fas fa-hourglass-half"></i> Initializing Plex authentication...
             </div>
         </div>
     </div>
@@ -658,14 +658,17 @@
                 // Show modal and continue PIN checking
                 const modal = document.getElementById('plexLinkModal');
                 const pinCode = document.getElementById('plexLinkPinCode');
+                const status = document.getElementById('plexLinkStatus');
                 modal.style.display = 'block';
                 
                 // Extract PIN code for display (but hide it since user already authenticated)
                 const pinCodeValue = plexPinId.substring(0, 4) + '-' + plexPinId.substring(4);
                 pinCode.textContent = pinCodeValue;
                 
+                // Ensure status is visible and show completion message
+                status.style.display = 'block';
                 currentPlexPinId = plexPinId;
-                setPlexLinkStatus('waiting', 'Completing authentication...');
+                setPlexLinkStatus('waiting', '<i class="fas fa-spinner spinner"></i> Completing Plex authentication and linking your account...');
                 startPlexPinChecking();
             }
         });
@@ -718,7 +721,6 @@
         function setupPlexEventListeners() {
             const linkButton = document.getElementById('linkPlexAccount');
             const unlinkButton = document.getElementById('unlinkPlexAccount');
-            const cancelButton = document.getElementById('cancelPlexLink');
             const modal = document.getElementById('plexLinkModal');
             
             linkButton.addEventListener('click', function() {
@@ -734,7 +736,7 @@
                 // Show loading state
                 const unlinkBtn = document.getElementById('unlinkPlexAccount');
                 const originalText = unlinkBtn.textContent;
-                unlinkBtn.textContent = 'Unlinking...';
+                unlinkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Unlinking...';
                 unlinkBtn.disabled = true;
                 
                 // Get current username from session or use stored value
@@ -786,14 +788,9 @@
                 })
                 .finally(() => {
                     // Restore button state
-                    unlinkBtn.textContent = originalText;
+                    unlinkBtn.innerHTML = originalText;
                     unlinkBtn.disabled = false;
                 });
-            });
-            
-            cancelButton.addEventListener('click', function() {
-                stopPlexLinking();
-                modal.style.display = 'none';
             });
             
             // Close modal when clicking outside
@@ -839,7 +836,10 @@
             
             modal.style.display = 'block';
             pinCode.textContent = '';
-            setPlexLinkStatus('waiting', '<i class="fas fa-spinner spinner"></i> Creating Plex PIN...');
+            
+            // Ensure status is visible and show initial message
+            status.style.display = 'block';
+            setPlexLinkStatus('waiting', '<i class="fas fa-spinner spinner"></i> Preparing Plex authentication...');
             
             // Create Plex PIN
             HuntarrUtils.fetchWithTimeout('/api/auth/plex/pin', {
@@ -862,7 +862,8 @@
                         pinCode.textContent = 'PIN-' + currentPlexPinId;
                     }
                     
-                    setPlexLinkStatus('waiting', 'You will be redirected to Plex to sign in. After signing in, you will be brought back here automatically.');
+                    // Show informative message about what's happening next
+                    setPlexLinkStatus('waiting', '<i class="fas fa-external-link-alt"></i> You will be redirected to Plex to sign in. After authentication, you will be brought back here automatically.');
                     
                     // Store PIN ID for when we return - no password needed
                     localStorage.setItem('huntarr-plex-pin-id', currentPlexPinId);
@@ -870,15 +871,18 @@
                     
                     // Redirect to Plex authentication instead of popup
                     setTimeout(() => {
-                        window.location.href = data.auth_url;
+                        setPlexLinkStatus('waiting', '<i class="fas fa-spinner spinner"></i> Redirecting to Plex...');
+                        setTimeout(() => {
+                            window.location.href = data.auth_url;
+                        }, 1000);
                     }, 2000); // 2 second delay to show the message
                 } else {
-                    setPlexLinkStatus('error', 'Failed to create Plex PIN: ' + (data.error || 'Unknown error'));
+                    setPlexLinkStatus('error', '<i class="fas fa-exclamation-triangle"></i> Failed to create Plex PIN: ' + (data.error || 'Unknown error. Please try again.'));
                 }
             })
             .catch(error => {
                 console.error('Error creating Plex PIN:', error);
-                setPlexLinkStatus('error', 'Network error creating Plex PIN');
+                setPlexLinkStatus('error', '<i class="fas fa-exclamation-triangle"></i> Network error: Unable to connect to Plex. Please check your internet connection and try again.');
             });
         }
         
@@ -886,6 +890,9 @@
             if (plexPinCheckInterval) {
                 clearInterval(plexPinCheckInterval);
             }
+            
+            // Show initial checking status
+            setPlexLinkStatus('waiting', '<i class="fas fa-hourglass-half"></i> Checking authentication status...');
             
             plexPinCheckInterval = setInterval(() => {
                 if (!currentPlexPinId) return;
@@ -895,13 +902,17 @@
                     .then(data => {
                         if (data.success && data.claimed) {
                             // PIN was claimed, now link the account
-                            setPlexLinkStatus('success', '<i class="fas fa-check"></i> Plex authenticated! Linking account...');
+                            setPlexLinkStatus('success', '<i class="fas fa-check"></i> Plex authentication successful! Linking your account...');
                             linkWithPlexToken(data.token);
+                        }
+                        // If not claimed yet, show waiting status
+                        else if (data.success && !data.claimed) {
+                            setPlexLinkStatus('waiting', '<i class="fas fa-hourglass-half"></i> Waiting for Plex authentication to complete...');
                         }
                     })
                     .catch(error => {
                         console.error('Error checking PIN:', error);
-                        setPlexLinkStatus('error', 'Network error checking PIN status');
+                        setPlexLinkStatus('error', '<i class="fas fa-exclamation-triangle"></i> Network error: Unable to verify authentication status. Please try again.');
                         stopPlexLinking();
                     });
             }, 2000);
@@ -910,13 +921,15 @@
             setTimeout(() => {
                 if (plexPinCheckInterval) {
                     stopPlexLinking();
-                    setPlexLinkStatus('error', 'PIN expired. Please try again.');
+                    setPlexLinkStatus('error', '<i class="fas fa-clock"></i> Authentication timeout: PIN expired after 10 minutes. Please try linking your account again.');
                 }
             }, 600000);
         }
         
         function linkWithPlexToken(token) {
             const username = getCurrentUsername();
+            
+            setPlexLinkStatus('waiting', '<i class="fas fa-spinner spinner"></i> Finalizing account link...');
             
             HuntarrUtils.fetchWithTimeout('/api/auth/plex/link', {
                 method: 'POST',
@@ -929,18 +942,18 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    setPlexLinkStatus('success', '<i class="fas fa-check"></i> Plex account linked successfully!');
+                    setPlexLinkStatus('success', '<i class="fas fa-check-circle"></i> Plex account successfully linked! Refreshing your account information...');
                     setTimeout(() => {
                         document.getElementById('plexLinkModal').style.display = 'none';
                         loadPlexAccountStatus(); // Refresh the display
                     }, 2000);
                 } else {
-                    setPlexLinkStatus('error', 'Linking failed: ' + (data.error || 'Unknown error'));
+                    setPlexLinkStatus('error', '<i class="fas fa-exclamation-triangle"></i> Account linking failed: ' + (data.error || 'Unknown error occurred. Please try again.'));
                 }
             })
             .catch(error => {
                 console.error('Error linking Plex account:', error);
-                setPlexLinkStatus('error', 'Network error during linking');
+                setPlexLinkStatus('error', '<i class="fas fa-exclamation-triangle"></i> Network error: Unable to complete account linking. Please check your connection and try again.');
             })
             .finally(() => {
                 stopPlexLinking();
@@ -956,8 +969,11 @@
         
         function setPlexLinkStatus(type, message) {
             const status = document.getElementById('plexLinkStatus');
-            status.className = `plex-status ${type}`;
-            status.innerHTML = message;
+            if (status) {
+                status.className = `plex-status ${type}`;
+                status.innerHTML = message;
+                status.style.display = 'block'; // Ensure it's always visible
+            }
         }
         
         // Add missing showMessage function for status messages
