@@ -755,27 +755,23 @@
                 
                 // Show loading state
                 const unlinkBtn = document.getElementById('unlinkPlexAccount');
-                const originalText = unlinkBtn.innerHTML;
+                const originalText = unlinkBtn.textContent;
                 unlinkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Unlinking...';
                 unlinkBtn.disabled = true;
                 
-                // Backend uses session authentication only, no need to send username
-                HuntarrUtils.fetchWithTimeout('/api/auth/plex/unlink', {
+                // Get current username from session or use stored value
+                const currentUsername = getCurrentUsername();
+                
+                fetch('./api/auth/plex/unlink', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                    }
+                    },
+                    body: JSON.stringify({
+                        username: currentUsername
+                    })
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(data => {
-                            throw new Error(data.error || `Server error: ${response.status}`);
-                        }).catch(() => {
-                            throw new Error(`HTTP error: ${response.status}`);
-                        });
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         showMessage('plexUnlinkStatus', 'success', 'Plex account unlinked successfully');
@@ -805,7 +801,7 @@
                 })
                 .catch(error => {
                     console.error('Error unlinking Plex account:', error);
-                    showMessage('plexUnlinkStatus', 'error', 'Failed to unlink account: ' + error.message);
+                    showMessage('plexUnlinkStatus', 'error', 'Failed to connect to server');
                 })
                 .finally(() => {
                     // Restore button state
@@ -865,7 +861,8 @@
             // Create Plex PIN
             HuntarrUtils.fetchWithTimeout('/api/auth/plex/pin', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_mode: true })
             })
             .then(response => response.json())
             .then(data => {

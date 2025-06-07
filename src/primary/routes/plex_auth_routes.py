@@ -427,7 +427,14 @@ def unlink_plex_account():
             
     except Exception as e:
         logger.error(f"Error unlinking Plex account: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+        # Check if this is the specific Plex-only user error
+        if "Plex-only user must set a local password" in str(e):
+            return jsonify({
+                'success': False, 
+                'error': 'You must set a local password before unlinking your Plex account. Please set a password in the account settings first.'
+            }), 400
+        else:
+            return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
 @plex_auth_bp.route('/api/auth/plex/status', methods=['GET'])
 def plex_status():

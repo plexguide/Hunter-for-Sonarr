@@ -895,13 +895,11 @@ def unlink_plex_from_user(username: str) -> bool:
                 removed_any = True
                 
         # If auth_type is plex, we need to handle this carefully
-        # For now, we'll keep the user but remove plex data
-        # The user will need to have a local password to continue using the account
         if user_data.get('auth_type') == 'plex':
             # Check if user has a local password set
             if not user_data.get('password'):
-                logger.error("Cannot unlink Plex from Plex-only user without local password")
-                return False
+                logger.error("Cannot unlink Plex from Plex-only user without local password. User must set a local password first.")
+                raise Exception("Plex-only user must set a local password before unlinking Plex account")
             # Change auth_type back to local
             user_data['auth_type'] = 'local'
             removed_any = True
