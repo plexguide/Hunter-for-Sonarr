@@ -330,7 +330,6 @@ def authenticate_request():
     # Check if proxy auth bypass is enabled - this completely disables authentication
     # Note: This has highest priority and is checked first (matching the "No Login Mode" in the UI)
     if proxy_auth_bypass:
-        logger.info("Proxy authentication bypass is ENABLED (No Login Mode) - Authentication bypassed!")
         return None
     
     remote_addr = request.remote_addr

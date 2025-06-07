@@ -154,6 +154,25 @@ def run_web_server():
 
     web_logger.info(f"Starting web server on {host}:{port} (Debug: {debug_mode})...")
 
+    # Log the current authentication mode once at startup
+    try:
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+        from primary.settings_manager import load_settings
+        
+        settings = load_settings("general")
+        local_access_bypass = settings.get("local_access_bypass", False)
+        proxy_auth_bypass = settings.get("proxy_auth_bypass", False)
+        
+        if proxy_auth_bypass:
+            web_logger.info("🔓 Authentication Mode: NO LOGIN MODE (Proxy authentication bypass enabled)")
+        elif local_access_bypass:
+            web_logger.info("🏠 Authentication Mode: LOCAL ACCESS BYPASS (Local network authentication bypass enabled)")
+        else:
+            web_logger.info("🔐 Authentication Mode: STANDARD (Full authentication required)")
+    except Exception as e:
+        web_logger.warning(f"Could not determine authentication mode at startup: {e}")
+
     if debug_mode:
         # Use Flask's development server for debugging (less efficient, auto-reloads)
         # Note: use_reloader=True can cause issues with threads starting twice.
