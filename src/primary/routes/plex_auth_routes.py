@@ -22,7 +22,12 @@ plex_auth_bp = Blueprint('plex_auth', __name__)
 def create_pin():
     """Create a new Plex PIN for authentication"""
     try:
-        pin_data = create_plex_pin()
+        # Check if we're in setup mode
+        setup_mode = False
+        if request.json:
+            setup_mode = request.json.get('setup_mode', False)
+        
+        pin_data = create_plex_pin(setup_mode=setup_mode)
         if pin_data:
             return jsonify({
                 'success': True,
@@ -293,20 +298,35 @@ def plex_login():
 def link_account():
     """Link Plex account to existing local user"""
     try:
-        # Check if user is authenticated via session
-        session_id = session.get(SESSION_COOKIE_NAME)
-        if not session_id or not verify_session(session_id):
-            return jsonify({'success': False, 'error': 'User not authenticated'}), 401
-        
-        # Get username from session
-        username = get_username_from_session(session_id)
-        if not username:
-            return jsonify({'success': False, 'error': 'Unable to determine username from session'}), 400
-        
         data = request.json
+        username = data.get('username')
         plex_token = data.get('token')
         oauth_code = data.get('code')
         oauth_state = data.get('state')
+        setup_mode = data.get('setup_mode', False)
+        
+        # Handle setup mode differently - user might not have valid session
+        if setup_mode and username:
+            # In setup mode, validate the username exists instead of requiring session
+            from src.primary.auth import get_user_data, hash_username
+            user_data = get_user_data()
+            username_hash = hash_username(username)
+            
+            if not user_data or user_data.get("username") != username_hash:
+                return jsonify({'success': False, 'error': 'Invalid username or user not found'}), 400
+                
+            # Username is valid, proceed with linking
+            authenticated_username = username
+        else:
+            # Normal mode - require session authentication
+            session_id = session.get(SESSION_COOKIE_NAME)
+            if not session_id or not verify_session(session_id):
+                return jsonify({'success': False, 'error': 'User not authenticated'}), 401
+            
+            # Get username from session
+            authenticated_username = get_username_from_session(session_id)
+            if not authenticated_username:
+                return jsonify({'success': False, 'error': 'Unable to determine username from session'}), 400
         
         # Handle OAuth code if provided
         if oauth_code and oauth_state:
@@ -356,11 +376,22 @@ def link_account():
             }), 401
         
         # Link accounts using session-based authentication
-        if link_plex_account_session_auth(username, plex_token, plex_user_data):
-            return jsonify({
-                'success': True,
-                'message': 'Plex account linked successfully'
-            })
+        if link_plex_account_session_auth(authenticated_username, plex_token, plex_user_data):
+            # In setup mode, create a new session for the user so they can continue setup
+            if setup_mode:
+                session_id = create_session(authenticated_username)
+                session[SESSION_COOKIE_NAME] = session_id
+                response = jsonify({
+                    'success': True,
+                    'message': 'Plex account linked successfully'
+                })
+                response.set_cookie(SESSION_COOKIE_NAME, session_id, httponly=True, samesite='Lax', path='/')
+                return response
+            else:
+                return jsonify({
+                    'success': True,
+                    'message': 'Plex account linked successfully'
+                })
         else:
             return jsonify({
                 'success': False,

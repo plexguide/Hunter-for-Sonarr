@@ -280,16 +280,26 @@ def authenticate_request():
     health_check_path = "/api/health"
     ping_path = "/ping"
 
-    # Skip authentication for static files, setup pages, health check path, and ping
-    if request.path.startswith((static_path, setup_path, api_setup_path)) or request.path in (favicon_path, health_check_path, ping_path):
+    logger.debug(f"authenticate_request: checking path '{request.path}'")
+
+    # FIRST: Always allow setup page access - this handles returns from external auth like Plex
+    if request.path == '/setup':
+        logger.debug(f"Allowing setup page access for path '{request.path}'")
+        return None
+
+    # Skip authentication for static files, API setup, health check path, and ping
+    if request.path.startswith((static_path, api_setup_path)) or request.path in (favicon_path, health_check_path, ping_path):
+        logger.debug(f"Skipping authentication for path '{request.path}' (static/api-setup/health/ping)")
         return None
     
     # If no user exists, redirect to setup
     if not user_exists():
+        logger.debug(f"No user exists, redirecting to setup")
         return redirect(url_for("common.setup"))
     
     # Skip authentication for login pages and Plex auth endpoints
     if request.path.startswith((login_path, api_login_path, api_auth_plex_path)):
+        logger.debug(f"Skipping authentication for login/plex path '{request.path}'")
         return None
     
     # Load general settings
@@ -385,18 +395,19 @@ def authenticate_request():
     # Check for valid session
     session_id = session.get(SESSION_COOKIE_NAME)
     if session_id and verify_session(session_id):
+        logger.debug(f"Valid session found for path '{request.path}'")
         return None
     
-    # No valid session, redirect to login
-    api_path = "/api/"
-    if not request.path.startswith(api_path):
-        return redirect(url_for("common.login_route"))
+    logger.debug(f"No valid session for path '{request.path}', session_id: {session_id}")
     
     # For API calls, return 401 Unauthorized
     if request.path.startswith("/api/"):
+        logger.debug(f"Returning 401 for API path '{request.path}'")
         return {"error": "Unauthorized"}, 401
     
-    return None
+    # No valid session, redirect to login
+    logger.debug(f"Redirecting to login for path '{request.path}'")
+    return redirect(url_for("common.login_route"))
 
 def logout(session_id: str):
     """Log out the current user by invalidating their session"""
@@ -596,9 +607,12 @@ def get_client_identifier() -> str:
         logger.info(f"Generated new Plex Client Identifier: {PLEX_CLIENT_IDENTIFIER}")
     return PLEX_CLIENT_IDENTIFIER
 
-def create_plex_pin() -> Optional[Dict[str, Union[str, int]]]:
+def create_plex_pin(setup_mode: bool = False) -> Optional[Dict[str, Union[str, int]]]:
     """
     Create a Plex PIN for authentication
+    
+    Args:
+        setup_mode: If True, redirect to setup page instead of root
     
     Returns:
         Dict with pin details or None if failed
@@ -632,14 +646,16 @@ def create_plex_pin() -> Optional[Dict[str, Union[str, int]]]:
         }
         
         # Create auth URL with redirect URI for main window flow
-        # Determine redirect based on the referrer or use a generic landing page
+        # Determine redirect based on setup mode or use root
         base_url = request.host_url.rstrip('/') if request else 'http://localhost:9705'
         
-        # For now, redirect to the root and let JavaScript handle the continuation
-        # This works for both login and user pages
-        redirect_uri = f"{base_url}/"
+        # Use setup page if in setup mode, otherwise use root
+        if setup_mode:
+            redirect_uri = f"{base_url}/setup"
+        else:
+            redirect_uri = f"{base_url}/"
         
-        logger.info(f"Created Plex PIN: {pin_id}")
+        logger.info(f"Created Plex PIN: {pin_id} (setup_mode: {setup_mode})")
         
         # Use Plex hosted login URL with forward URL for redirect support
         # This is the correct Plex OAuth approach according to official documentation

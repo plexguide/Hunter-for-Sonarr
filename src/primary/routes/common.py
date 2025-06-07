@@ -145,12 +145,16 @@ def logout_route():
 
 @common_bp.route('/setup', methods=['GET', 'POST'])
 def setup():
-    if user_exists(): # This function should now be defined via import
-        # If a user already exists, redirect to login or home
-        logger.info("Setup page accessed but user already exists. Redirecting to login.")
-        return redirect(url_for('common.login_route'))
-
+    # Allow setup page access even if user exists - setup might be in progress
+    # The authentication middleware will handle proper authentication checks
+    # This handles cases like returning from Plex authentication during setup
+    
     if request.method == 'POST':
+        # For POST requests, check if user exists to prevent duplicate creation
+        if user_exists():
+            logger.warning("Attempted to create user during setup but user already exists")
+            return jsonify({"success": False, "error": "User already exists"}), 400
+            
         username = None # Initialize username for logging in case of early failure
         try: # Add try block to catch potential errors during user creation
             data = request.json

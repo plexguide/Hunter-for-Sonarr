@@ -71,13 +71,20 @@
         document.addEventListener('DOMContentLoaded', function() {
             const plexLogin = localStorage.getItem('huntarr-plex-login');
             const plexLinking = localStorage.getItem('huntarr-plex-linking');
+            const plexPinId = localStorage.getItem('huntarr-plex-pin-id');
             
             if (plexLogin === 'true') {
                 // Redirect to login page to continue authentication
                 window.location.href = '/login';
             } else if (plexLinking === 'true') {
-                // Redirect to user page to continue linking
-                window.location.href = '/user';
+                // Check if we're in setup mode (indicated by presence of PIN ID)
+                if (plexPinId) {
+                    // Redirect to setup page to continue setup flow
+                    window.location.href = '/setup';
+                } else {
+                    // Redirect to user page to continue regular linking
+                    window.location.href = '/user';
+                }
             }
         });
     </script>
