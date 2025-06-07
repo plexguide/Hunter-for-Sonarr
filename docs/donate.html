@@ -9,7 +9,7 @@
     <script src="js/main.js" defer></script>
     <style>
         .donate-hero {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            background: linear-gradient(135deg, #2c3e50, #34495e);
             color: white;
             padding: 60px 40px;
             margin: -40px -40px 40px -40px;
@@ -65,7 +65,7 @@
             color: #0070ba;
         }
         
-        .bitcoin .donation-icon {
+        .crypto .donation-icon {
             color: #f7931a;
         }
         
@@ -113,12 +113,12 @@
             transform: translateY(-2px);
         }
         
-        .bitcoin-btn {
+        .crypto-btn {
             background: #f7931a;
             color: white;
         }
         
-        .bitcoin-btn:hover {
+        .crypto-btn:hover {
             background: #e6850e;
             transform: translateY(-2px);
         }
@@ -128,7 +128,53 @@
             border-radius: 12px;
             padding: 30px;
             margin: 40px 0;
-            border-left: 4px solid #e74c3c;
+            border-left: 4px solid #3498db;
+        }
+        
+        /* Crypto Selection Styles */
+        .crypto-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .crypto-option {
+            background: var(--primary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .crypto-option:hover {
+            border-color: var(--highlight-color);
+            background: var(--secondary-bg);
+        }
+        
+        .crypto-option i {
+            font-size: 2em;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .crypto-option .bitcoin-color {
+            color: #f7931a;
+        }
+        
+        .crypto-option .ethereum-color {
+            color: #627eea;
+        }
+        
+        .crypto-option .dogecoin-color {
+            color: #c2a633;
+        }
+        
+        .crypto-option h4 {
+            margin: 0;
+            font-size: 1.1em;
         }
         
         /* Bitcoin Modal Styles */
@@ -262,9 +308,9 @@
             </div>
 
             <div class="support-message">
-                <h2><i class="fas fa-graduation-cap" style="margin-right: 10px; color: #3498db;"></i>Supporting Education & Open Source</h2>
-                <p>Thank you for considering sponsorship of Huntarr! Your support serves a dual purpose - maintaining quality open-source software while investing in my daughter's future education. 100% of sponsorships and donations go directly toward her educational expenses, ensuring both the continued development of tools you rely on and the growth of the next generation.</p>
-                <p>Every contribution, no matter the size, makes a meaningful difference in keeping this project alive and helping fund an education that will create tomorrow's innovators.</p>
+                <h2><i class="fas fa-graduation-cap" style="margin-right: 10px; color: #3498db;"></i>Supporting My Daughter's College Fund</h2>
+                <p>Thank you for considering sponsorship of Huntarr! 100% of all donations go directly toward my daughter's college fund, ensuring both the continued development of tools you rely on and investing in the next generation's education.</p>
+                <p>Every contribution makes a meaningful difference in keeping this project alive while helping fund tomorrow's innovators.</p>
             </div>
 
             <div class="donation-methods">
@@ -286,12 +332,12 @@
                     </a>
                 </div>
 
-                <div class="donation-card bitcoin">
-                    <i class="fab fa-bitcoin donation-icon"></i>
-                    <h3>Bitcoin</h3>
-                    <p>Support us with cryptocurrency. Bitcoin donations are secure, private, and processed directly without third parties.</p>
-                    <button id="bitcoinBtn" class="donate-btn bitcoin-btn">
-                        <i class="fab fa-bitcoin" style="margin-right: 8px;"></i>Donate Bitcoin
+                <div class="donation-card crypto">
+                    <i class="fas fa-coins donation-icon"></i>
+                    <h3>Crypto Currency</h3>
+                    <p>Support us with cryptocurrency. Crypto donations are secure, private, and processed directly without third parties.</p>
+                    <button id="cryptoBtn" class="donate-btn crypto-btn">
+                        <i class="fas fa-coins" style="margin-right: 8px;"></i>Donate Crypto
                     </button>
                 </div>
             </div>
@@ -310,6 +356,33 @@
         </div>
     </div>
 
+    <!-- Crypto Selection Modal -->
+    <div id="cryptoSelectionModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 style="text-align: center; margin-bottom: 20px;">
+                <i class="fas fa-coins" style="color: #f7931a; margin-right: 10px;"></i>
+                Choose Cryptocurrency
+            </h2>
+            <p style="text-align: center; margin-bottom: 20px;">Select your preferred cryptocurrency:</p>
+            
+            <div class="crypto-selection">
+                <div class="crypto-option" onclick="showCryptoModal('bitcoin')">
+                    <i class="fab fa-bitcoin bitcoin-color"></i>
+                    <h4>Bitcoin</h4>
+                </div>
+                <div class="crypto-option" onclick="showCryptoModal('ethereum')">
+                    <i class="fab fa-ethereum ethereum-color"></i>
+                    <h4>Ethereum</h4>
+                </div>
+                <div class="crypto-option" onclick="showCryptoModal('dogecoin')">
+                    <i class="fas fa-dog dogecoin-color"></i>
+                    <h4>DogeCoin</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bitcoin Modal -->
     <div id="bitcoinModal" class="modal">
         <div class="modal-content">
@@ -321,11 +394,11 @@
             <p style="text-align: center; margin-bottom: 20px;">Send Bitcoin to the address below:</p>
             
             <div class="bitcoin-address" id="bitcoinAddress">
-                bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
+                37aoWfTwXXmZXD4ezBJNDDUmchEPvipwvK
             </div>
             
             <div style="text-align: center;">
-                <button class="copy-btn" onclick="copyBitcoinAddress()">
+                <button class="copy-btn" onclick="copyAddress('bitcoin')">
                     <i class="fas fa-copy" style="margin-right: 5px;"></i>
                     Copy Address
                 </button>
@@ -334,40 +407,162 @@
             <div class="qr-code">
                 <p style="margin-bottom: 15px; opacity: 0.8;">Or scan this QR code:</p>
                 <div style="background: white; padding: 20px; border-radius: 8px; display: inline-block;">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" alt="Bitcoin QR Code" style="display: block;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=37aoWfTwXXmZXD4ezBJNDDUmchEPvipwvK" alt="Bitcoin QR Code" style="display: block;">
                 </div>
             </div>
             
             <p style="text-align: center; margin-top: 20px; opacity: 0.8; font-size: 0.9em;">
-                Please double-check the address before sending. Bitcoin transactions are irreversible.
+                Please double-check the address before sending. Crypto transactions are irreversible.
+            </p>
+        </div>
+    </div>
+
+    <!-- Ethereum Modal -->
+    <div id="ethereumModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 style="text-align: center; margin-bottom: 20px;">
+                <i class="fab fa-ethereum" style="color: #627eea; margin-right: 10px;"></i>
+                Ethereum Donation
+            </h2>
+            <p style="text-align: center; margin-bottom: 20px;">Send Ethereum to the address below:</p>
+            
+            <div class="bitcoin-address" id="ethereumAddress">
+                0xb7147D900f2531880e538E0fa7f860557E2DbEC1
+            </div>
+            
+            <div style="text-align: center;">
+                <button class="copy-btn" onclick="copyAddress('ethereum')">
+                    <i class="fas fa-copy" style="margin-right: 5px;"></i>
+                    Copy Address
+                </button>
+            </div>
+            
+            <div class="qr-code">
+                <p style="margin-bottom: 15px; opacity: 0.8;">Or scan this QR code:</p>
+                <div style="background: white; padding: 20px; border-radius: 8px; display: inline-block;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0xb7147D900f2531880e538E0fa7f860557E2DbEC1" alt="Ethereum QR Code" style="display: block;">
+                </div>
+            </div>
+            
+            <p style="text-align: center; margin-top: 20px; opacity: 0.8; font-size: 0.9em;">
+                Please double-check the address before sending. Crypto transactions are irreversible.
+            </p>
+        </div>
+    </div>
+
+    <!-- DogeCoin Modal -->
+    <div id="dogecoinModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 style="text-align: center; margin-bottom: 20px;">
+                <i class="fas fa-dog" style="color: #c2a633; margin-right: 10px;"></i>
+                DogeCoin Donation
+            </h2>
+            <p style="text-align: center; margin-bottom: 20px;">Send DogeCoin to the address below:</p>
+            
+            <div class="bitcoin-address" id="dogecoinAddress">
+                D6L71CR7aioExLodvrADM7WER7xXU67HY2
+            </div>
+            
+            <div style="text-align: center;">
+                <button class="copy-btn" onclick="copyAddress('dogecoin')">
+                    <i class="fas fa-copy" style="margin-right: 5px;"></i>
+                    Copy Address
+                </button>
+            </div>
+            
+            <div class="qr-code">
+                <p style="margin-bottom: 15px; opacity: 0.8;">Or scan this QR code:</p>
+                <div style="background: white; padding: 20px; border-radius: 8px; display: inline-block;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=D6L71CR7aioExLodvrADM7WER7xXU67HY2" alt="DogeCoin QR Code" style="display: block;">
+                </div>
+            </div>
+            
+            <p style="text-align: center; margin-top: 20px; opacity: 0.8; font-size: 0.9em;">
+                Please double-check the address before sending. Crypto transactions are irreversible.
             </p>
         </div>
     </div>
 
     <script>
-        // Bitcoin Modal Functionality
-        const modal = document.getElementById('bitcoinModal');
-        const btn = document.getElementById('bitcoinBtn');
-        const span = document.getElementsByClassName('close')[0];
+        // Modal elements
+        const cryptoSelectionModal = document.getElementById('cryptoSelectionModal');
+        const bitcoinModal = document.getElementById('bitcoinModal');
+        const ethereumModal = document.getElementById('ethereumModal');
+        const dogecoinModal = document.getElementById('dogecoinModal');
+        const cryptoBtn = document.getElementById('cryptoBtn');
+        const closeButtons = document.getElementsByClassName('close');
 
-        btn.onclick = function() {
-            modal.style.display = 'block';
+        // Show crypto selection modal
+        cryptoBtn.onclick = function() {
+            cryptoSelectionModal.style.display = 'block';
         }
 
-        span.onclick = function() {
-            modal.style.display = 'none';
-        }
+        // Close modals when clicking X
+        Array.from(closeButtons).forEach(function(closeBtn) {
+            closeBtn.onclick = function() {
+                cryptoSelectionModal.style.display = 'none';
+                bitcoinModal.style.display = 'none';
+                ethereumModal.style.display = 'none';
+                dogecoinModal.style.display = 'none';
+            }
+        });
 
+        // Close modals when clicking outside
         window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = 'none';
+            if (event.target == cryptoSelectionModal) {
+                cryptoSelectionModal.style.display = 'none';
+            }
+            if (event.target == bitcoinModal) {
+                bitcoinModal.style.display = 'none';
+            }
+            if (event.target == ethereumModal) {
+                ethereumModal.style.display = 'none';
+            }
+            if (event.target == dogecoinModal) {
+                dogecoinModal.style.display = 'none';
             }
         }
 
-        function copyBitcoinAddress() {
-            const address = document.getElementById('bitcoinAddress').textContent;
+        // Show specific crypto modal
+        function showCryptoModal(cryptoType) {
+            cryptoSelectionModal.style.display = 'none';
+            
+            switch(cryptoType) {
+                case 'bitcoin':
+                    bitcoinModal.style.display = 'block';
+                    break;
+                case 'ethereum':
+                    ethereumModal.style.display = 'block';
+                    break;
+                case 'dogecoin':
+                    dogecoinModal.style.display = 'block';
+                    break;
+            }
+        }
+
+        // Copy address function
+        function copyAddress(cryptoType) {
+            let address;
+            let addressElementId;
+            
+            switch(cryptoType) {
+                case 'bitcoin':
+                    addressElementId = 'bitcoinAddress';
+                    break;
+                case 'ethereum':
+                    addressElementId = 'ethereumAddress';
+                    break;
+                case 'dogecoin':
+                    addressElementId = 'dogecoinAddress';
+                    break;
+            }
+            
+            address = document.getElementById(addressElementId).textContent;
+            
             navigator.clipboard.writeText(address).then(function() {
-                const btn = document.querySelector('.copy-btn');
+                const btn = event.target.closest('.copy-btn');
                 const originalText = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-check" style="margin-right: 5px;"></i>Copied!';
                 btn.style.background = '#2ecc71';
@@ -382,10 +577,13 @@
             });
         }
 
-        // Close modal with Escape key
+        // Close modals with Escape key
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
-                modal.style.display = 'none';
+                cryptoSelectionModal.style.display = 'none';
+                bitcoinModal.style.display = 'none';
+                ethereumModal.style.display = 'none';
+                dogecoinModal.style.display = 'none';
             }
         });
     </script>
