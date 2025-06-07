@@ -1615,7 +1615,7 @@ const SettingsForms = {
     // Test connection to an *arr API
     testConnection: function(app, url, apiKey, buttonElement) {
         // Temporarily suppress change detection to prevent the unsaved changes dialog
-        if (window.huntarrUI && window.huntarrUI.suppressUnsavedChangesCheck) {
+        if (window.huntarrUI) {
             window.huntarrUI.suppressUnsavedChangesCheck = true;
         }
         
