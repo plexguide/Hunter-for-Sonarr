@@ -755,23 +755,27 @@
                 
                 // Show loading state
                 const unlinkBtn = document.getElementById('unlinkPlexAccount');
-                const originalText = unlinkBtn.textContent;
+                const originalText = unlinkBtn.innerHTML;
                 unlinkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Unlinking...';
                 unlinkBtn.disabled = true;
                 
-                // Get current username from session or use stored value
-                const currentUsername = getCurrentUsername();
-                
-                fetch('./api/auth/plex/unlink', {
+                // Backend uses session authentication only, no need to send username
+                HuntarrUtils.fetchWithTimeout('/api/auth/plex/unlink', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: currentUsername
-                    })
+                    }
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || `Server error: ${response.status}`);
+                        }).catch(() => {
+                            throw new Error(`HTTP error: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         showMessage('plexUnlinkStatus', 'success', 'Plex account unlinked successfully');
@@ -790,9 +794,6 @@
                             notLinkedSection.style.display = 'block';
                             linkedSection.style.display = 'none';
                             
-                            // Clear the password field
-                            document.getElementById('localPasswordForPlex').value = '';
-                            
                             // Hide the success message after showing the updated state
                             setTimeout(() => {
                                 document.getElementById('plexUnlinkStatus').style.display = 'none';
@@ -804,7 +805,7 @@
                 })
                 .catch(error => {
                     console.error('Error unlinking Plex account:', error);
-                    showMessage('plexUnlinkStatus', 'error', 'Failed to connect to server');
+                    showMessage('plexUnlinkStatus', 'error', 'Failed to unlink account: ' + error.message);
                 })
                 .finally(() => {
                     // Restore button state
