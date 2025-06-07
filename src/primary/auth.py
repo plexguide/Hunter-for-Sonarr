@@ -907,3 +907,43 @@ def unlink_plex_from_user(username: str) -> bool:
     except Exception as e:
         logger.error(f"Error unlinking Plex account for user {username}: {str(e)}")
         return False
+
+def link_plex_account_session_auth(username: str, plex_token: str, plex_user_data: Dict[str, Any]) -> bool:
+    """
+    Link a Plex account to an existing local user using session authentication
+    
+    Args:
+        username: Local username (already verified via session)
+        plex_token: Plex access token
+        plex_user_data: User data from Plex API
+        
+    Returns:
+        bool: True if account linked successfully
+    """
+    try:
+        user_data = get_user_data()
+        
+        # Verify this is the correct user by checking username hash
+        username_hash = hash_username(username)
+        if user_data.get("username") != username_hash:
+            logger.warning(f"Failed to link Plex account: Username mismatch for {username}")
+            return False
+        
+        # Add Plex information to existing user
+        user_data["plex_linked"] = True
+        user_data["plex_token"] = plex_token
+        user_data["plex_user_id"] = plex_user_data.get('id')
+        user_data["plex_username"] = plex_user_data.get('username')
+        user_data["plex_email"] = plex_user_data.get('email')
+        user_data["plex_linked_at"] = time.time()
+        
+        if save_user_data(user_data):
+            logger.info(f"Plex account linked to local user: {username}")
+            return True
+        else:
+            logger.error("Failed to save linked Plex data")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error linking Plex account: {e}")
+        return False

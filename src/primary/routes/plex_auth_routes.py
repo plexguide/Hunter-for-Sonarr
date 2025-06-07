@@ -8,7 +8,8 @@ from flask import Blueprint, request, jsonify, session, redirect, url_for
 from src.primary.auth import (
     create_plex_pin, check_plex_pin, verify_plex_token, create_user_with_plex,
     link_plex_account, verify_plex_user, create_session, user_exists,
-    SESSION_COOKIE_NAME, verify_user, unlink_plex_from_user, get_client_identifier
+    SESSION_COOKIE_NAME, verify_user, unlink_plex_from_user, get_client_identifier,
+    verify_session, get_username_from_session, link_plex_account_session_auth
 )
 from src.primary.utils.logger import logger
 import time
@@ -292,18 +293,20 @@ def plex_login():
 def link_account():
     """Link Plex account to existing local user"""
     try:
+        # Check if user is authenticated via session
+        session_id = session.get(SESSION_COOKIE_NAME)
+        if not session_id or not verify_session(session_id):
+            return jsonify({'success': False, 'error': 'User not authenticated'}), 401
+        
+        # Get username from session
+        username = get_username_from_session(session_id)
+        if not username:
+            return jsonify({'success': False, 'error': 'Unable to determine username from session'}), 400
+        
         data = request.json
-        username = data.get('username')
-        password = data.get('password')
         plex_token = data.get('token')
         oauth_code = data.get('code')
         oauth_state = data.get('state')
-        
-        if not all([username, password]):
-            return jsonify({
-                'success': False,
-                'error': 'Username and password are required'
-            }), 400
         
         # Handle OAuth code if provided
         if oauth_code and oauth_state:
@@ -352,8 +355,8 @@ def link_account():
                 'error': 'Invalid Plex token'
             }), 401
         
-        # Link accounts
-        if link_plex_account(username, password, plex_token, plex_user_data):
+        # Link accounts using session-based authentication
+        if link_plex_account_session_auth(username, plex_token, plex_user_data):
             return jsonify({
                 'success': True,
                 'message': 'Plex account linked successfully'
@@ -361,8 +364,8 @@ def link_account():
         else:
             return jsonify({
                 'success': False,
-                'error': 'Failed to link Plex account. Please check your credentials.'
-            }), 400
+                'error': 'Failed to link Plex account'
+            }), 500
             
     except Exception as e:
         logger.error(f"Error linking Plex account: {e}")
@@ -375,17 +378,15 @@ def link_account():
 def unlink_plex_account():
     """Unlink Plex account from local user"""
     try:
-        data = request.get_json()
-        username = data.get('username')
-        password = data.get('password')
+        # Check if user is authenticated via session
+        session_id = session.get(SESSION_COOKIE_NAME)
+        if not session_id or not verify_session(session_id):
+            return jsonify({'success': False, 'error': 'User not authenticated'}), 401
         
-        if not username or not password:
-            return jsonify({'success': False, 'error': 'Username and password required'}), 400
-        
-        # Verify the local user credentials first
-        is_valid, requires_2fa = verify_user(username, password)
-        if not is_valid:
-            return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
+        # Get username from session
+        username = get_username_from_session(session_id)
+        if not username:
+            return jsonify({'success': False, 'error': 'Unable to determine username from session'}), 400
         
         # Remove Plex data from user credentials
         if unlink_plex_from_user(username):
