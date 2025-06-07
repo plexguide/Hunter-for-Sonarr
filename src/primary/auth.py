@@ -2,7 +2,7 @@
 """
 Authentication module for Huntarr
 Handles user creation, verification, and session management
-Including two-factor authentication
+Including two-factor authentication and Plex OAuth
 """
 
 import os
@@ -16,7 +16,9 @@ import io
 import qrcode
 import pyotp # Ensure pyotp is imported
 import re # Import the re module for regex
-from typing import Dict, Any, Optional, Tuple
+import requests
+import uuid
+from typing import Dict, Any, Optional, Tuple, Union
 from flask import request, redirect, url_for, session
 from .utils.logger import logger # Ensure logger is imported
 
@@ -31,8 +33,16 @@ USER_FILE = USER_DIR / "credentials.json"
 SESSION_EXPIRY = 60 * 60 * 24 * 7  # 1 week in seconds
 SESSION_COOKIE_NAME = "huntarr_session"
 
+# Plex OAuth settings
+PLEX_CLIENT_IDENTIFIER = None  # Will be generated on first use
+PLEX_PRODUCT_NAME = "Huntarr"
+PLEX_VERSION = "1.0"
+
 # Store active sessions
 active_sessions = {}
+
+# Store active Plex PINs
+active_plex_pins = {}
 
 # --- Add Helper functions for user data ---
 def get_user_data() -> Dict[str, Any]:
@@ -576,3 +586,312 @@ def get_app_url_and_key(app_type: str) -> Tuple[str, str]:
     """
     from primary import keys_manager
     return keys_manager.get_api_keys(app_type)
+
+def get_client_identifier() -> str:
+    """Get or generate Plex Client Identifier"""
+    global PLEX_CLIENT_IDENTIFIER
+    if not PLEX_CLIENT_IDENTIFIER:
+        PLEX_CLIENT_IDENTIFIER = str(uuid.uuid4())
+        logger.info(f"Generated new Plex Client Identifier: {PLEX_CLIENT_IDENTIFIER}")
+    return PLEX_CLIENT_IDENTIFIER
+
+def create_plex_pin() -> Optional[Dict[str, Union[str, int]]]:
+    """
+    Create a Plex PIN for authentication
+    
+    Returns:
+        Dict with pin details or None if failed
+    """
+    client_id = get_client_identifier()
+    
+    headers = {
+        'accept': 'application/json',
+        'X-Plex-Client-Identifier': client_id
+    }
+    
+    data = {
+        'strong': 'true',
+        'X-Plex-Product': PLEX_PRODUCT_NAME,
+        'X-Plex-Client-Identifier': client_id
+    }
+    
+    try:
+        response = requests.post('https://plex.tv/api/v2/pins', headers=headers, data=data)
+        response.raise_for_status()
+        pin_data = response.json()
+        
+        pin_id = pin_data['id']
+        pin_code = pin_data['code']
+        
+        # Store PIN data with expiration
+        active_plex_pins[pin_id] = {
+            'code': pin_code,
+            'created_at': time.time(),
+            'expires_at': time.time() + 600  # 10 minutes
+        }
+        
+        # Use a more compatible callback URL that works better
+        # We'll use the window.postMessage approach instead of a redirect
+        logger.info(f"Created Plex PIN: {pin_id}")
+        return {
+            'id': pin_id,
+            'code': pin_code,
+            'auth_url': f"https://app.plex.tv/auth#?clientID={client_id}&code={pin_code}&context%5Bdevice%5D%5Bproduct%5D={PLEX_PRODUCT_NAME}"
+        }
+    except Exception as e:
+        logger.error(f"Failed to create Plex PIN: {e}")
+        return None
+
+def check_plex_pin(pin_id: int) -> Optional[str]:
+    """
+    Check if a Plex PIN has been claimed and get the access token
+    
+    Args:
+        pin_id: The PIN ID to check
+        
+    Returns:
+        Optional[str]: Access token if PIN is claimed, None otherwise
+    """
+    if pin_id not in active_plex_pins:
+        logger.warning(f"PIN {pin_id} not found in active pins")
+        return None
+        
+    pin_data = active_plex_pins[pin_id]
+    
+    # Check if PIN has expired
+    if time.time() > pin_data['expires_at']:
+        logger.info(f"PIN {pin_id} has expired")
+        del active_plex_pins[pin_id]
+        return None
+    
+    client_id = get_client_identifier()
+    pin_code = pin_data['code']
+    
+    headers = {
+        'accept': 'application/json',
+        'X-Plex-Client-Identifier': client_id
+    }
+    
+    data = {
+        'code': pin_code
+    }
+    
+    try:
+        response = requests.get(f'https://plex.tv/api/v2/pins/{pin_id}', headers=headers, params=data)
+        response.raise_for_status()
+        
+        result = response.json()
+        auth_token = result.get('authToken')
+        
+        if auth_token:
+            logger.info(f"PIN {pin_id} successfully claimed")
+            # Clean up the PIN
+            del active_plex_pins[pin_id]
+            return auth_token
+        else:
+            logger.debug(f"PIN {pin_id} not yet claimed")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Failed to check Plex PIN {pin_id}: {e}")
+        return None
+
+def verify_plex_token(token: str) -> Optional[Dict[str, Any]]:
+    """
+    Verify a Plex access token and get user info
+    
+    Args:
+        token: Plex access token
+        
+    Returns:
+        Optional[Dict]: User info if token is valid, None otherwise
+    """
+    client_id = get_client_identifier()
+    
+    headers = {
+        'accept': 'application/json',
+        'X-Plex-Product': PLEX_PRODUCT_NAME,
+        'X-Plex-Client-Identifier': client_id,
+        'X-Plex-Token': token
+    }
+    
+    try:
+        response = requests.get('https://plex.tv/api/v2/user', headers=headers)
+        
+        if response.status_code == 200:
+            user_data = response.json()
+            logger.info(f"Plex token verified for user: {user_data.get('username', 'unknown')}")
+            return user_data
+        elif response.status_code == 401:
+            logger.warning("Invalid Plex token")
+            return None
+        else:
+            logger.error(f"Error verifying Plex token: {response.status_code}")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Failed to verify Plex token: {e}")
+        return None
+
+def create_user_with_plex(plex_token: str, plex_user_data: Dict[str, Any]) -> bool:
+    """
+    Create a new user with Plex authentication
+    
+    Args:
+        plex_token: Plex access token
+        plex_user_data: User data from Plex API
+        
+    Returns:
+        bool: True if user created successfully
+    """
+    if user_exists():
+        logger.warning("Attempted to create Plex user but local user already exists")
+        return False
+    
+    user_data = {
+        "auth_type": "plex",
+        "plex_token": plex_token,
+        "plex_user_id": plex_user_data.get('id'),
+        "plex_username": plex_user_data.get('username'),
+        "plex_email": plex_user_data.get('email'),
+        "created_at": time.time(),
+        "two_factor_enabled": False
+    }
+    
+    try:
+        if save_user_data(user_data):
+            logger.info(f"Plex user created: {plex_user_data.get('username')}")
+            return True
+        else:
+            logger.error("Failed to save Plex user data")
+            return False
+    except Exception as e:
+        logger.error(f"Error creating Plex user: {e}")
+        return False
+
+def link_plex_account(username: str, password: str, plex_token: str, plex_user_data: Dict[str, Any]) -> bool:
+    """
+    Link a Plex account to an existing local user
+    
+    Args:
+        username: Local username
+        password: Local password for verification
+        plex_token: Plex access token
+        plex_user_data: User data from Plex API
+        
+    Returns:
+        bool: True if account linked successfully
+    """
+    # Verify local credentials first
+    auth_success, _ = verify_user(username, password)
+    if not auth_success:
+        logger.warning(f"Failed to link Plex account: Invalid local credentials for {username}")
+        return False
+    
+    try:
+        user_data = get_user_data()
+        
+        # Add Plex information to existing user
+        user_data["plex_linked"] = True
+        user_data["plex_token"] = plex_token
+        user_data["plex_user_id"] = plex_user_data.get('id')
+        user_data["plex_username"] = plex_user_data.get('username')
+        user_data["plex_email"] = plex_user_data.get('email')
+        user_data["plex_linked_at"] = time.time()
+        
+        if save_user_data(user_data):
+            logger.info(f"Plex account linked to local user: {username}")
+            return True
+        else:
+            logger.error("Failed to save linked Plex data")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error linking Plex account: {e}")
+        return False
+
+def verify_plex_user(plex_token: str) -> Tuple[bool, Optional[Dict[str, Any]]]:
+    """
+    Verify Plex user credentials and return user data
+    
+    Args:
+        plex_token: Plex access token
+        
+    Returns:
+        Tuple[bool, Optional[Dict]]: (success, plex_user_data)
+    """
+    plex_user_data = verify_plex_token(plex_token)
+    if plex_user_data:
+        return True, plex_user_data
+    else:
+        return False, None
+
+def unlink_plex_from_user(username: str) -> bool:
+    """
+    Unlink Plex account from a user by removing Plex-related data
+    
+    Args:
+        username: The username to unlink Plex from
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        if not user_exists():
+            logger.error("No user file exists")
+            return False
+            
+        with open(USER_FILE, 'r') as f:
+            user_data = json.load(f)
+            
+        username_hash = hash_username(username)
+        
+        # Check if this user exists and has Plex data
+        if user_data.get("username") != username_hash:
+            logger.error("User not found")
+            return False
+            
+        # Remove all Plex-related fields
+        plex_fields_to_remove = [
+            'plex_token',
+            'plex_username', 
+            'plex_email',
+            'plex_linked_at',
+            'plex_linked'
+        ]
+        
+        removed_any = False
+        for field in plex_fields_to_remove:
+            if field in user_data:
+                del user_data[field]
+                removed_any = True
+                
+        # If auth_type is plex, we need to handle this carefully
+        # For now, we'll keep the user but remove plex data
+        # The user will need to have a local password to continue using the account
+        if user_data.get('auth_type') == 'plex':
+            # Check if user has a local password set
+            if not user_data.get('password'):
+                logger.error("Cannot unlink Plex from Plex-only user without local password")
+                return False
+            # Change auth_type back to local
+            user_data['auth_type'] = 'local'
+            removed_any = True
+        
+        if not removed_any:
+            logger.warning("No Plex data found to remove")
+            return True  # Not an error, just nothing to do
+            
+        # Save the updated user data
+        with open(USER_FILE, 'w') as f:
+            json.dump(user_data, f, indent=2)
+            
+        # Set appropriate file permissions
+        os.chmod(USER_FILE, 0o600)
+        
+        logger.info(f"Successfully unlinked Plex account for user {username}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error unlinking Plex account for user {username}: {str(e)}")
+        return False

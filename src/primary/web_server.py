@@ -31,11 +31,13 @@ from src.primary.utils.clean_logger import CLEAN_LOG_FILES # Import clean log fi
 from src.primary.auth import (
     authenticate_request, user_exists, create_user, verify_user, create_session,
     logout, SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret,
-    verify_2fa_code, disable_2fa, change_username, change_password
+    verify_2fa_code, disable_2fa, change_username, change_password,
+    create_plex_pin, check_plex_pin, verify_plex_token, create_user_with_plex,
+    link_plex_account, verify_plex_user
 )
 # Import blueprint for common routes
 from src.primary.routes.common import common_bp
-
+from src.primary.routes.plex_auth_routes import plex_auth_bp
 # Import blueprints for each app from the centralized blueprints module
 from src.primary.apps.blueprints import sonarr_bp, radarr_bp, lidarr_bp, readarr_bp, whisparr_bp, eros_bp
 
@@ -256,6 +258,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev_key_for_sessions')
 
 # Register blueprints
 app.register_blueprint(common_bp)
+app.register_blueprint(plex_auth_bp)
 app.register_blueprint(sonarr_bp, url_prefix='/api/sonarr')
 app.register_blueprint(radarr_bp, url_prefix='/api/radarr')
 app.register_blueprint(lidarr_bp, url_prefix='/api/lidarr')

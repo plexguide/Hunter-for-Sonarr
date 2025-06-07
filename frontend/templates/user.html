@@ -197,6 +197,94 @@
             box-shadow: 0 4px 10px rgba(231, 76, 60, 0.4);
         }
         
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: linear-gradient(180deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
+            border-radius: 15px;
+            padding: 30px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(90, 109, 137, 0.15);
+            color: #f8f9fa;
+            position: relative;
+        }
+        
+        .modal-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .plex-pin-display {
+            background: rgba(90, 109, 137, 0.1);
+            border: 2px solid rgba(204, 123, 25, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .plex-pin-code {
+            font-size: 28px;
+            font-weight: bold;
+            color: #e69500;
+            letter-spacing: 8px;
+            margin: 10px 0;
+        }
+        
+        .plex-status {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .plex-status.waiting {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+        }
+        
+        .plex-status.success {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+        
+        .plex-status.error {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+        }
+        
+        .modal-actions {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .spinner {
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         .status-message {
             margin-top: 12px;
             padding: 8px;
@@ -444,10 +532,73 @@
                         <div id="disableStatus" class="status-message" style="display: none;"></div>
                     </div>
                 </div>
+                
+                <div class="user-card">
+                    <h3><i class="fas fa-tv"></i> Plex Account</h3>
+                    <div class="form-group">
+                        <label>Status:</label>
+                        <span id="plexAccountStatus" class="status-badge" style="display: none;">Loading...</span>
+                    </div>
+                    
+                    <div id="plexNotLinkedSection" style="display: none;">
+                        <p class="help-text">Link your Plex account to enable Plex login and additional features.</p>
+                        <div class="form-group">
+                            <label for="localPasswordForPlex">Current Password:</label>
+                            <input type="password" id="localPasswordForPlex" class="form-control" placeholder="Enter your local password" required>
+                        </div>
+                        <div class="form-actions">
+                            <button id="linkPlexAccount" class="action-button primary-button">
+                                <i class="fas fa-link"></i> Link Plex Account
+                            </button>
+                        </div>
+                        <div id="plexLinkStatus" class="status-message" style="display: none;"></div>
+                    </div>
+                    
+                    <div id="plexLinkedSection" style="display: none;">
+                        <div class="form-group">
+                            <label>Plex Username:</label>
+                            <span id="plexUsername" class="current-value"></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Plex Email:</label>
+                            <span id="plexEmail" class="current-value"></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Linked At:</label>
+                            <span id="plexLinkedAt" class="current-value"></span>
+                        </div>
+                        <div class="form-actions">
+                            <button id="unlinkPlexAccount" class="action-button danger-button">
+                                <i class="fas fa-unlink"></i> Unlink Plex Account
+                            </button>
+                        </div>
+                        <div id="plexUnlinkStatus" class="status-message" style="display: none;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
+    
+    <!-- Plex Link Modal -->
+    <div class="modal" id="plexLinkModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div style="font-size: 40px; color: #e69500; margin-bottom: 10px;">
+                    <i class="fas fa-tv"></i>
+                </div>
+                <h2>Link Plex Account</h2>
+            </div>
+            <div class="plex-pin-display">
+                <p>PIN Code:</p>
+                <p id="plexLinkPinCode" class="plex-pin-code"></p>
+            </div>
+            <div class="plex-status" id="plexLinkStatus"></div>
+            <div class="modal-actions">
+                <button class="action-button secondary-button" id="cancelPlexLink">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Pass base URL configuration to JavaScript -->
     <script>window.HUNTARR_BASE_URL = '{{ base_url|default("", true) }}';</script>
     <!-- Pass global scripts -->
@@ -478,6 +629,295 @@
                 return 'Password must be at least 8 characters long.';
             }
             return null; // Password is valid
+        }
+        
+        // Plex account management
+        let currentPlexPinId = null;
+        let plexPinCheckInterval = null;
+        
+        // Load Plex account status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPlexAccountStatus();
+            setupPlexEventListeners();
+        });
+        
+        function loadPlexAccountStatus() {
+            HuntarrUtils.fetchWithTimeout('/api/auth/plex/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updatePlexAccountDisplay(data);
+                    } else {
+                        showPlexStatus('error', 'Failed to load Plex account status');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading Plex status:', error);
+                    showPlexStatus('error', 'Network error loading Plex status');
+                });
+        }
+        
+        function updatePlexAccountDisplay(data) {
+            const statusBadge = document.getElementById('plexAccountStatus');
+            const notLinkedSection = document.getElementById('plexNotLinkedSection');
+            const linkedSection = document.getElementById('plexLinkedSection');
+            
+            statusBadge.style.display = 'inline-block';
+            
+            if (data.plex_linked || data.auth_type === 'plex') {
+                statusBadge.textContent = 'Linked';
+                statusBadge.className = 'status-badge enabled';
+                notLinkedSection.style.display = 'none';
+                linkedSection.style.display = 'block';
+                
+                // Update Plex info
+                document.getElementById('plexUsername').textContent = data.plex_username || 'N/A';
+                document.getElementById('plexEmail').textContent = data.plex_email || 'N/A';
+                
+                if (data.plex_linked_at) {
+                    const linkedDate = new Date(data.plex_linked_at * 1000);
+                    document.getElementById('plexLinkedAt').textContent = linkedDate.toLocaleDateString();
+                }
+            } else {
+                statusBadge.textContent = 'Not Linked';
+                statusBadge.className = 'status-badge disabled';
+                notLinkedSection.style.display = 'block';
+                linkedSection.style.display = 'none';
+            }
+        }
+        
+        function setupPlexEventListeners() {
+            const linkButton = document.getElementById('linkPlexAccount');
+            const unlinkButton = document.getElementById('unlinkPlexAccount');
+            const cancelButton = document.getElementById('cancelPlexLink');
+            const modal = document.getElementById('plexLinkModal');
+            
+            linkButton.addEventListener('click', function() {
+                const password = document.getElementById('localPasswordForPlex').value;
+                if (!password) {
+                    showMessage('plexLinkStatus', 'error', 'Please enter your current password');
+                    return;
+                }
+                startPlexLinking(password);
+            });
+            
+            unlinkButton.addEventListener('click', function() {
+                // Ask for confirmation first
+                if (!confirm('Are you sure you want to unlink your Plex account? You will need to use your local username and password to log in.')) {
+                    return;
+                }
+                
+                // Then prompt for password confirmation
+                const password = prompt('Please enter your current password to unlink your Plex account:');
+                
+                if (!password) {
+                    showMessage('plexUnlinkStatus', 'error', 'Password is required to unlink Plex account');
+                    return;
+                }
+                
+                // Show loading state
+                const unlinkBtn = document.getElementById('unlinkPlexAccount');
+                const originalText = unlinkBtn.textContent;
+                unlinkBtn.textContent = 'Unlinking...';
+                unlinkBtn.disabled = true;
+                
+                // Get current username from session or use stored value
+                const currentUsername = getCurrentUsername();
+                
+                fetch('./api/auth/plex/unlink', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: currentUsername,
+                        password: password
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage('plexUnlinkStatus', 'success', 'Plex account unlinked successfully');
+                        // Refresh the page to update the Plex status display
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        showMessage('plexUnlinkStatus', 'error', data.error || 'Failed to unlink Plex account');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error unlinking Plex account:', error);
+                    showMessage('plexUnlinkStatus', 'error', 'Failed to connect to server');
+                })
+                .finally(() => {
+                    // Restore button state
+                    unlinkBtn.textContent = originalText;
+                    unlinkBtn.disabled = false;
+                });
+            });
+            
+            cancelButton.addEventListener('click', function() {
+                stopPlexLinking();
+                modal.style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    stopPlexLinking();
+                    modal.style.display = 'none';
+                }
+            });
+        }
+        
+        function getCurrentUsername() {
+            // Try to get username from various possible sources
+            // First check if it's stored in a hidden element or similar
+            const usernameElement = document.getElementById('currentUsername');
+            if (usernameElement && usernameElement.textContent) {
+                return usernameElement.textContent.trim();
+            }
+            
+            // Try to get from localStorage if stored there
+            const storedUsername = localStorage.getItem('huntarr_username');
+            if (storedUsername) {
+                return storedUsername;
+            }
+            
+            // Try to extract from cookies if needed
+            const cookies = document.cookie.split(';');
+            for (const cookie of cookies) {
+                const [name, value] = cookie.split('=').map(s => s.trim());
+                if (name === 'huntarr_username') {
+                    return decodeURIComponent(value);
+                }
+            }
+            
+            // As fallback, prompt the user
+            return prompt('Please enter your username:');
+        }
+        
+        function startPlexLinking(password) {
+            const modal = document.getElementById('plexLinkModal');
+            const pinCode = document.getElementById('plexLinkPinCode');
+            const status = document.getElementById('plexLinkStatus');
+            
+            modal.style.display = 'block';
+            pinCode.textContent = '';
+            setPlexLinkStatus('waiting', '<i class="fas fa-spinner spinner"></i> Creating Plex PIN...');
+            
+            // Create Plex PIN
+            HuntarrUtils.fetchWithTimeout('/api/auth/plex/pin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentPlexPinId = data.pin_id;
+                    
+                    // Extract PIN code from auth URL
+                    const urlParams = new URLSearchParams(data.auth_url.split('?')[1]);
+                    const pinCodeValue = urlParams.get('code');
+                    
+                    pinCode.textContent = pinCodeValue || 'PIN-' + currentPlexPinId;
+                    setPlexLinkStatus('waiting', 'Go to <strong>app.plex.tv/auth</strong> and enter this PIN:');
+                    
+                    // Open Plex authentication
+                    window.open(data.auth_url, 'plexAuth', 'width=600,height=700,scrollbars=yes');
+                    
+                    // Start checking PIN status
+                    startPlexPinChecking(password);
+                } else {
+                    setPlexLinkStatus('error', 'Failed to create Plex PIN: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error creating Plex PIN:', error);
+                setPlexLinkStatus('error', 'Network error creating Plex PIN');
+            });
+        }
+        
+        function startPlexPinChecking(password) {
+            if (plexPinCheckInterval) {
+                clearInterval(plexPinCheckInterval);
+            }
+            
+            plexPinCheckInterval = setInterval(() => {
+                if (!currentPlexPinId) return;
+                
+                HuntarrUtils.fetchWithTimeout(`/api/auth/plex/check/${currentPlexPinId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.claimed) {
+                            // PIN was claimed, now link the account
+                            setPlexLinkStatus('success', '<i class="fas fa-check"></i> Plex authenticated! Linking account...');
+                            linkWithPlexToken(data.token, password, data.user_data);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking PIN:', error);
+                        setPlexLinkStatus('error', 'Network error checking PIN status');
+                        stopPlexLinking();
+                    });
+            }, 2000);
+            
+            // Stop checking after 10 minutes
+            setTimeout(() => {
+                if (plexPinCheckInterval) {
+                    stopPlexLinking();
+                    setPlexLinkStatus('error', 'PIN expired. Please try again.');
+                }
+            }, 600000);
+        }
+        
+        function linkWithPlexToken(token, password, userData) {
+            const username = getCurrentUsername();
+            
+            HuntarrUtils.fetchWithTimeout('/api/auth/plex/link', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: username,
+                    password: password,
+                    token: token
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    setPlexLinkStatus('success', '<i class="fas fa-check"></i> Plex account linked successfully!');
+                    setTimeout(() => {
+                        document.getElementById('plexLinkModal').style.display = 'none';
+                        loadPlexAccountStatus(); // Refresh the display
+                        document.getElementById('localPasswordForPlex').value = '';
+                    }, 2000);
+                } else {
+                    setPlexLinkStatus('error', 'Linking failed: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error linking Plex account:', error);
+                setPlexLinkStatus('error', 'Network error during linking');
+            })
+            .finally(() => {
+                stopPlexLinking();
+            });
+        }
+        
+        function stopPlexLinking() {
+            if (plexPinCheckInterval) {
+                clearInterval(plexPinCheckInterval);
+                plexPinCheckInterval = null;
+            }
+            currentPlexPinId = null;
+        }
+        
+        function setPlexLinkStatus(type, message) {
+            const status = document.getElementById('plexLinkStatus');
+            status.className = `plex-status ${type}`;
+            status.innerHTML = message;
         }
     </script>
 </body>
