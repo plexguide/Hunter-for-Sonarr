@@ -278,11 +278,14 @@
         }
         
         .plex-pin-code {
-            font-size: 28px;
+            font-size: 18px;
             font-weight: bold;
             color: #e69500;
-            letter-spacing: 8px;
+            letter-spacing: 2px;
             margin: 10px 0;
+            word-wrap: break-word;
+            word-break: break-all;
+            line-height: 1.4;
         }
         
         .plex-status {
@@ -633,7 +636,7 @@
                     const pinCode = urlParams.get('code');
                     
                     plexPinCode.textContent = pinCode || 'PIN-' + currentPinId;
-                    setPlexStatus('waiting', 'Go to <strong>app.plex.tv/auth</strong> and enter this PIN:');
+                    setPlexStatus('waiting', 'Click <strong>Sign In</strong> in the Plex popup window that opened to authenticate:');
                     
                     // Open Plex authentication in new window
                     window.open(data.auth_url, 'plexAuth', 'width=600,height=700,scrollbars=yes');
