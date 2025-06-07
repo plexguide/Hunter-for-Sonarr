@@ -134,6 +134,12 @@ def test_connection():
         if not api_url or not api_key:
             return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
             
+        # Auto-correct URL if missing http(s) scheme
+        if not (api_url.startswith('http://') or api_url.startswith('https://')):
+            lidarr_logger.warning(f"API URL missing http(s) scheme: {api_url}")
+            api_url = f"http://{api_url}"
+            lidarr_logger.warning(f"Auto-correcting URL to: {api_url}")
+            
         # Test connection to Lidarr
         system_status = lidarr_api.get_system_status(api_url, api_key, api_timeout)
         

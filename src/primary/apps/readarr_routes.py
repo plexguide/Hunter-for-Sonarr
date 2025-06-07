@@ -29,11 +29,11 @@ def test_connection():
         
     readarr_logger.info(f"Testing connection to Readarr API at {api_url}")
     
-    # Validate URL format
+    # Auto-correct URL if missing http(s) scheme
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
-        error_msg = "API URL must start with http:// or https://"
-        readarr_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 400
+        readarr_logger.warning(f"API URL missing http(s) scheme: {api_url}")
+        api_url = f"http://{api_url}"
+        readarr_logger.warning(f"Auto-correcting URL to: {api_url}")
     
     # For Readarr, use api/v1
     url = f"{api_url}/api/v1/system/status"

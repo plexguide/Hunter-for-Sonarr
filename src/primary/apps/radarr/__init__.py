@@ -26,25 +26,44 @@ def get_configured_instances():
     if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
         for instance in settings["instances"]:
             if instance.get("enabled", True) and instance.get("api_url") and instance.get("api_key"):
+                # Get URL and key with auto-correction
+                api_url = instance.get("api_url", "").strip()
+                api_key = instance.get("api_key", "").strip()
+
+                # Enhanced URL validation - ensure URL has proper scheme
+                if api_url and not (api_url.startswith('http://') or api_url.startswith('https://')):
+                    radarr_logger.warning(f"Instance '{instance.get('name', 'Unnamed')}' has URL without http(s) scheme: {api_url}")
+                    api_url = f"http://{api_url}"
+                    radarr_logger.warning(f"Auto-correcting URL to: {api_url}")
+
                 # Create a settings object for this instance by combining global settings with instance-specific ones
                 instance_settings = settings.copy()
                 # Remove instances list to avoid confusion
                 if "instances" in instance_settings:
                     del instance_settings["instances"]
                 
-                # Override with instance-specific connection settings
-                instance_settings["api_url"] = instance.get("api_url")
-                instance_settings["api_key"] = instance.get("api_key")
+                # Override with instance-specific connection settings (using corrected URL)
+                instance_settings["api_url"] = api_url
+                instance_settings["api_key"] = api_key
                 instance_settings["instance_name"] = instance.get("name", "Default")
                 
                 instances.append(instance_settings)
     else:
         # Fallback to legacy single-instance config
-        api_url = settings.get("api_url")
-        api_key = settings.get("api_key")
+        api_url = settings.get("api_url", "").strip()
+        api_key = settings.get("api_key", "").strip()
+        
+        # Ensure URL has proper scheme for legacy config too
+        if api_url and not (api_url.startswith('http://') or api_url.startswith('https://')):
+            radarr_logger.warning(f"API URL missing http(s) scheme: {api_url}")
+            api_url = f"http://{api_url}"
+            radarr_logger.warning(f"Auto-correcting URL to: {api_url}")
+            
         if api_url and api_key:
-            settings["instance_name"] = "Default"
-            instances.append(settings)
+            settings_copy = settings.copy()
+            settings_copy["api_url"] = api_url  # Use corrected URL
+            settings_copy["instance_name"] = "Default"
+            instances.append(settings_copy)
     
     # Use debug level to avoid spamming logs, especially with 0 instances
     radarr_logger.debug(f"Found {len(instances)} configured and enabled Radarr instances")

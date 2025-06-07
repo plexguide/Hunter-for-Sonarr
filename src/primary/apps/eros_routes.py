@@ -29,9 +29,9 @@ def get_configured_instances():
 def test_connection(url, api_key):
     # Validate URL format
     if not (url.startswith('http://') or url.startswith('https://')):
-        error_msg = "API URL must start with http:// or https://"
-        eros_logger.error(error_msg)
-        return {"success": False, "message": error_msg}
+        eros_logger.warning(f"API URL missing http(s) scheme: {url}")
+        url = f"http://{url}"
+        eros_logger.warning(f"Auto-correcting URL to: {url}")
     
     # Try to establish a socket connection first to check basic connectivity
     parsed_url = urlparse(url)
@@ -179,6 +179,12 @@ def test_connection_endpoint():
         return jsonify({"success": False, "message": "API URL and API Key are required"}), 400
         
     eros_logger.info(f"Testing connection to Eros API at {api_url}")
+    
+    # Auto-correct URL if missing http(s) scheme
+    if not (api_url.startswith('http://') or api_url.startswith('https://')):
+        eros_logger.warning(f"API URL missing http(s) scheme: {api_url}")
+        api_url = f"http://{api_url}"
+        eros_logger.warning(f"Auto-correcting URL to: {api_url}")
     
     return test_connection(api_url, api_key)
 

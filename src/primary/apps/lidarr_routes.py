@@ -30,11 +30,11 @@ def test_connection():
         
     lidarr_logger.info(f"Testing connection to Lidarr API at {api_url}")
     
-    # Validate URL format
+    # Auto-correct URL if missing http(s) scheme
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
-        error_msg = "API URL must start with http:// or https://"
-        lidarr_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 400
+        lidarr_logger.warning(f"API URL missing http(s) scheme: {api_url}")
+        api_url = f"http://{api_url}"
+        lidarr_logger.warning(f"Auto-correcting URL to: {api_url}")
     
     # Try to establish a socket connection first to check basic connectivity
     parsed_url = urlparse(api_url)

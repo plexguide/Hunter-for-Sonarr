@@ -26,11 +26,11 @@ def test_connection():
     # Log the test attempt
     radarr_logger.info(f"Testing connection to Radarr API at {api_url}")
     
-    # First check if URL is properly formatted
+    # Auto-correct URL if missing http(s) scheme
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
-        error_msg = "API URL must start with http:// or https://"
-        radarr_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 400
+        radarr_logger.warning(f"API URL missing http(s) scheme: {api_url}")
+        api_url = f"http://{api_url}"
+        radarr_logger.warning(f"Auto-correcting URL to: {api_url}")
         
     # For Radarr, use api/v3
     api_base = "api/v3"

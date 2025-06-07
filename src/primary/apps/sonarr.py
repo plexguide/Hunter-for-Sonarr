@@ -29,11 +29,11 @@ def test_connection():
     # Log the test attempt
     sonarr_logger.info(f"Testing connection to Sonarr API at {api_url}")
     
-    # First check if URL is properly formatted
+    # Auto-correct URL if missing http(s) scheme
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
-        error_msg = "API URL must start with http:// or https://"
-        sonarr_logger.error(error_msg)
-        return jsonify({"success": False, "message": error_msg}), 400
+        sonarr_logger.warning(f"API URL missing http(s) scheme: {api_url}")
+        api_url = f"http://{api_url}"
+        sonarr_logger.warning(f"Auto-correcting URL to: {api_url}")
         
     # Create the test URL and set headers
     test_url = f"{api_url.rstrip('/')}/api/v3/system/status"
