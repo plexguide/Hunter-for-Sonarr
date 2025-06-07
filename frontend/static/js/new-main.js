@@ -2355,6 +2355,25 @@ let huntarrUI = {
         const starsElement = document.getElementById('github-stars-value');
         if (!starsElement) return;
         
+        // First, try to load from cache immediately for fast display
+        const cachedData = localStorage.getItem('huntarr-github-stars');
+        if (cachedData) {
+            try {
+                const parsed = JSON.parse(cachedData);
+                if (parsed.stars !== undefined) {
+                    starsElement.textContent = parsed.stars.toLocaleString();
+                    // If cache is recent (less than 1 hour), skip API call
+                    const cacheAge = Date.now() - (parsed.timestamp || 0);
+                    if (cacheAge < 3600000) { // 1 hour = 3600000ms
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('Invalid cached star data, will fetch fresh');
+                localStorage.removeItem('huntarr-github-stars');
+            }
+        }
+        
         starsElement.textContent = 'Loading...';
         
         // GitHub API endpoint for repository information
@@ -2391,9 +2410,15 @@ let huntarrUI = {
                 if (cachedData) {
                     try {
                         const parsed = JSON.parse(cachedData);
-                        starsElement.textContent = parsed.stars.toLocaleString();
+                        if (parsed.stars !== undefined) {
+                            starsElement.textContent = parsed.stars.toLocaleString();
+                        } else {
+                            starsElement.textContent = 'N/A';
+                        }
                     } catch (e) {
+                        console.error('Failed to parse cached star data:', e);
                         starsElement.textContent = 'N/A';
+                        localStorage.removeItem('huntarr-github-stars'); // Clear bad cache
                     }
                 } else {
                     starsElement.textContent = 'N/A';
@@ -2401,7 +2426,7 @@ let huntarrUI = {
             });
     },
 
-    // Add updateHomeConnectionStatus if it doesn't exist or needs adjustment
+    // Update home connection status
     updateHomeConnectionStatus: function() {
         console.log('[huntarrUI] Updating home connection statuses...');
         // This function should ideally call checkAppConnection for all relevant apps
@@ -3220,7 +3245,6 @@ let huntarrUI = {
             /^"[^"]*":\s*\[$/,                   // JSON key with opening bracket: "global": [
             /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*\[$/,  // Property key with opening bracket: global: [
             /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*\{$/,  // Property key with opening brace: config: {
-            /^[a-zA-Z_][a-zA-Z0-9_\s]*:\s*(True|False)$/i, // Property key with boolean: debug: false
             /^[a-zA-Z_]+\s+(Mode|Setting|Config|Option):\s*(True|False|\d+)$/i, // Config fragments: "ug Mode: False"
             /^[a-zA-Z_]+\s*Mode:\s*(True|False)$/i, // Mode fragments: "Debug Mode: False"
             /^[a-zA-Z_]+\s*Setting:\s*.*$/i,     // Setting fragments

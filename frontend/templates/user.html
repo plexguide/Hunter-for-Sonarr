@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>User Settings - Huntarr</title>
+    <title>User - Huntarr</title>
     {% include 'components/head.html' %}
     <style>
         .user-section {
@@ -606,6 +606,8 @@
     <script>window.HUNTARR_BASE_URL = '{{ base_url|default("", true) }}';</script>
     <!-- Pass global scripts -->
     {% include 'components/scripts.html' %}
+    <!-- Add main JavaScript for features like GitHub stars -->
+    <script src="./static/js/new-main.js"></script>
     <!-- Add specific reference to new-user.js -->
     <script src="./static/js/new-user.js"></script>
     <script>
@@ -614,6 +616,11 @@
             // Apply dark theme
             document.body.classList.add('dark-theme');
             localStorage.setItem('huntarr-dark-mode', 'true');
+            
+            // Initialize GitHub stars and other main features
+            if (typeof huntarrUI !== 'undefined' && huntarrUI.loadGitHubStarCount) {
+                huntarrUI.loadGitHubStarCount();
+            }
             
             // Update server setting to dark mode
             HuntarrUtils.fetchWithTimeout('/api/settings/theme', {
