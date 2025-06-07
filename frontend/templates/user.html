@@ -206,12 +206,13 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(5px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: linear-gradient(180deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
             border-radius: 15px;
             padding: 30px;
@@ -220,7 +221,6 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(90, 109, 137, 0.15);
             color: #f8f9fa;
-            position: relative;
         }
         
         .modal-header {
