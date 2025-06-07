@@ -664,8 +664,15 @@
                 HuntarrUtils.fetchWithTimeout(`/api/auth/plex/check/${currentPinId}`, {
                     method: 'GET'
                 })
-                .then(response => response.json())
-                .then(data => {
+                .then(response => {
+                    // Check response status before parsing JSON
+                    if (response.ok) {
+                        return response.json().then(data => ({ data, status: response.status }));
+                    } else {
+                        return response.json().then(data => ({ data, status: response.status }));
+                    }
+                })
+                .then(({ data, status }) => {
                     if (data.success) {
                         if (data.claimed) {
                             // PIN was claimed, now login with the token
@@ -704,17 +711,27 @@
                     token: token
                 })
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(response => {
+                // Check response status before parsing JSON
+                if (response.ok) {
+                    return response.json().then(data => ({ data, status: response.status }));
+                } else {
+                    return response.json().then(data => ({ data, status: response.status }));
+                }
+            })
+            .then(({ data, status }) => {
                 if (data.success) {
                     setPlexStatus('success', '<i class="fas fa-check"></i> Login successful! Redirecting...');
                     setTimeout(() => {
                         window.location.href = '/';
                     }, 1500);
                 } else {
-                    if (response.status === 409) {
+                    if (status === 409) {
                         // Local user exists, show linking option
                         setPlexStatus('error', 'Local user exists. Please link your Plex account in user settings.');
+                    } else if (status === 403) {
+                        // Plex account not linked to this instance
+                        setPlexStatus('error', 'This Plex account is not linked to this Huntarr instance. Please link your account in user settings first.');
                     } else {
                         setPlexStatus('error', 'Login failed: ' + (data.error || 'Unknown error'));
                     }
