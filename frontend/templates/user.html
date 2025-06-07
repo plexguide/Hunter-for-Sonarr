@@ -101,8 +101,8 @@
             padding: 8px 10px;
             background: rgba(28, 36, 54, 0.6);
             border-radius: 6px;
-            color: rgba(255, 255, 255, 0.8);
             border: 1px solid rgba(90, 109, 137, 0.2);
+            color: rgba(255, 255, 255, 0.8);
             font-size: 14px;
         }
         
@@ -649,6 +649,31 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadPlexAccountStatus();
             setupPlexEventListeners();
+            
+            // Check if we're returning from Plex authentication
+            const plexLinking = localStorage.getItem('huntarr-plex-linking');
+            const plexPinId = localStorage.getItem('huntarr-plex-pin-id');
+            const userPassword = localStorage.getItem('huntarr-user-password');
+            
+            if (plexLinking === 'true' && plexPinId && userPassword) {
+                // Clear the flags
+                localStorage.removeItem('huntarr-plex-linking');
+                localStorage.removeItem('huntarr-plex-pin-id');
+                localStorage.removeItem('huntarr-user-password');
+                
+                // Show modal and continue PIN checking
+                const modal = document.getElementById('plexLinkModal');
+                const pinCode = document.getElementById('plexLinkPinCode');
+                modal.style.display = 'block';
+                
+                // Extract PIN code for display (but hide it since user already authenticated)
+                const pinCodeValue = plexPinId.substring(0, 4) + '-' + plexPinId.substring(4);
+                pinCode.textContent = pinCodeValue;
+                
+                currentPlexPinId = plexPinId;
+                setPlexLinkStatus('waiting', 'Completing authentication...');
+                startPlexPinChecking(userPassword);
+            }
         });
         
         function loadPlexAccountStatus() {
@@ -832,13 +857,17 @@
                     const pinCodeValue = urlParams.get('code');
                     
                     pinCode.textContent = pinCodeValue || 'PIN-' + currentPlexPinId;
-                    setPlexLinkStatus('waiting', 'Click <strong>Sign In</strong> in the Plex popup window that opened to authenticate:');
+                    setPlexLinkStatus('waiting', 'You will be redirected to Plex to sign in. After signing in, you will be brought back here automatically.');
                     
-                    // Open Plex authentication
-                    window.open(data.auth_url, 'plexAuth', 'width=600,height=700,scrollbars=yes');
+                    // Store PIN ID and password in localStorage for when we return
+                    localStorage.setItem('huntarr-plex-pin-id', currentPlexPinId);
+                    localStorage.setItem('huntarr-user-password', password);
+                    localStorage.setItem('huntarr-plex-linking', 'true');
                     
-                    // Start checking PIN status
-                    startPlexPinChecking(password);
+                    // Redirect to Plex authentication instead of popup
+                    setTimeout(() => {
+                        window.location.href = data.auth_url;
+                    }, 2000); // 2 second delay to show the message
                 } else {
                     setPlexLinkStatus('error', 'Failed to create Plex PIN: ' + (data.error || 'Unknown error'));
                 }
@@ -919,7 +948,6 @@
         function stopPlexLinking() {
             if (plexPinCheckInterval) {
                 clearInterval(plexPinCheckInterval);
-                plexPinCheckInterval = null;
             }
             currentPlexPinId = null;
         }

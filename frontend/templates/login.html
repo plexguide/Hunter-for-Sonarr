@@ -596,6 +596,27 @@
         let currentPinId = null;
         let pinCheckInterval = null;
         
+        // Check if we're returning from Plex authentication
+        const plexLogin = localStorage.getItem('huntarr-plex-login');
+        const plexPinId = localStorage.getItem('huntarr-plex-pin-id');
+        
+        if (plexLogin === 'true' && plexPinId) {
+            // Clear the flags
+            localStorage.removeItem('huntarr-plex-login');
+            localStorage.removeItem('huntarr-plex-pin-id');
+            
+            // Show modal and continue PIN checking
+            plexModal.style.display = 'block';
+            
+            // Extract PIN code for display (but hide it since user already authenticated)
+            const pinCodeValue = plexPinId.substring(0, 4) + '-' + plexPinId.substring(4);
+            plexPinCode.textContent = pinCodeValue;
+            
+            currentPinId = plexPinId;
+            setPlexStatus('waiting', 'Completing authentication...');
+            startPinChecking();
+        }
+        
         plexLoginButton.addEventListener('click', function() {
             startPlexAuthentication();
         });
@@ -636,13 +657,16 @@
                     const pinCode = urlParams.get('code');
                     
                     plexPinCode.textContent = pinCode || 'PIN-' + currentPinId;
-                    setPlexStatus('waiting', 'Click <strong>Sign In</strong> in the Plex popup window that opened to authenticate:');
+                    setPlexStatus('waiting', 'You will be redirected to Plex to sign in. After signing in, you will be brought back here automatically.');
                     
-                    // Open Plex authentication in new window
-                    window.open(data.auth_url, 'plexAuth', 'width=600,height=700,scrollbars=yes');
+                    // Store PIN ID in localStorage for when we return
+                    localStorage.setItem('huntarr-plex-pin-id', currentPinId);
+                    localStorage.setItem('huntarr-plex-login', 'true');
                     
-                    // Start checking PIN status
-                    startPinChecking();
+                    // Redirect to Plex authentication instead of popup
+                    setTimeout(() => {
+                        window.location.href = data.auth_url;
+                    }, 2000); // 2 second delay to show the message
                 } else {
                     setPlexStatus('error', 'Failed to create Plex PIN: ' + (data.error || 'Unknown error'));
                 }

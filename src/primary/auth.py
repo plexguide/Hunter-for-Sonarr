@@ -631,13 +631,24 @@ def create_plex_pin() -> Optional[Dict[str, Union[str, int]]]:
             'expires_at': time.time() + 600  # 10 minutes
         }
         
-        # Use a more compatible callback URL that works better
-        # We'll use the window.postMessage approach instead of a redirect
+        # Create auth URL with redirect URI for main window flow
+        # Determine redirect based on the referrer or use a generic landing page
+        base_url = request.host_url.rstrip('/') if request else 'http://localhost:9705'
+        
+        # For now, redirect to the root and let JavaScript handle the continuation
+        # This works for both login and user pages
+        redirect_uri = f"{base_url}/"
+        
         logger.info(f"Created Plex PIN: {pin_id}")
+        
+        # Use Plex hosted login URL with forward URL for redirect support
+        # This is the correct Plex OAuth approach according to official documentation
+        hosted_login_url = f"https://app.plex.tv/auth#?clientID={client_id}&code={pin_code}&context%5Bdevice%5D%5Bproduct%5D={PLEX_PRODUCT_NAME}&forwardUrl={redirect_uri}"
+        
         return {
             'id': pin_id,
             'code': pin_code,
-            'auth_url': f"https://app.plex.tv/auth#?clientID={client_id}&code={pin_code}&context%5Bdevice%5D%5Bproduct%5D={PLEX_PRODUCT_NAME}"
+            'auth_url': hosted_login_url
         }
     except Exception as e:
         logger.error(f"Failed to create Plex PIN: {e}")

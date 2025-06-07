@@ -8,10 +8,11 @@ from flask import Blueprint, request, jsonify, session, redirect, url_for
 from src.primary.auth import (
     create_plex_pin, check_plex_pin, verify_plex_token, create_user_with_plex,
     link_plex_account, verify_plex_user, create_session, user_exists,
-    SESSION_COOKIE_NAME, verify_user, unlink_plex_from_user
+    SESSION_COOKIE_NAME, verify_user, unlink_plex_from_user, get_client_identifier
 )
 from src.primary.utils.logger import logger
 import time
+import requests
 
 # Create blueprint for Plex authentication routes
 plex_auth_bp = Blueprint('plex_auth', __name__)
@@ -70,6 +71,132 @@ def check_pin(pin_id):
             })
     except Exception as e:
         logger.error(f"Error checking Plex PIN {pin_id}: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+
+@plex_auth_bp.route('/api/auth/plex/oauth', methods=['POST'])
+def handle_oauth():
+    """Handle Plex OAuth callback with authorization code"""
+    try:
+        data = request.get_json()
+        auth_code = data.get('code')
+        state = data.get('state')  # This should contain our PIN ID
+        
+        if not auth_code or not state:
+            return jsonify({
+                'success': False,
+                'error': 'Missing authorization code or state'
+            }), 400
+        
+        # Exchange OAuth code for access token
+        client_id = get_client_identifier()
+        
+        # Plex OAuth token exchange
+        token_data = {
+            'code': auth_code,
+            'client_id': client_id,
+            'grant_type': 'authorization_code'
+        }
+        
+        headers = {
+            'Accept': 'application/json',
+            'X-Plex-Client-Identifier': client_id
+        }
+        
+        response = requests.post('https://plex.tv/api/v2/oauth/token', 
+                               data=token_data, headers=headers)
+        
+        if response.status_code == 200:
+            token_response = response.json()
+            access_token = token_response.get('access_token')
+            
+            if access_token:
+                # Verify the token and get user data
+                plex_user_data = verify_plex_token(access_token)
+                if plex_user_data:
+                    return jsonify({
+                        'success': True,
+                        'token': access_token,
+                        'user': plex_user_data
+                    })
+        
+        return jsonify({
+            'success': False,
+            'error': 'Failed to exchange OAuth code for token'
+        }), 400
+        
+    except Exception as e:
+        logger.error(f"Error handling Plex OAuth: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+
+@plex_auth_bp.route('/api/auth/plex/oauth/callback', methods=['POST'])
+def handle_oauth_callback():
+    """Handle Plex OAuth callback for login flow"""
+    try:
+        data = request.get_json()
+        auth_code = data.get('code')
+        state = data.get('state')
+        
+        if not auth_code or not state:
+            return jsonify({
+                'success': False,
+                'error': 'Missing authorization code or state'
+            }), 400
+        
+        # Exchange OAuth code for access token
+        client_id = get_client_identifier()
+        
+        token_data = {
+            'code': auth_code,
+            'client_id': client_id,
+            'grant_type': 'authorization_code'
+        }
+        
+        headers = {
+            'Accept': 'application/json',
+            'X-Plex-Client-Identifier': client_id
+        }
+        
+        response = requests.post('https://plex.tv/api/v2/oauth/token', 
+                               data=token_data, headers=headers)
+        
+        if response.status_code == 200:
+            token_response = response.json()
+            access_token = token_response.get('access_token')
+            
+            if access_token:
+                # Verify the token and get user data
+                plex_user_data = verify_plex_token(access_token)
+                if plex_user_data:
+                    # Check if this Plex account exists in our system
+                    if user_exists(plex_user_data['username']):
+                        # Login existing user
+                        session_id = create_session(plex_user_data['username'])
+                        session[SESSION_COOKIE_NAME] = session_id
+                        
+                        return jsonify({
+                            'success': True,
+                            'message': 'Login successful',
+                            'user': plex_user_data
+                        })
+                    else:
+                        return jsonify({
+                            'success': False,
+                            'error': 'Plex account not linked. Please create an account first.'
+                        }), 404
+        
+        return jsonify({
+            'success': False,
+            'error': 'Failed to authenticate with Plex'
+        }), 400
+        
+    except Exception as e:
+        logger.error(f"Error handling Plex OAuth callback: {e}")
         return jsonify({
             'success': False,
             'error': 'Internal server error'
@@ -169,11 +296,52 @@ def link_account():
         username = data.get('username')
         password = data.get('password')
         plex_token = data.get('token')
+        oauth_code = data.get('code')
+        oauth_state = data.get('state')
         
-        if not all([username, password, plex_token]):
+        if not all([username, password]):
             return jsonify({
                 'success': False,
-                'error': 'Username, password, and Plex token are required'
+                'error': 'Username and password are required'
+            }), 400
+        
+        # Handle OAuth code if provided
+        if oauth_code and oauth_state:
+            # Exchange OAuth code for access token
+            client_id = get_client_identifier()
+            
+            token_data = {
+                'code': oauth_code,
+                'client_id': client_id,
+                'grant_type': 'authorization_code'
+            }
+            
+            headers = {
+                'Accept': 'application/json',
+                'X-Plex-Client-Identifier': client_id
+            }
+            
+            response = requests.post('https://plex.tv/api/v2/oauth/token', 
+                                   data=token_data, headers=headers)
+            
+            if response.status_code == 200:
+                token_response = response.json()
+                plex_token = token_response.get('access_token')
+                
+                if not plex_token:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Failed to get access token from OAuth code'
+                    }), 400
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to exchange OAuth code for token'
+                }), 400
+        elif not plex_token:
+            return jsonify({
+                'success': False,
+                'error': 'Either Plex token or OAuth code is required'
             }), 400
         
         # Verify Plex token

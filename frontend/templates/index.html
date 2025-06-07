@@ -65,5 +65,22 @@
     <!-- Community Resources visibility handler -->
     <script src="./static/js/community-resources.js"></script>
     
+    <!-- Plex authentication return handler -->
+    <script>
+        // Check if we're returning from Plex authentication
+        document.addEventListener('DOMContentLoaded', function() {
+            const plexLogin = localStorage.getItem('huntarr-plex-login');
+            const plexLinking = localStorage.getItem('huntarr-plex-linking');
+            
+            if (plexLogin === 'true') {
+                // Redirect to login page to continue authentication
+                window.location.href = '/login';
+            } else if (plexLinking === 'true') {
+                // Redirect to user page to continue linking
+                window.location.href = '/user';
+            }
+        });
+    </script>
+    
 </body>
 </html>
