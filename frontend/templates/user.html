@@ -760,17 +760,12 @@
                 unlinkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Unlinking...';
                 unlinkBtn.disabled = true;
                 
-                // Get current username from session or use stored value
-                const currentUsername = getCurrentUsername();
-                
+                // Send request without username - backend gets it from session
                 fetch('./api/auth/plex/unlink', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: currentUsername
-                    })
+                    }
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -818,33 +813,6 @@
                     modal.style.display = 'none';
                 }
             });
-        }
-        
-        function getCurrentUsername() {
-            // Try to get username from various possible sources
-            // First check if it's stored in a hidden element or similar
-            const usernameElement = document.getElementById('currentUsername');
-            if (usernameElement && usernameElement.textContent) {
-                return usernameElement.textContent.trim();
-            }
-            
-            // Try to get from localStorage if stored there
-            const storedUsername = localStorage.getItem('huntarr_username');
-            if (storedUsername) {
-                return storedUsername;
-            }
-            
-            // Try to extract from cookies if needed
-            const cookies = document.cookie.split(';');
-            for (const cookie of cookies) {
-                const [name, value] = cookie.split('=').map(s => s.trim());
-                if (name === 'huntarr_username') {
-                    return decodeURIComponent(value);
-                }
-            }
-            
-            // As fallback, prompt the user
-            return prompt('Please enter your username:');
         }
         
         function startPlexLinking() {
@@ -947,15 +915,12 @@
         }
         
         function linkWithPlexToken(token) {
-            const username = getCurrentUsername();
-            
             setPlexLinkStatus('waiting', '<i class="fas fa-spinner spinner"></i> Finalizing account link...');
             
             HuntarrUtils.fetchWithTimeout('/api/auth/plex/link', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    username: username,
                     token: token
                 })
             })
