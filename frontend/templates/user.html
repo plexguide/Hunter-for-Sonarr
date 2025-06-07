@@ -773,10 +773,29 @@
                 .then(data => {
                     if (data.success) {
                         showMessage('plexUnlinkStatus', 'success', 'Plex account unlinked successfully');
-                        // Refresh the page to update the Plex status display
+                        // Instead of reloading the page, update the display immediately
                         setTimeout(() => {
-                            location.reload();
-                        }, 1500);
+                            // Update the Plex account display to show unlinked state
+                            const statusBadge = document.getElementById('plexAccountStatus');
+                            const notLinkedSection = document.getElementById('plexNotLinkedSection');
+                            const linkedSection = document.getElementById('plexLinkedSection');
+                            
+                            // Update status badge
+                            statusBadge.textContent = 'Not Linked';
+                            statusBadge.className = 'status-badge disabled';
+                            
+                            // Show/hide appropriate sections
+                            notLinkedSection.style.display = 'block';
+                            linkedSection.style.display = 'none';
+                            
+                            // Clear the password field
+                            document.getElementById('localPasswordForPlex').value = '';
+                            
+                            // Hide the success message after showing the updated state
+                            setTimeout(() => {
+                                document.getElementById('plexUnlinkStatus').style.display = 'none';
+                            }, 3000);
+                        }, 1000);
                     } else {
                         showMessage('plexUnlinkStatus', 'error', data.error || 'Failed to unlink Plex account');
                     }
@@ -962,6 +981,33 @@
             const status = document.getElementById('plexLinkStatus');
             status.className = `plex-status ${type}`;
             status.innerHTML = message;
+        }
+        
+        // Add missing showMessage function for status messages
+        function showMessage(elementId, type, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.className = `status-message ${type}`;
+                element.innerHTML = message;
+                element.style.display = 'block';
+                
+                // Auto-hide success messages after 5 seconds
+                if (type === 'success') {
+                    setTimeout(() => {
+                        element.style.display = 'none';
+                    }, 5000);
+                }
+            }
+        }
+        
+        // Add missing showPlexStatus function for general Plex status
+        function showPlexStatus(type, message) {
+            const statusBadge = document.getElementById('plexAccountStatus');
+            if (statusBadge) {
+                statusBadge.textContent = message;
+                statusBadge.className = `status-badge ${type === 'error' ? 'disabled' : 'enabled'}`;
+                statusBadge.style.display = 'inline-block';
+            }
         }
     </script>
 </body>
