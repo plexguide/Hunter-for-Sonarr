@@ -853,10 +853,16 @@
                     currentPlexPinId = data.pin_id;
                     
                     // Extract PIN code from auth URL
-                    const urlParams = new URLSearchParams(data.auth_url.split('?')[1]);
-                    const pinCodeValue = urlParams.get('code');
+                    // New format: https://app.plex.tv/auth#?clientID=...&code=PIN123456...
+                    const hashPart = data.auth_url.split('#')[1];
+                    if (hashPart) {
+                        const urlParams = new URLSearchParams(hashPart.substring(1)); // Remove the '?' after '#'
+                        const pinCodeValue = urlParams.get('code');
+                        pinCode.textContent = pinCodeValue || 'PIN-' + currentPlexPinId;
+                    } else {
+                        pinCode.textContent = 'PIN-' + currentPlexPinId;
+                    }
                     
-                    pinCode.textContent = pinCodeValue || 'PIN-' + currentPlexPinId;
                     setPlexLinkStatus('waiting', 'You will be redirected to Plex to sign in. After signing in, you will be brought back here automatically.');
                     
                     // Store PIN ID and password in localStorage for when we return

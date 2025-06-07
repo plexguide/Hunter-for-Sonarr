@@ -653,10 +653,15 @@
                     currentPinId = data.pin_id;
                     
                     // Extract PIN code from auth URL
-                    const urlParams = new URLSearchParams(data.auth_url.split('?')[1]);
-                    const pinCode = urlParams.get('code');
+                    const hashPart = data.auth_url.split('#')[1];
+                    if (hashPart) {
+                        const urlParams = new URLSearchParams(hashPart.substring(1)); // Remove the '?' after '#'
+                        const pinCode = urlParams.get('code');
+                        plexPinCode.textContent = pinCode || 'PIN-' + currentPinId;
+                    } else {
+                        plexPinCode.textContent = 'PIN-' + currentPinId;
+                    }
                     
-                    plexPinCode.textContent = pinCode || 'PIN-' + currentPinId;
                     setPlexStatus('waiting', 'You will be redirected to Plex to sign in. After signing in, you will be brought back here automatically.');
                     
                     // Store PIN ID in localStorage for when we return
