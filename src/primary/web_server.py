@@ -650,13 +650,17 @@ def test_notification():
     """Test notification endpoint"""
     
     try:
-        from src.primary.notification_manager import send_notification
+        from src.primary.notification_manager import send_notification, get_notification_config
         
-        # Send a test notification
+        # Get the user's configured notification level
+        config = get_notification_config()
+        user_level = config.get('level', 'info')
+        
+        # Send a test notification using the user's configured level
         success = send_notification(
             title="🧪 Huntarr Test Notification",
             message="This is a test notification to verify your Apprise configuration is working correctly! If you see this, your notifications are set up properly. 🎉",
-            level="info"
+            level=user_level
         )
         
         if success:
