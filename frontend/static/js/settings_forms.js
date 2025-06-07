@@ -1535,6 +1535,9 @@ const SettingsForms = {
                     return;
                 }
                 
+                // Temporarily suppress change detection to prevent the unsaved changes dialog
+                window._suppressUnsavedChangesDialog = true;
+                
                 // Show testing status
                 const originalButtonHTML = button.innerHTML;
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
@@ -1580,6 +1583,8 @@ const SettingsForms = {
                         setTimeout(() => {
                             button.innerHTML = originalButtonHTML;
                             button.classList.remove('test-success');
+                            // Reset suppression flag
+                            window._suppressUnsavedChangesDialog = false;
                         }, 3000);
                     } else {
                         // Failure
@@ -1591,6 +1596,8 @@ const SettingsForms = {
                         setTimeout(() => {
                             button.innerHTML = originalButtonHTML;
                             button.classList.remove('test-failed');
+                            // Reset suppression flag
+                            window._suppressUnsavedChangesDialog = false;
                         }, 3000);
                     }
                 })
@@ -1606,6 +1613,8 @@ const SettingsForms = {
                     setTimeout(() => {
                         button.innerHTML = originalButtonHTML;
                         button.classList.remove('test-failed');
+                        // Reset suppression flag
+                        window._suppressUnsavedChangesDialog = false;
                     }, 3000);
                 });
             });

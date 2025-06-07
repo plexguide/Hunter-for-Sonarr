@@ -39,8 +39,14 @@ function setupErosForm() {
     testErosButton.addEventListener('click', function() {
         console.log("[eros.js] Testing Eros connection...");
         
+        // Temporarily suppress change detection to prevent the unsaved changes dialog
+        window._suppressUnsavedChangesDialog = true;
+        
         // Basic validation
         if (!apiUrlInput.value || !apiKeyInput.value) {
+            // Reset suppression flag
+            window._suppressUnsavedChangesDialog = false;
+            
             if (typeof huntarrUI !== 'undefined') {
                 huntarrUI.showNotification('Please enter both API URL and API Key for Eros', 'error');
             } else {
@@ -73,6 +79,11 @@ function setupErosForm() {
             // Enable the button again
             testErosButton.disabled = false;
             
+            // Reset suppression flag after a short delay
+            setTimeout(() => {
+                window._suppressUnsavedChangesDialog = false;
+            }, 500);
+            
             if (erosStatusIndicator) {
                 if (data.success) {
                     erosStatusIndicator.className = 'connection-status success';
@@ -95,6 +106,9 @@ function setupErosForm() {
         .catch(error => {
             console.error('[eros.js] Error testing connection:', error);
             testErosButton.disabled = false;
+            
+            // Reset suppression flag
+            window._suppressUnsavedChangesDialog = false;
             
             if (erosStatusIndicator) {
                 erosStatusIndicator.className = 'connection-status failure';
