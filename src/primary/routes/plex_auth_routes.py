@@ -108,6 +108,7 @@ def plex_login():
                     'message': 'Plex user created and logged in successfully',
                     'auth_type': 'plex'
                 })
+                session[SESSION_COOKIE_NAME] = session_id  # Store in Flask session
                 response.set_cookie(SESSION_COOKIE_NAME, session_id, 
                                   max_age=60*60*24*7, httponly=True, secure=False)
                 return response
@@ -138,6 +139,7 @@ def plex_login():
                         'message': 'Logged in with Plex successfully',
                         'auth_type': 'plex'
                     })
+                    session[SESSION_COOKIE_NAME] = session_id  # Store in Flask session
                     response.set_cookie(SESSION_COOKIE_NAME, session_id, 
                                       max_age=60*60*24*7, httponly=True, secure=False)
                     return response
