@@ -273,6 +273,7 @@ def authenticate_request():
     static_path = "/static/"
     login_path = "/login"
     api_login_path = "/api/login"
+    api_auth_plex_path = "/api/auth/plex"
     setup_path = "/setup"
     api_setup_path = "/api/setup"
     favicon_path = "/favicon.ico"
@@ -287,8 +288,8 @@ def authenticate_request():
     if not user_exists():
         return redirect(url_for("common.setup"))
     
-    # Skip authentication for login pages
-    if request.path.startswith((login_path, api_login_path)):
+    # Skip authentication for login pages and Plex auth endpoints
+    if request.path.startswith((login_path, api_login_path, api_auth_plex_path)):
         return None
     
     # Load general settings
