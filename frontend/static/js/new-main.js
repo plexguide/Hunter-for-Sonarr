@@ -582,7 +582,7 @@ let huntarrUI = {
             // Set the iframe source when switching to this section
             const sponsorsFrame = document.getElementById('sponsorsFrame');
             if (sponsorsFrame && (!sponsorsFrame.src || sponsorsFrame.src === 'about:blank')) { // Set src only if not already set or blank
-                sponsorsFrame.src = 'https://github.com/sponsors/plexguide';
+                sponsorsFrame.src = 'https://plexguide.github.io/Huntarr.io/donate.html';
             }
         } else if (section === 'scheduling' && this.elements.schedulingSection) {
             // Hide all sections
