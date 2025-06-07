@@ -22,28 +22,35 @@ plex_auth_bp = Blueprint('plex_auth', __name__)
 def create_pin():
     """Create a new Plex PIN for authentication"""
     try:
-        # Check if we're in setup mode
+        # Check if we're in setup mode or user mode
         setup_mode = False
+        user_mode = False
         if request.json:
             setup_mode = request.json.get('setup_mode', False)
+            user_mode = request.json.get('user_mode', False)
         
-        pin_data = create_plex_pin(setup_mode=setup_mode)
+        # Add debugging
+        logger.info(f"create_pin called with setup_mode: {setup_mode}, user_mode: {user_mode}, request.json: {request.json}")
+        
+        pin_data = create_plex_pin(setup_mode=setup_mode, user_mode=user_mode)
         if pin_data:
+            logger.info(f"PIN created successfully: {pin_data['id']}, auth_url: {pin_data['auth_url']}")
             return jsonify({
                 'success': True,
                 'pin_id': pin_data['id'],
                 'auth_url': pin_data['auth_url']
             })
         else:
+            logger.error("Failed to create Plex PIN")
             return jsonify({
                 'success': False,
-                'error': 'Failed to create Plex PIN'
+                'error': 'Failed to create PIN'
             }), 500
     except Exception as e:
         logger.error(f"Error creating Plex PIN: {e}")
         return jsonify({
             'success': False,
-            'error': 'Internal server error'
+            'error': str(e)
         }), 500
 
 @plex_auth_bp.route('/api/auth/plex/check/<int:pin_id>', methods=['GET'])

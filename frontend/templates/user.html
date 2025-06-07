@@ -674,6 +674,7 @@
                 // Clear the flags
                 localStorage.removeItem('huntarr-plex-linking');
                 localStorage.removeItem('huntarr-plex-pin-id');
+                localStorage.removeItem('huntarr-plex-setup-mode'); // Explicitly clear setup mode flag
                 
                 // Show modal and continue PIN checking
                 const modal = document.getElementById('plexLinkModal');
@@ -886,6 +887,7 @@
                     // Store PIN ID for when we return - no password needed
                     localStorage.setItem('huntarr-plex-pin-id', currentPlexPinId);
                     localStorage.setItem('huntarr-plex-linking', 'true');
+                    localStorage.removeItem('huntarr-plex-setup-mode'); // Explicitly clear setup mode flag
                     
                     // Redirect to Plex authentication instead of popup
                     setTimeout(() => {

@@ -275,6 +275,7 @@ def authenticate_request():
     api_login_path = "/api/login"
     api_auth_plex_path = "/api/auth/plex"
     setup_path = "/setup"
+    user_path = "/user"
     api_setup_path = "/api/setup"
     favicon_path = "/favicon.ico"
     health_check_path = "/api/health"
@@ -282,9 +283,9 @@ def authenticate_request():
 
     logger.debug(f"authenticate_request: checking path '{request.path}'")
 
-    # FIRST: Always allow setup page access - this handles returns from external auth like Plex
-    if request.path == '/setup':
-        logger.debug(f"Allowing setup page access for path '{request.path}'")
+    # FIRST: Always allow setup and user page access - this handles returns from external auth like Plex
+    if request.path in ['/setup', '/user']:
+        logger.debug(f"Allowing setup/user page access for path: {request.path}")
         return None
 
     # Skip authentication for static files, API setup, health check path, and ping
@@ -607,12 +608,13 @@ def get_client_identifier() -> str:
         logger.info(f"Generated new Plex Client Identifier: {PLEX_CLIENT_IDENTIFIER}")
     return PLEX_CLIENT_IDENTIFIER
 
-def create_plex_pin(setup_mode: bool = False) -> Optional[Dict[str, Union[str, int]]]:
+def create_plex_pin(setup_mode: bool = False, user_mode: bool = False) -> Optional[Dict[str, Union[str, int]]]:
     """
     Create a Plex PIN for authentication
     
     Args:
-        setup_mode: If True, redirect to setup page instead of root
+        setup_mode: If True, redirect to setup page
+        user_mode: If True, redirect to user page
     
     Returns:
         Dict with pin details or None if failed
@@ -646,16 +648,19 @@ def create_plex_pin(setup_mode: bool = False) -> Optional[Dict[str, Union[str, i
         }
         
         # Create auth URL with redirect URI for main window flow
-        # Determine redirect based on setup mode or use root
+        # Determine redirect based on mode
         base_url = request.host_url.rstrip('/') if request else 'http://localhost:9705'
         
-        # Use setup page if in setup mode, otherwise use root
+        # Determine redirect based on mode
         if setup_mode:
             redirect_uri = f"{base_url}/setup"
+        elif user_mode:
+            redirect_uri = f"{base_url}/user"
         else:
             redirect_uri = f"{base_url}/"
         
-        logger.info(f"Created Plex PIN: {pin_id} (setup_mode: {setup_mode})")
+        logger.info(f"Created Plex PIN: {pin_id} (setup_mode: {setup_mode}, user_mode: {user_mode})")
+        logger.info(f"Plex redirect_uri set to: {redirect_uri}")
         
         # Use Plex hosted login URL with forward URL for redirect support
         # This is the correct Plex OAuth approach according to official documentation
