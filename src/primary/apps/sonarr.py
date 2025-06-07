@@ -59,16 +59,50 @@ def test_connection():
         try:
             response_data = response.json()
             
+            # Extract and validate Sonarr version
+            version = response_data.get('version', 'unknown')
+            sonarr_logger.debug(f"Successfully connected to Sonarr API version: {version}")
+            
+            # Check for unsupported Sonarr v5.x versions
+            if version != 'unknown':
+                try:
+                    # Extract major version number
+                    major_version = int(version.split('.')[0])
+                    
+                    if major_version >= 5:
+                        error_msg = f"Sonarr v{major_version}.x is not supported. This app is designed for Sonarr v3.x and v4.x only. Sonarr v5 is still in preview and not yet supported."
+                        sonarr_logger.warning(f"Rejecting connection to unsupported Sonarr version: {version}")
+                        return jsonify({
+                            "success": False,
+                            "message": error_msg,
+                            "version": version
+                        }), 400
+                    
+                    elif major_version < 3:
+                        error_msg = f"Sonarr v{major_version}.x is too old and not supported. Please use Sonarr v3.x or v4.x."
+                        sonarr_logger.warning(f"Rejecting connection to unsupported old Sonarr version: {version}")
+                        return jsonify({
+                            "success": False,
+                            "message": error_msg,
+                            "version": version
+                        }), 400
+                    
+                    else:
+                        # Version 3.x or 4.x - supported
+                        sonarr_logger.info(f"Accepted connection to supported Sonarr version: {version}")
+                        
+                except (ValueError, IndexError):
+                    # If we can't parse the version, log a warning but allow connection
+                    sonarr_logger.warning(f"Could not parse Sonarr version '{version}', allowing connection")
+            
             # Save keys if connection is successful - Not saving here anymore since we use instances
             # keys_manager.save_api_keys("sonarr", api_url, api_key)
-            
-            sonarr_logger.debug(f"Successfully connected to Sonarr API version: {response_data.get('version', 'unknown')}")
 
             # Return success with some useful information
             return jsonify({
                 "success": True,
                 "message": "Successfully connected to Sonarr API",
-                "version": response_data.get('version', 'unknown')
+                "version": version
             })
         except ValueError:
             error_msg = "Invalid JSON response from Sonarr API"
