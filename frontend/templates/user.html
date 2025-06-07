@@ -550,7 +550,7 @@
                                 <i class="fas fa-link"></i> Link Plex Account
                             </button>
                         </div>
-                        <div id="plexLinkStatus" class="status-message" style="display: none;"></div>
+                        <div id="plexMainPageStatus" class="status-message" style="display: none;"></div>
                     </div>
                     
                     <div id="plexLinkedSection" style="display: none;">
@@ -902,7 +902,7 @@
                     .then(data => {
                         if (data.success && data.claimed) {
                             // PIN was claimed, now link the account
-                            setPlexLinkStatus('success', '<i class="fas fa-check"></i> Plex authentication successful! Linking your account...');
+                            setPlexLinkStatus('success', '<i class="fas fa-link"></i> Plex account successfully linked!');
                             linkWithPlexToken(data.token);
                         }
                         // If not claimed yet, show waiting status
@@ -942,7 +942,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    setPlexLinkStatus('success', '<i class="fas fa-check-circle"></i> Plex account successfully linked! Refreshing your account information...');
+                    setPlexLinkStatus('success', '<i class="fas fa-check-circle"></i> Plex account successfully linked!');
                     setTimeout(() => {
                         document.getElementById('plexLinkModal').style.display = 'none';
                         loadPlexAccountStatus(); // Refresh the display
