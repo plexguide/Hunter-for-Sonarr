@@ -645,9 +645,19 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                }
+                },
+                body: JSON.stringify({ login_mode: true })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || `Server error: ${response.status}`);
+                    }).catch(() => {
+                        throw new Error(`HTTP error: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     currentPinId = data.pin_id;
@@ -678,7 +688,7 @@
             })
             .catch(error => {
                 console.error('Error creating Plex PIN:', error);
-                setPlexStatus('error', 'Network error creating Plex PIN');
+                setPlexStatus('error', 'Failed to create Plex PIN: ' + error.message);
             });
         }
         
