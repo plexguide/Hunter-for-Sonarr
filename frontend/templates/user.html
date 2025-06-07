@@ -5,8 +5,8 @@
     {% include 'components/head.html' %}
     <style>
         .user-section {
-            padding: 15px;
-            max-width: 1200px;
+            padding: 18px;
+            max-width: 1440px;
             margin: 0 auto;
         }
         
@@ -15,11 +15,11 @@
             .user-section {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 20px;
+                gap: 24px;
             }
             
             .user-card {
-                flex: 1 1 250px; /* Base width, but allow growth and shrinking */
+                flex: 1 1 300px;
             }
         }
         
@@ -40,7 +40,7 @@
             background: linear-gradient(180deg, rgba(22, 26, 34, 0.98), rgba(18, 22, 30, 0.95));
             border-radius: 10px;
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-            padding: 18px;
+            padding: 22px;
             border: 1px solid rgba(90, 109, 137, 0.15);
             overflow: hidden;
             display: flex;
@@ -50,7 +50,7 @@
         /* Add bottom margin only when cards are stacked (mobile view) */
         @media (max-width: 991px) {
             .user-card {
-                margin-bottom: 15px;
+                margin-bottom: 18px;
             }
         }
         
@@ -58,7 +58,7 @@
             display: flex;
             align-items: center;
             margin-top: 0;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             font-size: 16px;
             font-weight: 600;
             color: #fff;
@@ -71,13 +71,13 @@
         }
         
         .form-group {
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             position: relative;
         }
         
         /* Additional styling to compact the 2FA card */
         .user-card:last-child .form-group {
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
         
         #twoFactorEnabled {
@@ -86,19 +86,19 @@
         }
         
         #enableTwoFactorSection, #setupTwoFactorSection, #disableTwoFactorSection {
-            margin-top: 8px;
+            margin-top: 10px;
         }
         
         .form-group label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 7px;
             color: rgba(255, 255, 255, 0.9);
             font-weight: 500;
             font-size: 13px;
         }
         
         .current-value {
-            padding: 8px 10px;
+            padding: 10px 12px;
             background: rgba(28, 36, 54, 0.6);
             border-radius: 6px;
             border: 1px solid rgba(90, 109, 137, 0.2);
@@ -108,7 +108,7 @@
         
         .form-control {
             width: 100%;
-            padding: 8px 10px;
+            padding: 10px 12px;
             border: 1px solid rgba(90, 109, 137, 0.2);
             border-radius: 6px;
             background-color: rgba(28, 36, 54, 0.6);
@@ -143,13 +143,13 @@
         }
         
         .form-actions {
-            margin-top: 10px;
+            margin-top: 12px;
             display: flex;
-            gap: 7px;
+            gap: 8px;
         }
         
         .action-button {
-            padding: 8px 15px;
+            padding: 10px 18px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
@@ -331,18 +331,18 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 14px 0;
+            margin: 17px 0;
         }
         
         .qr-code {
             background: white;
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 10px;
+            width: 77px;
+            height: 77px;
+            margin: 0 auto 12px;
         }
         
         .qr-code img {
@@ -354,7 +354,7 @@
         /* Responsive QR code for mobile */
         @media (max-width: 768px) {
             .qr-code {
-                width: 30%;
+                width: 36%;
                 height: auto;
             }
         }
@@ -362,13 +362,14 @@
         .secret-key-container {
             display: flex;
             align-items: center;
-            gap: 7px;
-            margin-bottom: 7px;
+            gap: 8px;
+            margin-bottom: 8px;
+            width: 100%;
         }
         
         .secret-key {
             font-family: monospace;
-            padding: 7px 10px;
+            padding: 8px 12px;
             background: rgba(28, 36, 54, 0.8);
             border-radius: 6px;
             border: 1px solid rgba(90, 109, 137, 0.3);
@@ -376,13 +377,15 @@
             flex: 1;
             font-size: 12px;
             user-select: all;
+            word-break: break-all;
+            overflow-wrap: break-word;
         }
         
         .copy-button {
             background: transparent;
             border: 1px solid rgba(90, 109, 137, 0.3);
             color: rgba(255, 255, 255, 0.8);
-            padding: 6px 10px;
+            padding: 8px 12px;
             border-radius: 4px;
             cursor: pointer;
             display: flex;
@@ -390,6 +393,8 @@
             gap: 4px;
             font-size: 12px;
             transition: all 0.2s ease;
+            white-space: nowrap;
+            min-width: fit-content;
         }
         
         .copy-button:hover {
@@ -398,10 +403,16 @@
             color: white;
         }
         
+        .copy-button.copied {
+            background: rgba(40, 167, 69, 0.2);
+            border-color: rgba(40, 167, 69, 0.5);
+            color: #28a745;
+        }
+        
         .help-text {
             font-size: 11px;
             color: rgba(255, 255, 255, 0.6);
-            margin-top: 4px;
+            margin-top: 5px;
         }
         
         .verification-code {
@@ -412,7 +423,7 @@
         
         @media (max-width: 768px) {
             .user-card {
-                padding: 15px;
+                padding: 18px; /* Increased from 15px by 20% */
             }
             
             .form-actions {
@@ -427,10 +438,18 @@
             .secret-key-container {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 8px; /* Maintain consistent gap */
             }
             
             .copy-button {
-                margin-top: 7px;
+                margin-top: 8px; /* Increased from 7px by 20% */
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .secret-key {
+                width: 100%;
+                text-align: center;
             }
         }
     </style>
@@ -645,6 +664,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadPlexAccountStatus();
             setupPlexEventListeners();
+            setupCopyButtons(); // Add copy button functionality
             
             // Check if we're returning from Plex authentication
             const plexLinking = localStorage.getItem('huntarr-plex-linking');
@@ -1001,6 +1021,88 @@
                 statusBadge.className = `status-badge ${type === 'error' ? 'disabled' : 'enabled'}`;
                 statusBadge.style.display = 'inline-block';
             }
+        }
+        
+        function setupCopyButtons() {
+            // Set up copy functionality for all copy buttons
+            const copyButtons = document.querySelectorAll('.copy-button');
+            copyButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Find the secret key element (sibling of the copy button)
+                    const secretKeyElement = this.parentElement.querySelector('.secret-key');
+                    if (secretKeyElement) {
+                        const textToCopy = secretKeyElement.textContent;
+                        
+                        // Use the modern clipboard API if available
+                        if (navigator.clipboard && window.isSecureContext) {
+                            navigator.clipboard.writeText(textToCopy).then(() => {
+                                showCopySuccess(this);
+                            }).catch(err => {
+                                console.error('Failed to copy text: ', err);
+                                // Fallback to older method
+                                fallbackCopyTextToClipboard(textToCopy, this);
+                            });
+                        } else {
+                            // Fallback for older browsers or non-secure contexts
+                            fallbackCopyTextToClipboard(textToCopy, this);
+                        }
+                    }
+                });
+            });
+        }
+        
+        function fallbackCopyTextToClipboard(text, button) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess(button);
+                } else {
+                    console.error('Fallback: Unable to copy');
+                    showCopyError(button);
+                }
+            } catch (err) {
+                console.error('Fallback: Unable to copy', err);
+                showCopyError(button);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        function showCopySuccess(button) {
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            button.classList.add('copied');
+            
+            // Reset after 2 seconds
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('copied');
+            }, 2000);
+        }
+        
+        function showCopyError(button) {
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-times"></i> Failed';
+            button.style.color = '#dc3545';
+            
+            // Reset after 2 seconds
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.style.color = '';
+            }, 2000);
         }
     </script>
 </body>
