@@ -584,3 +584,211 @@ def tag_processed_artist(api_url: str, api_key: str, api_timeout: int, artist_id
     except Exception as e:
         lidarr_logger.error(f"Error tagging Lidarr artist {artist_id} with '{tag_label}': {e}")
         return False
+
+def get_missing_albums_random_page(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, count: int) -> List[Dict[str, Any]]:
+    """
+    Get a specified number of random missing albums by selecting a random page.
+    This is much more efficient for very large libraries.
+    
+    Args:
+        api_url: The base URL of the Lidarr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        monitored_only: Whether to include only monitored albums
+        count: How many albums to return
+        
+    Returns:
+        A list of randomly selected missing albums, up to the requested count
+    """
+    endpoint = "wanted/missing"
+    page_size = 100  # Smaller page size for better performance
+    retries = 2
+    retry_delay = 3
+    
+    # First, make a request to get just the total record count (page 1 with size=1)
+    params = {
+        "page": 1,
+        "pageSize": 1,
+        "includeArtist": "true"  # Include artist info for filtering
+    }
+    
+    for attempt in range(retries + 1):
+        try:
+            # Get total record count from a minimal query
+            lidarr_logger.debug(f"Getting missing albums count (attempt {attempt+1}/{retries+1})")
+            response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
+            
+            if not response or not isinstance(response, dict):
+                lidarr_logger.warning(f"Invalid response when getting missing count (attempt {attempt+1})")
+                if attempt < retries:
+                    time.sleep(retry_delay)
+                    continue
+                return []
+                
+            total_records = response.get('totalRecords', 0)
+            
+            if total_records == 0:
+                lidarr_logger.info("No missing albums found in Lidarr.")
+                return []
+                
+            # Calculate total pages with our desired page size
+            total_pages = (total_records + page_size - 1) // page_size
+            lidarr_logger.info(f"Found {total_records} total missing albums across {total_pages} pages")
+            
+            if total_pages == 0:
+                return []
+                
+            # Select a random page
+            import random
+            random_page = random.randint(1, total_pages)
+            lidarr_logger.info(f"Selected random page {random_page} of {total_pages} for missing albums")
+            
+            # Get albums from the random page
+            params = {
+                "page": random_page,
+                "pageSize": page_size,
+                "includeArtist": "true"
+            }
+            
+            response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
+            
+            if not response or not isinstance(response, dict):
+                lidarr_logger.warning(f"Invalid response when getting missing albums page {random_page}")
+                return []
+                
+            records = response.get('records', [])
+            lidarr_logger.info(f"Retrieved {len(records)} missing albums from page {random_page}")
+            
+            # Apply monitored filter if requested
+            if monitored_only:
+                filtered_records = [
+                    album for album in records
+                    if album.get('monitored', False) and album.get('artist', {}).get('monitored', False)
+                ]
+                lidarr_logger.debug(f"Filtered to {len(filtered_records)} monitored missing albums")
+                records = filtered_records
+            
+            # Select random albums from this page
+            if len(records) > count:
+                selected_records = random.sample(records, count)
+                lidarr_logger.debug(f"Randomly selected {len(selected_records)} missing albums from page {random_page}")
+                return selected_records
+            else:
+                # If we have fewer albums than requested, return all of them
+                lidarr_logger.debug(f"Returning all {len(records)} missing albums from page {random_page} (fewer than requested {count})")
+                return records
+                
+        except Exception as e:
+            lidarr_logger.error(f"Error getting missing albums from Lidarr (attempt {attempt+1}): {str(e)}")
+            if attempt < retries:
+                time.sleep(retry_delay)
+                continue
+            return []
+    
+    # If we get here, all retries failed
+    lidarr_logger.error("All attempts to get missing albums failed")
+    return []
+
+def get_cutoff_unmet_albums_random_page(api_url: str, api_key: str, api_timeout: int, monitored_only: bool, count: int) -> List[Dict[str, Any]]:
+    """
+    Get a specified number of random cutoff unmet albums by selecting a random page.
+    This is much more efficient for very large libraries.
+    
+    Args:
+        api_url: The base URL of the Lidarr API
+        api_key: The API key for authentication
+        api_timeout: Timeout for the API request
+        monitored_only: Whether to include only monitored albums
+        count: How many albums to return
+        
+    Returns:
+        A list of randomly selected cutoff unmet albums
+    """
+    endpoint = "wanted/cutoff"
+    page_size = 100  # Smaller page size for better performance
+    retries = 2
+    retry_delay = 3
+    
+    # First, make a request to get just the total record count (page 1 with size=1)
+    params = {
+        "page": 1,
+        "pageSize": 1,
+        "includeArtist": "true"  # Include artist info for filtering
+    }
+    
+    for attempt in range(retries + 1):
+        try:
+            # Get total record count from a minimal query
+            lidarr_logger.debug(f"Getting cutoff unmet albums count (attempt {attempt+1}/{retries+1})")
+            response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
+            
+            if not response or not isinstance(response, dict):
+                lidarr_logger.warning(f"Invalid response when getting cutoff unmet count (attempt {attempt+1})")
+                if attempt < retries:
+                    time.sleep(retry_delay)
+                    continue
+                return []
+                
+            total_records = response.get('totalRecords', 0)
+            
+            if total_records == 0:
+                lidarr_logger.info("No cutoff unmet albums found in Lidarr.")
+                return []
+                
+            # Calculate total pages with our desired page size
+            total_pages = (total_records + page_size - 1) // page_size
+            lidarr_logger.info(f"Found {total_records} total cutoff unmet albums across {total_pages} pages")
+            
+            if total_pages == 0:
+                return []
+                
+            # Select a random page
+            import random
+            random_page = random.randint(1, total_pages)
+            lidarr_logger.info(f"Selected random page {random_page} of {total_pages} for cutoff unmet albums")
+            
+            # Get albums from the random page
+            params = {
+                "page": random_page,
+                "pageSize": page_size,
+                "includeArtist": "true"
+            }
+            
+            response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
+            
+            if not response or not isinstance(response, dict):
+                lidarr_logger.warning(f"Invalid response when getting cutoff unmet albums page {random_page}")
+                return []
+                
+            records = response.get('records', [])
+            lidarr_logger.info(f"Retrieved {len(records)} cutoff unmet albums from page {random_page}")
+            
+            # Apply monitored filter if requested
+            if monitored_only:
+                filtered_records = [
+                    album for album in records
+                    if album.get('monitored', False) and album.get('artist', {}).get('monitored', False)
+                ]
+                lidarr_logger.debug(f"Filtered to {len(filtered_records)} monitored cutoff unmet albums")
+                records = filtered_records
+            
+            # Select random albums from this page
+            if len(records) > count:
+                selected_records = random.sample(records, count)
+                lidarr_logger.debug(f"Randomly selected {len(selected_records)} cutoff unmet albums from page {random_page}")
+                return selected_records
+            else:
+                # If we have fewer albums than requested, return all of them
+                lidarr_logger.debug(f"Returning all {len(records)} cutoff unmet albums from page {random_page} (fewer than requested {count})")
+                return records
+                
+        except Exception as e:
+            lidarr_logger.error(f"Error getting cutoff unmet albums from Lidarr (attempt {attempt+1}): {str(e)}")
+            if attempt < retries:
+                time.sleep(retry_delay)
+                continue
+            return []
+    
+    # If we get here, all retries failed
+    lidarr_logger.error("All attempts to get cutoff unmet albums failed")
+    return []

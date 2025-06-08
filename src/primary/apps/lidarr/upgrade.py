@@ -82,32 +82,32 @@ def process_cutoff_upgrades(
     tag_processed_items = lidarr_settings.get("tag_processed_items", True)
 
     try:
-        lidarr_logger.info(f"Fetching cutoff unmet albums for {instance_name}...")
-        # Pass necessary details extracted above to the API function
-        # Corrected function name from get_cutoff_unmet to get_cutoff_unmet_albums
-        cutoff_unmet_albums = lidarr_api.get_cutoff_unmet_albums(
-            api_url,
-            api_key,
-            monitored_only=monitored_only,
-            api_timeout=api_timeout
+        lidarr_logger.info(f"Retrieving cutoff unmet albums...")
+        # Use efficient random page selection instead of fetching all albums
+        cutoff_unmet_data = lidarr_api.get_cutoff_unmet_albums_random_page(
+            api_url, api_key, api_timeout, monitored_only, hunt_upgrade_items * 2
         )
-
-        if not cutoff_unmet_albums:
-            lidarr_logger.info(f"No cutoff unmet albums found for {instance_name}.")
+        
+        if cutoff_unmet_data is None: # API call failed
+            lidarr_logger.error("Failed to retrieve cutoff unmet albums from Lidarr API.")
             return False
-
-        lidarr_logger.info(f"Found {len(cutoff_unmet_albums)} cutoff unmet albums for {instance_name}.")
+        
+        if not cutoff_unmet_data:
+            lidarr_logger.info("No cutoff unmet albums found.")
+            return False
+        
+        lidarr_logger.info(f"Retrieved {len(cutoff_unmet_data)} cutoff unmet albums from random page selection.")
 
         # Filter out already processed items
         unprocessed_albums = []
-        for album in cutoff_unmet_albums:
+        for album in cutoff_unmet_data:
             album_id = str(album.get('id'))
             if not is_processed("lidarr", instance_name, album_id):
                 unprocessed_albums.append(album)
             else:
                 lidarr_logger.debug(f"Skipping already processed album ID: {album_id}")
         
-        lidarr_logger.info(f"Found {len(unprocessed_albums)} unprocessed albums out of {len(cutoff_unmet_albums)} total albums eligible for quality upgrade.")
+        lidarr_logger.info(f"Found {len(unprocessed_albums)} unprocessed albums out of {len(cutoff_unmet_data)} total albums eligible for quality upgrade.")
         
         if not unprocessed_albums:
             lidarr_logger.info("No unprocessed albums found for quality upgrade. Skipping cycle.")

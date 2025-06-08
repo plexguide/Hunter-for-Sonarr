@@ -80,20 +80,20 @@ def process_missing_books(
         return False
 
     # Get missing books
-    readarr_logger.info("Retrieving wanted/missing books...")
-
-    # Call the correct function to get missing books
-    missing_books_data = readarr_api.get_wanted_missing_books(api_url, api_key, api_timeout, monitored_only)
-
-    if missing_books_data is None: # Check if None was returned due to an API error
-        readarr_logger.error(f"Failed to retrieve missing books data. Skipping processing.")
+    readarr_logger.info(f"Retrieving books with missing files...")
+    # Use efficient random page selection instead of fetching all books
+    missing_books_data = readarr_api.get_wanted_missing_books_random_page(
+        api_url, api_key, api_timeout, monitored_only, hunt_missing_books * 2
+    )
+    
+    if missing_books_data is None or not missing_books_data: # API call failed or no books
+        if missing_books_data is None:
+            readarr_logger.error("Failed to retrieve missing books from Readarr API.")
+        else:
+            readarr_logger.info("No missing books found.")
         return False
-        
-    readarr_logger.info(f"Found {len(missing_books_data)} missing books.")
-
-    if not missing_books_data:
-        readarr_logger.info("No missing books found.")
-        return False
+    
+    readarr_logger.info(f"Retrieved {len(missing_books_data)} missing books from random page selection.")
 
     # Check for stop signal after retrieving books
     if stop_check():

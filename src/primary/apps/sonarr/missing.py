@@ -96,12 +96,16 @@ def process_missing_seasons_packs_mode(
     sonarr_settings = load_settings("sonarr")
     tag_processed_items = sonarr_settings.get("tag_processed_items", True)
     
-    # Get all missing episodes in one call instead of per-series
-    missing_episodes = sonarr_api.get_missing_episodes(api_url, api_key, api_timeout, monitored_only)
+    # Get all missing episodes using efficient random page selection instead of fetching all
+    missing_episodes = sonarr_api.get_missing_episodes_random_page(
+        api_url, api_key, api_timeout, monitored_only, hunt_missing_items * 20  # Get more episodes to increase chance of finding full seasons
+    )
     if not missing_episodes:
         sonarr_logger.info("No missing episodes found")
         return False
     
+    sonarr_logger.info(f"Retrieved {len(missing_episodes)} missing episodes from random page selection.")
+
     # Filter out future episodes if configured
     if skip_future_episodes:
         now_unix = time.time()

@@ -93,7 +93,10 @@ def process_missing_movies(
     
     # Get missing movies 
     radarr_logger.info("Retrieving movies with missing files...")
-    missing_movies = radarr_api.get_movies_with_missing(api_url, api_key, api_timeout, monitored_only) 
+    # Use efficient random page selection instead of fetching all movies
+    missing_movies = radarr_api.get_movies_with_missing_random_page(
+        api_url, api_key, api_timeout, monitored_only, hunt_missing_movies * 2
+    ) 
     
     if missing_movies is None: # API call failed
         radarr_logger.error("Failed to retrieve missing movies from Radarr API.")
@@ -103,12 +106,7 @@ def process_missing_movies(
         radarr_logger.info("No missing movies found.")
         return False
     
-    # Check for stop signal after retrieving movies
-    if stop_check():
-        radarr_logger.info("Stop requested after retrieving missing movies. Aborting...")
-        return False
-    
-    radarr_logger.info(f"Found {len(missing_movies)} movies with missing files.")
+    radarr_logger.info(f"Retrieved {len(missing_movies)} missing movies from random page selection.")
     
     # Filter out future releases if configured
     if skip_future_releases:
