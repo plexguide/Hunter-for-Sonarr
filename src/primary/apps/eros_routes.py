@@ -10,6 +10,7 @@ import traceback
 import socket
 from urllib.parse import urlparse
 from src.primary.apps.eros import api as eros_api
+from src.primary.apps.eros import get_configured_instances
 # Import centralized path configuration
 from src.primary.utils.config_paths import CONFIG_PATH
 
@@ -19,12 +20,6 @@ eros_logger = get_logger("eros")
 # Make sure we're using the correct state files
 PROCESSED_MISSING_FILE = get_state_file_path("eros", "processed_missing") 
 PROCESSED_UPGRADES_FILE = get_state_file_path("eros", "processed_upgrades")
-
-def get_configured_instances():
-    # Load Eros settings
-    settings = load_settings("eros")
-    instances = settings.get("instances", [])
-    return instances
 
 def test_connection(url, api_key):
     # Validate URL format
