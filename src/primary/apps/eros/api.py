@@ -585,33 +585,36 @@ def add_tag_to_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int
         eros_logger.error(f"Error adding tag {tag_id} to movie {movie_id}: {e}")
         return False
 
-def tag_processed_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int, tag_label: str = "huntarr-processed") -> bool:
+def tag_processed_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int, tag_label: str = "huntarr-missing") -> bool:
     """
-    Tag a movie as processed by Huntarr.
+    Tag a movie in Eros with the specified tag.
     
     Args:
         api_url: The base URL of the Eros API
-        api_key: The API key for authentication  
+        api_key: The API key for authentication
         api_timeout: Timeout for the API request
         movie_id: The ID of the movie to tag
-        tag_label: The label of the tag to add (default: "huntarr-processed")
+        tag_label: The tag to apply (huntarr-missing, huntarr-upgraded)
         
     Returns:
-        True if successful, False otherwise
+        True if the tagging was successful, False otherwise
     """
     try:
         # Get or create the tag
         tag_id = get_or_create_tag(api_url, api_key, api_timeout, tag_label)
-        if not tag_id:
-            eros_logger.error(f"Failed to get or create tag '{tag_label}'")
+        if tag_id is None:
+            eros_logger.error(f"Failed to get or create tag '{tag_label}' in Eros")
             return False
-        
+            
         # Add the tag to the movie
         success = add_tag_to_movie(api_url, api_key, api_timeout, movie_id, tag_id)
         if success:
-            eros_logger.info(f"Successfully tagged movie {movie_id} with '{tag_label}'")
-        return success
-        
+            eros_logger.debug(f"Successfully tagged Eros movie {movie_id} with '{tag_label}'")
+            return True
+        else:
+            eros_logger.error(f"Failed to add tag '{tag_label}' to Eros movie {movie_id}")
+            return False
+            
     except Exception as e:
-        eros_logger.error(f"Error tagging movie {movie_id} with '{tag_label}': {e}")
+        eros_logger.error(f"Error tagging Eros movie {movie_id} with '{tag_label}': {e}")
         return False

@@ -159,10 +159,10 @@ def process_cutoff_upgrades(
                 series_id = item.get('seriesId')
                 if series_id:
                     try:
-                        whisparr_api.tag_processed_series(api_url, api_key, api_timeout, series_id)
-                        whisparr_logger.debug(f"Tagged series {series_id} as processed for upgrades")
+                        whisparr_api.tag_processed_series(api_url, api_key, api_timeout, series_id, "huntarr-upgraded")
+                        whisparr_logger.debug(f"Tagged series {series_id} with 'huntarr-upgraded'")
                     except Exception as e:
-                        whisparr_logger.warning(f"Failed to tag series {series_id}: {e}")
+                        whisparr_logger.warning(f"Failed to tag series {series_id} with 'huntarr-upgraded': {e}")
             
             # Log to history so the upgrade appears in the history UI
             series_title = item.get("series", {}).get("title", "Unknown Series")

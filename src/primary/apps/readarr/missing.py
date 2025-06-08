@@ -168,10 +168,10 @@ def process_missing_books(
             # Tag the book's author if enabled (keep author tagging as it's still useful)
             if tag_processed_items and author_id:
                 try:
-                    readarr_api.tag_processed_author(api_url, api_key, api_timeout, author_id)
-                    readarr_logger.debug(f"Tagged author {author_id} as processed")
+                    readarr_api.tag_processed_author(api_url, api_key, api_timeout, author_id, "huntarr-missing")
+                    readarr_logger.debug(f"Tagged author {author_id} with 'huntarr-missing'")
                 except Exception as e:
-                    readarr_logger.warning(f"Failed to tag author {author_id}: {e}")
+                    readarr_logger.warning(f"Failed to tag author {author_id} with 'huntarr-missing': {e}")
             
             # Log history entry for this specific book
             media_name = f"{author_name} - {book_title}"

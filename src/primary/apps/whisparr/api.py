@@ -501,33 +501,36 @@ def add_tag_to_series(api_url: str, api_key: str, api_timeout: int, series_id: i
         whisparr_logger.error(f"Error adding tag {tag_id} to series {series_id}: {e}")
         return False
 
-def tag_processed_series(api_url: str, api_key: str, api_timeout: int, series_id: int, tag_label: str = "huntarr-processed") -> bool:
+def tag_processed_series(api_url: str, api_key: str, api_timeout: int, series_id: int, tag_label: str = "huntarr-missing") -> bool:
     """
-    Tag a series as processed by Huntarr.
+    Tag a series in Whisparr with the specified tag.
     
     Args:
         api_url: The base URL of the Whisparr API
-        api_key: The API key for authentication  
+        api_key: The API key for authentication
         api_timeout: Timeout for the API request
         series_id: The ID of the series to tag
-        tag_label: The label of the tag to add (default: "huntarr-processed")
+        tag_label: The tag to apply (huntarr-missing, huntarr-upgraded)
         
     Returns:
-        True if successful, False otherwise
+        True if the tagging was successful, False otherwise
     """
     try:
         # Get or create the tag
         tag_id = get_or_create_tag(api_url, api_key, api_timeout, tag_label)
-        if not tag_id:
-            whisparr_logger.error(f"Failed to get or create tag '{tag_label}'")
+        if tag_id is None:
+            whisparr_logger.error(f"Failed to get or create tag '{tag_label}' in Whisparr")
             return False
-        
+            
         # Add the tag to the series
         success = add_tag_to_series(api_url, api_key, api_timeout, series_id, tag_id)
         if success:
-            whisparr_logger.info(f"Successfully tagged series {series_id} with '{tag_label}'")
-        return success
-        
+            whisparr_logger.debug(f"Successfully tagged Whisparr series {series_id} with '{tag_label}'")
+            return True
+        else:
+            whisparr_logger.error(f"Failed to add tag '{tag_label}' to Whisparr series {series_id}")
+            return False
+            
     except Exception as e:
-        whisparr_logger.error(f"Error tagging series {series_id} with '{tag_label}': {e}")
+        whisparr_logger.error(f"Error tagging Whisparr series {series_id} with '{tag_label}': {e}")
         return False

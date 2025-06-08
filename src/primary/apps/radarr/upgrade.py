@@ -112,10 +112,10 @@ def process_cutoff_upgrades(
             # Tag the movie if enabled
             if tag_processed_items:
                 try:
-                    radarr_api.tag_processed_movie(api_url, api_key, api_timeout, movie_id)
-                    radarr_logger.debug(f"Tagged movie {movie_id} as processed for upgrades")
+                    radarr_api.tag_processed_movie(api_url, api_key, api_timeout, movie_id, "huntarr-upgraded")
+                    radarr_logger.debug(f"Tagged movie {movie_id} with 'huntarr-upgraded'")
                 except Exception as e:
-                    radarr_logger.warning(f"Failed to tag movie {movie_id}: {e}")
+                    radarr_logger.warning(f"Failed to tag movie {movie_id} with 'huntarr-upgraded': {e}")
             
             # Log to history so the upgrade appears in the history UI
             media_name = f"{movie_title} ({movie_year})"

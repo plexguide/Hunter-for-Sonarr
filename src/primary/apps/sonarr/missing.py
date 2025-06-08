@@ -222,10 +222,10 @@ def process_missing_seasons_packs_mode(
             # Tag the series if enabled
             if tag_processed_items:
                 try:
-                    sonarr_api.tag_processed_series(api_url, api_key, api_timeout, series_id)
-                    sonarr_logger.debug(f"Tagged series {series_id} as processed")
+                    sonarr_api.tag_processed_series(api_url, api_key, api_timeout, series_id, "huntarr-missing")
+                    sonarr_logger.debug(f"Tagged series {series_id} with 'huntarr-missing'")
                 except Exception as e:
-                    sonarr_logger.warning(f"Failed to tag series {series_id}: {e}")
+                    sonarr_logger.warning(f"Failed to tag series {series_id} with 'huntarr-missing': {e}")
             
             # Log to history system
             media_name = f"{series_title} - Season {season_number} (contains {episode_count} missing episodes)"
@@ -373,10 +373,10 @@ def process_missing_shows_mode(
             # Tag the series if enabled
             if tag_processed_items:
                 try:
-                    sonarr_api.tag_processed_series(api_url, api_key, api_timeout, show_id)
-                    sonarr_logger.debug(f"Tagged series {show_id} as processed")
+                    sonarr_api.tag_processed_series(api_url, api_key, api_timeout, show_id, "huntarr-shows-missing")
+                    sonarr_logger.debug(f"Tagged series {show_id} with 'huntarr-shows-missing'")
                 except Exception as e:
-                    sonarr_logger.warning(f"Failed to tag series {show_id}: {e}")
+                    sonarr_logger.warning(f"Failed to tag series {show_id} with 'huntarr-shows-missing': {e}")
             
             # Add episode IDs to stateful manager IMMEDIATELY after processing each batch
             for episode_id in episode_ids:

@@ -182,10 +182,10 @@ def process_missing_items(
                 series_id = item.get('seriesId')
                 if series_id:
                     try:
-                        whisparr_api.tag_processed_series(api_url, api_key, api_timeout, series_id)
-                        whisparr_logger.debug(f"Tagged series {series_id} as processed")
+                        whisparr_api.tag_processed_series(api_url, api_key, api_timeout, series_id, "huntarr-missing")
+                        whisparr_logger.debug(f"Tagged series {series_id} with 'huntarr-missing'")
                     except Exception as e:
-                        whisparr_logger.warning(f"Failed to tag series {series_id}: {e}")
+                        whisparr_logger.warning(f"Failed to tag series {series_id} with 'huntarr-missing': {e}")
             
             # Log to history system
             media_name = f"{title} - {season_episode}"

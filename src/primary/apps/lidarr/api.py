@@ -551,33 +551,36 @@ def add_tag_to_artist(api_url: str, api_key: str, api_timeout: int, artist_id: i
         lidarr_logger.error(f"Error adding tag {tag_id} to artist {artist_id}: {e}")
         return False
 
-def tag_processed_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int, tag_label: str = "huntarr-processed") -> bool:
+def tag_processed_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int, tag_label: str = "huntarr-missing") -> bool:
     """
-    Tag an artist as processed by Huntarr.
+    Tag an artist in Lidarr with the specified tag.
     
     Args:
         api_url: The base URL of the Lidarr API
-        api_key: The API key for authentication  
+        api_key: The API key for authentication
         api_timeout: Timeout for the API request
         artist_id: The ID of the artist to tag
-        tag_label: The label of the tag to add (default: "huntarr-processed")
+        tag_label: The tag to apply (huntarr-missing, huntarr-upgraded)
         
     Returns:
-        True if successful, False otherwise
+        True if the tagging was successful, False otherwise
     """
     try:
         # Get or create the tag
         tag_id = get_or_create_tag(api_url, api_key, api_timeout, tag_label)
-        if not tag_id:
-            lidarr_logger.error(f"Failed to get or create tag '{tag_label}'")
+        if tag_id is None:
+            lidarr_logger.error(f"Failed to get or create tag '{tag_label}' in Lidarr")
             return False
-        
+            
         # Add the tag to the artist
         success = add_tag_to_artist(api_url, api_key, api_timeout, artist_id, tag_id)
         if success:
-            lidarr_logger.info(f"Successfully tagged artist {artist_id} with '{tag_label}'")
-        return success
-        
+            lidarr_logger.debug(f"Successfully tagged Lidarr artist {artist_id} with '{tag_label}'")
+            return True
+        else:
+            lidarr_logger.error(f"Failed to add tag '{tag_label}' to Lidarr artist {artist_id}")
+            return False
+            
     except Exception as e:
-        lidarr_logger.error(f"Error tagging artist {artist_id} with '{tag_label}': {e}")
+        lidarr_logger.error(f"Error tagging Lidarr artist {artist_id} with '{tag_label}': {e}")
         return False

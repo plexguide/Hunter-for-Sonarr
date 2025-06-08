@@ -504,33 +504,36 @@ def add_tag_to_author(api_url: str, api_key: str, api_timeout: int, author_id: i
         logger.error(f"Error adding tag {tag_id} to author {author_id}: {e}")
         return False
 
-def tag_processed_author(api_url: str, api_key: str, api_timeout: int, author_id: int, tag_label: str = "huntarr-processed") -> bool:
+def tag_processed_author(api_url: str, api_key: str, api_timeout: int, author_id: int, tag_label: str = "huntarr-missing") -> bool:
     """
-    Tag an author as processed by Huntarr.
+    Tag an author in Readarr with the specified tag.
     
     Args:
         api_url: The base URL of the Readarr API
-        api_key: The API key for authentication  
+        api_key: The API key for authentication
         api_timeout: Timeout for the API request
         author_id: The ID of the author to tag
-        tag_label: The label of the tag to add (default: "huntarr-processed")
+        tag_label: The tag to apply (huntarr-missing, huntarr-upgraded)
         
     Returns:
-        True if successful, False otherwise
+        True if the tagging was successful, False otherwise
     """
     try:
-        # Get or create the tag
+                # Get or create the tag
         tag_id = get_or_create_tag(api_url, api_key, api_timeout, tag_label)
-        if not tag_id:
-            logger.error(f"Failed to get or create tag '{tag_label}'")
+        if tag_id is None:
+            readarr_logger.error(f"Failed to get or create tag '{tag_label}' in Readarr")
             return False
-        
+            
         # Add the tag to the author
         success = add_tag_to_author(api_url, api_key, api_timeout, author_id, tag_id)
         if success:
-            logger.info(f"Successfully tagged author {author_id} with '{tag_label}'")
-        return success
-        
+            readarr_logger.debug(f"Successfully tagged Readarr author {author_id} with '{tag_label}'")
+            return True
+        else:
+            readarr_logger.error(f"Failed to add tag '{tag_label}' to Readarr author {author_id}")
+            return False
+            
     except Exception as e:
-        logger.error(f"Error tagging author {author_id} with '{tag_label}': {e}")
+        readarr_logger.error(f"Error tagging Readarr author {author_id} with '{tag_label}': {e}")
         return False

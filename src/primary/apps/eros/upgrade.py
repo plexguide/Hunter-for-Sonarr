@@ -178,10 +178,10 @@ def process_cutoff_upgrades(
             # Tag the movie if enabled
             if tag_processed_items:
                 try:
-                    eros_api.tag_processed_movie(api_url, api_key, api_timeout, item_id)
-                    eros_logger.debug(f"Tagged movie {item_id} as processed for upgrades")
+                    eros_api.tag_processed_movie(api_url, api_key, api_timeout, item_id, "huntarr-upgraded")
+                    eros_logger.debug(f"Tagged movie {item_id} with 'huntarr-upgraded'")
                 except Exception as e:
-                    eros_logger.warning(f"Failed to tag movie {item_id}: {e}")
+                    eros_logger.warning(f"Failed to tag movie {item_id} with 'huntarr-upgraded': {e}")
             
             # Log to history so the upgrade appears in the history UI
             log_processed_media("eros", item_info, item_id, instance_name, "upgrade")

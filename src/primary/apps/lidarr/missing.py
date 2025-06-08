@@ -263,10 +263,10 @@ def process_missing_albums(
                     # Tag the artist if enabled
                     if tag_processed_items:
                         try:
-                            lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id)
-                            lidarr_logger.debug(f"Tagged artist {artist_id} as processed")
+                            lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id, "huntarr-missing")
+                            lidarr_logger.debug(f"Tagged artist {artist_id} with 'huntarr-missing'")
                         except Exception as e:
-                            lidarr_logger.warning(f"Failed to tag artist {artist_id}: {e}")
+                            lidarr_logger.warning(f"Failed to tag artist {artist_id} with 'huntarr-missing': {e}")
                 
                 # Also mark all albums from this artist as processed
                 if artist_id in items_by_artist:
@@ -353,11 +353,11 @@ def process_missing_albums(
                             artist_id = album_info.get('artistId')
                             if artist_id and artist_id not in tagged_artists:
                                 try:
-                                    lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id)
-                                    lidarr_logger.debug(f"Tagged artist {artist_id} as processed (from album {album_id})")
+                                    lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id, "huntarr-missing")
+                                    lidarr_logger.debug(f"Tagged artist {artist_id} with 'huntarr-missing'")
                                     tagged_artists.add(artist_id)
                                 except Exception as e:
-                                    lidarr_logger.warning(f"Failed to tag artist {artist_id}: {e}")
+                                    lidarr_logger.warning(f"Failed to tag artist {artist_id} with 'huntarr-missing': {e}")
                 
                 # Log to history system
                 for album_id in album_ids_to_search:

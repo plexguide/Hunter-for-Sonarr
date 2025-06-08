@@ -164,11 +164,11 @@ def process_cutoff_upgrades(
                 author_id = book.get('authorId')
                 if author_id and author_id not in tagged_authors:
                     try:
-                        readarr_api.tag_processed_author(api_url, api_key, api_timeout, author_id)
-                        readarr_logger.debug(f"Tagged author {author_id} as processed for upgrades")
+                        readarr_api.tag_processed_author(api_url, api_key, api_timeout, author_id, "huntarr-upgraded")
+                        readarr_logger.debug(f"Tagged author {author_id} with 'huntarr-upgraded'")
                         tagged_authors.add(author_id)
                     except Exception as e:
-                        readarr_logger.warning(f"Failed to tag author {author_id}: {e}")
+                        readarr_logger.warning(f"Failed to tag author {author_id} with 'huntarr-upgraded': {e}")
             
         # Log to history system for each book
         for book in books_to_process:

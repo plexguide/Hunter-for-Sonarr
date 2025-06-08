@@ -167,11 +167,11 @@ def process_cutoff_upgrades(
                     artist_id = album.get('artistId')
                     if artist_id and artist_id not in tagged_artists:
                         try:
-                            lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id)
-                            lidarr_logger.debug(f"Tagged artist {artist_id} as processed for upgrades")
+                            lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id, "huntarr-upgraded")
+                            lidarr_logger.debug(f"Tagged artist {artist_id} with 'huntarr-upgraded'")
                             tagged_artists.add(artist_id)
                         except Exception as e:
-                            lidarr_logger.warning(f"Failed to tag artist {artist_id}: {e}")
+                            lidarr_logger.warning(f"Failed to tag artist {artist_id} with 'huntarr-upgraded': {e}")
             
             # Log to history
             for album_id in album_ids_to_search:
