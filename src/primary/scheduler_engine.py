@@ -152,6 +152,23 @@ def execute_action(action_entry):
         add_to_history(action_entry, "skipped", message)
         return False  # Already executed
     
+    # Helper function to extract base app name from app identifiers like "radarr-all"
+    def get_base_app_name(app_identifier):
+        """Extract base app name from identifiers like 'radarr-all', 'sonarr-instance1', etc."""
+        if not app_identifier or app_identifier == "global":
+            return app_identifier
+        
+        # Split on hyphen and take the first part as the base app name
+        base_name = app_identifier.split('-')[0]
+        
+        # Validate it's a known app
+        valid_apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']
+        if base_name in valid_apps:
+            return base_name
+        
+        # If not a known app with suffix, return the original identifier
+        return app_identifier
+    
     try:
         # Handle both old "pause" and new "disable" terminology
         if action_type == "pause" or action_type == "disable":
@@ -189,7 +206,10 @@ def execute_action(action_entry):
                 message = f"Executing disable action for {app_type}"
                 scheduler_logger.info(message)
                 try:
-                    config_file = os.path.join(str(SETTINGS_DIR), f"{app_type}.json")
+                    # Extract base app name for config file access
+                    base_app_name = get_base_app_name(app_type)
+                    config_file = os.path.join(str(SETTINGS_DIR), f"{base_app_name}.json")
+                    
                     if os.path.exists(config_file):
                         with open(config_file, 'r') as f:
                             config_data = json.load(f)
@@ -203,10 +223,15 @@ def execute_action(action_entry):
                         with open(config_file, 'w') as f:
                             json.dump(config_data, f, indent=2)
                         # Clear cache for this app to ensure the UI refreshes
-                        clear_cache(app_type)
-                    result_message = f"{app_type} disabled successfully"
-                    scheduler_logger.info(result_message)
-                    add_to_history(action_entry, "success", result_message)
+                        clear_cache(base_app_name)
+                        result_message = f"{app_type} disabled successfully"
+                        scheduler_logger.info(result_message)
+                        add_to_history(action_entry, "success", result_message)
+                    else:
+                        error_message = f"Config file not found for {app_type} at {config_file}"
+                        scheduler_logger.error(error_message)
+                        add_to_history(action_entry, "error", error_message)
+                        return False
                 except Exception as e:
                     error_message = f"Error disabling {app_type}: {str(e)}"
                     scheduler_logger.error(error_message)
@@ -249,7 +274,10 @@ def execute_action(action_entry):
                 message = f"Executing enable action for {app_type}"
                 scheduler_logger.info(message)
                 try:
-                    config_file = os.path.join(str(SETTINGS_DIR), f"{app_type}.json")
+                    # Extract base app name for config file access
+                    base_app_name = get_base_app_name(app_type)
+                    config_file = os.path.join(str(SETTINGS_DIR), f"{base_app_name}.json")
+                    
                     if os.path.exists(config_file):
                         with open(config_file, 'r') as f:
                             config_data = json.load(f)
@@ -263,10 +291,15 @@ def execute_action(action_entry):
                         with open(config_file, 'w') as f:
                             json.dump(config_data, f, indent=2)
                         # Clear cache for this app to ensure the UI refreshes
-                        clear_cache(app_type)
-                    result_message = f"{app_type} enabled successfully"
-                    scheduler_logger.info(result_message)
-                    add_to_history(action_entry, "success", result_message)
+                        clear_cache(base_app_name)
+                        result_message = f"{app_type} enabled successfully"
+                        scheduler_logger.info(result_message)
+                        add_to_history(action_entry, "success", result_message)
+                    else:
+                        error_message = f"Config file not found for {app_type} at {config_file}"
+                        scheduler_logger.error(error_message)
+                        add_to_history(action_entry, "error", error_message)
+                        return False
                 except Exception as e:
                     error_message = f"Error enabling {app_type}: {str(e)}"
                     scheduler_logger.error(error_message)
@@ -308,16 +341,24 @@ def execute_action(action_entry):
                     message = f"Setting API cap for {app_type} to {api_limit}"
                     scheduler_logger.info(message)
                     try:
-                        config_file = os.path.join(str(SETTINGS_DIR), f"{app_type}.json")
+                        # Extract base app name for config file access
+                        base_app_name = get_base_app_name(app_type)
+                        config_file = os.path.join(str(SETTINGS_DIR), f"{base_app_name}.json")
+                        
                         if os.path.exists(config_file):
                             with open(config_file, 'r') as f:
                                 config_data = json.load(f)
                             config_data['hourly_cap'] = api_limit
                             with open(config_file, 'w') as f:
                                 json.dump(config_data, f, indent=2)
-                        result_message = f"API cap set to {api_limit} for {app_type}"
-                        scheduler_logger.info(result_message)
-                        add_to_history(action_entry, "success", result_message)
+                            result_message = f"API cap set to {api_limit} for {app_type}"
+                            scheduler_logger.info(result_message)
+                            add_to_history(action_entry, "success", result_message)
+                        else:
+                            error_message = f"Config file not found for {app_type} at {config_file}"
+                            scheduler_logger.error(error_message)
+                            add_to_history(action_entry, "error", error_message)
+                            return False
                     except Exception as e:
                         error_message = f"Error setting API cap for {app_type} to {api_limit}: {str(e)}"
                         scheduler_logger.error(error_message)
