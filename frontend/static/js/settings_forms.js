@@ -1620,6 +1620,216 @@ const SettingsForms = {
                 });
             });
         });
+        
+        // Set up remove buttons for existing instances
+        const removeButtons = container.querySelectorAll('.remove-instance-btn');
+        removeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const instancePanel = btn.closest('.instance-item') || btn.closest('.instance-panel');
+                if (instancePanel && instancePanel.parentNode) {
+                    instancePanel.parentNode.removeChild(instancePanel);
+                    
+                    // Update the button text with new count if updateAddButtonText exists
+                    const addBtn = container.querySelector(`.add-${appType}-instance-btn`);
+                    if (addBtn) {
+                        const instancesContainer = container.querySelector('.instances-container');
+                        if (instancesContainer) {
+                            const currentCount = instancesContainer.querySelectorAll('.instance-item').length;
+                            addBtn.innerHTML = `<i class="fas fa-plus"></i> Add ${appType.charAt(0).toUpperCase() + appType.slice(1)} Instance (${currentCount}/9)`;
+                            
+                            // Re-enable button if we're under the limit
+                            if (currentCount < 9) {
+                                addBtn.disabled = false;
+                                addBtn.title = "";
+                            }
+                        }
+                    }
+                    
+                    // Trigger change event to update save button state
+                    const changeEvent = new Event('change');
+                    container.dispatchEvent(changeEvent);
+                }
+            });
+        });
+        
+        // Add instance button functionality
+        const addBtn = container.querySelector(`.add-${appType}-instance-btn`);
+        if (addBtn) {
+            // Function to update the button text with current instance count
+            const updateAddButtonText = () => {
+                const instancesContainer = container.querySelector('.instances-container');
+                if (!instancesContainer) return;
+                const currentCount = instancesContainer.querySelectorAll('.instance-item').length;
+                addBtn.innerHTML = `<i class="fas fa-plus"></i> Add ${appType.charAt(0).toUpperCase() + appType.slice(1)} Instance (${currentCount}/9)`;
+                
+                // Disable button if we've reached the limit
+                if (currentCount >= 9) {
+                    addBtn.disabled = true;
+                    addBtn.title = "Maximum of 9 instances allowed";
+                } else {
+                    addBtn.disabled = false;
+                    addBtn.title = "";
+                }
+            };
+            
+            // Initial button text update
+            updateAddButtonText();
+            
+            // Add event listener for the add button
+            addBtn.addEventListener('click', function() {
+                const instancesContainer = container.querySelector('.instances-container');
+                if (!instancesContainer) return;
+                
+                const existingInstances = instancesContainer.querySelectorAll('.instance-item');
+                const currentCount = existingInstances.length;
+                
+                // Don't allow more than 9 instances
+                if (currentCount >= 9) {
+                    alert('Maximum of 9 instances allowed');
+                    return;
+                }
+                
+                const newIndex = currentCount; // Use current count as new index
+                
+                // Create new instance HTML
+                const newInstanceHtml = `
+                    <div class="instance-item" data-instance-id="${newIndex}">
+                        <div class="instance-header">
+                            <h4>Instance ${newIndex + 1}: New Instance</h4>
+                            <div class="instance-actions">
+                                <button type="button" class="remove-instance-btn">Remove</button>
+                                <button type="button" class="test-connection-btn" data-instance="${newIndex}" style="margin-left: 10px;">
+                                    <i class="fas fa-plug"></i> Test Connection
+                                </button>
+                            </div>
+                        </div>
+                        <div class="instance-content">
+                            <div class="setting-item">
+                                <label for="${appType}-name-${newIndex}">Name:</label>
+                                <input type="text" id="${appType}-name-${newIndex}" name="name" value="" placeholder="Friendly name for this ${appType} instance">
+                                <p class="setting-help">Friendly name for this ${appType} instance</p>
+                            </div>
+                            <div class="setting-item">
+                                <label for="${appType}-url-${newIndex}">URL:</label>
+                                <input type="text" id="${appType}-url-${newIndex}" name="api_url" value="" placeholder="Base URL for ${appType} (e.g., http://localhost:8989)">
+                                <p class="setting-help">Base URL for ${appType}</p>
+                            </div>
+                            <div class="setting-item">
+                                <label for="${appType}-key-${newIndex}">API Key:</label>
+                                <input type="text" id="${appType}-key-${newIndex}" name="api_key" value="" placeholder="API key for ${appType}">
+                                <p class="setting-help">API key for ${appType}</p>
+                            </div>
+                            <div class="setting-item">
+                                <label for="${appType}-enabled-${newIndex}">Enabled:</label>
+                                <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                                    <input type="checkbox" id="${appType}-enabled-${newIndex}" name="enabled" checked>
+                                    <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add the new instance to the container
+                instancesContainer.insertAdjacentHTML('beforeend', newInstanceHtml);
+                
+                // Get the newly added instance element
+                const newInstance = instancesContainer.querySelector(`[data-instance-id="${newIndex}"]`);
+                
+                // Set up event listeners for the new instance's buttons
+                const newTestBtn = newInstance.querySelector('.test-connection-btn');
+                const newRemoveBtn = newInstance.querySelector('.remove-instance-btn');
+                
+                // Test connection button
+                if (newTestBtn) {
+                    newTestBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const instancePanel = newTestBtn.closest('.instance-item');
+                        const urlInput = instancePanel.querySelector('input[name="api_url"]');
+                        const keyInput = instancePanel.querySelector('input[name="api_key"]');
+                        
+                        if (!urlInput || !keyInput) {
+                            alert('Error: Could not find URL or API key inputs');
+                            return;
+                        }
+                        
+                        const url = urlInput.value.trim();
+                        const apiKey = keyInput.value.trim();
+                        
+                        if (!url) {
+                            alert('Please enter a valid URL');
+                            urlInput.focus();
+                            return;
+                        }
+                        
+                        if (!apiKey) {
+                            alert('Please enter a valid API key');
+                            keyInput.focus();
+                            return;
+                        }
+                        
+                        // Use the same test connection logic as existing buttons
+                        const originalButtonHTML = newTestBtn.innerHTML;
+                        newTestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+                        newTestBtn.disabled = true;
+                        
+                        HuntarrUtils.fetchWithTimeout(`/api/${appType}/test-connection`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ api_url: url, api_key: apiKey })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            newTestBtn.disabled = false;
+                            if (data.success) {
+                                newTestBtn.innerHTML = '<i class="fas fa-check"></i> Connected!';
+                                alert(`Successfully connected to ${appType}`);
+                                setTimeout(() => {
+                                    newTestBtn.innerHTML = originalButtonHTML;
+                                }, 3000);
+                            } else {
+                                newTestBtn.innerHTML = '<i class="fas fa-times"></i> Failed';
+                                alert(`Connection failed: ${data.message || 'Unknown error'}`);
+                                setTimeout(() => {
+                                    newTestBtn.innerHTML = originalButtonHTML;
+                                }, 3000);
+                            }
+                        })
+                        .catch(error => {
+                            newTestBtn.disabled = false;
+                            newTestBtn.innerHTML = '<i class="fas fa-times"></i> Error';
+                            alert(`Connection test failed: ${error.message}`);
+                            setTimeout(() => {
+                                newTestBtn.innerHTML = originalButtonHTML;
+                            }, 3000);
+                        });
+                    });
+                }
+                
+                // Remove button
+                if (newRemoveBtn) {
+                    newRemoveBtn.addEventListener('click', function() {
+                        newInstance.remove();
+                        updateAddButtonText();
+                        
+                        // Trigger change event
+                        const changeEvent = new Event('change');
+                        container.dispatchEvent(changeEvent);
+                    });
+                }
+                
+                // Update button text and trigger change event
+                updateAddButtonText();
+                const changeEvent = new Event('change');
+                container.dispatchEvent(changeEvent);
+                
+                // Focus on the name input of the new instance
+                const nameInput = newInstance.querySelector('input[name="name"]');
+                if (nameInput) {
+                    nameInput.focus();
+                }
+            });
+        }
     },
     
     // Test connection to an *arr API

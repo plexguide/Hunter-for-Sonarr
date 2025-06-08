@@ -1289,17 +1289,18 @@ let huntarrUI = {
             console.log(`[huntarrUI] Found ${instanceItems.length} instance items for ${app}. Processing multi-instance mode.`);
             // Multi-instance logic (current Sonarr logic)
             instanceItems.forEach((item, index) => {
-                const instanceId = item.dataset.instanceId; // Assumes Sonarr uses data-instance-id
-                const nameInput = form.querySelector(`#${app}_instance_${instanceId}_name`);
-                const urlInput = form.querySelector(`#${app}_instance_${instanceId}_api_url`);
-                const keyInput = form.querySelector(`#${app}_instance_${instanceId}_api_key`);
-                const enabledInput = item.querySelector('.instance-enabled'); // Assumes Sonarr uses this class for enable toggle
+                const instanceId = item.dataset.instanceId; // Gets the data-instance-id
+                const nameInput = form.querySelector(`#${app}-name-${instanceId}`);
+                const urlInput = form.querySelector(`#${app}-url-${instanceId}`);
+                const keyInput = form.querySelector(`#${app}-key-${instanceId}`);
+                const enabledInput = form.querySelector(`#${app}-enabled-${instanceId}`);
 
                 if (urlInput && keyInput) { // Need URL and Key at least
                     settings.instances.push({
                         // Use nameInput value if available, otherwise generate a default
                         name: nameInput && nameInput.value.trim() !== '' ? nameInput.value.trim() : `Instance ${index + 1}`,
                         api_url: this.cleanUrlString(urlInput.value),
+                        api_key: keyInput.value.trim(),
                         // Default to true if toggle doesn't exist or is checked
                         enabled: enabledInput ? enabledInput.checked : true
                     });
@@ -1339,11 +1340,10 @@ let huntarrUI = {
             instanceItems.forEach((item) => {
                 const instanceId = item.dataset.instanceId;
                 if(instanceId) {
-                    handledInstanceFieldIds.add(`${app}_instance_${instanceId}_name`);
-                    handledInstanceFieldIds.add(`${app}_instance_${instanceId}_api_url`);
-                    handledInstanceFieldIds.add(`${app}_instance_${instanceId}_api_key`);
-                    const enabledToggle = item.querySelector('.instance-enabled');
-                    if (enabledToggle && enabledToggle.id) handledInstanceFieldIds.add(enabledToggle.id);
+                    handledInstanceFieldIds.add(`${app}-name-${instanceId}`);
+                    handledInstanceFieldIds.add(`${app}-url-${instanceId}`);
+                    handledInstanceFieldIds.add(`${app}-key-${instanceId}`);
+                    handledInstanceFieldIds.add(`${app}-enabled-${instanceId}`);
                 }
             });
         } else {
