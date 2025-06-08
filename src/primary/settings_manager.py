@@ -200,6 +200,15 @@ def save_settings(app_name: str, settings_data: Dict[str, Any]) -> bool:
         # Clear cache for this app to ensure fresh reads
         clear_cache(app_name)
         
+        # If general settings were saved, also clear timezone cache
+        if app_name == 'general':
+            try:
+                from src.primary.utils.timezone_utils import clear_timezone_cache
+                clear_timezone_cache()
+                settings_logger.debug("Timezone cache cleared after general settings save")
+            except Exception as e:
+                settings_logger.warning(f"Failed to clear timezone cache: {e}")
+        
         return True
     except Exception as e:
         settings_logger.error(f"Error saving settings for {app_name} to {settings_file}: {e}")
@@ -285,6 +294,47 @@ def apply_timezone(timezone: str) -> bool:
     except Exception as e:
         settings_logger.error(f"Error setting timezone: {str(e)}")
         return False
+
+def initialize_timezone_from_env():
+    """Initialize timezone setting from TZ environment variable if not already set."""
+    try:
+        # Get the TZ environment variable
+        tz_env = os.environ.get('TZ')
+        if not tz_env:
+            settings_logger.info("No TZ environment variable found, using default UTC")
+            return
+        
+        # Load current general settings
+        general_settings = load_settings("general")
+        current_timezone = general_settings.get("timezone")
+        
+        # If timezone is not set in settings, initialize it from TZ environment variable
+        if not current_timezone or current_timezone == "UTC":
+            settings_logger.info(f"Initializing timezone from TZ environment variable: {tz_env}")
+            
+            # Validate the timezone
+            try:
+                import pytz
+                pytz.timezone(tz_env)  # This will raise an exception if invalid
+                
+                # Update the settings
+                general_settings["timezone"] = tz_env
+                save_settings("general", general_settings)
+                
+                # Apply the timezone to the system
+                apply_timezone(tz_env)
+                
+                settings_logger.info(f"Successfully initialized timezone to {tz_env}")
+                
+            except pytz.UnknownTimeZoneError:
+                settings_logger.warning(f"Invalid timezone in TZ environment variable: {tz_env}, keeping UTC")
+            except Exception as e:
+                settings_logger.error(f"Error validating timezone {tz_env}: {e}")
+        else:
+            settings_logger.info(f"Timezone already set in settings: {current_timezone}")
+            
+    except Exception as e:
+        settings_logger.error(f"Error initializing timezone from environment: {e}")
 
 # Add a list of known advanced settings for clarity and documentation
 ADVANCED_SETTINGS = [

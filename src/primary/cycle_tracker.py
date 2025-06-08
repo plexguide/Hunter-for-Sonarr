@@ -205,19 +205,8 @@ def _save_cycle_data(data: Dict[str, Any]) -> None:
 def _get_user_timezone():
     """Get the user's selected timezone from general settings"""
     try:
-        from src.primary import settings_manager
-        general_settings = settings_manager.load_settings("general")
-        timezone_name = general_settings.get("timezone", "UTC")
-        
-        # Import timezone handling
-        import pytz
-        try:
-            user_tz = pytz.timezone(timezone_name)
-            print(f"[CycleTracker] Using user timezone: {timezone_name}")
-            return user_tz
-        except pytz.UnknownTimeZoneError:
-            print(f"[CycleTracker] Unknown timezone '{timezone_name}', falling back to UTC")
-            return pytz.UTC
+        from src.primary.utils.timezone_utils import get_user_timezone
+        return get_user_timezone()
     except Exception as e:
         print(f"[CycleTracker] Error getting user timezone: {e}, using UTC")
         import pytz
@@ -346,7 +335,7 @@ def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime, cyclelo
         # Determine cyclelock value
         if cyclelock is None:
             # If not explicitly set, preserve existing value or default to True (cycle starting)
-            existing_cyclelock = sleep_data.get(app_type, {}).get('cyclelock', True)
+            existing_cyclelock = sleep_data.get(app_type, {})
             cyclelock = existing_cyclelock
         
         # Update the app's data - store times in user's timezone format

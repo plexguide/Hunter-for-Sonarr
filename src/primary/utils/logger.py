@@ -45,16 +45,10 @@ class LocalTimeFormatter(logging.Formatter):
     def _get_user_timezone(self):
         """Get the user's selected timezone from general settings"""
         try:
-            from src.primary import settings_manager
-            general_settings = settings_manager.load_settings("general")
-            timezone_name = general_settings.get("timezone", "UTC")
-            
-            import pytz
-            try:
-                return pytz.timezone(timezone_name)
-            except pytz.UnknownTimeZoneError:
-                return pytz.UTC
+            from src.primary.utils.timezone_utils import get_user_timezone
+            return get_user_timezone()
         except Exception:
+            # Final fallback if timezone_utils can't be imported
             import pytz
             return pytz.UTC
     
@@ -215,6 +209,33 @@ def update_logging_levels():
         app_logger.setLevel(level)
     
     print(f"[Logger] Updated all logger levels to {logging.getLevelName(level)}")
+
+def refresh_timezone_formatters():
+    """
+    Force refresh of all logger formatters to use updated timezone settings.
+    This should be called when the timezone setting changes.
+    """
+    print("[Logger] Refreshing timezone formatters for all loggers")
+    
+    # Create new formatter with updated timezone handling
+    log_format = "%(asctime)s - huntarr - %(levelname)s - %(message)s"
+    new_formatter = LocalTimeFormatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
+    
+    # Update main logger handlers
+    if logger:
+        for handler in logger.handlers:
+            handler.setFormatter(new_formatter)
+    
+    # Update all app logger handlers
+    for app_name, app_logger in app_loggers.items():
+        app_type = app_name.split('.')[-1] if '.' in app_name else app_name
+        app_format = f"%(asctime)s - huntarr.{app_type} - %(levelname)s - %(message)s"
+        app_formatter = LocalTimeFormatter(app_format, datefmt="%Y-%m-%d %H:%M:%S")
+        
+        for handler in app_logger.handlers:
+            handler.setFormatter(app_formatter)
+    
+    print("[Logger] Timezone formatters refreshed for all loggers")
 
 def debug_log(message: str, data: object = None, app_type: Optional[str] = None) -> None:
     """

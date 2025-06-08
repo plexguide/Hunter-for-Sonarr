@@ -357,12 +357,8 @@ def get_state_management_summary(app_type: str, instance_name: str) -> Dict[str,
 def _get_user_timezone():
     """Get the user's selected timezone from general settings"""
     try:
-        from src.primary.settings_manager import load_settings
-        import pytz
-        general_settings = load_settings("general")
-        timezone_name = general_settings.get("timezone", "UTC")
-        user_tz = pytz.timezone(timezone_name)
-        return user_tz
+        from src.primary.utils.timezone_utils import get_user_timezone
+        return get_user_timezone()
     except Exception as e:
         stateful_logger.warning(f"Could not get user timezone, defaulting to UTC: {e}")
         import pytz

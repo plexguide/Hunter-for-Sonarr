@@ -180,11 +180,8 @@ def clear_processed_ids(app_type: str = None) -> None:
 def _get_user_timezone():
     """Get the user's selected timezone from general settings"""
     try:
-        import pytz
-        general_settings = settings_manager.load_settings("general")
-        timezone_name = general_settings.get("timezone", "UTC")
-        user_tz = pytz.timezone(timezone_name)
-        return user_tz
+        from src.primary.utils.timezone_utils import get_user_timezone
+        return get_user_timezone()
     except Exception as e:
         logger.warning(f"Could not get user timezone, defaulting to UTC: {e}")
         import pytz

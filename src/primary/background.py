@@ -47,15 +47,8 @@ hourly_cap_scheduler_thread = None
 def _get_user_timezone():
     """Get the user's selected timezone from general settings"""
     try:
-        general_settings = settings_manager.load_settings("general")
-        timezone_name = general_settings.get("timezone", "UTC")
-        
-        # Import timezone handling
-        try:
-            user_tz = pytz.timezone(timezone_name)
-            return user_tz
-        except pytz.UnknownTimeZoneError:
-            return pytz.UTC
+        from src.primary.utils.timezone_utils import get_user_timezone
+        return get_user_timezone()
     except Exception:
         return pytz.UTC
 

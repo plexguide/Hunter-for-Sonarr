@@ -619,6 +619,13 @@ def save_general_settings():
                 timezone_success = settings_manager.apply_timezone(new_timezone)
                 if timezone_success:
                     general_logger.info(f"Successfully applied timezone {new_timezone}")
+                    # Refresh all logger formatters to use the new timezone
+                    try:
+                        from src.primary.utils.logger import refresh_timezone_formatters
+                        refresh_timezone_formatters()
+                        general_logger.info("Timezone formatters refreshed for all loggers")
+                    except Exception as e:
+                        general_logger.warning(f"Failed to refresh timezone formatters: {e}")
                 else:
                     general_logger.warning(f"Failed to apply timezone {new_timezone}, but settings saved")
             except Exception as e:

@@ -116,6 +116,14 @@ try:
     # Initialize main logger
     huntarr_logger = setup_main_logger()
     
+    # Initialize timezone from TZ environment variable
+    try:
+        from primary.settings_manager import initialize_timezone_from_env
+        initialize_timezone_from_env()
+        huntarr_logger.info("Timezone initialization completed.")
+    except Exception as e:
+        huntarr_logger.warning(f"Failed to initialize timezone from environment: {e}")
+    
     # Initialize clean logging for frontend consumption
     setup_clean_logging()
     huntarr_logger.info("Clean logging system initialized for frontend consumption.")
