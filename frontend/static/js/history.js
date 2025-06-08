@@ -530,7 +530,13 @@ const historyModule = {
                     seriesTitle = seriesTitle.replace(/\s*-\s*S\d+.*$/i, ''); // Remove "- S13 - COMPLETE SEASON PACK"
                     seriesTitle = seriesTitle.replace(/\s*-\s*Season\s+\d+.*$/i, ''); // Remove "- Season 13..."
                     seriesTitle = seriesTitle.replace(/\s*-\s*\w\d+\w\d+.*$/i, ''); // Remove "- S01E01..."
-                    seriesTitle = seriesTitle.replace(/\s*\(.*\)$/, ''); // Remove year or other parenthetical info
+                    
+                    // Handle country codes in parentheses - convert (US) to -us, etc.
+                    seriesTitle = seriesTitle.replace(/\s*\(([A-Z]{2,3})\)$/i, '-$1'); // Convert (US) to -US
+                    
+                    // Remove other parenthetical info like years
+                    seriesTitle = seriesTitle.replace(/\s*\(\d{4}\).*$/, ''); // Remove (2023) and anything after
+                    seriesTitle = seriesTitle.replace(/\s*\([^)]*\)$/, ''); // Remove other parenthetical info
                     
                     // Convert to slug format (lowercase, replace spaces and special chars with dashes)
                     const slug = seriesTitle
@@ -592,32 +598,35 @@ const historyModule = {
         titleSpan.style.whiteSpace = 'normal';
         titleSpan.style.overflow = 'visible';
         
-        // Try to get instance settings and create link
-        try {
-            const instanceSettings = await this.getInstanceSettings(entry.app_type, entry.instance_name);
-            
-            if (instanceSettings && instanceSettings.api_url) {
-                const directLink = this.generateDirectLink(entry.app_type, instanceSettings.api_url, entry.id, entry.processed_info);
+        // Only create links for Sonarr entries
+        if (entry.app_type && entry.app_type.toLowerCase() === 'sonarr') {
+            // Try to get instance settings and create link
+            try {
+                const instanceSettings = await this.getInstanceSettings(entry.app_type, entry.instance_name);
                 
-                if (directLink) {
-                    // Create clickable link
-                    const linkElement = document.createElement('a');
-                    linkElement.href = directLink;
-                    linkElement.target = '_blank';
-                    linkElement.rel = 'noopener noreferrer';
-                    linkElement.className = 'history-direct-link';
-                    linkElement.textContent = entry.processed_info;
-                    linkElement.title = `Open in ${entry.app_type.charAt(0).toUpperCase() + entry.app_type.slice(1)}`;
+                if (instanceSettings && instanceSettings.api_url) {
+                    const directLink = this.generateDirectLink(entry.app_type, instanceSettings.api_url, entry.id, entry.processed_info);
                     
-                    titleSpan.appendChild(linkElement);
-                    return titleSpan;
+                    if (directLink) {
+                        // Create clickable link
+                        const linkElement = document.createElement('a');
+                        linkElement.href = directLink;
+                        linkElement.target = '_blank';
+                        linkElement.rel = 'noopener noreferrer';
+                        linkElement.className = 'history-direct-link';
+                        linkElement.textContent = entry.processed_info;
+                        linkElement.title = `Open in ${entry.app_type.charAt(0).toUpperCase() + entry.app_type.slice(1)}`;
+                        
+                        titleSpan.appendChild(linkElement);
+                        return titleSpan;
+                    }
                 }
+            } catch (error) {
+                console.warn(`Could not create direct link for ${entry.app_type}-${entry.instance_name}:`, error);
             }
-        } catch (error) {
-            console.warn(`Could not create direct link for ${entry.app_type}-${entry.instance_name}:`, error);
         }
         
-        // Fallback to plain text if link creation fails
+        // Fallback to plain text for all non-Sonarr apps or if link creation fails
         titleSpan.textContent = entry.processed_info;
         return titleSpan;
     }
