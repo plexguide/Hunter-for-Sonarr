@@ -522,18 +522,18 @@ def tag_processed_author(api_url: str, api_key: str, api_timeout: int, author_id
                 # Get or create the tag
         tag_id = get_or_create_tag(api_url, api_key, api_timeout, tag_label)
         if tag_id is None:
-            readarr_logger.error(f"Failed to get or create tag '{tag_label}' in Readarr")
+            logger.error(f"Failed to get or create tag '{tag_label}' in Readarr")
             return False
             
         # Add the tag to the author
         success = add_tag_to_author(api_url, api_key, api_timeout, author_id, tag_id)
         if success:
-            readarr_logger.debug(f"Successfully tagged Readarr author {author_id} with '{tag_label}'")
+            logger.debug(f"Successfully tagged Readarr author {author_id} with '{tag_label}'")
             return True
         else:
-            readarr_logger.error(f"Failed to add tag '{tag_label}' to Readarr author {author_id}")
+            logger.error(f"Failed to add tag '{tag_label}' to Readarr author {author_id}")
             return False
             
     except Exception as e:
-        readarr_logger.error(f"Error tagging Readarr author {author_id} with '{tag_label}': {e}")
+        logger.error(f"Error tagging Readarr author {author_id} with '{tag_label}': {e}")
         return False
