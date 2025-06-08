@@ -62,6 +62,14 @@ const SettingsForms = {
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                             </label>
                         </div>
+                        <div class="setting-item swaparr-instance-toggle" style="display: none;">
+                            <label for="sonarr-swaparr-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html" class="info-icon" title="Enable Swaparr stalled download monitoring for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Swaparr Enabled:</label>
+                            <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                                <input type="checkbox" id="sonarr-swaparr-${index}" name="swaparr_enabled" ${instance.swaparr_enabled === true ? 'checked' : ''}>
+                                <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                            </label>
+                            <p class="setting-help">Enable Swaparr to monitor and remove stalled downloads for this Sonarr instance</p>
+                        </div>
                     </div>
                 </div>
             `;
@@ -243,6 +251,14 @@ const SettingsForms = {
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                             </label>
                         </div>
+                        <div class="setting-item swaparr-instance-toggle" style="display: none;">
+                            <label for="radarr-swaparr-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html" class="info-icon" title="Enable Swaparr stalled download monitoring for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Swaparr Enabled:</label>
+                            <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                                <input type="checkbox" id="radarr-swaparr-${index}" name="swaparr_enabled" ${instance.swaparr_enabled === true ? 'checked' : ''}>
+                                <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                            </label>
+                            <p class="setting-help">Enable Swaparr to monitor and remove stalled downloads for this Radarr instance</p>
+                        </div>
                     </div>
                 </div>
             `;
@@ -403,6 +419,14 @@ const SettingsForms = {
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                             </label>
                         </div>
+                        <div class="setting-item swaparr-instance-toggle" style="display: none;">
+                            <label for="lidarr-swaparr-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html" class="info-icon" title="Enable Swaparr stalled download monitoring for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Swaparr Enabled:</label>
+                            <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                                <input type="checkbox" id="lidarr-swaparr-${index}" name="swaparr_enabled" ${instance.swaparr_enabled === true ? 'checked' : ''}>
+                                <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                            </label>
+                            <p class="setting-help">Enable Swaparr to monitor and remove stalled downloads for this Lidarr instance</p>
+                        </div>
                     </div>
                 </div>
             `;
@@ -546,6 +570,14 @@ const SettingsForms = {
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                             </label>
                         </div>
+                        <div class="setting-item swaparr-instance-toggle" style="display: none;">
+                            <label for="readarr-swaparr-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html" class="info-icon" title="Enable Swaparr stalled download monitoring for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Swaparr Enabled:</label>
+                            <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                                <input type="checkbox" id="readarr-swaparr-${index}" name="swaparr_enabled" ${instance.swaparr_enabled === true ? 'checked' : ''}>
+                                <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                            </label>
+                            <p class="setting-help">Enable Swaparr to monitor and remove stalled downloads for this Readarr instance</p>
+                        </div>
                     </div>
                 </div>
             `;
@@ -680,6 +712,14 @@ const SettingsForms = {
                                 <input type="checkbox" id="whisparr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                             </label>
+                        </div>
+                        <div class="setting-item swaparr-instance-toggle" style="display: none;">
+                            <label for="whisparr-swaparr-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html" class="info-icon" title="Enable Swaparr stalled download monitoring for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Swaparr Enabled:</label>
+                            <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                                <input type="checkbox" id="whisparr-swaparr-${index}" name="swaparr_enabled" ${instance.swaparr_enabled === true ? 'checked' : ''}>
+                                <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                            </label>
+                            <p class="setting-help">Enable Swaparr to monitor and remove stalled downloads for this Whisparr instance</p>
                         </div>
                     </div>
                 </div>
@@ -819,6 +859,14 @@ const SettingsForms = {
                                 <input type="checkbox" id="eros-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                             </label>
+                        </div>
+                        <div class="setting-item swaparr-instance-toggle" style="display: none;">
+                            <label for="eros-swaparr-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html" class="info-icon" title="Enable Swaparr stalled download monitoring for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Swaparr Enabled:</label>
+                            <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                                <input type="checkbox" id="eros-swaparr-${index}" name="swaparr_enabled" ${instance.swaparr_enabled === true ? 'checked' : ''}>
+                                <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                            </label>
+                            <p class="setting-help">Enable Swaparr to monitor and remove stalled downloads for this Eros instance</p>
                         </div>
                     </div>
                 </div>
@@ -996,6 +1044,23 @@ const SettingsForms = {
                     </label>
                     <p class="setting-help">Test mode - logs what would be removed without actually removing anything</p>
                 </div>
+                
+                <div class="setting-item">
+                    <label for="swaparr_sleep_duration">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#sleep-duration" class="info-icon" title="Time between Swaparr cycles" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Sleep Duration:
+                    </label>
+                    <div class="input-group" style="display: flex; align-items: center; gap: 10px;">
+                        <input type="number" id="swaparr_sleep_duration" value="${settings.sleep_duration || 900}" min="60" max="86400" style="width: 120px;">
+                        <span style="color: #9ca3af; font-size: 14px;">seconds</span>
+                        <span id="swaparrSleepDisplay" style="color: #6b7280; font-size: 13px; margin-left: 10px;">
+                            (${this.convertSecondsToReadable(settings.sleep_duration || 900)})
+                        </span>
+                    </div>
+                    <p class="setting-help">Time to wait between Swaparr processing cycles (default: 900 seconds / 15 minutes)</p>
+                </div>
             </div>
             
             <div class="settings-group">
@@ -1039,6 +1104,31 @@ const SettingsForms = {
         
         if (resetBtn) {
             resetBtn.addEventListener('click', () => this.resetSwaparrData(resetBtn));
+        }
+        
+        // Add event listener for sleep duration display update
+        const sleepInput = container.querySelector('#swaparr_sleep_duration');
+        if (sleepInput) {
+            sleepInput.addEventListener('input', () => {
+                const display = container.querySelector('#swaparrSleepDisplay');
+                if (display) {
+                    const seconds = parseInt(sleepInput.value) || 900;
+                    display.textContent = `(${this.convertSecondsToReadable(seconds)})`;
+                }
+            });
+        }
+
+        // Add event listener for global Swaparr enabled toggle to control instance visibility
+        const swaparrEnabledToggle = container.querySelector('#swaparr_enabled');
+        if (swaparrEnabledToggle) {
+            swaparrEnabledToggle.addEventListener('change', () => {
+                this.updateSwaparrInstanceVisibility();
+            });
+            
+            // Initial visibility update
+            setTimeout(() => {
+                this.updateSwaparrInstanceVisibility();
+            }, 100);
         }
     },
     
@@ -1228,6 +1318,47 @@ const SettingsForms = {
         return date.toLocaleString('en-US', options);
     },
     
+    // Convert seconds to readable format
+    convertSecondsToReadable: function(seconds) {
+        if (!seconds || seconds <= 0) return '0 seconds';
+        
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const remainingSeconds = seconds % 60;
+        
+        const parts = [];
+        if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+        if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+        if (remainingSeconds > 0 && hours === 0) parts.push(`${remainingSeconds} second${remainingSeconds > 1 ? 's' : ''}`);
+        
+        return parts.join(', ') || '0 seconds';
+    },
+
+    // Toggle visibility of Swaparr instance controls based on global Swaparr enabled state
+    updateSwaparrInstanceVisibility: function() {
+        // Check if global Swaparr is enabled
+        const swaparrEnabledToggle = document.querySelector('#swaparr_enabled');
+        const swaparrEnabled = swaparrEnabledToggle ? swaparrEnabledToggle.checked : false;
+        
+        // Find all Swaparr instance toggles
+        const swaparrInstanceToggles = document.querySelectorAll('.swaparr-instance-toggle');
+        
+        // Show/hide based on global Swaparr enabled state
+        swaparrInstanceToggles.forEach(toggle => {
+            toggle.style.display = swaparrEnabled ? 'block' : 'none';
+        });
+        
+        console.log(`Swaparr instance toggles ${swaparrEnabled ? 'shown' : 'hidden'} based on global setting`);
+    },
+    
+    // Global function to update Swaparr instance visibility (called when settings are loaded)
+    updateAllSwaparrInstanceVisibility: function() {
+        // Add small delay to ensure DOM is ready
+        setTimeout(() => {
+            this.updateSwaparrInstanceVisibility();
+        }, 200);
+    },
+    
     // Get settings from form
     getFormSettings: function(container, appType) {
         let settings = {};
@@ -1334,11 +1465,13 @@ const SettingsForms = {
                 const urlInput = instance.querySelector('input[name="api_url"]');
                 const keyInput = instance.querySelector('input[name="api_key"]');
                 const enabledInput = instance.querySelector('input[name="enabled"]');
+                const swaparrEnabledInput = instance.querySelector('input[name="swaparr_enabled"]');
                 
                 const name = nameInput ? nameInput.value : null;
                 const url = urlInput ? urlInput.value : null;
                 const key = keyInput ? keyInput.value : null;
                 const enabled = enabledInput ? enabledInput.checked : true; // Default to enabled if checkbox not found
+                const swaparrEnabled = swaparrEnabledInput ? swaparrEnabledInput.checked : false; // Default to disabled
                 
                 if (!name || !url || !key) {
                     console.warn(`Instance ${index} is missing required fields`);
@@ -1348,7 +1481,8 @@ const SettingsForms = {
                     name: name || `Instance ${index + 1}`,
                     api_url: url || "",
                     api_key: key || "",
-                    enabled: enabled
+                    enabled: enabled,
+                    swaparr_enabled: swaparrEnabled
                 };
                 
                 instances.push(instanceObj);
@@ -1442,6 +1576,7 @@ const SettingsForms = {
                 settings.ignore_above_size = getInputValue('#swaparr_ignore_above_size', '25GB');
                 settings.remove_from_client = getInputValue('#swaparr_remove_from_client', true);
                 settings.dry_run = getInputValue('#swaparr_dry_run', false);
+                settings.sleep_duration = getInputValue('#swaparr_sleep_duration', 900);
             }
         }
         
@@ -2039,6 +2174,14 @@ const SettingsForms = {
                                     <input type="checkbox" id="${appType}-enabled-${newIndex}" name="enabled" checked>
                                     <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                                 </label>
+                            </div>
+                            <div class="setting-item swaparr-instance-toggle" style="display: none;">
+                                <label for="${appType}-swaparr-${newIndex}">Swaparr Enabled:</label>
+                                <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                                    <input type="checkbox" id="${appType}-swaparr-${newIndex}" name="swaparr_enabled">
+                                    <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                                </label>
+                                <p class="setting-help">Enable Swaparr to monitor and remove stalled downloads for this ${appType} instance</p>
                             </div>
                         </div>
                     </div>

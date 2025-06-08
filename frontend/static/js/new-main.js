@@ -1011,6 +1011,12 @@ let huntarrUI = {
                     SettingsForms.updateDurationDisplay();
                 }
                 
+                // Update Swaparr instance visibility based on global setting
+                if (typeof SettingsForms !== 'undefined' && 
+                    typeof SettingsForms.updateAllSwaparrInstanceVisibility === 'function') {
+                    SettingsForms.updateAllSwaparrInstanceVisibility();
+                }
+                
                 // Load stateful info immediately, don't wait for loadAllSettings to complete
                 this.loadStatefulInfo();
             })
@@ -1037,6 +1043,15 @@ let huntarrUI = {
                         SettingsForms.updateDurationDisplay();
                     } catch (e) {
                         console.error(`[huntarrUI] Error updating duration display:`, e);
+                    }
+                }
+                
+                // Update Swaparr instance visibility based on global setting
+                if (typeof SettingsForms.updateAllSwaparrInstanceVisibility === 'function') {
+                    try {
+                        SettingsForms.updateAllSwaparrInstanceVisibility();
+                    } catch (e) {
+                        console.error(`[huntarrUI] Error updating Swaparr instance visibility:`, e);
                     }
                 }
             } else {

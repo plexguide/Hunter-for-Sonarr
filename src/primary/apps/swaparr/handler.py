@@ -20,7 +20,6 @@ from typing import Dict, List, Any, Optional
 
 from src.primary.utils.logger import get_logger
 from src.primary.settings_manager import load_settings
-from src.primary.stats_manager import increment_stat
 from src.primary.utils.config_paths import SWAPARR_DIR
 
 # Create logger
@@ -331,7 +330,13 @@ def process_stalled_downloads(app_name, app_settings, swaparr_settings=None):
         swaparr_settings = load_settings("swaparr")
     
     if not swaparr_settings or not swaparr_settings.get("enabled", False):
-        swaparr_logger.debug(f"Swaparr is disabled, skipping {app_name} instance: {app_settings.get('instance_name', 'Unknown')}")
+        swaparr_logger.debug(f"Swaparr is globally disabled, skipping {app_name} instance: {app_settings.get('instance_name', 'Unknown')}")
+        return
+    
+    # Check if Swaparr is enabled for this specific instance
+    instance_swaparr_enabled = app_settings.get('swaparr_enabled', False)
+    if not instance_swaparr_enabled:
+        swaparr_logger.debug(f"Swaparr is disabled for {app_name} instance: {app_settings.get('instance_name', 'Unknown')}")
         return
     
     instance_name = app_settings.get('instance_name', 'Unknown')
@@ -425,8 +430,7 @@ def process_stalled_downloads(app_name, app_settings, swaparr_settings=None):
                         swaparr_logger.info(f"Re-removed previously removed download: {item['name']}")
                         # Update the removal time
                         removed_items[item_hash]["removed_time"] = datetime.utcnow().isoformat()
-                        # Increment stats
-                        increment_stat("swaparr", "removed")
+                        # Note: Swaparr uses its own statistics system (SWAPARR_STATS), not the hunting stats manager
                 else:
                     swaparr_logger.info(f"DRY RUN: Would have re-removed previously removed download: {item['name']}")
                 
@@ -530,8 +534,7 @@ def process_stalled_downloads(app_name, app_settings, swaparr_settings=None):
                             "reason": strike_reason
                         }
                         
-                        # Increment stats
-                        increment_stat("swaparr", "removed")
+                        # Note: Swaparr uses its own statistics system (SWAPARR_STATS), not the hunting stats manager
                 else:
                     swaparr_logger.info(f"DRY RUN: Would have removed {item['name']} after {max_strikes} strikes")
                 
