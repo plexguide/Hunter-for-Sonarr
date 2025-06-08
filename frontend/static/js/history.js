@@ -503,20 +503,68 @@ const historyModule = {
     },
     
     // Generate direct link to item in *arr application
-    generateDirectLink: function(appType, instanceUrl, itemId) {
-        if (!instanceUrl || !itemId) return null;
+    generateDirectLink: function(appType, instanceUrl, itemId, title) {
+        if (!instanceUrl) return null;
         
-        // Ensure URL doesn't end with slash
-        const baseUrl = instanceUrl.replace(/\/$/, '');
+        // Ensure URL doesn't end with slash and remove any localhost prefix
+        let baseUrl = instanceUrl.replace(/\/$/, '');
+        
+        // Remove localhost:9705 prefix if present (this happens when the instance URL gets prepended)
+        baseUrl = baseUrl.replace(/^.*localhost:\d+\//, '');
+        
+        // Ensure we have http:// or https:// prefix
+        if (!baseUrl.match(/^https?:\/\//)) {
+            baseUrl = 'http://' + baseUrl;
+        }
         
         // Generate appropriate path based on app type
         let path;
         switch (appType.toLowerCase()) {
             case 'sonarr':
-                path = `/series/${itemId}`;
+                // Sonarr uses title-based slugs, not IDs
+                if (title) {
+                    // Extract series title from the full title (remove season info, episode info, etc.)
+                    let seriesTitle = title;
+                    
+                    // Remove season and episode information
+                    seriesTitle = seriesTitle.replace(/\s*-\s*S\d+.*$/i, ''); // Remove "- S13 - COMPLETE SEASON PACK"
+                    seriesTitle = seriesTitle.replace(/\s*-\s*Season\s+\d+.*$/i, ''); // Remove "- Season 13..."
+                    seriesTitle = seriesTitle.replace(/\s*-\s*\w\d+\w\d+.*$/i, ''); // Remove "- S01E01..."
+                    seriesTitle = seriesTitle.replace(/\s*\(.*\)$/, ''); // Remove year or other parenthetical info
+                    
+                    // Convert to slug format (lowercase, replace spaces and special chars with dashes)
+                    const slug = seriesTitle
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[^\w\s-]/g, '') // Remove special characters except dashes and spaces
+                        .replace(/\s+/g, '-') // Replace spaces with dashes
+                        .replace(/-+/g, '-') // Replace multiple dashes with single dash
+                        .replace(/^-|-$/g, ''); // Remove leading/trailing dashes
+                    
+                    path = `/series/${slug}`;
+                } else {
+                    // Fallback to ID if no title available
+                    path = `/series/${itemId}`;
+                }
                 break;
             case 'radarr':
-                path = `/movie/${itemId}`;
+                // Radarr also uses title-based slugs
+                if (title) {
+                    // Extract movie title (remove year and other info)
+                    let movieTitle = title.replace(/\s*\(\d{4}\).*$/, ''); // Remove (2023) and anything after
+                    
+                    const slug = movieTitle
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[^\w\s-]/g, '')
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-')
+                        .replace(/^-|-$/g, '');
+                    
+                    path = `/movie/${slug}`;
+                } else {
+                    path = `/movie/${itemId}`;
+                }
                 break;
             case 'lidarr':
                 path = `/artist/${itemId}`;
@@ -549,7 +597,7 @@ const historyModule = {
             const instanceSettings = await this.getInstanceSettings(entry.app_type, entry.instance_name);
             
             if (instanceSettings && instanceSettings.api_url) {
-                const directLink = this.generateDirectLink(entry.app_type, instanceSettings.api_url, entry.id);
+                const directLink = this.generateDirectLink(entry.app_type, instanceSettings.api_url, entry.id, entry.processed_info);
                 
                 if (directLink) {
                     // Create clickable link
