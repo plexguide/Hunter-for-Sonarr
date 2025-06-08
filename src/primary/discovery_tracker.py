@@ -100,7 +100,7 @@ def get_sonarr_wanted_episodes(instance: Dict[str, Any]) -> List[Dict[str, Any]]
             logger.info(f"Retrieved {len(response['records'])} wanted episodes from Sonarr instance: {instance.get('name', 'Unknown')}")
             return response["records"]
         else:
-            logger.warning(f"No wanted episodes found for Sonarr instance: {instance.get('name', 'Unknown')}")
+            logger.debug(f"No wanted episodes found for Sonarr instance: {instance.get('name', 'Unknown')}")
             return []
             
     except Exception as e:
