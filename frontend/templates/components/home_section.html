@@ -69,11 +69,34 @@
         .stats-card .card-header {
             padding: 8px 20px !important; /* 50% reduction from original 16px */
             min-height: 0 !important;
+            /* Firefox-specific fix for text blurriness on hover */
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            -moz-backface-visibility: hidden;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            -moz-transform: translateZ(0);
+            will-change: auto;
+            text-rendering: geometricPrecision;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         .stats-card .card-header h3 {
             font-size: 16px !important; /* Slightly smaller font size */
             line-height: 1.2 !important; /* Tighter line height */
+            /* Additional Firefox text clarity fixes */
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            -moz-backface-visibility: hidden;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            -moz-transform: translateZ(0);
+            text-rendering: geometricPrecision;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            /* Prevent inheritance of child transform effects */
+            isolation: isolate;
         }
         
         .stats-card .card-header .action-button {
