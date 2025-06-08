@@ -34,7 +34,7 @@ def test_connection():
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
         radarr_logger.warning(f"API URL missing http(s) scheme: {api_url}")
         api_url = f"http://{api_url}"
-        radarr_logger.warning(f"Auto-correcting URL to: {api_url}")
+        radarr_logger.debug(f"Auto-correcting URL to: {api_url}")
     
     # Try to establish a socket connection first to check basic connectivity
     parsed_url = urlparse(api_url)

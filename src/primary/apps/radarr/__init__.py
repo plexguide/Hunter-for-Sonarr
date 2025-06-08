@@ -32,9 +32,9 @@ def get_configured_instances():
 
                 # Enhanced URL validation - ensure URL has proper scheme
                 if api_url and not (api_url.startswith('http://') or api_url.startswith('https://')):
-                    radarr_logger.warning(f"Instance '{instance.get('name', 'Unnamed')}' has URL without http(s) scheme: {api_url}")
+                    radarr_logger.debug(f"Instance '{instance.get('name', 'Unnamed')}' has URL without http(s) scheme: {api_url}")
+                    radarr_logger.debug(f"Auto-correcting URL to: {api_url}")
                     api_url = f"http://{api_url}"
-                    radarr_logger.warning(f"Auto-correcting URL to: {api_url}")
 
                 # Create a settings object for this instance by combining global settings with instance-specific ones
                 instance_settings = settings.copy()

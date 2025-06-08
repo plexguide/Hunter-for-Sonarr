@@ -207,7 +207,7 @@ def process_missing_movies(
                 else:
                     # No valid release dates found at all, include in search to be safe
                     should_include = True
-                    radarr_logger.warning(f"Movie ID {movie.get('id')} ('{movie.get('title')}') has no physicalRelease, digitalRelease, inCinemas, or releaseDate fields - including in search but this may indicate missing metadata in Radarr")
+                    radarr_logger.debug(f"Movie ID {movie.get('id')} ('{movie.get('title')}') has no physicalRelease, digitalRelease, inCinemas, or releaseDate fields - including in search but this may indicate missing metadata in Radarr")
             
             if should_include:
                 filtered_movies.append(movie)

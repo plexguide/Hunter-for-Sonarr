@@ -44,9 +44,9 @@ def get_configured_instances():
 
             # Enhanced URL validation - ensure URL has proper scheme
             if api_url and not (api_url.startswith('http://') or api_url.startswith('https://')):
-                eros_logger.warning(f"Instance '{instance.get('name', 'Unnamed')}' has URL without http(s) scheme: {api_url}")
+                eros_logger.debug(f"Instance '{instance.get('name', 'Unnamed')}' has URL without http(s) scheme: {api_url}")
                 api_url = f"http://{api_url}"
-                eros_logger.warning(f"Auto-correcting URL to: {api_url}")
+                eros_logger.debug(f"Auto-correcting URL to: {api_url}")
 
             is_enabled = instance.get("enabled", True)
 

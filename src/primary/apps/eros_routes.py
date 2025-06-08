@@ -26,7 +26,7 @@ def test_connection(url, api_key):
     if not (url.startswith('http://') or url.startswith('https://')):
         eros_logger.warning(f"API URL missing http(s) scheme: {url}")
         url = f"http://{url}"
-        eros_logger.warning(f"Auto-correcting URL to: {url}")
+        eros_logger.debug(f"Auto-correcting URL to: {url}")
     
     # Try to establish a socket connection first to check basic connectivity
     parsed_url = urlparse(url)
@@ -179,7 +179,7 @@ def test_connection_endpoint():
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
         eros_logger.warning(f"API URL missing http(s) scheme: {api_url}")
         api_url = f"http://{api_url}"
-        eros_logger.warning(f"Auto-correcting URL to: {api_url}")
+        eros_logger.debug(f"Auto-correcting URL to: {api_url}")
     
     return test_connection(api_url, api_key)
 

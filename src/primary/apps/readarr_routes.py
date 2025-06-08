@@ -33,7 +33,7 @@ def test_connection():
     if not (api_url.startswith('http://') or api_url.startswith('https://')):
         readarr_logger.warning(f"API URL missing http(s) scheme: {api_url}")
         api_url = f"http://{api_url}"
-        readarr_logger.warning(f"Auto-correcting URL to: {api_url}")
+        readarr_logger.debug(f"Auto-correcting URL to: {api_url}")
     
     # For Readarr, use api/v1
     url = f"{api_url}/api/v1/system/status"
