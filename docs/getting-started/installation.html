@@ -246,13 +246,21 @@
                         <li>Navigate to the directory:
                             <pre class="terminal"><code class="command-prompt">cd Huntarr.io</code></pre>
                         </li>
+                        <li><strong>Create and activate a virtual environment (recommended for Ubuntu 24.04+):</strong>
+                            <pre class="terminal"><code class="command-prompt">python3 -m venv huntarr-env
+source huntarr-env/bin/activate  # On Windows: huntarr-env\Scripts\activate</code></pre>
+                        </li>
                         <li>Install Python dependencies:
                             <pre class="terminal"><code class="command-prompt">pip install -r requirements.txt</code></pre>
                         </li>
                         <li>Run the application:
-                            <pre class="terminal"><code class="command-prompt">python run.py</code></pre>
+                            <pre class="terminal"><code class="command-prompt">python3 main.py</code></pre>
                         </li>
                     </ol>
+                    
+                    <div class="alert alert-info">
+                        <strong>Note for Ubuntu 24.04+ users:</strong> Modern Ubuntu versions require the use of virtual environments to prevent conflicts with system packages. The virtual environment step is highly recommended to avoid installation issues.
+                    </div>
                 </div>
             </section>
             
