@@ -28,6 +28,7 @@ APP_LOG_FILES = {
     "readarr": LOG_DIR / "readarr.log", # Updated filename
     "whisparr": LOG_DIR / "whisparr.log", # Added Whisparr
     "eros": LOG_DIR / "eros.log",      # Added Eros for Whisparr V3
+    "swaparr": LOG_DIR / "swaparr.log",  # Added Swaparr for stalled download management
     "hunting": LOG_DIR / "hunting.log"  # Added Hunt Manager - fixed key
 }
 

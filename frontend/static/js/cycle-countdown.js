@@ -11,7 +11,7 @@ window.CycleCountdown = (function() {
     // Track apps that are currently running cycles
     const runningCycles = {};
     // List of apps to track
-    const trackedApps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'whisparr-v3', 'eros'];
+    const trackedApps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'whisparr-v3', 'eros', 'swaparr'];
     
     // Get base URL for API calls, respecting subpath configuration
     function getBaseUrl() {

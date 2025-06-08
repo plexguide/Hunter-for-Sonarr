@@ -138,7 +138,7 @@ async function fetchAppInstances() {
     console.debug('Fetching app instances from list.json for scheduler dropdown'); // DEBUG level per user preference
     
     // Define the app types we support (for fallback)
-    const appTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'bazarr'];
+    const appTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr', 'bazarr'];
     const instances = {};
     
     // Initialize all app types with empty arrays

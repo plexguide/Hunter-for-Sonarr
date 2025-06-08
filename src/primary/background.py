@@ -384,6 +384,25 @@ def app_specific_loop(app_type: str) -> None:
                 except Exception as e:
                     app_logger.error(f"Error during upgrade processing for {instance_name}: {e}", exc_info=True)
 
+            # --- Process Swaparr (stalled downloads) --- #
+            try:
+                # Try to import Swaparr module
+                from src.primary.apps.swaparr.handler import process_stalled_downloads
+                from src.primary.settings_manager import load_settings as swaparr_load_settings
+                
+                # Check if Swaparr is enabled
+                swaparr_settings = swaparr_load_settings("swaparr")
+                if swaparr_settings and swaparr_settings.get("enabled", False):
+                    app_logger.info(f"Running Swaparr stalled download detection on {app_type} instance: {instance_name}")
+                    process_stalled_downloads(app_type, combined_settings, swaparr_settings)
+                    app_logger.info(f"Completed Swaparr processing for {app_type} instance: {instance_name}")
+                else:
+                    app_logger.debug(f"Swaparr is disabled, skipping stalled download processing for {app_type} instance: {instance_name}")
+            except ImportError as e:
+                app_logger.debug(f"Swaparr module not available for {instance_name}: {e}")
+            except Exception as e:
+                app_logger.error(f"Error during Swaparr processing for {instance_name}: {e}", exc_info=True)
+
             # Small delay between instances if needed (optional)
             if not stop_event.is_set():
                  time.sleep(1) # Short pause

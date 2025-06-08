@@ -25,6 +25,7 @@ CLEAN_LOG_FILES = {
     "readarr": LOG_DIR / "clean_readarr.log",
     "whisparr": LOG_DIR / "clean_whisparr.log",
     "eros": LOG_DIR / "clean_eros.log",
+    "swaparr": LOG_DIR / "clean_swaparr.log",
     "hunting": LOG_DIR / "clean_hunting.log"
 }
 
@@ -105,6 +106,7 @@ class CleanLogFormatter(logging.Formatter):
             r'^\[readarr\]\s*',
             r'^\[whisparr\]\s*',
             r'^\[eros\]\s*',
+            r'^\[swaparr\]\s*',
             r'^\[hunting\]\s*',
         ]
         
@@ -147,6 +149,7 @@ class CleanLogFormatter(logging.Formatter):
             'readarr': 'readarr',
             'whisparr': 'whisparr',
             'eros': 'eros',
+            'swaparr': 'swaparr',
             'hunting': 'hunting',
         }
         

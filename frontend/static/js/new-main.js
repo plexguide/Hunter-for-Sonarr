@@ -22,7 +22,8 @@ let huntarrUI = {
         lidarr: false,
         readarr: false, // Added readarr
         whisparr: false, // Added whisparr
-        eros: false // Added eros
+        eros: false, // Added eros
+        swaparr: false // Added swaparr
     },
     originalSettings: {}, // Store the full original settings object
     settingsChanged: false, // Flag to track unsaved settings changes
@@ -1001,6 +1002,7 @@ let huntarrUI = {
                 if (data.readarr) this.populateSettingsForm('readarr', data.readarr);
                 if (data.whisparr) this.populateSettingsForm('whisparr', data.whisparr);
                 if (data.eros) this.populateSettingsForm('eros', data.eros);
+                if (data.swaparr) this.populateSettingsForm('swaparr', data.swaparr);
                 if (data.general) this.populateSettingsForm('general', data.general);
                 
                 // Update duration displays (like sleep durations)
@@ -1762,7 +1764,7 @@ let huntarrUI = {
         let totalConfigured = statusData?.total_configured ?? 0;
         
         // For all *arr apps, 'isConfigured' means at least one instance is configured
-        if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros'].includes(app)) {
+        if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'].includes(app)) {
             isConfigured = totalConfigured > 0;
             // For *arr apps, 'isConnected' means at least one instance is connected
             isConnected = isConfigured && connectedCount > 0; 
@@ -1786,7 +1788,7 @@ let huntarrUI = {
         }
 
         // --- Badge Update Logic (only runs if configured) ---
-        if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros'].includes(app)) {
+        if (['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'].includes(app)) {
             // *Arr specific badge text (already checked isConfigured)
             statusElement.innerHTML = `<i class="fas fa-plug"></i> Connected ${connectedCount}/${totalConfigured}`;
             statusElement.className = 'status-badge ' + (isConnected ? 'connected' : 'error');
@@ -2022,11 +2024,12 @@ let huntarrUI = {
     
     updateStatsDisplay: function(stats) {
         // Update each app's statistics
-        const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros'];
+        const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'];
         const statTypes = ['hunted', 'upgraded'];
         
         // More robust low usage mode detection - check multiple sources
         const isLowUsageMode = this.isLowUsageModeEnabled();
+        
         
         console.log(`[huntarrUI] updateStatsDisplay - Low usage mode: ${isLowUsageMode}`);
         

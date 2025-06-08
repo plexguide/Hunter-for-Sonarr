@@ -909,6 +909,309 @@ const SettingsForms = {
         this.updateDurationDisplay();
     },
     
+    // Generate Swaparr settings form
+    generateSwaparrForm: function(container, settings = {}) {
+        // Add data-app-type attribute to container
+        container.setAttribute('data-app-type', 'swaparr');
+        
+        const html = `
+            <div class="settings-group">
+                <h3>Swaparr Configuration</h3>
+                <p class="setting-help" style="margin-bottom: 20px; color: #9ca3af;">
+                    Swaparr monitors your *arr applications' download queues and removes stalled downloads automatically.
+                    Based on <a href="https://github.com/ThijmenGThN/swaparr" target="_blank" style="color: #3b82f6;">Swaparr v0.10.0</a>.
+                </p>
+                
+                <div class="setting-item">
+                    <label for="swaparr_enabled">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#enable-swaparr" class="info-icon" title="Enable or disable Swaparr" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Enable Swaparr:
+                    </label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="swaparr_enabled" ${settings.enabled === true ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Enable automatic removal of stalled downloads</p>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="swaparr_max_strikes">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#max-strikes" class="info-icon" title="Number of strikes before removal" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Max Strikes:
+                    </label>
+                    <input type="number" id="swaparr_max_strikes" min="1" max="10" value="${settings.max_strikes || 3}">
+                    <p class="setting-help">Number of strikes a download gets before being removed (default: 3)</p>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="swaparr_max_download_time">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#max-download-time" class="info-icon" title="Maximum time before considering download stalled" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Max Download Time:
+                    </label>
+                    <input type="text" id="swaparr_max_download_time" value="${settings.max_download_time || '2h'}" placeholder="e.g., 2h, 120m, 7200s">
+                    <p class="setting-help">Maximum time before considering a download stalled (examples: 2h, 120m, 7200s)</p>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="swaparr_ignore_above_size">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#ignore-above-size" class="info-icon" title="Ignore downloads larger than this size" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Ignore Above Size:
+                    </label>
+                    <input type="text" id="swaparr_ignore_above_size" value="${settings.ignore_above_size || '25GB'}" placeholder="e.g., 25GB, 10GB, 5000MB">
+                    <p class="setting-help">Ignore downloads larger than this size (examples: 25GB, 10GB, 5000MB)</p>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="swaparr_remove_from_client">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#remove-from-client" class="info-icon" title="Remove downloads from download client" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Remove from Client:
+                    </label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="swaparr_remove_from_client" ${settings.remove_from_client !== false ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Also remove downloads from the download client (recommended: enabled)</p>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="swaparr_dry_run">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#dry-run-mode" class="info-icon" title="Test mode - no actual removals" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Dry Run Mode:
+                    </label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="swaparr_dry_run" ${settings.dry_run === true ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Test mode - logs what would be removed without actually removing anything</p>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Swaparr Status</h3>
+                <div id="swaparrStatus" class="status-panel">
+                    <div class="loading-panel">
+                        <i class="fas fa-spinner fa-spin"></i> Loading status...
+                    </div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button type="button" id="testSwaparrBtn" class="btn btn-secondary" style="background-color: #6366f1; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-right: 10px;">
+                        <i class="fas fa-vial"></i> Test Configuration
+                    </button>
+                    <button type="button" id="runSwaparrBtn" class="btn btn-secondary" style="background-color: #059669; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-right: 10px;">
+                        <i class="fas fa-play"></i> Run Now
+                    </button>
+                    <button type="button" id="resetSwaparrBtn" class="btn btn-secondary" style="background-color: #dc2626; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                        <i class="fas fa-undo"></i> Reset Data
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        
+        // Load status immediately
+        this.loadSwaparrStatus(container);
+        
+        // Set up button event listeners
+        const testBtn = container.querySelector('#testSwaparrBtn');
+        const runBtn = container.querySelector('#runSwaparrBtn');
+        const resetBtn = container.querySelector('#resetSwaparrBtn');
+        
+        if (testBtn) {
+            testBtn.addEventListener('click', () => this.testSwaparrConfig(testBtn));
+        }
+        
+        if (runBtn) {
+            runBtn.addEventListener('click', () => this.runSwaparrNow(runBtn));
+        }
+        
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.resetSwaparrData(resetBtn));
+        }
+    },
+    
+    // Load Swaparr status
+    loadSwaparrStatus: function(container) {
+        const statusPanel = container.querySelector('#swaparrStatus');
+        if (!statusPanel) return;
+        
+        HuntarrUtils.fetchWithTimeout('./api/swaparr/status')
+            .then(response => response.json())
+            .then(data => {
+                const sessionStats = data.session_statistics || {};
+                const appStats = data.app_statistics || {};
+                const settings = data.settings || {};
+                
+                let statusHtml = `
+                    <div class="status-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        <div class="stat-item">
+                            <div class="stat-label">Session Processed</div>
+                            <div class="stat-value" style="color: #3b82f6;">${sessionStats.processed || 0}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Session Strikes</div>
+                            <div class="stat-value" style="color: #f59e0b;">${sessionStats.strikes || 0}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Session Removals</div>
+                            <div class="stat-value" style="color: #ef4444;">${sessionStats.removals || 0}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Session Ignored</div>
+                            <div class="stat-value" style="color: #6b7280;">${sessionStats.ignored || 0}</div>
+                        </div>
+                    </div>
+                `;
+                
+                if (Object.keys(appStats).length > 0) {
+                    statusHtml += `
+                        <div class="app-stats" style="margin-top: 15px;">
+                            <h4>Per-App Statistics</h4>
+                            <div class="app-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                    `;
+                    
+                    Object.entries(appStats).forEach(([app, stats]) => {
+                        statusHtml += `
+                            <div class="app-stat">
+                                <div class="app-name" style="font-weight: bold; text-transform: capitalize;">${app}</div>
+                                <div class="app-stats-detail" style="font-size: 12px; color: #9ca3af;">
+                                    P: ${stats.processed || 0} | S: ${stats.strikes || 0} | R: ${stats.removals || 0}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    statusHtml += `
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Configuration summary
+                statusHtml += `
+                    <div class="config-summary" style="margin-top: 15px; padding: 10px; background-color: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <h4>Current Configuration</h4>
+                        <div style="font-size: 13px; color: #d1d5db;">
+                            <div>Max Strikes: <span style="color: #3b82f6;">${settings.max_strikes || 3}</span></div>
+                            <div>Max Download Time: <span style="color: #3b82f6;">${settings.max_download_time || '2h'}</span></div>
+                            <div>Ignore Above Size: <span style="color: #3b82f6;">${settings.ignore_above_size || '25GB'}</span></div>
+                            <div>Dry Run: <span style="color: ${settings.dry_run ? '#f59e0b' : '#10b981'};">${settings.dry_run ? 'Enabled' : 'Disabled'}</span></div>
+                        </div>
+                    </div>
+                `;
+                
+                statusPanel.innerHTML = statusHtml;
+            })
+            .catch(error => {
+                console.error('Error loading Swaparr status:', error);
+                statusPanel.innerHTML = `
+                    <div class="error-message" style="color: #ef4444; text-align: center;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Failed to load status. Check if any *arr apps are configured.
+                    </div>
+                `;
+            });
+    },
+    
+    // Test Swaparr configuration
+    testSwaparrConfig: function(button) {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+        button.disabled = true;
+        
+        HuntarrUtils.fetchWithTimeout('./api/swaparr/test', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                
+                if (data.success) {
+                    alert(`Test successful!\n\nFound ${data.total_apps || 0} configured apps:\n${(data.configured_apps || []).join(', ') || 'None'}`);
+                } else {
+                    alert(`Test failed: ${data.message || 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                alert(`Test failed: ${error.message}`);
+            });
+    },
+    
+    // Run Swaparr now
+    runSwaparrNow: function(button) {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
+        button.disabled = true;
+        
+        HuntarrUtils.fetchWithTimeout('./api/swaparr/run', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                
+                if (data.success) {
+                    alert('Swaparr processing triggered successfully! Check logs for details.');
+                    // Reload status after a short delay
+                    setTimeout(() => {
+                        const container = button.closest('.settings-group').parentElement;
+                        this.loadSwaparrStatus(container);
+                    }, 2000);
+                } else {
+                    alert(`Run failed: ${data.message || 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                alert(`Run failed: ${error.message}`);
+            });
+    },
+    
+    // Reset Swaparr data
+    resetSwaparrData: function(button) {
+        if (!confirm('Are you sure you want to reset all Swaparr data? This will clear strikes and removed items.')) {
+            return;
+        }
+        
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+        button.disabled = true;
+        
+        HuntarrUtils.fetchWithTimeout('./api/swaparr/reset', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                
+                if (data.success) {
+                    alert('Swaparr data reset successfully!');
+                    // Reload status
+                    const container = button.closest('.settings-group').parentElement;
+                    this.loadSwaparrStatus(container);
+                } else {
+                    alert(`Reset failed: ${data.message || 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                alert(`Reset failed: ${error.message}`);
+            });
+    },
+    
     // Format date nicely for display
     formatDate: function(date) {
         if (!date) return 'Never';
@@ -1128,6 +1431,17 @@ const SettingsForms = {
 
                 settings.sleep_duration = getInputValue('#eros_sleep_duration', 900);
                 settings.hourly_cap = getInputValue('#eros_hourly_cap', 20);
+            }
+            else if (appType === 'swaparr') {
+                // Swaparr doesn't use instances, so set empty array
+                settings.instances = [];
+                
+                settings.enabled = getInputValue('#swaparr_enabled', false);
+                settings.max_strikes = getInputValue('#swaparr_max_strikes', 3);
+                settings.max_download_time = getInputValue('#swaparr_max_download_time', '2h');
+                settings.ignore_above_size = getInputValue('#swaparr_ignore_above_size', '25GB');
+                settings.remove_from_client = getInputValue('#swaparr_remove_from_client', true);
+                settings.dry_run = getInputValue('#swaparr_dry_run', false);
             }
         }
         

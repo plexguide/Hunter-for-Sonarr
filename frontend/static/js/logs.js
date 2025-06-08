@@ -410,6 +410,17 @@ window.LogsModule = {
                 // Add to logs container
                 this.insertLogEntryInOrder(logEntry);
                 
+                // Special event dispatching for Swaparr logs
+                if (logAppType === 'swaparr' && this.currentLogApp === 'swaparr') {
+                    // Dispatch a custom event for swaparr.js to process
+                    const swaparrEvent = new CustomEvent('swaparrLogReceived', {
+                        detail: {
+                            logData: cleanMessage
+                        }
+                    });
+                    document.dispatchEvent(swaparrEvent);
+                }
+                
                 // Apply current log level filter
                 const currentLogLevel = this.elements.logLevelSelect ? this.elements.logLevelSelect.value : 'all';
                 if (currentLogLevel !== 'all') {

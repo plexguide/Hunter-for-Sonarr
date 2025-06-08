@@ -42,7 +42,7 @@ function loadHourlyCapData() {
  */
 function updateHourlyCapDisplay(caps, limits) {
     // Update each app's API cap indicator
-    const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros'];
+    const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'];
     
     apps.forEach(app => {
         // If we have data for this app

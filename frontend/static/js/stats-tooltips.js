@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initStatsTooltips() {
     // Add event listeners to statistics numbers
-    const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros'];
+    const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'];
     const statTypes = ['hunted', 'upgraded'];
     
     apps.forEach(app => {

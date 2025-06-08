@@ -87,10 +87,11 @@ SCHEDULER_DIR = CONFIG_PATH / "scheduler"
 RESET_DIR = CONFIG_PATH / "reset"  # Add reset directory
 TALLY_DIR = CONFIG_PATH / "tally"  # Add tally directory for stats
 EROS_DIR = CONFIG_PATH / "eros"  # Add Eros directory
+SWAPARR_DIR = CONFIG_PATH / "swaparr"  # Add Swaparr directory for state tracking
 
 # Create all directories
 for dir_path in [LOG_DIR, SETTINGS_DIR, USER_DIR, STATEFUL_DIR, HISTORY_DIR, 
-                SCHEDULER_DIR, RESET_DIR, TALLY_DIR, EROS_DIR]:
+                SCHEDULER_DIR, RESET_DIR, TALLY_DIR, EROS_DIR, SWAPARR_DIR]:
     try:
         dir_path.mkdir(parents=True, exist_ok=True)
     except Exception as e:
