@@ -157,7 +157,7 @@ def process_missing_movies(
                 alternative_dates = []
                 
                 # Define all possible release date fields in order of preference
-                all_date_fields = ['physicalRelease', 'digitalRelease', 'inCinemas']
+                all_date_fields = ['physicalRelease', 'digitalRelease', 'inCinemas', 'releaseDate']
                 
                 # Check alternative date fields (excluding the one we already tried)
                 for alt_field in all_date_fields:
@@ -177,6 +177,8 @@ def process_missing_movies(
                                 alt_release_date = datetime.datetime.fromisoformat(clean_alt_date_str)
                                 alternative_dates.append((alt_field, alt_release_date))
                             except ValueError:
+                                # If we can't parse this alternative date, log it but continue
+                                radarr_logger.debug(f"Could not parse {alt_field} date '{alt_date_str}' for movie ID {movie.get('id')}")
                                 continue
                 
                 if alternative_dates:
@@ -205,7 +207,7 @@ def process_missing_movies(
                 else:
                     # No valid release dates found at all, include in search to be safe
                     should_include = True
-                    radarr_logger.debug(f"Movie ID {movie.get('id')} ('{movie.get('title')}') has no valid release dates, including in search to be safe")
+                    radarr_logger.warning(f"Movie ID {movie.get('id')} ('{movie.get('title')}') has no physicalRelease, digitalRelease, inCinemas, or releaseDate fields - including in search but this may indicate missing metadata in Radarr")
             
             if should_include:
                 filtered_movies.append(movie)
