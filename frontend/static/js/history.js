@@ -12,6 +12,20 @@ const historyModule = {
     searchQuery: '',
     isLoading: false,
     
+    // Instance configuration cache
+    instancesConfig: null,
+    configLoadPromise: null,
+    
+    // URL patterns for different app types
+    urlPatterns: {
+        'sonarr': '/series/{id}',
+        'radarr': '/movie/{id}',
+        'lidarr': '/artist/{id}', 
+        'readarr': '/author/{id}',
+        'whisparr': '/movie/{id}',
+        'eros': '/movie/{id}'
+    },
+    
     // DOM elements
     elements: {},
     
@@ -171,13 +185,17 @@ const historyModule = {
     fetchHistoryData: function() {
         this.setLoading(true);
         
-        // Construct URL with parameters
-        let url = `/api/history/${this.currentApp}?page=${this.currentPage}&page_size=${this.pageSize}`;
-        if (this.searchQuery) {
-            url += `&search=${encodeURIComponent(this.searchQuery)}`;
-        }
-        
-        HuntarrUtils.fetchWithTimeout(url)
+        // Load instance configurations first, then fetch history data
+        this.loadInstanceConfigurations()
+            .then(() => {
+                // Construct URL with parameters
+                let url = `./api/history/${this.currentApp}?page=${this.currentPage}&page_size=${this.pageSize}`;
+                if (this.searchQuery) {
+                    url += `&search=${encodeURIComponent(this.searchQuery)}`;
+                }
+                
+                return HuntarrUtils.fetchWithTimeout(url);
+            })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -253,12 +271,7 @@ const historyModule = {
             infoIcon.style.textAlign = 'center';
             
             // Create a span for the title with wrapping enabled
-            const titleSpan = document.createElement('span');
-            titleSpan.className = 'processed-title';
-            titleSpan.style.wordBreak = 'break-word'; // Enable word breaking
-            titleSpan.style.whiteSpace = 'normal'; // Allow normal wrapping
-            titleSpan.style.overflow = 'visible'; // Ensure text is not cut off
-            titleSpan.innerHTML = this.escapeHtml(entry.processed_info);
+            const titleSpan = this.createClickableTitle(entry);
             
             // Create tooltip element for JSON data
             const tooltip = document.createElement('div');
@@ -435,6 +448,119 @@ const historyModule = {
                 return '<span class="operation-status success">Success</span>';
             default:
                 return operationType ? this.escapeHtml(operationType.charAt(0).toUpperCase() + operationType.slice(1)) : 'Unknown';
+        }
+    },
+    
+    // Load instance configurations for building clickable links
+    loadInstanceConfigurations: function() {
+        // Return existing promise if already loading
+        if (this.configLoadPromise) {
+            return this.configLoadPromise;
+        }
+        
+        // Return cached config if available
+        if (this.instancesConfig) {
+            return Promise.resolve(this.instancesConfig);
+        }
+        
+        // Load configurations from API
+        this.configLoadPromise = HuntarrUtils.fetchWithTimeout('./api/instances/all')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to load instance configurations: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(config => {
+                this.instancesConfig = config;
+                console.log('[History] Loaded instance configurations:', config);
+                return config;
+            })
+            .catch(error => {
+                console.error('[History] Error loading instance configurations:', error);
+                this.instancesConfig = {}; // Set empty config on error
+                return {};
+            })
+            .finally(() => {
+                this.configLoadPromise = null; // Clear promise after completion
+            });
+        
+        return this.configLoadPromise;
+    },
+    
+    // Generate clickable URL for a history entry
+    generateClickableUrl: function(entry) {
+        if (!this.instancesConfig || !entry.app_type || !entry.id || !entry.instance_name) {
+            return null;
+        }
+        
+        const appType = entry.app_type;
+        const instanceName = entry.instance_name;
+        const itemId = entry.id;
+        
+        // Get instance configuration
+        const appInstances = this.instancesConfig[appType];
+        if (!appInstances || !appInstances[instanceName]) {
+            console.debug(`[History] No instance configuration found for ${appType}:${instanceName}`);
+            return null;
+        }
+        
+        const instanceConfig = appInstances[instanceName];
+        const baseUrl = instanceConfig.api_url;
+        
+        // Get URL pattern for this app type
+        const urlPattern = this.urlPatterns[appType];
+        if (!urlPattern) {
+            console.debug(`[History] No URL pattern defined for app type: ${appType}`);
+            return null;
+        }
+        
+        // Build the full URL
+        const fullUrl = baseUrl + urlPattern.replace('{id}', itemId);
+        console.debug(`[History] Generated URL for ${appType}:${instanceName}:${itemId} -> ${fullUrl}`);
+        
+        return fullUrl;
+    },
+    
+    // Create clickable title element
+    createClickableTitle: function(entry) {
+        const url = this.generateClickableUrl(entry);
+        
+        if (url) {
+            // Create a clickable link
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.className = 'history-title-link';
+            link.style.color = 'inherit';
+            link.style.textDecoration = 'none';
+            link.style.wordBreak = 'break-word';
+            link.style.whiteSpace = 'normal';
+            link.style.overflow = 'visible';
+            
+            // Add hover effect
+            link.addEventListener('mouseenter', function() {
+                this.style.textDecoration = 'underline';
+                this.style.color = '#4CAF50';
+            });
+            
+            link.addEventListener('mouseleave', function() {
+                this.style.textDecoration = 'none';
+                this.style.color = 'inherit';
+            });
+            
+            link.innerHTML = this.escapeHtml(entry.processed_info);
+            return link;
+        } else {
+            // Create a regular span if no URL available
+            const span = document.createElement('span');
+            span.className = 'processed-title';
+            span.style.wordBreak = 'break-word';
+            span.style.whiteSpace = 'normal';
+            span.style.overflow = 'visible';
+            span.innerHTML = this.escapeHtml(entry.processed_info);
+            return span;
         }
     }
 };

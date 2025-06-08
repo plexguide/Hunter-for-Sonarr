@@ -2391,3 +2391,53 @@ input#stateful_management_hours {
     gap: 15px;
     margin-bottom: 15px; /* Add margin below to separate from table */
 }
+
+/* Clickable History Links Styling */
+.history-title-link {
+    color: inherit !important;
+    text-decoration: none !important;
+    cursor: pointer;
+    word-break: break-word;
+    white-space: normal;
+    overflow: visible;
+    transition: all 0.2s ease;
+    border-radius: 3px;
+    padding: 1px 3px;
+    display: inline-block;
+}
+
+.history-title-link:hover {
+    color: #4CAF50 !important;
+    text-decoration: underline !important;
+    background-color: rgba(76, 175, 80, 0.1);
+    box-shadow: 0 1px 3px rgba(76, 175, 80, 0.2);
+}
+
+.history-title-link:visited {
+    color: inherit;
+}
+
+.history-title-link:active {
+    color: #45a049 !important;
+    background-color: rgba(76, 175, 80, 0.2);
+}
+
+/* Non-clickable title styling (fallback) */
+.processed-title {
+    word-break: break-word;
+    white-space: normal;
+    overflow: visible;
+}
+
+/* Add subtle indicator for clickable items */
+.history-title-link::after {
+    content: ' 🔗';
+    font-size: 0.8em;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    margin-left: 4px;
+}
+
+.history-title-link:hover::after {
+    opacity: 0.6;
+}

@@ -655,29 +655,69 @@ def save_general_settings():
 @app.route('/api/test-notification', methods=['POST'])
 def test_notification():
     """Test notification endpoint"""
-    
+    web_logger = get_logger("web_server")
     try:
-        from src.primary.notification_manager import send_notification, get_notification_config
+        # Get the current general settings to use for testing
+        general_settings = settings_manager.load_settings("general")
         
-        # Get the user's configured notification level
-        config = get_notification_config()
-        user_level = config.get('level', 'info')
+        # Extract notification settings
+        apprise_urls = general_settings.get("apprise_urls", [])
+        notification_level = general_settings.get("notification_level", "info")
         
-        # Send a test notification using the user's configured level
+        if not apprise_urls:
+            return jsonify({"success": False, "error": "No notification URLs configured"}), 400
+        
+        # Test the notification
         success = send_notification(
-            title="🧪 Huntarr Test Notification",
-            message="This is a test notification to verify your Apprise configuration is working correctly! If you see this, your notifications are set up properly. 🎉",
-            level=user_level
+            title="Huntarr Test Notification",
+            message="This is a test notification to verify your notification setup is working correctly.",
+            level="info",  # Always use info level for test
+            notification_settings=general_settings
         )
         
         if success:
-            return jsonify({"success": True, "message": "Test notification sent successfully!"}), 200, {'Content-Type': 'application/json'}
+            web_logger.info("Test notification sent successfully")
+            return jsonify({"success": True})
         else:
-            return jsonify({"success": False, "error": "Failed to send test notification. Check your Apprise URLs and settings."}), 500, {'Content-Type': 'application/json'}
+            web_logger.warning("Test notification failed to send")
+            return jsonify({"success": False, "error": "Failed to send test notification"})
             
     except Exception as e:
-        general_logger.error(f"Error sending test notification: {e}")
+        web_logger.error(f"Error sending test notification: {str(e)}")
         return jsonify({"success": False, "error": f"Error sending test notification: {str(e)}"}), 500, {'Content-Type': 'application/json'}
+
+@app.route('/api/instances/all', methods=['GET'])
+def get_all_instances():
+    """Get all configured instances for all apps - used for building clickable links"""
+    web_logger = get_logger("web_server")
+    try:
+        instances_config = {}
+        
+        for app_name in settings_manager.KNOWN_APP_TYPES:
+            app_settings = settings_manager.load_settings(app_name)
+            instances_config[app_name] = {}
+            
+            # Handle multi-instance apps
+            if 'instances' in app_settings and isinstance(app_settings['instances'], list):
+                for instance in app_settings['instances']:
+                    if instance.get('enabled', True) and instance.get('api_url'):
+                        instance_name = instance.get('name', 'Default')
+                        instances_config[app_name][instance_name] = {
+                            'api_url': instance['api_url'].rstrip('/'),  # Remove trailing slashes
+                            'name': instance_name
+                        }
+            # Handle legacy single-instance apps
+            elif app_settings.get('api_url'):
+                instances_config[app_name]['Default'] = {
+                    'api_url': app_settings['api_url'].rstrip('/'),
+                    'name': 'Default'
+                }
+        
+        return jsonify(instances_config)
+        
+    except Exception as e:
+        web_logger.error(f"Error getting instances configuration: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/settings/<app_name>', methods=['GET', 'POST'])
 def handle_app_settings(app_name):
