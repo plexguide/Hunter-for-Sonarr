@@ -385,7 +385,7 @@ def should_execute_schedule(schedule_entry):
     exact_time = datetime.datetime.now(user_tz)
     timezone_name = str(user_tz)
     time_with_tz = f"{exact_time.strftime('%Y-%m-%d %H:%M:%S.%f')} {timezone_name}"
-    scheduler_logger.info(f"EXACT CURRENT TIME: {time_with_tz}")
+    scheduler_logger.debug(f"EXACT CURRENT TIME: {time_with_tz}")
     
     if not schedule_entry.get("enabled", True):
         scheduler_logger.debug(f"Schedule {schedule_id} is disabled, skipping")
@@ -399,7 +399,7 @@ def should_execute_schedule(schedule_entry):
     current_day = datetime.datetime.now(user_tz).strftime("%A").lower()  # e.g., 'monday'
     
     # Debug what's being compared
-    scheduler_logger.info(f"CRITICAL DEBUG - Today: '{current_day}', Schedule days: {days}")
+    scheduler_logger.debug(f"CRITICAL DEBUG - Today: '{current_day}', Schedule days: {days}")
     
     # If days array is empty, treat as "run every day"
     if not days:
@@ -410,10 +410,10 @@ def should_execute_schedule(schedule_entry):
         
         # If today is not in the schedule days, skip this schedule
         if current_day not in lowercase_days:
-            scheduler_logger.info(f"FAILURE: Schedule {schedule_id} not configured to run on {current_day}, skipping")
+            scheduler_logger.debug(f"FAILURE: Schedule {schedule_id} not configured to run on {current_day}, skipping")
             return False
         else:
-            scheduler_logger.info(f"SUCCESS: Schedule {schedule_id} IS configured to run on {current_day}")
+            scheduler_logger.debug(f"SUCCESS: Schedule {schedule_id} IS configured to run on {current_day}")
 
     
     # Get current time with second-level precision for accurate timing (in user's timezone)
@@ -442,19 +442,19 @@ def should_execute_schedule(schedule_entry):
     if timezone_name:
         time_debug_str += f" {timezone_name}"
     
-    scheduler_logger.info(f"Schedule {schedule_id} time: {schedule_hour:02d}:{schedule_minute:02d}, " 
+    scheduler_logger.debug(f"Schedule {schedule_id} time: {schedule_hour:02d}:{schedule_minute:02d}, " 
                          f"current time: {time_debug_str}")
     
     # ===== STRICT TIME COMPARISON - PREVENT EARLY EXECUTION =====
     
     # If current hour is BEFORE scheduled hour, NEVER execute
     if current_time.hour < schedule_hour:
-        scheduler_logger.info(f"BLOCKED EXECUTION: Current hour {current_time.hour} is BEFORE scheduled hour {schedule_hour}")
+        scheduler_logger.debug(f"BLOCKED EXECUTION: Current hour {current_time.hour} is BEFORE scheduled hour {schedule_hour}")
         return False
     
     # If same hour but current minute is BEFORE scheduled minute, NEVER execute
     if current_time.hour == schedule_hour and current_time.minute < schedule_minute:
-        scheduler_logger.info(f"BLOCKED EXECUTION: Current minute {current_time.minute} is BEFORE scheduled minute {schedule_minute}")
+        scheduler_logger.debug(f"BLOCKED EXECUTION: Current minute {current_time.minute} is BEFORE scheduled minute {schedule_minute}")
         return False
     
     # ===== 4-MINUTE EXECUTION WINDOW =====
@@ -475,7 +475,7 @@ def should_execute_schedule(schedule_entry):
             return True
     
     # We've missed the 4-minute window
-    scheduler_logger.info(f"MISSED WINDOW: Current time {current_time.hour:02d}:{current_time.minute:02d} " 
+    scheduler_logger.debug(f"MISSED WINDOW: Current time {current_time.hour:02d}:{current_time.minute:02d} " 
                         f"is past the 4-minute window for {schedule_hour:02d}:{schedule_minute:02d}")
     return False
 
