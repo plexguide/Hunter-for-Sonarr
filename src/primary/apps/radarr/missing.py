@@ -119,6 +119,9 @@ def process_missing_movies(
         skipped_count = 0
         for movie in missing_movies:
             release_date_str = movie.get(release_type_field)
+            should_include = False
+            found_valid_date = False
+            
             if release_date_str:
                 try:
                     # Improved date parsing logic to handle various ISO formats
@@ -138,19 +141,76 @@ def process_missing_movies(
                     
                     # Parse the release date
                     release_date = datetime.datetime.fromisoformat(clean_date_str)
+                    found_valid_date = True
                     
                     if release_date <= now:
-                        filtered_movies.append(movie)
+                        should_include = True
                     else:
                         radarr_logger.debug(f"Skipping future movie ID {movie.get('id')} ('{movie.get('title')}') with {release_type} release date: {release_date_str} (parsed as: {release_date})")
-                        skipped_count += 1
+                        should_include = False
                 except ValueError as e:
-                    radarr_logger.warning(f"Could not parse {release_type} release date '{release_date_str}' for movie ID {movie.get('id')}. Error: {e}. Including it in search to be safe.")
-                    filtered_movies.append(movie)  # Keep if date is invalid
-            else:
-                # No release date available - include it in search
-                radarr_logger.debug(f"Movie ID {movie.get('id')} ('{movie.get('title')}') has no {release_type_field} date, including in search")
+                    radarr_logger.warning(f"Could not parse {release_type} release date '{release_date_str}' for movie ID {movie.get('id')}. Error: {e}. Will check alternative dates.")
+                    found_valid_date = False
+            
+            # If the specified release type field doesn't exist or couldn't be parsed, check alternative date fields
+            if not found_valid_date:
+                alternative_dates = []
+                
+                # Define all possible release date fields in order of preference
+                all_date_fields = ['physicalRelease', 'digitalRelease', 'inCinemas']
+                
+                # Check alternative date fields (excluding the one we already tried)
+                for alt_field in all_date_fields:
+                    if alt_field != release_type_field:
+                        alt_date_str = movie.get(alt_field)
+                        if alt_date_str:
+                            try:
+                                # Use same parsing logic
+                                clean_alt_date_str = alt_date_str
+                                if '.' in clean_alt_date_str and 'Z' in clean_alt_date_str:
+                                    clean_alt_date_str = clean_alt_date_str.split('.')[0] + 'Z'
+                                if clean_alt_date_str.endswith('Z'):
+                                    clean_alt_date_str = clean_alt_date_str[:-1] + '+00:00'
+                                elif '+' not in clean_alt_date_str and '-' not in clean_alt_date_str[-6:]:
+                                    clean_alt_date_str += '+00:00'
+                                
+                                alt_release_date = datetime.datetime.fromisoformat(clean_alt_date_str)
+                                alternative_dates.append((alt_field, alt_release_date))
+                            except ValueError:
+                                continue
+                
+                if alternative_dates:
+                    # If we have alternative dates, use the earliest non-future one if available
+                    # Otherwise, if ALL alternative dates are in the future, skip the movie
+                    future_dates = []
+                    past_dates = []
+                    
+                    for field_name, alt_date in alternative_dates:
+                        if alt_date <= now:
+                            past_dates.append((field_name, alt_date))
+                        else:
+                            future_dates.append((field_name, alt_date))
+                    
+                    if past_dates:
+                        # At least one release date is in the past, include the movie
+                        should_include = True
+                        earliest_past = min(past_dates, key=lambda x: x[1])
+                        radarr_logger.debug(f"Movie ID {movie.get('id')} ('{movie.get('title')}') has no {release_type_field} date, but {earliest_past[0]} date is in the past: {earliest_past[1]}, including in search")
+                    else:
+                        # All available dates are in the future, skip the movie  
+                        should_include = False
+                        earliest_future = min(future_dates, key=lambda x: x[1])
+                        radarr_logger.debug(f"Skipping future movie ID {movie.get('id')} ('{movie.get('title')}') - all available release dates are in the future (earliest: {earliest_future[0]} on {earliest_future[1]})")
+                        skipped_count += 1
+                else:
+                    # No valid release dates found at all, include in search to be safe
+                    should_include = True
+                    radarr_logger.debug(f"Movie ID {movie.get('id')} ('{movie.get('title')}') has no valid release dates, including in search to be safe")
+            
+            if should_include:
                 filtered_movies.append(movie)
+            elif found_valid_date:  # Only increment skipped count if we found and used the specified date field
+                skipped_count += 1
         
         missing_movies = filtered_movies
         if skipped_count > 0:

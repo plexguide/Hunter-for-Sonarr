@@ -776,6 +776,44 @@
         margin-top: 2px; /* Align with the first line of text */
     }
     
+    /* History direct link styling */
+    .history-direct-link {
+        color: #2185d0;
+        text-decoration: none;
+        transition: color 0.2s ease;
+        cursor: pointer;
+        border-bottom: 1px dotted transparent;
+    }
+    
+    .history-direct-link:hover {
+        color: #1e7bb8;
+        text-decoration: none;
+        border-bottom: 1px dotted #1e7bb8;
+    }
+    
+    .history-direct-link:visited {
+        color: #8e44ad;
+    }
+    
+    .history-direct-link:visited:hover {
+        color: #7d3c98;
+        border-bottom: 1px dotted #7d3c98;
+    }
+    
+    /* Add subtle icon to indicate external link */
+    .history-direct-link::after {
+        content: " \f35d";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        font-size: 0.75em;
+        opacity: 0.6;
+        margin-left: 4px;
+    }
+    
+    .history-direct-link:hover::after {
+        opacity: 1;
+    }
+    
     /* Ensure the first column allows wrapping */
     .modern-table td:first-child, .history-table td:first-child {
         white-space: normal;
