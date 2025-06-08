@@ -858,12 +858,12 @@ def verify_plex_user(plex_token: str) -> Tuple[bool, Optional[Dict[str, Any]]]:
     else:
         return False, None
 
-def unlink_plex_from_user(username: str) -> bool:
+def unlink_plex_from_user(username: str = None) -> bool:
     """
-    Unlink Plex account from a user by removing Plex-related data
+    Unlink Plex account from the current authenticated user by removing Plex-related data
     
     Args:
-        username: The username to unlink Plex from
+        username: Not used anymore - kept for compatibility
         
     Returns:
         bool: True if successful, False otherwise
@@ -876,12 +876,11 @@ def unlink_plex_from_user(username: str) -> bool:
         with open(USER_FILE, 'r') as f:
             user_data = json.load(f)
             
-        username_hash = hash_username(username)
-        
-        # Check if this user exists and has Plex data
-        if user_data.get("username") != username_hash:
-            logger.error("User not found")
-            return False
+        # No need to validate username since user is already authenticated via session
+        # Just check if Plex data exists to unlink
+        if not user_data.get('plex_linked', False):
+            logger.warning("No Plex account linked to unlink")
+            return True  # Not an error, just nothing to do
             
         # Remove all Plex-related fields
         plex_fields_to_remove = [
@@ -889,7 +888,8 @@ def unlink_plex_from_user(username: str) -> bool:
             'plex_username', 
             'plex_email',
             'plex_linked_at',
-            'plex_linked'
+            'plex_linked',
+            'plex_user_id'
         ]
         
         removed_any = False
@@ -919,19 +919,19 @@ def unlink_plex_from_user(username: str) -> bool:
         # Set appropriate file permissions
         os.chmod(USER_FILE, 0o600)
         
-        logger.info(f"Successfully unlinked Plex account for user {username}")
+        logger.info(f"Successfully unlinked Plex account from authenticated user")
         return True
         
     except Exception as e:
-        logger.error(f"Error unlinking Plex account for user {username}: {str(e)}")
-        return False
+        logger.error(f"Error unlinking Plex account: {str(e)}")
+        raise  # Re-raise the exception so the route handler can catch it
 
 def link_plex_account_session_auth(username: str, plex_token: str, plex_user_data: Dict[str, Any]) -> bool:
     """
     Link a Plex account to an existing local user using session authentication
     
     Args:
-        username: Local username (already verified via session)
+        username: Not used for validation - kept for compatibility
         plex_token: Plex access token
         plex_user_data: User data from Plex API
         
@@ -941,11 +941,8 @@ def link_plex_account_session_auth(username: str, plex_token: str, plex_user_dat
     try:
         user_data = get_user_data()
         
-        # Verify this is the correct user by checking username hash
-        username_hash = hash_username(username)
-        if user_data.get("username") != username_hash:
-            logger.warning(f"Failed to link Plex account: Username mismatch for {username}")
-            return False
+        # No need to validate username since user is already authenticated via session
+        # Just proceed to add Plex information
         
         # Add Plex information to existing user
         user_data["plex_linked"] = True
@@ -956,7 +953,7 @@ def link_plex_account_session_auth(username: str, plex_token: str, plex_user_dat
         user_data["plex_linked_at"] = time.time()
         
         if save_user_data(user_data):
-            logger.info(f"Plex account linked to local user: {username}")
+            logger.info(f"Plex account linked to authenticated user - Plex username: {plex_user_data.get('username')}")
             return True
         else:
             logger.error("Failed to save linked Plex data")

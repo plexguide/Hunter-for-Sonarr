@@ -421,13 +421,8 @@ def unlink_plex_account():
         if not session_id or not verify_session(session_id):
             return jsonify({'success': False, 'error': 'User not authenticated'}), 401
         
-        # Get username from session
-        username = get_username_from_session(session_id)
-        if not username:
-            return jsonify({'success': False, 'error': 'Unable to determine username from session'}), 400
-        
-        # Remove Plex data from user credentials
-        if unlink_plex_from_user(username):
+        # Since user is authenticated, we can directly unlink without username validation
+        if unlink_plex_from_user():
             return jsonify({'success': True, 'message': 'Plex account unlinked successfully'})
         else:
             return jsonify({'success': False, 'error': 'Failed to unlink Plex account'}), 500
