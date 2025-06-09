@@ -536,21 +536,22 @@ window.LogsModule = {
         let insertPosition = null;
         
         // Find the correct position - newest entries should be at the top
-        // So we need to find the first entry that is older than our new entry
+        // For same-timestamp logs, insert at the top to maintain "newest first" order
         for (let i = 0; i < existingEntries.length; i++) {
             const existingTimestamp = this.parseLogTimestamp(existingEntries[i]);
             
             if (!existingTimestamp) continue;
             
-            // If new log is newer than this existing log, insert before it
-            if (newTimestamp > existingTimestamp) {
+            // If new log is newer than existing log, OR if timestamps are equal (same second),
+            // insert before it to maintain newest-first order
+            if (newTimestamp >= existingTimestamp) {
                 insertPosition = existingEntries[i];
                 break;
             }
         }
         
         if (insertPosition) {
-            // Insert before the older entry (maintains newest-first order)
+            // Insert before the older or same-timestamp entry (maintains newest-first order)
             this.elements.logsContainer.insertBefore(newLogEntry, insertPosition);
         } else {
             // If it's older than all existing entries, add at the end
