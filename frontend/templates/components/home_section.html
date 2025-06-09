@@ -561,23 +561,22 @@
                         <div style="font-size: 11px; color: rgba(160, 168, 184, 0.9); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">SESSION REMOVALS</div>
                         <div style="font-size: 28px; font-weight: 700; background: linear-gradient(to bottom right, #e74c3c, #c0392b); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;" id="swaparr-removals">0</div>
                     </div>
-                    <div style="flex: 1; background: linear-gradient(145deg, rgba(26, 32, 44, 0.9), rgba(20, 24, 33, 0.8)); border-radius: 8px; padding: 15px; text-align: center; border: 1px solid rgba(120, 140, 180, 0.15); min-height: 80px; display: flex; flex-direction: column; justify-content: center; position: relative;">
+                    <div style="flex: 1; background: linear-gradient(145deg, rgba(26, 32, 44, 0.9), rgba(20, 24, 33, 0.8)); border-radius: 8px; padding: 15px; text-align: center; border: 1px solid rgba(120, 140, 180, 0.15); min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
                         <div style="font-size: 11px; color: rgba(160, 168, 184, 0.9); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">SESSION IGNORED</div>
                         <div style="font-size: 28px; font-weight: 700; background: linear-gradient(to bottom right, #95a5a6, #7f8c8d); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;" id="swaparr-ignored">0</div>
-                        
-                        <!-- Timer positioned on the right like Sonarr -->
-                        <div id="swaparrCycleTimer" style="position: absolute; right: 8px; bottom: 8px; display: flex; align-items: center; gap: 5px; font-size: 0.9rem; padding: 8px 12px; border-radius: 4px; background-color: rgba(0, 0, 0, 0.15); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border-left: 2px solid #00c2ce;">
-                            <i class="fas fa-clock" style="margin-right: 5px; font-size: 0.9rem;"></i>
-                            <span class="timer-value" style="font-family: monospace; font-weight: 600; color: white;">--:--:--</span>
-                        </div>
                     </div>
                 </div>
                 
-                <!-- Reset Cycle Button positioned like Sonarr -->
-                <div style="display: flex; justify-content: flex-end; margin-top: 15px;">
+                <!-- Timer and Reset Button area (like Sonarr) -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
                     <button id="reset-swaparr-cycle-inline" style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s ease;">
                         <i class="fas fa-sync-alt"></i> Reset
                     </button>
+                    
+                    <div id="swaparrCycleTimer" style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; padding: 8px 12px; border-radius: 4px; background-color: rgba(0, 0, 0, 0.15); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border-left: 2px solid #00c2ce;">
+                        <i class="fas fa-clock" style="margin-right: 5px; font-size: 0.9rem;"></i>
+                        <span class="timer-value" style="font-family: monospace; font-weight: 600; color: white;">--:--:--</span>
+                    </div>
                 </div>
             </div>
         </div>
