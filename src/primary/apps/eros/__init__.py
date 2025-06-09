@@ -65,6 +65,7 @@ def get_configured_instances():
                 instance_settings["api_url"] = api_url
                 instance_settings["api_key"] = api_key
                 instance_settings["instance_name"] = instance_name
+                instance_settings["swaparr_enabled"] = instance.get("swaparr_enabled", False)
                 
                 # Add timeout setting with default if not present
                 if "api_timeout" not in instance_settings:

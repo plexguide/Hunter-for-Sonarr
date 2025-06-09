@@ -46,6 +46,7 @@ def get_configured_instances():
                 instance_settings["api_url"] = api_url
                 instance_settings["api_key"] = api_key
                 instance_settings["instance_name"] = instance.get("name", "Default")
+                instance_settings["swaparr_enabled"] = instance.get("swaparr_enabled", False)
                 
                 instances.append(instance_settings)
     else:
@@ -63,6 +64,7 @@ def get_configured_instances():
             settings_copy = settings.copy()
             settings_copy["api_url"] = api_url  # Use corrected URL
             settings_copy["instance_name"] = "Default"
+            settings_copy["swaparr_enabled"] = settings.get("swaparr_enabled", False)
             instances.append(settings_copy)
     
     # Use debug level to avoid spamming logs, especially with 0 instances

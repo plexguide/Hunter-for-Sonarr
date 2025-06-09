@@ -46,6 +46,7 @@ def get_configured_instances():
                     "instance_name": instance.get("name", "Default"),
                     "api_url": api_url,
                     "api_key": api_key,
+                    "swaparr_enabled": instance.get("swaparr_enabled", False),
                 }
                 instances.append(instance_data)
                 # lidarr_logger.info(f"Added valid instance: {instance_data}") # Removed verbose log
@@ -78,6 +79,7 @@ def get_configured_instances():
                 "instance_name": "Default",
                 "api_url": api_url,
                 "api_key": api_key,
+                "swaparr_enabled": settings.get("swaparr_enabled", False),
             }
             instances.append(instance_data)
             # lidarr_logger.info(f"Added valid legacy instance: {instance_data}") # Removed verbose log
