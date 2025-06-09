@@ -96,6 +96,33 @@ window.location.href = './';
 fetch('./api/endpoint');
 ```
 
+### 6. CSS Loading Order/Specificity Issues
+**Symptoms:** Inline component CSS styles not applying, especially mobile responsive changes
+**Root Cause:** External CSS files (`responsive-fix.css`, `new-style.css`) load after component templates and override inline styles
+**Fix:** Add critical responsive CSS to external files with higher specificity
+```css
+/* ❌ BROKEN - Inline component CSS gets overridden */
+<!-- In component template -->
+<style>
+.app-stats-card.swaparr .stats-numbers {
+    grid-template-columns: 1fr !important;
+}
+</style>
+
+/* ✅ FIXED - Add to external CSS file */
+/* File: frontend/static/css/responsive-fix.css */
+@media (max-width: 768px) {
+    .app-stats-card.swaparr .stats-numbers {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        /* Debug border for testing */
+        border: 2px solid lime !important;
+    }
+}
+```
+**Debugging Technique:** Use colored debug borders to confirm CSS is loading
+**Files:** `/frontend/static/css/responsive-fix.css`, `/frontend/static/css/new-style.css`
+
 ## 🔧 DEVELOPMENT WORKFLOW
 
 ### Before Any Changes
@@ -163,6 +190,13 @@ grep -r "window.location.href = '/" frontend/
 3. Verify HTML structure matches selectors
 4. Compare with working functions
 
+### CSS Issues
+1. Check browser console for errors
+2. Add debug borders: `border: 2px solid lime !important;`
+3. Verify CSS loading order (external files vs inline)
+4. Test specificity with `!important` declarations
+5. Search for conflicting rules: `grep -r "className" frontend/static/css/`
+
 ### Settings Issues
 1. Check form generation functions
 2. Verify `getFormSettings()` method
@@ -178,7 +212,8 @@ grep -r "window.location.href = '/" frontend/
 5. **❌ Auto-committing without approval**
 6. **❌ Double backslashes in regex patterns**
 7. **❌ Testing only in Docker (must test bare metal)**
-8. **❌ Adding to main CSS/JS files (create separate files)**
+8. **❌ Adding responsive CSS to component templates (use external CSS files)**
+9. **❌ Not using debug borders to test CSS loading**
 
 ## 🚀 ENVIRONMENT DETECTION PATTERN
 
