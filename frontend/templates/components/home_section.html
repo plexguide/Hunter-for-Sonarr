@@ -540,6 +540,52 @@
             </div>
         </div>
 
+        <!-- Swaparr Status Card (only shows when Swaparr is enabled) -->
+        <div class="card stats-card" id="swaparrStatusCard" style="display: none;">
+            <div class="card-header">
+                <h3><i class="fas fa-download"></i> Swaparr Status</h3>
+                <button id="reset-swaparr-cycle" class="action-button secondary"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+            </div>
+            <div class="swaparr-status-container">
+                <!-- Session Statistics in horizontal layout -->
+                <div class="swaparr-stats-horizontal">
+                    <div class="swaparr-stat-box">
+                        <div class="stat-label">SESSION PROCESSED</div>
+                        <div class="stat-value" id="swaparr-processed">0</div>
+                    </div>
+                    <div class="swaparr-stat-box">
+                        <div class="stat-label">SESSION STRIKES</div>
+                        <div class="stat-value" id="swaparr-strikes">0</div>
+                    </div>
+                    <div class="swaparr-stat-box">
+                        <div class="stat-label">SESSION REMOVALS</div>
+                        <div class="stat-value" id="swaparr-removals">0</div>
+                    </div>
+                    <div class="swaparr-stat-box">
+                        <div class="stat-label">SESSION IGNORED</div>
+                        <div class="stat-value" id="swaparr-ignored">0</div>
+                    </div>
+                </div>
+                
+                <!-- Countdown Timer -->
+                <div class="swaparr-countdown-section">
+                    <h4>Countdown Timer</h4>
+                    <div class="countdown-timer-container">
+                        <div class="countdown-display" id="swaparrCycleTimer">
+                            <i class="fas fa-clock"></i>
+                            <span class="timer-value">--:--:--</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="swaparr-action-buttons">
+                        <button id="reset-swaparr-data" class="action-button danger"><i class="fas fa-trash"></i> Reset Data</button>
+                        <button id="reset-swaparr-cycle-inline" class="action-button secondary"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </section>
 
@@ -1037,6 +1083,158 @@
         background: linear-gradient(145deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.05));
         color: #e74c3c;
         border: 1px solid rgba(231, 76, 60, 0.3);
+    
+    /* Swaparr Status Card Styling */
+    .swaparr-status-container {
+        padding: 20px;
+        background-color: rgba(15, 18, 24, 0.4);
+    }
+    
+    .swaparr-stats-horizontal {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    
+    /* Responsive design for smaller screens */
+    @media (max-width: 768px) {
+        .swaparr-stats-horizontal {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .swaparr-stats-horizontal {
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        
+        .swaparr-action-buttons {
+            flex-direction: column;
+            gap: 10px;
+        }
+    }
+    
+    .swaparr-stat-box {
+        background: linear-gradient(145deg, rgba(26, 32, 44, 0.9), rgba(20, 24, 33, 0.8));
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        border: 1px solid rgba(120, 140, 180, 0.15);
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+        min-height: 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .swaparr-stat-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border-color: rgba(120, 140, 180, 0.3);
+    }
+    
+    .swaparr-stat-box .stat-label {
+        font-size: 11px;
+        color: rgba(160, 168, 184, 0.9);
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+    
+    .swaparr-stat-box .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(to bottom right, #3498db, #2980b9);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .swaparr-countdown-section {
+        text-align: center;
+    }
+    
+    .swaparr-countdown-section h4 {
+        margin: 0 0 15px 0;
+        color: #e0e6ed;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    .countdown-timer-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .countdown-display {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 24px;
+        font-weight: 600;
+        color: #3498db;
+    }
+    
+    .countdown-display i {
+        font-size: 20px;
+    }
+    
+    .timer-value {
+        font-family: 'Courier New', monospace;
+        background: linear-gradient(to bottom right, #3498db, #2980b9);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .swaparr-action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 10px;
+    }
+    
+    .swaparr-action-buttons .action-button {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .swaparr-action-buttons .action-button.danger {
+        background-color: #e74c3c;
+        color: white;
+    }
+    
+    .swaparr-action-buttons .action-button.danger:hover {
+        background-color: #c0392b;
+        transform: translateY(-1px);
+    }
+    
+    .swaparr-action-buttons .action-button.secondary {
+        background-color: #3498db;
+        color: white;
+    }
+    
+    .swaparr-action-buttons .action-button.secondary:hover {
+        background-color: #2980b9;
+        transform: translateY(-1px);
+    }
         box-shadow: 0 3px 10px rgba(231, 76, 60, 0.1);
     }
     

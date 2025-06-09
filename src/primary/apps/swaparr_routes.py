@@ -242,6 +242,25 @@ def reset_session_statistics():
         swaparr_logger.error(f"Error resetting session statistics: {str(e)}")
         return jsonify({"success": False, "message": f"Error resetting session statistics: {str(e)}"}), 500
 
+@swaparr_bp.route('/reset-cycle', methods=['POST'])
+def reset_cycle_endpoint():
+    """Reset Swaparr cycle - forces a new cycle to start immediately"""
+    try:
+        from src.primary.cycle_tracker import reset_cycle
+        
+        # Reset the cycle timer for Swaparr
+        success = reset_cycle('swaparr')
+        
+        if success:
+            swaparr_logger.info("Reset Swaparr cycle timer - forcing new cycle to start")
+            return jsonify({"success": True, "message": "Swaparr cycle reset successfully"})
+        else:
+            swaparr_logger.error("Failed to reset Swaparr cycle")
+            return jsonify({"success": False, "message": "Failed to reset Swaparr cycle"}), 500
+    except Exception as e:
+        swaparr_logger.error(f"Error resetting Swaparr cycle: {str(e)}")
+        return jsonify({"success": False, "message": f"Error resetting Swaparr cycle: {str(e)}"}), 500
+
 @swaparr_bp.route('/test', methods=['POST'])
 def test_configuration():
     """Test Swaparr configuration with specific instances"""

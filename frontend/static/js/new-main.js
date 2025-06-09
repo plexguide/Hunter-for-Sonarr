@@ -113,6 +113,12 @@ let huntarrUI = {
         // Add global event handler for unsaved changes
         this.registerGlobalUnsavedChangesHandler();
         
+        // Setup Swaparr components
+        this.setupSwaparrResetCycle();
+        
+        // Setup Swaparr status polling (refresh every 30 seconds)
+        this.setupSwaparrStatusPolling();
+        
         // Make dashboard visible after initialization to prevent FOUC
         this.showDashboard();
     },
@@ -483,6 +489,8 @@ let huntarrUI = {
             this.disconnectAllEventSources(); 
             // Check app connections when returning to home page to update status
             this.checkAppConnections();
+            // Load Swaparr status
+            this.loadSwaparrStatus();
             // Stats are already loaded, no need to reload unless data changed
             // this.loadMediaStats();
         } else if (section === 'logs' && this.elements.logsSection) {
@@ -1831,6 +1839,128 @@ let huntarrUI = {
                 statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Not Connected';
             }
         }
+    },
+
+    // Load and update Swaparr status card
+    loadSwaparrStatus: function() {
+        HuntarrUtils.fetchWithTimeout('./api/swaparr/status')
+            .then(response => response.json())
+            .then(data => {
+                const swaparrCard = document.getElementById('swaparrStatusCard');
+                if (!swaparrCard) return;
+
+                // Show/hide card based on whether Swaparr is enabled
+                if (data.enabled && data.configured) {
+                    swaparrCard.style.display = 'block';
+                    
+                    // Update session statistics
+                    const sessionStats = data.session_statistics || {};
+                    document.getElementById('swaparr-processed').textContent = sessionStats.total_processed || 0;
+                    document.getElementById('swaparr-strikes').textContent = sessionStats.strikes_added || 0;
+                    document.getElementById('swaparr-removals').textContent = sessionStats.downloads_removed || 0;
+                    document.getElementById('swaparr-ignored').textContent = sessionStats.items_ignored || 0;
+                    
+                    // Setup button event handlers after content is loaded
+                    setTimeout(() => {
+                        this.setupSwaparrResetCycle();
+                    }, 100);
+                    
+                } else {
+                    swaparrCard.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading Swaparr status:', error);
+                const swaparrCard = document.getElementById('swaparrStatusCard');
+                if (swaparrCard) {
+                    swaparrCard.style.display = 'none';
+                }
+            });
+    },
+
+    // Setup Swaparr Reset Cycle button
+    setupSwaparrResetCycle: function() {
+        // Handle header reset cycle button
+        const resetButton = document.getElementById('reset-swaparr-cycle');
+        if (resetButton) {
+            resetButton.addEventListener('click', () => {
+                this.resetSwaparrCycle();
+            });
+        }
+
+        // Handle inline reset cycle button
+        const resetCycleInline = document.getElementById('reset-swaparr-cycle-inline');
+        if (resetCycleInline) {
+            resetCycleInline.addEventListener('click', () => {
+                this.resetSwaparrCycle();
+            });
+        }
+
+        // Handle reset data button
+        const resetDataButton = document.getElementById('reset-swaparr-data');
+        if (resetDataButton) {
+            resetDataButton.addEventListener('click', () => {
+                this.resetSwaparrData();
+            });
+        }
+    },
+
+    // Reset Swaparr cycle helper function
+    resetSwaparrCycle: function() {
+        if (confirm('Are you sure you want to reset the Swaparr cycle? This will force Swaparr to start a new cycle immediately.')) {
+            HuntarrUtils.fetchWithTimeout('./api/swaparr/reset-cycle', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        this.showNotification('Swaparr cycle reset successfully', 'success');
+                        // Refresh cycle timer
+                        if (window.CycleCountdown) {
+                            window.CycleCountdown.loadCycleData();
+                        }
+                    } else {
+                        this.showNotification('Failed to reset Swaparr cycle', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resetting Swaparr cycle:', error);
+                    this.showNotification('Error resetting Swaparr cycle', 'error');
+                });
+        }
+    },
+
+    // Reset Swaparr data function
+    resetSwaparrData: function() {
+        if (confirm('Are you sure you want to reset all Swaparr data? This will clear all strike counts and removed items data.')) {
+            HuntarrUtils.fetchWithTimeout('./api/swaparr/reset-session', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        this.showNotification('Swaparr data reset successfully', 'success');
+                        // Refresh the status display
+                        this.loadSwaparrStatus();
+                    } else {
+                        this.showNotification('Failed to reset Swaparr data', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resetting Swaparr data:', error);
+                    this.showNotification('Error resetting Swaparr data', 'error');
+                });
+        }
+    },
+
+    // Setup Swaparr status polling
+    setupSwaparrStatusPolling: function() {
+        // Load initial status
+        this.loadSwaparrStatus();
+        
+        // Set up polling to refresh Swaparr status every 30 seconds
+        // Only poll when home section is active to reduce unnecessary requests
+        setInterval(() => {
+            if (this.currentSection === 'home') {
+                this.loadSwaparrStatus();
+            }
+        }, 30000);
     },
     
     // User actions
