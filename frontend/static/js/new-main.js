@@ -1002,7 +1002,11 @@ let huntarrUI = {
                 if (data.readarr) this.populateSettingsForm('readarr', data.readarr);
                 if (data.whisparr) this.populateSettingsForm('whisparr', data.whisparr);
                 if (data.eros) this.populateSettingsForm('eros', data.eros);
-                if (data.swaparr) this.populateSettingsForm('swaparr', data.swaparr);
+                if (data.swaparr) {
+                    // Cache Swaparr settings globally for instance visibility logic
+                    window.swaparrSettings = data.swaparr;
+                    this.populateSettingsForm('swaparr', data.swaparr);
+                }
                 if (data.general) this.populateSettingsForm('general', data.general);
                 
                 // Update duration displays (like sleep durations)
@@ -1142,6 +1146,16 @@ let huntarrUI = {
             // Update original settings state with the full config returned from backend
             if (typeof savedConfig === 'object' && savedConfig !== null) {
                 this.originalSettings = JSON.parse(JSON.stringify(savedConfig));
+                
+                // Cache Swaparr settings globally if they were updated
+                if (app === 'swaparr') {
+                    // Handle both nested (savedConfig.swaparr) and direct (savedConfig) formats
+                    const swaparrData = savedConfig.swaparr || (savedConfig && !savedConfig.sonarr && !savedConfig.radarr ? savedConfig : null);
+                    if (swaparrData) {
+                        window.swaparrSettings = swaparrData;
+                        console.log('[huntarrUI] Updated Swaparr settings cache:', window.swaparrSettings);
+                    }
+                }
                 
                 // Check if low usage mode setting has changed and apply it immediately
                 if (app === 'general' && 'low_usage_mode' in settings) {

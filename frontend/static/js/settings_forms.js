@@ -191,6 +191,11 @@ const SettingsForms = {
                 }
             });
         }
+        
+        // Update Swaparr instance visibility for this app
+        setTimeout(() => {
+            this.updateSwaparrInstanceVisibility();
+        }, 100);
     },
     
     // Generate Radarr settings form
@@ -359,6 +364,11 @@ const SettingsForms = {
                 }
             });
         }
+        
+        // Update Swaparr instance visibility for this app
+        setTimeout(() => {
+            this.updateSwaparrInstanceVisibility();
+        }, 100);
     },
     
     // Generate Lidarr settings form
@@ -510,6 +520,11 @@ const SettingsForms = {
 
         // Add event listeners for the instance management
         SettingsForms.setupInstanceManagement(container, 'lidarr', settings.instances.length);
+        
+        // Update Swaparr instance visibility for this app
+        setTimeout(() => {
+            this.updateSwaparrInstanceVisibility();
+        }, 100);
     },
     
     // Generate Readarr settings form
@@ -653,6 +668,11 @@ const SettingsForms = {
 
         // Add event listeners for the instance management
         SettingsForms.setupInstanceManagement(container, 'readarr', settings.instances.length);
+        
+        // Update Swaparr instance visibility for this app
+        setTimeout(() => {
+            this.updateSwaparrInstanceVisibility();
+        }, 100);
     },
     
     // Generate Whisparr settings form
@@ -800,6 +820,11 @@ const SettingsForms = {
         
         // Update duration display
         this.updateDurationDisplay();
+        
+        // Update Swaparr instance visibility for this app
+        setTimeout(() => {
+            this.updateSwaparrInstanceVisibility();
+        }, 100);
     },
     
     // Generate Eros settings form
@@ -955,6 +980,11 @@ const SettingsForms = {
         
         // Update duration display
         this.updateDurationDisplay();
+        
+        // Update Swaparr instance visibility for this app
+        setTimeout(() => {
+            this.updateSwaparrInstanceVisibility();
+        }, 100);
     },
     
     // Generate Swaparr settings form
@@ -1122,6 +1152,10 @@ const SettingsForms = {
         const swaparrEnabledToggle = container.querySelector('#swaparr_enabled');
         if (swaparrEnabledToggle) {
             swaparrEnabledToggle.addEventListener('change', () => {
+                // Update cache when global toggle changes
+                if (window.swaparrSettings) {
+                    window.swaparrSettings.enabled = swaparrEnabledToggle.checked;
+                }
                 this.updateSwaparrInstanceVisibility();
             });
             
@@ -1336,9 +1370,52 @@ const SettingsForms = {
 
     // Toggle visibility of Swaparr instance controls based on global Swaparr enabled state
     updateSwaparrInstanceVisibility: function() {
-        // Check if global Swaparr is enabled
+        // First try to get the current state from the DOM if we're on the Swaparr page
         const swaparrEnabledToggle = document.querySelector('#swaparr_enabled');
-        const swaparrEnabled = swaparrEnabledToggle ? swaparrEnabledToggle.checked : false;
+        let swaparrEnabled = false;
+        
+        if (swaparrEnabledToggle) {
+            // We're on the Swaparr page, use the current toggle state
+            swaparrEnabled = swaparrEnabledToggle.checked;
+        } else {
+            // We're not on the Swaparr page, fetch the saved settings
+            try {
+                // Check if we have cached Swaparr settings
+                if (window.swaparrSettings && typeof window.swaparrSettings.enabled !== 'undefined') {
+                    swaparrEnabled = window.swaparrSettings.enabled;
+                } else {
+                    // Fetch settings asynchronously and update visibility when done
+                    HuntarrUtils.fetchWithTimeout('./api/settings/swaparr')
+                        .then(response => response.json())
+                        .then(data => {
+                            window.swaparrSettings = data;
+                            const enabled = data.enabled || false;
+                            
+                            // Update visibility based on fetched settings
+                            const swaparrInstanceToggles = document.querySelectorAll('.swaparr-instance-toggle');
+                            swaparrInstanceToggles.forEach(toggle => {
+                                toggle.style.display = enabled ? 'block' : 'none';
+                            });
+                            
+                            console.log(`Swaparr instance toggles ${enabled ? 'shown' : 'hidden'} based on saved settings`);
+                        })
+                        .catch(error => {
+                            console.error('Failed to fetch Swaparr settings:', error);
+                            // Default to hidden on error
+                            const swaparrInstanceToggles = document.querySelectorAll('.swaparr-instance-toggle');
+                            swaparrInstanceToggles.forEach(toggle => {
+                                toggle.style.display = 'none';
+                            });
+                        });
+                    
+                    // Exit early since we're doing async fetch
+                    return;
+                }
+            } catch (error) {
+                console.error('Error checking Swaparr settings:', error);
+                swaparrEnabled = false;
+            }
+        }
         
         // Find all Swaparr instance toggles
         const swaparrInstanceToggles = document.querySelectorAll('.swaparr-instance-toggle');
