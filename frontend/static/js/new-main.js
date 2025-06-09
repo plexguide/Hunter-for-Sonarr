@@ -1878,29 +1878,21 @@ let huntarrUI = {
             });
     },
 
-    // Setup Swaparr Reset Cycle button
+    // Setup Swaparr Reset buttons
     setupSwaparrResetCycle: function() {
-        // Handle header reset cycle button
-        const resetButton = document.getElementById('reset-swaparr-cycle');
-        if (resetButton) {
-            resetButton.addEventListener('click', () => {
-                this.resetSwaparrCycle();
-            });
-        }
-
-        // Handle inline reset cycle button
-        const resetCycleInline = document.getElementById('reset-swaparr-cycle-inline');
-        if (resetCycleInline) {
-            resetCycleInline.addEventListener('click', () => {
-                this.resetSwaparrCycle();
-            });
-        }
-
-        // Handle reset data button
+        // Handle header reset data button (like Live Hunts Executed)
         const resetDataButton = document.getElementById('reset-swaparr-data');
         if (resetDataButton) {
             resetDataButton.addEventListener('click', () => {
                 this.resetSwaparrData();
+            });
+        }
+
+        // Handle inline reset cycle button (like Sonarr)
+        const resetCycleInline = document.getElementById('reset-swaparr-cycle-inline');
+        if (resetCycleInline) {
+            resetCycleInline.addEventListener('click', () => {
+                this.resetSwaparrCycle();
             });
         }
     },
