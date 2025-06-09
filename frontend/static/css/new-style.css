@@ -2391,3 +2391,10 @@ input#stateful_management_hours {
     gap: 15px;
     margin-bottom: 15px; /* Add margin below to separate from table */
 }
+
+/* Fix for Swaparr toggle alignment in instances (diagnostic) */
+.instance-item .setting-item.swaparr-instance-toggle label:not(.toggle-switch) {
+    width: 250px !important; /* Extremely large width for testing */
+    min-width: 250px !important;
+    flex-shrink: 0 !important;
+}
