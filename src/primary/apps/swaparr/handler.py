@@ -324,244 +324,197 @@ def delete_download(app_name, api_url, api_key, download_id, remove_from_client=
         SWAPARR_STATS['errors_encountered'] += 1
         return False
 
-def process_stalled_downloads(app_name, app_settings, swaparr_settings=None):
-    """Process stalled downloads for a specific app instance"""
-    if not swaparr_settings:
-        swaparr_settings = load_settings("swaparr")
+def process_stalled_downloads(app_name, instance_name, instance_data, settings):
+    """Process stalled downloads for a specific app instance."""
+    swaparr_logger.info(f"Checking download queue for {app_name} instance: {instance_name}")
     
-    if not swaparr_settings or not swaparr_settings.get("enabled", False):
-        swaparr_logger.debug(f"Swaparr is globally disabled, skipping {app_name} instance: {app_settings.get('instance_name', 'Unknown')}")
-        return
-    
-    # Check if Swaparr is enabled for this specific instance
-    instance_swaparr_enabled = app_settings.get('swaparr_enabled', False)
-    if not instance_swaparr_enabled:
-        swaparr_logger.debug(f"Swaparr is disabled for {app_name} instance: {app_settings.get('instance_name', 'Unknown')}")
-        return
-    
-    instance_name = app_settings.get('instance_name', 'Unknown')
-    swaparr_logger.info(f"Processing stalled downloads for {app_name} instance: {instance_name}")
-    
-    # Add to processed apps set
-    SWAPARR_STATS['apps_processed'].add(f"{app_name}:{instance_name}")
-    
-    # Get settings
-    max_strikes = swaparr_settings.get("max_strikes", 3)
-    max_download_time = parse_time_string_to_seconds(swaparr_settings.get("max_download_time", "2h"))
-    ignore_above_size = parse_size_string_to_bytes(swaparr_settings.get("ignore_above_size", "25GB"))
-    remove_from_client = swaparr_settings.get("remove_from_client", True)
-    dry_run = swaparr_settings.get("dry_run", False)
-    
-    api_url = app_settings.get("api_url")
-    api_key = app_settings.get("api_key")
-    api_timeout = app_settings.get("api_timeout", 120)
-    
-    if not api_url or not api_key:
-        swaparr_logger.error(f"Missing API URL or API Key for {app_name} instance: {instance_name}")
-        SWAPARR_STATS['errors_encountered'] += 1
-        return
-    
-    # Load existing strike data
-    strike_data = load_strike_data(app_name)
-    
-    # Load list of permanently removed items
-    removed_items = load_removed_items(app_name)
-    
-    # Clean up expired removed items (older than 30 days)
-    now = datetime.utcnow()
-    expired_count = 0
-    for item_hash in list(removed_items.keys()):
-        try:
-            removed_date = datetime.fromisoformat(removed_items[item_hash]["removed_time"].replace('Z', '+00:00'))
-            if (now - removed_date) > timedelta(days=30):
-                swaparr_logger.debug(f"Removing expired entry from removed items list: {removed_items[item_hash]['name']}")
-                del removed_items[item_hash]
-                expired_count += 1
-        except (KeyError, ValueError) as e:
-            swaparr_logger.warning(f"Error processing removed item entry: {e}")
-    
-    if expired_count > 0:
-        swaparr_logger.info(f"Cleaned up {expired_count} expired entries from removed items list")
-    
-    # Get current queue items
-    queue_items = get_queue_items(app_name, api_url, api_key, api_timeout)
-    
-    if not queue_items:
-        swaparr_logger.info(f"No queue items found for {app_name} instance: {instance_name}")
-        return
-    
-    swaparr_logger.info(f"Found {len(queue_items)} items in download queue for {app_name}:{instance_name}")
-    
-    # Keep track of items still in queue for cleanup
-    current_item_ids = set(item["id"] for item in queue_items)
-    
-    # Clean up items that are no longer in the queue
-    cleaned_strikes = 0
-    for item_id in list(strike_data.keys()):
-        if int(item_id) not in current_item_ids:
-            swaparr_logger.debug(f"Removing item {item_id} from strike list as it's no longer in the queue")
-            del strike_data[item_id]
-            cleaned_strikes += 1
-    
-    if cleaned_strikes > 0:
-        swaparr_logger.info(f"Cleaned up {cleaned_strikes} obsolete strike entries")
-    
-    # Process each queue item
-    items_processed_this_run = 0
-    for item in queue_items:
-        # Check if Swaparr has been disabled during processing (every 10 items to avoid excessive I/O)
-        if items_processed_this_run % 10 == 0:
-            current_swaparr_settings = load_settings("swaparr")
-            if not current_swaparr_settings or not current_swaparr_settings.get("enabled", False):
-                swaparr_logger.warning(f"Swaparr was disabled during download processing for {app_name} instance: {instance_name}. Stopping after processing {items_processed_this_run} items.")
-                break
+    try:
+        # Check if instance has Swaparr enabled
+        if not instance_data.get("swaparr_enabled", False):
+            swaparr_logger.info(f"Swaparr not enabled for {app_name} instance: {instance_name}, skipping")
+            return 0  # Return 0 processed
         
-        item_id = str(item["id"])
-        item_state = "Normal"
-        item_hash = generate_item_hash(item)
+        # Check for disabled setting during processing (every 10 items to avoid excessive I/O)
+        current_swaparr_settings = load_settings("swaparr")
+        if not current_swaparr_settings or not current_swaparr_settings.get("enabled", False):
+            swaparr_logger.warning(f"Swaparr was disabled during download processing for {app_name} instance: {instance_name}. Stopping processing.")
+            return 0
         
-        SWAPARR_STATS['total_processed'] += 1
-        items_processed_this_run += 1
+        # Get the download queue
+        queue_response = get_queue_items(app_name, instance_data["api_url"], instance_data["api_key"])
+        queue_items = queue_response
         
-        # Check if this item has been previously removed
-        if item_hash in removed_items:
-            last_removed_date = datetime.fromisoformat(removed_items[item_hash]["removed_time"].replace('Z', '+00:00'))
-            days_since_removal = (now - last_removed_date).days
+        swaparr_logger.info(f"Found {len(queue_items)} downloads in queue for {app_name} instance: {instance_name}")
+        
+        if len(queue_items) == 0:
+            swaparr_logger.info(f"No downloads to process for {app_name} instance: {instance_name}")
+            return 0
+        
+        # Process each queue item
+        items_processed_this_run = 0
+        for item in queue_items:
+            # Check if Swaparr has been disabled during processing (every 10 items to avoid excessive I/O)
+            if items_processed_this_run % 10 == 0:
+                current_swaparr_settings = load_settings("swaparr")
+                if not current_swaparr_settings or not current_swaparr_settings.get("enabled", False):
+                    swaparr_logger.warning(f"Swaparr was disabled during download processing for {app_name} instance: {instance_name}. Stopping after processing {items_processed_this_run} items.")
+                    break
             
-            # Re-remove it automatically if it's been less than 7 days since last removal
-            if days_since_removal < 7:
-                swaparr_logger.warning(f"Found previously removed download that reappeared: {item['name']} (removed {days_since_removal} days ago)")
+            item_id = str(item["id"])
+            item_state = "Normal"
+            item_hash = generate_item_hash(item)
+            
+            SWAPARR_STATS['total_processed'] += 1
+            items_processed_this_run += 1
+            
+            # Check if this item has been previously removed
+            removed_items = load_removed_items(app_name)
+            if item_hash in removed_items:
+                last_removed_date = datetime.fromisoformat(removed_items[item_hash]["removed_time"].replace('Z', '+00:00'))
+                days_since_removal = (datetime.utcnow() - last_removed_date).days
                 
-                if not dry_run:
-                    if delete_download(app_name, api_url, api_key, item["id"], remove_from_client, api_timeout):
-                        swaparr_logger.info(f"Re-removed previously removed download: {item['name']}")
-                        # Update the removal time
-                        removed_items[item_hash]["removed_time"] = datetime.utcnow().isoformat()
-                        # Note: Swaparr uses its own statistics system (SWAPARR_STATS), not the hunting stats manager
-                else:
-                    swaparr_logger.info(f"DRY RUN: Would have re-removed previously removed download: {item['name']}")
-                
-                item_state = "Re-removed" if not dry_run else "Would Re-remove (Dry Run)"
-                continue
-        
-        # Skip large files if configured
-        if item["size"] >= ignore_above_size:
-            swaparr_logger.debug(f"Ignoring large download: {item['name']} ({item['size']} bytes > {ignore_above_size} bytes)")
-            item_state = "Ignored (Size)"
-            SWAPARR_STATS['items_ignored'] += 1
-            continue
-        
-        # Handle delayed items - we'll skip these (respects delay profiles)
-        if item["status"] == "delay":
-            swaparr_logger.debug(f"Ignoring delayed download: {item['name']}")
-            item_state = "Ignored (Delayed)"
-            SWAPARR_STATS['items_ignored'] += 1
-            continue
-        
-        # Special handling for "queued" status
-        # We only skip truly queued items, not those with metadata issues
-        metadata_issue = "metadata" in item["status"].lower() or "metadata" in item["error_message"].lower()
-        
-        if item["status"] == "queued" and not metadata_issue:
-            # For regular queued items, check how long they've been in strike data
-            if item_id in strike_data and "first_strike_time" in strike_data[item_id]:
-                first_strike = datetime.fromisoformat(strike_data[item_id]["first_strike_time"].replace('Z', '+00:00'))
-                if (now - first_strike) < timedelta(hours=1):
-                    # Skip if it's been less than 1 hour since first seeing it
-                    swaparr_logger.debug(f"Ignoring recently queued download: {item['name']}")
-                    item_state = "Ignored (Recently Queued)"
-                    SWAPARR_STATS['items_ignored'] += 1
+                # Re-remove it automatically if it's been less than 7 days since last removal
+                if days_since_removal < 7:
+                    swaparr_logger.warning(f"Found previously removed download that reappeared: {item['name']} (removed {days_since_removal} days ago)")
+                    
+                    if not settings.get("dry_run", False):
+                        if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True):
+                            swaparr_logger.info(f"Re-removed previously removed download: {item['name']}")
+                            # Update the removal time
+                            removed_items[item_hash]["removed_time"] = datetime.utcnow().isoformat()
+                            # Note: Swaparr uses its own statistics system (SWAPARR_STATS), not the hunting stats manager
+                    else:
+                        swaparr_logger.info(f"DRY RUN: Would have re-removed previously removed download: {item['name']}")
+                    
+                    item_state = "Re-removed" if not settings.get("dry_run", False) else "Would Re-remove (Dry Run)"
                     continue
-            else:
-                # Initialize with first strike time for queued items
-                if item_id not in strike_data:
-                    strike_data[item_id] = {
-                        "strikes": 0,
-                        "name": item["name"],
-                        "first_strike_time": datetime.utcnow().isoformat(),
-                        "last_strike_time": None
-                    }
-                swaparr_logger.debug(f"Monitoring new queued download: {item['name']}")
-                item_state = "Monitoring (Queued)"
+            
+            # Skip large files if configured
+            max_size = parse_size_string_to_bytes(settings.get("ignore_above_size", "25GB"))
+            if item["size"] >= max_size:
+                swaparr_logger.debug(f"Ignoring large download: {item['name']} ({item['size']} bytes > {max_size} bytes)")
+                item_state = "Ignored (Size)"
+                SWAPARR_STATS['items_ignored'] += 1
                 continue
-        
-        # Initialize strike count if not already in strike data
-        if item_id not in strike_data:
-            strike_data[item_id] = {
-                "strikes": 0,
-                "name": item["name"],
-                "first_strike_time": datetime.utcnow().isoformat(),
-                "last_strike_time": None
-            }
-        
-        # Check if download should be striked
-        should_strike = False
-        strike_reason = ""
-        
-        # Strike if metadata issue, eta too long, or no progress (eta = 0 and not queued)
-        if metadata_issue:
-            should_strike = True
-            strike_reason = "Metadata"
-        elif item["eta"] >= max_download_time:
-            should_strike = True
-            strike_reason = "ETA too long"
-        elif item["eta"] == 0 and item["status"] not in ["queued", "delay"]:
-            should_strike = True
-            strike_reason = "No progress"
-        
-        # If we should strike this item, add a strike
-        if should_strike:
-            strike_data[item_id]["strikes"] += 1
-            strike_data[item_id]["last_strike_time"] = datetime.utcnow().isoformat()
             
-            if strike_data[item_id]["first_strike_time"] is None:
-                strike_data[item_id]["first_strike_time"] = datetime.utcnow().isoformat()
+            # Handle delayed items - we'll skip these (respects delay profiles)
+            if item["status"] == "delay":
+                swaparr_logger.debug(f"Ignoring delayed download: {item['name']}")
+                item_state = "Ignored (Delayed)"
+                SWAPARR_STATS['items_ignored'] += 1
+                continue
             
-            current_strikes = strike_data[item_id]["strikes"]
-            swaparr_logger.info(f"Added strike ({current_strikes}/{max_strikes}) to {item['name']} - Reason: {strike_reason}")
-            SWAPARR_STATS['strikes_added'] += 1
+            # Special handling for "queued" status
+            # We only skip truly queued items, not those with metadata issues
+            metadata_issue = "metadata" in item["status"].lower() or "metadata" in item["error_message"].lower()
             
-            # If max strikes reached, remove the download
-            if current_strikes >= max_strikes:
-                swaparr_logger.warning(f"Max strikes reached for {item['name']}, removing download")
-                
-                if not dry_run:
-                    if delete_download(app_name, api_url, api_key, item["id"], remove_from_client, api_timeout):
-                        swaparr_logger.info(f"Successfully removed {item['name']} after {max_strikes} strikes")
-                        
-                        # Keep the item in strike data for reference but mark as removed
-                        strike_data[item_id]["removed"] = True
-                        strike_data[item_id]["removed_time"] = datetime.utcnow().isoformat()
-                        
-                        # Add to removed items list for persistent tracking
-                        removed_items[item_hash] = {
-                            "name": item["name"],
-                            "size": item["size"],
-                            "removed_time": datetime.utcnow().isoformat(),
-                            "reason": strike_reason
-                        }
-                        
-                        # Note: Swaparr uses its own statistics system (SWAPARR_STATS), not the hunting stats manager
+            if item["status"] == "queued" and not metadata_issue:
+                # For regular queued items, check how long they've been in strike data
+                strike_data = load_strike_data(app_name)
+                if item_id in strike_data and "first_strike_time" in strike_data[item_id]:
+                    first_strike = datetime.fromisoformat(strike_data[item_id]["first_strike_time"].replace('Z', '+00:00'))
+                    if (datetime.utcnow() - first_strike) < timedelta(hours=1):
+                        # Skip if it's been less than 1 hour since first seeing it
+                        swaparr_logger.debug(f"Ignoring recently queued download: {item['name']}")
+                        item_state = "Ignored (Recently Queued)"
+                        SWAPARR_STATS['items_ignored'] += 1
+                        continue
                 else:
-                    swaparr_logger.info(f"DRY RUN: Would have removed {item['name']} after {max_strikes} strikes")
+                    # Initialize with first strike time for queued items
+                    if item_id not in strike_data:
+                        strike_data[item_id] = {
+                            "strikes": 0,
+                            "name": item["name"],
+                            "first_strike_time": datetime.utcnow().isoformat(),
+                            "last_strike_time": None
+                        }
+                    swaparr_logger.debug(f"Monitoring new queued download: {item['name']}")
+                    item_state = "Monitoring (Queued)"
+                    continue
+            
+            # Initialize strike count if not already in strike data
+            if item_id not in strike_data:
+                strike_data[item_id] = {
+                    "strikes": 0,
+                    "name": item["name"],
+                    "first_strike_time": datetime.utcnow().isoformat(),
+                    "last_strike_time": None
+                }
+            
+            # Check if download should be striked
+            should_strike = False
+            strike_reason = ""
+            
+            # Strike if metadata issue, eta too long, or no progress (eta = 0 and not queued)
+            if metadata_issue:
+                should_strike = True
+                strike_reason = "Metadata"
+            elif item["eta"] >= parse_time_string_to_seconds(settings.get("max_download_time", "2h")):
+                should_strike = True
+                strike_reason = "ETA too long"
+            elif item["eta"] == 0 and item["status"] not in ["queued", "delay"]:
+                should_strike = True
+                strike_reason = "No progress"
+            
+            # If we should strike this item, add a strike
+            if should_strike:
+                strike_data[item_id]["strikes"] += 1
+                strike_data[item_id]["last_strike_time"] = datetime.utcnow().isoformat()
                 
-                item_state = "Removed" if not dry_run else "Would Remove (Dry Run)"
-            else:
-                item_state = f"Striked ({current_strikes}/{max_strikes})"
+                if strike_data[item_id]["first_strike_time"] is None:
+                    strike_data[item_id]["first_strike_time"] = datetime.utcnow().isoformat()
+                
+                current_strikes = strike_data[item_id]["strikes"]
+                swaparr_logger.info(f"Added strike ({current_strikes}/{settings.get('max_strikes', 3)}) to {item['name']} - Reason: {strike_reason}")
+                SWAPARR_STATS['strikes_added'] += 1
+                
+                # If max strikes reached, remove the download
+                if current_strikes >= settings.get('max_strikes', 3):
+                    swaparr_logger.warning(f"Max strikes reached for {item['name']}, removing download")
+                    
+                    if not settings.get("dry_run", False):
+                        if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True):
+                            swaparr_logger.info(f"Successfully removed {item['name']} after {settings.get('max_strikes', 3)} strikes")
+                            
+                            # Keep the item in strike data for reference but mark as removed
+                            strike_data[item_id]["removed"] = True
+                            strike_data[item_id]["removed_time"] = datetime.utcnow().isoformat()
+                            
+                            # Add to removed items list for persistent tracking
+                            removed_items[item_hash] = {
+                                "name": item["name"],
+                                "size": item["size"],
+                                "removed_time": datetime.utcnow().isoformat(),
+                                "reason": strike_reason
+                            }
+                            
+                            # Note: Swaparr uses its own statistics system (SWAPARR_STATS), not the hunting stats manager
+                    else:
+                        swaparr_logger.info(f"DRY RUN: Would have removed {item['name']} after {settings.get('max_strikes', 3)} strikes")
+                    
+                    item_state = "Removed" if not settings.get("dry_run", False) else "Would Remove (Dry Run)"
+                else:
+                    item_state = f"Striked ({current_strikes}/{settings.get('max_strikes', 3)})"
+            
+            swaparr_logger.debug(f"Processed download: {item['name']} - State: {item_state}")
         
-        swaparr_logger.debug(f"Processed download: {item['name']} - State: {item_state}")
-    
-    # Save updated strike data
-    save_strike_data(app_name, strike_data)
-    
-    # Save updated removed items list
-    save_removed_items(app_name, removed_items)
-    
-    # Update last run time
-    SWAPARR_STATS['last_run_time'] = datetime.utcnow().isoformat()
-    
-    swaparr_logger.info(f"Finished processing {items_processed_this_run} downloads for {app_name} instance: {instance_name}")
-    swaparr_logger.info(f"Session stats - Strikes: {SWAPARR_STATS['strikes_added']}, Removed: {SWAPARR_STATS['downloads_removed']}, Ignored: {SWAPARR_STATS['items_ignored']}, API calls: {SWAPARR_STATS['api_calls_made']}")
+        # Save updated strike data
+        save_strike_data(app_name, strike_data)
+        
+        # Save updated removed items list
+        save_removed_items(app_name, removed_items)
+        
+        # Update last run time
+        SWAPARR_STATS['last_run_time'] = datetime.utcnow().isoformat()
+        
+        swaparr_logger.info(f"Finished processing {items_processed_this_run} downloads for {app_name} instance: {instance_name}")
+        swaparr_logger.info(f"Session stats - Strikes: {SWAPARR_STATS['strikes_added']}, Removed: {SWAPARR_STATS['downloads_removed']}, Ignored: {SWAPARR_STATS['items_ignored']}, API calls: {SWAPARR_STATS['api_calls_made']}")
+        
+        return items_processed_this_run
+    except Exception as e:
+        swaparr_logger.error(f"Error processing {app_name} instance {instance_name}: {str(e)}")
+        SWAPARR_STATS['errors_encountered'] += 1
+        return 0
 
 def run_swaparr():
     """Run Swaparr cycle to check for stalled downloads in all configured Starr app instances"""
@@ -570,7 +523,7 @@ def run_swaparr():
     settings = load_settings("swaparr")
     
     if not settings or not settings.get("enabled", False):
-        swaparr_logger.debug("Swaparr is disabled, skipping run")
+        swaparr_logger.debug("Swaparr is disabled, skipping processing")
         return
     
     swaparr_logger.info("Starting Swaparr stalled download detection cycle")
@@ -582,7 +535,7 @@ def run_swaparr():
         swaparr_logger.warning("No configured Starr app instances found for Swaparr monitoring")
         return
     
-    swaparr_logger.info(f"Processing {total_instances} Starr app instances for stalled downloads")
+    swaparr_logger.info(f"Found {total_instances} configured Starr app instances for Swaparr monitoring")
     
     # Process stalled downloads for each app type and instance
     processed_instances = 0
@@ -595,15 +548,14 @@ def run_swaparr():
                 return
             
             try:
-                process_stalled_downloads(app_name, app_settings, current_settings)
-                processed_instances += 1
+                processed_instances += process_stalled_downloads(app_name, app_settings.get('instance_name', 'Unknown'), app_settings, current_settings)
             except Exception as e:
                 swaparr_logger.error(f"Error processing {app_name} instance {app_settings.get('instance_name', 'Unknown')}: {str(e)}")
                 SWAPARR_STATS['errors_encountered'] += 1
                 processed_instances += 1
     
     stats = get_session_stats()
-    swaparr_logger.info(f"Swaparr cycle completed. Processed {len(stats['apps_processed'])} app instances.")
+    swaparr_logger.info(f"Swaparr cycle completed. Processed {processed_instances} app instances.")
     
     # Log summary stats if there was activity
     if stats['total_processed'] > 0:

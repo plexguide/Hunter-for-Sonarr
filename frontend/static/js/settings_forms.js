@@ -1082,9 +1082,12 @@ const SettingsForms = {
                         <i class="fas fa-spinner fa-spin"></i> Loading status...
                     </div>
                 </div>
-                <div style="margin-top: 15px;">
+                <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
                     <button type="button" id="resetSwaparrBtn" class="btn btn-secondary" style="background-color: #dc2626; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
                         <i class="fas fa-undo"></i> Reset Data
+                    </button>
+                    <button type="button" id="resetSwaparrCycleBtn" class="btn btn-secondary cycle-reset-button" data-app="swaparr" style="background-color: #00c2ce; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                        <i class="fas fa-sync-alt"></i> Reset Cycle
                     </button>
                 </div>
             </div>
@@ -1097,9 +1100,14 @@ const SettingsForms = {
         
         // Set up button event listeners
         const resetBtn = container.querySelector('#resetSwaparrBtn');
+        const resetCycleBtn = container.querySelector('#resetSwaparrCycleBtn');
         
         if (resetBtn) {
             resetBtn.addEventListener('click', () => this.resetSwaparrData(resetBtn));
+        }
+        
+        if (resetCycleBtn) {
+            resetCycleBtn.addEventListener('click', () => this.resetSwaparrCycle(resetCycleBtn));
         }
         
         // Add event listener for sleep duration display update
@@ -1163,20 +1171,25 @@ const SettingsForms = {
                     </div>
                 `;
                 
-                // Configuration summary
+                // Countdown Timer section
                 statusHtml += `
-                    <div class="config-summary" style="margin-top: 15px; padding: 10px; background-color: rgba(0,0,0,0.2); border-radius: 6px;">
-                        <h4>Current Configuration</h4>
-                        <div style="font-size: 13px; color: #d1d5db;">
-                            <div>Max Strikes: <span style="color: #3b82f6;">${settings.max_strikes || 3}</span></div>
-                            <div>Max Download Time: <span style="color: #3b82f6;">${settings.max_download_time || '2h'}</span></div>
-                            <div>Ignore Above Size: <span style="color: #3b82f6;">${settings.ignore_above_size || '25GB'}</span></div>
-                            <div>Dry Run: <span style="color: ${settings.dry_run ? '#f59e0b' : '#10b981'};">${settings.dry_run ? 'Enabled' : 'Disabled'}</span></div>
+                    <div class="countdown-summary" style="margin-top: 15px; padding: 10px; background-color: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <h4>Countdown Timer</h4>
+                        <div id="swaparrCycleTimer" class="cycle-timer" style="display: flex; align-items: center; justify-content: center; font-size: 0.9rem; padding: 8px 12px; border-radius: 4px; margin: 8px auto 6px auto; background-color: rgba(0, 0, 0, 0.15); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; user-select: none; max-width: 200px; border-left: 2px solid #00c2ce;">
+                            <i class="fas fa-clock" style="margin-right: 5px; font-size: 0.9rem;"></i>
+                            <span class="timer-value" style="font-family: monospace; font-weight: 600; color: white;">--:--:--</span>
                         </div>
                     </div>
                 `;
                 
                 statusPanel.innerHTML = statusHtml;
+                
+                // Initialize countdown timer for Swaparr if CycleCountdown is available
+                if (window.CycleCountdown) {
+                    console.log('Initializing Swaparr countdown timer');
+                    // The countdown will be handled by the existing CycleCountdown system
+                    // which will find the swaparrCycleTimer element and the cycle-reset-button
+                }
             })
             .catch(error => {
                 console.error('Error loading Swaparr status:', error);
@@ -1218,6 +1231,35 @@ const SettingsForms = {
                 button.innerHTML = originalText;
                 button.disabled = false;
                 alert(`Reset failed: ${error.message}`);
+            });
+    },
+    
+    // Reset Swaparr cycle
+    resetSwaparrCycle: function(button) {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+        button.disabled = true;
+        
+        HuntarrUtils.fetchWithTimeout('./api/cycle/reset/swaparr', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                
+                if (data.success) {
+                    alert('Swaparr cycle reset successfully!');
+                    // Trigger countdown timer update if available
+                    if (window.CycleCountdown) {
+                        console.log('Cycle reset completed for Swaparr, CycleCountdown will handle the refresh');
+                    }
+                } else {
+                    alert(`Cycle reset failed: ${data.message || 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                alert(`Cycle reset failed: ${error.message}`);
             });
     },
     

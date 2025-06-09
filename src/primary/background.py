@@ -701,6 +701,7 @@ def swaparr_app_loop():
     try:
         from src.primary.apps.swaparr.handler import run_swaparr
         from src.primary.settings_manager import load_settings
+        from src.primary.cycle_tracker import start_cycle, end_cycle, update_next_cycle
         
         while not stop_event.is_set():
             try:
@@ -718,9 +719,15 @@ def swaparr_app_loop():
                 # Get sleep duration from settings
                 sleep_duration = swaparr_settings.get("sleep_duration", 900)
                 
-                # Calculate next cycle time
-                next_cycle_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=sleep_duration)
-                next_cycle_str = next_cycle_time.strftime('%Y-%m-%d %H:%M:%S')
+                # Get user's timezone
+                user_tz = _get_user_timezone()
+                
+                # Calculate next cycle time in user's timezone
+                now_user_tz = datetime.datetime.now(user_tz).replace(microsecond=0)
+                next_cycle_time = now_user_tz + datetime.timedelta(seconds=sleep_duration)
+                
+                # Start cycle tracking
+                start_cycle("swaparr")
                 
                 # Start cycle
                 swaparr_logger.info("=== SWAPARR cycle started. Processing stalled downloads across all instances. ===")
@@ -733,11 +740,17 @@ def swaparr_app_loop():
                     swaparr_logger.error(f"Error during Swaparr processing: {e}", exc_info=True)
                     swaparr_logger.info("=== SWAPARR cycle finished with errors. ===")
                 
-                # Sleep duration and next cycle info
-                swaparr_logger.info(f"Next cycle will begin at {next_cycle_str} (UTC)")
+                # End cycle tracking
+                next_cycle_naive = next_cycle_time.replace(tzinfo=None) if next_cycle_time.tzinfo else next_cycle_time
+                end_cycle("swaparr", next_cycle_naive)
+                update_next_cycle("swaparr", next_cycle_naive)
+                
+                # Sleep duration and next cycle info (like other apps)
+                swaparr_logger.debug(f"Current time ({user_tz}): {now_user_tz.strftime('%Y-%m-%d %H:%M:%S')}")
+                swaparr_logger.info(f"Next cycle will begin at {next_cycle_time.strftime('%Y-%m-%d %H:%M:%S')} ({user_tz})")
                 swaparr_logger.info(f"Sleep duration: {sleep_duration} seconds")
                 
-                # Sleep with responsiveness to stop events
+                # Sleep with responsiveness to stop events (like other apps)
                 elapsed = 0
                 while elapsed < sleep_duration and not stop_event.is_set():
                     sleep_interval = min(30, sleep_duration - elapsed)  # Check every 30 seconds

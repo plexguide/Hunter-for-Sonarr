@@ -1069,19 +1069,30 @@ def reset_app_cycle(app_name):
     web_logger.info(f"Manual cycle reset requested for {app_name} via API")
     
     # Check if app name is valid
-    if app_name not in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']:
+    if app_name not in ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr']:
         return jsonify({
             'success': False,
             'error': f"Invalid app name: {app_name}"
         }), 400
     
-    # Check if the app is configured
-    configured_apps = settings_manager.get_configured_apps()
-    if app_name not in configured_apps:
-        return jsonify({
-            'success': False,
-            'error': f"{app_name} is not configured"
-        }), 400
+    # Check if the app is configured (special handling for Swaparr)
+    if app_name == 'swaparr':
+        # For Swaparr, check if it's enabled in settings
+        from src.primary.settings_manager import load_settings
+        swaparr_settings = load_settings("swaparr")
+        if not swaparr_settings or not swaparr_settings.get("enabled", False):
+            return jsonify({
+                'success': False,
+                'error': f"{app_name} is not enabled"
+            }), 400
+    else:
+        # For other apps, use the standard configured apps check
+        configured_apps = settings_manager.get_configured_apps()
+        if app_name not in configured_apps:
+            return jsonify({
+                'success': False,
+                'error': f"{app_name} is not configured"
+            }), 400
         
     try:
         # Trigger cycle reset for the app using a file-based approach
