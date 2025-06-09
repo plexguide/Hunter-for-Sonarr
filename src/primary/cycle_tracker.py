@@ -335,7 +335,7 @@ def update_sleep_json(app_type: str, next_cycle_time: datetime.datetime, cyclelo
         # Determine cyclelock value
         if cyclelock is None:
             # If not explicitly set, preserve existing value or default to True (cycle starting)
-            existing_cyclelock = sleep_data.get(app_type, {})
+            existing_cyclelock = sleep_data.get(app_type, {}).get('cyclelock', True)
             cyclelock = existing_cyclelock
         
         # Update the app's data - store times in user's timezone format

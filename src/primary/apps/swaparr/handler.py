@@ -215,9 +215,9 @@ def get_queue_items(app_name, api_url, api_key, api_timeout=120):
             if api_version in ["v3"]:  # Radarr, Sonarr, Whisparr, Eros use v3
                 records = queue_data.get("records", [])
                 total_records = queue_data.get("totalRecords", 0)
-            else:  # Lidarr, Readarr use v1
-                records = queue_data
-                total_records = len(records)
+            else:  # Lidarr, Readarr use v1 - but they also use the records structure
+                records = queue_data.get("records", [])
+                total_records = queue_data.get("totalRecords", len(records))
             
             # Add this page's records to our collection
             all_records.extend(records)
@@ -350,6 +350,10 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
             swaparr_logger.info(f"No downloads to process for {app_name} instance: {instance_name}")
             return 0
         
+        # Load strike data and removed items for this app
+        strike_data = load_strike_data(app_name)
+        removed_items = load_removed_items(app_name)
+        
         # Process each queue item
         items_processed_this_run = 0
         for item in queue_items:
@@ -368,7 +372,6 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
             items_processed_this_run += 1
             
             # Check if this item has been previously removed
-            removed_items = load_removed_items(app_name)
             if item_hash in removed_items:
                 last_removed_date = datetime.fromisoformat(removed_items[item_hash]["removed_time"].replace('Z', '+00:00'))
                 days_since_removal = (datetime.utcnow() - last_removed_date).days
@@ -410,7 +413,6 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
             
             if item["status"] == "queued" and not metadata_issue:
                 # For regular queued items, check how long they've been in strike data
-                strike_data = load_strike_data(app_name)
                 if item_id in strike_data and "first_strike_time" in strike_data[item_id]:
                     first_strike = datetime.fromisoformat(strike_data[item_id]["first_strike_time"].replace('Z', '+00:00'))
                     if (datetime.utcnow() - first_strike) < timedelta(hours=1):
@@ -550,12 +552,18 @@ def run_swaparr():
     
     for app_name, app_instances in instances.items():
         for app_settings in app_instances:
+            # Debug log the swaparr_enabled status
+            swaparr_enabled = app_settings.get("swaparr_enabled", False)
+            instance_name = app_settings.get('instance_name', 'Unknown')
+            swaparr_logger.debug(f"Checking {app_name} instance '{instance_name}' - swaparr_enabled: {swaparr_enabled}")
+            
             # Skip instances that don't have Swaparr enabled
-            if not app_settings.get("swaparr_enabled", False):
-                swaparr_logger.debug(f"Skipping {app_name} instance '{app_settings.get('instance_name', 'Unknown')}' - Swaparr not enabled for this instance")
+            if not swaparr_enabled:
+                swaparr_logger.debug(f"Skipping {app_name} instance '{instance_name}' - Swaparr not enabled for this instance")
                 continue
             
             swaparr_enabled_instances += 1
+            swaparr_logger.info(f"Processing {app_name} instance '{instance_name}' - Swaparr enabled")
             
             # Check if Swaparr has been disabled during processing
             current_settings = load_settings("swaparr")
