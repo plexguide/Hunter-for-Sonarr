@@ -15,6 +15,7 @@ from src.primary.apps.swaparr.handler import (
     SWAPARR_STATE_DIR
 )
 from src.primary.apps.swaparr import get_configured_instances, is_configured
+from src.primary.apps.swaparr.stats_manager import get_swaparr_stats, increment_swaparr_stat
 
 # Create the blueprint directly in this file
 swaparr_bp = Blueprint('swaparr', __name__)
@@ -90,6 +91,9 @@ def get_status():
     # Get session statistics
     session_stats = get_session_stats()
     
+    # Get persistent statistics
+    swaparr_persistent_stats = get_swaparr_stats()
+    
     # Get configured instances info
     instances_info = {}
     if configured:
@@ -117,6 +121,7 @@ def get_status():
         },
         "app_statistics": app_statistics,
         "session_statistics": session_stats,
+        "persistent_statistics": swaparr_persistent_stats,
         "configured_instances": instances_info
     })
 
@@ -373,5 +378,22 @@ def manual_run():
             "success": False, 
             "message": f"Manual run failed: {str(e)}"
         }), 500
+
+@swaparr_bp.route('/test-stats', methods=['POST'])
+def test_stats_increment():
+    """Test endpoint to increment stats for testing large number formatting"""
+    data = request.json or {}
+    stat_type = data.get('stat_type', 'processed')
+    count = data.get('count', 1000)
+    
+    if increment_swaparr_stat(stat_type, count):
+        current_stats = get_swaparr_stats()
+        return jsonify({
+            "success": True, 
+            "message": f"Incremented {stat_type} by {count}",
+            "current_stats": current_stats
+        })
+    else:
+        return jsonify({"success": False, "message": "Failed to increment stats"}), 500
 
  

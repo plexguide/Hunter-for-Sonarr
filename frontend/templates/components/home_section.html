@@ -1092,82 +1092,7 @@
         gap: 20px;
     }
     
-    .app-stats-card.swaparr .stats-numbers {
-        display: grid !important;
-        grid-template-columns: repeat(4, 1fr) !important;
-        gap: 15px !important;
-        margin-bottom: 20px !important;
-        flex-direction: initial !important;
-        justify-content: initial !important;
-    }
-    
-    /* Improved mobile responsiveness - break to 2x2 grid earlier */
-    @media (max-width: 900px) {
-        .app-stats-card.swaparr .stats-numbers {
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 12px !important;
-        }
-    }
-    
-    /* Stack vertically on mobile for better readability - FORCE OVERRIDE */
-    @media (max-width: 600px) {
-        .app-stats-card.swaparr .stats-numbers {
-            display: grid !important;
-            grid-template-columns: 1fr !important;
-            grid-template-rows: repeat(4, auto) !important;
-            gap: 10px !important;
-            max-width: 300px !important;
-            margin: 0 auto 20px auto !important;
-            flex-direction: initial !important;
-            justify-content: initial !important;
-            /* Force grid layout - debug border */
-            border: 2px solid red !important;
-        }
-        
-        .app-stats-card.swaparr .stat-box {
-            padding: 15px;
-            background: rgba(26, 32, 44, 0.5);
-            border-radius: 10px;
-            border: 1px solid rgba(120, 140, 180, 0.2);
-            transition: all 0.3s ease;
-        }
-        
-        .app-stats-card.swaparr .stat-box:hover {
-            transform: translateY(-2px);
-            border-color: rgba(120, 140, 180, 0.4);
-            background: rgba(26, 32, 44, 0.7);
-        }
-        
-        .app-stats-card.swaparr .stat-number {
-            font-size: 32px;
-            margin-bottom: 6px;
-        }
-        
-        .app-stats-card.swaparr .stat-label {
-            font-size: 12px;
-            letter-spacing: 0.5px;
-        }
-    }
-    
-    /* Extra small mobile devices */
-    @media (max-width: 400px) {
-        .app-stats-card.swaparr .stats-numbers {
-            max-width: 280px;
-            gap: 8px;
-        }
-        
-        .app-stats-card.swaparr .stat-box {
-            padding: 12px;
-        }
-        
-        .app-stats-card.swaparr .stat-number {
-            font-size: 28px;
-        }
-        
-        .app-stats-card.swaparr .stat-label {
-            font-size: 11px;
-        }
-    }
+
     
     .swaparr-status-container {
         padding: 20px !important;
@@ -1185,22 +1110,14 @@
         width: 100% !important;
     }
     
-    /* Responsive design for smaller screens */
-    @media (max-width: 900px) {
-        .swaparr-stats-horizontal {
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 12px !important;
-        }
+    .swaparr-action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 10px;
     }
     
     @media (max-width: 600px) {
-        .swaparr-stats-horizontal {
-            grid-template-columns: 1fr !important;
-            gap: 10px !important;
-            max-width: 300px !important;
-            margin: 0 auto 25px auto !important;
-        }
-        
         .swaparr-action-buttons {
             flex-direction: column;
             gap: 10px;

@@ -1853,12 +1853,12 @@ let huntarrUI = {
                 if (data.enabled && data.configured) {
                     swaparrCard.style.display = 'block';
                     
-                    // Update session statistics
-                    const sessionStats = data.session_statistics || {};
-                    document.getElementById('swaparr-processed').textContent = sessionStats.total_processed || 0;
-                    document.getElementById('swaparr-strikes').textContent = sessionStats.strikes_added || 0;
-                    document.getElementById('swaparr-removals').textContent = sessionStats.downloads_removed || 0;
-                    document.getElementById('swaparr-ignored').textContent = sessionStats.items_ignored || 0;
+                    // Update persistent statistics with large number formatting (like other apps)
+                    const persistentStats = data.persistent_statistics || {};
+                    document.getElementById('swaparr-processed').textContent = this.formatLargeNumber(persistentStats.processed || 0);
+                    document.getElementById('swaparr-strikes').textContent = this.formatLargeNumber(persistentStats.strikes || 0);
+                    document.getElementById('swaparr-removals').textContent = this.formatLargeNumber(persistentStats.removals || 0);
+                    document.getElementById('swaparr-ignored').textContent = this.formatLargeNumber(persistentStats.ignored || 0);
                     
                     // Setup button event handlers after content is loaded
                     setTimeout(() => {
