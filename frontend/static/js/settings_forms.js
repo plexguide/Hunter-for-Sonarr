@@ -1083,12 +1083,6 @@ const SettingsForms = {
                     </div>
                 </div>
                 <div style="margin-top: 15px;">
-                    <button type="button" id="testSwaparrBtn" class="btn btn-secondary" style="background-color: #6366f1; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-right: 10px;">
-                        <i class="fas fa-vial"></i> Test Configuration
-                    </button>
-                    <button type="button" id="runSwaparrBtn" class="btn btn-secondary" style="background-color: #059669; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-right: 10px;">
-                        <i class="fas fa-play"></i> Run Now
-                    </button>
                     <button type="button" id="resetSwaparrBtn" class="btn btn-secondary" style="background-color: #dc2626; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
                         <i class="fas fa-undo"></i> Reset Data
                     </button>
@@ -1102,17 +1096,7 @@ const SettingsForms = {
         this.loadSwaparrStatus(container);
         
         // Set up button event listeners
-        const testBtn = container.querySelector('#testSwaparrBtn');
-        const runBtn = container.querySelector('#runSwaparrBtn');
         const resetBtn = container.querySelector('#resetSwaparrBtn');
-        
-        if (testBtn) {
-            testBtn.addEventListener('click', () => this.testSwaparrConfig(testBtn));
-        }
-        
-        if (runBtn) {
-            runBtn.addEventListener('click', () => this.runSwaparrNow(runBtn));
-        }
         
         if (resetBtn) {
             resetBtn.addEventListener('click', () => this.resetSwaparrData(resetBtn));
@@ -1179,30 +1163,6 @@ const SettingsForms = {
                     </div>
                 `;
                 
-                if (Object.keys(appStats).length > 0) {
-                    statusHtml += `
-                        <div class="app-stats" style="margin-top: 15px;">
-                            <h4>Per-App Statistics</h4>
-                            <div class="app-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
-                    `;
-                    
-                    Object.entries(appStats).forEach(([app, stats]) => {
-                        statusHtml += `
-                            <div class="app-stat">
-                                <div class="app-name" style="font-weight: bold; text-transform: capitalize;">${app}</div>
-                                <div class="app-stats-detail" style="font-size: 12px; color: #9ca3af;">
-                                    P: ${stats.processed || 0} | S: ${stats.strikes || 0} | R: ${stats.removals || 0}
-                                </div>
-                            </div>
-                        `;
-                    });
-                    
-                    statusHtml += `
-                            </div>
-                        </div>
-                    `;
-                }
-                
                 // Configuration summary
                 statusHtml += `
                     <div class="config-summary" style="margin-top: 15px; padding: 10px; background-color: rgba(0,0,0,0.2); border-radius: 6px;">
@@ -1226,61 +1186,6 @@ const SettingsForms = {
                         Failed to load status. Check if any *arr apps are configured.
                     </div>
                 `;
-            });
-    },
-    
-    // Test Swaparr configuration
-    testSwaparrConfig: function(button) {
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
-        button.disabled = true;
-        
-        HuntarrUtils.fetchWithTimeout('./api/swaparr/test', { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
-                button.innerHTML = originalText;
-                button.disabled = false;
-                
-                if (data.success) {
-                    alert(`Test successful!\n\nFound ${data.total_apps || 0} configured apps:\n${(data.configured_apps || []).join(', ') || 'None'}`);
-                } else {
-                    alert(`Test failed: ${data.message || 'Unknown error'}`);
-                }
-            })
-            .catch(error => {
-                button.innerHTML = originalText;
-                button.disabled = false;
-                alert(`Test failed: ${error.message}`);
-            });
-    },
-    
-    // Run Swaparr now
-    runSwaparrNow: function(button) {
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running...';
-        button.disabled = true;
-        
-        HuntarrUtils.fetchWithTimeout('./api/swaparr/run', { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
-                button.innerHTML = originalText;
-                button.disabled = false;
-                
-                if (data.success) {
-                    alert('Swaparr processing triggered successfully! Check logs for details.');
-                    // Reload status after a short delay
-                    setTimeout(() => {
-                        const container = button.closest('.settings-group').parentElement;
-                        this.loadSwaparrStatus(container);
-                    }, 2000);
-                } else {
-                    alert(`Run failed: ${data.message || 'Unknown error'}`);
-                }
-            })
-            .catch(error => {
-                button.innerHTML = originalText;
-                button.disabled = false;
-                alert(`Run failed: ${error.message}`);
             });
     },
     
