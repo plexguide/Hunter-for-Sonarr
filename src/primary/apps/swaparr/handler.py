@@ -531,31 +531,49 @@ def run_swaparr():
     instances = get_configured_instances()
     total_instances = sum(len(app_instances) for app_instances in instances.values())
     
-    if total_instances == 0:
-        swaparr_logger.warning("No configured Starr app instances found for Swaparr monitoring")
+    # Count only Swaparr-enabled instances
+    swaparr_enabled_count = 0
+    for app_name, app_instances in instances.items():
+        for app_settings in app_instances:
+            if app_settings.get("swaparr_enabled", False):
+                swaparr_enabled_count += 1
+    
+    if swaparr_enabled_count == 0:
+        swaparr_logger.info(f"Found {total_instances} configured Starr app instances, but none have Swaparr enabled. Cycle complete.")
         return
     
-    swaparr_logger.info(f"Found {total_instances} configured Starr app instances for Swaparr monitoring")
+    swaparr_logger.info(f"Found {swaparr_enabled_count} Swaparr-enabled instances out of {total_instances} total configured Starr app instances")
     
     # Process stalled downloads for each app type and instance
     processed_instances = 0
+    swaparr_enabled_instances = 0
+    
     for app_name, app_instances in instances.items():
         for app_settings in app_instances:
+            # Skip instances that don't have Swaparr enabled
+            if not app_settings.get("swaparr_enabled", False):
+                swaparr_logger.debug(f"Skipping {app_name} instance '{app_settings.get('instance_name', 'Unknown')}' - Swaparr not enabled for this instance")
+                continue
+            
+            swaparr_enabled_instances += 1
+            
             # Check if Swaparr has been disabled during processing
             current_settings = load_settings("swaparr")
             if not current_settings or not current_settings.get("enabled", False):
-                swaparr_logger.warning(f"Swaparr was disabled during processing. Ending cycle early after processing {processed_instances}/{total_instances} instances.")
+                swaparr_logger.warning(f"Swaparr was disabled during processing. Ending cycle early after processing {processed_instances}/{swaparr_enabled_instances} Swaparr-enabled instances.")
                 return
             
             try:
-                processed_instances += process_stalled_downloads(app_name, app_settings.get('instance_name', 'Unknown'), app_settings, current_settings)
+                items_processed = process_stalled_downloads(app_name, app_settings.get('instance_name', 'Unknown'), app_settings, current_settings)
+                processed_instances += 1
+                swaparr_logger.debug(f"Processed {items_processed} items from {app_name} instance '{app_settings.get('instance_name', 'Unknown')}'")
             except Exception as e:
                 swaparr_logger.error(f"Error processing {app_name} instance {app_settings.get('instance_name', 'Unknown')}: {str(e)}")
                 SWAPARR_STATS['errors_encountered'] += 1
                 processed_instances += 1
     
     stats = get_session_stats()
-    swaparr_logger.info(f"Swaparr cycle completed. Processed {processed_instances} app instances.")
+    swaparr_logger.info(f"=== SWAPARR cycle completed. Processed {processed_instances} Swaparr-enabled app instances. ===")
     
     # Log summary stats if there was activity
     if stats['total_processed'] > 0:
