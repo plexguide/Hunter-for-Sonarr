@@ -547,23 +547,23 @@
                 <button id="reset-swaparr-cycle" class="action-button secondary"><i class="fas fa-sync-alt"></i> Reset Cycle</button>
             </div>
             <div class="swaparr-status-container">
-                <!-- Session Statistics in horizontal layout -->
-                <div class="swaparr-stats-horizontal">
-                    <div class="swaparr-stat-box">
-                        <div class="stat-label">SESSION PROCESSED</div>
-                        <div class="stat-value" id="swaparr-processed">0</div>
+                <!-- Session Statistics in horizontal layout using flexbox -->
+                <div style="display: flex; gap: 15px; margin-bottom: 25px; width: 100%;">
+                    <div style="flex: 1; background: linear-gradient(145deg, rgba(26, 32, 44, 0.9), rgba(20, 24, 33, 0.8)); border-radius: 8px; padding: 15px; text-align: center; border: 1px solid rgba(120, 140, 180, 0.15); min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="font-size: 11px; color: rgba(160, 168, 184, 0.9); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">SESSION PROCESSED</div>
+                        <div style="font-size: 28px; font-weight: 700; background: linear-gradient(to bottom right, #3498db, #2980b9); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;" id="swaparr-processed">0</div>
                     </div>
-                    <div class="swaparr-stat-box">
-                        <div class="stat-label">SESSION STRIKES</div>
-                        <div class="stat-value" id="swaparr-strikes">0</div>
+                    <div style="flex: 1; background: linear-gradient(145deg, rgba(26, 32, 44, 0.9), rgba(20, 24, 33, 0.8)); border-radius: 8px; padding: 15px; text-align: center; border: 1px solid rgba(120, 140, 180, 0.15); min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="font-size: 11px; color: rgba(160, 168, 184, 0.9); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">SESSION STRIKES</div>
+                        <div style="font-size: 28px; font-weight: 700; background: linear-gradient(to bottom right, #f39c12, #e67e22); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;" id="swaparr-strikes">0</div>
                     </div>
-                    <div class="swaparr-stat-box">
-                        <div class="stat-label">SESSION REMOVALS</div>
-                        <div class="stat-value" id="swaparr-removals">0</div>
+                    <div style="flex: 1; background: linear-gradient(145deg, rgba(26, 32, 44, 0.9), rgba(20, 24, 33, 0.8)); border-radius: 8px; padding: 15px; text-align: center; border: 1px solid rgba(120, 140, 180, 0.15); min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="font-size: 11px; color: rgba(160, 168, 184, 0.9); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">SESSION REMOVALS</div>
+                        <div style="font-size: 28px; font-weight: 700; background: linear-gradient(to bottom right, #e74c3c, #c0392b); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;" id="swaparr-removals">0</div>
                     </div>
-                    <div class="swaparr-stat-box">
-                        <div class="stat-label">SESSION IGNORED</div>
-                        <div class="stat-value" id="swaparr-ignored">0</div>
+                    <div style="flex: 1; background: linear-gradient(145deg, rgba(26, 32, 44, 0.9), rgba(20, 24, 33, 0.8)); border-radius: 8px; padding: 15px; text-align: center; border: 1px solid rgba(120, 140, 180, 0.15); min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="font-size: 11px; color: rgba(160, 168, 184, 0.9); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">SESSION IGNORED</div>
+                        <div style="font-size: 28px; font-weight: 700; background: linear-gradient(to bottom right, #95a5a6, #7f8c8d); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;" id="swaparr-ignored">0</div>
                     </div>
                 </div>
                 
@@ -1086,29 +1086,33 @@
     
     /* Swaparr Status Card Styling */
     .swaparr-status-container {
-        padding: 20px;
-        background-color: rgba(15, 18, 24, 0.4);
+        padding: 20px !important;
+        background-color: rgba(15, 18, 24, 0.4) !important;
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     .swaparr-stats-horizontal {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 15px;
-        margin-bottom: 25px;
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 15px !important;
+        margin-bottom: 25px !important;
+        width: 100% !important;
     }
     
     /* Responsive design for smaller screens */
     @media (max-width: 768px) {
         .swaparr-stats-horizontal {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
         }
     }
     
     @media (max-width: 480px) {
         .swaparr-stats-horizontal {
-            grid-template-columns: 1fr;
-            gap: 8px;
+            grid-template-columns: 1fr !important;
+            gap: 8px !important;
         }
         
         .swaparr-action-buttons {
@@ -1118,17 +1122,19 @@
     }
     
     .swaparr-stat-box {
-        background: linear-gradient(145deg, rgba(26, 32, 44, 0.9), rgba(20, 24, 33, 0.8));
-        border-radius: 8px;
-        padding: 15px;
-        text-align: center;
-        border: 1px solid rgba(120, 140, 180, 0.15);
-        transition: all 0.3s ease;
-        backdrop-filter: blur(5px);
-        min-height: 80px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        background: linear-gradient(145deg, rgba(26, 32, 44, 0.9), rgba(20, 24, 33, 0.8)) !important;
+        border-radius: 8px !important;
+        padding: 15px !important;
+        text-align: center !important;
+        border: 1px solid rgba(120, 140, 180, 0.15) !important;
+        transition: all 0.3s ease !important;
+        backdrop-filter: blur(5px) !important;
+        min-height: 80px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     .swaparr-stat-box:hover {
@@ -1138,23 +1144,27 @@
     }
     
     .swaparr-stat-box .stat-label {
-        font-size: 11px;
-        color: rgba(160, 168, 184, 0.9);
-        font-weight: 600;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        margin-bottom: 8px;
+        font-size: 11px !important;
+        color: rgba(160, 168, 184, 0.9) !important;
+        font-weight: 600 !important;
+        letter-spacing: 1px !important;
+        text-transform: uppercase !important;
+        margin-bottom: 8px !important;
+        margin-top: 0 !important;
+        line-height: 1.2 !important;
     }
     
     .swaparr-stat-box .stat-value {
-        font-size: 28px;
-        font-weight: 700;
-        color: #fff;
-        background: linear-gradient(to bottom right, #3498db, #2980b9);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        font-size: 28px !important;
+        font-weight: 700 !important;
+        color: #fff !important;
+        background: linear-gradient(to bottom right, #3498db, #2980b9) !important;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+        margin: 0 !important;
+        line-height: 1 !important;
     }
     
     .swaparr-countdown-section {
