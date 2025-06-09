@@ -409,6 +409,13 @@ def process_stalled_downloads(app_name, app_settings, swaparr_settings=None):
     # Process each queue item
     items_processed_this_run = 0
     for item in queue_items:
+        # Check if Swaparr has been disabled during processing (every 10 items to avoid excessive I/O)
+        if items_processed_this_run % 10 == 0:
+            current_swaparr_settings = load_settings("swaparr")
+            if not current_swaparr_settings or not current_swaparr_settings.get("enabled", False):
+                swaparr_logger.warning(f"Swaparr was disabled during download processing for {app_name} instance: {instance_name}. Stopping after processing {items_processed_this_run} items.")
+                break
+        
         item_id = str(item["id"])
         item_state = "Normal"
         item_hash = generate_item_hash(item)
@@ -578,13 +585,22 @@ def run_swaparr():
     swaparr_logger.info(f"Processing {total_instances} Starr app instances for stalled downloads")
     
     # Process stalled downloads for each app type and instance
+    processed_instances = 0
     for app_name, app_instances in instances.items():
         for app_settings in app_instances:
+            # Check if Swaparr has been disabled during processing
+            current_settings = load_settings("swaparr")
+            if not current_settings or not current_settings.get("enabled", False):
+                swaparr_logger.warning(f"Swaparr was disabled during processing. Ending cycle early after processing {processed_instances}/{total_instances} instances.")
+                return
+            
             try:
-                process_stalled_downloads(app_name, app_settings, settings)
+                process_stalled_downloads(app_name, app_settings, current_settings)
+                processed_instances += 1
             except Exception as e:
                 swaparr_logger.error(f"Error processing {app_name} instance {app_settings.get('instance_name', 'Unknown')}: {str(e)}")
                 SWAPARR_STATS['errors_encountered'] += 1
+                processed_instances += 1
     
     stats = get_session_stats()
     swaparr_logger.info(f"Swaparr cycle completed. Processed {len(stats['apps_processed'])} app instances.")
