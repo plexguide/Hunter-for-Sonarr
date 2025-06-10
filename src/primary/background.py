@@ -750,13 +750,46 @@ def swaparr_app_loop():
                 swaparr_logger.info(f"Next cycle will begin at {next_cycle_time.strftime('%Y-%m-%d %H:%M:%S')} ({user_tz})")
                 swaparr_logger.info(f"Sleep duration: {sleep_duration} seconds")
                 
-                # Sleep with responsiveness to stop events (like other apps)
+                # Sleep with responsiveness to stop events and reset files (like other apps)
+                from src.primary.utils.config_paths import get_reset_path
+                reset_file_path = get_reset_path("swaparr")
+                
                 elapsed = 0
+                wait_interval = 5  # Check every 5 seconds for responsiveness
                 while elapsed < sleep_duration and not stop_event.is_set():
-                    sleep_interval = min(30, sleep_duration - elapsed)  # Check every 30 seconds
-                    if stop_event.wait(sleep_interval):
+                    # Check if reset file exists (same logic as other apps)
+                    if os.path.exists(reset_file_path):
+                        try:
+                            # Read timestamp from the file (if it exists)
+                            with open(reset_file_path, 'r') as f:
+                                timestamp = f.read().strip()
+                            swaparr_logger.info(f"!!! RESET FILE DETECTED !!! Manual cycle reset triggered for swaparr (timestamp: {timestamp}). Starting new cycle immediately.")
+                                
+                            # Delete the reset file
+                            os.remove(reset_file_path)
+                            swaparr_logger.info(f"Reset file removed for swaparr. Starting new cycle now.")
+                            break
+                        except Exception as e:
+                            swaparr_logger.error(f"Error processing reset file for swaparr: {e}", exc_info=True)
+                            # Try to remove the file even if reading failed
+                            try:
+                                os.remove(reset_file_path)
+                            except:
+                                pass
+                            break
+                    
+                    # Check for stop event
+                    if stop_event.is_set():
+                        swaparr_logger.info("Stop event detected during sleep. Breaking out of sleep cycle.")
                         break
-                    elapsed += sleep_interval
+                    
+                    # Sleep for a short interval
+                    stop_event.wait(wait_interval)
+                    elapsed += wait_interval
+                    
+                    # Log progress every 30 seconds (like other apps)
+                    if elapsed > 0 and elapsed % 30 == 0:
+                        swaparr_logger.debug(f"Still sleeping, {sleep_duration - elapsed} seconds remaining before next cycle...")
                     
             except Exception as e:
                 swaparr_logger.error(f"Unexpected error in Swaparr loop: {e}", exc_info=True)

@@ -1888,36 +1888,8 @@ let huntarrUI = {
             });
         }
 
-        // Handle inline reset cycle button (like Sonarr)
-        const resetCycleInline = document.getElementById('reset-swaparr-cycle-inline');
-        if (resetCycleInline) {
-            resetCycleInline.addEventListener('click', () => {
-                this.resetSwaparrCycle();
-            });
-        }
-    },
-
-    // Reset Swaparr cycle helper function
-    resetSwaparrCycle: function() {
-        if (confirm('Are you sure you want to reset the Swaparr cycle? This will force Swaparr to start a new cycle immediately.')) {
-            HuntarrUtils.fetchWithTimeout('./api/swaparr/reset-cycle', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        this.showNotification('Swaparr cycle reset successfully', 'success');
-                        // Refresh cycle timer
-                        if (window.CycleCountdown) {
-                            window.CycleCountdown.loadCycleData();
-                        }
-                    } else {
-                        this.showNotification('Failed to reset Swaparr cycle', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error resetting Swaparr cycle:', error);
-                    this.showNotification('Error resetting Swaparr cycle', 'error');
-                });
-        }
+        // Note: Inline reset cycle button is now handled automatically by CycleCountdown system
+        // via the cycle-reset-button class and data-app="swaparr" attribute
     },
 
     // Reset Swaparr data function
