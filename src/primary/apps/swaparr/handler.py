@@ -371,7 +371,8 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
             item_hash = generate_item_hash(item)
             
             SWAPARR_STATS['total_processed'] += 1
-            increment_swaparr_stat("processed", 1)  # Track processed items in persistent system
+            if not settings.get("dry_run", False):
+                increment_swaparr_stat("processed", 1)  # Track processed items in persistent system
             items_processed_this_run += 1
             
             # Check if this item has been previously removed
@@ -401,7 +402,8 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                 swaparr_logger.debug(f"Ignoring large download: {item['name']} ({item['size']} bytes > {max_size} bytes)")
                 item_state = "Ignored (Size)"
                 SWAPARR_STATS['items_ignored'] += 1
-                increment_swaparr_stat("ignored", 1)  # Track ignored items in persistent system
+                if not settings.get("dry_run", False):
+                    increment_swaparr_stat("ignored", 1)  # Track ignored items in persistent system
                 continue
             
             # Handle delayed items - we'll skip these (respects delay profiles)
@@ -409,7 +411,8 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                 swaparr_logger.debug(f"Ignoring delayed download: {item['name']}")
                 item_state = "Ignored (Delayed)"
                 SWAPARR_STATS['items_ignored'] += 1
-                increment_swaparr_stat("ignored", 1)  # Track ignored items in persistent system
+                if not settings.get("dry_run", False):
+                    increment_swaparr_stat("ignored", 1)  # Track ignored items in persistent system
                 continue
             
             # Special handling for "queued" status
@@ -425,7 +428,8 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                         swaparr_logger.debug(f"Ignoring recently queued download: {item['name']}")
                         item_state = "Ignored (Recently Queued)"
                         SWAPARR_STATS['items_ignored'] += 1
-                        increment_swaparr_stat("ignored", 1)  # Track ignored items in persistent system
+                        if not settings.get("dry_run", False):
+                            increment_swaparr_stat("ignored", 1)  # Track ignored items in persistent system
                         continue
                 else:
                     # Initialize with first strike time for queued items
@@ -475,7 +479,8 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                 current_strikes = strike_data[item_id]["strikes"]
                 swaparr_logger.info(f"Added strike ({current_strikes}/{settings.get('max_strikes', 3)}) to {item['name']} - Reason: {strike_reason}")
                 SWAPARR_STATS['strikes_added'] += 1
-                increment_swaparr_stat("strikes", 1)  # Track strikes in persistent system
+                if not settings.get("dry_run", False):
+                    increment_swaparr_stat("strikes", 1)  # Track strikes in persistent system
                 
                 # If max strikes reached, remove the download
                 if current_strikes >= settings.get('max_strikes', 3):
