@@ -975,11 +975,80 @@ const SettingsForms = {
         container.setAttribute('data-app-type', 'swaparr');
         
         const html = `
+            <!-- Swaparr Developer Credit Section -->
+            <div class="settings-group" style="margin-bottom: 25px;">
+                <div class="swaparr-credit-section" style="
+                    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                    border: 2px solid #00c2ce;
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin: 15px 0 25px 0;
+                    box-shadow: 0 8px 25px rgba(0, 194, 206, 0.2);
+                ">
+
+                    <div style="
+                        background: rgba(255, 255, 255, 0.05);
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin: 15px 0;
+                        border-left: 4px solid #00c2ce;
+                    ">
+                        <p style="color: #e2e8f0; margin: 0 0 8px 0; font-size: 0.95em; line-height: 1.6;">
+                            <strong>Developer:</strong> <a href="https://github.com/ThijmenGThN" target="_blank" rel="noopener" style="color: #00c2ce; text-decoration: none;">ThijmenGThN</a> • 
+                            <strong>GitHub Stars:</strong> <span style="color: #fbbf24;">⭐ <span id="swaparr-stars-count">172</span></span> • 
+                            <strong>Version:</strong> v0.10.0
+                        </p>
+                        <p style="color: #cbd5e1; margin: 0; font-size: 0.85em; line-height: 1.4; font-style: italic;">
+                            <strong>Beta Notice:</strong> This is a rewritten implementation by Admin9705 for Huntarr integration. 
+                            Please note that the original Swaparr project does not provide support for this Huntarr-specific implementation. 
+                            For Huntarr-related issues, use Huntarr's support channels.
+                        </p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 15px 0;">
+                        <a href="https://github.com/ThijmenGThN/swaparr" target="_blank" rel="noopener" style="
+                            display: inline-block;
+                            background: linear-gradient(90deg, #00c2ce 0%, #0891b2 100%);
+                            color: white;
+                            padding: 8px 16px;
+                            border-radius: 6px;
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.9em;
+                            transition: all 0.3s ease;
+                            margin-right: 10px;
+                        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="fas fa-star" style="margin-right: 5px;"></i>
+                            Star Swaparr Project
+                        </a>
+                    </div>
+                    
+
+                </div>
+                
+                <!-- Advanced Options Notice -->
+                <div style="
+                    background: linear-gradient(135deg, #164e63 0%, #0e7490 50%, #0891b2 100%);
+                    border: 1px solid #22d3ee;
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin: 15px 0 20px 0;
+                    box-shadow: 0 4px 12px rgba(34, 211, 238, 0.15);
+                ">
+                    <p style="color: #e0f7fa; margin: 0; font-size: 0.9em; line-height: 1.5;">
+                        <i class="fas fa-rocket" style="margin-right: 8px; color: #22d3ee;"></i>
+                        <strong>Need Advanced Options?</strong> For enhanced control and features, we recommend 
+                        <a href="https://github.com/flmorg/cleanuperr" target="_blank" rel="noopener" style="color: #fbbf24; text-decoration: none; font-weight: 600;">
+                            <strong>Cleanuperr</strong>
+                        </a> which offers more comprehensive management capabilities.
+                    </p>
+                </div>
+            </div>
+            
             <div class="settings-group">
                 <h3>Swaparr Configuration</h3>
                 <p class="setting-help" style="margin-bottom: 20px; color: #9ca3af;">
                     Swaparr monitors your *arr applications' download queues and removes stalled downloads automatically.
-                    Based on <a href="https://github.com/ThijmenGThN/swaparr" target="_blank" style="color: #3b82f6;">Swaparr v0.10.0</a>.
                 </p>
                 
                 <div class="setting-item">
@@ -1075,40 +1144,13 @@ const SettingsForms = {
                 </div>
             </div>
             
-            <div class="settings-group">
-                <h3>Swaparr Status</h3>
-                <div id="swaparrStatus" class="status-panel">
-                    <div class="loading-panel">
-                        <i class="fas fa-spinner fa-spin"></i> Loading status...
-                    </div>
-                </div>
-                <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
-                    <button type="button" id="resetSwaparrBtn" class="btn btn-secondary" style="background-color: #dc2626; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
-                        <i class="fas fa-undo"></i> Reset Data
-                    </button>
-                    <button type="button" id="resetSwaparrCycleBtn" class="btn btn-secondary cycle-reset-button" data-app="swaparr" style="background-color: #00c2ce; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
-                        <i class="fas fa-sync-alt"></i> Reset Cycle
-                    </button>
-                </div>
-            </div>
+
         `;
         
         container.innerHTML = html;
         
-        // Load status immediately
-        this.loadSwaparrStatus(container);
-        
-        // Set up button event listeners
-        const resetBtn = container.querySelector('#resetSwaparrBtn');
-        const resetCycleBtn = container.querySelector('#resetSwaparrCycleBtn');
-        
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => this.resetSwaparrData(resetBtn));
-        }
-        
-        if (resetCycleBtn) {
-            resetCycleBtn.addEventListener('click', () => this.resetSwaparrCycle(resetCycleBtn));
-        }
+        // Load Swaparr GitHub star count dynamically
+        this.loadSwaparrStarCount();
         
         // Add event listener for sleep duration display update
         const sleepInput = container.querySelector('#swaparr_sleep_duration');
@@ -1138,130 +1180,130 @@ const SettingsForms = {
         }
     },
     
-    // Load Swaparr status
-    loadSwaparrStatus: function(container) {
-        const statusPanel = container.querySelector('#swaparrStatus');
-        if (!statusPanel) return;
+    // Generate Hunt Manager placeholder form
+    generateHuntingForm: function(container, settings = {}) {
+        // Add data-app-type attribute to container
+        container.setAttribute('data-app-type', 'hunting');
         
-        HuntarrUtils.fetchWithTimeout('./api/swaparr/status')
-            .then(response => response.json())
-            .then(data => {
-                const sessionStats = data.session_statistics || {};
-                const appStats = data.app_statistics || {};
-                const settings = data.settings || {};
-                
-                let statusHtml = `
-                    <div class="status-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
-                        <div class="stat-item">
-                            <div class="stat-label">Session Processed</div>
-                            <div class="stat-value" style="color: #3b82f6;">${sessionStats.processed || 0}</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Session Strikes</div>
-                            <div class="stat-value" style="color: #f59e0b;">${sessionStats.strikes || 0}</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Session Removals</div>
-                            <div class="stat-value" style="color: #ef4444;">${sessionStats.removals || 0}</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Session Ignored</div>
-                            <div class="stat-value" style="color: #6b7280;">${sessionStats.ignored || 0}</div>
-                        </div>
+        const html = `
+            <div class="settings-group">
+                <div class="development-notice" style="
+                    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+                    border: 2px solid #60a5fa;
+                    border-radius: 12px;
+                    padding: 25px;
+                    margin: 20px 0;
+                    text-align: center;
+                    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+                ">
+                    <div style="margin-bottom: 15px;">
+                        <i class="fas fa-code-branch" style="font-size: 2.5em; color: #60a5fa; margin-bottom: 10px;"></i>
                     </div>
-                `;
-                
-                // Countdown Timer section
-                statusHtml += `
-                    <div class="countdown-summary" style="margin-top: 15px; padding: 10px; background-color: rgba(0,0,0,0.2); border-radius: 6px;">
-                        <h4>Countdown Timer</h4>
-                        <div id="swaparrCycleTimer" class="cycle-timer" style="display: flex; align-items: center; justify-content: center; font-size: 0.9rem; padding: 8px 12px; border-radius: 4px; margin: 8px auto 6px auto; background-color: rgba(0, 0, 0, 0.15); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; user-select: none; max-width: 200px; border-left: 2px solid #00c2ce;">
-                            <i class="fas fa-clock" style="margin-right: 5px; font-size: 0.9rem;"></i>
-                            <span class="timer-value" style="font-family: monospace; font-weight: 600; color: white;">--:--:--</span>
-                        </div>
+                    <h3 style="color: white; margin: 0 0 15px 0; font-size: 1.4em; font-weight: 600;">
+                        Hunt Manager - Under Development
+                    </h3>
+                    <p style="color: #dbeafe; margin: 0 0 20px 0; font-size: 1.1em; line-height: 1.6;">
+                        Hunt Manager is currently in active development and serves as a placeholder for upcoming advanced media discovery features.
+                        This module will provide sophisticated hunting algorithms and enhanced discovery mechanisms for your media library.
+                    </p>
+                    <div style="
+                        background: rgba(255, 255, 255, 0.1);
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin: 15px 0;
+                        border-left: 4px solid #60a5fa;
+                    ">
+                        <p style="color: #f1f5f9; margin: 0; font-size: 0.95em;">
+                            <i class="fas fa-info-circle" style="margin-right: 8px; color: #60a5fa;"></i>
+                            <strong>Current Status:</strong> Planning & Architecture Phase
+                        </p>
                     </div>
-                `;
-                
-                statusPanel.innerHTML = statusHtml;
-                
-                // Initialize countdown timer for Swaparr if CycleCountdown is available
-                if (window.CycleCountdown) {
-                    console.log('Initializing Swaparr countdown timer');
-                    // The countdown will be handled by the existing CycleCountdown system
-                    // which will find the swaparrCycleTimer element and the cycle-reset-button
-                }
-            })
-            .catch(error => {
-                console.error('Error loading Swaparr status:', error);
-                statusPanel.innerHTML = `
-                    <div class="error-message" style="color: #ef4444; text-align: center;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        Failed to load status. Check if any *arr apps are configured.
-                    </div>
-                `;
-            });
+                    <p style="color: #cbd5e1; margin: 10px 0 0 0; font-size: 0.9em;">
+                        Stay tuned for updates as we continue to enhance Huntarr's capabilities!
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
     },
     
-    // Reset Swaparr data
-    resetSwaparrData: function(button) {
-        if (!confirm('Are you sure you want to reset all Swaparr data? This will clear strikes and removed items.')) {
-            return;
+    // Load Swaparr GitHub star count dynamically
+    loadSwaparrStarCount: function() {
+        const starsElement = document.getElementById('swaparr-stars-count');
+        if (!starsElement) return;
+        
+        // First, try to load from cache immediately for fast display
+        const cachedData = localStorage.getItem('swaparr-github-stars');
+        if (cachedData) {
+            try {
+                const parsed = JSON.parse(cachedData);
+                if (parsed.stars !== undefined) {
+                    starsElement.textContent = parsed.stars.toLocaleString();
+                    // If cache is recent (less than 1 hour), skip API call
+                    const cacheAge = Date.now() - (parsed.timestamp || 0);
+                    if (cacheAge < 3600000) { // 1 hour = 3600000ms
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('Invalid cached Swaparr star data, will fetch fresh');
+                localStorage.removeItem('swaparr-github-stars');
+            }
         }
         
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
-        button.disabled = true;
+        starsElement.textContent = 'Loading...';
         
-        HuntarrUtils.fetchWithTimeout('./api/swaparr/reset', { method: 'POST' })
-            .then(response => response.json())
+        // GitHub API endpoint for Swaparr repository
+        const apiUrl = 'https://api.github.com/repos/ThijmenGThN/swaparr';
+        
+        HuntarrUtils.fetchWithTimeout(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`GitHub API error: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                button.innerHTML = originalText;
-                button.disabled = false;
-                
-                if (data.success) {
-                    alert('Swaparr data reset successfully!');
-                    // Reload status
-                    const container = button.closest('.settings-group').parentElement;
-                    this.loadSwaparrStatus(container);
+                if (data && data.stargazers_count !== undefined) {
+                    // Format the number with commas for thousands
+                    const formattedStars = data.stargazers_count.toLocaleString();
+                    starsElement.textContent = formattedStars;
+                    
+                    // Store in localStorage to avoid excessive API requests
+                    const cacheData = {
+                        stars: data.stargazers_count,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem('swaparr-github-stars', JSON.stringify(cacheData));
                 } else {
-                    alert(`Reset failed: ${data.message || 'Unknown error'}`);
+                    throw new Error('Star count not found in response');
                 }
             })
             .catch(error => {
-                button.innerHTML = originalText;
-                button.disabled = false;
-                alert(`Reset failed: ${error.message}`);
-            });
-    },
-    
-    // Reset Swaparr cycle
-    resetSwaparrCycle: function(button) {
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
-        button.disabled = true;
-        
-        HuntarrUtils.fetchWithTimeout('./api/cycle/reset/swaparr', { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
-                button.innerHTML = originalText;
-                button.disabled = false;
+                console.error('Error fetching Swaparr GitHub stars:', error);
                 
-                if (data.success) {
-                    alert('Swaparr cycle reset successfully!');
-                    // Trigger countdown timer update if available
-                    if (window.CycleCountdown) {
-                        console.log('Cycle reset completed for Swaparr, CycleCountdown will handle the refresh');
+                // Try to load from cache if we have it
+                const cachedData = localStorage.getItem('swaparr-github-stars');
+                if (cachedData) {
+                    try {
+                        const parsed = JSON.parse(cachedData);
+                        if (parsed.stars !== undefined) {
+                            starsElement.textContent = parsed.stars.toLocaleString();
+                        } else {
+                            starsElement.textContent = '172'; // Fallback to known value
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse cached Swaparr star data:', e);
+                        starsElement.textContent = '172'; // Fallback to known value
+                        localStorage.removeItem('swaparr-github-stars'); // Clear bad cache
                     }
                 } else {
-                    alert(`Cycle reset failed: ${data.message || 'Unknown error'}`);
+                    starsElement.textContent = '172'; // Fallback to known value
                 }
-            })
-            .catch(error => {
-                button.innerHTML = originalText;
-                button.disabled = false;
-                alert(`Cycle reset failed: ${error.message}`);
             });
     },
+
     
     // Format date nicely for display
     formatDate: function(date) {
