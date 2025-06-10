@@ -1,4 +1,14 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Swaparr Documentation - Huntarr.io</title><link rel="stylesheet" href="../css/main.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><script src="../js/main.js" defer></script></head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swaparr Documentation - Huntarr.io</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="../js/main.js" defer></script>
+</head>
+<body>
     <div class="sidebar">
         <div class="sidebar-logo">
             <img src="../images/huntarr-logo.png" alt="Huntarr Logo">
@@ -40,18 +50,333 @@
 
     <div class="main-content">
         <div class="container">
-            <h1>Sonarr Documentation</h1>
+            <h1>Swaparr Documentation</h1>
             
             <div style="text-align: center; margin: 20px auto;">
-                <img src="../images/arrs/sonarr.png" alt="Sonarr Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                <img src="../images/arrs/swaparr.png" alt="Swaparr Logo" style="width: 80px; height: 80px; object-fit: contain;">
             </div>
             
-            <p>Sonarr is an automated TV show downloading and management application. Huntarr integrates with your existing Sonarr instance to automatically search for missing episodes and quality upgrades that Sonarr doesn't actively hunt for.</p>
+            <div class="alert alert-warning" style="margin: 20px 0; padding: 15px; background: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107;">
+                <strong><i class="fas fa-info-circle" style="margin-right: 8px;"></i>Beta Notice:</strong> 
+                Swaparr is a rewritten implementation by Admin9705 for Huntarr integration. 
+                Please note that the original Swaparr project does not provide support for this Huntarr-specific implementation. 
+                For Huntarr-related issues, use Huntarr's support channels.
+            </div>
             
-            <h2 id="sonarr-instance-setup">Sonarr Instance Setup</h2>
+            <p>Swaparr is an automated download monitoring and cleanup utility that works with your *arr applications (Sonarr, Radarr, Lidarr, etc.). It monitors your download queues and automatically removes stalled, failed, or problematic downloads to keep your automation running smoothly.</p>
             
-<div class="main-content"><div class="container"><h1>Swaparr Documentation</h1><div style="text-align: center; margin: 20px auto;"><img src="../images/arrs/swaparr.png" alt="Swaparr Logo" style="width: 80px; height: 80px; object-fit: contain;"></div>
-<div class="alert alert-warning" style="margin: 20px 0; padding: 15px; background: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107;"><strong><i class="fas fa-info-circle" style="margin-right: 8px;"></i>Beta Notice:</strong> Swaparr is a rewritten implementation by Admin9705 for Huntarr integration. Please note that the original Swaparr project does not provide support for this Huntarr-specific implementation. For Huntarr-related issues, use Huntarr's support channels.</div>
-<p>Swaparr is an automated download monitoring and cleanup utility that works with your *arr applications (Sonarr, Radarr, Lidarr, etc.). It monitors your download queues and automatically removes stalled, failed, or problematic downloads to keep your automation running smoothly.</p><div class="alert alert-info" style="margin: 20px 0; padding: 15px; background: rgba(13, 202, 240, 0.1); border-left: 4px solid #0dcaf0;"><strong><i class="fas fa-star" style="margin-right: 8px; color: #fbbf24;"></i>Project Credit:</strong> Original Swaparr by <a href="https://github.com/ThijmenGThN" target="_blank" style="color: #0dcaf0;">ThijmenGThN</a> • GitHub Stars: ⭐ 172 • Version: v0.10.0 • <a href="https://github.com/ThijmenGThN/swaparr" target="_blank" style="color: #fbbf24;">⭐ Star the Project</a></div>
-<h2>Configuration</h2><h3>*arr Instance Setup</h3><p>Configure which of your *arr applications Swaparr should monitor using your existing Huntarr configurations.</p><h3>Monitoring Settings</h3><ul><li><strong>Sleep Duration:</strong> Time between monitoring cycles (recommended: 15-30 minutes)</li><li><strong>Strike Threshold:</strong> Number of times a download must be flagged before removal</li><li><strong>Dry Run Mode:</strong> Test mode that logs actions without actually removing downloads</li></ul>
-<h2>How Swaparr Helps</h2><p>Swaparr automatically identifies and removes problematic downloads that can clog your download queues, including stalled downloads, failed imports, and stuck items. It uses a configurable strike system to ensure downloads are truly problematic before removal.</p><div class="section-nav"><a href="index.html">← Back to Apps</a><a href="../settings/settings.html">Settings Documentation →</a></div><footer>Huntarr.io | Swaparr Documentation | Thanks 4 Using Huntarr - Admin9705</footer></div></div></body></html>
+            <div class="alert alert-info" style="margin: 20px 0; padding: 15px; background: rgba(13, 202, 240, 0.1); border-left: 4px solid #0dcaf0;">
+                <strong><i class="fas fa-star" style="margin-right: 8px; color: #fbbf24;"></i>Project Credit:</strong> 
+                Original Swaparr by <a href="https://github.com/ThijmenGThN" target="_blank" style="color: #0dcaf0;">ThijmenGThN</a> • 
+                GitHub Stars: ⭐ 172 • 
+                Version: v0.10.0 • 
+                <a href="https://github.com/ThijmenGThN/swaparr" target="_blank" style="color: #fbbf24;">⭐ Star the Project</a>
+            </div>
+            
+            <h2 id="overview">Overview</h2>
+            
+            <h3><i class="fas fa-exclamation-triangle" style="margin-right: 10px; color: #f39c12;"></i>What Problem Does Swaparr Solve?</h3>
+            <p>While your *arr applications are excellent at managing media downloads, they can struggle with:</p>
+            <ul>
+                <li><strong>Stalled Downloads:</strong> Downloads that appear to be active but haven't made progress</li>
+                <li><strong>Failed Downloads:</strong> Downloads that have failed but remain in the queue</li>
+                <li><strong>Stuck Imports:</strong> Downloads that completed but aren't being imported properly</li>
+                <li><strong>Queue Clogging:</strong> Problematic downloads preventing new ones from starting</li>
+                <li><strong>Manual Cleanup:</strong> Having to manually remove problematic downloads regularly</li>
+            </ul>
+            
+            <h3><i class="fas fa-magic" style="margin-right: 10px; color: #2ecc71;"></i>How Swaparr Helps</h3>
+            <p>Swaparr automates the cleanup process by:</p>
+            <ul>
+                <li><strong>Monitoring Download Progress:</strong> Continuously checks download status and progress</li>
+                <li><strong>Smart Detection:</strong> Identifies truly stalled downloads vs. slow but progressing ones</li>
+                <li><strong>Automatic Removal:</strong> Removes problematic downloads automatically</li>
+                <li><strong>Strike System:</strong> Uses a configurable strike system before taking action</li>
+                <li><strong>Safe Operation:</strong> Includes dry-run mode and comprehensive logging</li>
+            </ul>
+            
+            <h2 id="configuration">Configuration</h2>
+            
+            <p>The following settings correspond to the options you see in the Swaparr Configuration panel:</p>
+            
+            <h3 id="enable-swaparr"><i class="fas fa-power-off" style="margin-right: 8px; color: #2ecc71;"></i>Enable Swaparr</h3>
+            <p><strong>What it does:</strong> Master switch to enable or disable automatic removal of stalled downloads.</p>
+            <p><strong>When to use:</strong> Turn this on after configuring your other settings. You can disable this temporarily to stop Swaparr without losing your configuration.</p>
+            
+            <h3 id="max-strikes"><i class="fas fa-shield-alt" style="margin-right: 8px; color: #e74c3c;"></i>Max Strikes</h3>
+            <p><strong>What it does:</strong> Number of times a download must be flagged as problematic before being removed (default: 3).</p>
+            <p><strong>How it works:</strong> Each monitoring cycle, Swaparr checks downloads. If a download meets the "stalled" criteria, it gets a strike. Once it reaches your max strikes setting, it gets removed.</p>
+            <p><strong>Recommended values:</strong></p>
+            <ul>
+                <li><strong>1-2 strikes:</strong> Aggressive cleanup, faster response (for users with reliable indexers)</li>
+                <li><strong>3-4 strikes:</strong> Balanced approach (recommended for most users)</li>
+                <li><strong>5+ strikes:</strong> Conservative, gives downloads more time (for slower connections or unreliable indexers)</li>
+            </ul>
+            
+            <h3 id="max-download-time"><i class="fas fa-clock" style="margin-right: 8px; color: #3498db;"></i>Max Download Time</h3>
+            <p><strong>What it does:</strong> Maximum time before considering a download stalled (examples: 2h, 120m, 7200s).</p>
+            <p><strong>How it works:</strong> If a download has been running longer than this time without making progress, it will receive a strike.</p>
+            <p><strong>Recommended values:</strong></p>
+            <ul>
+                <li><strong>1-2 hours:</strong> For fast connections and reliable trackers</li>
+                <li><strong>2-4 hours:</strong> Balanced setting for most users</li>
+                <li><strong>4+ hours:</strong> For slower connections or private trackers with limited seeds</li>
+            </ul>
+            
+            <h3 id="ignore-above-size"><i class="fas fa-hdd" style="margin-right: 8px; color: #9b59b6;"></i>Ignore Above Size</h3>
+            <p><strong>What it does:</strong> Ignore downloads larger than this size (examples: 25GB, 10GB, 5000MB).</p>
+            <p><strong>Why this matters:</strong> Large files naturally take longer to download. This prevents Swaparr from removing legitimate large downloads that are progressing slowly.</p>
+            <p><strong>Recommended values:</strong></p>
+            <ul>
+                <li><strong>TV Shows:</strong> 10-25GB (season packs, 4K episodes)</li>
+                <li><strong>Movies:</strong> 25-50GB (4K movies, remuxes)</li>
+                <li><strong>Music:</strong> 5-10GB (FLAC albums, discographies)</li>
+            </ul>
+            
+            <h3 id="remove-from-client"><i class="fas fa-trash" style="margin-right: 8px; color: #e67e22;"></i>Remove from Client</h3>
+            <p><strong>What it does:</strong> Also remove downloads from the download client (recommended: enabled).</p>
+            <p><strong>When enabled:</strong> Removes the download from both the *arr application and your download client (qBittorrent, Deluge, etc.)</p>
+            <p><strong>When disabled:</strong> Only removes from the *arr application, but leaves the download in your client</p>
+            <p><strong>Recommendation:</strong> Keep this enabled for complete cleanup. Only disable if you want to manually review removed downloads in your client.</p>
+            
+            <h3 id="dry-run-mode"><i class="fas fa-eye" style="margin-right: 8px; color: #f39c12;"></i>Dry Run Mode</h3>
+            <p><strong>What it does:</strong> Test mode - logs what would be removed without actually removing anything.</p>
+            <p><strong>Perfect for:</strong></p>
+            <ul>
+                <li>Testing your configuration before going live</li>
+                <li>Seeing what Swaparr would remove with your current settings</li>
+                <li>Troubleshooting why certain downloads aren't being removed</li>
+                <li>Understanding Swaparr's behavior before trusting it with your downloads</li>
+            </ul>
+            <p><strong>Recommendation:</strong> Enable this first, run for a few cycles, check the logs, then disable once you're confident in your settings.</p>
+            
+            <h3 id="sleep-duration"><i class="fas fa-moon" style="margin-right: 8px; color: #6c5ce7;"></i>Sleep Duration</h3>
+            <p><strong>What it does:</strong> Time to wait between Swaparr processing cycles (default: 900 seconds / 15 minutes).</p>
+            <p><strong>How it affects performance:</strong></p>
+            <ul>
+                <li><strong>Shorter intervals (5-10 min):</strong> Faster response to stalled downloads, more system load</li>
+                <li><strong>Medium intervals (15-30 min):</strong> Good balance, recommended for most users</li>
+                <li><strong>Longer intervals (45+ min):</strong> Less system load, slower response to issues</li>
+            </ul>
+            <p><strong>Consider your setup:</strong> If you have many active downloads, shorter intervals help. If you have a slower system or fewer downloads, longer intervals are fine.</p>
+            
+            <h2 id="*arr-instance-setup">*arr Instance Setup</h2>
+            
+            <p>Swaparr uses your existing *arr configurations from Huntarr. In the Swaparr configuration, you'll see checkboxes for each of your configured instances:</p>
+            
+            <table>
+                <tr>
+                    <th>Application</th>
+                    <th>What Gets Monitored</th>
+                    <th>Best Practices</th>
+                </tr>
+                <tr>
+                    <td><strong>Sonarr Instances</strong></td>
+                    <td>TV show download queues</td>
+                    <td>Enable for instances with frequent stalled episodes</td>
+                </tr>
+                <tr>
+                    <td><strong>Radarr Instances</strong></td>
+                    <td>Movie download queues</td>
+                    <td>Especially useful for instances downloading large 4K movies</td>
+                </tr>
+                <tr>
+                    <td><strong>Lidarr Instances</strong></td>
+                    <td>Music download queues</td>
+                    <td>Enable if you frequently download FLAC or large music collections</td>
+                </tr>
+                <tr>
+                    <td><strong>Readarr Instances</strong></td>
+                    <td>Book/audiobook download queues</td>
+                    <td>Useful for large audiobook files that might stall</td>
+                </tr>
+                <tr>
+                    <td><strong>Whisparr Instances</strong></td>
+                    <td>Adult content download queues</td>
+                    <td>Enable based on your monitoring needs</td>
+                </tr>
+            </table>
+            
+            <h2 id="operation">How Swaparr Works</h2>
+            
+            <h3 id="monitoring-cycle">Monitoring Cycle</h3>
+            <p>Every sleep duration interval, Swaparr performs these steps:</p>
+            <ol>
+                <li><strong>Instance Discovery:</strong> Finds your enabled *arr instances</li>
+                <li><strong>Queue Analysis:</strong> Gets current download queues from each instance</li>
+                <li><strong>Progress Check:</strong> Compares current state with previous cycles</li>
+                <li><strong>Strike Assessment:</strong> Awards strikes to downloads meeting removal criteria</li>
+                <li><strong>Action Execution:</strong> Removes downloads that exceed max strikes</li>
+                <li><strong>Statistics Update:</strong> Updates persistent statistics and logs results</li>
+            </ol>
+            
+            <h3 id="detection-criteria">When Downloads Get Strikes</h3>
+            <p>A download receives a strike when it meets ALL these conditions:</p>
+            <ul>
+                <li>Has been downloading longer than your <strong>Max Download Time</strong></li>
+                <li>Is smaller than your <strong>Ignore Above Size</strong> setting</li>
+                <li>Shows no progress since the last monitoring cycle</li>
+                <li>Is not in a "completed" or "seeding" state</li>
+            </ul>
+            
+            <h3 id="statistics">Statistics Tracking</h3>
+            <p>Swaparr tracks comprehensive statistics visible on your home dashboard:</p>
+            
+            <table>
+                <tr>
+                    <th>Statistic</th>
+                    <th>What It Counts</th>
+                    <th>When It Increases</th>
+                </tr>
+                <tr>
+                    <td><strong>Processed</strong></td>
+                    <td>Total downloads analyzed</td>
+                    <td>Every download checked during monitoring cycles</td>
+                </tr>
+                <tr>
+                    <td><strong>Strikes</strong></td>
+                    <td>Strikes issued to problematic downloads</td>
+                    <td>When a download meets strike criteria</td>
+                </tr>
+                <tr>
+                    <td><strong>Removals</strong></td>
+                    <td>Downloads actually removed</td>
+                    <td>When a download reaches max strikes and gets removed</td>
+                </tr>
+                <tr>
+                    <td><strong>Ignored</strong></td>
+                    <td>Downloads skipped due to rules</td>
+                    <td>When downloads are larger than ignore size or already completed</td>
+                </tr>
+            </table>
+            
+            <h2 id="best-practices">Best Practices</h2>
+            
+            <h3><i class="fas fa-lightbulb" style="margin-right: 10px; color: #f39c12;"></i>Getting Started</h3>
+            <ol>
+                <li><strong>Start with Dry Run:</strong> Enable dry run mode and monitor logs for 24-48 hours</li>
+                <li><strong>Conservative Settings:</strong> Use 4-5 max strikes and longer download times initially</li>
+                <li><strong>Monitor Statistics:</strong> Watch the dashboard stats to understand Swaparr's impact</li>
+                <li><strong>Gradual Adjustment:</strong> Fine-tune settings based on your specific download patterns</li>
+                <li><strong>Check Logs:</strong> Review logs regularly to ensure expected behavior</li>
+            </ol>
+            
+            <h3><i class="fas fa-cogs" style="margin-right: 10px; color: #3498db;"></i>Configuration Tips</h3>
+            <ul>
+                <li><strong>Match Your Connection:</strong> Adjust max download time based on your internet speed</li>
+                <li><strong>Consider Your Trackers:</strong> Private trackers may need more conservative settings</li>
+                <li><strong>Instance Selection:</strong> Only monitor instances that commonly have stalled downloads</li>
+                <li><strong>Size Limits:</strong> Set ignore above size to protect large, slow downloads</li>
+                <li><strong>Peak Hours:</strong> Consider longer sleep duration during peak internet usage</li>
+            </ul>
+            
+            <div class="alert alert-info">
+                <strong>Advanced Alternative:</strong> For more sophisticated download management, consider 
+                <a href="https://github.com/flmorg/cleanuperr" target="_blank" style="color: #3498db;"><strong>Cleanuperr</strong></a>, 
+                which offers more comprehensive management capabilities.
+            </div>
+            
+            <h2 id="example-configurations">Example Configurations</h2>
+            
+            <h3><i class="fas fa-rocket" style="margin-right: 8px; color: #e67e22;"></i>Aggressive Setup (Fast Connection, Reliable Trackers)</h3>
+            <ul>
+                <li><strong>Max Strikes:</strong> 2</li>
+                <li><strong>Max Download Time:</strong> 1h</li>
+                <li><strong>Ignore Above Size:</strong> 50GB</li>
+                <li><strong>Sleep Duration:</strong> 600 seconds (10 minutes)</li>
+                <li><strong>Remove from Client:</strong> Enabled</li>
+            </ul>
+            
+            <h3><i class="fas fa-balance-scale" style="margin-right: 8px; color: #2ecc71;"></i>Balanced Setup (Most Users)</h3>
+            <ul>
+                <li><strong>Max Strikes:</strong> 3</li>
+                <li><strong>Max Download Time:</strong> 2h</li>
+                <li><strong>Ignore Above Size:</strong> 25GB</li>
+                <li><strong>Sleep Duration:</strong> 900 seconds (15 minutes)</li>
+                <li><strong>Remove from Client:</strong> Enabled</li>
+            </ul>
+            
+            <h3><i class="fas fa-shield-alt" style="margin-right: 8px; color: #3498db;"></i>Conservative Setup (Slower Connection, Private Trackers)</h3>
+            <ul>
+                <li><strong>Max Strikes:</strong> 5</li>
+                <li><strong>Max Download Time:</strong> 4h</li>
+                <li><strong>Ignore Above Size:</strong> 15GB</li>
+                <li><strong>Sleep Duration:</strong> 1800 seconds (30 minutes)</li>
+                <li><strong>Remove from Client:</strong> Enabled</li>
+            </ul>
+            
+            <h2 id="troubleshooting">Troubleshooting</h2>
+            
+            <h3>Common Issues</h3>
+            
+            <h4><i class="fas fa-search" style="margin-right: 8px;"></i>No Downloads Detected</h4>
+            <p>If Swaparr reports no downloads to monitor:</p>
+            <ul>
+                <li>Verify your *arr instances are properly configured in Huntarr Settings</li>
+                <li>Check that you've enabled the correct instances in Swaparr configuration</li>
+                <li>Ensure the selected instances have active downloads in their queues</li>
+                <li>Test API connectivity using the *arr instance connection tests</li>
+                <li>Check Huntarr logs for Swaparr connection errors</li>
+            </ul>
+            
+            <h4><i class="fas fa-ban" style="margin-right: 8px;"></i>Downloads Not Being Removed</h4>
+            <p>If problematic downloads aren't being removed:</p>
+            <ul>
+                <li>Verify <strong>Dry Run Mode</strong> is disabled</li>
+                <li>Check if downloads exceed your <strong>Ignore Above Size</strong> setting</li>
+                <li>Ensure downloads have been stalled longer than <strong>Max Download Time</strong></li>
+                <li>Confirm downloads have accumulated enough strikes (check logs)</li>
+                <li>Verify <strong>Enable Swaparr</strong> is turned on</li>
+                <li>Check download client API permissions</li>
+            </ul>
+            
+            <h4><i class="fas fa-fast-forward" style="margin-right: 8px;"></i>Too Aggressive Removal</h4>
+            <p>If Swaparr is removing downloads too quickly:</p>
+            <ul>
+                <li>Increase <strong>Max Strikes</strong> to give downloads more chances</li>
+                <li>Extend <strong>Max Download Time</strong> for slower downloads</li>
+                <li>Increase <strong>Ignore Above Size</strong> to protect larger files</li>
+                <li>Extend <strong>Sleep Duration</strong> to reduce monitoring frequency</li>
+                <li>Consider your network conditions and typical download speeds</li>
+            </ul>
+            
+            <h4><i class="fas fa-clock" style="margin-right: 8px;"></i>Performance Issues</h4>
+            <p>If Swaparr is impacting system performance:</p>
+            <ul>
+                <li>Increase <strong>Sleep Duration</strong> to reduce processing frequency</li>
+                <li>Disable monitoring for instances with very large queues</li>
+                <li>Check if your *arr applications are responding slowly</li>
+                <li>Monitor system resource usage during Swaparr cycles</li>
+            </ul>
+            
+            <h3>Logging and Debugging</h3>
+            <p>Swaparr provides detailed logging to help diagnose issues. Look for these log entries:</p>
+            <ul>
+                <li><strong>Cycle Start/End:</strong> Beginning and completion of each monitoring cycle</li>
+                <li><strong>Instance Processing:</strong> Which *arr instances are being checked</li>
+                <li><strong>Strike Assignment:</strong> When downloads receive strikes and why</li>
+                <li><strong>Removal Actions:</strong> Successful or failed removal attempts</li>
+                <li><strong>Statistics Updates:</strong> Changes to tracked statistics</li>
+                <li><strong>API Errors:</strong> Connection issues with *arr applications or download clients</li>
+            </ul>
+            
+            <div class="alert alert-info">
+                <strong><i class="fas fa-life-ring" style="margin-right: 8px;"></i>Support:</strong> 
+                For issues specific to Huntarr's Swaparr implementation, use Huntarr's support channels: 
+                <a href="https://discord.com/invite/PGJJjR5Cww" target="_blank">Discord</a> or 
+                <a href="https://www.reddit.com/r/huntarr/" target="_blank">Reddit</a>. 
+                For general Swaparr questions, refer to the original project documentation.
+            </div>
+            
+            <div class="section-nav">
+                <a href="index.html">← Back to Apps</a>
+                <a href="../settings/settings.html">Settings Documentation →</a>
+            </div>
+            
+            <footer>
+                Huntarr.io | Swaparr Documentation | Thanks 4 Using Huntarr - Admin9705
+            </footer>
+        </div>
+    </div>
+</body>
+</html> 
