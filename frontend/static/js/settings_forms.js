@@ -1172,25 +1172,41 @@ const SettingsForms = {
                 </div>
                 
                 <div class="setting-item">
-                    <label for="swaparr_malicious_extensions">
+                    <label for="swaparr_malicious_extensions_input">
                         <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#malicious-extensions" class="info-icon" title="File extensions to consider malicious" target="_blank" rel="noopener">
                             <i class="fas fa-info-circle"></i>
                         </a>
                         Malicious File Extensions:
                     </label>
-                    <textarea id="swaparr_malicious_extensions" rows="3" placeholder="Enter file extensions separated by commas...">${(settings.malicious_extensions || ['.lnk', '.exe', '.bat', '.cmd', '.scr', '.zipx', '.jar', '.vbs']).join(', ')}</textarea>
-                    <p class="setting-help">File extensions to block (comma-separated). Examples: .lnk, .exe, .bat, .zipx</p>
+                    <div class="tag-input-container">
+                        <div class="tag-list" id="swaparr_malicious_extensions_tags"></div>
+                        <div class="tag-input-wrapper">
+                            <input type="text" id="swaparr_malicious_extensions_input" placeholder="Type extension and press Enter (e.g. .lnk)" class="tag-input">
+                            <button type="button" class="tag-add-btn" onclick="addExtensionTag()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="setting-help">File extensions to block. Type extension and press Enter or click +. Examples: .lnk, .exe, .bat, .zipx</p>
                 </div>
                 
                 <div class="setting-item">
-                    <label for="swaparr_suspicious_patterns">
+                    <label for="swaparr_suspicious_patterns_input">
                         <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#suspicious-patterns" class="info-icon" title="Suspicious filename patterns" target="_blank" rel="noopener">
                             <i class="fas fa-info-circle"></i>
                         </a>
                         Suspicious Patterns:
                     </label>
-                    <textarea id="swaparr_suspicious_patterns" rows="3" placeholder="Enter suspicious patterns separated by commas...">${(settings.suspicious_patterns || ['password.txt', 'readme.txt', 'install.exe', 'keygen', 'crack']).join(', ')}</textarea>
-                    <p class="setting-help">Filename patterns to block (comma-separated). Examples: password.txt, keygen, crack</p>
+                    <div class="tag-input-container">
+                        <div class="tag-list" id="swaparr_suspicious_patterns_tags"></div>
+                        <div class="tag-input-wrapper">
+                            <input type="text" id="swaparr_suspicious_patterns_input" placeholder="Type pattern and press Enter (e.g. keygen)" class="tag-input">
+                            <button type="button" class="tag-add-btn" onclick="addPatternTag()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="setting-help">Filename patterns to block. Type pattern and press Enter or click +. Examples: password.txt, keygen, crack</p>
                 </div>
             </div>
             
@@ -1213,6 +1229,9 @@ const SettingsForms = {
                 }
             });
         }
+        
+        // Initialize tag systems
+        this.initializeTagSystem(settings);
 
         // Add event listener for global Swaparr enabled toggle to control instance visibility
         const swaparrEnabledToggle = container.querySelector('#swaparr_enabled');
@@ -1228,6 +1247,124 @@ const SettingsForms = {
             setTimeout(() => {
             }, 100);
         }
+    },
+    
+    // Initialize tag input systems for malicious file detection
+    initializeTagSystem: function(settings) {
+        // Initialize extensions
+        const defaultExtensions = ['.lnk', '.exe', '.bat', '.cmd', '.scr', '.pif', '.com', '.zipx', '.jar', '.vbs', '.js', '.jse', '.wsf', '.wsh'];
+        const extensions = settings.malicious_extensions || defaultExtensions;
+        this.loadTags('swaparr_malicious_extensions_tags', extensions);
+        
+        // Initialize patterns
+        const defaultPatterns = ['password.txt', 'readme.txt', 'install.exe', 'setup.exe', 'keygen', 'crack', 'patch.exe', 'activator'];
+        const patterns = settings.suspicious_patterns || defaultPatterns;
+        this.loadTags('swaparr_suspicious_patterns_tags', patterns);
+        
+        // Add enter key listeners
+        const extensionInput = document.getElementById('swaparr_malicious_extensions_input');
+        const patternInput = document.getElementById('swaparr_suspicious_patterns_input');
+        
+        if (extensionInput) {
+            extensionInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.addExtensionTag();
+                }
+            });
+        }
+        
+        if (patternInput) {
+            patternInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.addPatternTag();
+                }
+            });
+        }
+        
+        // Make functions globally accessible
+        window.addExtensionTag = () => this.addExtensionTag();
+        window.addPatternTag = () => this.addPatternTag();
+    },
+    
+    // Load tags into a tag list
+    loadTags: function(containerId, tags) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.innerHTML = '';
+        tags.forEach(tag => {
+            this.createTagElement(container, tag);
+        });
+    },
+    
+    // Create a tag element
+    createTagElement: function(container, text) {
+        const tagDiv = document.createElement('div');
+        tagDiv.className = 'tag-item';
+        tagDiv.innerHTML = `
+            <span class="tag-text">${text}</span>
+            <button type="button" class="tag-remove" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(tagDiv);
+    },
+    
+    // Add extension tag
+    addExtensionTag: function() {
+        const input = document.getElementById('swaparr_malicious_extensions_input');
+        const container = document.getElementById('swaparr_malicious_extensions_tags');
+        
+        if (!input || !container) return;
+        
+        let value = input.value.trim();
+        if (!value) return;
+        
+        // Auto-add dot if not present for extensions
+        if (!value.startsWith('.')) {
+            value = '.' + value;
+        }
+        
+        // Check for duplicates
+        const existing = Array.from(container.querySelectorAll('.tag-text')).map(el => el.textContent);
+        if (existing.includes(value)) {
+            input.value = '';
+            return;
+        }
+        
+        this.createTagElement(container, value);
+        input.value = '';
+    },
+    
+    // Add pattern tag
+    addPatternTag: function() {
+        const input = document.getElementById('swaparr_suspicious_patterns_input');
+        const container = document.getElementById('swaparr_suspicious_patterns_tags');
+        
+        if (!input || !container) return;
+        
+        const value = input.value.trim();
+        if (!value) return;
+        
+        // Check for duplicates
+        const existing = Array.from(container.querySelectorAll('.tag-text')).map(el => el.textContent);
+        if (existing.includes(value)) {
+            input.value = '';
+            return;
+        }
+        
+        this.createTagElement(container, value);
+        input.value = '';
+    },
+    
+    // Get tags from a container
+    getTagsFromContainer: function(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return [];
+        
+        return Array.from(container.querySelectorAll('.tag-text')).map(el => el.textContent);
     },
     
     // Generate Hunt Manager placeholder form
@@ -1611,19 +1748,9 @@ const SettingsForms = {
                 // Malicious file detection settings
                 settings.malicious_file_detection = getInputValue('#swaparr_malicious_detection', false);
                 
-                // Parse malicious extensions (comma-separated)
-                const extensionsText = document.getElementById('swaparr_malicious_extensions')?.value || '';
-                settings.malicious_extensions = extensionsText
-                    .split(',')
-                    .map(ext => ext.trim())
-                    .filter(ext => ext.length > 0);
-                
-                // Parse suspicious patterns (comma-separated)
-                const patternsText = document.getElementById('swaparr_suspicious_patterns')?.value || '';
-                settings.suspicious_patterns = patternsText
-                    .split(',')
-                    .map(pattern => pattern.trim())
-                    .filter(pattern => pattern.length > 0);
+                // Get tags from tag containers
+                settings.malicious_extensions = this.getTagsFromContainer('swaparr_malicious_extensions_tags');
+                settings.suspicious_patterns = this.getTagsFromContainer('swaparr_suspicious_patterns_tags');
             }
         }
         
