@@ -162,9 +162,25 @@ def process_upgrade_seasons_mode(
         sonarr_logger.info("No valid seasons with cutoff unmet episodes found.")
         return False
     
+    # CRITICAL FIX: Filter out already processed seasons at the season level
+    # This prevents the same season pack upgrade from being processed repeatedly
+    unprocessed_seasons = []
+    for series_id, season_number, episode_count, series_title in available_seasons:
+        season_id = f"{series_id}_{season_number}"
+        if not is_processed("sonarr", instance_name, season_id):
+            unprocessed_seasons.append((series_id, season_number, episode_count, series_title))
+        else:
+            sonarr_logger.debug(f"Skipping already processed season ID: {season_id} ({series_title} - Season {season_number})")
+    
+    sonarr_logger.info(f"Found {len(unprocessed_seasons)} unprocessed seasons out of {len(available_seasons)} total seasons with cutoff unmet episodes.")
+    
+    if not unprocessed_seasons:
+        sonarr_logger.info("All seasons with cutoff unmet episodes have been processed.")
+        return False
+    
     # Select seasons to process - always randomly
-    random.shuffle(available_seasons)
-    seasons_to_process = available_seasons[:hunt_upgrade_items]
+    random.shuffle(unprocessed_seasons)
+    seasons_to_process = unprocessed_seasons[:hunt_upgrade_items]
     
     sonarr_logger.info(f"Selected {len(seasons_to_process)} seasons with cutoff unmet episodes to process")
     
@@ -211,6 +227,11 @@ def process_upgrade_seasons_mode(
                 
                 # Log this as a season pack upgrade in the history
                 log_season_pack_upgrade(api_url, api_key, api_timeout, series_id, season_number, instance_name)
+                
+                # CRITICAL FIX: Mark the season as processed at the season level to prevent reprocessing
+                season_id = f"{series_id}_{season_number}"
+                add_processed_id("sonarr", instance_name, season_id)
+                sonarr_logger.debug(f"Marked season ID {season_id} as processed for upgrades ({series_title} - Season {season_number})")
                 
                 # We'll increment stats individually for each episode instead of in batch
                 # increment_stat("sonarr", "upgraded", len(episode_ids))
