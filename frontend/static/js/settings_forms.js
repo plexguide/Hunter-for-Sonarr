@@ -21,7 +21,14 @@ const SettingsForms = {
 
         // Create a container for instances
         let instancesHtml = `
-            <div class="settings-group">
+            <div class="settings-group" style="
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                border: 2px solid #00c2ce;
+                border-radius: 12px;
+                padding: 20px;
+                margin: 15px 0 25px 0;
+                box-shadow: 0 4px 12px rgba(0, 194, 206, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            ">
                 <h3>Sonarr Instances</h3>
                 <div class="instances-container">
         `;
@@ -1045,7 +1052,14 @@ const SettingsForms = {
                 </div>
             </div>
             
-            <div class="settings-group">
+            <div class="settings-group" style="
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                border: 2px solid #00c2ce;
+                border-radius: 12px;
+                padding: 20px;
+                margin: 15px 0 25px 0;
+                box-shadow: 0 4px 12px rgba(0, 194, 206, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            ">
                 <h3>Swaparr Configuration</h3>
                 <p class="setting-help" style="margin-bottom: 20px; color: #9ca3af;">
                     Swaparr monitors your *arr applications' download queues and removes stalled downloads automatically.
@@ -1570,7 +1584,14 @@ const SettingsForms = {
         container.setAttribute('data-app-type', 'general');
         
         container.innerHTML = `
-            <div class="settings-group">
+            <div class="settings-group" style="
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                border: 2px solid #00c2ce;
+                border-radius: 12px;
+                padding: 20px;
+                margin: 15px 0 25px 0;
+                box-shadow: 0 4px 12px rgba(0, 194, 206, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            ">
                 <h3>System Settings</h3>
                 <div class="setting-item">
                     <label for="check_for_updates"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#check-for-updates" class="info-icon" title="Learn more about update checking" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Check for Updates:</label>
@@ -1624,7 +1645,14 @@ const SettingsForms = {
                 </div>
             </div>
             
-            <div class="settings-group">
+            <div class="settings-group" style="
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                border: 2px solid #00c2ce;
+                border-radius: 12px;
+                padding: 20px;
+                margin: 15px 0 25px 0;
+                box-shadow: 0 4px 12px rgba(0, 194, 206, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            ">
                 <div class="stateful-header-row">
                     <h3>Stateful Management</h3>
                     <!-- Original reset button removed, now using emergency button -->
@@ -1652,7 +1680,14 @@ const SettingsForms = {
                 </div>
             </div>
             
-            <div class="settings-group">
+            <div class="settings-group" style="
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                border: 2px solid #00c2ce;
+                border-radius: 12px;
+                padding: 20px;
+                margin: 15px 0 25px 0;
+                box-shadow: 0 4px 12px rgba(0, 194, 206, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            ">
                 <h3>Security</h3>
                 <div class="setting-item">
                     <label for="auth_mode"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#authentication-mode" class="info-icon" title="Learn more about authentication modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Authentication Mode:</label>
@@ -1678,7 +1713,14 @@ const SettingsForms = {
                 </div>
             </div>
             
-            <div class="settings-group">
+            <div class="settings-group" style="
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                border: 2px solid #00c2ce;
+                border-radius: 12px;
+                padding: 20px;
+                margin: 15px 0 25px 0;
+                box-shadow: 0 4px 12px rgba(0, 194, 206, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            ">
                 <h3>Advanced Settings</h3>
                 <div class="setting-item">
                     <label for="api_timeout"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#api-timeout" class="info-icon" title="Learn more about API timeout settings" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Timeout:</label>
@@ -1710,10 +1752,16 @@ const SettingsForms = {
                     <input type="text" id="base_url" value="${settings.base_url || ''}" placeholder="/huntarr">
                     <p class="setting-help" style="margin-left: -3ch !important;">Base URL path for reverse proxy (e.g., '/huntarr'). Leave empty for root path. Requires restart. Credit <a href="https://github.com/scr4tchy" target="_blank">scr4tchy</a>.</p>
                 </div>
-                <div class="setting-item">
             </div>
 
-            <div class="settings-group">
+            <div class="settings-group" style="
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                border: 2px solid #00c2ce;
+                border-radius: 12px;
+                padding: 20px;
+                margin: 15px 0 25px 0;
+                box-shadow: 0 4px 12px rgba(0, 194, 206, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            ">
                 <h3>Apprise Notifications</h3>
                 <div class="setting-item">
                     <label for="enable_notifications"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#enable-notifications" class="info-icon" title="Enable or disable notifications" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enable Notifications:</label>
