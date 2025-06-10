@@ -43,8 +43,6 @@ def get_configured_instances():
             "eros": eros_instances
         }
         
-        total_instances = sum(len(v) for v in instances.values())
-        swaparr_logger.debug(f"Found {total_instances} configured Starr app instances for Swaparr monitoring")
         return instances
         
     except Exception as e:
