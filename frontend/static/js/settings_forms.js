@@ -1157,6 +1157,21 @@ const SettingsForms = {
                     <p class="setting-help">Time to wait between Swaparr processing cycles (default: 900 seconds / 15 minutes)</p>
                 </div>
                 
+            </div>
+            
+            <div class="settings-group" style="
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                border: 2px solid rgba(90, 109, 137, 0.3);
+                border-radius: 12px;
+                padding: 20px;
+                margin: 15px 0 25px 0;
+                box-shadow: 0 4px 12px rgba(90, 109, 137, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            ">
+                <h3>Security Features</h3>
+                <p class="setting-help" style="margin-bottom: 20px; color: #9ca3af;">
+                    Advanced security features to protect your system from malicious downloads and suspicious content by analyzing download names and titles. Detection is based on filename patterns, not file contents.
+                </p>
+                
                 <div class="setting-item">
                     <label for="swaparr_malicious_detection">
                         <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#malicious-file-detection" class="info-icon" title="Enable malicious file detection" target="_blank" rel="noopener">
