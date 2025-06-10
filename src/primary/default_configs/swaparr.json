@@ -8,5 +8,9 @@
   "sleep_duration": 900,
   "malicious_file_detection": false,
   "malicious_extensions": [".lnk", ".exe", ".bat", ".cmd", ".scr", ".pif", ".com", ".zipx", ".jar", ".vbs", ".js", ".jse", ".wsf", ".wsh"],
-  "suspicious_patterns": ["password.txt", "readme.txt", "install.exe", "setup.exe", "keygen", "crack", "patch.exe", "activator"]
+  "suspicious_patterns": ["password.txt", "readme.txt", "install.exe", "setup.exe", "keygen", "crack", "patch.exe", "activator"],
+  "age_based_removal": false,
+  "max_age_days": 7,
+  "quality_based_removal": false,
+  "blocked_quality_patterns": ["cam", "camrip", "hdcam", "ts", "telesync", "tc", "telecine", "r6", "dvdscr", "dvdscreener", "workprint", "wp"]
 } 

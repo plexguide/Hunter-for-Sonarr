@@ -1225,6 +1225,91 @@ const SettingsForms = {
                 </div>
             </div>
             
+            <div class="settings-group" style="
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                border: 2px solid rgba(90, 109, 137, 0.3);
+                border-radius: 12px;
+                padding: 20px;
+                margin: 15px 0 25px 0;
+                box-shadow: 0 4px 12px rgba(90, 109, 137, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            ">
+                <h3>Age-Based Cleanup</h3>
+                <p class="setting-help" style="margin-bottom: 20px; color: #9ca3af;">
+                    Automatically remove downloads that have been stuck for too long, regardless of strike count.
+                </p>
+                
+                <div class="setting-item">
+                    <label for="swaparr_age_based_removal">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#age-based-removal" class="info-icon" title="Enable age-based removal" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Enable Age-Based Removal:
+                    </label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="swaparr_age_based_removal" ${settings.age_based_removal === true ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Remove downloads that have been stuck longer than the specified age limit</p>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="swaparr_max_age_days">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#max-age-days" class="info-icon" title="Maximum age before removal" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Maximum Age (Days):
+                    </label>
+                    <input type="number" id="swaparr_max_age_days" min="1" max="30" value="${settings.max_age_days || 7}">
+                    <p class="setting-help">Remove downloads older than this many days (default: 7 days)</p>
+                </div>
+            </div>
+            
+            <div class="settings-group" style="
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+                border: 2px solid rgba(90, 109, 137, 0.3);
+                border-radius: 12px;
+                padding: 20px;
+                margin: 15px 0 25px 0;
+                box-shadow: 0 4px 12px rgba(90, 109, 137, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            ">
+                <h3>Quality-Based Filtering</h3>
+                <p class="setting-help" style="margin-bottom: 20px; color: #9ca3af;">
+                    Automatically remove downloads with poor or undesirable quality indicators in their names.
+                </p>
+                
+                <div class="setting-item">
+                    <label for="swaparr_quality_based_removal">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#quality-based-removal" class="info-icon" title="Enable quality-based filtering" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Enable Quality-Based Filtering:
+                    </label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="swaparr_quality_based_removal" ${settings.quality_based_removal === true ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Automatically remove downloads with blocked quality patterns in their names</p>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="swaparr_quality_patterns_input">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#blocked-quality-patterns" class="info-icon" title="Quality patterns to block" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Blocked Quality Patterns:
+                    </label>
+                    <div class="tag-input-container">
+                        <div class="tag-list" id="swaparr_quality_patterns_tags"></div>
+                        <div class="tag-input-wrapper">
+                            <input type="text" id="swaparr_quality_patterns_input" placeholder="Type quality pattern and press Enter (e.g. cam)" class="tag-input">
+                            <button type="button" class="tag-add-btn" onclick="addQualityTag()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="setting-help">Quality patterns to block. Type pattern and press Enter or click +. Examples: cam, ts, hdcam, workprint</p>
+                </div>
+            </div>
 
         `;
         
@@ -1276,9 +1361,15 @@ const SettingsForms = {
         const patterns = settings.suspicious_patterns || defaultPatterns;
         this.loadTags('swaparr_suspicious_patterns_tags', patterns);
         
+        // Initialize quality patterns
+        const defaultQualityPatterns = ['cam', 'camrip', 'hdcam', 'ts', 'telesync', 'tc', 'telecine', 'r6', 'dvdscr', 'dvdscreener', 'workprint', 'wp'];
+        const qualityPatterns = settings.blocked_quality_patterns || defaultQualityPatterns;
+        this.loadTags('swaparr_quality_patterns_tags', qualityPatterns);
+        
         // Add enter key listeners
         const extensionInput = document.getElementById('swaparr_malicious_extensions_input');
         const patternInput = document.getElementById('swaparr_suspicious_patterns_input');
+        const qualityInput = document.getElementById('swaparr_quality_patterns_input');
         
         if (extensionInput) {
             extensionInput.addEventListener('keypress', (e) => {
@@ -1298,9 +1389,19 @@ const SettingsForms = {
             });
         }
         
+        if (qualityInput) {
+            qualityInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.addQualityTag();
+                }
+            });
+        }
+        
         // Make functions globally accessible
         window.addExtensionTag = () => this.addExtensionTag();
         window.addPatternTag = () => this.addPatternTag();
+        window.addQualityTag = () => this.addQualityTag();
     },
     
     // Load tags into a tag list
@@ -1374,6 +1475,27 @@ const SettingsForms = {
         input.value = '';
     },
     
+    // Add quality pattern tag
+    addQualityTag: function() {
+        const input = document.getElementById('swaparr_quality_patterns_input');
+        const container = document.getElementById('swaparr_quality_patterns_tags');
+        
+        if (!input || !container) return;
+        
+        const value = input.value.trim().toLowerCase();
+        if (!value) return;
+        
+        // Check for duplicates
+        const existing = Array.from(container.querySelectorAll('.tag-text')).map(el => el.textContent.toLowerCase());
+        if (existing.includes(value)) {
+            input.value = '';
+            return;
+        }
+        
+        this.createTagElement(container, value);
+        input.value = '';
+    },
+    
     // Get tags from a container
     getTagsFromContainer: function(containerId) {
         const container = document.getElementById(containerId);
@@ -1426,6 +1548,7 @@ const SettingsForms = {
                 </div>
             </div>
         `;
+        
         
         container.innerHTML = html;
     },
@@ -1766,6 +1889,14 @@ const SettingsForms = {
                 // Get tags from tag containers
                 settings.malicious_extensions = this.getTagsFromContainer('swaparr_malicious_extensions_tags');
                 settings.suspicious_patterns = this.getTagsFromContainer('swaparr_suspicious_patterns_tags');
+                
+                // Age-based removal settings
+                settings.age_based_removal = getInputValue('#swaparr_age_based_removal', false);
+                settings.max_age_days = getInputValue('#swaparr_max_age_days', 7);
+                
+                // Quality-based removal settings
+                settings.quality_based_removal = getInputValue('#swaparr_quality_based_removal', false);
+                settings.blocked_quality_patterns = this.getTagsFromContainer('swaparr_quality_patterns_tags');
             }
         }
         

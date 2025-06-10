@@ -168,6 +168,51 @@ def check_for_malicious_files(item, settings):
     
     return False, None
 
+def check_age_based_removal(item, strike_data, settings):
+    """Check if download should be removed based on age"""
+    if not settings.get('age_based_removal', False):
+        return False, None
+    
+    max_age_days = settings.get('max_age_days', 7)
+    item_id = str(item.get('id', ''))
+    
+    # Check if we have strike data for this item
+    if item_id not in strike_data or not strike_data[item_id].get('first_strike_time'):
+        return False, None
+    
+    try:
+        first_strike = datetime.fromisoformat(strike_data[item_id]['first_strike_time'].replace('Z', '+00:00'))
+        age_days = (datetime.utcnow() - first_strike).days
+        
+        if age_days >= max_age_days:
+            swaparr_logger.warning(f"Age-based removal triggered for '{item['name']}': {age_days} days old (max: {max_age_days})")
+            return True, f"Too old: {age_days} days (max: {max_age_days})"
+    except (ValueError, KeyError) as e:
+        swaparr_logger.error(f"Error parsing first strike time for item {item_id}: {e}")
+    
+    return False, None
+
+def check_quality_based_removal(item, settings):
+    """Check if download should be removed based on quality"""
+    if not settings.get('quality_based_removal', False):
+        return False, None
+    
+    # Use user-defined blocked quality patterns from settings
+    blocked_qualities = settings.get('blocked_quality_patterns', [
+        'cam', 'camrip', 'hdcam', 'ts', 'telesync', 'tc', 'telecine',
+        'r6', 'dvdscr', 'dvdscreener', 'workprint', 'wp'
+    ])
+    
+    item_name = item.get('name', '').lower()
+    
+    # Check for blocked quality patterns
+    for quality in blocked_qualities:
+        if quality.lower() in item_name:
+            swaparr_logger.warning(f"Quality-based removal triggered for '{item['name']}': contains blocked quality '{quality}'")
+            return True, f"Blocked quality: {quality}"
+    
+    return False, None
+
 def parse_time_string_to_seconds(time_string):
     """Parse a time string like '2h', '30m', '1d' to seconds"""
     if not time_string:
@@ -508,6 +553,35 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                 
                 continue  # Skip to next item - don't process further
             
+            # Check for quality-based removal SECOND - immediate removal without strikes  
+            is_quality_blocked, quality_reason = check_quality_based_removal(item, settings)
+            if is_quality_blocked:
+                swaparr_logger.warning(f"QUALITY-BASED REMOVAL: {item['name']} - {quality_reason}")
+                
+                if not settings.get("dry_run", False):
+                    if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True):
+                        swaparr_logger.info(f"Successfully removed quality-blocked download: {item['name']}")
+                        
+                        # Mark as removed to prevent reappearance
+                        removed_items[item_hash] = {
+                            "name": item["name"],
+                            "removed_time": datetime.utcnow().isoformat(),
+                            "reason": f"Quality: {quality_reason}",
+                            "size": item["size"]
+                        }
+                        save_removed_items(app_name, removed_items)
+                        
+                        item_state = f"REMOVED (Quality: {quality_reason})"
+                        
+                        # Track quality removal statistics
+                        SWAPARR_STATS['quality_removed'] = SWAPARR_STATS.get('quality_removed', 0) + 1
+                        increment_swaparr_stat("quality_removals", 1)
+                else:
+                    swaparr_logger.info(f"DRY RUN: Would remove quality-blocked download: {item['name']} - {quality_reason}")
+                    item_state = f"Would Remove (Quality: {quality_reason})"
+                
+                continue  # Skip to next item - don't process further
+            
             # Initialize strike count if not already in strike data
             if item_id not in strike_data:
                 strike_data[item_id] = {
@@ -516,6 +590,39 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                     "first_strike_time": datetime.utcnow().isoformat(),
                     "last_strike_time": None
                 }
+            
+            # Check for age-based removal THIRD - immediate removal without strikes
+            is_age_expired, age_reason = check_age_based_removal(item, strike_data, settings)
+            if is_age_expired:
+                swaparr_logger.warning(f"AGE-BASED REMOVAL: {item['name']} - {age_reason}")
+                
+                if not settings.get("dry_run", False):
+                    if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True):
+                        swaparr_logger.info(f"Successfully removed age-expired download: {item['name']}")
+                        
+                        # Mark as removed to prevent reappearance
+                        removed_items[item_hash] = {
+                            "name": item["name"],
+                            "removed_time": datetime.utcnow().isoformat(),
+                            "reason": f"Age: {age_reason}",
+                            "size": item["size"]
+                        }
+                        save_removed_items(app_name, removed_items)
+                        
+                        # Keep the item in strike data for reference but mark as removed
+                        strike_data[item_id]["removed"] = True
+                        strike_data[item_id]["removed_time"] = datetime.utcnow().isoformat()
+                        
+                        item_state = f"REMOVED (Age: {age_reason})"
+                        
+                        # Track age removal statistics
+                        SWAPARR_STATS['age_removed'] = SWAPARR_STATS.get('age_removed', 0) + 1
+                        increment_swaparr_stat("age_removals", 1)
+                else:
+                    swaparr_logger.info(f"DRY RUN: Would remove age-expired download: {item['name']} - {age_reason}")
+                    item_state = f"Would Remove (Age: {age_reason})"
+                
+                continue  # Skip to next item - don't process further
             
             # Check if download should be striked
             should_strike = False

@@ -160,6 +160,139 @@
             </ul>
             <p><strong>Consider your setup:</strong> If you have many active downloads, shorter intervals help. If you have a slower system or fewer downloads, longer intervals are fine.</p>
             
+            <h2 id="security-features">Security Features</h2>
+            
+            <p>Swaparr includes advanced security features to protect your system from malicious downloads and suspicious content by analyzing download names and titles. Detection is based on filename patterns, not file contents.</p>
+            
+            <h3 id="malicious-file-detection"><i class="fas fa-shield-alt" style="margin-right: 8px; color: #e74c3c;"></i>Malicious File Detection</h3>
+            <p><strong>What it does:</strong> Automatically detect and immediately remove downloads with malicious file types.</p>
+            <p><strong>How it works:</strong> Scans download names for dangerous file extensions and suspicious patterns. Unlike the strike system, malicious content is removed immediately without warnings.</p>
+            <p><strong>When to enable:</strong> Highly recommended for all users, especially those using public trackers where malicious content is more common.</p>
+            
+            <div class="alert alert-warning" style="margin: 15px 0; padding: 15px; background: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107;">
+                <strong><i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>Important:</strong> 
+                This feature analyzes filename patterns only, not actual file contents. It's designed to catch obviously malicious downloads based on their names.
+            </div>
+            
+            <h3 id="malicious-extensions"><i class="fas fa-file-code" style="margin-right: 8px; color: #e67e22;"></i>Malicious File Extensions</h3>
+            <p><strong>What it does:</strong> File extensions to consider malicious and block immediately.</p>
+            <p><strong>Default blocked extensions:</strong></p>
+            <ul>
+                <li><strong>Executable files:</strong> .exe, .bat, .cmd, .com, .scr, .pif</li>
+                <li><strong>Script files:</strong> .vbs, .js, .jse, .wsf, .wsh</li>
+                <li><strong>Archive formats:</strong> .zipx (suspicious variant)</li>
+                <li><strong>Link files:</strong> .lnk (Windows shortcuts)</li>
+                <li><strong>Java archives:</strong> .jar (can contain malware)</li>
+            </ul>
+            <p><strong>Customization:</strong> Use the tag input system to add or remove extensions. Type the extension (with or without the dot) and press Enter or click the + button.</p>
+            
+            <h3 id="suspicious-patterns"><i class="fas fa-search" style="margin-right: 8px; color: #f39c12;"></i>Suspicious Patterns</h3>
+            <p><strong>What it does:</strong> Filename patterns that indicate potentially malicious or unwanted content.</p>
+            <p><strong>Default blocked patterns:</strong></p>
+            <ul>
+                <li><strong>Common malware indicators:</strong> keygen, crack, patch.exe, activator</li>
+                <li><strong>Suspicious files:</strong> password.txt, readme.txt, install.exe, setup.exe</li>
+            </ul>
+            <p><strong>Examples of what gets blocked:</strong></p>
+            <ul>
+                <li>"Movie.Name.2024.1080p.KEYGEN.mkv" - Contains "keygen"</li>
+                <li>"Software.Name.v1.2.Crack.Only.zip" - Contains "crack"</li>
+                <li>"Game.Install.Password.txt.exe" - Contains suspicious pattern</li>
+            </ul>
+            <p><strong>Customization:</strong> Add patterns that are common in your region or specific to content you want to avoid.</p>
+            
+            <h2 id="age-based-cleanup">Age-Based Cleanup</h2>
+            
+            <p>Age-based cleanup automatically removes downloads that have been stuck for too long, regardless of strike count. This provides a safety net for downloads that might slip through the normal strike system.</p>
+            
+            <h3 id="age-based-removal"><i class="fas fa-calendar-times" style="margin-right: 8px; color: #e74c3c;"></i>Enable Age-Based Removal</h3>
+            <p><strong>What it does:</strong> Remove downloads that have been stuck longer than the specified age limit.</p>
+            <p><strong>How it works:</strong> Tracks when Swaparr first noticed each download and removes it after the specified number of days, even if it hasn't reached the maximum strike count.</p>
+            <p><strong>When to use:</strong> Enable this to prevent downloads from sitting in queues indefinitely. Particularly useful for handling edge cases where the normal strike system might not catch problematic downloads.</p>
+            
+            <h3 id="max-age-days"><i class="fas fa-hourglass-end" style="margin-right: 8px; color: #f39c12;"></i>Maximum Age (Days)</h3>
+            <p><strong>What it does:</strong> Remove downloads older than this many days (default: 7 days).</p>
+            <p><strong>Recommended values:</strong></p>
+            <ul>
+                <li><strong>3-5 days:</strong> Aggressive cleanup, good for users with reliable download sources</li>
+                <li><strong>7-10 days:</strong> Balanced approach, gives enough time for slow downloads (recommended)</li>
+                <li><strong>14+ days:</strong> Conservative, for users with very slow connections or unreliable trackers</li>
+            </ul>
+            <p><strong>Consider your setup:</strong> Private trackers with limited seeders might need longer age limits. Public trackers with many alternatives can use shorter limits.</p>
+            
+            <div class="alert alert-info" style="margin: 15px 0; padding: 15px; background: rgba(13, 202, 240, 0.1); border-left: 4px solid #0dcaf0;">
+                <strong><i class="fas fa-info-circle" style="margin-right: 8px;"></i>Age Tracking:</strong> 
+                The age timer starts when Swaparr first sees a download in the queue, not when the download actually started. This ensures accurate tracking across Swaparr restarts.
+            </div>
+            
+            <h2 id="quality-based-filtering">Quality-Based Filtering</h2>
+            
+            <p>Quality-based filtering automatically removes downloads with poor or undesirable quality indicators in their names. This helps maintain high standards for your media library.</p>
+            
+            <h3 id="quality-based-removal"><i class="fas fa-filter" style="margin-right: 8px; color: #9b59b6;"></i>Enable Quality-Based Filtering</h3>
+            <p><strong>What it does:</strong> Automatically remove downloads with blocked quality patterns in their names.</p>
+            <p><strong>How it works:</strong> Scans download names for quality indicators that suggest poor viewing/listening experience. Like malicious file detection, quality-blocked content is removed immediately without strikes.</p>
+            <p><strong>When to use:</strong> Enable if you want to maintain high quality standards and automatically reject low-quality releases.</p>
+            
+            <h3 id="blocked-quality-patterns"><i class="fas fa-ban" style="margin-right: 8px; color: #e74c3c;"></i>Blocked Quality Patterns</h3>
+            <p><strong>What it does:</strong> Quality patterns to block based on their indicators in filenames.</p>
+            <p><strong>Default blocked qualities:</strong></p>
+            <ul>
+                <li><strong>Camera recordings:</strong> cam, camrip, hdcam - Recorded in theaters with handheld cameras</li>
+                <li><strong>Telesyncs:</strong> ts, telesync, tc, telecine - Audio/video from different sources, poor sync</li>
+                <li><strong>Pre-retail:</strong> r6, dvdscr, dvdscreener - Pre-release screeners, often watermarked</li>
+                <li><strong>Workprints:</strong> workprint, wp - Unfinished cuts, missing effects or audio</li>
+            </ul>
+            
+            <p><strong>Examples of what gets blocked:</strong></p>
+            <ul>
+                <li>"Movie.Name.2024.CAM.XviD.avi" - CAM recording</li>
+                <li>"Show.S01E01.TS.HDTV.x264.mkv" - Telesync quality</li>
+                <li>"Movie.2024.R6.DVDScr.XviD.avi" - DVD screener</li>
+                <li>"New.Movie.2024.WORKPRINT.x264.mp4" - Work print</li>
+            </ul>
+            
+            <p><strong>Quality standards comparison:</strong></p>
+            <table>
+                <tr>
+                    <th>Quality Type</th>
+                    <th>Video Quality</th>
+                    <th>Audio Quality</th>
+                    <th>Recommendation</th>
+                </tr>
+                <tr>
+                    <td><strong>CAM/TS</strong></td>
+                    <td>Very Poor</td>
+                    <td>Very Poor</td>
+                    <td style="color: #e74c3c;">Block (Default)</td>
+                </tr>
+                <tr>
+                    <td><strong>DVDScr/R6</strong></td>
+                    <td>Poor</td>
+                    <td>Fair</td>
+                    <td style="color: #e74c3c;">Block (Default)</td>
+                </tr>
+                <tr>
+                    <td><strong>HDTV/WEB-DL</strong></td>
+                    <td>Good</td>
+                    <td>Good</td>
+                    <td style="color: #2ecc71;">Allow</td>
+                </tr>
+                <tr>
+                    <td><strong>BluRay/Remux</strong></td>
+                    <td>Excellent</td>
+                    <td>Excellent</td>
+                    <td style="color: #2ecc71;">Allow</td>
+                </tr>
+            </table>
+            
+            <p><strong>Customization:</strong> Use the tag input system to add quality patterns specific to your preferences. For example, you might want to block "720p" if you only accept 1080p or higher.</p>
+            
+            <div class="alert alert-warning" style="margin: 15px 0; padding: 15px; background: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107;">
+                <strong><i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>Be Careful:</strong> 
+                Adding too many quality patterns might block legitimate releases. Start with the defaults and add patterns gradually based on your specific needs.
+            </div>
+            
             <h2 id="*arr-instance-setup">*arr Instance Setup</h2>
             
             <p>Swaparr uses your existing *arr configurations from Huntarr. In the Swaparr configuration, you'll see checkboxes for each of your configured instances:</p>
@@ -240,8 +373,23 @@
                 </tr>
                 <tr>
                     <td><strong>Removals</strong></td>
-                    <td>Downloads actually removed</td>
+                    <td>Downloads removed via strike system</td>
                     <td>When a download reaches max strikes and gets removed</td>
+                </tr>
+                <tr>
+                    <td><strong>Malicious Removals</strong></td>
+                    <td>Downloads removed for malicious content</td>
+                    <td>When malicious file detection blocks a download</td>
+                </tr>
+                <tr>
+                    <td><strong>Quality Removals</strong></td>
+                    <td>Downloads removed for poor quality</td>
+                    <td>When quality-based filtering blocks a download</td>
+                </tr>
+                <tr>
+                    <td><strong>Age Removals</strong></td>
+                    <td>Downloads removed for being too old</td>
+                    <td>When age-based cleanup removes stale downloads</td>
                 </tr>
                 <tr>
                     <td><strong>Ignored</strong></td>
@@ -285,6 +433,9 @@
                 <li><strong>Ignore Above Size:</strong> 50GB</li>
                 <li><strong>Sleep Duration:</strong> 600 seconds (10 minutes)</li>
                 <li><strong>Remove from Client:</strong> Enabled</li>
+                <li><strong>Malicious File Detection:</strong> Enabled</li>
+                <li><strong>Age-Based Removal:</strong> Enabled (5 days)</li>
+                <li><strong>Quality-Based Filtering:</strong> Enabled (default patterns)</li>
             </ul>
             
             <h3><i class="fas fa-balance-scale" style="margin-right: 8px; color: #2ecc71;"></i>Balanced Setup (Most Users)</h3>
@@ -294,6 +445,9 @@
                 <li><strong>Ignore Above Size:</strong> 25GB</li>
                 <li><strong>Sleep Duration:</strong> 900 seconds (15 minutes)</li>
                 <li><strong>Remove from Client:</strong> Enabled</li>
+                <li><strong>Malicious File Detection:</strong> Enabled</li>
+                <li><strong>Age-Based Removal:</strong> Enabled (7 days)</li>
+                <li><strong>Quality-Based Filtering:</strong> Optional (based on preferences)</li>
             </ul>
             
             <h3><i class="fas fa-shield-alt" style="margin-right: 8px; color: #3498db;"></i>Conservative Setup (Slower Connection, Private Trackers)</h3>
@@ -303,6 +457,9 @@
                 <li><strong>Ignore Above Size:</strong> 15GB</li>
                 <li><strong>Sleep Duration:</strong> 1800 seconds (30 minutes)</li>
                 <li><strong>Remove from Client:</strong> Enabled</li>
+                <li><strong>Malicious File Detection:</strong> Enabled</li>
+                <li><strong>Age-Based Removal:</strong> Enabled (14 days)</li>
+                <li><strong>Quality-Based Filtering:</strong> Disabled (manual quality control)</li>
             </ul>
             
             <h2 id="troubleshooting">Troubleshooting</h2>
