@@ -5,5 +5,8 @@
   "ignore_above_size": "25GB",
   "remove_from_client": true,
   "dry_run": false,
-  "sleep_duration": 900
+  "sleep_duration": 900,
+  "malicious_file_detection": false,
+  "malicious_extensions": [".lnk", ".exe", ".bat", ".cmd", ".scr", ".pif", ".com", ".zipx", ".jar", ".vbs", ".js", ".jse", ".wsf", ".wsh"],
+  "suspicious_patterns": ["password.txt", "readme.txt", "install.exe", "setup.exe", "keygen", "crack", "patch.exe", "activator"]
 } 

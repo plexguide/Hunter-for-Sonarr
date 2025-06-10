@@ -34,6 +34,7 @@ SWAPARR_STATS = {
     'total_processed': 0,
     'strikes_added': 0,
     'downloads_removed': 0,
+    'malicious_removed': 0,
     'items_ignored': 0,
     'api_calls_made': 0,
     'errors_encountered': 0,
@@ -49,6 +50,7 @@ def reset_session_stats():
         'total_processed': 0,
         'strikes_added': 0,
         'downloads_removed': 0,
+        'malicious_removed': 0,
         'items_ignored': 0,
         'api_calls_made': 0,
         'errors_encountered': 0,
@@ -132,6 +134,39 @@ def generate_item_hash(item):
     This helps track items across restarts even if their queue ID changes."""
     hash_input = f"{item['name']}_{item['size']}"
     return hashlib.md5(hash_input.encode('utf-8')).hexdigest()
+
+def check_for_malicious_files(item, settings):
+    """Check if download contains malicious file types"""
+    if not settings.get('malicious_file_detection', False):
+        return False, None
+    
+    # Use user-defined malicious extensions from settings
+    malicious_extensions = settings.get('malicious_extensions', [
+        '.lnk', '.exe', '.bat', '.cmd', '.scr', '.pif', '.com', 
+        '.zipx', '.jar', '.vbs', '.js', '.jse', '.wsf', '.wsh'
+    ])
+    
+    # Use user-defined suspicious patterns from settings
+    suspicious_patterns = settings.get('suspicious_patterns', [
+        'password.txt', 'readme.txt', 'install.exe', 'setup.exe',
+        'keygen', 'crack', 'patch.exe', 'activator'
+    ])
+    
+    item_name = item.get('name', '').lower()
+    
+    # Check for malicious extensions in the title/name
+    for ext in malicious_extensions:
+        if ext.lower() in item_name:
+            swaparr_logger.warning(f"Malicious file detected in '{item_name}': contains {ext}")
+            return True, f"Contains malicious file type: {ext}"
+    
+    # Check for suspicious patterns
+    for pattern in suspicious_patterns:
+        if pattern.lower() in item_name:
+            swaparr_logger.warning(f"Suspicious content detected in '{item_name}': contains {pattern}")
+            return True, f"Contains suspicious content: {pattern}"
+    
+    return False, None
 
 def parse_time_string_to_seconds(time_string):
     """Parse a time string like '2h', '30m', '1d' to seconds"""
@@ -443,6 +478,35 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                     swaparr_logger.debug(f"Monitoring new queued download: {item['name']}")
                     item_state = "Monitoring (Queued)"
                     continue
+            
+            # Check for malicious files FIRST - immediate removal without strikes
+            is_malicious, malicious_reason = check_for_malicious_files(item, settings)
+            if is_malicious:
+                swaparr_logger.error(f"MALICIOUS CONTENT DETECTED: {item['name']} - {malicious_reason}")
+                
+                if not settings.get("dry_run", False):
+                    if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True):
+                        swaparr_logger.info(f"Successfully removed malicious download: {item['name']}")
+                        
+                        # Mark as removed to prevent reappearance
+                        removed_items[item_hash] = {
+                            "name": item["name"],
+                            "removed_time": datetime.utcnow().isoformat(),
+                            "reason": f"Malicious: {malicious_reason}",
+                            "size": item["size"]
+                        }
+                        save_removed_items(app_name, removed_items)
+                        
+                        item_state = f"REMOVED (Malicious: {malicious_reason})"
+                        
+                        # Track malicious removal statistics
+                        SWAPARR_STATS['malicious_removed'] = SWAPARR_STATS.get('malicious_removed', 0) + 1
+                        increment_swaparr_stat("malicious_removals", 1)
+                else:
+                    swaparr_logger.info(f"DRY RUN: Would remove malicious download: {item['name']} - {malicious_reason}")
+                    item_state = f"Would Remove (Malicious: {malicious_reason})"
+                
+                continue  # Skip to next item - don't process further
             
             # Initialize strike count if not already in strike data
             if item_id not in strike_data:

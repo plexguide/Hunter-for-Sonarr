@@ -1156,6 +1156,42 @@ const SettingsForms = {
                     </div>
                     <p class="setting-help">Time to wait between Swaparr processing cycles (default: 900 seconds / 15 minutes)</p>
                 </div>
+                
+                <div class="setting-item">
+                    <label for="swaparr_malicious_detection">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#malicious-file-detection" class="info-icon" title="Enable malicious file detection" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Malicious File Detection:
+                    </label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="swaparr_malicious_detection" ${settings.malicious_file_detection === true ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Automatically detect and immediately remove downloads with malicious file types</p>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="swaparr_malicious_extensions">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#malicious-extensions" class="info-icon" title="File extensions to consider malicious" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Malicious File Extensions:
+                    </label>
+                    <textarea id="swaparr_malicious_extensions" rows="3" placeholder="Enter file extensions separated by commas...">${(settings.malicious_extensions || ['.lnk', '.exe', '.bat', '.cmd', '.scr', '.zipx', '.jar', '.vbs']).join(', ')}</textarea>
+                    <p class="setting-help">File extensions to block (comma-separated). Examples: .lnk, .exe, .bat, .zipx</p>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="swaparr_suspicious_patterns">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#suspicious-patterns" class="info-icon" title="Suspicious filename patterns" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Suspicious Patterns:
+                    </label>
+                    <textarea id="swaparr_suspicious_patterns" rows="3" placeholder="Enter suspicious patterns separated by commas...">${(settings.suspicious_patterns || ['password.txt', 'readme.txt', 'install.exe', 'keygen', 'crack']).join(', ')}</textarea>
+                    <p class="setting-help">Filename patterns to block (comma-separated). Examples: password.txt, keygen, crack</p>
+                </div>
             </div>
             
 
@@ -1571,6 +1607,23 @@ const SettingsForms = {
                 settings.remove_from_client = getInputValue('#swaparr_remove_from_client', true);
                 settings.dry_run = getInputValue('#swaparr_dry_run', false);
                 settings.sleep_duration = getInputValue('#swaparr_sleep_duration', 900);
+                
+                // Malicious file detection settings
+                settings.malicious_file_detection = getInputValue('#swaparr_malicious_detection', false);
+                
+                // Parse malicious extensions (comma-separated)
+                const extensionsText = document.getElementById('swaparr_malicious_extensions')?.value || '';
+                settings.malicious_extensions = extensionsText
+                    .split(',')
+                    .map(ext => ext.trim())
+                    .filter(ext => ext.length > 0);
+                
+                // Parse suspicious patterns (comma-separated)
+                const patternsText = document.getElementById('swaparr_suspicious_patterns')?.value || '';
+                settings.suspicious_patterns = patternsText
+                    .split(',')
+                    .map(pattern => pattern.trim())
+                    .filter(pattern => pattern.length > 0);
             }
         }
         
