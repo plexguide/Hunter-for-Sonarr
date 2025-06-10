@@ -44,7 +44,7 @@ def get_configured_instances():
         }
         
         total_instances = sum(len(v) for v in instances.values())
-        swaparr_logger.info(f"Found {total_instances} configured Starr app instances for Swaparr monitoring")
+        swaparr_logger.debug(f"Found {total_instances} configured Starr app instances for Swaparr monitoring")
         return instances
         
     except Exception as e:

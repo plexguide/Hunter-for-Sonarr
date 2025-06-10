@@ -1922,22 +1922,76 @@ let huntarrUI = {
 
     // Reset Swaparr data function
     resetSwaparrData: function() {
-        if (confirm('Are you sure you want to reset all Swaparr data? This will clear all strike counts and removed items data.')) {
-            HuntarrUtils.fetchWithTimeout('./api/swaparr/reset-session', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        this.showNotification('Swaparr data reset successfully', 'success');
-                        // Refresh the status display
-                        this.loadSwaparrStatus();
-                    } else {
-                        this.showNotification('Failed to reset Swaparr data', 'error');
+        // Prevent multiple executions
+        if (this.swaparrResetInProgress) {
+            return;
+        }
+        
+        // Show confirmation
+        if (!confirm('Are you sure you want to reset all Swaparr data? This will clear all strike counts and removed items data.')) {
+            return;
+        }
+        
+        this.swaparrResetInProgress = true;
+        
+        // Immediately update the UI first to provide immediate feedback (like Live Hunts)
+        this.updateSwaparrStatsDisplay({
+            processed: 0,
+            strikes: 0, 
+            removals: 0,
+            ignored: 0
+        });
+        
+        // Show success notification immediately
+        this.showNotification('Swaparr statistics reset successfully', 'success');
+
+        // Try to send the reset to the server, but don't depend on it for UI feedback
+        try {
+            HuntarrUtils.fetchWithTimeout('./api/swaparr/reset-stats', { method: 'POST' })
+                .then(response => {
+                    // Just log the response, don't rely on it for UI feedback
+                    if (!response.ok) {
+                        console.warn('Server responded with non-OK status for Swaparr stats reset');
                     }
+                    return response.json().catch(() => ({}));
+                })
+                .then(data => {
+                    console.log('Swaparr stats reset response:', data);
                 })
                 .catch(error => {
-                    console.error('Error resetting Swaparr data:', error);
-                    this.showNotification('Error resetting Swaparr data', 'error');
+                    console.warn('Error communicating with server for Swaparr stats reset:', error);
+                })
+                .finally(() => {
+                    // Reset the flag after a delay
+                    setTimeout(() => {
+                        this.swaparrResetInProgress = false;
+                    }, 1000);
                 });
+        } catch (error) {
+            console.warn('Error in Swaparr stats reset:', error);
+            this.swaparrResetInProgress = false;
+        }
+    },
+
+    // Update Swaparr stats display with animation (like Live Hunts)
+    updateSwaparrStatsDisplay: function(stats) {
+        const elements = {
+            'processed': document.getElementById('swaparr-processed'),
+            'strikes': document.getElementById('swaparr-strikes'),
+            'removals': document.getElementById('swaparr-removals'),
+            'ignored': document.getElementById('swaparr-ignored')
+        };
+
+        for (const [key, element] of Object.entries(elements)) {
+            if (element && stats.hasOwnProperty(key)) {
+                const currentValue = this.parseFormattedNumber(element.textContent);
+                const targetValue = stats[key];
+                
+                if (currentValue !== targetValue) {
+                    // Animate the number change
+                    this.animateNumber(element, currentValue, targetValue, 500);
+                }
+            }
         }
     },
 

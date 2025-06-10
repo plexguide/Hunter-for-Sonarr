@@ -15,7 +15,7 @@ from src.primary.apps.swaparr.handler import (
     SWAPARR_STATE_DIR
 )
 from src.primary.apps.swaparr import get_configured_instances, is_configured
-from src.primary.apps.swaparr.stats_manager import get_swaparr_stats, increment_swaparr_stat
+from src.primary.apps.swaparr.stats_manager import get_swaparr_stats, reset_swaparr_stats
 
 # Create the blueprint directly in this file
 swaparr_bp = Blueprint('swaparr', __name__)
@@ -247,6 +247,20 @@ def reset_session_statistics():
         swaparr_logger.error(f"Error resetting session statistics: {str(e)}")
         return jsonify({"success": False, "message": f"Error resetting session statistics: {str(e)}"}), 500
 
+@swaparr_bp.route('/reset-stats', methods=['POST'])
+def reset_persistent_statistics():
+    """Reset persistent statistics (the ones shown on homepage)"""
+    try:
+        success = reset_swaparr_stats()
+        if success:
+            swaparr_logger.info("Reset Swaparr persistent statistics")
+            return jsonify({"success": True, "message": "Persistent statistics reset successfully"})
+        else:
+            return jsonify({"success": False, "message": "Failed to reset persistent statistics"}), 500
+    except Exception as e:
+        swaparr_logger.error(f"Error resetting persistent statistics: {str(e)}")
+        return jsonify({"success": False, "message": f"Error resetting persistent statistics: {str(e)}"}), 500
+
 @swaparr_bp.route('/reset-cycle', methods=['POST'])
 def reset_cycle_endpoint():
     """Reset Swaparr cycle - forces a new cycle to start immediately"""
@@ -379,21 +393,6 @@ def manual_run():
             "message": f"Manual run failed: {str(e)}"
         }), 500
 
-@swaparr_bp.route('/test-stats', methods=['POST'])
-def test_stats_increment():
-    """Test endpoint to increment stats for testing large number formatting"""
-    data = request.json or {}
-    stat_type = data.get('stat_type', 'processed')
-    count = data.get('count', 1000)
-    
-    if increment_swaparr_stat(stat_type, count):
-        current_stats = get_swaparr_stats()
-        return jsonify({
-            "success": True, 
-            "message": f"Incremented {stat_type} by {count}",
-            "current_stats": current_stats
-        })
-    else:
-        return jsonify({"success": False, "message": "Failed to increment stats"}), 500
+
 
  
