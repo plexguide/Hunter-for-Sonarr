@@ -76,15 +76,15 @@
             
             if (plexLogin === 'true') {
                 // Redirect to login page to continue authentication
-                window.location.href = '/login';
+                window.location.href = './login';
             } else if (plexLinking === 'true') {
                 // Check if we're explicitly in setup mode
                 if (plexSetupMode === 'true') {
                     // Redirect to setup page to continue setup flow
-                    window.location.href = '/setup';
+                    window.location.href = './setup';
                 } else {
                     // Redirect to user page to continue regular linking
-                    window.location.href = '/user';
+                    window.location.href = './user';
                 }
             }
         });

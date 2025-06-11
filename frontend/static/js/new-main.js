@@ -2135,7 +2135,7 @@ let huntarrUI = {
         .then(data => {
             if (data.success) {
                 console.log('[huntarrUI] Logout successful, redirecting to login.');
-                window.location.href = '/login'; // Redirect to login page
+                window.location.href = './login'; // Redirect to login page
             } else {
                 console.error('[huntarrUI] Logout failed:', data.message);
                 this.showNotification('Logout failed. Please try again.', 'error');
