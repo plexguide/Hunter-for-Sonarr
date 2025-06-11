@@ -525,7 +525,7 @@
                 
                 if (status === 200 && body.success) {
                     // Login successful
-                    window.location.href = body.redirect || '/';
+                                                window.location.href = body.redirect || './';
                 } else if (status === 401 && requires2FA) {
                     // 2FA is required
                     console.log('2FA required, showing 2FA input field');
