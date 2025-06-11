@@ -244,11 +244,13 @@ def process_missing_albums(
                 
                     # Tag the artist if enabled
                     if tag_processed_items:
+                        from src.primary.settings_manager import get_custom_tag
+                        custom_tag = get_custom_tag("lidarr", "missing", "huntarr-missing")
                         try:
-                            lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id, "huntarr-missing")
-                            lidarr_logger.debug(f"Tagged artist {artist_id} with 'huntarr-missing'")
+                            lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id, custom_tag)
+                            lidarr_logger.debug(f"Tagged artist {artist_id} with '{custom_tag}'")
                         except Exception as e:
-                            lidarr_logger.warning(f"Failed to tag artist {artist_id} with 'huntarr-missing': {e}")
+                            lidarr_logger.warning(f"Failed to tag artist {artist_id} with '{custom_tag}': {e}")
                 
                 # Also mark all albums from this artist as processed
                 if artist_id in items_by_artist:
@@ -328,6 +330,8 @@ def process_missing_albums(
                 
                 # Tag artists if enabled (from albums)
                 if tag_processed_items:
+                    from src.primary.settings_manager import get_custom_tag
+                    custom_tag = get_custom_tag("lidarr", "missing", "huntarr-missing")
                     tagged_artists = set()  # Track which artists we've already tagged
                     for album_id in album_ids_to_search:
                         album_info = missing_items_dict.get(album_id)
@@ -335,11 +339,11 @@ def process_missing_albums(
                             artist_id = album_info.get('artistId')
                             if artist_id and artist_id not in tagged_artists:
                                 try:
-                                    lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id, "huntarr-missing")
-                                    lidarr_logger.debug(f"Tagged artist {artist_id} with 'huntarr-missing'")
+                                    lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id, custom_tag)
+                                    lidarr_logger.debug(f"Tagged artist {artist_id} with '{custom_tag}'")
                                     tagged_artists.add(artist_id)
                                 except Exception as e:
-                                    lidarr_logger.warning(f"Failed to tag artist {artist_id} with 'huntarr-missing': {e}")
+                                    lidarr_logger.warning(f"Failed to tag artist {artist_id} with '{custom_tag}': {e}")
                 
                 # Log to history system
                 for album_id in album_ids_to_search:

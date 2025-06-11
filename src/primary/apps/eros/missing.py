@@ -197,11 +197,13 @@ def process_missing_items(
             
             # Tag the movie if enabled
             if tag_processed_items:
+                from src.primary.settings_manager import get_custom_tag
+                custom_tag = get_custom_tag("eros", "missing", "huntarr-missing")
                 try:
-                    eros_api.tag_processed_movie(api_url, api_key, api_timeout, item_id, "huntarr-missing")
-                    eros_logger.debug(f"Tagged movie {item_id} with 'huntarr-missing'")
+                    eros_api.tag_processed_movie(api_url, api_key, api_timeout, item_id, custom_tag)
+                    eros_logger.debug(f"Tagged movie {item_id} with '{custom_tag}'")
                 except Exception as e:
-                    eros_logger.warning(f"Failed to tag movie {item_id} with 'huntarr-missing': {e}")
+                    eros_logger.warning(f"Failed to tag movie {item_id} with '{custom_tag}': {e}")
             
             # Log to history system
             log_processed_media("eros", item_info, item_id, instance_name, "missing")

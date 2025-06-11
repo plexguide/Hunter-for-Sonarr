@@ -179,13 +179,15 @@ def process_missing_items(
             
             # Tag the series if enabled
             if tag_processed_items:
+                from src.primary.settings_manager import get_custom_tag
+                custom_tag = get_custom_tag("whisparr", "missing", "huntarr-missing")
                 series_id = item.get('seriesId')
                 if series_id:
                     try:
-                        whisparr_api.tag_processed_series(api_url, api_key, api_timeout, series_id, "huntarr-missing")
-                        whisparr_logger.debug(f"Tagged series {series_id} with 'huntarr-missing'")
+                        whisparr_api.tag_processed_series(api_url, api_key, api_timeout, series_id, custom_tag)
+                        whisparr_logger.debug(f"Tagged series {series_id} with '{custom_tag}'")
                     except Exception as e:
-                        whisparr_logger.warning(f"Failed to tag series {series_id} with 'huntarr-missing': {e}")
+                        whisparr_logger.warning(f"Failed to tag series {series_id} with '{custom_tag}': {e}")
             
             # Log to history system
             media_name = f"{title} - {season_episode}"

@@ -656,10 +656,34 @@ def save_general_settings():
 
 @app.route('/api/test-notification', methods=['POST'])
 def test_notification():
-    """Test notification endpoint"""
+    """Test notification endpoint with enhanced Windows debugging"""
+    import platform
+    web_logger = get_logger("web_server")
     
     try:
-        from src.primary.notification_manager import send_notification, get_notification_config
+        from src.primary.notification_manager import send_notification, get_notification_config, apprise_import_error
+        
+        # Enhanced debugging for Windows issues
+        system_info = {
+            "platform": platform.system(),
+            "platform_release": platform.release(),
+            "python_version": platform.python_version(),
+            "apprise_available": apprise_import_error is None
+        }
+        
+        web_logger.info(f"Test notification requested on {system_info}")
+        
+        # Check for Apprise import issues first (common Windows problem)
+        if apprise_import_error:
+            error_msg = f"Apprise library not available: {apprise_import_error}"
+            if platform.system() == "Windows":
+                error_msg += " (Common on Windows - try: pip install apprise)"
+            web_logger.error(error_msg)
+            return jsonify({
+                "success": False, 
+                "error": error_msg,
+                "system_info": system_info
+            }), 500, {'Content-Type': 'application/json'}
         
         # Get the user's configured notification level
         config = get_notification_config()
@@ -673,13 +697,30 @@ def test_notification():
         )
         
         if success:
+            web_logger.info(f"Test notification sent successfully on {platform.system()}")
             return jsonify({"success": True, "message": "Test notification sent successfully!"}), 200, {'Content-Type': 'application/json'}
         else:
-            return jsonify({"success": False, "error": "Failed to send test notification. Check your Apprise URLs and settings."}), 500, {'Content-Type': 'application/json'}
+            error_msg = "Failed to send test notification. Check your Apprise URLs and settings."
+            if platform.system() == "Windows":
+                error_msg += " On Windows, ensure Apprise is properly installed and all dependencies are available."
+            web_logger.warning(f"Test notification failed: {error_msg}")
+            return jsonify({
+                "success": False, 
+                "error": error_msg,
+                "system_info": system_info
+            }), 500, {'Content-Type': 'application/json'}
             
     except Exception as e:
-        general_logger.error(f"Error sending test notification: {e}")
-        return jsonify({"success": False, "error": f"Error sending test notification: {str(e)}"}), 500, {'Content-Type': 'application/json'}
+        error_msg = f"Error sending test notification: {str(e)}"
+        web_logger.error(f"{error_msg} | System: {platform.system()}")
+        return jsonify({
+            "success": False, 
+            "error": error_msg,
+            "system_info": {
+                "platform": platform.system(),
+                "python_version": platform.python_version()
+            }
+        }), 500, {'Content-Type': 'application/json'}
 
 @app.route('/api/settings/<app_name>', methods=['GET', 'POST'])
 def handle_app_settings(app_name):

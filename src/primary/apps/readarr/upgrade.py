@@ -159,16 +159,18 @@ def process_cutoff_upgrades(
         
         # Tag authors if enabled (from books)
         if tag_processed_items:
+            from src.primary.settings_manager import get_custom_tag
+            custom_tag = get_custom_tag("readarr", "upgrade", "huntarr-upgraded")
             tagged_authors = set()  # Track which authors we've already tagged
             for book in books_to_process:
                 author_id = book.get('authorId')
                 if author_id and author_id not in tagged_authors:
                     try:
-                        readarr_api.tag_processed_author(api_url, api_key, api_timeout, author_id, "huntarr-upgraded")
-                        readarr_logger.debug(f"Tagged author {author_id} with 'huntarr-upgraded'")
+                        readarr_api.tag_processed_author(api_url, api_key, api_timeout, author_id, custom_tag)
+                        readarr_logger.debug(f"Tagged author {author_id} with '{custom_tag}'")
                         tagged_authors.add(author_id)
                     except Exception as e:
-                        readarr_logger.warning(f"Failed to tag author {author_id} with 'huntarr-upgraded': {e}")
+                        readarr_logger.warning(f"Failed to tag author {author_id} with '{custom_tag}': {e}")
             
         # Log to history system for each book
         for book in books_to_process:

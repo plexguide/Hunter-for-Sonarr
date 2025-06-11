@@ -15,6 +15,10 @@
   "monitored_only": true,
   "skip_future_episodes": true,
   "tag_processed_items": true,
-
+  "custom_tags": {
+    "missing": "huntarr-missing",
+    "upgrade": "huntarr-upgrade",
+    "shows_missing": "huntarr-shows-missing"
+  },
   "hourly_cap": 20
 }

@@ -233,11 +233,13 @@ def process_missing_movies(
             
             # Tag the movie if enabled
             if tag_processed_items:
+                from src.primary.settings_manager import get_custom_tag
+                custom_tag = get_custom_tag("radarr", "missing", "huntarr-missing")
                 try:
-                    radarr_api.tag_processed_movie(api_url, api_key, api_timeout, movie_id, "huntarr-missing")
-                    radarr_logger.debug(f"Tagged movie {movie_id} with 'huntarr-missing'")
+                    radarr_api.tag_processed_movie(api_url, api_key, api_timeout, movie_id, custom_tag)
+                    radarr_logger.debug(f"Tagged movie {movie_id} with '{custom_tag}'")
                 except Exception as e:
-                    radarr_logger.warning(f"Failed to tag movie {movie_id} with 'huntarr-missing': {e}")
+                    radarr_logger.warning(f"Failed to tag movie {movie_id} with '{custom_tag}': {e}")
             
             # Immediately add to processed IDs to prevent duplicate processing
             success = add_processed_id("radarr", instance_name, str(movie_id))

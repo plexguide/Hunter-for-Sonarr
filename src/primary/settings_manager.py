@@ -380,6 +380,29 @@ def get_ssl_verify_setting():
     """
     return get_advanced_setting("ssl_verify", True)
 
+def get_custom_tag(app_name: str, tag_type: str, default: str) -> str:
+    """
+    Get a custom tag for an app and tag type.
+    
+    Args:
+        app_name: The app name (sonarr, radarr, etc.)
+        tag_type: The tag type (missing, upgrade, shows_missing)
+        default: Default tag if custom tag not found
+        
+    Returns:
+        The custom tag string
+    """
+    settings = load_settings(app_name)
+    custom_tags = settings.get('custom_tags', {})
+    tag = custom_tags.get(tag_type, default)
+    
+    # Validate tag length (max 25 characters as per UI)
+    if len(tag) > 25:
+        settings_logger.warning(f"Custom tag '{tag}' for {app_name}.{tag_type} exceeds 25 characters, truncating")
+        tag = tag[:25]
+    
+    return tag
+
 # Example usage (for testing purposes, remove later)
 if __name__ == "__main__":
     settings_logger.info(f"Known app types: {KNOWN_APP_TYPES}")

@@ -162,16 +162,18 @@ def process_cutoff_upgrades(
             
             # Tag artists if enabled (from albums)
             if tag_processed_items:
+                from src.primary.settings_manager import get_custom_tag
+                custom_tag = get_custom_tag("lidarr", "upgrade", "huntarr-upgraded")
                 tagged_artists = set()  # Track which artists we've already tagged
                 for album in albums_to_search:
                     artist_id = album.get('artistId')
                     if artist_id and artist_id not in tagged_artists:
                         try:
-                            lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id, "huntarr-upgraded")
-                            lidarr_logger.debug(f"Tagged artist {artist_id} with 'huntarr-upgraded'")
+                            lidarr_api.tag_processed_artist(api_url, api_key, api_timeout, artist_id, custom_tag)
+                            lidarr_logger.debug(f"Tagged artist {artist_id} with '{custom_tag}'")
                             tagged_artists.add(artist_id)
                         except Exception as e:
-                            lidarr_logger.warning(f"Failed to tag artist {artist_id} with 'huntarr-upgraded': {e}")
+                            lidarr_logger.warning(f"Failed to tag artist {artist_id} with '{custom_tag}': {e}")
             
             # Log to history
             for album_id in album_ids_to_search:

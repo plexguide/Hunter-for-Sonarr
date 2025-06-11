@@ -23,5 +23,9 @@
   "hunt_upgrade_movies": 0,
   "sleep_duration": 900,
   "tag_processed_items": true,
+  "custom_tags": {
+    "missing": "huntarr-missing",
+    "upgrade": "huntarr-upgrade"
+  },
   "hourly_cap": 20
 }

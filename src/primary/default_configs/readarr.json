@@ -14,5 +14,9 @@
   "skip_future_releases": true,
 
   "hourly_cap": 20,
-  "tag_processed_items": true
+  "tag_processed_items": true,
+  "custom_tags": {
+    "missing": "huntarr-missing",
+    "upgrade": "huntarr-upgrade"
+  }
 }

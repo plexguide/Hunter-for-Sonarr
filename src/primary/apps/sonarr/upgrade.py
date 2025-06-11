@@ -219,11 +219,13 @@ def process_upgrade_seasons_mode(
                 
                 # Tag the series if enabled
                 if tag_processed_items:
+                    from src.primary.settings_manager import get_custom_tag
+                    custom_tag = get_custom_tag("sonarr", "upgrade", "huntarr-upgraded")
                     try:
-                        sonarr_api.tag_processed_series(api_url, api_key, api_timeout, series_id, "huntarr-upgraded")
-                        sonarr_logger.debug(f"Tagged series {series_id} with 'huntarr-upgraded'")
+                        sonarr_api.tag_processed_series(api_url, api_key, api_timeout, series_id, custom_tag)
+                        sonarr_logger.debug(f"Tagged series {series_id} with '{custom_tag}'")
                     except Exception as e:
-                        sonarr_logger.warning(f"Failed to tag series {series_id} with 'huntarr-upgraded': {e}")
+                        sonarr_logger.warning(f"Failed to tag series {series_id} with '{custom_tag}': {e}")
                 
                 # Log this as a season pack upgrade in the history
                 log_season_pack_upgrade(api_url, api_key, api_timeout, series_id, season_number, instance_name)
@@ -410,11 +412,13 @@ def process_upgrade_shows_mode(
                 
                 # Tag the series if enabled
                 if tag_processed_items:
+                    from src.primary.settings_manager import get_custom_tag
+                    custom_tag = get_custom_tag("sonarr", "upgrade", "huntarr-upgraded")
                     try:
-                        sonarr_api.tag_processed_series(api_url, api_key, api_timeout, series_id, "huntarr-upgraded")
-                        sonarr_logger.debug(f"Tagged series {series_id} with 'huntarr-upgraded'")
+                        sonarr_api.tag_processed_series(api_url, api_key, api_timeout, series_id, custom_tag)
+                        sonarr_logger.debug(f"Tagged series {series_id} with '{custom_tag}'")
                     except Exception as e:
-                        sonarr_logger.warning(f"Failed to tag series {series_id} with 'huntarr-upgraded': {e}")
+                        sonarr_logger.warning(f"Failed to tag series {series_id} with '{custom_tag}': {e}")
                 
                 # We'll increment stats individually for each episode instead of in batch
                 # increment_stat("sonarr", "upgraded", len(episode_ids))
