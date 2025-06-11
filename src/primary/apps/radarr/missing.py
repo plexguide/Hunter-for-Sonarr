@@ -19,6 +19,29 @@ from src.primary.settings_manager import load_settings, get_advanced_setting
 # Get logger for the app
 radarr_logger = get_logger("radarr")
 
+def parse_date(date_str):
+    """Parse date string, handling various ISO formats from Radarr API"""
+    if not date_str:
+        return None
+    
+    try:
+        # Handle milliseconds (e.g., "2024-01-01T00:00:00.000Z")
+        clean_date_str = date_str
+        if '.' in clean_date_str and 'Z' in clean_date_str:
+            clean_date_str = clean_date_str.split('.')[0] + 'Z'
+        
+        # Handle different timezone formats
+        if clean_date_str.endswith('Z'):
+            clean_date_str = clean_date_str[:-1] + '+00:00'
+        elif '+' not in clean_date_str and '-' not in clean_date_str[-6:]:
+            # No timezone info, assume UTC
+            clean_date_str += '+00:00'
+        
+        # Parse the release date
+        return datetime.datetime.fromisoformat(clean_date_str)
+    except (ValueError, TypeError):
+        return None
+
 def process_missing_movies(
     app_settings: Dict[str, Any],
     stop_check: Callable[[], bool] # Function to check if stop is requested
@@ -58,21 +81,14 @@ def process_missing_movies(
     # Use advanced settings from general.json for command operations
     command_wait_delay = get_advanced_setting("command_wait_delay", 1)
     command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
-    release_type = app_settings.get("release_type", "physical")
     
     radarr_logger.info(f"Hunt Missing Movies: {hunt_missing_movies}")
     radarr_logger.info(f"Monitored Only: {monitored_only}")
     radarr_logger.info(f"Skip Future Releases: {skip_future_releases}")
-    # Skip Movie Refresh setting has been removed
-    radarr_logger.info(f"Release Type for Future Status: {release_type}")
-    
-    release_type_field = 'physicalRelease'
-    if release_type == 'digital':
-        release_type_field = 'digitalRelease'
-    elif release_type == 'cinema':
-        release_type_field = 'inCinemas'
-        
-    radarr_logger.info(f"Using {release_type_field} date to determine future releases")
+    if app_settings.get('ignore_release_date', False):
+        radarr_logger.info(f"⚠️  Ignore Release Date: ENABLED (will process movies regardless of release date)")
+    else:
+        radarr_logger.info(f"Ignore Release Date: disabled (future releases will be skipped)")
     radarr_logger.info("=======================================")
     
     radarr_logger.info("Starting missing movies processing cycle for Radarr.")
@@ -108,115 +124,54 @@ def process_missing_movies(
     
     radarr_logger.info(f"Retrieved {len(missing_movies)} missing movies from random page selection.")
     
-    # Filter out future releases if configured
+    # Skip future releases if enabled
     if skip_future_releases:
-        now = datetime.datetime.now().replace(tzinfo=datetime.timezone.utc)
-        original_count = len(missing_movies)
+        radarr_logger.info("Filtering out future releases...")
+        now = datetime.datetime.now(datetime.timezone.utc)
         
         filtered_movies = []
         skipped_count = 0
+        no_date_count = 0
         for movie in missing_movies:
-            release_date_str = movie.get(release_type_field)
-            should_include = False
-            found_valid_date = False
+            movie_id = movie.get('id')
+            movie_title = movie.get('title', 'Unknown Title')
+            release_date_str = movie.get('releaseDate')
             
             if release_date_str:
-                try:
-                    # Improved date parsing logic to handle various ISO formats
-                    # Remove any milliseconds and normalize timezone
-                    clean_date_str = release_date_str
-                    
-                    # Handle milliseconds (e.g., "2024-01-01T00:00:00.000Z")
-                    if '.' in clean_date_str and 'Z' in clean_date_str:
-                        clean_date_str = clean_date_str.split('.')[0] + 'Z'
-                    
-                    # Handle different timezone formats
-                    if clean_date_str.endswith('Z'):
-                        clean_date_str = clean_date_str[:-1] + '+00:00'
-                    elif '+' not in clean_date_str and '-' not in clean_date_str[-6:]:
-                        # No timezone info, assume UTC
-                        clean_date_str += '+00:00'
-                    
-                    # Parse the release date
-                    release_date = datetime.datetime.fromisoformat(clean_date_str)
-                    found_valid_date = True
-                    
-                    if release_date <= now:
-                        should_include = True
-                    else:
-                        radarr_logger.debug(f"Skipping future movie ID {movie.get('id')} ('{movie.get('title')}') with {release_type} release date: {release_date_str} (parsed as: {release_date})")
-                        should_include = False
-                except ValueError as e:
-                    radarr_logger.warning(f"Could not parse {release_type} release date '{release_date_str}' for movie ID {movie.get('id')}. Error: {e}. Will check alternative dates.")
-                    found_valid_date = False
-            
-            # If the specified release type field doesn't exist or couldn't be parsed, check alternative date fields
-            if not found_valid_date:
-                alternative_dates = []
-                
-                # Define all possible release date fields in order of preference
-                all_date_fields = ['physicalRelease', 'digitalRelease', 'inCinemas', 'releaseDate']
-                
-                # Check alternative date fields (excluding the one we already tried)
-                for alt_field in all_date_fields:
-                    if alt_field != release_type_field:
-                        alt_date_str = movie.get(alt_field)
-                        if alt_date_str:
-                            try:
-                                # Use same parsing logic
-                                clean_alt_date_str = alt_date_str
-                                if '.' in clean_alt_date_str and 'Z' in clean_alt_date_str:
-                                    clean_alt_date_str = clean_alt_date_str.split('.')[0] + 'Z'
-                                if clean_alt_date_str.endswith('Z'):
-                                    clean_alt_date_str = clean_alt_date_str[:-1] + '+00:00'
-                                elif '+' not in clean_alt_date_str and '-' not in clean_alt_date_str[-6:]:
-                                    clean_alt_date_str += '+00:00'
-                                
-                                alt_release_date = datetime.datetime.fromisoformat(clean_alt_date_str)
-                                alternative_dates.append((alt_field, alt_release_date))
-                            except ValueError:
-                                # If we can't parse this alternative date, log it but continue
-                                radarr_logger.debug(f"Could not parse {alt_field} date '{alt_date_str}' for movie ID {movie.get('id')}")
-                                continue
-                
-                if alternative_dates:
-                    # If we have alternative dates, use the earliest non-future one if available
-                    # Otherwise, if ALL alternative dates are in the future, skip the movie
-                    future_dates = []
-                    past_dates = []
-                    
-                    for field_name, alt_date in alternative_dates:
-                        if alt_date <= now:
-                            past_dates.append((field_name, alt_date))
-                        else:
-                            future_dates.append((field_name, alt_date))
-                    
-                    if past_dates:
-                        # At least one release date is in the past, include the movie
-                        should_include = True
-                        earliest_past = min(past_dates, key=lambda x: x[1])
-                        radarr_logger.debug(f"Movie ID {movie.get('id')} ('{movie.get('title')}') has no {release_type_field} date, but {earliest_past[0]} date is in the past: {earliest_past[1]}, including in search")
-                    else:
-                        # All available dates are in the future, skip the movie  
-                        should_include = False
-                        earliest_future = min(future_dates, key=lambda x: x[1])
-                        radarr_logger.debug(f"Skipping future movie ID {movie.get('id')} ('{movie.get('title')}') - all available release dates are in the future (earliest: {earliest_future[0]} on {earliest_future[1]})")
+                release_date = parse_date(release_date_str)
+                if release_date:
+                    if release_date > now:
+                        # Movie has a future release date, skip it
+                        radarr_logger.debug(f"Skipping future movie ID {movie_id} ('{movie_title}') - releaseDate is in the future: {release_date}")
                         skipped_count += 1
+                        continue
+                    else:
+                        # Movie release date is in the past, include it
+                        radarr_logger.debug(f"Movie ID {movie_id} ('{movie_title}') releaseDate is in the past: {release_date}, including in search")
+                        filtered_movies.append(movie)
                 else:
-                    # No valid release dates found at all, include in search to be safe
-                    should_include = True
-                    radarr_logger.debug(f"Movie ID {movie.get('id')} ('{movie.get('title')}') has no physicalRelease, digitalRelease, inCinemas, or releaseDate fields - including in search but this may indicate missing metadata in Radarr")
-            
-            if should_include:
-                filtered_movies.append(movie)
-            elif found_valid_date:  # Only increment skipped count if we found and used the specified date field
-                skipped_count += 1
+                    # Could not parse release date, treat as no date
+                    radarr_logger.debug(f"Movie ID {movie_id} ('{movie_title}') has unparseable releaseDate '{release_date_str}' - treating as no release date")
+                    if app_settings.get('process_no_release_dates', False):
+                        radarr_logger.debug(f"Movie ID {movie_id} ('{movie_title}') has no valid release date but process_no_release_dates is enabled - including in search")
+                        filtered_movies.append(movie)
+                    else:
+                        radarr_logger.debug(f"Skipping movie ID {movie_id} ('{movie_title}') - no valid release date and process_no_release_dates is disabled")
+                        no_date_count += 1
+            else:
+                # No release date available at all
+                if app_settings.get('process_no_release_dates', False):
+                    radarr_logger.debug(f"Movie ID {movie_id} ('{movie_title}') has no releaseDate field but process_no_release_dates is enabled - including in search")
+                    filtered_movies.append(movie)
+                else:
+                    radarr_logger.debug(f"Skipping movie ID {movie_id} ('{movie_title}') - no releaseDate field and process_no_release_dates is disabled")
+                    no_date_count += 1
         
+        radarr_logger.info(f"Filtered out {skipped_count} future releases and {no_date_count} movies with no release dates")
+        radarr_logger.debug(f"After filtering: {len(filtered_movies)} movies remaining from {len(missing_movies)} original")
         missing_movies = filtered_movies
-        if skipped_count > 0:
-            radarr_logger.info(f"Skipped {skipped_count} future movie releases based on {release_type} release date.")
-        
-        radarr_logger.debug(f"After future release filtering: {len(missing_movies)} movies remaining from {original_count} original")
+    else:
+        radarr_logger.info("Skip future releases is disabled - processing all movies regardless of release date")
 
     if not missing_movies:
         radarr_logger.info("No missing movies left to process after filtering future releases.")

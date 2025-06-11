@@ -323,21 +323,20 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="radarr_skip_future_releases"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Releases:</label>
+                    <label for="radarr_skip_future_releases"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#skip-future-movies" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Releases:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="radarr_skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
-                    <p class="setting-help">Skip searching for movies with future release dates</p>
+                    <p class="setting-help">Skip searching for movies with future release dates (uses Release Date field)</p>
                 </div>
-                <div class="setting-item" id="future_release_type_container" style="${settings.skip_future_releases !== false ? '' : 'display: none;'}">
-                    <label for="radarr_release_type"><a href="https://huntarr.io/threads/radarr-release-type.24/" class="info-icon" title="Learn more about release type options" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Release Type for Future Status:</label>
-                    <select id="radarr_release_type">
-                        <option value="digital" ${settings.release_type === 'digital' ? 'selected' : ''}>Digital Release</option>
-                        <option value="physical" ${settings.release_type === 'physical' || !settings.release_type ? 'selected' : ''}>Physical Release</option>
-                        <option value="cinema" ${settings.release_type === 'cinema' ? 'selected' : ''}>Cinema Release</option>
-                    </select>
-                    <p class="setting-help">Select which release date type to use when determining if a movie is considered a future release</p>
+                <div class="setting-item" id="process_no_release_dates_container" style="${settings.skip_future_releases !== false ? '' : 'display: none;'}">
+                    <label for="radarr_process_no_release_dates"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#process-no-release-dates" class="info-icon" title="Learn more about processing movies with no release dates" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Process No Release Dates:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="radarr_process_no_release_dates" ${settings.process_no_release_dates === true ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help" style="color: #ff6b35; font-weight: bold;">⚠️ WARNING: Rare case. Process movies with missing release date information - may result in unknown/poor quality downloads</p>
                 </div>
                 <div class="setting-item">
                     <label for="radarr_tag_processed_items"><a href="https://github.com/plexguide/Huntarr.io/issues/382" class="info-icon" title="Learn more about tagging processed items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Tag Processed Items:</label>
@@ -358,14 +357,14 @@ const SettingsForms = {
         
         // Set up event listeners for the skip_future_releases checkbox
         const skipFutureCheckbox = container.querySelector('#radarr_skip_future_releases');
-        const releaseTypeContainer = container.querySelector('#future_release_type_container');
+        const noReleaseDatesContainer = container.querySelector('#process_no_release_dates_container');
         
         if (skipFutureCheckbox) {
             skipFutureCheckbox.addEventListener('change', function() {
                 if (this.checked) {
-                    releaseTypeContainer.style.display = '';
+                    noReleaseDatesContainer.style.display = '';
                 } else {
-                    releaseTypeContainer.style.display = 'none';
+                    noReleaseDatesContainer.style.display = 'none';
                 }
             });
         }
@@ -1826,9 +1825,8 @@ const SettingsForms = {
                 settings.hourly_cap = getInputValue('#radarr_hourly_cap', 20);
                 settings.monitored_only = getInputValue('#radarr_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#radarr_skip_future_releases', true);
+                settings.process_no_release_dates = getInputValue('#radarr_process_no_release_dates', false);
                 settings.tag_processed_items = getInputValue('#radarr_tag_processed_items', true);
-
-                settings.release_type = getInputValue('#radarr_release_type', 'physical');
             } 
             else if (appType === 'lidarr') {
                 settings.hunt_missing_items = getInputValue('#lidarr_hunt_missing_items', 1);
