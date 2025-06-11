@@ -56,9 +56,38 @@
                 <img src="../images/arrs/sonarr.png" alt="Sonarr Logo" style="width: 80px; height: 80px; object-fit: contain;">
             </div>
             
-            <p>Sonarr is an automated TV show downloading and management application. Huntarr integrates with your existing Sonarr instance to automatically search for missing episodes and quality upgrades that Sonarr doesn't actively hunt for.</p>
+            <div class="alert alert-info" style="margin: 20px 0; padding: 15px; background: rgba(13, 202, 240, 0.1); border-left: 4px solid #0dcaf0;">
+                <strong><i class="fas fa-info-circle" style="margin-right: 8px;"></i>What is Sonarr?</strong> 
+                Sonarr is an automated TV series downloading and management application. It monitors for new episodes, searches indexers, and automatically downloads content using your preferred download clients.
+            </div>
             
-            <h2 id="sonarr-instance-setup">Sonarr Instance Setup</h2>
+            <p>Sonarr automates the process of monitoring and downloading TV series. It integrates with popular download clients and uses indexers to search for and download episodes automatically, making it easy to build and maintain an organized TV library.</p>
+            
+            <h2 id="overview">Overview</h2>
+            
+            <h3><i class="fas fa-download" style="margin-right: 10px; color: #3498db;"></i>What Sonarr Does</h3>
+            <p>Sonarr provides automated content management for TV series by:</p>
+            <ul>
+                <li><strong>Automatic Searching:</strong> Monitors for new episodes and searches configured indexers</li>
+                <li><strong>Quality Management:</strong> Downloads content based on your quality preferences</li>
+                <li><strong>Library Organization:</strong> Automatically organizes downloaded episodes in your media library</li>
+                <li><strong>Upgrade Management:</strong> Can upgrade existing episodes to better quality when available</li>
+                <li><strong>Download Client Integration:</strong> Works with popular download clients like qBittorrent, Deluge, etc.</li>
+            </ul>
+            
+            <h3><i class="fas fa-cogs" style="margin-right: 10px; color: #e67e22;"></i>How Huntarr Enhances Sonarr</h3>
+            <p>Huntarr adds intelligent automation on top of Sonarr:</p>
+            <ul>
+                <li><strong>Smart Search Timing:</strong> Prevents overwhelming indexers with too many requests</li>
+                <li><strong>Missing Episode Detection:</strong> Identifies and prioritizes missing episodes</li>
+                <li><strong>Upgrade Intelligence:</strong> Finds better quality versions of existing episodes</li>
+                <li><strong>Rate Limiting:</strong> Respects API limits to prevent bans or throttling</li>
+                <li><strong>Multi-Instance Support:</strong> Manage multiple Sonarr instances from one interface</li>
+            </ul>
+            
+            <h2 id="connection-settings">Instance Configuration</h2>
+            
+            <p>Configure your Sonarr instances to connect Huntarr with your Sonarr installation(s).</p>
             
             <h3>Adding Your Sonarr Instance</h3>
             <p>To connect your existing Sonarr instance to Huntarr:</p>

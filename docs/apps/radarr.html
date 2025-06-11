@@ -55,9 +55,38 @@
                 <img src="../images/arrs/radarr.png" alt="Radarr Logo" style="width: 80px; height: 80px; object-fit: contain;">
             </div>
             
-            <p>Radarr is an automated movie downloading and management application. Huntarr integrates with your existing Radarr instance to automatically search for missing movies and quality upgrades that Radarr doesn't actively hunt for.</p>
+            <div class="alert alert-info" style="margin: 20px 0; padding: 15px; background: rgba(13, 202, 240, 0.1); border-left: 4px solid #0dcaf0;">
+                <strong><i class="fas fa-info-circle" style="margin-right: 8px;"></i>What is Radarr?</strong> 
+                Radarr is an automated movie downloading and management application. It monitors for new movies, searches indexers, and automatically downloads content using your preferred download clients.
+            </div>
             
-            <h2 id="instances">Radarr Instance Setup</h2>
+            <p>Radarr automates the process of monitoring and downloading movies. It integrates with popular download clients and uses indexers to search for and download movies automatically, making it easy to build and maintain an organized movie library.</p>
+            
+            <h2 id="overview">Overview</h2>
+            
+            <h3><i class="fas fa-download" style="margin-right: 10px; color: #3498db;"></i>What Radarr Does</h3>
+            <p>Radarr provides automated content management for movies by:</p>
+            <ul>
+                <li><strong>Automatic Searching:</strong> Monitors for new movies and searches configured indexers</li>
+                <li><strong>Quality Management:</strong> Downloads content based on your quality preferences</li>
+                <li><strong>Library Organization:</strong> Automatically organizes downloaded movies in your media library</li>
+                <li><strong>Upgrade Management:</strong> Can upgrade existing movies to better quality when available</li>
+                <li><strong>Download Client Integration:</strong> Works with popular download clients like qBittorrent, Deluge, etc.</li>
+            </ul>
+            
+            <h3><i class="fas fa-cogs" style="margin-right: 10px; color: #e67e22;"></i>How Huntarr Enhances Radarr</h3>
+            <p>Huntarr adds intelligent automation on top of Radarr:</p>
+            <ul>
+                <li><strong>Smart Search Timing:</strong> Prevents overwhelming indexers with too many requests</li>
+                <li><strong>Missing Movie Detection:</strong> Identifies and prioritizes missing movies</li>
+                <li><strong>Upgrade Intelligence:</strong> Finds better quality versions of existing movies</li>
+                <li><strong>Rate Limiting:</strong> Respects API limits to prevent bans or throttling</li>
+                <li><strong>Multi-Instance Support:</strong> Manage multiple Radarr instances from one interface</li>
+            </ul>
+            
+            <h2 id="instances">Instance Configuration</h2>
+            
+            <p>Configure your Radarr instances to connect Huntarr with your Radarr installation(s).</p>
             
             <h3>Adding Your Radarr Instance</h3>
             <p>To connect your existing Radarr instance to Huntarr:</p>
