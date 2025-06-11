@@ -48,22 +48,22 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="sonarr-name-${index}"><a href="/Huntarr.io/docs/#/guides/multi-instance?id=naming-instances" class="info-icon" title="Learn more about naming your Sonarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
+                            <label for="sonarr-name-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#instances" class="info-icon" title="Learn more about naming your Sonarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
                             <input type="text" id="sonarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Sonarr instance">
                             <p class="setting-help">Friendly name for this Sonarr instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="sonarr-url-${index}"><a href="https://huntarr.io/threads/sonarr-missing-search-mode.16/" class="info-icon" title="Learn more about Sonarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
+                            <label for="sonarr-url-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#instances" class="info-icon" title="Learn more about Sonarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
                             <input type="text" id="sonarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Sonarr (e.g., http://localhost:8989)">
                             <p class="setting-help">Base URL for Sonarr (e.g., http://localhost:8989)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="sonarr-key-${index}"><a href="/Huntarr.io/docs/#/installation?id=api-keys" class="info-icon" title="Learn more about finding your Sonarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
+                            <label for="sonarr-key-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#instances" class="info-icon" title="Learn more about finding your Sonarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
                             <input type="text" id="sonarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Sonarr">
                             <p class="setting-help">API key for Sonarr</p>
                         </div>
                         <div class="setting-item">
-                            <label for="sonarr-enabled-${index}"><a href="/Huntarr.io/docs/#/guides/multi-instance?id=enabling-disabling-instances" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
+                            <label for="sonarr-enabled-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#instances" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
                             <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                                 <input type="checkbox" id="sonarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -98,7 +98,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="sonarr-hunt-missing-mode"><a href="https://huntarr.io/threads/sonarr-missing-search-mode.16/" class="info-icon" title="Learn more about missing search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search Mode:</label>
+                    <label for="sonarr-hunt-missing-mode"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Learn more about missing search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search Mode:</label>
                     <select id="sonarr-hunt-missing-mode" name="hunt_missing_mode">
                         <option value="seasons_packs" ${settings.hunt_missing_mode === 'seasons_packs' || !settings.hunt_missing_mode ? 'selected' : ''}>Season Packs</option>
                         <option value="shows" ${settings.hunt_missing_mode === 'shows' ? 'selected' : ''}>Shows</option>
@@ -108,7 +108,7 @@ const SettingsForms = {
                     <p class="setting-help" style="color: #cc7a00; font-weight: bold; display: ${settings.hunt_missing_mode === 'episodes' ? 'block' : 'none'};" id="episodes-missing-warning">⚠️ Episodes mode makes excessive API calls and does not support tagging. Use only for targeting specific episodes. Season Packs mode is strongly recommended.</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr-upgrade-mode"><a href="/Huntarr.io/docs/#/configuration?id=upgrade-modes" class="info-icon" title="Learn more about upgrade modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Mode:</label>
+                    <label for="sonarr-upgrade-mode"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Learn more about upgrade modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Mode:</label>
                     <select id="sonarr-upgrade-mode" name="upgrade_mode">
                         <option value="seasons_packs" ${settings.upgrade_mode === 'seasons_packs' || !settings.upgrade_mode ? 'selected' : ''}>Season Packs</option>
                         <option value="episodes" ${settings.upgrade_mode === 'episodes' ? 'selected' : ''}>Episodes</option>
@@ -117,22 +117,22 @@ const SettingsForms = {
                     <p class="setting-help" style="color: #cc7a00; font-weight: bold; display: ${settings.upgrade_mode === 'episodes' ? 'block' : 'none'};" id="episodes-upgrade-warning">⚠️ Episodes mode makes excessive API calls and does not support tagging. Use only for targeting specific episodes. Season Packs mode is strongly recommended.</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr-hunt-missing-items"><a href="/Huntarr.io/docs/#/configuration?id=missing-items-search" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
+                    <label for="sonarr-hunt-missing-items"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
                     <input type="number" id="sonarr-hunt-missing-items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr-hunt-upgrade-items"><a href="https://huntarr.io" class="info-icon" title="Learn more about upgrade items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
+                    <label for="sonarr-hunt-upgrade-items"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Learn more about upgrade items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
                     <input type="number" id="sonarr-hunt-upgrade-items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
                     <p class="setting-help">Number of episodes to upgrade per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr_sleep_duration"><a href="/Huntarr.io/docs/#/configuration?id=sleep-duration" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
+                    <label for="sonarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
                     <input type="number" id="sonarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr_hourly_cap"><a href="#" class="info-icon" title="Maximum API requests per hour for this app" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
+                    <label for="sonarr_hourly_cap"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Maximum API requests per hour for this app (20 is safe)" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
                     <input type="number" id="sonarr_hourly_cap" name="hourly_cap" min="1" max="500" value="${settings.hourly_cap !== undefined ? settings.hourly_cap : 20}">
                     <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
                     <p class="setting-help" style="color: #cc0000; font-weight: bold;">Setting this too high will risk your accounts being banned! You have been warned!</p>
@@ -142,7 +142,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="sonarr_monitored_only"><a href="/Huntarr.io/docs/#/configuration?id=monitored-only" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Monitored Only:</label>
+                    <label for="sonarr_monitored_only"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#monitored-only" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Monitored Only:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="sonarr_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -150,7 +150,7 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr_skip_future_episodes"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping future episodes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Episodes:</label>
+                    <label for="sonarr_skip_future_episodes"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#skip-future-episodes" class="info-icon" title="Learn more about skipping future episodes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Episodes:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="sonarr_skip_future_episodes" name="skip_future_episodes" ${settings.skip_future_episodes !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -408,22 +408,22 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="lidarr-name-${index}"><a href="https://huntarr.io/threads/name-field.18/" class="info-icon" title="Learn more about naming your Lidarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
+                            <label for="lidarr-name-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#instances" class="info-icon" title="Learn more about naming your Lidarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
                             <input type="text" id="lidarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Lidarr instance">
                             <p class="setting-help">Friendly name for this Lidarr instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="lidarr-url-${index}"><a href="https://huntarr.io/threads/url.19/" class="info-icon" title="Learn more about Lidarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
-                            <input type="text" id="lidarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Lidarr (e.g., http://localhost:8686)">
-                            <p class="setting-help">Base URL for Lidarr (e.g., http://localhost:8686)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="lidarr-key-${index}"><a href="https://huntarr.io/threads/api-key.20/" class="info-icon" title="Learn more about finding your Lidarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
-                            <input type="text" id="lidarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Lidarr">
-                            <p class="setting-help">API key for Lidarr</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="lidarr-enabled-${index}"><a href="https://huntarr.io/threads/enable-toggle.21/" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
+                                            <label for="lidarr-url-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#instances" class="info-icon" title="Learn more about Lidarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
+                <input type="text" id="lidarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Lidarr (e.g., http://localhost:8686)">
+                <p class="setting-help">Base URL for Lidarr (e.g., http://localhost:8686)</p>
+                </div>
+                <div class="setting-item">
+                <label for="lidarr-key-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#instances" class="info-icon" title="Learn more about finding your Lidarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
+                <input type="text" id="lidarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Lidarr">
+                <p class="setting-help">API key for Lidarr</p>
+                </div>
+                <div class="setting-item">
+                <label for="lidarr-enabled-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#instances" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
                             <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                                 <input type="checkbox" id="lidarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -460,30 +460,30 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="lidarr_hunt_missing_mode"><a href="https://huntarr.io" class="info-icon" title="Learn more about missing search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search Mode:</label>
+                    <label for="lidarr_hunt_missing_mode"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Learn more about missing search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search Mode:</label>
                     <select id="lidarr_hunt_missing_mode" name="hunt_missing_mode">
                         <option value="album" selected>Album</option>
                     </select>
                     <p class="setting-help">Search for individual albums (Artist mode deprecated in Huntarr 7.5.0+)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="lidarr_hunt_missing_items"><a href="https://huntarr.io" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
+                    <label for="lidarr_hunt_missing_items"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
                     <input type="number" id="lidarr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of artists with missing albums to search per cycle (0 to disable)</p>
                 </div>
                 
                 <div class="setting-item">
-                    <label for="lidarr_hunt_upgrade_items"><a href="https://huntarr.io" class="info-icon" title="Learn more about upgrading items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
+                    <label for="lidarr_hunt_upgrade_items"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Learn more about upgrading items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
                     <input type="number" id="lidarr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
                     <p class="setting-help">Number of albums to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="lidarr_sleep_duration"><a href="/Huntarr.io/docs/#/configuration?id=sleep-duration" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
+                    <label for="lidarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
                     <input type="number" id="lidarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
                 <div class="setting-item">
-                    <label for="lidarr_hourly_cap"><a href="#" class="info-icon" title="Maximum API requests per hour for this app" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
+                    <label for="lidarr_hourly_cap"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Maximum API requests per hour for this app (20 is safe)" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
                     <input type="number" id="lidarr_hourly_cap" name="hourly_cap" min="1" max="500" value="${settings.hourly_cap !== undefined ? settings.hourly_cap : 20}">
                     <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
                     <p class="setting-help" style="color: #cc0000; font-weight: bold;">Setting this too high will risk your accounts being banned! You have been warned!</p>
@@ -493,7 +493,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="lidarr_monitored_only"><a href="/Huntarr.io/docs/#/configuration?id=monitored-only" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Monitored Only:</label>
+                    <label for="lidarr_monitored_only"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#monitored-only" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Monitored Only:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="lidarr_monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -501,7 +501,7 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="lidarr_skip_future_releases"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Releases:</label>
+                    <label for="lidarr_skip_future_releases"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#skip-future-releases" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Releases:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="lidarr_skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -561,22 +561,22 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="readarr-name-${index}"><a href="https://huntarr.io/threads/name-field.18/" class="info-icon" title="Learn more about naming your Readarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
-                            <input type="text" id="readarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Readarr instance">
-                            <p class="setting-help">Friendly name for this Readarr instance</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="readarr-url-${index}"><a href="https://huntarr.io/threads/url.19/" class="info-icon" title="Learn more about Readarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
-                            <input type="text" id="readarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Readarr (e.g., http://localhost:8787)">
-                            <p class="setting-help">Base URL for Readarr (e.g., http://localhost:8787)</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="readarr-key-${index}"><a href="https://huntarr.io/threads/api-key.20/" class="info-icon" title="Learn more about finding your Readarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
-                            <input type="text" id="readarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Readarr">
-                            <p class="setting-help">API key for Readarr</p>
-                        </div>
-                        <div class="setting-item">
-                            <label for="readarr-enabled-${index}"><a href="https://huntarr.io/threads/enable-toggle.21/" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
+                                            <label for="readarr-name-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#instances" class="info-icon" title="Learn more about naming your Readarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
+                <input type="text" id="readarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Readarr instance">
+                <p class="setting-help">Friendly name for this Readarr instance</p>
+                </div>
+                <div class="setting-item">
+                <label for="readarr-url-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#instances" class="info-icon" title="Learn more about Readarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
+                <input type="text" id="readarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Readarr (e.g., http://localhost:8787)">
+                <p class="setting-help">Base URL for Readarr (e.g., http://localhost:8787)</p>
+                </div>
+                <div class="setting-item">
+                <label for="readarr-key-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#instances" class="info-icon" title="Learn more about finding your Readarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
+                <input type="text" id="readarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Readarr">
+                <p class="setting-help">API key for Readarr</p>
+                </div>
+                <div class="setting-item">
+                <label for="readarr-enabled-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#instances" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
                             <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                                 <input type="checkbox" id="readarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -613,17 +613,17 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="readarr_hunt_missing_books"><a href="https://huntarr.io" class="info-icon" title="Learn more about missing books search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
+                    <label for="readarr_hunt_missing_books"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#search-settings" class="info-icon" title="Learn more about missing books search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
                     <input type="number" id="readarr_hunt_missing_books" name="hunt_missing_books" min="0" value="${settings.hunt_missing_books !== undefined ? settings.hunt_missing_books : 1}">
                     <p class="setting-help">Number of missing books to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="readarr_hunt_upgrade_books"><a href="https://huntarr.io" class="info-icon" title="Learn more about upgrading books" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
+                    <label for="readarr_hunt_upgrade_books"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#search-settings" class="info-icon" title="Learn more about upgrading books" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
                     <input type="number" id="readarr_hunt_upgrade_books" name="hunt_upgrade_books" min="0" value="${settings.hunt_upgrade_books !== undefined ? settings.hunt_upgrade_books : 0}">
                     <p class="setting-help">Number of books to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="readarr_sleep_duration"><a href="/Huntarr.io/docs/#/configuration?id=sleep-duration" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
+                    <label for="readarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
                     <input type="number" id="readarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -638,7 +638,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="readarr_monitored_only"><a href="/Huntarr.io/docs/#/configuration?id=monitored-only" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Monitored Only:</label>
+                    <label for="readarr_monitored_only"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#monitored-only" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Monitored Only:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="readarr_monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -646,7 +646,7 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="readarr_skip_future_releases"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Releases:</label>
+                    <label for="readarr_skip_future_releases"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#skip-future-releases" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Releases:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="readarr_skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -706,22 +706,22 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="whisparr-name-${index}"><a href="https://huntarr.io/threads/name-field.18/" class="info-icon" title="Learn more about naming your Whisparr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
+                            <label for="whisparr-name-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#instances" class="info-icon" title="Learn more about naming your Whisparr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
                             <input type="text" id="whisparr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Whisparr V2 instance">
                             <p class="setting-help">Friendly name for this Whisparr V2 instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="whisparr-url-${index}"><a href="https://huntarr.io/threads/url.19/" class="info-icon" title="Learn more about Whisparr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
+                            <label for="whisparr-url-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#instances" class="info-icon" title="Learn more about Whisparr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
                             <input type="text" id="whisparr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Whisparr V2 (e.g., http://localhost:6969)">
                             <p class="setting-help">Base URL for Whisparr V2 (e.g., http://localhost:6969)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="whisparr-key-${index}"><a href="https://huntarr.io/threads/api-key.20/" class="info-icon" title="Learn more about finding your Whisparr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
+                            <label for="whisparr-key-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#instances" class="info-icon" title="Learn more about finding your Whisparr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
                             <input type="text" id="whisparr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr V2">
                             <p class="setting-help">API key for Whisparr V2</p>
                         </div>
                         <div class="setting-item">
-                            <label for="whisparr-enabled-${index}"><a href="https://huntarr.io/threads/enable-toggle.21/" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
+                            <label for="whisparr-enabled-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#instances" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
                             <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                                 <input type="checkbox" id="whisparr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -756,17 +756,17 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="whisparr_hunt_missing_items"><a href="https://huntarr.io" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
+                    <label for="whisparr_hunt_missing_items"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
                     <input type="number" id="whisparr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_hunt_upgrade_items"><a href="https://huntarr.io" class="info-icon" title="Learn more about upgrading items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
+                    <label for="whisparr_hunt_upgrade_items"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Learn more about upgrading items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
                     <input type="number" id="whisparr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
                     <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_sleep_duration"><a href="/Huntarr.io/docs/#/configuration?id=sleep-duration" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
+                    <label for="whisparr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
                     <input type="number" id="whisparr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
@@ -781,7 +781,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="whisparr_monitored_only"><a href="/Huntarr.io/docs/#/configuration?id=monitored-only" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Monitored Only:</label>
+                    <label for="whisparr_monitored_only"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#monitored-only" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Monitored Only:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="whisparr_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -789,7 +789,7 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="whisparr_skip_future_releases"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Releases:</label>
+                    <label for="whisparr_skip_future_releases"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#skip-future-releases" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Releases:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="whisparr_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
