@@ -57,7 +57,7 @@
             
             <p>Radarr is an automated movie downloading and management application. Huntarr integrates with your existing Radarr instance to automatically search for missing movies and quality upgrades that Radarr doesn't actively hunt for.</p>
             
-            <h2 id="radarr-instance-setup">Radarr Instance Setup</h2>
+            <h2 id="instances">Radarr Instance Setup</h2>
             
             <h3>Adding Your Radarr Instance</h3>
             <p>To connect your existing Radarr instance to Huntarr:</p>
@@ -165,11 +165,11 @@
             <h3 id="additional-options"><i class="fas fa-cogs" style="margin-right: 10px; color: #9b59b6;"></i>Additional Options</h3>
             <p>Fine-tune Huntarr's behavior with these additional settings:</p>
             
-            <h4><i class="fas fa-eye" style="margin-right: 8px; color: #f1c40f;"></i>Monitored Only</h4>
+            <h4 id="monitored-only"><i class="fas fa-eye" style="margin-right: 8px; color: #f1c40f;"></i>Monitored Only</h4>
             <p>When enabled, Huntarr will only search for movies that are marked as "Monitored" in Radarr. This prevents searches for movies you've intentionally unmonitored.</p>
             
             <h4 id="skip-future-movies"><i class="fas fa-calendar" style="margin-right: 8px; color: #e74c3c;"></i>Skip Future Movies</h4>
-            <p>When enabled, Huntarr will skip movies with future release dates (based on the Release Date field). When disabled, Huntarr will process all movies regardless of release date.</p>
+            <p>When enabled, Huntarr will skip movies with future release dates (based on the Release Date field) for both missing movie searches and quality upgrades. When disabled, Huntarr will process all movies regardless of release date.</p>
             
             <div class="alert alert-info">
                 <strong>📋 Release Date Logic Simplified:</strong> As of Huntarr 7.6.0+, we've simplified release date filtering to only use the <strong>Release Date</strong> field from Radarr. This field is the most reliable and consistently populated date field in the Radarr API.
@@ -193,7 +193,7 @@
             </ul>
             
             <h5>Release Date Logic Flow</h5>
-            <p>The simplified logic works as follows:</p>
+            <p>The simplified logic works as follows for both missing movie searches and quality upgrades:</p>
             <ul>
                 <li><strong>Skip Future Releases = OFF:</strong> Process all movies regardless of release date (useful if you want cam rips, theater recordings, etc.)</li>
                 <li><strong>Skip Future Releases = ON:</strong> Only process movies with past release dates, with optional control over movies with missing dates</li>
@@ -223,7 +223,7 @@
             <script>mermaid.initialize({startOnLoad:true});</script>
             
             <h4 id="process-no-release-dates"><i class="fas fa-question-circle" style="margin-right: 8px; color: #ff6b35;"></i>Process No Release Dates</h4>
-            <p>In rare cases, some movies in your Radarr library may have missing or invalid release date information. By default, Huntarr will <strong>skip</strong> these movies to avoid potentially downloading unknown or poor quality content.</p>
+            <p>In rare cases, some movies in your Radarr library may have missing or invalid release date information. By default, Huntarr will <strong>skip</strong> these movies for both missing searches and quality upgrades to avoid potentially downloading unknown or poor quality content.</p>
             
             <p>When this option is enabled, Huntarr will process movies that have:</p>
             <ul>
