@@ -1,0 +1,18 @@
+{
+  "version": "v7.7.3",
+  "updated": "2024-12-25T12:00:00Z",
+  "sponsors": [
+    {
+      "login": "example-sponsor",
+      "name": "Example Sponsor",
+      "avatarUrl": "https://ui-avatars.com/api/?name=ES&background=4A90E2&color=fff&size=200",
+      "url": "https://github.com/example-sponsor"
+    }
+  ],
+  "project": {
+    "name": "Huntarr",
+    "description": "Automated media management for the masses",
+    "repository": "plexguide/Huntarr.io",
+    "website": "https://plexguide.github.io/Huntarr.io"
+  }
+} 

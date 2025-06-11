@@ -146,6 +146,38 @@ fetch('./api/endpoint');
 - Ensure documentation anchors exist before linking
 **File:** `/frontend/static/js/settings_forms.js`
 
+### 8. GitHub API Rate Limiting & Timeout Issues
+**Symptoms:** Sponsor sections showing timeouts, empty data, or rate limit errors
+**Root Cause:** Direct GitHub API calls from each installation hitting rate limits
+**Fix:** Use GitHub Actions + static manifest approach (Matthieu's solution)
+```python
+# ❌ BROKEN - Direct API calls from each installation
+response = requests.post('https://api.github.com/graphql', json={'query': query}, headers=headers)
+
+# ✅ FIXED - Fetch from static manifest updated by GitHub Actions
+response = requests.get("https://plexguide.github.io/Huntarr.io/manifest.json", timeout=10)
+manifest_data = response.json()
+sponsors = manifest_data.get('sponsors', [])
+```
+**Solution Pattern:**
+1. **GitHub Action** runs on releases + daily schedule
+2. **Fetches sponsors** using authenticated GraphQL API  
+3. **Publishes manifest.json** to GitHub Pages with sponsors + version data
+4. **Installations fetch** from static manifest (no authentication needed)
+5. **No rate limits** since only the GitHub Action hits the API
+
+**Benefits:**
+- Each installation doesn't need GitHub API access
+- No rate limiting issues for users
+- Faster response times (static file vs API call)
+- Automatic updates via GitHub Actions
+- Fallback to cached data if manifest unavailable
+
+**Files:** 
+- `.github/workflows/update-manifest.yml` - GitHub Action workflow
+- `src/primary/web_server.py` - Backend API endpoint
+- GitHub Pages serves `manifest.json` automatically
+
 ## 🔧 DEVELOPMENT WORKFLOW
 
 ### Before Any Changes

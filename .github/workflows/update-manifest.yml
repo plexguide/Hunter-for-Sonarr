@@ -1,0 +1,95 @@
+name: Update Manifest
+
+on:
+  release:
+    types: [published]
+  schedule:
+    # Run every 24 hours at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggers
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get latest release
+        id: latest_release
+        run: |
+          LATEST=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r '.tag_name // "v0.0.0"')
+          echo "version=$LATEST" >> $GITHUB_OUTPUT
+          echo "Latest version: $LATEST"
+
+      - name: Fetch sponsors data
+        id: sponsors
+        run: |
+          # Fetch sponsors using GitHub's GraphQL API
+          SPONSORS_JSON=$(curl -s -X POST \
+            -H "Authorization: bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "query": "query { organization(login: \"plexguide\") { sponsorshipsAsMaintainer(first: 50, orderBy: {field: CREATED_AT, direction: DESC}) { totalCount edges { node { sponsorEntity { ... on User { login avatarUrl name url } ... on Organization { login avatarUrl name url } } } } } } }"
+            }' \
+            https://api.github.com/graphql | jq -c '.data.organization.sponsorshipsAsMaintainer.edges // []')
+          
+          # Process sponsors into simplified format
+          PROCESSED_SPONSORS=$(echo "$SPONSORS_JSON" | jq -c '[.[] | .node.sponsorEntity | select(. != null) | {
+            login: .login,
+            name: (.name // .login),
+            avatarUrl: .avatarUrl,
+            url: .url
+          }]')
+          
+          echo "sponsors=$PROCESSED_SPONSORS" >> $GITHUB_OUTPUT
+          echo "Found $(echo "$PROCESSED_SPONSORS" | jq length) sponsors"
+
+      - name: Create manifest.json
+        run: |
+          cat > manifest.json << EOF
+          {
+            "version": "${{ steps.latest_release.outputs.version }}",
+            "updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "sponsors": ${{ steps.sponsors.outputs.sponsors }},
+            "project": {
+              "name": "Huntarr",
+              "description": "Automated media management for the masses",
+              "repository": "${{ github.repository }}",
+              "website": "https://plexguide.github.io/Huntarr.io"
+            }
+          }
+          EOF
+
+      - name: Validate JSON
+        run: |
+          if ! jq . manifest.json > /dev/null; then
+            echo "ERROR: Generated manifest.json is not valid JSON"
+            cat manifest.json
+            exit 1
+          fi
+          echo "✅ manifest.json is valid"
+          echo "Sponsor count: $(jq '.sponsors | length' manifest.json)"
+          echo "Version: $(jq -r '.version' manifest.json)"
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          if ! git diff --exit-code manifest.json; then
+            git add manifest.json
+            git commit -m "Update manifest with latest sponsors and version"
+            git push
+            echo "✅ Manifest updated and pushed"
+          else
+            echo "ℹ️ No changes to manifest.json"
+          fi 

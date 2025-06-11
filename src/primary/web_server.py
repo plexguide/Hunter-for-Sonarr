@@ -1153,10 +1153,10 @@ def api_health_check():
 
 @app.route('/api/github_sponsors', methods=['GET'])
 def get_github_sponsors():
-    # API access configuration
-    api_config = "1a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Nk9" 
-    auth_token = api_config[2:-3]  # Format for API usage
-    
+    """
+    Fetch sponsors from GitHub Pages manifest instead of hitting API directly.
+    This prevents rate limiting and timeout issues by using Matthieu's approach.
+    """
     # Setup cache directories - use cross-platform path configuration
     from src.primary.utils.config_paths import get_path
     CACHE_DIR = get_path('settings', 'sponsor')
@@ -1170,108 +1170,83 @@ def get_github_sponsors():
         current_app.logger.error(f"Failed to create cache directory {CACHE_DIR}: {e}")
         # Continue anyway - we'll handle file write errors later
     
-    # Check if valid cache exists
+    # Check if valid cache exists (shorter cache time since manifest updates frequently)
     try:
         if os.path.exists(SPONSORS_CACHE_FILE):
             with open(SPONSORS_CACHE_FILE, 'r') as f:
                 cache_data = json.load(f)
                 
-            # Check if the cache is still valid based on its expiration
+            # Check if the cache is still valid (shorter cache time for manifest)
             cached_time = datetime.datetime.fromisoformat(cache_data.get('timestamp', ''))
-            expiry_days = cache_data.get('expiry_days', 1)  # Default to 1 day if not set
+            cache_hours = cache_data.get('cache_hours', 2)  # Default to 2 hours if not set
             
-            if datetime.datetime.now() - cached_time < datetime.timedelta(days=expiry_days):
-                current_app.logger.info(f"Returning cached GitHub sponsors data (expires in {expiry_days} days from {cached_time})")
+            if datetime.datetime.now() - cached_time < datetime.timedelta(hours=cache_hours):
+                current_app.logger.info(f"Returning cached sponsors data (expires in {cache_hours} hours from {cached_time})")
                 return jsonify(cache_data.get('sponsors', []))
             else:
-                current_app.logger.info(f"Cache expired after {expiry_days} days. Fetching fresh GitHub sponsors data.")
+                current_app.logger.info(f"Cache expired after {cache_hours} hours. Fetching fresh sponsors data from manifest.")
     except Exception as e:
         current_app.logger.error(f"Error reading sponsors cache: {e}")
-        # Return empty list if cache reading fails to prevent 500 errors
-        return jsonify([])
+        # Continue to fetch fresh data
 
-    # Set up GraphQL query and headers
-    headers = {
-        'Authorization': f'bearer {auth_token}',
-        'Content-Type': 'application/json',
-    }
-
-    query = """
-    query {
-      organization(login: "plexguide") {
-        sponsorshipsAsMaintainer(first: 20, orderBy: {field: CREATED_AT, direction: DESC}) {
-          totalCount
-          edges {
-            node {
-              sponsorEntity {
-                ... on User {
-                  login
-                  avatarUrl
-                  name
-                  url
-                }
-                ... on Organization {
-                  login
-                  avatarUrl
-                  name
-                  url
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    """
-
+    # Fetch from GitHub Pages manifest (no authentication needed)
+    manifest_url = "https://plexguide.github.io/Huntarr.io/manifest.json"
+    
     try:
-        # Fetch data from GitHub GraphQL API
-        response = requests.post('https://api.github.com/graphql', json={'query': query}, headers=headers, timeout=10)
+        # Fetch the manifest with a reasonable timeout
+        response = requests.get(manifest_url, timeout=10)
         response.raise_for_status()
-        data = response.json()
-
-        if 'errors' in data:
-            current_app.logger.error(f"GitHub API errors: {data['errors']}")
-            return jsonify({'error': 'Failed to fetch sponsors from GitHub API', 'details': data['errors']}), 500
-
-        # Process the response data
-        sponsors_data = data.get('data', {}).get('organization', {}).get('sponsorshipsAsMaintainer', {}).get('edges', [])
+        manifest_data = response.json()
         
-        sponsors_list = []
-        for edge in sponsors_data:
-            sponsor_node = edge.get('node', {}).get('sponsorEntity', {})
-            if sponsor_node:
-                sponsors_list.append({
-                    'login': sponsor_node.get('login'),
-                    'avatarUrl': sponsor_node.get('avatarUrl'),  # Changed to match what frontend expects
-                    'name': sponsor_node.get('name') or sponsor_node.get('login'),
-                    'url': sponsor_node.get('url')
+        # Extract sponsors from manifest
+        sponsors_list = manifest_data.get('sponsors', [])
+        
+        # Ensure sponsors have the expected format
+        formatted_sponsors = []
+        for sponsor in sponsors_list:
+            if isinstance(sponsor, dict):
+                formatted_sponsors.append({
+                    'login': sponsor.get('login', ''),
+                    'avatarUrl': sponsor.get('avatarUrl', ''),
+                    'name': sponsor.get('name', sponsor.get('login', 'Unknown')),
+                    'url': sponsor.get('url', '#')
                 })
         
-        # Generate a random expiration period between 4-7 days
+        # Generate cache time between 1-3 hours
         import random  # Import here to ensure it's available
-        expiry_days = random.randint(4, 7)
+        cache_hours = random.randint(1, 3)
         
         # Save to cache with timestamp and expiration
         try:
             with open(SPONSORS_CACHE_FILE, 'w') as f:
                 cache_data = {
                     'timestamp': datetime.datetime.now().isoformat(),
-                    'expiry_days': expiry_days,
-                    'sponsors': sponsors_list
+                    'cache_hours': cache_hours,
+                    'sponsors': formatted_sponsors,
+                    'manifest_version': manifest_data.get('version', 'unknown'),
+                    'manifest_updated': manifest_data.get('updated', 'unknown')
                 }
                 json.dump(cache_data, f)
                 
-            current_app.logger.info(f"Cached fresh GitHub sponsors data with {expiry_days} day expiration.")
+            current_app.logger.info(f"Cached fresh sponsors data from manifest with {cache_hours} hour expiration. Found {len(formatted_sponsors)} sponsors.")
         except Exception as cache_error:
             current_app.logger.warning(f"Failed to cache sponsors data: {cache_error}")
             # Continue without caching
         
-        return jsonify(sponsors_list)
+        return jsonify(formatted_sponsors)
 
     except requests.exceptions.RequestException as e:
-        current_app.logger.error(f"Error fetching GitHub sponsors: {e}")
-        # Return empty list instead of 500 error to prevent UI issues
+        current_app.logger.error(f"Error fetching sponsors manifest: {e}")
+        # Try to return cached data even if expired as fallback
+        try:
+            if os.path.exists(SPONSORS_CACHE_FILE):
+                with open(SPONSORS_CACHE_FILE, 'r') as f:
+                    cache_data = json.load(f)
+                current_app.logger.info("Returning expired cache data as fallback")
+                return jsonify(cache_data.get('sponsors', []))
+        except Exception:
+            pass
+        # Return empty list if all else fails
         return jsonify([])
     except Exception as e:
         current_app.logger.error(f"An unexpected error occurred while fetching sponsors: {e}")
