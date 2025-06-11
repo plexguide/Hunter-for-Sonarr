@@ -855,22 +855,22 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                            <label for="eros-name-${index}"><a href="https://huntarr.io/threads/name-field.18/" class="info-icon" title="Learn more about naming your Whisparr V3 instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
-                            <input type="text" id="eros-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Whisparr V3 instance">
-                            <p class="setting-help">Friendly name for this Whisparr V3 instance</p>
+                                            <label for="eros-name-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#instance-name" class="info-icon" title="Learn more about naming your Whisparr V3 (Eros) instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
+                <input type="text" id="eros-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Whisparr V3 (Eros) instance">
+                <p class="setting-help">Friendly name for this Whisparr V3 (Eros) instance</p>
                         </div>
                         <div class="setting-item">
-                            <label for="eros-url-${index}"><a href="https://huntarr.io/threads/url.19/" class="info-icon" title="Learn more about Whisparr V3 URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
-                            <input type="text" id="eros-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Whisparr V3 (e.g., http://localhost:6969)">
-                            <p class="setting-help">Base URL for Whisparr V3 (e.g., http://localhost:6969)</p>
+                                            <label for="eros-url-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#instance-url" class="info-icon" title="Learn more about Whisparr V3 (Eros) URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
+                <input type="text" id="eros-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Whisparr V3 (Eros) (e.g., http://localhost:6969)">
+                <p class="setting-help">Base URL for Whisparr V3 (Eros) (e.g., http://localhost:6969)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="eros-key-${index}"><a href="https://huntarr.io/threads/api-key.20/" class="info-icon" title="Learn more about finding your Whisparr V3 API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
-                            <input type="text" id="eros-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr V3">
-                            <p class="setting-help">API key for Whisparr V3</p>
+                                            <label for="eros-key-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#instance-api-key" class="info-icon" title="Learn more about finding your Whisparr V3 (Eros) API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
+                <input type="text" id="eros-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Whisparr V3 (Eros)">
+                <p class="setting-help">API key for Whisparr V3 (Eros)</p>
                         </div>
                         <div class="setting-item">
-                            <label for="eros-enabled-${index}"><a href="https://huntarr.io/threads/enable-toggle.21/" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
+                            <label for="eros-enabled-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#instance-enabled" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
                             <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                                 <input type="checkbox" id="eros-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -905,7 +905,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="eros_search_mode"><a href="https://huntarr.io" class="info-icon" title="Learn more about search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Search Mode:</label>
+                    <label for="eros_search_mode"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#search-mode" class="info-icon" title="Learn more about search modes" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Search Mode:</label>
                     <select id="eros_search_mode" name="search_mode">
                         <option value="movie" ${settings.search_mode === 'movie' || !settings.search_mode ? 'selected' : ''}>Movie</option>
                         <option value="scene" ${settings.search_mode === 'scene' ? 'selected' : ''}>Scene</option>
@@ -913,22 +913,22 @@ const SettingsForms = {
                     <p class="setting-help">How to search for missing and upgradable Whisparr V3 content (Movie-based or Scene-based)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="eros_hunt_missing_items"><a href="https://huntarr.io" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
+                    <label for="eros_hunt_missing_items"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#missing-search" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
                     <input type="number" id="eros_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
                     <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="eros_hunt_upgrade_items"><a href="https://huntarr.io" class="info-icon" title="Learn more about upgrading items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
+                    <label for="eros_hunt_upgrade_items"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#upgrade-search" class="info-icon" title="Learn more about upgrading items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
                     <input type="number" id="eros_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
                     <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
                 </div>
                 <div class="setting-item">
-                    <label for="eros_sleep_duration"><a href="/Huntarr.io/docs/#/configuration?id=sleep-duration" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
+                    <label for="eros_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#sleep-duration" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
                     <input type="number" id="eros_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
                 <div class="setting-item">
-                    <label for="eros_hourly_cap"><a href="#" class="info-icon" title="Maximum API requests per hour for this app" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
+                    <label for="eros_hourly_cap"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#api-cap" class="info-icon" title="Maximum API requests per hour for this app (20 is safe)" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
                     <input type="number" id="eros_hourly_cap" name="hourly_cap" min="1" max="500" value="${settings.hourly_cap !== undefined ? settings.hourly_cap : 20}">
                     <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
                     <p class="setting-help" style="color: #cc0000; font-weight: bold;">Setting this too high will risk your accounts being banned! You have been warned!</p>
@@ -938,7 +938,7 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Additional Options</h3>
                 <div class="setting-item">
-                    <label for="eros_monitored_only"><a href="/Huntarr.io/docs/#/configuration?id=monitored-only" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Monitored Only:</label>
+                    <label for="eros_monitored_only"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#monitored-only" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Monitored Only:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="eros_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
@@ -946,7 +946,7 @@ const SettingsForms = {
                     <p class="setting-help">Only search for monitored items</p>
                 </div>
                 <div class="setting-item">
-                    <label for="eros_skip_future_releases"><a href="https://huntarr.io" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Releases:</label>
+                    <label for="eros_skip_future_releases"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#skip-future-releases" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Releases:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="eros_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
