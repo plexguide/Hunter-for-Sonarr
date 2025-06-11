@@ -223,7 +223,7 @@ const appsModule = {
         appPanel.innerHTML = '<div class="loading-panel"><i class="fas fa-spinner fa-spin"></i> Loading settings...</div>';
         
         // Fetch settings for this app
-        HuntarrUtils.fetchWithTimeout(`/api/settings/${app}`)
+        HuntarrUtils.fetchWithTimeout(`./api/settings/${app}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -646,7 +646,7 @@ const appsModule = {
             console.log('Apprise URLs being sent:', settings.apprise_urls);
         }
         
-        HuntarrUtils.fetchWithTimeout(`/api/settings/${appType}`, {
+        HuntarrUtils.fetchWithTimeout(`./api/settings/${appType}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

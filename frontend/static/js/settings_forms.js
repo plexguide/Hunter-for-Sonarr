@@ -2346,7 +2346,7 @@ const SettingsForms = {
                 button.disabled = true;
                 
                 // Make the API request
-                HuntarrUtils.fetchWithTimeout(`/api/${appType}/test-connection`, {
+                HuntarrUtils.fetchWithTimeout(`./api/${appType}/test-connection`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -2583,7 +2583,7 @@ const SettingsForms = {
                         newTestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
                         newTestBtn.disabled = true;
                         
-                        HuntarrUtils.fetchWithTimeout(`/api/${appType}/test-connection`, {
+                        HuntarrUtils.fetchWithTimeout(`./api/${appType}/test-connection`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ api_url: url, api_key: apiKey })
@@ -2694,7 +2694,7 @@ const SettingsForms = {
         }
         
         // Make the API request
-        HuntarrUtils.fetchWithTimeout(`/api/${app}/test-connection`, {
+        HuntarrUtils.fetchWithTimeout(`./api/${app}/test-connection`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

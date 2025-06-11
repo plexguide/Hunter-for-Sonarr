@@ -63,7 +63,7 @@ function setupWhisparrForm() {
         }
         
         // Direct connection test - let the backend handle version checking
-        HuntarrUtils.fetchWithTimeout('/api/whisparr/test-connection', {
+        HuntarrUtils.fetchWithTimeout('./api/whisparr/test-connection', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -144,7 +144,7 @@ function setupWhisparrForm() {
 
         const wasSettingsChanged = typeof huntarrUI !== 'undefined' ? huntarrUI.settingsChanged : false;
         
-        HuntarrUtils.fetchWithTimeout('/api/whisparr/get-versions')
+        HuntarrUtils.fetchWithTimeout('./api/whisparr/get-versions')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to fetch Whisparr version');

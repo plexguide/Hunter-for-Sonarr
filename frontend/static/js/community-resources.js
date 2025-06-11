@@ -27,7 +27,7 @@ function initCommunityResourcesVisibility() {
     }
     
     // Fetch general settings to determine visibility
-    HuntarrUtils.fetchWithTimeout('/api/settings/general')
+    HuntarrUtils.fetchWithTimeout('./api/settings/general')
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);

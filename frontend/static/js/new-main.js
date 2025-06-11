@@ -995,7 +995,7 @@ let huntarrUI = {
         this.settingsChanged = false;
         
         // Get all settings to populate forms
-        HuntarrUtils.fetchWithTimeout('/api/settings')
+        HuntarrUtils.fetchWithTimeout('./api/settings')
             .then(response => response.json())
             .then(data => {
                 console.log('Loaded settings:', data);
@@ -1457,7 +1457,7 @@ let huntarrUI = {
                 statusElement.innerHTML = '<span style="color: #fbbf24;">Sending test notification...</span>';
                 
                 // Now test with the saved settings
-                return HuntarrUtils.fetchWithTimeout('/api/test-notification', {
+                return HuntarrUtils.fetchWithTimeout('./api/test-notification', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1527,7 +1527,7 @@ let huntarrUI = {
             }
             
             // Save the settings
-            HuntarrUtils.fetchWithTimeout('/api/settings/general', {
+            HuntarrUtils.fetchWithTimeout('./api/settings/general', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1673,7 +1673,7 @@ let huntarrUI = {
         url = this.cleanUrlString(url);
         
         // Make the API request to test the connection
-        HuntarrUtils.fetchWithTimeout(`/api/${appName}/test-connection`, {
+        HuntarrUtils.fetchWithTimeout(`./api/${appName}/test-connection`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1768,7 +1768,7 @@ let huntarrUI = {
     },
     
     checkAppConnection: function(app) {
-        HuntarrUtils.fetchWithTimeout(`/api/status/${app}`)
+        HuntarrUtils.fetchWithTimeout(`./api/status/${app}`)
             .then(response => response.json())
             .then(data => {
                 // Pass the whole data object for all apps
@@ -1983,7 +1983,7 @@ let huntarrUI = {
     
     // User actions
     startHunt: function() {
-        HuntarrUtils.fetchWithTimeout('/api/hunt/start', { method: 'POST' })
+        HuntarrUtils.fetchWithTimeout('./api/hunt/start', { method: 'POST' })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -1999,7 +1999,7 @@ let huntarrUI = {
     },
     
     stopHunt: function() {
-        HuntarrUtils.fetchWithTimeout('/api/hunt/stop', { method: 'POST' })
+        HuntarrUtils.fetchWithTimeout('./api/hunt/stop', { method: 'POST' })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -2019,7 +2019,7 @@ let huntarrUI = {
         const usernameElement = document.getElementById('username');
         if (!usernameElement) return;
         
-        HuntarrUtils.fetchWithTimeout('/api/user/info')
+        HuntarrUtils.fetchWithTimeout('./api/user/info')
             .then(response => response.json())
             .then(data => {
                 if (data.username) {
@@ -2040,7 +2040,7 @@ let huntarrUI = {
     // Check if local access bypass is enabled and update UI accordingly
     checkLocalAccessBypassStatus: function() {
         console.log("Checking local access bypass status...");
-        HuntarrUtils.fetchWithTimeout('/api/get_local_access_bypass_status') // Corrected URL
+        HuntarrUtils.fetchWithTimeout('./api/get_local_access_bypass_status') // Corrected URL
             .then(response => {
                 if (!response.ok) {
                     // Log error if response is not OK (e.g., 404, 500)
@@ -2125,7 +2125,7 @@ let huntarrUI = {
     logout: function(e) { // Added logout function
         e.preventDefault(); // Prevent default link behavior
         console.log('[huntarrUI] Logging out...');
-        HuntarrUtils.fetchWithTimeout('/logout', { // Use the correct endpoint defined in Flask
+        HuntarrUtils.fetchWithTimeout('./logout', { // Use the correct endpoint defined in Flask
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -2163,7 +2163,7 @@ let huntarrUI = {
             statsContainer.classList.add('stats-loading');
         }
         
-        HuntarrUtils.fetchWithTimeout('/api/stats')
+        HuntarrUtils.fetchWithTimeout('./api/stats')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -2364,7 +2364,7 @@ let huntarrUI = {
         try {
             const requestBody = appType ? { app_type: appType } : {};
             
-            HuntarrUtils.fetchWithTimeout('/api/stats/reset_public', {
+            HuntarrUtils.fetchWithTimeout('./api/stats/reset_public', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -2428,7 +2428,7 @@ let huntarrUI = {
 
     // Load current version from version.txt
     loadCurrentVersion: function() {
-        HuntarrUtils.fetchWithTimeout('/version.txt')
+        HuntarrUtils.fetchWithTimeout('./version.txt')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to load version.txt');
@@ -2669,7 +2669,7 @@ let huntarrUI = {
         }
         
         // Always fetch fresh data from the server
-        HuntarrUtils.fetchWithTimeout('/api/stateful/info', { 
+        HuntarrUtils.fetchWithTimeout('./api/stateful/info', { 
             cache: 'no-cache',
             headers: {
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -2881,7 +2881,7 @@ let huntarrUI = {
         // Add debug logging
         console.log("Sending reset request to /api/stateful/reset");
         
-        HuntarrUtils.fetchWithTimeout('/api/stateful/reset', {
+        HuntarrUtils.fetchWithTimeout('./api/stateful/reset', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -2998,7 +2998,7 @@ let huntarrUI = {
         console.log(`[huntarrUI] Directly updating stateful expiration to ${hours} hours`);
         
         // Make a direct API call to update the stateful expiration
-        HuntarrUtils.fetchWithTimeout('/api/stateful/update-expiration', {
+        HuntarrUtils.fetchWithTimeout('./api/stateful/update-expiration', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -3109,7 +3109,7 @@ let huntarrUI = {
     
     // Check if Low Usage Mode is enabled in settings and apply it
     checkLowUsageMode: function() {
-        return HuntarrUtils.fetchWithTimeout('/api/settings/general', {
+        return HuntarrUtils.fetchWithTimeout('./api/settings/general', {
             method: 'GET'
         })
         .then(response => response.json())

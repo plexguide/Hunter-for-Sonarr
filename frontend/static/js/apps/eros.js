@@ -63,7 +63,7 @@ function setupErosForm() {
         }
         
         // Call API to test connection
-        HuntarrUtils.fetchWithTimeout('/api/eros/test-connection', {
+        HuntarrUtils.fetchWithTimeout('./api/eros/test-connection', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -148,7 +148,7 @@ function getErosVersion() {
     }
     
     // Endpoint to get version info - using the test endpoint since it returns version
-    HuntarrUtils.fetchWithTimeout('/api/eros/test-connection', {
+    HuntarrUtils.fetchWithTimeout('./api/eros/test-connection', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -178,7 +178,7 @@ function getErosVersion() {
  */
 function refreshErosStatusAndVersion() {
     // Try to get current connection status from the server
-    HuntarrUtils.fetchWithTimeout('/api/eros/status')
+    HuntarrUtils.fetchWithTimeout('./api/eros/status')
         .then(response => response.json())
         .then(data => {
             const panel = document.getElementById('erosSettings');

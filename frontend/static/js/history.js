@@ -204,7 +204,7 @@ const historyModule = {
     clearHistory: function() {
         this.setLoading(true);
         
-        HuntarrUtils.fetchWithTimeout(`/api/history/${this.currentApp}`, {
+        HuntarrUtils.fetchWithTimeout(`./api/history/${this.currentApp}`, {
             method: 'DELETE',
         })
             .then(response => {
