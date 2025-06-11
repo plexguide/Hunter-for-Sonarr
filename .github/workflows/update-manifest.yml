@@ -33,21 +33,27 @@ jobs:
       - name: Fetch sponsors data
         id: sponsors
         run: |
-          # Fetch sponsors using GitHub's GraphQL API
+          # Fetch sponsors using GitHub's GraphQL API with tier information
           SPONSORS_JSON=$(curl -s -X POST \
             -H "Authorization: bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{
-              "query": "query { organization(login: \"plexguide\") { sponsorshipsAsMaintainer(first: 50, orderBy: {field: CREATED_AT, direction: DESC}) { totalCount edges { node { sponsorEntity { ... on User { login avatarUrl name url } ... on Organization { login avatarUrl name url } } } } } } }"
+              "query": "query { organization(login: \"plexguide\") { sponsorshipsAsMaintainer(first: 50, orderBy: {field: CREATED_AT, direction: DESC}) { totalCount edges { node { tier { monthlyPriceInDollars name } createdAt sponsorEntity { ... on User { login avatarUrl name url } ... on Organization { login avatarUrl name url } } } } } } }"
             }' \
             https://api.github.com/graphql | jq -c '.data.organization.sponsorshipsAsMaintainer.edges // []')
           
-          # Process sponsors into simplified format
-          PROCESSED_SPONSORS=$(echo "$SPONSORS_JSON" | jq -c '[.[] | .node.sponsorEntity | select(. != null) | {
-            login: .login,
-            name: (.name // .login),
-            avatarUrl: .avatarUrl,
-            url: .url
+          # Process sponsors with tier information and categorization
+          PROCESSED_SPONSORS=$(echo "$SPONSORS_JSON" | jq -c '[.[] | .node | select(.sponsorEntity != null) | {
+            login: .sponsorEntity.login,
+            name: (.sponsorEntity.name // .sponsorEntity.login),
+            avatarUrl: .sponsorEntity.avatarUrl,
+            url: .sponsorEntity.url,
+            tier: (.tier.name // "Supporter"),
+            monthlyAmount: (.tier.monthlyPriceInDollars // 0),
+            createdAt: .createdAt,
+            category: (if (.tier.monthlyPriceInDollars // 0) >= 25 then "featured" 
+                      elif (.tier.monthlyPriceInDollars // 0) >= 10 then "active"
+                      else "past" end)
           }]')
           
           echo "sponsors=$PROCESSED_SPONSORS" >> $GITHUB_OUTPUT

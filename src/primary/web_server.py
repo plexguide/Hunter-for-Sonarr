@@ -1201,7 +1201,7 @@ def get_github_sponsors():
         # Extract sponsors from manifest
         sponsors_list = manifest_data.get('sponsors', [])
         
-        # Ensure sponsors have the expected format
+        # Ensure sponsors have the expected format with category information
         formatted_sponsors = []
         for sponsor in sponsors_list:
             if isinstance(sponsor, dict):
@@ -1209,7 +1209,10 @@ def get_github_sponsors():
                     'login': sponsor.get('login', ''),
                     'avatarUrl': sponsor.get('avatarUrl', ''),
                     'name': sponsor.get('name', sponsor.get('login', 'Unknown')),
-                    'url': sponsor.get('url', '#')
+                    'url': sponsor.get('url', '#'),
+                    'category': sponsor.get('category', 'past'),
+                    'tier': sponsor.get('tier', 'Supporter'),
+                    'monthlyAmount': sponsor.get('monthlyAmount', 0)
                 })
         
         # Generate cache time between 1-3 hours

@@ -1916,6 +1916,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 100);
     const sponsorContainer = document.getElementById('rotating-sponsor-content');
     let sponsors = [];
+    let weightedSponsorPool = [];
     let currentSponsorIndex = 0;
     let intervalId = null;
 
@@ -1953,21 +1954,52 @@ document.addEventListener('DOMContentLoaded', function() {
     // Make the container visible immediately
     document.getElementById('sponsor-widget-container').style.visibility = 'visible';
     
-    // Function to get a random sponsor different from the current one
-    function getRandomSponsor() {
-        if (sponsors.length === 0) return null;
+    // Function to create weighted sponsor pool based on category
+    function createWeightedPool(sponsors) {
+        const pool = [];
         
-        // If only one sponsor, just return it
+        sponsors.forEach(sponsor => {
+            let weight;
+            switch(sponsor.category) {
+                case 'featured': weight = 1.5; break; // 50% more selections
+                case 'past': weight = 0.5; break;     // 50% fewer selections  
+                default: weight = 1.0; break;         // Normal selections for active/others
+            }
+            
+            // Add sponsor to pool multiple times based on weight
+            const entries = Math.round(weight * 10); // Multiply by 10 for better granularity
+            for (let i = 0; i < entries; i++) {
+                pool.push(sponsor);
+            }
+        });
+        
+        return shuffleArray(pool);
+    }
+    
+    // Function to get a weighted random sponsor (avoiding immediate repeats)
+    function getNextSponsor() {
+        if (weightedSponsorPool.length === 0) return null;
+        
+        // If only one unique sponsor, just return it
         if (sponsors.length === 1) return sponsors[0];
         
-        // Generate a random index different from the current one
-        let newIndex;
-        do {
-            newIndex = Math.floor(Math.random() * sponsors.length);
-        } while (newIndex === currentSponsorIndex);
+        let attempts = 0;
+        let selectedSponsor;
         
-        currentSponsorIndex = newIndex;
-        return sponsors[currentSponsorIndex];
+        // Try to avoid showing the same sponsor twice in a row
+        do {
+            const randomIndex = Math.floor(Math.random() * weightedSponsorPool.length);
+            selectedSponsor = weightedSponsorPool[randomIndex];
+            attempts++;
+        } while (attempts < 10 && selectedSponsor && selectedSponsor.login === 
+                (sponsors[currentSponsorIndex] && sponsors[currentSponsorIndex].login));
+        
+        // Update current sponsor index for next comparison
+        if (selectedSponsor) {
+            currentSponsorIndex = sponsors.findIndex(s => s.login === selectedSponsor.login);
+        }
+        
+        return selectedSponsor;
     }
     
     // Display the sponsor information in the UI
@@ -2021,10 +2053,12 @@ document.addEventListener('DOMContentLoaded', function() {
         descContainer.style.opacity = '1';
     }
     
-    // Function to rotate to a new random sponsor
+    // Function to rotate to the next weighted random sponsor
     function rotateSponsor() {
-        const sponsor = getRandomSponsor();
-        displaySponsor(sponsor);
+        const sponsor = getNextSponsor();
+        if (sponsor) {
+            displaySponsor(sponsor);
+        }
     }
 
     // Create a placeholder sponsor while loading
@@ -2074,25 +2108,20 @@ document.addEventListener('DOMContentLoaded', function() {
             sponsors = await response.json();
             
             if (sponsors && sponsors.length > 0) {
-                // Limit to 10 sponsors if there are more
-                if (sponsors.length > 10) {
-                    sponsors = sponsors.slice(0, 10);
-                }
+                // Create weighted pool where featured sponsors appear more often
+                weightedSponsorPool = createWeightedPool(sponsors);
                 
-                // Shuffle sponsors for randomness
-                sponsors = shuffleArray([...sponsors]);
-                
-                // Choose a random sponsor for initial display
-                currentSponsorIndex = Math.floor(Math.random() * sponsors.length);
-                
-                // Show almost immediately with minimal delay
+                // Show first weighted random sponsor almost immediately
                 setTimeout(() => {
-                    displaySponsor(sponsors[currentSponsorIndex]);
+                    const firstSponsor = getNextSponsor();
+                    if (firstSponsor) {
+                        displaySponsor(firstSponsor);
+                        
+                        // Set up regular rotation every 17 seconds
+                        if (intervalId) clearInterval(intervalId);
+                        intervalId = setInterval(rotateSponsor, 17000);
+                    }
                 }, 100); // Very short delay to avoid visual glitches
-                
-                // Set up rotation every 15 seconds
-                if (intervalId) clearInterval(intervalId);
-                intervalId = setInterval(rotateSponsor, 15000);
             } else {
                 // If no sponsors, show a fallback message
                 sponsorContainer.textContent = 'Support us on GitHub!';
