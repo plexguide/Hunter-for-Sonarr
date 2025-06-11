@@ -336,7 +336,7 @@ const SettingsForms = {
                         <input type="checkbox" id="radarr_process_no_release_dates" ${settings.process_no_release_dates === true ? 'checked' : ''}>
                         <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                     </label>
-                    <p class="setting-help" style="color: #ff6b35; font-weight: bold;">⚠️ WARNING: Rare case. Process movies with missing release date information - may result in unknown/poor quality downloads</p>
+                                            <p class="setting-help">Rare case. Process movies with missing release date information - may result in unknown/poor quality downloads</p>
                 </div>
                 <div class="setting-item">
                     <label for="radarr_tag_processed_items"><a href="https://github.com/plexguide/Huntarr.io/issues/382" class="info-icon" title="Learn more about tagging processed items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Tag Processed Items:</label>
