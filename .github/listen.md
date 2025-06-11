@@ -166,9 +166,34 @@ fetch('./api/endpoint');
 - [ ] Check browser console for errors
 - [ ] Get user approval before committing
 
+### Proactive Violation Scanning
+**Run these before every release to catch violations early:**
+```bash
+# 1. Absolute URL violations (most critical for subpath deployment)
+echo "=== SCANNING FOR ABSOLUTE URL VIOLATIONS ==="
+grep -r "fetch('/api/" frontend/ --include="*.js" | wc -l | xargs echo "fetch() absolute URLs:"
+grep -r "window.location.href.*= '/" frontend/ --include="*.js" --include="*.html" | wc -l | xargs echo "redirect absolute URLs:"
+
+# 2. Documentation link violations  
+echo "=== SCANNING FOR DOCUMENTATION LINK VIOLATIONS ==="
+grep -r "href.*plexguide.github.io" frontend/ --include="*.js" | grep -v "plexguide.github.io/Huntarr.io" | wc -l | xargs echo "wrong domain links:"
+
+# 3. Hard-coded path violations
+echo "=== SCANNING FOR HARD-CODED PATH VIOLATIONS ==="
+grep -r "/config" src/ --include="*.py" | grep -v "_detect_environment\|_get.*path" | wc -l | xargs echo "hard-coded /config paths:"
+grep -r "/app" src/ --include="*.py" | grep -v "_detect_environment\|_get.*path" | wc -l | xargs echo "hard-coded /app paths:"
+
+# 4. Frontend-docs alignment check
+echo "=== CHECKING FRONTEND-DOCS ALIGNMENT ==="
+echo "Frontend anchor references:"
+grep -r "href.*plexguide\.github\.io.*#" frontend/static/js/ | grep -o "#[^\"]*" | sort | uniq | wc -l
+echo "Documentation anchors available:"
+grep -r 'id="[^"]*"' docs/apps/ | grep -o 'id="[^"]*"' | sort | uniq | wc -l
+```
+
 ### Path Hunting Commands
 ```bash
-# Search for hard-coded paths
+# Search for hard-coded paths (legacy)
 grep -r "/config" src/ --include="*.py"
 grep -r "/app" src/ --include="*.py"
 grep -r "href=\"/" frontend/
@@ -195,6 +220,35 @@ grep -r "window.location.href = '/" frontend/
 
 ## 🎯 DEBUGGING QUICK REFERENCE
 
+### Systematic Issue Discovery
+**When things don't work, don't guess - scan systematically:**
+```bash
+# 1. Check for violation patterns first
+./violation_scan.sh  # From proactive practices above
+
+# 2. Specific issue hunting
+grep -r "EXACT_ERROR_TEXT" frontend/ src/ --include="*.js" --include="*.py"
+grep -r "functionName\|variableName" frontend/ --include="*.js"
+```
+
+### Subpath Deployment Issues
+**Symptoms:** Works on localhost, fails on domain.com/huntarr/
+**Root Cause:** Absolute URLs that don't work in subdirectories
+**Debug Process:**
+1. Check browser network tab for 404s on absolute URLs
+2. Search for absolute patterns: `grep -r "fetch('/api" frontend/`
+3. Check redirects: `grep -r "window.location.href.*= '/" frontend/`
+4. Verify all URLs are relative: `./api/` not `/api/`
+
+### Frontend-Documentation Link Issues  
+**Symptoms:** Info icons (i) lead to 404 or wrong pages
+**Root Cause:** Mismatched frontend links vs documentation anchors
+**Debug Process:**
+1. Extract frontend anchor references: `grep -r "href.*#" frontend/static/js/ | grep -o "#[^\"]*"`
+2. Extract doc anchors: `grep -r 'id="[^"]*"' docs/ | grep -o 'id="[^"]*"'`
+3. Compare lists to find mismatches
+4. Add missing anchors or fix links
+
 ### Log Issues
 1. Check if logs exist: `docker exec huntarr cat /config/logs/[app].log`
 2. Test backend streaming: `curl -N -s "http://localhost:9705/logs?app=[app]"`
@@ -206,12 +260,14 @@ grep -r "window.location.href = '/" frontend/
 2. Verify paths exist in target environment
 3. Test with both Docker and bare metal
 4. Check file permissions
+5. **NEW:** Scan for hard-coded paths: `grep -r "/config\|/app" src/ | grep -v "_detect_environment"`
 
 ### JavaScript Issues
 1. Check browser console for errors
 2. Search for undefined variables: `grep -r "variableName" frontend/`
 3. Verify HTML structure matches selectors
 4. Compare with working functions
+5. **NEW:** Check for absolute URL patterns causing 404s in subpaths
 
 ### CSS Issues
 1. Check browser console for errors
@@ -225,8 +281,80 @@ grep -r "window.location.href = '/" frontend/
 2. Verify `getFormSettings()` method
 3. Test save/load cycle
 4. Check API endpoints
+5. **NEW:** Verify info icon links point to existing documentation anchors
+
+### Documentation Issues
+**Symptoms:** Broken links, 404s, outdated information
+**Debug Process:**
+1. Test all links manually or with link checker
+2. Verify features mentioned actually exist in codebase
+3. Check frontend alignment with documentation
+4. Audit FAQ against real support requests
 
 ## 📊 RECENT IMPROVEMENTS
+
+### Systematic Code Violation Fixes (2024-12)
+**Issue:** 71 systematic code violations discovered through comprehensive codebase analysis
+**Root Cause:** Lack of proactive violation scanning and systematic fixing approach
+**Solution:** Implemented systematic approach to finding and fixing violations
+
+**Fixed Violations:**
+1. **51 absolute fetch URLs** - All `/api/` calls converted to `./api/` for subpath compatibility
+2. **15 outdated documentation links** - Fixed old domain references in settings_forms.js
+3. **5 window.location.href absolute URLs** - Converted `/` redirects to `./` 
+4. **Missing documentation anchors** - Added proper IDs to all referenced doc sections
+
+**Key Files Modified:**
+- `/frontend/static/js/settings_forms.js` - Documentation links and form generation
+- `/frontend/static/js/new-main.js` - URL handling and redirects
+- `/frontend/static/js/apps.js` - API calls and fetch operations
+- All documentation files - Added missing anchor IDs
+
+**Prevention Strategy:** Use systematic grep searches to catch violations early:
+```bash
+# Catch absolute URLs before they become problems
+grep -r "fetch('/api/" frontend/ --include="*.js"
+grep -r "window.location.href.*= '/" frontend/ --include="*.js" --include="*.html"
+grep -r "href.*plexguide.github.io" frontend/ --include="*.js" | grep -v "plexguide.github.io/Huntarr.io"
+```
+
+### Documentation Reality Check & User Experience (2024-12)
+**Issue:** Documentation promised features that didn't exist (standalone logs/history pages)
+**Root Cause:** Feature documentation grew organically without reality checks
+**Solution:** Systematic audit of promised vs actual features
+
+**Changes:**
+- Removed broken links to non-existent logs.html and history.html
+- Updated features page to reflect actual functionality (Swaparr, Search Automation)
+- Completely rewrote FAQ with real-world Docker problems and practical solutions
+- Added prominent community help section on homepage with proper user flow
+
+**Lessons Learned:**
+- **Document what exists, not what's planned** - Only link to documentation that actually exists
+- **FAQ should solve real problems** - Base content on actual support requests, not theoretical issues
+- **User journey matters** - Help → Explanation → Setup → Community is better than promotional content
+
+### Frontend-Documentation Alignment System (2024-12)
+**Issue:** Frontend info icons linked to anchors that didn't exist in documentation
+**Root Cause:** No systematic checking of frontend links against actual documentation
+**Solution:** Implemented verification system for frontend→docs alignment
+
+**Process:**
+1. Extract all documentation links from frontend: `grep -r "plexguide.github.io.*#" frontend/`
+2. Extract all anchor IDs from docs: `grep -r 'id="[^"]*"' docs/`
+3. Cross-reference and fix mismatches
+4. Add missing anchor IDs where content exists but ID missing
+
+**Prevention:** Before any documentation changes, verify link alignment:
+```bash
+# Extract frontend links
+grep -r "href.*plexguide\.github\.io.*#" frontend/static/js/ | grep -o "#[^\"]*" | sort | uniq
+
+# Extract doc anchors  
+grep -r 'id="[^"]*"' docs/apps/ | grep -o 'id="[^"]*"' | sort | uniq
+
+# Compare results to catch mismatches
+```
 
 ### Radarr Release Date Consistency (2024-12)
 **Issue:** Missing movie searches respected `skip_future_releases` setting, but upgrade searches ignored it
@@ -251,6 +379,62 @@ grep -r "window.location.href = '/" frontend/
 8. **❌ Adding responsive CSS to component templates (use external CSS files)**
 9. **❌ Not using debug borders to test CSS loading**
 10. **❌ Inconsistent behavior between missing/upgrade logic** - Always check both implement same filtering
+11. **❌ Reactive violation fixing** - Don't wait for problems to appear, scan proactively
+12. **❌ Documentation that promises non-existent features** - Only document what actually exists
+13. **❌ Frontend links without verifying documentation anchors exist** - Always cross-check
+14. **❌ Organic feature growth without reality checks** - Audit promised vs actual features regularly
+15. **❌ Theoretical FAQ content** - Base FAQ on real user problems and support requests
+
+## 🚨 PROACTIVE DEVELOPMENT PRACTICES
+
+### Pre-Commit Violation Scanning
+**ALWAYS run before any commit to catch violations early:**
+```bash
+# Create violation_scan.sh for easy reuse
+echo "=== HUNTARR VIOLATION SCAN ==="
+echo "1. Absolute URL violations (breaks subpath deployment):"
+echo "   fetch() absolute URLs: $(grep -r "fetch('/api/" frontend/ --include="*.js" | wc -l)"
+echo "   redirect absolute URLs: $(grep -r "window.location.href.*= '/" frontend/ --include="*.js" --include="*.html" | wc -l)"
+echo ""
+echo "2. Documentation violations:"
+echo "   Wrong domain links: $(grep -r "href.*plexguide.github.io" frontend/ --include="*.js" | grep -v "plexguide.github.io/Huntarr.io" | wc -l)"
+echo ""
+echo "3. Hard-coded path violations:"
+echo "   /config paths: $(grep -r "/config" src/ --include="*.py" | grep -v "_detect_environment\|_get.*path" | wc -l)"
+echo "   /app paths: $(grep -r "/app" src/ --include="*.py" | grep -v "_detect_environment\|_get.*path" | wc -l)"
+echo ""
+echo "4. Frontend-docs alignment:"
+echo "   Frontend anchors: $(grep -r "href.*plexguide\.github\.io.*#" frontend/static/js/ 2>/dev/null | grep -o "#[^\"]*" | sort | uniq | wc -l)"
+echo "   Doc anchors: $(grep -r 'id="[^"]*"' docs/apps/ 2>/dev/null | grep -o 'id="[^"]*"' | sort | uniq | wc -l)"
+echo "=== SCAN COMPLETE ==="
+```
+
+### Documentation Reality Audit Process
+**Before any documentation changes:**
+1. **Verify features exist**: Don't document planned features, only existing ones
+2. **Check all links work**: Test every link in documentation
+3. **Verify frontend alignment**: Ensure info icons point to existing anchors
+4. **FAQ reality check**: Base content on actual support requests, not theoretical issues
+
+**Commands to audit documentation:**
+```bash
+# 1. Find all links in documentation
+grep -r "href=" docs/ | grep -v "^#" | cut -d'"' -f2 | sort | uniq
+
+# 2. Find all frontend documentation links
+grep -r "plexguide.github.io" frontend/static/js/ | grep -o "https://[^\"]*"
+
+# 3. Check anchor mismatches
+diff <(grep -r "href.*#" frontend/static/js/ | grep -o "#[^\"]*" | sort | uniq) \
+     <(grep -r 'id="[^"]*"' docs/ | grep -o 'id="[^"]*"' | sed 's/id="//' | sed 's/"$//' | sort | uniq)
+```
+
+### User Experience Validation
+**Before major UI changes:**
+1. **Test user journey**: Help → Explanation → Setup → Community
+2. **Verify community links work**: Discord, GitHub Issues, Reddit
+3. **Check mobile responsiveness**: Test all breakpoints
+4. **Validate against real user problems**: Base features on actual use cases
 
 ## 🚀 ENVIRONMENT DETECTION PATTERN
 
