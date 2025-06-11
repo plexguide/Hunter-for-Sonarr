@@ -175,6 +175,8 @@
                 <strong>📋 Release Date Logic Simplified:</strong> As of Huntarr 7.6.0+, we've simplified release date filtering to only use the <strong>Release Date</strong> field from Radarr. This field is the most reliable and consistently populated date field in the Radarr API.
             </div>
             
+
+            
             <h5>Why We Simplified Release Date Detection</h5>
             <p>Previous versions of Huntarr used complex fallback logic that checked multiple date fields (Physical Release, Digital Release, In Cinemas) with confusing priority rules. This approach had several problems:</p>
             <ul>
@@ -198,6 +200,8 @@
                 <li><strong>Skip Future Releases = OFF:</strong> Process all movies regardless of release date (useful if you want cam rips, theater recordings, etc.)</li>
                 <li><strong>Skip Future Releases = ON:</strong> Only process movies with past release dates, with optional control over movies with missing dates</li>
             </ul>
+            
+
             
             <div class="mermaid">
                 graph TD
@@ -366,10 +370,12 @@
             <p>If Huntarr isn't finding the right quality:</p>
             <ul>
                 <li>Verify your quality profiles are properly configured in Radarr</li>
-                <li>Check that your indexers support the quality levels you're seeking</li>
-                <li>Review cutoff settings to ensure upgrades are allowed</li>
-                <li>Consider adjusting your upgrade search frequency</li>
+                <li>Check that your cutoff settings in Radarr match your expectations</li>
+                <li>Ensure your indexers support the quality levels you want</li>
             </ul>
+            
+
+
             
             <div class="section-nav">
                 <a href="sonarr.html">← Sonarr Documentation</a>

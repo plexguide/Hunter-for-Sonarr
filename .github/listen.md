@@ -123,6 +123,29 @@ fetch('./api/endpoint');
 **Debugging Technique:** Use colored debug borders to confirm CSS is loading
 **Files:** `/frontend/static/css/responsive-fix.css`, `/frontend/static/css/new-style.css`
 
+### 7. Info Icon Documentation Link Issues
+**Symptoms:** Info icons (i) linking to wrong domains, localhost, or broken forum links
+**Root Cause:** Hard-coded old links instead of GitHub documentation links
+**Fix:** Use proper GitHub documentation pattern with specific anchors
+```javascript
+// ❌ BROKEN - Old forum or localhost links
+<label><a href="https://huntarr.io/threads/name-field.18/" class="info-icon">
+<label><a href="/Huntarr.io/docs/#/configuration" class="info-icon">
+<label><a href="#" class="info-icon">
+
+// ✅ FIXED - GitHub documentation with anchors
+<label><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#instances" class="info-icon">
+<label><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#skip-future-movies" class="info-icon">
+<label><a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#enable-swaparr" class="info-icon">
+```
+**Pattern:** `https://plexguide.github.io/Huntarr.io/apps/[app-name].html#[anchor]`
+**Requirements:**
+- Always use `https://plexguide.github.io/Huntarr.io/` domain
+- Include `target="_blank" rel="noopener"` attributes
+- Use specific anchors that match documentation headers
+- Ensure documentation anchors exist before linking
+**File:** `/frontend/static/js/settings_forms.js`
+
 ## 🔧 DEVELOPMENT WORKFLOW
 
 ### Before Any Changes
@@ -203,6 +226,19 @@ grep -r "window.location.href = '/" frontend/
 3. Test save/load cycle
 4. Check API endpoints
 
+## 📊 RECENT IMPROVEMENTS
+
+### Radarr Release Date Consistency (2024-12)
+**Issue:** Missing movie searches respected `skip_future_releases` setting, but upgrade searches ignored it
+**Solution:** Made upgrade behavior consistent with missing movie logic
+**Changes:**
+- Updated `src/primary/apps/radarr/upgrade.py` to check release dates
+- Both missing and upgrade searches now respect `skip_future_releases` and `process_no_release_dates`
+- Documentation updated to clarify behavior affects both search types
+- Frontend info icons fixed to use GitHub documentation links
+
+**User Benefit:** Consistent behavior - no more unexpected future movie upgrades
+
 ## ⚠️ ANTI-PATTERNS TO AVOID
 
 1. **❌ Hard-coded absolute paths:** `/config/file.json`
@@ -214,6 +250,7 @@ grep -r "window.location.href = '/" frontend/
 7. **❌ Testing only in Docker (must test bare metal)**
 8. **❌ Adding responsive CSS to component templates (use external CSS files)**
 9. **❌ Not using debug borders to test CSS loading**
+10. **❌ Inconsistent behavior between missing/upgrade logic** - Always check both implement same filtering
 
 ## 🚀 ENVIRONMENT DETECTION PATTERN
 
