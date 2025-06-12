@@ -293,7 +293,6 @@ KNOWN_LOG_FILES = {
     "whisparr": CLEAN_LOG_FILES.get("whisparr"),
     "eros": CLEAN_LOG_FILES.get("eros"),  # Added Eros to known log files
     "swaparr": CLEAN_LOG_FILES.get("swaparr"),  # Added Swaparr to known log files
-    "hunting": CLEAN_LOG_FILES.get("hunting"),  # Added Hunt Manager to known log files - fixed key
     "system": CLEAN_LOG_FILES.get("system"), # Map 'system' to the clean huntarr log
 }
 # Filter out None values if an app log file doesn't exist

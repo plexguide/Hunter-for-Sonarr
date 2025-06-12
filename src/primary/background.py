@@ -23,7 +23,6 @@ __version__ = "1.0.0" # Consider updating this based on changes
 # Set up logging first
 from src.primary.utils.logger import setup_main_logger, get_logger # Import get_logger
 logger = setup_main_logger()
-hunting_logger = get_logger("hunting")  # Add hunting logger for Hunt Manager logs
 
 # Import necessary modules
 from src.primary import config, settings_manager
@@ -902,17 +901,6 @@ def start_huntarr():
     except Exception as e:
         logger.error(f"Failed to start schedule action engine: {e}")
         
-    # Start the discovery tracker for hunt management
-    try:
-        from src.primary.discovery_tracker import run_discovery_tracker_background
-        run_discovery_tracker_background()
-        hunting_logger.info("Hunt Manager (discovery tracker) started successfully")
-    except Exception as e:
-        hunting_logger.error(f"Failed to start Hunt Manager (discovery tracker): {e}")
-        
-    # Instance list generator has been removed
-    logger.debug("Instance list generator has been removed and is no longer needed")
-
     # Log initial configuration for all known apps
     for app_name in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
         try:

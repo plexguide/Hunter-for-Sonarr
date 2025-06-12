@@ -26,7 +26,6 @@ CLEAN_LOG_FILES = {
     "whisparr": LOG_DIR / "clean_whisparr.log",
     "eros": LOG_DIR / "clean_eros.log",
     "swaparr": LOG_DIR / "clean_swaparr.log",
-    "hunting": LOG_DIR / "clean_hunting.log"
 }
 
 def _get_user_timezone():
@@ -107,7 +106,6 @@ class CleanLogFormatter(logging.Formatter):
             r'^\[whisparr\]\s*',
             r'^\[eros\]\s*',
             r'^\[swaparr\]\s*',
-            r'^\[hunting\]\s*',
         ]
         
         for pattern in prefixes_to_remove:
@@ -150,7 +148,6 @@ class CleanLogFormatter(logging.Formatter):
             'whisparr': 'whisparr',
             'eros': 'eros',
             'swaparr': 'swaparr',
-            'hunting': 'hunting',
         }
         
         return app_types.get(logger_name, 'system')
