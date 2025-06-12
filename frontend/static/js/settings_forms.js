@@ -1946,6 +1946,7 @@ const SettingsForms = {
             settings.timezone = getInputValue('#timezone', 'UTC');
             settings.check_for_updates = getInputValue('#check_for_updates', true);
             settings.display_community_resources = getInputValue('#display_community_resources', true);
+            settings.display_huntarr_support = getInputValue('#display_huntarr_support', true);
             settings.low_usage_mode = getInputValue('#low_usage_mode', false);
             settings.stateful_management_hours = getInputValue('#stateful_management_hours', 168);
             
@@ -2261,6 +2262,14 @@ const SettingsForms = {
                     <p class="setting-help" style="margin-left: -3ch !important;">Show or hide the Resources section on the home page</p>
                 </div>
                 <div class="setting-item">
+                    <label for="display_huntarr_support"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#display-huntarr-support" class="info-icon" title="Learn more about Huntarr support display options" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Display Huntarr Support:</label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="display_huntarr_support" ${settings.display_huntarr_support !== false ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help" style="margin-left: -3ch !important;">Display support section to help Huntarr development through GitHub stars and donations</p>
+                </div>
+                <div class="setting-item">
                     <label for="low_usage_mode"><a href="https://plexguide.github.io/Huntarr.io/settings/settings.html#low-usage-mode" class="info-icon" title="Learn more about Low Usage Mode" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Low Usage Mode:</label>
                     <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                         <input type="checkbox" id="low_usage_mode" ${settings.low_usage_mode === true ? 'checked' : ''}>
@@ -2561,6 +2570,99 @@ const SettingsForms = {
             // Add change event listener
             enableNotificationsCheckbox.addEventListener('change', function() {
                 toggleNotificationSettings(this.checked);
+            });
+        }
+
+        // Add event listener for Display Huntarr Support toggle
+        const displayHuntarrSupportToggle = container.querySelector('#display_huntarr_support');
+        if (displayHuntarrSupportToggle) {
+            displayHuntarrSupportToggle.addEventListener('change', function() {
+                if (!this.checked) {
+                    // Show popup when turning off
+                    const modal = document.createElement('div');
+                    modal.className = 'modal-overlay';
+                    modal.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.7);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 10000;
+                    `;
+                    
+                    const modalContent = document.createElement('div');
+                    modalContent.style.cssText = `
+                        background: #1f2937;
+                        border-radius: 12px;
+                        padding: 30px;
+                        max-width: 500px;
+                        margin: 20px;
+                        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                    `;
+                    
+                    modalContent.innerHTML = `
+                        <div style="text-align: center;">
+                            <div style="font-size: 48px; margin-bottom: 20px;">⭐</div>
+                                                         <h3 style="color: #f3f4f6; margin-bottom: 20px; font-size: 24px;">Support Huntarr Development</h3>
+                             <p style="color: #d1d5db; line-height: 1.6; margin-bottom: 25px;">
+                                 Huntarr is completely free and open-source with hundreds of hours spent by myself with the support of many others!
+                             </p>
+                             <p style="color: #d1d5db; line-height: 1.6; margin-bottom: 25px;">
+                                 If you enjoy using Huntarr, starring the project on GitHub greatly increases the visibility/advertisement and helps other users discover this tool. It's difficult to spread the word of this tool and means a great deal to me!
+                             </p>
+                             <p style="color: #60a5fa; line-height: 1.6; margin-bottom: 25px; font-weight: 500;">
+                                 If you starred the project, thank you so much! If not, please <a href="https://github.com/plexguide/huntarr" target="_blank" style="color: #60a5fa; text-decoration: underline;">click here</a> and click the ⭐ to help out!
+                             </p>
+                             <p style="color: #9ca3af; line-height: 1.6; margin-bottom: 30px; font-style: italic; font-size: 14px;">
+                                 Thank You ~ Admin9705 (and to those helping support my Daughter's 529)
+                             </p>
+                            <button id="supportModalOk" style="
+                                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                                color: white;
+                                border: none;
+                                padding: 12px 30px;
+                                border-radius: 8px;
+                                font-size: 16px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(59, 130, 246, 0.4)'"
+                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.3)'">
+                                OK
+                            </button>
+                        </div>
+                    `;
+                    
+                    modal.appendChild(modalContent);
+                    document.body.appendChild(modal);
+                    
+                    // Handle OK button click
+                    document.getElementById('supportModalOk').addEventListener('click', function() {
+                        document.body.removeChild(modal);
+                    });
+                    
+                    // Handle click outside modal
+                    modal.addEventListener('click', function(e) {
+                        if (e.target === modal) {
+                            document.body.removeChild(modal);
+                        }
+                    });
+                    
+                    // Handle ESC key
+                    const handleEscape = function(e) {
+                        if (e.key === 'Escape') {
+                            document.body.removeChild(modal);
+                            document.removeEventListener('keydown', handleEscape);
+                        }
+                    };
+                    document.addEventListener('keydown', handleEscape);
+                }
             });
         }
         

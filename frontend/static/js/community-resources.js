@@ -19,11 +19,17 @@ document.addEventListener('DOMContentLoaded', function() {
  * based on the display_community_resources setting in general.json
  */
 function initCommunityResourcesVisibility() {
-    // First check if the community hub card exists
+    // Check if the community hub card exists
     const communityHubCard = document.querySelector('.community-hub-card');
     if (!communityHubCard) {
         console.log('[Community] Community hub card not found in DOM');
         return;
+    }
+    
+    // Check if the Huntarr support section exists
+    const huntarrSupportSection = document.querySelector('#huntarr-support-section');
+    if (!huntarrSupportSection) {
+        console.log('[Community] Huntarr support section not found in DOM');
     }
     
     // Fetch general settings to determine visibility
@@ -37,7 +43,7 @@ function initCommunityResourcesVisibility() {
         .then(data => {
             console.log('[Community] Loaded general settings:', data);
             
-            // Check if the setting exists and is false
+            // Handle Community Resources visibility
             if (data.display_community_resources === false) {
                 // Hide the community hub card
                 console.log('[Community] Hiding community resources section');
@@ -47,10 +53,26 @@ function initCommunityResourcesVisibility() {
                 console.log('[Community] Showing community resources section');
                 communityHubCard.style.display = '';
             }
+            
+            // Handle Huntarr Support visibility (defaults to true)
+            if (huntarrSupportSection) {
+                if (data.display_huntarr_support === false) {
+                    // Hide the Huntarr support section
+                    console.log('[Community] Hiding Huntarr support section');
+                    huntarrSupportSection.style.display = 'none';
+                } else {
+                    // Show the Huntarr support section (default)
+                    console.log('[Community] Showing Huntarr support section');
+                    huntarrSupportSection.style.display = '';
+                }
+            }
         })
         .catch(error => {
             console.error('[Community] Error loading general settings:', error);
             // Default to showing if there's an error
             communityHubCard.style.display = '';
+            if (huntarrSupportSection) {
+                huntarrSupportSection.style.display = '';
+            }
         });
 } 
