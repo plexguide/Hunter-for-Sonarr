@@ -35,6 +35,10 @@ const SettingsForms = {
 
         // Generate form elements for each instance
         settings.instances.forEach((instance, index) => {
+            // Set default values if not present
+            const huntMissingItems = instance.hunt_missing_items !== undefined ? instance.hunt_missing_items : 1;
+            const huntUpgradeItems = instance.hunt_upgrade_items !== undefined ? instance.hunt_upgrade_items : 0;
+            
             instancesHtml += `
                 <div class="instance-item" data-instance-id="${index}">
                     <div class="instance-header">
@@ -48,27 +52,37 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                                            <label for="sonarr-name-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#connection-settings" class="info-icon" title="Learn more about naming your Sonarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
-                <input type="text" id="sonarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Sonarr instance">
-                <p class="setting-help">Friendly name for this Sonarr instance</p>
-                </div>
-                <div class="setting-item">
-                <label for="sonarr-url-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#connection-settings" class="info-icon" title="Learn more about Sonarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
-                <input type="text" id="sonarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Sonarr (e.g., http://localhost:8989)">
-                <p class="setting-help">Base URL for Sonarr (e.g., http://localhost:8989)</p>
-                </div>
-                <div class="setting-item">
-                <label for="sonarr-key-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#connection-settings" class="info-icon" title="Learn more about finding your Sonarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
-                <input type="text" id="sonarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Sonarr">
-                <p class="setting-help">API key for Sonarr</p>
-                </div>
-                <div class="setting-item">
-                <label for="sonarr-enabled-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#connection-settings" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
+                            <label for="sonarr-enabled-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#connection-settings" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
                             <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                                 <input type="checkbox" id="sonarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                             </label>
                             <p class="setting-help">Enable or disable this Sonarr instance for processing</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="sonarr-name-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#connection-settings" class="info-icon" title="Learn more about naming your Sonarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
+                            <input type="text" id="sonarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Sonarr instance">
+                            <p class="setting-help">Friendly name for this Sonarr instance</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="sonarr-url-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#connection-settings" class="info-icon" title="Learn more about Sonarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
+                            <input type="text" id="sonarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Sonarr (e.g., http://localhost:8989)">
+                            <p class="setting-help">Base URL for Sonarr (e.g., http://localhost:8989)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="sonarr-key-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#connection-settings" class="info-icon" title="Learn more about finding your Sonarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
+                            <input type="text" id="sonarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Sonarr">
+                            <p class="setting-help">API key for Sonarr</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="sonarr-hunt-missing-items-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Learn more about missing items search for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
+                            <input type="number" id="sonarr-hunt-missing-items-${index}" name="hunt_missing_items" min="0" value="${huntMissingItems}">
+                            <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="sonarr-hunt-upgrade-items-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Learn more about upgrade items search for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
+                            <input type="number" id="sonarr-hunt-upgrade-items-${index}" name="hunt_upgrade_items" min="0" value="${huntUpgradeItems}">
+                            <p class="setting-help">Number of episodes to upgrade per cycle (0 to disable)</p>
                         </div>
                         <div class="setting-item">
                             <label for="sonarr-swaparr-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html" class="info-icon" title="Enable Swaparr stalled download monitoring for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Swaparr:</label>
@@ -117,18 +131,8 @@ const SettingsForms = {
                     <p class="setting-help" style="color: #cc7a00; font-weight: bold; display: ${settings.upgrade_mode === 'episodes' ? 'block' : 'none'};" id="episodes-upgrade-warning">⚠️ Episodes mode makes excessive API calls and does not support tagging. Use only for targeting specific episodes. Season Packs mode is strongly recommended.</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr-hunt-missing-items"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
-                    <input type="number" id="sonarr-hunt-missing-items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
-                    <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="sonarr-hunt-upgrade-items"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Learn more about upgrade items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
-                    <input type="number" id="sonarr-hunt-upgrade-items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
-                    <p class="setting-help">Number of episodes to upgrade per cycle (0 to disable)</p>
-                </div>
-                <div class="setting-item">
                     <label for="sonarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                    <input type="number" id="sonarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                                        <input type="number" id="sonarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
                 <div class="setting-item">
@@ -276,6 +280,14 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
+                            <label for="radarr-enabled-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#instances" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
+                            <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                                <input type="checkbox" id="radarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
+                                <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                            </label>
+                            <p class="setting-help">Enable or disable this Radarr instance for processing</p>
+                        </div>
+                        <div class="setting-item">
                             <label for="radarr-name-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#instances" class="info-icon" title="Learn more about naming your Radarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
                             <input type="text" id="radarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Radarr instance">
                             <p class="setting-help">Friendly name for this Radarr instance</p>
@@ -291,12 +303,14 @@ const SettingsForms = {
                             <p class="setting-help">API key for Radarr</p>
                         </div>
                         <div class="setting-item">
-                            <label for="radarr-enabled-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#instances" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
-                            <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
-                                <input type="checkbox" id="radarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
-                                <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
-                            </label>
-                            <p class="setting-help">Enable or disable this Radarr instance for processing</p>
+                            <label for="radarr-hunt-missing-movies-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#search-settings" class="info-icon" title="Learn more about missing movies search for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
+                            <input type="number" id="radarr-hunt-missing-movies-${index}" name="hunt_missing_movies" min="0" value="${instance.hunt_missing_movies !== undefined ? instance.hunt_missing_movies : 1}">
+                            <p class="setting-help">Number of missing movies to search per cycle (0 to disable)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="radarr-hunt-upgrade-movies-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#search-settings" class="info-icon" title="Learn more about upgrading movies for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
+                            <input type="number" id="radarr-hunt-upgrade-movies-${index}" name="hunt_upgrade_movies" min="0" value="${instance.hunt_upgrade_movies !== undefined ? instance.hunt_upgrade_movies : 0}">
+                            <p class="setting-help">Number of movies to search for quality upgrades per cycle (0 to disable)</p>
                         </div>
                         <div class="setting-item">
                             <label for="radarr-swaparr-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html" class="info-icon" title="Enable Swaparr stalled download monitoring for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Swaparr:</label>
@@ -327,18 +341,8 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="radarr_hunt_missing_movies"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#search-settings" class="info-icon" title="Learn more about missing movies search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
-                    <input type="number" id="radarr_hunt_missing_movies" name="hunt_missing_movies" min="0" value="${settings.hunt_missing_movies !== undefined ? (settings.hunt_missing_movies === 0 ? 0 : settings.hunt_missing_movies) : 1}">
-                    <p class="setting-help">Number of missing movies to search per cycle (0 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="radarr_hunt_upgrade_movies"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#search-settings" class="info-icon" title="Learn more about upgrading movies" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
-                    <input type="number" id="radarr_hunt_upgrade_movies" name="hunt_upgrade_movies" min="0" value="${settings.hunt_upgrade_movies !== undefined ? (settings.hunt_upgrade_movies === 0 ? 0 : settings.hunt_upgrade_movies) : 0}">
-                    <p class="setting-help">Number of movies to search for quality upgrades per cycle (0 to disable)</p>
-                </div>
-                <div class="setting-item">
                     <label for="radarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                    <input type="number" id="radarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                                        <input type="number" id="radarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
                 <div class="setting-item">
@@ -476,27 +480,37 @@ const SettingsForms = {
                     </div>
                     <div class="instance-content">
                         <div class="setting-item">
-                                            <label for="lidarr-name-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#connection-settings" class="info-icon" title="Learn more about naming your Lidarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
-                <input type="text" id="lidarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Lidarr instance">
-                <p class="setting-help">Friendly name for this Lidarr instance</p>
-                </div>
-                <div class="setting-item">
-                <label for="lidarr-url-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#connection-settings" class="info-icon" title="Learn more about Lidarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
-                <input type="text" id="lidarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Lidarr (e.g., http://localhost:8686)">
-                <p class="setting-help">Base URL for Lidarr (e.g., http://localhost:8686)</p>
-                </div>
-                <div class="setting-item">
-                <label for="lidarr-key-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#connection-settings" class="info-icon" title="Learn more about finding your Lidarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
-                <input type="text" id="lidarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Lidarr">
-                <p class="setting-help">API key for Lidarr</p>
-                </div>
-                <div class="setting-item">
-                <label for="lidarr-enabled-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#connection-settings" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
+                            <label for="lidarr-enabled-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#connection-settings" class="info-icon" title="Learn more about enabling/disabling instances" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Enabled:</label>
                             <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
                                 <input type="checkbox" id="lidarr-enabled-${index}" name="enabled" ${instance.enabled !== false ? 'checked' : ''}>
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                             </label>
                             <p class="setting-help">Enable or disable this Lidarr instance for processing</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr-name-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#connection-settings" class="info-icon" title="Learn more about naming your Lidarr instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Name:</label>
+                            <input type="text" id="lidarr-name-${index}" name="name" value="${instance.name || ''}" placeholder="Friendly name for this Lidarr instance">
+                            <p class="setting-help">Friendly name for this Lidarr instance</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr-url-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#connection-settings" class="info-icon" title="Learn more about Lidarr URL configuration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>URL:</label>
+                            <input type="text" id="lidarr-url-${index}" name="api_url" value="${instance.api_url || ''}" placeholder="Base URL for Lidarr (e.g., http://localhost:8686)">
+                            <p class="setting-help">Base URL for Lidarr (e.g., http://localhost:8686)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr-key-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#connection-settings" class="info-icon" title="Learn more about finding your Lidarr API key" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Key:</label>
+                            <input type="text" id="lidarr-key-${index}" name="api_key" value="${instance.api_key || ''}" placeholder="API key for Lidarr">
+                            <p class="setting-help">API key for Lidarr</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr-hunt-missing-items-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Learn more about missing items search for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
+                            <input type="number" id="lidarr-hunt-missing-items-${index}" name="hunt_missing_items" min="0" value="${instance.hunt_missing_items !== undefined ? instance.hunt_missing_items : 1}">
+                            <p class="setting-help">Number of artists with missing albums to search per cycle (0 to disable)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="lidarr-hunt-upgrade-items-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Learn more about upgrading items for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
+                            <input type="number" id="lidarr-hunt-upgrade-items-${index}" name="hunt_upgrade_items" min="0" value="${instance.hunt_upgrade_items !== undefined ? instance.hunt_upgrade_items : 0}">
+                            <p class="setting-help">Number of albums to search for quality upgrades per cycle (0 to disable)</p>
                         </div>
                         <div class="setting-item">
                             <label for="lidarr-swaparr-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html" class="info-icon" title="Enable Swaparr stalled download monitoring for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Swaparr:</label>
@@ -534,20 +548,10 @@ const SettingsForms = {
                     </select>
                     <p class="setting-help">Search for individual albums (Artist mode deprecated in Huntarr 7.5.0+)</p>
                 </div>
-                <div class="setting-item">
-                    <label for="lidarr_hunt_missing_items"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
-                    <input type="number" id="lidarr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
-                    <p class="setting-help">Number of artists with missing albums to search per cycle (0 to disable)</p>
-                </div>
-                
-                <div class="setting-item">
-                    <label for="lidarr_hunt_upgrade_items"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Learn more about upgrading items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
-                    <input type="number" id="lidarr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
-                    <p class="setting-help">Number of albums to search for quality upgrades per cycle (0 to disable)</p>
-                </div>
+
                 <div class="setting-item">
                     <label for="lidarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                    <input type="number" id="lidarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                                        <input type="number" id="lidarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
                 <div class="setting-item">
@@ -734,7 +738,7 @@ const SettingsForms = {
                 </div>
                 <div class="setting-item">
                     <label for="readarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                    <input type="number" id="readarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                                        <input type="number" id="readarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
                 <div class="setting-item">
@@ -928,11 +932,11 @@ const SettingsForms = {
                 </div>
                 <div class="setting-item">
                 <label for="whisparr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                <input type="number" id="whisparr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
-                <p class="setting-help">Time in seconds between processing cycles</p>
+                                    <input type="number" id="whisparr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                    <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
                 <div class="setting-item">
-                <label for="whisparr_hourly_cap"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Maximum API requests per hour for this app (20 is safe)" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
+                    <label for="whisparr_hourly_cap"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Maximum API requests per hour for this app (20 is safe)" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
                     <input type="number" id="whisparr_hourly_cap" name="hourly_cap" min="1" max="500" value="${settings.hourly_cap !== undefined ? settings.hourly_cap : 20}">
                     <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
                     <p class="setting-help" style="color: #cc0000; font-weight: bold;">Setting this too high will risk your accounts being banned! You have been warned!</p>
@@ -1136,7 +1140,7 @@ const SettingsForms = {
                 </div>
                 <div class="setting-item">
                     <label for="eros_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#sleep-duration" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                    <input type="number" id="eros_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                                        <input type="number" id="eros_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
                 <div class="setting-item">
@@ -2034,11 +2038,19 @@ const SettingsForms = {
                 const enabledInput = instance.querySelector('input[name="enabled"]');
                 const swaparrEnabledInput = instance.querySelector('input[name="swaparr_enabled"]');
                 
+                // Get per-instance missing/upgrade values 
+                const huntMissingItemsInput = instance.querySelector('input[name="hunt_missing_items"]') || instance.querySelector('input[name="hunt_missing_movies"]');
+                const huntUpgradeItemsInput = instance.querySelector('input[name="hunt_upgrade_items"]') || instance.querySelector('input[name="hunt_upgrade_movies"]');
+                
                 const name = nameInput ? nameInput.value : null;
                 const url = urlInput ? urlInput.value : null;
                 const key = keyInput ? keyInput.value : null;
                 const enabled = enabledInput ? enabledInput.checked : true; // Default to enabled if checkbox not found
                 const swaparrEnabled = swaparrEnabledInput ? swaparrEnabledInput.checked : false; // Default to disabled
+                
+                // Get per-instance hunt values (default: missing=1, upgrade=0)
+                const huntMissingItems = huntMissingItemsInput ? parseInt(huntMissingItemsInput.value) || 0 : 1;
+                const huntUpgradeItems = huntUpgradeItemsInput ? parseInt(huntUpgradeItemsInput.value) || 0 : 0;
                 
                 if (!name || !url || !key) {
                     console.warn(`Instance ${index} is missing required fields`);
@@ -2052,18 +2064,62 @@ const SettingsForms = {
                     swaparr_enabled: swaparrEnabled
                 };
                 
+                // Add per-instance missing/upgrade settings for apps that support it
+                if (appType === 'sonarr') {
+                    instanceObj.hunt_missing_items = huntMissingItems;
+                    instanceObj.hunt_upgrade_items = huntUpgradeItems;
+                } else if (appType === 'radarr') {
+                    instanceObj.hunt_missing_movies = huntMissingItems;
+                    instanceObj.hunt_upgrade_movies = huntUpgradeItems;
+                } else if (appType === 'lidarr') {
+                    instanceObj.hunt_missing_items = huntMissingItems;
+                    instanceObj.hunt_upgrade_items = huntUpgradeItems;
+                } else if (appType === 'readarr') {
+                    instanceObj.hunt_missing_books = huntMissingItems;
+                    instanceObj.hunt_upgrade_books = huntUpgradeItems;
+                } else if (appType === 'whisparr') {
+                    instanceObj.hunt_missing_items = huntMissingItems;
+                    instanceObj.hunt_upgrade_items = huntUpgradeItems;
+                } else if (appType === 'eros') {
+                    instanceObj.hunt_missing_items = huntMissingItems;
+                    instanceObj.hunt_upgrade_items = huntUpgradeItems;
+                }
+                
                 instances.push(instanceObj);
             });
             
             // Ensure we always have at least one instance
             if (instances.length === 0) {
                 console.warn('No instances found, adding a default empty instance');
-                instances.push({
+                const defaultInstance = {
                     name: 'Default',
                     api_url: '',
                     api_key: '',
                     enabled: true
-                });
+                };
+                
+                // Add per-instance missing/upgrade defaults for apps that support it
+                if (appType === 'sonarr') {
+                    defaultInstance.hunt_missing_items = 1;
+                    defaultInstance.hunt_upgrade_items = 0;
+                } else if (appType === 'radarr') {
+                    defaultInstance.hunt_missing_movies = 1;
+                    defaultInstance.hunt_upgrade_movies = 0;
+                } else if (appType === 'lidarr') {
+                    defaultInstance.hunt_missing_items = 1;
+                    defaultInstance.hunt_upgrade_items = 0;
+                } else if (appType === 'readarr') {
+                    defaultInstance.hunt_missing_books = 1;
+                    defaultInstance.hunt_upgrade_books = 0;
+                } else if (appType === 'whisparr') {
+                    defaultInstance.hunt_missing_items = 1;
+                    defaultInstance.hunt_upgrade_items = 0;
+                } else if (appType === 'eros') {
+                    defaultInstance.hunt_missing_items = 1;
+                    defaultInstance.hunt_upgrade_items = 0;
+                }
+                
+                instances.push(defaultInstance);
             }
             
             settings.instances = instances;
@@ -2072,8 +2128,6 @@ const SettingsForms = {
             if (appType === 'sonarr') {
                 settings.hunt_missing_mode = getInputValue('#sonarr-hunt-missing-mode', 'seasons_packs');
                 settings.upgrade_mode = getInputValue('#sonarr-upgrade-mode', 'seasons_packs');
-                settings.hunt_missing_items = getInputValue('#sonarr-hunt-missing-items', 1);
-                settings.hunt_upgrade_items = getInputValue('#sonarr-hunt-upgrade-items', 0);
                 settings.sleep_duration = getInputValue('#sonarr_sleep_duration', 900);
                 settings.hourly_cap = getInputValue('#sonarr_hourly_cap', 20);
                 settings.monitored_only = getInputValue('#sonarr_monitored_only', true);
@@ -2089,8 +2143,6 @@ const SettingsForms = {
 
             } 
             else if (appType === 'radarr') {
-                settings.hunt_missing_movies = getInputValue('#radarr_hunt_missing_movies', 1);
-                settings.hunt_upgrade_movies = getInputValue('#radarr_hunt_upgrade_movies', 0);
                 settings.sleep_duration = getInputValue('#radarr_sleep_duration', 900);
                 settings.hourly_cap = getInputValue('#radarr_hourly_cap', 20);
                 settings.monitored_only = getInputValue('#radarr_monitored_only', true);
@@ -2105,8 +2157,6 @@ const SettingsForms = {
                 };
             } 
             else if (appType === 'lidarr') {
-                settings.hunt_missing_items = getInputValue('#lidarr_hunt_missing_items', 1);
-                settings.hunt_upgrade_items = getInputValue('#lidarr_hunt_upgrade_items', 0);
                 settings.hunt_missing_mode = getInputValue('#lidarr_hunt_missing_mode', 'album');
                 settings.monitored_only = getInputValue('#lidarr_monitored_only', true);
                 settings.sleep_duration = getInputValue('#lidarr_sleep_duration', 900);
@@ -2792,6 +2842,67 @@ const SettingsForms = {
                 
                 const newIndex = currentCount; // Use current count as new index
                 
+                // Get field names and defaults based on app type
+                let missingFieldName, upgradeFieldName, missingDefault, upgradeDefault, missingLabel, upgradeLabel;
+                
+                switch(appType) {
+                    case 'sonarr':
+                        missingFieldName = 'hunt_missing_items';
+                        upgradeFieldName = 'hunt_upgrade_items';
+                        missingDefault = 1;
+                        upgradeDefault = 0;
+                        missingLabel = 'Missing Search';
+                        upgradeLabel = 'Upgrade Search';
+                        break;
+                    case 'radarr':
+                        missingFieldName = 'hunt_missing_movies';
+                        upgradeFieldName = 'hunt_upgrade_movies';
+                        missingDefault = 1;
+                        upgradeDefault = 0;
+                        missingLabel = 'Missing Search';
+                        upgradeLabel = 'Upgrade Search';
+                        break;
+                    case 'lidarr':
+                        missingFieldName = 'hunt_missing_items';
+                        upgradeFieldName = 'hunt_upgrade_items';
+                        missingDefault = 1;
+                        upgradeDefault = 0;
+                        missingLabel = 'Missing Search';
+                        upgradeLabel = 'Upgrade Search';
+                        break;
+                    case 'readarr':
+                        missingFieldName = 'hunt_missing_books';
+                        upgradeFieldName = 'hunt_upgrade_books';
+                        missingDefault = 1;
+                        upgradeDefault = 0;
+                        missingLabel = 'Missing Search';
+                        upgradeLabel = 'Upgrade Search';
+                        break;
+                    case 'whisparr':
+                        missingFieldName = 'hunt_missing_items';
+                        upgradeFieldName = 'hunt_upgrade_items';
+                        missingDefault = 1;
+                        upgradeDefault = 0;
+                        missingLabel = 'Missing Search';
+                        upgradeLabel = 'Upgrade Search';
+                        break;
+                    case 'eros':
+                        missingFieldName = 'hunt_missing_items';
+                        upgradeFieldName = 'hunt_upgrade_items';
+                        missingDefault = 1;
+                        upgradeDefault = 0;
+                        missingLabel = 'Missing Search';
+                        upgradeLabel = 'Upgrade Search';
+                        break;
+                    default:
+                        missingFieldName = 'hunt_missing_items';
+                        upgradeFieldName = 'hunt_upgrade_items';
+                        missingDefault = 1;
+                        upgradeDefault = 0;
+                        missingLabel = 'Missing Search';
+                        upgradeLabel = 'Upgrade Search';
+                }
+
                 // Create new instance HTML
                 const newInstanceHtml = `
                     <div class="instance-item" data-instance-id="${newIndex}">
@@ -2805,6 +2916,14 @@ const SettingsForms = {
                             </div>
                         </div>
                         <div class="instance-content">
+                            <div class="setting-item">
+                                <label for="${appType}-enabled-${newIndex}">Enabled:</label>
+                                <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                                    <input type="checkbox" id="${appType}-enabled-${newIndex}" name="enabled" checked>
+                                    <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                                </label>
+                                <p class="setting-help">Enable or disable this ${appType.charAt(0).toUpperCase() + appType.slice(1)} instance for processing</p>
+                            </div>
                             <div class="setting-item">
                                 <label for="${appType}-name-${newIndex}">Name:</label>
                                 <input type="text" id="${appType}-name-${newIndex}" name="name" value="" placeholder="Friendly name for this ${appType} instance">
@@ -2821,12 +2940,14 @@ const SettingsForms = {
                                 <p class="setting-help">API key for ${appType}</p>
                             </div>
                             <div class="setting-item">
-                                <label for="${appType}-enabled-${newIndex}">Enabled:</label>
-                                <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
-                                    <input type="checkbox" id="${appType}-enabled-${newIndex}" name="enabled" checked>
-                                    <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
-                                </label>
-                                <p class="setting-help">Enable or disable this ${appType.charAt(0).toUpperCase() + appType.slice(1)} instance for processing</p>
+                                <label for="${appType}-${missingFieldName}-${newIndex}">${missingLabel}:</label>
+                                <input type="number" id="${appType}-${missingFieldName}-${newIndex}" name="${missingFieldName}" min="0" value="${missingDefault}">
+                                <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
+                            </div>
+                            <div class="setting-item">
+                                <label for="${appType}-${upgradeFieldName}-${newIndex}">${upgradeLabel}:</label>
+                                <input type="number" id="${appType}-${upgradeFieldName}-${newIndex}" name="${upgradeFieldName}" min="0" value="${upgradeDefault}">
+                                <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
                             </div>
                             <div class="setting-item">
                                 <label for="${appType}-swaparr-${newIndex}"><a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html" class="info-icon" title="Enable Swaparr stalled download monitoring for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Swaparr:</label>

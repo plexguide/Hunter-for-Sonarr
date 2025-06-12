@@ -37,7 +37,7 @@ def process_cutoff_upgrades(
         sonarr_logger.info("'hunt_upgrade_items' setting is 0 or less. Skipping upgrade processing.")
         return False
         
-    sonarr_logger.info(f"Checking for {hunt_upgrade_items} quality upgrades...")
+    sonarr_logger.info(f"Checking for {hunt_upgrade_items} quality upgrades for instance '{instance_name}'...")
     
     sonarr_logger.info(f"Using {upgrade_mode.upper()} mode for quality upgrades")
 

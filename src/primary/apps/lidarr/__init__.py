@@ -41,12 +41,14 @@ def get_configured_instances():
 
             # Only include properly configured instances
             if is_enabled and api_url and api_key:
-                # Return only essential instance details
+                # Return only essential instance details including per-instance hunt values
                 instance_data = {
                     "instance_name": instance.get("name", "Default"),
                     "api_url": api_url,
                     "api_key": api_key,
                     "swaparr_enabled": instance.get("swaparr_enabled", False),
+                    "hunt_missing_items": instance.get("hunt_missing_items", 1),  # Per-instance missing hunt value
+                    "hunt_upgrade_items": instance.get("hunt_upgrade_items", 0),  # Per-instance upgrade hunt value
                 }
                 instances.append(instance_data)
                 # lidarr_logger.info(f"Added valid instance: {instance_data}") # Removed verbose log
@@ -80,6 +82,8 @@ def get_configured_instances():
                 "api_url": api_url,
                 "api_key": api_key,
                 "swaparr_enabled": settings.get("swaparr_enabled", False),
+                "hunt_missing_items": settings.get("hunt_missing_items", 1),  # Legacy missing hunt value
+                "hunt_upgrade_items": settings.get("hunt_upgrade_items", 0),  # Legacy upgrade hunt value
             }
             instances.append(instance_data)
             # lidarr_logger.info(f"Added valid legacy instance: {instance_data}") # Removed verbose log

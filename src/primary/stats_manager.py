@@ -282,7 +282,7 @@ def increment_hourly_cap(app_type: str, count: int = 1) -> bool:
         hourly_limit = app_settings.get("hourly_cap", 20)  # Default to 20 if not set
         
         # Log current usage vs limit
-        logger.debug(f"*** HOURLY API INCREMENT *** {app_type} by {count}: {prev_value} -> {new_value} (limit: {hourly_limit})")
+        logger.debug(f"*** HOURLY API INCREMENT *** {app_type} by {count}: {prev_value} -> {new_value} (hourly limit: {hourly_limit})")
         
         # Warn if approaching limit
         if new_value >= int(hourly_limit * 0.8) and prev_value < int(hourly_limit * 0.8):
@@ -331,6 +331,72 @@ def get_hourly_cap_status(app_type: str) -> Dict[str, Any]:
             "percent_used": int((current_usage / hourly_limit) * 100) if hourly_limit > 0 else 0,
             "exceeded": current_usage >= hourly_limit
         }
+
+def _calculate_per_instance_hourly_limit(app_type: str) -> int:
+    """
+    Calculate the hourly limit based on the sum of all enabled instances' hunt values
+    
+    Args:
+        app_type: The application type (sonarr, radarr, etc.)
+        
+    Returns:
+        The calculated hourly limit based on per-instance hunt values
+    """
+    try:
+        # Import here to avoid circular imports
+        from src.primary.settings_manager import load_settings
+        
+        # Load app settings to get instances
+        app_settings = load_settings(app_type)
+        if not app_settings:
+            logger.warning(f"No settings found for {app_type}, using default limit 20")
+            return 20
+        
+        instances = app_settings.get("instances", [])
+        if not instances:
+            # Fallback to legacy single instance if no instances array
+            logger.debug(f"No instances array found for {app_type}, using legacy single instance calculation")
+            missing_limit = app_settings.get("hunt_missing_items", 1) if app_type in ["sonarr", "lidarr", "whisparr", "eros"] else app_settings.get("hunt_missing_movies" if app_type == "radarr" else "hunt_missing_books", 1)
+            upgrade_limit = app_settings.get("hunt_upgrade_items", 0) if app_type in ["sonarr", "lidarr", "whisparr", "eros"] else app_settings.get("hunt_upgrade_movies" if app_type == "radarr" else "hunt_upgrade_books", 0)
+            total_limit = missing_limit + upgrade_limit
+            return max(total_limit, 1)  # Ensure minimum of 1
+        
+        # Calculate total hunt values across all enabled instances
+        total_missing = 0
+        total_upgrade = 0
+        enabled_instances = 0
+        
+        # Get the correct field names based on app type
+        if app_type == "radarr":
+            missing_field = "hunt_missing_movies"
+            upgrade_field = "hunt_upgrade_movies"
+        elif app_type == "readarr":
+            missing_field = "hunt_missing_books"
+            upgrade_field = "hunt_upgrade_books"
+        else:  # sonarr, lidarr, whisparr, eros
+            missing_field = "hunt_missing_items"
+            upgrade_field = "hunt_upgrade_items"
+        
+        for instance in instances:
+            # Only count enabled instances
+            if instance.get("enabled", True):  # Default to enabled if not specified
+                enabled_instances += 1
+                total_missing += instance.get(missing_field, 1)  # Default to 1 if not specified
+                total_upgrade += instance.get(upgrade_field, 0)  # Default to 0 if not specified
+        
+        total_limit = total_missing + total_upgrade
+        
+        logger.debug(f"Calculated hourly limit for {app_type}: {total_limit} (missing: {total_missing}, upgrade: {total_upgrade}, enabled instances: {enabled_instances})")
+        
+        # Ensure minimum of 1 even if all values are 0
+        return max(total_limit, 1)
+        
+    except Exception as e:
+        logger.error(f"Error calculating per-instance hourly limit for {app_type}: {e}")
+        # Fallback to app-level hourly_cap or default
+        from src.primary.settings_manager import load_settings
+        app_settings = load_settings(app_type)
+        return app_settings.get("hourly_cap", 20) if app_settings else 20
 
 def check_hourly_cap_exceeded(app_type: str) -> bool:
     """

@@ -42,7 +42,7 @@ def process_missing_episodes(
         sonarr_logger.info("'hunt_missing_items' setting is 0 or less. Skipping missing processing.")
         return False
         
-    sonarr_logger.info(f"Checking for {hunt_missing_items} missing episodes in {hunt_missing_mode} mode...")
+    sonarr_logger.info(f"Checking for {hunt_missing_items} missing episodes in {hunt_missing_mode} mode for instance '{instance_name}'...")
 
     # Handle different modes
     if hunt_missing_mode == "seasons_packs":

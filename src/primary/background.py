@@ -276,13 +276,36 @@ def app_specific_loop(app_type: str) -> None:
                 # Continue with the cycle even if cap check fails - safer than skipping
 
             # --- Check if Hunt Modes are Enabled --- #
-            # These checks use the hunt_missing_setting/hunt_upgrade_setting defined earlier
-            # which correspond to keys in the main app_settings dict (e.g., 'hunt_missing_items')
-            hunt_missing_value = app_settings.get(hunt_missing_setting, 0)
-            hunt_upgrade_value = app_settings.get(hunt_upgrade_setting, 0)
+            # For per-instance settings, get values from instance details
+            # For apps without per-instance settings, fall back to global app settings
+            if app_type == "sonarr":
+                hunt_missing_value = instance_details.get("hunt_missing_items", 1)  # Default to 1
+                hunt_upgrade_value = instance_details.get("hunt_upgrade_items", 0)  # Default to 0
+            elif app_type == "radarr":
+                hunt_missing_value = instance_details.get("hunt_missing_movies", 1)  # Default to 1
+                hunt_upgrade_value = instance_details.get("hunt_upgrade_movies", 0)  # Default to 0
+            elif app_type == "lidarr":
+                hunt_missing_value = instance_details.get("hunt_missing_items", 1)  # Default to 1
+                hunt_upgrade_value = instance_details.get("hunt_upgrade_items", 0)  # Default to 0
+            elif app_type == "readarr":
+                hunt_missing_value = instance_details.get("hunt_missing_books", 1)  # Default to 1
+                hunt_upgrade_value = instance_details.get("hunt_upgrade_books", 0)  # Default to 0
+            elif app_type == "whisparr":
+                hunt_missing_value = instance_details.get("hunt_missing_items", 1)  # Default to 1
+                hunt_upgrade_value = instance_details.get("hunt_upgrade_items", 0)  # Default to 0
+            elif app_type == "eros":
+                hunt_missing_value = instance_details.get("hunt_missing_items", 1)  # Default to 1
+                hunt_upgrade_value = instance_details.get("hunt_upgrade_items", 0)  # Default to 0
+            else:
+                # Fall back to global settings for other apps
+                hunt_missing_value = app_settings.get(hunt_missing_setting, 0)
+                hunt_upgrade_value = app_settings.get(hunt_upgrade_setting, 0)
 
             hunt_missing_enabled = hunt_missing_value > 0
             hunt_upgrade_enabled = hunt_upgrade_value > 0
+            
+            # Debug logging for per-instance hunt values
+            app_logger.info(f"Instance '{instance_name}' - Missing: {hunt_missing_value} (enabled: {hunt_missing_enabled}), Upgrade: {hunt_upgrade_value} (enabled: {hunt_upgrade_enabled})")
 
             # --- Queue Size Check --- # Moved inside loop
             # Get maximum_download_queue_size from general settings (still using minimum_download_queue_size key for backward compatibility)
@@ -325,7 +348,7 @@ def app_specific_loop(app_type: str) -> None:
                     api_timeout = combined_settings.get("api_timeout", 120)
                     monitored_only = combined_settings.get("monitored_only", True)
                     skip_future_episodes = combined_settings.get("skip_future_episodes", True)
-                    hunt_missing_items = combined_settings.get("hunt_missing_items", 0)
+                    hunt_missing_items = hunt_missing_value  # Use per-instance value
                     hunt_missing_mode = combined_settings.get("hunt_missing_mode", "episodes")
                     command_wait_delay = combined_settings.get("command_wait_delay", 1)
                     command_wait_attempts = combined_settings.get("command_wait_attempts", 600)
@@ -362,7 +385,7 @@ def app_specific_loop(app_type: str) -> None:
                         api_key = combined_settings.get("api_key", "").strip()
                         api_timeout = combined_settings.get("api_timeout", 120)
                         monitored_only = combined_settings.get("monitored_only", True)
-                        hunt_upgrade_items = combined_settings.get("hunt_upgrade_items", 0)
+                        hunt_upgrade_items = hunt_upgrade_value  # Use per-instance value
                         upgrade_mode = combined_settings.get("upgrade_mode", "episodes")
                         command_wait_delay = combined_settings.get("command_wait_delay", 1)
                         command_wait_attempts = combined_settings.get("command_wait_attempts", 600)
