@@ -120,7 +120,9 @@ let huntarrUI = {
         this.setupSwaparrStatusPolling();
         
         // Make dashboard visible after initialization to prevent FOUC
-        this.showDashboard();
+        setTimeout(() => {
+            this.showDashboard();
+        }, 50); // Reduced from implicit longer delay
     },
     
     // Cache DOM elements for better performance
@@ -2157,6 +2159,22 @@ let huntarrUI = {
         
         this.isLoadingStats = true;
         
+        // Try to load cached stats first for immediate display
+        const cachedStats = localStorage.getItem('huntarr-stats-cache');
+        if (cachedStats) {
+            try {
+                const parsedStats = JSON.parse(cachedStats);
+                const cacheAge = Date.now() - (parsedStats.timestamp || 0);
+                // Use cache if less than 5 minutes old
+                if (cacheAge < 300000) {
+                    console.log('[huntarrUI] Using cached stats for immediate display');
+                    this.updateStatsDisplay(parsedStats.stats, true); // true = from cache
+                }
+            } catch (e) {
+                console.log('[huntarrUI] Failed to parse cached stats');
+            }
+        }
+        
         // Add loading class to stats container to hide raw JSON
         const statsContainer = document.querySelector('.media-stats-container');
         if (statsContainer) {
@@ -2174,6 +2192,12 @@ let huntarrUI = {
                 if (data.success && data.stats) {
                     // Store raw stats data globally for tooltips to access
                     window.mediaStats = data.stats;
+                    
+                    // Cache the fresh stats with timestamp
+                    localStorage.setItem('huntarr-stats-cache', JSON.stringify({
+                        stats: data.stats,
+                        timestamp: Date.now()
+                    }));
                     
                     // Update display
                     this.updateStatsDisplay(data.stats);
@@ -2199,7 +2223,7 @@ let huntarrUI = {
             });
     },
     
-    updateStatsDisplay: function(stats) {
+    updateStatsDisplay: function(stats, isFromCache = false) {
         // Update each app's statistics
         const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr'];
         const statTypes = ['hunted', 'upgraded'];
@@ -2208,7 +2232,7 @@ let huntarrUI = {
         const isLowUsageMode = this.isLowUsageModeEnabled();
         
         
-        console.log(`[huntarrUI] updateStatsDisplay - Low usage mode: ${isLowUsageMode}`);
+        console.log(`[huntarrUI] updateStatsDisplay - Low usage mode: ${isLowUsageMode}, from cache: ${isFromCache}`);
         
         apps.forEach(app => {
             if (stats[app]) {
@@ -2220,8 +2244,8 @@ let huntarrUI = {
                         const currentValue = this.parseFormattedNumber(currentText);
                         const targetValue = Math.max(0, parseInt(stats[app][type]) || 0); // Ensure non-negative
                         
-                        // If low usage mode is enabled, skip animations and set values directly
-                        if (isLowUsageMode) {
+                        // If low usage mode is enabled or loading from cache, skip animations and set values directly
+                        if (isLowUsageMode || isFromCache) {
                             element.textContent = this.formatLargeNumber(targetValue);
                         } else {
                             // Only animate if values are different and both are valid
@@ -2273,7 +2297,7 @@ let huntarrUI = {
             return;
         }
         
-        const duration = 1000; // Animation duration in milliseconds
+        const duration = 600; // Animation duration in milliseconds - reduced for faster loading feel
         const startTime = performance.now();
         
         const updateNumber = (currentTime) => {

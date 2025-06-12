@@ -5,14 +5,58 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the community resources visibility
-    initCommunityResourcesVisibility();
+    // Initialize the community resources visibility immediately
+    initCommunityResourcesVisibilityImmediate();
     
     // Also listen for settings changes that might affect visibility
     window.addEventListener('settings-saved', function() {
         initCommunityResourcesVisibility();
     });
 });
+
+/**
+ * Immediately shows sections with cached data to prevent flashing
+ */
+function initCommunityResourcesVisibilityImmediate() {
+    // Check if the community hub card exists
+    const communityHubCard = document.querySelector('.community-hub-card');
+    const huntarrSupportSection = document.querySelector('#huntarr-support-section');
+    
+    // Try to get cached settings first
+    const cachedSettings = localStorage.getItem('huntarr-general-settings');
+    if (cachedSettings) {
+        try {
+            const settings = JSON.parse(cachedSettings);
+            
+            // Show/hide based on cached settings immediately
+            if (communityHubCard) {
+                communityHubCard.style.display = settings.display_community_resources !== false ? '' : 'none';
+            }
+            if (huntarrSupportSection) {
+                huntarrSupportSection.style.display = settings.display_huntarr_support !== false ? '' : 'none';
+            }
+            
+            console.log('[Community] Applied cached visibility settings');
+            
+            // Still fetch fresh settings in background to update if changed
+            initCommunityResourcesVisibility();
+            return;
+        } catch (e) {
+            console.log('[Community] Failed to parse cached settings');
+        }
+    }
+    
+    // If no cache, show both by default (most common case) to prevent hiding content
+    if (communityHubCard) {
+        communityHubCard.style.display = '';
+    }
+    if (huntarrSupportSection) {
+        huntarrSupportSection.style.display = '';
+    }
+    
+    // Fetch fresh settings
+    initCommunityResourcesVisibility();
+}
 
 /**
  * Initializes the visibility of the Community Resources section
@@ -42,6 +86,9 @@ function initCommunityResourcesVisibility() {
         })
         .then(data => {
             console.log('[Community] Loaded general settings:', data);
+            
+            // Cache the settings for immediate use next time
+            localStorage.setItem('huntarr-general-settings', JSON.stringify(data));
             
             // Handle Community Resources visibility
             if (data.display_community_resources === false) {

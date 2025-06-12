@@ -244,9 +244,9 @@
 
     </style>
     <!-- Add initially hidden class to prevent flickering before JS initializes -->  
-    <div class="dashboard-grid stack-layout mobile-scrollable" style="opacity: 0; transition: opacity 0.3s ease;">
+    <div class="dashboard-grid stack-layout mobile-scrollable" style="opacity: 0; transition: opacity 0.15s ease;">
         <!-- Enhanced Support Links with Modern Design -->
-        <div class="card support-links-card" id="huntarr-support-section">
+        <div class="card support-links-card" id="huntarr-support-section" style="display: none;">
             <div class="support-links-container">
                 <div class="support-links-grid">
                     <a href="https://github.com/plexguide/huntarr" target="_blank" class="support-link github">
@@ -287,7 +287,7 @@
         </div>
         
         <!-- Community & Resources Hub (redesigned links section) -->
-        <div class="card community-hub-card">
+        <div class="card community-hub-card" style="display: none;">
             <div class="card-header">
                 <h3>Resources</h3>
             </div>
@@ -347,8 +347,8 @@
                 <div class="app-stats-grid">
                     <!-- Sonarr Card -->
                     <div class="app-stats-card sonarr">
-                        <div class="status-container">
-                            <span id="sonarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        <div class="status-container" style="display: none;">
+                            <span id="sonarrHomeStatus" class="status-badge"></span>
                         </div>
                         <div class="hourly-cap-container">
                             <div class="hourly-cap-status" id="sonarr-hourly-cap">
@@ -379,8 +379,8 @@
                     
                     <!-- Radarr Card -->
                     <div class="app-stats-card radarr">
-                        <div class="status-container">
-                            <span id="radarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        <div class="status-container" style="display: none;">
+                            <span id="radarrHomeStatus" class="status-badge"></span>
                         </div>
                         <div class="hourly-cap-container">
                             <div class="hourly-cap-status" id="radarr-hourly-cap">
@@ -411,8 +411,8 @@
                     
                     <!-- Lidarr Card -->
                     <div class="app-stats-card lidarr">
-                        <div class="status-container">
-                            <span id="lidarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        <div class="status-container" style="display: none;">
+                            <span id="lidarrHomeStatus" class="status-badge"></span>
                         </div>
                         <div class="hourly-cap-container">
                             <div class="hourly-cap-status" id="lidarr-hourly-cap">
@@ -443,8 +443,8 @@
                     
                     <!-- Readarr Card -->
                     <div class="app-stats-card readarr">
-                        <div class="status-container">
-                            <span id="readarrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        <div class="status-container" style="display: none;">
+                            <span id="readarrHomeStatus" class="status-badge"></span>
                         </div>
                         <div class="hourly-cap-container">
                             <div class="hourly-cap-status" id="readarr-hourly-cap">
@@ -475,8 +475,8 @@
                     
                     <!-- Whisparr Card -->
                     <div class="app-stats-card whisparr">
-                        <div class="status-container">
-                            <span id="whisparrHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        <div class="status-container" style="display: none;">
+                            <span id="whisparrHomeStatus" class="status-badge"></span>
                         </div>
                         <div class="hourly-cap-container">
                             <div class="hourly-cap-status" id="whisparr-hourly-cap">
@@ -507,8 +507,8 @@
                     
                     <!-- Eros Card -->
                     <div class="app-stats-card eros">
-                        <div class="status-container">
-                            <span id="erosHomeStatus" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        <div class="status-container" style="display: none;">
+                            <span id="erosHomeStatus" class="status-badge"></span>
                         </div>
                         <div class="hourly-cap-container">
                             <div class="hourly-cap-status" id="eros-hourly-cap">
@@ -1910,10 +1910,57 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Set a small timeout to allow all DOM elements to initialize
+    // Load cached stats immediately to prevent flashing
+    (function() {
+        try {
+            const cachedStats = localStorage.getItem('huntarr-stats-cache');
+            if (cachedStats) {
+                const statsData = JSON.parse(cachedStats);
+                const cacheAge = Date.now() - (statsData.timestamp || 0);
+                
+                // Use cache if less than 5 minutes old
+                if (cacheAge < 300000 && statsData.stats) {
+                    const stats = statsData.stats;
+                    const apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros'];
+                    const statTypes = ['hunted', 'upgraded'];
+                    
+                    // Immediately populate stats with cached values
+                    apps.forEach(app => {
+                        if (stats[app]) {
+                            statTypes.forEach(type => {
+                                const element = document.getElementById(`${app}-${type}`);
+                                if (element) {
+                                    const value = Math.max(0, parseInt(stats[app][type]) || 0);
+                                    element.textContent = formatLargeNumber(value);
+                                }
+                            });
+                        }
+                    });
+                    console.log('[HomeOptimization] Loaded cached stats immediately');
+                }
+            }
+        } catch (e) {
+            console.log('[HomeOptimization] Failed to load cached stats');
+        }
+        
+        // Helper function for number formatting (simplified version)
+        function formatLargeNumber(num) {
+            if (num < 1000) return num.toString();
+            else if (num < 10000) return (num / 1000).toFixed(1) + 'K';
+            else if (num < 100000) return (num / 1000).toFixed(1) + 'K';
+            else if (num < 1000000) return Math.floor(num / 1000) + 'K';
+            else if (num < 10000000) return (num / 1000000).toFixed(1) + 'M';
+            else if (num < 100000000) return (num / 1000000).toFixed(1) + 'M';
+            else if (num < 1000000000) return Math.floor(num / 1000000) + 'M';
+            else if (num < 1000000000000) return (num / 1000000000).toFixed(1) + 'B';
+            else return (num / 1000000000000).toFixed(1) + 'T';
+        }
+    })();
+    
     setTimeout(function() {
         // Show the dashboard after initialization
         document.querySelector('.dashboard-grid').style.opacity = '1';
-    }, 100);
+    }, 25);
     const sponsorContainer = document.getElementById('rotating-sponsor-content');
     let sponsors = [];
     let weightedSponsorPool = [];
