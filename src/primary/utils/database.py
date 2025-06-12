@@ -1,14 +1,14 @@
 """
 SQLite Database Manager for Huntarr
 Replaces all JSON file operations with SQLite database for better performance and reliability.
-Handles both app configurations and general settings.
+Handles both app configurations, general settings, and stateful management data.
 """
 
 import os
 import json
 import sqlite3
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Set
 from datetime import datetime
 import logging
 
@@ -59,9 +59,33 @@ class HuntarrDatabase:
                 )
             ''')
             
+            # Create stateful_lock table for stateful management lock info
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS stateful_lock (
+                    id INTEGER PRIMARY KEY CHECK (id = 1),
+                    created_at INTEGER NOT NULL,
+                    expires_at INTEGER NOT NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            # Create stateful_processed_ids table for processed media IDs
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS stateful_processed_ids (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    app_type TEXT NOT NULL,
+                    instance_name TEXT NOT NULL,
+                    media_id TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(app_type, instance_name, media_id)
+                )
+            ''')
+            
             # Create indexes for better performance
             conn.execute('CREATE INDEX IF NOT EXISTS idx_app_configs_type ON app_configs(app_type)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_general_settings_key ON general_settings(setting_key)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_stateful_processed_app_instance ON stateful_processed_ids(app_type, instance_name)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_stateful_processed_media_id ON stateful_processed_ids(media_id)')
             
             conn.commit()
             logger.info(f"Database initialized at: {self.db_path}")
@@ -264,6 +288,85 @@ class HuntarrDatabase:
             with open(backup_file, 'w') as f:
                 json.dump(general_settings, f, indent=2)
             logger.info(f"Backed up general settings to {backup_file}")
+
+    # Stateful Management Methods
+    
+    def get_stateful_lock_info(self) -> Dict[str, Any]:
+        """Get stateful management lock information"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute('SELECT created_at, expires_at FROM stateful_lock WHERE id = 1')
+            row = cursor.fetchone()
+            
+            if row:
+                return {
+                    "created_at": row[0],
+                    "expires_at": row[1]
+                }
+            return {}
+    
+    def set_stateful_lock_info(self, created_at: int, expires_at: int):
+        """Set stateful management lock information"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute('''
+                INSERT OR REPLACE INTO stateful_lock (id, created_at, expires_at, updated_at)
+                VALUES (1, ?, ?, CURRENT_TIMESTAMP)
+            ''', (created_at, expires_at))
+            conn.commit()
+            logger.debug(f"Set stateful lock: created_at={created_at}, expires_at={expires_at}")
+    
+    def get_processed_ids(self, app_type: str, instance_name: str) -> Set[str]:
+        """Get processed media IDs for a specific app instance"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute('''
+                SELECT media_id FROM stateful_processed_ids 
+                WHERE app_type = ? AND instance_name = ?
+            ''', (app_type, instance_name))
+            
+            return {row[0] for row in cursor.fetchall()}
+    
+    def add_processed_id(self, app_type: str, instance_name: str, media_id: str) -> bool:
+        """Add a processed media ID for a specific app instance"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute('''
+                    INSERT OR IGNORE INTO stateful_processed_ids 
+                    (app_type, instance_name, media_id)
+                    VALUES (?, ?, ?)
+                ''', (app_type, instance_name, str(media_id)))
+                conn.commit()
+                logger.debug(f"Added processed ID {media_id} for {app_type}/{instance_name}")
+                return True
+        except Exception as e:
+            logger.error(f"Error adding processed ID {media_id} for {app_type}/{instance_name}: {e}")
+            return False
+    
+    def is_processed(self, app_type: str, instance_name: str, media_id: str) -> bool:
+        """Check if a media ID has been processed for a specific app instance"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute('''
+                SELECT 1 FROM stateful_processed_ids 
+                WHERE app_type = ? AND instance_name = ? AND media_id = ?
+            ''', (app_type, instance_name, str(media_id)))
+            
+            return cursor.fetchone() is not None
+    
+    def clear_all_stateful_data(self):
+        """Clear all stateful management data (for reset)"""
+        with sqlite3.connect(self.db_path) as conn:
+            # Clear processed IDs
+            conn.execute('DELETE FROM stateful_processed_ids')
+            # Clear lock info
+            conn.execute('DELETE FROM stateful_lock')
+            conn.commit()
+            logger.info("Cleared all stateful management data from database")
+    
+    def get_stateful_summary(self, app_type: str, instance_name: str) -> Dict[str, Any]:
+        """Get summary of stateful data for an app instance"""
+        processed_ids = self.get_processed_ids(app_type, instance_name)
+        return {
+            "processed_count": len(processed_ids),
+            "has_processed_items": len(processed_ids) > 0
+        }
 
 # Global database instance
 _database_instance = None
