@@ -1983,38 +1983,7 @@ let huntarrUI = {
         }, 30000);
     },
     
-    // User actions
-    startHunt: function() {
-        HuntarrUtils.fetchWithTimeout('./api/hunt/start', { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.showNotification('Hunt started successfully', 'success');
-                } else {
-                    this.showNotification('Failed to start hunt', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error starting hunt:', error);
-                this.showNotification('Error starting hunt', 'error');
-            });
-    },
-    
-    stopHunt: function() {
-        HuntarrUtils.fetchWithTimeout('./api/hunt/stop', { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.showNotification('Hunt stopped successfully', 'success');
-                } else {
-                    this.showNotification('Failed to stop hunt', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error stopping hunt:', error);
-                this.showNotification('Error stopping hunt', 'error');
-            });
-    },
+
     
     // User
     loadUsername: function() {

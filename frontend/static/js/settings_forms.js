@@ -1753,54 +1753,7 @@ const SettingsForms = {
         return Array.from(container.querySelectorAll('.tag-text')).map(el => el.textContent);
     },
     
-    // Generate Hunt Manager placeholder form
-    generateHuntingForm: function(container, settings = {}) {
-        // Add data-app-type attribute to container
-        container.setAttribute('data-app-type', 'hunting');
-        
-        const html = `
-            <div class="settings-group">
-                <div class="development-notice" style="
-                    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-                    border: 2px solid #60a5fa;
-                    border-radius: 12px;
-                    padding: 25px;
-                    margin: 20px 0;
-                    text-align: center;
-                    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
-                ">
-                    <div style="margin-bottom: 15px;">
-                        <i class="fas fa-code-branch" style="font-size: 2.5em; color: #60a5fa; margin-bottom: 10px;"></i>
-                    </div>
-                    <h3 style="color: white; margin: 0 0 15px 0; font-size: 1.4em; font-weight: 600;">
-                        Hunt Manager - Under Development
-                    </h3>
-                    <p style="color: #dbeafe; margin: 0 0 20px 0; font-size: 1.1em; line-height: 1.6;">
-                        Hunt Manager is currently in active development and serves as a placeholder for upcoming advanced media discovery features.
-                        This module will provide sophisticated hunting algorithms and enhanced discovery mechanisms for your media library.
-                    </p>
-                    <div style="
-                        background: rgba(255, 255, 255, 0.1);
-                        border-radius: 8px;
-                        padding: 15px;
-                        margin: 15px 0;
-                        border-left: 4px solid #60a5fa;
-                    ">
-                        <p style="color: #f1f5f9; margin: 0; font-size: 0.95em;">
-                            <i class="fas fa-info-circle" style="margin-right: 8px; color: #60a5fa;"></i>
-                            <strong>Current Status:</strong> Planning & Architecture Phase
-                        </p>
-                    </div>
-                    <p style="color: #cbd5e1; margin: 10px 0 0 0; font-size: 0.9em;">
-                        Stay tuned for updates as we continue to enhance Huntarr's capabilities!
-                    </p>
-                </div>
-            </div>
-        `;
-        
-        
-        container.innerHTML = html;
-    },
+
     
     // Load Swaparr GitHub star count dynamically
     loadSwaparrStarCount: function() {

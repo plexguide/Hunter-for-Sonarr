@@ -934,29 +934,7 @@ def api_app_status(app_name):
         # Return a valid response even on error to prevent UI issues
         return jsonify({"configured": False, "connected": False, "error": "Internal error"}), 200
 
-# --- Add Hunt Control Endpoints --- #
-# These might need adjustment depending on how start/stop is managed now
-# If main.py handles threads based on config, these might not be needed,
-# or they could modify a global 'enabled' setting per app.
-# For now, keep them simple placeholders.
 
-@app.route('/api/hunt/start', methods=['POST'])
-def api_start_hunt():
-    # Placeholder: In the new model, threads start based on config.
-    # This might enable all configured apps or toggle a global flag.
-    # Or it could modify an 'enabled' setting per app.
-    # settings_manager.update_setting('global', 'hunt_enabled', True)
-    return jsonify({"success": True, "message": "Hunt control endpoint (start) - functionality may change."})
-
-@app.route('/api/hunt/stop', methods=['POST'])
-def api_stop_hunt():
-    # Placeholder: Signal main thread to stop?
-    # Or disable all apps?
-    # settings_manager.update_setting('global', 'hunt_enabled', False)
-    # Or send SIGTERM/SIGINT to the main process?
-    # pid = get_main_process_pid() # Need a way to get PID if not self
-    # if pid: os.kill(pid, signal.SIGTERM)
-    return jsonify({"success": True, "message": "Hunt control endpoint (stop) - functionality may change."})
 
 @app.route('/api/settings/apply-timezone', methods=['POST'])
 def apply_timezone_setting():

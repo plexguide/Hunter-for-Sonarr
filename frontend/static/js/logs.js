@@ -330,7 +330,7 @@ window.LogsModule = {
                     }
                     
                     // Check if this log should be displayed based on the selected app
-                    const currentApp = this.currentLogApp === 'hunting' ? 'hunting' : this.currentLogApp;
+                    const currentApp = this.currentLogApp;
                     const shouldDisplay = this.currentLogApp === 'all' || currentApp === logAppType;
 
                     if (!shouldDisplay) return;
