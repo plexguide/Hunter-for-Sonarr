@@ -736,16 +736,7 @@ const SettingsForms = {
             
             <div class="settings-group">
                 <h3>Search Settings</h3>
-                <div class="setting-item">
-                    <label for="readarr_hunt_missing_books"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#search-settings" class="info-icon" title="Learn more about missing books search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
-                    <input type="number" id="readarr_hunt_missing_books" name="hunt_missing_books" min="0" value="${settings.hunt_missing_books !== undefined ? settings.hunt_missing_books : 1}">
-                    <p class="setting-help">Number of missing books to search per cycle (0 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="readarr_hunt_upgrade_books"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#search-settings" class="info-icon" title="Learn more about upgrading books" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
-                    <input type="number" id="readarr_hunt_upgrade_books" name="hunt_upgrade_books" min="0" value="${settings.hunt_upgrade_books !== undefined ? settings.hunt_upgrade_books : 0}">
-                    <p class="setting-help">Number of books to search for quality upgrades per cycle (0 to disable)</p>
-                </div>
+
                 <div class="setting-item">
                     <label for="readarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
                                         <input type="number" id="readarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
@@ -940,16 +931,7 @@ const SettingsForms = {
         let searchSettingsHtml = `
             <div class="settings-group">
                 <h3>Search Settings</h3>
-                <div class="setting-item">
-                                    <label for="whisparr_hunt_missing_items"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
-                <input type="number" id="whisparr_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
-                <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
-                </div>
-                <div class="setting-item">
-                <label for="whisparr_hunt_upgrade_items"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Learn more about upgrading items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
-                <input type="number" id="whisparr_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
-                <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
-                </div>
+                
                 <div class="setting-item">
                 <label for="whisparr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
                                     <input type="number" id="whisparr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
@@ -1158,19 +1140,10 @@ const SettingsForms = {
                     </select>
                     <p class="setting-help">How to search for missing and upgradable Whisparr V3 content (Movie-based or Scene-based)</p>
                 </div>
-                <div class="setting-item">
-                    <label for="eros_hunt_missing_items"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#missing-search" class="info-icon" title="Learn more about missing items search" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
-                    <input type="number" id="eros_hunt_missing_items" name="hunt_missing_items" min="0" value="${settings.hunt_missing_items !== undefined ? settings.hunt_missing_items : 1}">
-                    <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
-                </div>
-                <div class="setting-item">
-                    <label for="eros_hunt_upgrade_items"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#upgrade-search" class="info-icon" title="Learn more about upgrading items" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
-                    <input type="number" id="eros_hunt_upgrade_items" name="hunt_upgrade_items" min="0" value="${settings.hunt_upgrade_items !== undefined ? settings.hunt_upgrade_items : 0}">
-                    <p class="setting-help">Number of items to search for quality upgrades per cycle (0 to disable)</p>
-                </div>
+
                 <div class="setting-item">
                     <label for="eros_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#sleep-duration" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                                        <input type="number" id="eros_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
+                    <input type="number" id="eros_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
                     <p class="setting-help">Time in seconds between processing cycles</p>
                 </div>
                 <div class="setting-item">
@@ -2200,8 +2173,6 @@ const SettingsForms = {
                 };
             } 
             else if (appType === 'readarr') {
-                settings.hunt_missing_books = getInputValue('#readarr_hunt_missing_books', 1);
-                settings.hunt_upgrade_books = getInputValue('#readarr_hunt_upgrade_books', 0);
                 settings.monitored_only = getInputValue('#readarr_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#readarr_skip_future_releases', true);
                 settings.tag_processed_items = getInputValue('#readarr_tag_processed_items', true);
@@ -2216,8 +2187,6 @@ const SettingsForms = {
                 };
             } 
             else if (appType === 'whisparr') {
-                settings.hunt_missing_items = getInputValue('#whisparr_hunt_missing_items', 1);
-                settings.hunt_upgrade_items = getInputValue('#whisparr_hunt_upgrade_items', 0);
                 settings.monitored_only = getInputValue('#whisparr_monitored_only', true);
                 settings.whisparr_version = getInputValue('#whisparr-api-version', 'v3');
                 settings.skip_future_releases = getInputValue('#whisparr_skip_future_releases', true);
@@ -2234,8 +2203,6 @@ const SettingsForms = {
             }
             else if (appType === 'eros') {
                 settings.search_mode = getInputValue('#eros_search_mode', 'movie');
-                settings.hunt_missing_items = getInputValue('#eros_hunt_missing_items', 1);
-                settings.hunt_upgrade_items = getInputValue('#eros_hunt_upgrade_items', 0);
                 settings.monitored_only = getInputValue('#eros_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#eros_skip_future_releases', true);
                 settings.tag_processed_items = getInputValue('#eros_tag_processed_items', true);
