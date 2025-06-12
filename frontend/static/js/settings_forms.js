@@ -705,6 +705,16 @@ const SettingsForms = {
                             </label>
                             <p class="setting-help">Enable Swaparr to monitor and remove stalled downloads for this Readarr instance</p>
                         </div>
+                        <div class="setting-item">
+                            <label for="readarr-hunt-missing-books-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#search-settings" class="info-icon" title="Learn more about missing books search for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
+                            <input type="number" id="readarr-hunt-missing-books-${index}" name="hunt_missing_books" min="0" value="${instance.hunt_missing_books !== undefined ? instance.hunt_missing_books : 1}">
+                            <p class="setting-help">Number of missing books to search per cycle (0 to disable)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="readarr-hunt-upgrade-books-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#search-settings" class="info-icon" title="Learn more about upgrade books search for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
+                            <input type="number" id="readarr-hunt-upgrade-books-${index}" name="hunt_upgrade_books" min="0" value="${instance.hunt_upgrade_books !== undefined ? instance.hunt_upgrade_books : 0}">
+                            <p class="setting-help">Number of books to upgrade per cycle (0 to disable)</p>
+                        </div>
                     </div>
                 </div>
             `;
@@ -900,6 +910,16 @@ const SettingsForms = {
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                             </label>
                             <p class="setting-help">Enable Swaparr to monitor and remove stalled downloads for this Whisparr V2 instance</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="whisparr-hunt-missing-items-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Learn more about missing items search for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
+                            <input type="number" id="whisparr-hunt-missing-items-${index}" name="hunt_missing_items" min="0" value="${instance.hunt_missing_items !== undefined ? instance.hunt_missing_items : 1}">
+                            <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="whisparr-hunt-upgrade-items-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Learn more about upgrade items search for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
+                            <input type="number" id="whisparr-hunt-upgrade-items-${index}" name="hunt_upgrade_items" min="0" value="${instance.hunt_upgrade_items !== undefined ? instance.hunt_upgrade_items : 0}">
+                            <p class="setting-help">Number of items to upgrade per cycle (0 to disable)</p>
                         </div>
                     </div>
                 </div>
@@ -1100,6 +1120,16 @@ const SettingsForms = {
                                 <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
                             </label>
                             <p class="setting-help">Enable Swaparr to monitor and remove stalled downloads for this Whisparr V3 instance</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="eros-hunt-missing-items-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#missing-search" class="info-icon" title="Learn more about missing items search for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Missing Search:</label>
+                            <input type="number" id="eros-hunt-missing-items-${index}" name="hunt_missing_items" min="0" value="${instance.hunt_missing_items !== undefined ? instance.hunt_missing_items : 1}">
+                            <p class="setting-help">Number of missing items to search per cycle (0 to disable)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label for="eros-hunt-upgrade-items-${index}"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#upgrade-search" class="info-icon" title="Learn more about upgrade items search for this instance" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Upgrade Search:</label>
+                            <input type="number" id="eros-hunt-upgrade-items-${index}" name="hunt_upgrade_items" min="0" value="${instance.hunt_upgrade_items !== undefined ? instance.hunt_upgrade_items : 0}">
+                            <p class="setting-help">Number of items to upgrade per cycle (0 to disable)</p>
                         </div>
                     </div>
                 </div>

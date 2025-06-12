@@ -162,7 +162,7 @@ def get_system_status(api_url: str, api_key: str, api_timeout: int) -> Dict:
     Returns:
         System status information or empty dict if request failed
     """
-    response = arr_request(api_url, api_key, api_timeout, "system/status")
+    response = arr_request(api_url, api_key, api_timeout, "system/status", count_api=False)
     if response:
         return response
     return {}
@@ -217,7 +217,7 @@ def get_queue(api_url: str, api_key: str, api_timeout: int) -> List:
     Returns:
         Queue information or empty list if request failed
     """
-    response = arr_request(api_url, api_key, api_timeout, "queue")
+    response = arr_request(api_url, api_key, api_timeout, "queue", count_api=False)
     if not response or "records" not in response:
         return []
     

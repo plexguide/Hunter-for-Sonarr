@@ -263,7 +263,7 @@ def get_queue(api_url: str, api_key: str, api_timeout: int) -> List:
 def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int:
     """Get the current size of the Lidarr download queue."""
     params = {"pageSize": 1} # Only need 1 record to get totalRecords
-    response = arr_request(api_url, api_key, api_timeout, "queue", params=params)
+    response = arr_request(api_url, api_key, api_timeout, "queue", params=params, count_api=False)
     
     if response and isinstance(response, dict) and 'totalRecords' in response:
         queue_size = response.get('totalRecords', 0)

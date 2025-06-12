@@ -144,7 +144,7 @@ def get_download_queue_size(api_url: str, api_key: str, api_timeout: int) -> int
     Returns:
         The number of items in the download queue, or -1 if the request failed
     """
-    response = arr_request(api_url, api_key, api_timeout, "queue")
+    response = arr_request(api_url, api_key, api_timeout, "queue", count_api=False)
     
     if response is None:
         return -1
@@ -392,7 +392,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
         
         # First try with standard path
         endpoint = "system/status"
-        response = arr_request(api_url, api_key, api_timeout, endpoint)
+        response = arr_request(api_url, api_key, api_timeout, endpoint, count_api=False)
         
         # If that failed, try with v3 path format
         if response is None:
