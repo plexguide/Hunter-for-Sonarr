@@ -162,7 +162,7 @@ def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitor
             # In movie mode, we get all movies and filter for ones without files
             endpoint = "movie"
             
-            response = arr_request(api_url, api_key, api_timeout, endpoint)
+            response = arr_request(api_url, api_key, api_timeout, endpoint, count_api=False)
             
             if response is None:
                 return None
@@ -181,7 +181,7 @@ def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitor
             # First check if the movie-scene endpoint exists
             endpoint = "scene/missing?pageSize=1000"
             
-            response = arr_request(api_url, api_key, api_timeout, endpoint)
+            response = arr_request(api_url, api_key, api_timeout, endpoint, count_api=False)
             
             if response is None:
                 # Fallback to regular movie filtering if scene endpoint doesn't exist
@@ -231,7 +231,7 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
         # Endpoint
         endpoint = "wanted/cutoff?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
         
-        response = arr_request(api_url, api_key, api_timeout, endpoint)
+        response = arr_request(api_url, api_key, api_timeout, endpoint, count_api=False)
         
         if response is None:
             return None
@@ -277,7 +277,7 @@ def get_quality_upgrades(api_url: str, api_key: str, api_timeout: int, monitored
             # In movie mode, we get all movies and filter for ones that have files but need quality upgrades
             endpoint = "movie"
             
-            response = arr_request(api_url, api_key, api_timeout, endpoint)
+            response = arr_request(api_url, api_key, api_timeout, endpoint, count_api=False)
             
             if response is None:
                 return None
@@ -295,7 +295,7 @@ def get_quality_upgrades(api_url: str, api_key: str, api_timeout: int, monitored
             # In scene mode, try to use scene-specific endpoints
             endpoint = "scene/cutoff?pageSize=1000"
             
-            response = arr_request(api_url, api_key, api_timeout, endpoint)
+            response = arr_request(api_url, api_key, api_timeout, endpoint, count_api=False)
             
             if response is None:
                 # Fallback to regular movie filtering if scene endpoint doesn't exist
@@ -461,7 +461,7 @@ def get_command_status(api_url: str, api_key: str, api_timeout: int, command_id:
         command_endpoint = f"command/{command_id}"
         
         # Make the API request
-        result = arr_request(api_url, api_key, api_timeout, command_endpoint)
+        result = arr_request(api_url, api_key, api_timeout, command_endpoint, count_api=False)
         
         if result:
             eros_logger.debug(f"Command {command_id} status: {result.get('status', 'unknown')}")

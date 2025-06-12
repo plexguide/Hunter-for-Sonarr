@@ -203,7 +203,7 @@ def check_connection(api_url: str, api_key: str, api_timeout: int) -> bool:
 def get_artists(api_url: str, api_key: str, api_timeout: int, artist_id: Optional[int] = None) -> Union[List, Dict, None]:
     """Get artist information from Lidarr."""
     endpoint = f"artist/{artist_id}" if artist_id else "artist"
-    return arr_request(api_url, api_key, api_timeout, endpoint)
+    return arr_request(api_url, api_key, api_timeout, endpoint, count_api=False)
 
 def get_albums(api_url: str, api_key: str, api_timeout: int, album_id: Optional[int] = None, artist_id: Optional[int] = None) -> Union[List, Dict, None]:
     """Get album information from Lidarr."""
@@ -216,7 +216,7 @@ def get_albums(api_url: str, api_key: str, api_timeout: int, album_id: Optional[
     else:
         endpoint = "album"
         
-    return arr_request(api_url, api_key, api_timeout, endpoint, params=params if params else None)
+    return arr_request(api_url, api_key, api_timeout, endpoint, params=params if params else None, count_api=False)
 
 def get_tracks(api_url: str, api_key: str, api_timeout: int, album_id: Optional[int] = None) -> Union[List, None]:
      """Get track information for a specific album."""
@@ -224,7 +224,7 @@ def get_tracks(api_url: str, api_key: str, api_timeout: int, album_id: Optional[
          lidarr_logger.warning("get_tracks requires an album_id.")
          return None
      params = {'albumId': album_id}
-     return arr_request(api_url, api_key, api_timeout, "track", params=params)
+     return arr_request(api_url, api_key, api_timeout, "track", params=params, count_api=False)
 
 def get_queue(api_url: str, api_key: str, api_timeout: int) -> List:
     """Get the current queue from Lidarr (handles pagination)."""
@@ -240,7 +240,7 @@ def get_queue(api_url: str, api_key: str, api_timeout: int) -> List:
             "sortKey": "timeleft", # Example sort key
             "sortDir": "asc"
         }
-        response = arr_request(api_url, api_key, api_timeout, "queue", params=params)
+        response = arr_request(api_url, api_key, api_timeout, "queue", params=params, count_api=False)
         
         if response and isinstance(response, dict) and 'records' in response:
             records = response.get('records', [])
@@ -292,7 +292,7 @@ def get_missing_albums(api_url: str, api_key: str, api_timeout: int, monitored_o
         }
         
         lidarr_logger.debug(f"Requesting missing albums page {page} with params: {params}")
-        response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
+        response = arr_request(api_url, api_key, api_timeout, endpoint, params=params, count_api=False)
 
         if response and isinstance(response, dict) and 'records' in response:
             records = response.get('records', [])
@@ -361,7 +361,7 @@ def get_cutoff_unmet_albums(api_url: str, api_key: str, api_timeout: int, monito
         }
         
         lidarr_logger.debug(f"Requesting cutoff unmet albums page {page} with params: {params}")
-        response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
+        response = arr_request(api_url, api_key, api_timeout, endpoint, params=params, count_api=False)
         
         if response and isinstance(response, dict) and 'records' in response:
             records = response.get('records', [])

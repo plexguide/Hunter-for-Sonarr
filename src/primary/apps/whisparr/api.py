@@ -176,7 +176,7 @@ def get_items_with_missing(api_url: str, api_key: str, api_timeout: int, monitor
         # Endpoint parameters - always use v2 format
         endpoint = "wanted/missing?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
         
-        response = arr_request(api_url, api_key, api_timeout, endpoint)
+        response = arr_request(api_url, api_key, api_timeout, endpoint, count_api=False)
         
         if response is None:
             return None
@@ -216,7 +216,7 @@ def get_cutoff_unmet_items(api_url: str, api_key: str, api_timeout: int, monitor
         # Endpoint - always use v2 format
         endpoint = "wanted/cutoff?pageSize=1000&sortKey=airDateUtc&sortDirection=descending"
         
-        response = arr_request(api_url, api_key, api_timeout, endpoint)
+        response = arr_request(api_url, api_key, api_timeout, endpoint, count_api=False)
         
         if response is None:
             return None

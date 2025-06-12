@@ -96,7 +96,7 @@ def get_download_queue_size(api_url: str = None, api_key: str = None, timeout: i
             return 0
         else:
             # Use the arr_request function if API URL and key aren't provided
-            response = arr_request("queue")
+            response = arr_request("queue", count_api=False)
             if response and "totalRecords" in response:
                 return response["totalRecords"]
             return 0
@@ -242,7 +242,7 @@ def get_books_with_missing_files() -> List[Dict]:
         A list of book objects with missing files
     """
     # First, get all books
-    books = arr_request("book")
+    books = arr_request("book", count_api=False)
     if not books:
         return []
     
@@ -271,7 +271,7 @@ def get_cutoff_unmet_books(api_url: Optional[str] = None, api_key: Optional[str]
     # The cutoffUnmet endpoint in Readarr
     params = "cutoffUnmet=true"
     # Pass credentials to arr_request
-    books = arr_request(f"wanted/cutoff?{params}", api_url=api_url, api_key=api_key, api_timeout=api_timeout)
+    books = arr_request(f"wanted/cutoff?{params}", api_url=api_url, api_key=api_key, api_timeout=api_timeout, count_api=False)
     if not books or "records" not in books:
         return []
     
@@ -528,7 +528,7 @@ def book_search(book_ids: List[int], api_url: Optional[str] = None, api_key: Opt
     }
     
     # Pass credentials to arr_request
-    response = arr_request(endpoint, method="POST", data=data, api_url=api_url, api_key=api_key, api_timeout=api_timeout)
+    response = arr_request(endpoint, method="POST", data=data, api_url=api_url, api_key=api_key, api_timeout=api_timeout, count_api=False)
     # Return the response object (contains command ID) instead of just True/False
     # The calling function expects the command object now.
     return response 
@@ -670,7 +670,7 @@ def tag_processed_author(api_url: str, api_key: str, api_timeout: int, author_id
         True if the tagging was successful, False otherwise
     """
     try:
-                # Get or create the tag
+        # Get or create the tag
         tag_id = get_or_create_tag(api_url, api_key, api_timeout, tag_label)
         if tag_id is None:
             logger.error(f"Failed to get or create tag '{tag_label}' in Readarr")

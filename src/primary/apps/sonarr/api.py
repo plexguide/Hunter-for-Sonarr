@@ -185,7 +185,7 @@ def get_series(api_url: str, api_key: str, api_timeout: int, series_id: Optional
     else:
         endpoint = "series"
     
-    return arr_request(api_url, api_key, api_timeout, endpoint)
+    return arr_request(api_url, api_key, api_timeout, endpoint, count_api=False)
 
 def get_episode(api_url: str, api_key: str, api_timeout: int, episode_id: int) -> Dict:
     """
@@ -200,7 +200,7 @@ def get_episode(api_url: str, api_key: str, api_timeout: int, episode_id: int) -
     Returns:
         Episode information or empty dict if request failed
     """
-    response = arr_request(api_url, api_key, api_timeout, f"episode/{episode_id}")
+    response = arr_request(api_url, api_key, api_timeout, f"episode/{episode_id}", count_api=False)
     if response:
         return response
     return {}
@@ -249,7 +249,7 @@ def get_calendar(api_url: str, api_key: str, api_timeout: int, start_date: Optio
     if params:
         endpoint = f"{endpoint}?{'&'.join(params)}"
     
-    response = arr_request(api_url, api_key, api_timeout, endpoint)
+    response = arr_request(api_url, api_key, api_timeout, endpoint, count_api=False)
     if response:
         return response
     return []
@@ -267,7 +267,7 @@ def command_status(api_url: str, api_key: str, api_timeout: int, command_id: Uni
     Returns:
         Command status information or empty dict if request failed
     """
-    response = arr_request(api_url, api_key, api_timeout, f"command/{command_id}")
+    response = arr_request(api_url, api_key, api_timeout, f"command/{command_id}", count_api=False)
     if response:
         return response
     return {}
