@@ -686,7 +686,7 @@ let huntarrUI = {
         let displayName = app.charAt(0).toUpperCase() + app.slice(1);
         if (app === 'whisparr') displayName = 'Whisparr V2';
         else if (app === 'eros') displayName = 'Whisparr V3';
-        else if (app === 'hunting') displayName = 'Hunt Manager';
+
         if (this.elements.currentLogApp) this.elements.currentLogApp.textContent = displayName;
         // Switch to the selected app logs
         this.currentLogApp = app;
