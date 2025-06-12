@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Settings manager for Huntarr
-Handles loading, saving, and providing settings from individual JSON files per app
+Handles loading, saving, and providing settings from SQLite database
 Supports default configurations for different Arr applications
 """
 
@@ -9,8 +9,6 @@ import os
 import json
 import pathlib
 import logging
-import shutil
-import subprocess
 import time
 from typing import Dict, Any, Optional, List
 
@@ -18,19 +16,16 @@ from typing import Dict, Any, Optional, List
 logging.basicConfig(level=logging.INFO)
 settings_logger = logging.getLogger("settings_manager")
 
-# Settings directory setup - Root config directory
-# Use the centralized path configuration
-from src.primary.utils.config_paths import SETTINGS_DIR
+# Database integration
+from src.primary.utils.database import get_database
 
-# Settings directory is already created by config_paths module
-
-# Default configs location remains the same
+# Default configs location
 DEFAULT_CONFIGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'default_configs'))
 
-# Update or add this as a class attribute or constant
+# Known app types
 KNOWN_APP_TYPES = ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros", "swaparr", "general"]
 
-# Add a settings cache with timestamps to avoid excessive disk reads
+# Add a settings cache with timestamps to avoid excessive database reads
 settings_cache = {}  # Format: {app_name: {'timestamp': timestamp, 'data': settings_dict}}
 CACHE_TTL = 5  # Cache time-to-live in seconds
 
@@ -45,18 +40,10 @@ def clear_cache(app_name=None):
         settings_logger.debug("Clearing entire settings cache")
         settings_cache = {}
 
-def get_settings_file_path(app_name: str) -> pathlib.Path:
-    """Get the path to the settings file for a specific app."""
-    if app_name not in KNOWN_APP_TYPES:
-        # Log a warning but allow for potential future app types
-        settings_logger.warning(f"Requested settings file for unknown app type: {app_name}")
-    return SETTINGS_DIR / f"{app_name}.json"
-
 def get_default_config_path(app_name: str) -> pathlib.Path:
     """Get the path to the default config file for a specific app."""
     return pathlib.Path(DEFAULT_CONFIGS_DIR) / f"{app_name}.json"
 
-# Helper function to load default settings for a specific app
 def load_default_app_settings(app_name: str) -> Dict[str, Any]:
     """Load default settings for a specific app from its JSON file."""
     default_file = get_default_config_path(app_name)
@@ -72,29 +59,41 @@ def load_default_app_settings(app_name: str) -> Dict[str, Any]:
         return {}
 
 def _ensure_config_exists(app_name: str) -> None:
-    """Ensure the config file exists for an app, copying from default if not."""
-    settings_file = get_settings_file_path(app_name)
-    if not settings_file.exists():
-        default_file = get_default_config_path(app_name)
-        if default_file.exists():
-            try:
-                shutil.copyfile(default_file, settings_file)
-                settings_logger.info(f"Created default settings file for {app_name} at {settings_file}")
-            except Exception as e:
-                settings_logger.error(f"Error copying default settings for {app_name}: {e}")
+    """Ensure the config exists for an app in the database."""
+    try:
+        db = get_database()
+        
+        if app_name == 'general':
+            # Check if general settings exist
+            existing_settings = db.get_general_settings()
+            if not existing_settings:
+                # Load defaults and store in database
+                default_settings = load_default_app_settings(app_name)
+                if default_settings:
+                    db.save_general_settings(default_settings)
+                    settings_logger.info(f"Created default general settings in database")
+                else:
+                    settings_logger.warning(f"No default config found for general settings")
         else:
-            # Create an empty file if no default exists
-            settings_logger.warning(f"No default config found for {app_name}. Creating empty settings file.")
-            try:
-                with open(settings_file, 'w') as f:
-                    json.dump({}, f)
-            except Exception as e:
-                settings_logger.error(f"Error creating empty settings file for {app_name}: {e}")
-
+            # Check if app config exists
+            config = db.get_app_config(app_name)
+            if config is None:
+                # Load defaults and store in database
+                default_settings = load_default_app_settings(app_name)
+                if default_settings:
+                    db.save_app_config(app_name, default_settings)
+                    settings_logger.info(f"Created default settings in database for {app_name}")
+                else:
+                    # Create empty config in database
+                    db.save_app_config(app_name, {})
+                    settings_logger.warning(f"No default config found for {app_name}. Created empty database entry.")
+    except Exception as e:
+        settings_logger.error(f"Database error for {app_name}: {e}")
+        raise
 
 def load_settings(app_type, use_cache=True):
     """
-    Load settings for a specific app type
+    Load settings for a specific app type from database
     
     Args:
         app_type: The app type to load settings for
@@ -120,64 +119,63 @@ def load_settings(app_type, use_cache=True):
         else:
             settings_logger.debug(f"Cache expired for {app_type} (age: {cache_age:.1f}s)")
     
-    # No valid cache entry, load from disk
-    _ensure_config_exists(app_type)
-    settings_file = get_settings_file_path(app_type)
+    # No valid cache entry, load from database
+    current_settings = {}
+    
     try:
-        with open(settings_file, 'r') as f:
-            # Load existing settings
-            current_settings = json.load(f)
-            
-            # Load defaults to check for missing keys
-            default_settings = load_default_app_settings(app_type)
-            
-            # Add missing keys from defaults without overwriting existing values
-            updated = False
-            for key, value in default_settings.items():
-                if key not in current_settings:
-                    current_settings[key] = value
-                    updated = True
-            
-            # Apply Lidarr migration (artist -> album) for Huntarr 7.5.0+
-            if app_type == "lidarr":
-                if current_settings.get("hunt_missing_mode") == "artist":
-                    settings_logger.info("Migrating Lidarr hunt_missing_mode from 'artist' to 'album' (Huntarr 7.5.0+)")
-                    current_settings["hunt_missing_mode"] = "album"
-                    updated = True
-            
-            # If keys were added, save the updated file
-            if updated:
-                settings_logger.info(f"Added missing default keys to {app_type}.json")
-                save_settings(app_type, current_settings) # Use save_settings to handle writing
-            
-            # Update cache
-            settings_cache[app_type] = {
-                'timestamp': time.time(),
-                'data': current_settings
-            }
-                
-            return current_settings
-            
-    except json.JSONDecodeError:
-        settings_logger.error(f"Error decoding JSON from {settings_file}. Restoring from default.")
-        # Attempt to restore from default
-        default_settings = load_default_app_settings(app_type)
-        save_settings(app_type, default_settings) # Save the restored defaults
+        db = get_database()
         
-        # Update cache with defaults
-        settings_cache[app_type] = {
-            'timestamp': time.time(),
-            'data': default_settings
-        }
+        if app_type == 'general':
+            current_settings = db.get_general_settings()
+            if not current_settings:
+                # Config doesn't exist in database, create it
+                _ensure_config_exists(app_type)
+                current_settings = db.get_general_settings()
+        else:
+            current_settings = db.get_app_config(app_type)
+            if current_settings is None:
+                # Config doesn't exist in database, create it
+                _ensure_config_exists(app_type)
+                current_settings = db.get_app_config(app_type) or {}
+            
+        settings_logger.debug(f"Loaded {app_type} settings from database")
         
-        return default_settings
     except Exception as e:
-        settings_logger.error(f"Error loading settings for {app_type} from {settings_file}: {e}")
-        return {} # Return empty dict on other errors
-
+        settings_logger.error(f"Database error loading {app_type}: {e}")
+        raise
+    
+    # Load defaults to check for missing keys
+    default_settings = load_default_app_settings(app_type)
+    
+    # Add missing keys from defaults without overwriting existing values
+    updated = False
+    for key, value in default_settings.items():
+        if key not in current_settings:
+            current_settings[key] = value
+            updated = True
+    
+    # Apply Lidarr migration (artist -> album) for Huntarr 7.5.0+
+    if app_type == "lidarr":
+        if current_settings.get("hunt_missing_mode") == "artist":
+            settings_logger.info("Migrating Lidarr hunt_missing_mode from 'artist' to 'album' (Huntarr 7.5.0+)")
+            current_settings["hunt_missing_mode"] = "album"
+            updated = True
+    
+    # If keys were added, save the updated settings
+    if updated:
+        settings_logger.info(f"Added missing default keys to {app_type} settings")
+        save_settings(app_type, current_settings)
+    
+    # Update cache
+    settings_cache[app_type] = {
+        'timestamp': time.time(),
+        'data': current_settings
+    }
+        
+    return current_settings
 
 def save_settings(app_name: str, settings_data: Dict[str, Any]) -> bool:
-    """Save settings for a specific app."""
+    """Save settings for a specific app to database."""
     if app_name not in KNOWN_APP_TYPES:
          settings_logger.error(f"Attempted to save settings for unknown app type: {app_name}")
          return False
@@ -186,17 +184,23 @@ def save_settings(app_name: str, settings_data: Dict[str, Any]) -> bool:
     if app_name == 'general':
         settings_logger.info(f"Saving general settings: {settings_data}")
         settings_logger.info(f"Apprise URLs being saved: {settings_data.get('apprise_urls', 'NOT_FOUND')}")
-         
-    settings_file = get_settings_file_path(app_name)
+    
     try:
-        # Ensure the directory exists (though it should from the top-level check)
-        settings_file.parent.mkdir(parents=True, exist_ok=True)
+        db = get_database()
         
-        # Write the provided settings data directly
-        with open(settings_file, 'w') as f:
-            json.dump(settings_data, f, indent=2)
-        settings_logger.info(f"Settings saved successfully for {app_name} to {settings_file}")
+        if app_name == 'general':
+            db.save_general_settings(settings_data)
+        else:
+            db.save_app_config(app_name, settings_data)
+            
+        settings_logger.info(f"Settings saved successfully for {app_name} to database")
+        success = True
         
+    except Exception as e:
+        settings_logger.error(f"Database error saving {app_name}: {e}")
+        return False
+    
+    if success:
         # Clear cache for this app to ensure fresh reads
         clear_cache(app_name)
         
@@ -208,11 +212,8 @@ def save_settings(app_name: str, settings_data: Dict[str, Any]) -> bool:
                 settings_logger.debug("Timezone cache cleared after general settings save")
             except Exception as e:
                 settings_logger.warning(f"Failed to clear timezone cache: {e}")
-        
-        return True
-    except Exception as e:
-        settings_logger.error(f"Error saving settings for {app_name} to {settings_file}: {e}")
-        return False
+    
+    return success
 
 def get_setting(app_name: str, key: str, default: Optional[Any] = None) -> Any:
     """Get a specific setting value for an app."""
@@ -231,8 +232,7 @@ def get_all_settings() -> Dict[str, Dict[str, Any]]:
     """Load settings for all known apps."""
     all_settings = {}
     for app_name in KNOWN_APP_TYPES:
-        # Only include apps if their config file exists or can be created from defaults
-        # Effectively, load_settings ensures the file exists and loads it.
+        # Only include apps if their config exists or can be created from defaults
         settings = load_settings(app_name)
         if settings: # Only add if settings were successfully loaded
              all_settings[app_name] = settings
@@ -242,6 +242,9 @@ def get_configured_apps() -> List[str]:
     """Return a list of app names that have basic configuration (API URL and Key)."""
     configured = []
     for app_name in KNOWN_APP_TYPES:
+        if app_name == 'general':
+            continue  # Skip general settings
+            
         settings = load_settings(app_name)
         
         # First check if there are valid instances configured (multi-instance mode)
@@ -362,46 +365,49 @@ def get_advanced_setting(setting_name, default_value=None):
         default_value: The default value to return if the setting is not found
         
     Returns:
-        The value of the setting or the default value if not found
+        The value of the advanced setting, or default_value if not found
     """
     if setting_name not in ADVANCED_SETTINGS:
-        settings_logger.warning(f"Requested unknown advanced setting: {setting_name}")
+        settings_logger.warning(f"get_advanced_setting called with unknown setting: {setting_name}")
     
-    # Get from general settings
-    general_settings = load_settings('general', use_cache=True)
+    general_settings = load_settings("general")
     return general_settings.get(setting_name, default_value)
 
 def get_ssl_verify_setting():
     """
-    Get the SSL verification setting.
+    Get the SSL verification setting from general settings.
     
     Returns:
-        bool: True if SSL verification should be enabled (default), False otherwise
+        bool: True if SSL verification is enabled, False otherwise
     """
-    return get_advanced_setting("ssl_verify", True)
+    return get_advanced_setting("ssl_verify", True)  # Default to True for security
 
 def get_custom_tag(app_name: str, tag_type: str, default: str) -> str:
     """
-    Get a custom tag for an app and tag type.
+    Get a custom tag for a specific app and tag type.
     
     Args:
-        app_name: The app name (sonarr, radarr, etc.)
-        tag_type: The tag type (missing, upgrade, shows_missing)
-        default: Default tag if custom tag not found
+        app_name: The name of the app (e.g., 'sonarr', 'radarr')
+        tag_type: The type of tag (e.g., 'missing', 'upgrade')
+        default: The default tag to return if not found
         
     Returns:
-        The custom tag string
+        str: The custom tag or the default if not found
     """
     settings = load_settings(app_name)
-    custom_tags = settings.get('custom_tags', {})
-    tag = custom_tags.get(tag_type, default)
-    
-    # Validate tag length (max 25 characters as per UI)
-    if len(tag) > 25:
-        settings_logger.warning(f"Custom tag '{tag}' for {app_name}.{tag_type} exceeds 25 characters, truncating")
-        tag = tag[:25]
-    
-    return tag
+    custom_tags = settings.get("custom_tags", {})
+    return custom_tags.get(tag_type, default)
+
+def initialize_database():
+    """Initialize the database with default configurations if needed."""
+    try:
+        db = get_database()
+        defaults_dir = pathlib.Path(DEFAULT_CONFIGS_DIR)
+        db.initialize_from_defaults(defaults_dir)
+        settings_logger.info("Database initialized with default configurations")
+    except Exception as e:
+        settings_logger.error(f"Failed to initialize database: {e}")
+        raise
 
 # Example usage (for testing purposes, remove later)
 if __name__ == "__main__":

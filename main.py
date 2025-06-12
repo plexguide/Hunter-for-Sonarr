@@ -289,6 +289,16 @@ def main():
     
     # Register cleanup handler
     atexit.register(cleanup_handler)
+    
+    # Initialize database with default configurations
+    try:
+        from primary.settings_manager import initialize_database
+        initialize_database()
+        huntarr_logger.info("Database initialization completed successfully")
+    except Exception as e:
+        huntarr_logger.error(f"Failed to initialize database: {e}")
+        huntarr_logger.error("Application may not function correctly without database")
+        # Continue anyway - the app might still work with defaults
 
     background_thread = None
     try:
