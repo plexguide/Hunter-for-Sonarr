@@ -30,7 +30,7 @@ def get_ssl_verify_setting() -> bool:
         lidarr_logger.warning(f"Error getting SSL verify setting: {e}. Using default (True).")
         return True
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, params: Dict = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, params: Dict = None, count_api: bool = True) -> Any:
     """
     Generic function to make requests to Lidarr API (V1).
     
@@ -95,6 +95,14 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
 
         # Check for successful response
         response.raise_for_status()
+        
+        # Increment API counter only if count_api is True and request was successful
+        if count_api:
+            try:
+                from src.primary.stats_manager import increment_hourly_cap
+                increment_hourly_cap("lidarr")
+            except Exception as e:
+                lidarr_logger.warning(f"Failed to increment API counter for lidarr: {e}")
             
         # Parse response if there is content
         if response.content and response.headers.get('Content-Type', '').startswith('application/json'):
@@ -484,7 +492,7 @@ def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: s
     """
     try:
         # First, check if the tag already exists
-        response = arr_request(api_url, api_key, api_timeout, "tag")
+        response = arr_request(api_url, api_key, api_timeout, "tag", count_api=False)
         if response:
             for tag in response:
                 if tag.get('label') == tag_label:
@@ -494,7 +502,7 @@ def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: s
         
         # Tag doesn't exist, create it
         tag_data = {"label": tag_label}
-        response = arr_request(api_url, api_key, api_timeout, "tag", method="POST", data=tag_data)
+        response = arr_request(api_url, api_key, api_timeout, "tag", method="POST", data=tag_data, count_api=False)
         if response and 'id' in response:
             tag_id = response['id']
             lidarr_logger.info(f"Created new tag '{tag_label}' with ID: {tag_id}")
@@ -523,7 +531,7 @@ def add_tag_to_artist(api_url: str, api_key: str, api_timeout: int, artist_id: i
     """
     try:
         # First get the current artist data
-        artist_data = arr_request(api_url, api_key, api_timeout, f"artist/{artist_id}")
+        artist_data = arr_request(api_url, api_key, api_timeout, f"artist/{artist_id}", count_api=False)
         if not artist_data:
             lidarr_logger.error(f"Failed to get artist data for ID: {artist_id}")
             return False
@@ -539,7 +547,7 @@ def add_tag_to_artist(api_url: str, api_key: str, api_timeout: int, artist_id: i
         artist_data['tags'] = current_tags
         
         # Update the artist with the new tags
-        response = arr_request(api_url, api_key, api_timeout, f"artist/{artist_id}", method="PUT", data=artist_data)
+        response = arr_request(api_url, api_key, api_timeout, f"artist/{artist_id}", method="PUT", data=artist_data, count_api=False)
         if response:
             lidarr_logger.debug(f"Successfully added tag {tag_id} to artist {artist_id}")
             return True
@@ -616,7 +624,7 @@ def get_missing_albums_random_page(api_url: str, api_key: str, api_timeout: int,
         try:
             # Get total record count from a minimal query
             lidarr_logger.debug(f"Getting missing albums count (attempt {attempt+1}/{retries+1})")
-            response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
+            response = arr_request(api_url, api_key, api_timeout, endpoint, params=params, count_api=False)
             
             if not response or not isinstance(response, dict):
                 lidarr_logger.warning(f"Invalid response when getting missing count (attempt {attempt+1})")
@@ -650,7 +658,7 @@ def get_missing_albums_random_page(api_url: str, api_key: str, api_timeout: int,
                 "includeArtist": "true"
             }
             
-            response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
+            response = arr_request(api_url, api_key, api_timeout, endpoint, params=params, count_api=False)
             
             if not response or not isinstance(response, dict):
                 lidarr_logger.warning(f"Invalid response when getting missing albums page {random_page}")
@@ -720,7 +728,7 @@ def get_cutoff_unmet_albums_random_page(api_url: str, api_key: str, api_timeout:
         try:
             # Get total record count from a minimal query
             lidarr_logger.debug(f"Getting cutoff unmet albums count (attempt {attempt+1}/{retries+1})")
-            response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
+            response = arr_request(api_url, api_key, api_timeout, endpoint, params=params, count_api=False)
             
             if not response or not isinstance(response, dict):
                 lidarr_logger.warning(f"Invalid response when getting cutoff unmet count (attempt {attempt+1})")
@@ -754,7 +762,7 @@ def get_cutoff_unmet_albums_random_page(api_url: str, api_key: str, api_timeout:
                 "includeArtist": "true"
             }
             
-            response = arr_request(api_url, api_key, api_timeout, endpoint, params=params)
+            response = arr_request(api_url, api_key, api_timeout, endpoint, params=params, count_api=False)
             
             if not response or not isinstance(response, dict):
                 lidarr_logger.warning(f"Invalid response when getting cutoff unmet albums page {random_page}")

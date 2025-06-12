@@ -430,7 +430,7 @@ def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: s
         
         # Tag doesn't exist, create it
         tag_data = {"label": tag_label}
-        response = arr_request(api_url, api_key, api_timeout, "tag", method="POST", data=tag_data)
+        response = arr_request(api_url, api_key, api_timeout, "tag", method="POST", data=tag_data, count_api=False)
         if response and 'id' in response:
             tag_id = response['id']
             radarr_logger.info(f"Created new tag '{tag_label}' with ID: {tag_id}")
@@ -475,7 +475,7 @@ def add_tag_to_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int
         movie_data['tags'] = current_tags
         
         # Update the movie with the new tags
-        response = arr_request(api_url, api_key, api_timeout, f"movie/{movie_id}", method="PUT", data=movie_data)
+        response = arr_request(api_url, api_key, api_timeout, f"movie/{movie_id}", method="PUT", data=movie_data, count_api=False)
         if response:
             radarr_logger.debug(f"Successfully added tag {tag_id} to movie {movie_id}")
             return True

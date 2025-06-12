@@ -21,7 +21,7 @@ sonarr_logger = get_logger("sonarr")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, count_api: bool = True) -> Any:
     """
     Make a request to the Sonarr API.
     
@@ -82,6 +82,14 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
             
             # Check for successful response
             response.raise_for_status()
+            
+            # Increment API counter only if count_api is True and request was successful
+            if count_api:
+                try:
+                    from src.primary.stats_manager import increment_hourly_cap
+                    increment_hourly_cap("sonarr")
+                except Exception as e:
+                    sonarr_logger.warning(f"Failed to increment API counter for sonarr: {e}")
             
             # Check if there's any content before trying to parse JSON
             if response.content:
@@ -1159,7 +1167,7 @@ def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: s
     """
     try:
         # First, check if the tag already exists
-        response = arr_request(api_url, api_key, api_timeout, "tag")
+        response = arr_request(api_url, api_key, api_timeout, "tag", count_api=False)
         if response:
             for tag in response:
                 if tag.get('label') == tag_label:
@@ -1169,7 +1177,7 @@ def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: s
         
         # Tag doesn't exist, create it
         tag_data = {"label": tag_label}
-        response = arr_request(api_url, api_key, api_timeout, "tag", method="POST", data=tag_data)
+        response = arr_request(api_url, api_key, api_timeout, "tag", method="POST", data=tag_data, count_api=False)
         if response and 'id' in response:
             tag_id = response['id']
             sonarr_logger.info(f"Created new tag '{tag_label}' with ID: {tag_id}")
@@ -1198,7 +1206,7 @@ def add_tag_to_series(api_url: str, api_key: str, api_timeout: int, series_id: i
     """
     try:
         # First get the current series data
-        series_data = arr_request(api_url, api_key, api_timeout, f"series/{series_id}")
+        series_data = arr_request(api_url, api_key, api_timeout, f"series/{series_id}", count_api=False)
         if not series_data:
             sonarr_logger.error(f"Failed to get series data for ID: {series_id}")
             return False
@@ -1214,7 +1222,7 @@ def add_tag_to_series(api_url: str, api_key: str, api_timeout: int, series_id: i
         series_data['tags'] = current_tags
         
         # Update the series with the new tags
-        response = arr_request(api_url, api_key, api_timeout, f"series/{series_id}", method="PUT", data=series_data)
+        response = arr_request(api_url, api_key, api_timeout, f"series/{series_id}", method="PUT", data=series_data, count_api=False)
         if response:
             sonarr_logger.debug(f"Successfully added tag {tag_id} to series {series_id}")
             return True

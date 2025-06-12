@@ -106,7 +106,7 @@ def get_download_queue_size(api_url: str = None, api_key: str = None, timeout: i
 
 def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type: str = "readarr",
                 api_url: str = None, api_key: str = None, api_timeout: int = None, 
-                params: Dict = None, instance_data: Dict = None) -> Any:
+                params: Dict = None, instance_data: Dict = None, count_api: bool = True) -> Any:
     """
     Make a request to the Readarr API.
     
@@ -216,6 +216,14 @@ def arr_request(endpoint: str, method: str = "GET", data: Dict = None, app_type:
         
         # Check for errors
         response.raise_for_status()
+        
+        # Increment API counter only if count_api is True and request was successful
+        if count_api:
+            try:
+                from src.primary.stats_manager import increment_hourly_cap
+                increment_hourly_cap("readarr")
+            except Exception as e:
+                logger.warning(f"Failed to increment API counter for readarr: {e}")
         
         # Parse JSON response
         if response.text:
@@ -580,7 +588,7 @@ def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: s
     """
     try:
         # First, check if the tag already exists
-        response = arr_request("tag", api_url=api_url, api_key=api_key, api_timeout=api_timeout)
+        response = arr_request("tag", api_url=api_url, api_key=api_key, api_timeout=api_timeout, count_api=False)
         if response:
             for tag in response:
                 if tag.get('label') == tag_label:
@@ -590,7 +598,7 @@ def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: s
         
         # Tag doesn't exist, create it
         tag_data = {"label": tag_label}
-        response = arr_request("tag", method="POST", data=tag_data, api_url=api_url, api_key=api_key, api_timeout=api_timeout)
+        response = arr_request("tag", method="POST", data=tag_data, api_url=api_url, api_key=api_key, api_timeout=api_timeout, count_api=False)
         if response and 'id' in response:
             tag_id = response['id']
             logger.info(f"Created new tag '{tag_label}' with ID: {tag_id}")
@@ -619,7 +627,7 @@ def add_tag_to_author(api_url: str, api_key: str, api_timeout: int, author_id: i
     """
     try:
         # First get the current author data
-        author_data = arr_request(f"author/{author_id}", api_url=api_url, api_key=api_key, api_timeout=api_timeout)
+        author_data = arr_request(f"author/{author_id}", api_url=api_url, api_key=api_key, api_timeout=api_timeout, count_api=False)
         if not author_data:
             logger.error(f"Failed to get author data for ID: {author_id}")
             return False
@@ -635,7 +643,7 @@ def add_tag_to_author(api_url: str, api_key: str, api_timeout: int, author_id: i
         author_data['tags'] = current_tags
         
         # Update the author with the new tags
-        response = arr_request(f"author/{author_id}", method="PUT", data=author_data, api_url=api_url, api_key=api_key, api_timeout=api_timeout)
+        response = arr_request(f"author/{author_id}", method="PUT", data=author_data, api_url=api_url, api_key=api_key, api_timeout=api_timeout, count_api=False)
         if response:
             logger.debug(f"Successfully added tag {tag_id} to author {author_id}")
             return True

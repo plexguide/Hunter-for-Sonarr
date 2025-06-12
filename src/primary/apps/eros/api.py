@@ -22,7 +22,7 @@ eros_logger = get_logger("eros")
 # Use a session for better performance
 session = requests.Session()
 
-def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None) -> Any:
+def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, method: str = "GET", data: Dict = None, count_api: bool = True) -> Any:
     """
     Make a request to the Eros API.
     
@@ -81,6 +81,15 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
             # Check if the request was successful
             try:
                 response.raise_for_status()
+                
+                # Increment API counter only if count_api is True and request was successful
+                if count_api:
+                    try:
+                        from src.primary.stats_manager import increment_hourly_cap
+                        increment_hourly_cap("eros")
+                    except Exception as e:
+                        eros_logger.warning(f"Failed to increment API counter for eros: {e}")
+                        
             except requests.exceptions.HTTPError as e:
                 eros_logger.error(f"Error during {method} request to {endpoint}: {e}, Status Code: {response.status_code}")
                 eros_logger.debug(f"Response content: {response.text[:200]}")
@@ -518,7 +527,7 @@ def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: s
     """
     try:
         # First, check if the tag already exists
-        response = arr_request(api_url, api_key, api_timeout, "tag")
+        response = arr_request(api_url, api_key, api_timeout, "tag", count_api=False)
         if response:
             for tag in response:
                 if tag.get('label') == tag_label:
@@ -528,7 +537,7 @@ def get_or_create_tag(api_url: str, api_key: str, api_timeout: int, tag_label: s
         
         # Tag doesn't exist, create it
         tag_data = {"label": tag_label}
-        response = arr_request(api_url, api_key, api_timeout, "tag", method="POST", data=tag_data)
+        response = arr_request(api_url, api_key, api_timeout, "tag", method="POST", data=tag_data, count_api=False)
         if response and 'id' in response:
             tag_id = response['id']
             eros_logger.info(f"Created new tag '{tag_label}' with ID: {tag_id}")
@@ -557,7 +566,7 @@ def add_tag_to_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int
     """
     try:
         # First get the current movie data
-        movie_data = arr_request(api_url, api_key, api_timeout, f"movie/{movie_id}")
+        movie_data = arr_request(api_url, api_key, api_timeout, f"movie/{movie_id}", count_api=False)
         if not movie_data:
             eros_logger.error(f"Failed to get movie data for ID: {movie_id}")
             return False
@@ -573,7 +582,7 @@ def add_tag_to_movie(api_url: str, api_key: str, api_timeout: int, movie_id: int
         movie_data['tags'] = current_tags
         
         # Update the movie with the new tags
-        response = arr_request(api_url, api_key, api_timeout, f"movie/{movie_id}", method="PUT", data=movie_data)
+        response = arr_request(api_url, api_key, api_timeout, f"movie/{movie_id}", method="PUT", data=movie_data, count_api=False)
         if response:
             eros_logger.debug(f"Successfully added tag {tag_id} to movie {movie_id}")
             return True
