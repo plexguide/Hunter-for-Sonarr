@@ -589,8 +589,13 @@ def get_app_url_and_key(app_type: str) -> Tuple[str, str]:
     Returns:
         Tuple[str, str]: (api_url, api_key)
     """
-    from primary import keys_manager
-    return keys_manager.get_api_keys(app_type)
+    from src.primary.settings_manager import load_settings
+    settings = load_settings(app_type)
+    if settings:
+        api_url = settings.get('url', '')
+        api_key = settings.get('api_key', '')
+        return api_url, api_key
+    return '', ''
 
 def get_client_identifier() -> str:
     """Get or generate Plex Client Identifier"""
@@ -863,57 +868,39 @@ def unlink_plex_from_user(username: str = None) -> bool:
     """
     try:
         if not user_exists():
-            logger.error("No user file exists")
+            logger.error("No user exists")
             return False
             
-        with open(USER_FILE, 'r') as f:
-            user_data = json.load(f)
+        user_data = get_user_data()
+        if not user_data:
+            logger.error("Failed to get user data")
+            return False
             
-        # No need to validate username since user is already authenticated via session
-        # Just check if Plex data exists to unlink
+        # Check if Plex data exists to unlink
         if not user_data.get('plex_linked', False):
             logger.warning("No Plex account linked to unlink")
             return True  # Not an error, just nothing to do
             
-        # Remove all Plex-related fields
-        plex_fields_to_remove = [
-            'plex_token',
-            'plex_username', 
-            'plex_email',
-            'plex_linked_at',
-            'plex_linked',
-            'plex_user_id'
-        ]
-        
-        removed_any = False
-        for field in plex_fields_to_remove:
-            if field in user_data:
-                del user_data[field]
-                removed_any = True
-                
         # If auth_type is plex, we need to handle this carefully
         if user_data.get('auth_type') == 'plex':
             # Check if user has a local password set
             if not user_data.get('password'):
                 logger.error("Cannot unlink Plex from Plex-only user without local password. User must set a local password first.")
                 raise Exception("Plex-only user must set a local password before unlinking Plex account")
-            # Change auth_type back to local
-            user_data['auth_type'] = 'local'
-            removed_any = True
         
-        if not removed_any:
-            logger.warning("No Plex data found to remove")
-            return True  # Not an error, just nothing to do
-            
-        # Save the updated user data
-        with open(USER_FILE, 'w') as f:
-            json.dump(user_data, f, indent=2)
-            
-        # Set appropriate file permissions
-        os.chmod(USER_FILE, 0o600)
+        # Use database to update user and remove Plex data
+        from src.primary.utils.database import HuntarrDatabase
+        db = HuntarrDatabase()
         
-        logger.info(f"Successfully unlinked Plex account from authenticated user")
-        return True
+        # Update user to remove Plex data
+        success = db.update_user_plex(user_data['username'], None, None)
+        
+        if success:
+            logger.info(f"Successfully unlinked Plex account from authenticated user")
+            return True
+        else:
+            logger.error("Failed to unlink Plex account in database")
+            return False
         
     except Exception as e:
         logger.error(f"Error unlinking Plex account: {str(e)}")

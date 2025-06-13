@@ -875,10 +875,8 @@ def start_huntarr():
         logger.error(f"Error during configuration migration: {e}")
         logger.debug(traceback.format_exc())
     
-    # Perform initial settings migration if specified (e.g., via env var or arg)
-    if os.environ.get("HUNTARR_RUN_MIGRATION", "false").lower() == "true":
-        logger.info("Running settings migration from huntarr.json (if found)...")
-        settings_manager.migrate_from_huntarr_json()
+    # Legacy migration removed - settings are now stored in database
+    # Migration environment variable no longer used
         
     # Start the hourly API cap scheduler
     try:
