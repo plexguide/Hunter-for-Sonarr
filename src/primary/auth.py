@@ -22,12 +22,8 @@ from typing import Dict, Any, Optional, Tuple, Union
 from flask import request, redirect, url_for, session
 from .utils.logger import logger # Ensure logger is imported
 
-# User directory setup
-# Use the centralized path configuration
-from src.primary.utils.config_paths import USER_DIR
-
-# User directory is already created by config_paths module
-USER_FILE = USER_DIR / "credentials.json"
+# Database setup
+from src.primary.utils.database import get_database
 
 # Session settings
 SESSION_EXPIRY = 60 * 60 * 24 * 7  # 1 week in seconds
@@ -44,43 +40,58 @@ active_sessions = {}
 # Store active Plex PINs
 active_plex_pins = {}
 
-# --- Add Helper functions for user data ---
-def get_user_data() -> Dict[str, Any]:
-    """Load user data from the credentials file."""
-    if not USER_FILE.exists():
-        logger.warning(f"Attempted to get user data, but file not found: {USER_FILE}")
-        return {}
-    try:
-        with open(USER_FILE, 'r') as f:
-            return json.load(f)
-    except json.JSONDecodeError:
-        logger.error(f"Error decoding JSON from user file: {USER_FILE}")
-        return {}
-    except Exception as e:
-        logger.error(f"Error reading user file {USER_FILE}: {e}", exc_info=True)
+# --- Helper functions for user data ---
+def get_user_data(username: str = None) -> Dict[str, Any]:
+    """Load user data from the database."""
+    db = get_database()
+    if username:
+        return db.get_user_by_username(username) or {}
+    else:
+        # For backward compatibility, return first user if no username specified
+        # This is used in legacy code that expects single user
         return {}
 
 def save_user_data(user_data: Dict[str, Any]) -> bool:
-    """Save user data to the credentials file."""
+    """Save user data to the database."""
     try:
-        logger.debug(f"Attempting to save user data to: {USER_FILE}")
-        # Ensure directory exists (though it should from startup)
-        USER_DIR.mkdir(parents=True, exist_ok=True)
-        
-        with open(USER_FILE, 'w') as f:
-            json.dump(user_data, f, indent=4) # Add indent for readability
-        
-        # Set permissions after writing
-        try:
-            os.chmod(USER_FILE, 0o644)
-            logger.debug(f"Set permissions 0o644 on {USER_FILE}")
-        except Exception as e_perm:
-            logger.warning(f"Could not set permissions on file {USER_FILE}: {e_perm}")
+        db = get_database()
+        username = user_data.get('username')
+        if not username:
+            logger.error("Cannot save user data without username")
+            return False
             
-        logger.info(f"User data saved successfully to {USER_FILE}")
-        return True
+        # Check if user exists
+        existing_user = db.get_user_by_username(username)
+        if existing_user:
+            # Update existing user
+            success = True
+            if 'password' in user_data:
+                success &= db.update_user_password(username, user_data['password'])
+            if 'two_fa_enabled' in user_data or 'two_fa_secret' in user_data:
+                success &= db.update_user_2fa(
+                    username, 
+                    user_data.get('two_fa_enabled', existing_user.get('two_fa_enabled', False)),
+                    user_data.get('two_fa_secret', existing_user.get('two_fa_secret'))
+                )
+            if 'plex_token' in user_data or 'plex_user_data' in user_data:
+                success &= db.update_user_plex(
+                    username,
+                    user_data.get('plex_token', existing_user.get('plex_token')),
+                    user_data.get('plex_user_data', existing_user.get('plex_user_data'))
+                )
+            return success
+        else:
+            # Create new user
+            return db.create_user(
+                username=username,
+                password=user_data.get('password', ''),
+                two_fa_enabled=user_data.get('two_fa_enabled', False),
+                two_fa_secret=user_data.get('two_fa_secret'),
+                plex_token=user_data.get('plex_token'),
+                plex_user_data=user_data.get('plex_user_data')
+            )
     except Exception as e:
-        logger.error(f"Error saving user file {USER_FILE}: {e}", exc_info=True)
+        logger.error(f"Error saving user data: {e}", exc_info=True)
         return False
 # --- End Helper functions ---
 
@@ -123,7 +134,8 @@ def validate_password_strength(password: str) -> Optional[str]:
 
 def user_exists() -> bool:
     """Check if a user has been created"""
-    return USER_FILE.exists() and os.path.getsize(USER_FILE) > 0
+    db = get_database()
+    return db.user_exists()
 
 def create_user(username: str, password: str) -> bool:
     """Create a new user"""
@@ -131,44 +143,21 @@ def create_user(username: str, password: str) -> bool:
         logger.error("Attempted to create user with empty username or password")
         return False
         
-    # Ensure user directory exists with proper permissions
-    logger.info(f"Ensuring user directory exists: {USER_DIR}")
-    USER_DIR.mkdir(parents=True, exist_ok=True)
-    try:
-        # Set appropriate permissions if not running as root
-        logger.info(f"Setting permissions on directory: {USER_DIR}")
-        os.chmod(USER_DIR, 0o755)
-    except Exception as e:
-        logger.warning(f"Could not set permissions on directory {USER_DIR}: {e}")
-        
-    # Hash the username and password
-    username_hash = hash_username(username)
-    password_hash = hash_password(password)
+    # Store credentials in database (no hashing as requested)
+    db = get_database()
+    success = db.create_user(
+        username=username,
+        password=password,
+        two_fa_enabled=False,
+        two_fa_secret=None
+    )
     
-    # Store the credentials
-    user_data = {
-        "username": username_hash,
-        "password": password_hash,
-        "created_at": time.time(),
-        "2fa_enabled": False,
-        "2fa_secret": None
-    }
-    
-    try:
-        logger.info(f"Writing user file: {USER_FILE}")
-        with open(USER_FILE, 'w') as f:
-            json.dump(user_data, f)
-        # Set appropriate permissions on the file
-        try:
-            logger.info(f"Setting permissions on file: {USER_FILE}")
-            os.chmod(USER_FILE, 0o644)
-        except Exception as e:
-            logger.warning(f"Could not set permissions on file {USER_FILE}: {e}")
+    if success:
         logger.info("User creation successful")
-        return True
-    except Exception as e:
-        logger.error(f"Error creating user file {USER_FILE}: {e}", exc_info=True)
-        return False
+    else:
+        logger.error("User creation failed")
+    
+    return success
 
 def verify_user(username: str, password: str, otp_code: str = None) -> Tuple[bool, bool]:
     """
@@ -182,45 +171,45 @@ def verify_user(username: str, password: str, otp_code: str = None) -> Tuple[boo
         return False, False
         
     try:
-        with open(USER_FILE, 'r') as f:
-            user_data = json.load(f)
-            
-        # Hash the provided username
-        username_hash = hash_username(username)
+        db = get_database()
+        user_data = db.get_user_by_username(username)
         
-        # Compare username and verify password
-        if user_data.get("username") == username_hash:
-            if verify_password(user_data.get("password", ""), password):
-                # Check if 2FA is enabled
-                two_fa_enabled = user_data.get("2fa_enabled", False)
-                logger.debug(f"2FA enabled for user '{username}': {two_fa_enabled}")
-                logger.debug(f"2FA secret present: {bool(user_data.get('2fa_secret'))}")
-                logger.debug(f"OTP code provided: {bool(otp_code)}")
-                
-                if two_fa_enabled:
-                    # If 2FA code was provided, verify it
-                    if otp_code:
-                        totp = pyotp.TOTP(user_data.get("2fa_secret"))
-                        valid_code = totp.verify(otp_code)
-                        logger.debug(f"OTP code validation result: {valid_code}")
-                        if valid_code:
-                            logger.info(f"User '{username}' authenticated successfully with 2FA.")
-                            return True, False
-                        else:
-                            logger.warning(f"Login attempt failed for user '{username}': Invalid 2FA code.")
-                            return False, True
+        if not user_data:
+            logger.warning(f"Login attempt failed: User '{username}' not found.")
+            return False, False
+        
+        # Verify password (no hashing as requested)
+        if user_data.get("password") == password:
+            # Check if 2FA is enabled
+            two_fa_enabled = user_data.get("two_fa_enabled", False)
+            logger.debug(f"2FA enabled for user '{username}': {two_fa_enabled}")
+            logger.debug(f"2FA secret present: {bool(user_data.get('two_fa_secret'))}")
+            logger.debug(f"OTP code provided: {bool(otp_code)}")
+            
+            if two_fa_enabled:
+                # If 2FA code was provided, verify it
+                if otp_code:
+                    totp = pyotp.TOTP(user_data.get("two_fa_secret"))
+                    valid_code = totp.verify(otp_code)
+                    logger.debug(f"OTP code validation result: {valid_code}")
+                    if valid_code:
+                        logger.info(f"User '{username}' authenticated successfully with 2FA.")
+                        return True, False
                     else:
-                        # No OTP code provided but 2FA is enabled
-                        logger.warning(f"Login attempt failed for user '{username}': 2FA code required but not provided.")
-                        logger.debug("Returning needs_2fa=True to trigger 2FA input display")
+                        logger.warning(f"Login attempt failed for user '{username}': Invalid 2FA code.")
                         return False, True
                 else:
-                    # 2FA not enabled, password is correct
-                    logger.info(f"User '{username}' authenticated successfully (no 2FA).")
-                    return True, False
+                    # No OTP code provided but 2FA is enabled
+                    logger.warning(f"Login attempt failed for user '{username}': 2FA code required but not provided.")
+                    logger.debug("Returning needs_2fa=True to trigger 2FA input display")
+                    return False, True
             else:
-                logger.warning(f"Login attempt failed for user '{username}': Invalid password.")
-                return False, False
+                # 2FA not enabled, password is correct
+                logger.info(f"User '{username}' authenticated successfully (no 2FA).")
+                return True, False
+        else:
+            logger.warning(f"Login attempt failed for user '{username}': Invalid password.")
+            return False, False
     except Exception as e:
         logger.error(f"Error during user verification for '{username}': {e}", exc_info=True)
     
@@ -419,8 +408,11 @@ def logout(session_id: str):
 
 def is_2fa_enabled(username):
     """Check if 2FA is enabled for a user."""
-    user_data = get_user_data()
-    return user_data.get('2fa_enabled', False)
+    db = get_database()
+    user_data = db.get_user_by_username(username)
+    if user_data:
+        return user_data.get("two_fa_enabled", False)
+    return False
 
 def generate_2fa_secret(username: str) -> Tuple[str, str]:
     """
@@ -457,8 +449,9 @@ def generate_2fa_secret(username: str) -> Tuple[str, str]:
         img_str = base64.b64encode(buffered.getvalue()).decode()
     
         # Store the secret temporarily associated with the user
-        user_data = get_user_data()
+        user_data = get_user_data(username)
         user_data["temp_2fa_secret"] = secret
+        user_data["username"] = username  # Ensure username is set
         if save_user_data(user_data):
             logger.info(f"Generated temporary 2FA secret for user '{username}'.")
             return secret, f"data:image/png;base64,{img_str}"

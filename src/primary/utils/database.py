@@ -185,6 +185,21 @@ class HuntarrDatabase:
                 )
             ''')
             
+            # Create users table for authentication and user management
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    two_fa_enabled BOOLEAN DEFAULT FALSE,
+                    two_fa_secret TEXT,
+                    plex_token TEXT,
+                    plex_user_data TEXT
+                )
+            ''')
+            
             # Create indexes for better performance
             conn.execute('CREATE INDEX IF NOT EXISTS idx_app_configs_type ON app_configs(app_type)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_general_settings_key ON general_settings(setting_key)')
@@ -202,6 +217,7 @@ class HuntarrDatabase:
             conn.execute('CREATE INDEX IF NOT EXISTS idx_schedules_time ON schedules(time_hour, time_minute)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_state_data_app_type ON state_data(app_type, state_type)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_swaparr_state_app_name ON swaparr_state(app_name, state_type)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)')
             
             conn.commit()
             logger.info(f"Database initialized at: {self.db_path}")
@@ -1071,6 +1087,120 @@ class HuntarrDatabase:
     def set_swaparr_removed_items(self, app_name: str, removed_items: Dict[str, Any]):
         """Set removed items data for a specific Swaparr app"""
         self.set_swaparr_state_data(app_name, "removed_items", removed_items)
+
+    # User Management Methods
+    def user_exists(self) -> bool:
+        """Check if any user exists in the database"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute('SELECT COUNT(*) FROM users')
+            count = cursor.fetchone()[0]
+            return count > 0
+    
+    def get_user_by_username(self, username: str) -> Optional[Dict[str, Any]]:
+        """Get user data by username"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute(
+                'SELECT * FROM users WHERE username = ?',
+                (username,)
+            )
+            row = cursor.fetchone()
+            
+            if row:
+                user_data = dict(row)
+                # Parse JSON fields
+                if user_data.get('plex_user_data'):
+                    try:
+                        user_data['plex_user_data'] = json.loads(user_data['plex_user_data'])
+                    except json.JSONDecodeError:
+                        user_data['plex_user_data'] = None
+                return user_data
+            return None
+    
+    def create_user(self, username: str, password: str, two_fa_enabled: bool = False, 
+                   two_fa_secret: str = None, plex_token: str = None, 
+                   plex_user_data: Dict[str, Any] = None) -> bool:
+        """Create a new user"""
+        try:
+            plex_data_json = json.dumps(plex_user_data) if plex_user_data else None
+            
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute('''
+                    INSERT INTO users (username, password, two_fa_enabled, two_fa_secret, 
+                                     plex_token, plex_user_data, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ''', (username, password, two_fa_enabled, two_fa_secret, plex_token, plex_data_json))
+                conn.commit()
+                logger.info(f"Created user: {username}")
+                return True
+        except Exception as e:
+            logger.error(f"Error creating user {username}: {e}")
+            return False
+    
+    def update_user_password(self, username: str, new_password: str) -> bool:
+        """Update user password"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute('''
+                    UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP 
+                    WHERE username = ?
+                ''', (new_password, username))
+                conn.commit()
+                logger.info(f"Updated password for user: {username}")
+                return True
+        except Exception as e:
+            logger.error(f"Error updating password for user {username}: {e}")
+            return False
+    
+    def update_user_username(self, old_username: str, new_username: str) -> bool:
+        """Update username"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute('''
+                    UPDATE users SET username = ?, updated_at = CURRENT_TIMESTAMP 
+                    WHERE username = ?
+                ''', (new_username, old_username))
+                conn.commit()
+                logger.info(f"Updated username from {old_username} to {new_username}")
+                return True
+        except Exception as e:
+            logger.error(f"Error updating username from {old_username} to {new_username}: {e}")
+            return False
+    
+    def update_user_2fa(self, username: str, two_fa_enabled: bool, two_fa_secret: str = None) -> bool:
+        """Update user 2FA settings"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute('''
+                    UPDATE users SET two_fa_enabled = ?, two_fa_secret = ?, 
+                                   updated_at = CURRENT_TIMESTAMP 
+                    WHERE username = ?
+                ''', (two_fa_enabled, two_fa_secret, username))
+                conn.commit()
+                logger.info(f"Updated 2FA settings for user: {username}")
+                return True
+        except Exception as e:
+            logger.error(f"Error updating 2FA for user {username}: {e}")
+            return False
+    
+    def update_user_plex(self, username: str, plex_token: str = None, 
+                        plex_user_data: Dict[str, Any] = None) -> bool:
+        """Update user Plex settings"""
+        try:
+            plex_data_json = json.dumps(plex_user_data) if plex_user_data else None
+            
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute('''
+                    UPDATE users SET plex_token = ?, plex_user_data = ?, 
+                                   updated_at = CURRENT_TIMESTAMP 
+                    WHERE username = ?
+                ''', (plex_token, plex_data_json, username))
+                conn.commit()
+                logger.info(f"Updated Plex settings for user: {username}")
+                return True
+        except Exception as e:
+            logger.error(f"Error updating Plex settings for user {username}: {e}")
+            return False
 
 # Global database instance
 _database_instance = None
