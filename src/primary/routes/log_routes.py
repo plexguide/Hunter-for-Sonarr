@@ -43,17 +43,28 @@ def get_logs(app_type):
         offset = int(request.args.get('offset', 0))
         search = request.args.get('search')
         
-        # Map 'system' to actual app type in database
-        db_app_type = 'system' if app_type == 'system' else app_type
-        
-        # Get logs from database
-        logs = logs_db.get_logs(
-            app_type=db_app_type,
-            level=level,
-            limit=limit,
-            offset=offset,
-            search=search
-        )
+        # Handle 'all' app type by getting logs from all apps
+        if app_type == 'all':
+            # Get logs from all app types
+            logs = logs_db.get_logs(
+                app_type=None,  # None means all app types
+                level=level,
+                limit=limit,
+                offset=offset,
+                search=search
+            )
+        else:
+            # Map 'system' to actual app type in database
+            db_app_type = 'system' if app_type == 'system' else app_type
+            
+            # Get logs from specific app type
+            logs = logs_db.get_logs(
+                app_type=db_app_type,
+                level=level,
+                limit=limit,
+                offset=offset,
+                search=search
+            )
         
         # Format logs for frontend (same format as file-based logs)
         formatted_logs = []
@@ -66,11 +77,19 @@ def get_logs(app_type):
             formatted_logs.append(formatted_log)
         
         # Get total count for pagination
-        total_count = logs_db.get_log_count(
-            app_type=db_app_type,
-            level=level,
-            search=search
-        )
+        if app_type == 'all':
+            total_count = logs_db.get_log_count(
+                app_type=None,  # None means all app types
+                level=level,
+                search=search
+            )
+        else:
+            db_app_type = 'system' if app_type == 'system' else app_type
+            total_count = logs_db.get_log_count(
+                app_type=db_app_type,
+                level=level,
+                search=search
+            )
         
         return jsonify({
             'success': True,

@@ -315,18 +315,29 @@ window.LogsModule = {
     
     // Load logs from the database API
     loadLogsFromAPI: function(appType, isPolling = false) {
-        const apiUrl = appType === 'all' ? '/api/logs/system' : `/api/logs/${appType}`;
+        // Use the correct API endpoint - the backend now supports 'all' as an app_type
+        const apiUrl = `/api/logs/${appType}`;
+        
         const limit = isPolling ? 20 : 100; // Load fewer logs when polling for updates
         
-        HuntarrUtils.fetchWithTimeout(`${apiUrl}?limit=${limit}&offset=0`)
-            .then(response => response.json())
+        // Include level filter in API call if a specific level is selected
+        const currentLogLevel = this.elements.logLevelSelect ? this.elements.logLevelSelect.value : 'all';
+        let apiParams = `limit=${limit}&offset=0`;
+        if (currentLogLevel !== 'all') {
+            apiParams += `&level=${currentLogLevel.toUpperCase()}`;
+        }
+        
+        HuntarrUtils.fetchWithTimeout(`${apiUrl}?${apiParams}`)
+            .then(response => {
+                return response.json();
+            })
             .then(data => {
                 if (data.success && data.logs) {
                     this.processLogsFromAPI(data.logs, appType, isPolling);
                 } else {
-                    console.error('[LogsModule] Failed to load logs:', data.error);
+                    console.error('[LogsModule] Failed to load logs:', data.error || 'No logs in response');
                     if (this.elements.logConnectionStatus) {
-                        this.elements.logConnectionStatus.textContent = 'Error loading logs';
+                        this.elements.logConnectionStatus.textContent = data.error || 'Error loading logs';
                         this.elements.logConnectionStatus.className = 'status-error';
                     }
                 }
@@ -388,12 +399,9 @@ window.LogsModule = {
                     return;
                 }
                 
-                // Check if this log should be displayed based on the selected app
-                const currentApp = this.currentLogApp;
-                const shouldDisplay = this.currentLogApp === 'all' || currentApp === logAppType;
-
-                if (!shouldDisplay) return;
-
+                // No need for client-side app filtering since the API handles this correctly now
+                // The API returns the right logs based on the selected app type
+                
                 const logEntry = document.createElement('div');
                 logEntry.className = 'log-entry';
 
