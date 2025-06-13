@@ -313,17 +313,17 @@ def link_account():
         setup_mode = data.get('setup_mode', False)
         
         # Handle setup mode differently - user might not have valid session
-        if setup_mode and username:
-            # In setup mode, validate the username exists instead of requiring session
-            from src.primary.auth import get_user_data, hash_username
+        if setup_mode:
+            # In setup mode, just get the user data without username validation
+            # Since Huntarr is single-user, we don't need to validate specific usernames
+            from src.primary.auth import get_user_data
             user_data = get_user_data()
-            username_hash = hash_username(username)
             
-            if not user_data or user_data.get("username") != username_hash:
-                return jsonify({'success': False, 'error': 'Invalid username or user not found'}), 400
+            if not user_data:
+                return jsonify({'success': False, 'error': 'No user found in system'}), 400
                 
-            # Username is valid, proceed with linking
-            authenticated_username = username
+            # Use the actual username from the database
+            authenticated_username = user_data.get('username')
         else:
             # Normal mode - require session authentication
             session_id = session.get(SESSION_COOKIE_NAME)
@@ -451,8 +451,13 @@ def plex_status():
                 'error': 'No user found'
             }), 404
         
-        plex_linked = user_data.get('plex_linked', False)
-        auth_type = user_data.get('auth_type', 'local')
+        # Check if Plex is linked by looking for plex_token
+        plex_token = user_data.get('plex_token')
+        plex_user_data = user_data.get('plex_user_data')
+        plex_linked = bool(plex_token)
+        
+        # Determine auth type - if user has plex_token, they can use plex auth
+        auth_type = 'plex' if plex_linked else 'local'
         
         response_data = {
             'success': True,
@@ -460,12 +465,21 @@ def plex_status():
             'auth_type': auth_type
         }
         
-        if plex_linked or auth_type == 'plex':
-            response_data.update({
-                'plex_username': user_data.get('plex_username'),
-                'plex_email': user_data.get('plex_email'),
-                'plex_linked_at': user_data.get('plex_linked_at')
-            })
+        if plex_linked:
+            # Parse plex_user_data if it exists
+            if plex_user_data and isinstance(plex_user_data, dict):
+                response_data.update({
+                    'plex_username': plex_user_data.get('username'),
+                    'plex_email': plex_user_data.get('email'),
+                    'plex_linked_at': plex_user_data.get('linked_at')
+                })
+            else:
+                # If plex_user_data is missing, we still know it's linked but don't have details
+                response_data.update({
+                    'plex_username': 'Unknown',
+                    'plex_email': 'Unknown',
+                    'plex_linked_at': None
+                })
         
         return jsonify(response_data)
         

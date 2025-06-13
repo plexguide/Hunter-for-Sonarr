@@ -18,6 +18,7 @@ import pyotp # Ensure pyotp is imported
 import re # Import the re module for regex
 import requests
 import uuid
+import sqlite3
 from typing import Dict, Any, Optional, Tuple, Union
 from flask import request, redirect, url_for, session
 from .utils.logger import logger # Ensure logger is imported
@@ -49,7 +50,27 @@ def get_user_data(username: str = None) -> Dict[str, Any]:
     else:
         # For backward compatibility, return first user if no username specified
         # This is used in legacy code that expects single user
-        return {}
+        try:
+            # Get the first user from the database
+            with sqlite3.connect(db.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.execute('SELECT * FROM users LIMIT 1')
+                row = cursor.fetchone()
+                
+                if row:
+                    user_data = dict(row)
+                    # Parse JSON fields
+                    if user_data.get('plex_user_data'):
+                        try:
+                            import json
+                            user_data['plex_user_data'] = json.loads(user_data['plex_user_data'])
+                        except json.JSONDecodeError:
+                            user_data['plex_user_data'] = None
+                    return user_data
+                return {}
+        except Exception as e:
+            logger.error(f"Error getting user data: {e}")
+            return {}
 
 def save_user_data(user_data: Dict[str, Any]) -> bool:
     """Save user data to the database."""
@@ -877,7 +898,7 @@ def unlink_plex_from_user(username: str = None) -> bool:
             return False
             
         # Check if Plex data exists to unlink
-        if not user_data.get('plex_linked', False):
+        if not user_data.get('plex_token'):
             logger.warning("No Plex account linked to unlink")
             return True  # Not an error, just nothing to do
             
@@ -924,13 +945,13 @@ def link_plex_account_session_auth(username: str, plex_token: str, plex_user_dat
         # No need to validate username since user is already authenticated via session
         # Just proceed to add Plex information
         
-        # Add Plex information to existing user
-        user_data["plex_linked"] = True
+        # Prepare Plex user data for storage - add linked timestamp
+        plex_data_to_store = plex_user_data.copy()
+        plex_data_to_store['linked_at'] = time.time()
+        
+        # Store Plex information using database schema fields
         user_data["plex_token"] = plex_token
-        user_data["plex_user_id"] = plex_user_data.get('id')
-        user_data["plex_username"] = plex_user_data.get('username')
-        user_data["plex_email"] = plex_user_data.get('email')
-        user_data["plex_linked_at"] = time.time()
+        user_data["plex_user_data"] = plex_data_to_store
         
         if save_user_data(user_data):
             logger.info(f"Plex account linked to authenticated user - Plex username: {plex_user_data.get('username')}")
