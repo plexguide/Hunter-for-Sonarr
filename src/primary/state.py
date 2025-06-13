@@ -189,54 +189,6 @@ def calculate_reset_time(app_type: str) -> str:
         days = hours / 24
         return f"Next reset: in {int(days)} days"
 
-def load_processed_ids(app_type: str, state_type: str) -> List[int]:
-    """
-    Load processed IDs from database.
-    
-    Args:
-        app_type: The app type (sonarr, radarr, etc.)
-        state_type: The state type (processed_missing, processed_upgrades)
-        
-    Returns:
-        A list of processed IDs
-    """
-    try:
-        db = get_database()
-        return db.get_processed_ids_state(app_type, state_type)
-    except Exception as e:
-        logger.error(f"Error loading processed IDs for {app_type}/{state_type}: {e}")
-        return []
-
-def save_processed_ids(app_type: str, state_type: str, ids: List[int]) -> None:
-    """
-    Save processed IDs to database.
-    
-    Args:
-        app_type: The app type (sonarr, radarr, etc.)
-        state_type: The state type (processed_missing, processed_upgrades)
-        ids: The list of IDs to save
-    """
-    try:
-        db = get_database()
-        db.set_processed_ids_state(app_type, state_type, ids)
-    except Exception as e:
-        logger.error(f"Error saving processed IDs for {app_type}/{state_type}: {e}")
-
-def save_processed_id(app_type: str, state_type: str, item_id: int) -> None:
-    """
-    Add a single ID to processed IDs.
-    
-    Args:
-        app_type: The app type (sonarr, radarr, etc.)
-        state_type: The state type (processed_missing, processed_upgrades)
-        item_id: The ID to add
-    """
-    try:
-        db = get_database()
-        db.add_processed_id_state(app_type, state_type, item_id)
-    except Exception as e:
-        logger.error(f"Error adding processed ID for {app_type}/{state_type}: {e}")
-
 def reset_state_file(app_type: str, state_type: str) -> bool:
     """
     Reset a specific state file for an app type.
@@ -260,27 +212,6 @@ def reset_state_file(app_type: str, state_type: str) -> bool:
     except Exception as e:
         logger.error(f"Error resetting {state_type} state for {app_type}: {e}")
         return False
-
-def truncate_processed_list(app_type: str, state_type: str, max_items: int = 1000) -> None:
-    """
-    Truncate a processed IDs list to a maximum number of items.
-    This helps prevent the database from growing too large over time.
-    
-    Args:
-        app_type: The app type (sonarr, radarr, etc.)
-        state_type: The state type (processed_missing, processed_upgrades)
-        max_items: The maximum number of items to keep
-    """
-    try:
-        db = get_database()
-        processed_ids = db.get_processed_ids_state(app_type, state_type)
-        
-        if len(processed_ids) > max_items:
-            processed_ids = processed_ids[-max_items:]
-            db.set_processed_ids_state(app_type, state_type, processed_ids)
-            logger.debug(f"Truncated {app_type}/{state_type} to {max_items} items")
-    except Exception as e:
-        logger.error(f"Error truncating processed list for {app_type}/{state_type}: {e}")
 
 def init_state_files() -> None:
     """Initialize state data for all app types in database"""
