@@ -214,7 +214,7 @@ def verify_user(username: str, password: str, otp_code: str = None) -> Tuple[boo
                     valid_code = totp.verify(otp_code)
                     logger.debug(f"OTP code validation result: {valid_code}")
                     if valid_code:
-                        logger.info(f"User '{username}' authenticated successfully with 2FA.")
+                        logger.debug(f"User '{username}' authenticated successfully with 2FA.")
                         return True, False
                     else:
                         logger.warning(f"Login attempt failed for user '{username}': Invalid 2FA code.")
@@ -226,7 +226,7 @@ def verify_user(username: str, password: str, otp_code: str = None) -> Tuple[boo
                     return False, True
             else:
                 # 2FA not enabled, password is correct
-                logger.info(f"User '{username}' authenticated successfully (no 2FA).")
+                logger.debug(f"User '{username}' authenticated successfully (no 2FA).")
                 return True, False
         else:
             logger.warning(f"Login attempt failed for user '{username}': Invalid password.")
@@ -771,7 +771,7 @@ def verify_plex_token(token: str) -> Optional[Dict[str, Any]]:
         
         if response.status_code == 200:
             user_data = response.json()
-            logger.info(f"Plex token verified for user: {user_data.get('username', 'unknown')}")
+            logger.debug(f"Plex token verified for user: {user_data.get('username', 'unknown')}")
             return user_data
         elif response.status_code == 401:
             logger.warning("Invalid Plex token")

@@ -301,10 +301,10 @@ window.LogsModule = {
         // Load initial logs
         this.loadLogsFromAPI(appType);
         
-        // Set up polling for new logs every 2 seconds
+        // Set up polling for new logs every 5 seconds (reduced from 2 seconds)
         this.logPollingInterval = setInterval(() => {
             this.loadLogsFromAPI(appType, true);
-        }, 2000);
+        }, 5000);
         
         // Update connection status
         if (this.elements.logConnectionStatus) {

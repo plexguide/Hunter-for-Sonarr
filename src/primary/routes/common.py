@@ -97,7 +97,7 @@ def login_route():
                 session[SESSION_COOKIE_NAME] = session_token # Store token in Flask session immediately
                 response = jsonify({"success": True, "redirect": "./"}) # Add redirect URL
                 response.set_cookie(SESSION_COOKIE_NAME, session_token, httponly=True, samesite='Lax', path='/') # Add path
-                logger.info(f"User '{username}' logged in successfully.")
+                logger.debug(f"User '{username}' logged in successfully.")
                 return response
             elif needs_2fa:
                 # Authentication failed *because* 2FA was required (or code was invalid)
@@ -208,7 +208,7 @@ def setup():
                         logger.error(f"Error saving proxy auth bypass setting: {e}", exc_info=True)
                 
                 # Automatically log in the user after setup
-                logger.info(f"User '{username}' created successfully during setup. Creating session.")
+                logger.debug(f"User '{username}' created successfully during setup. Creating session.")
                 session_token = create_session(username)
                 # Explicitly set username in Flask session - might not be needed if using token correctly
                 # session['username'] = username

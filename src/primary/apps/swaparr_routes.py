@@ -31,13 +31,20 @@ def get_status():
     # Get strike statistics from database for all configured apps
     app_statistics = {}
     
-    try:
-        db = get_database()
-        
-        # Get all configured instances to check for state data
-        if configured:
+    # Only read statistics if Swaparr is enabled to avoid unnecessary database errors
+    if enabled and configured:
+        try:
+            db = get_database()
+            
+            # Get all configured instances to check for state data
             instances = get_configured_instances()
             for app_name, app_instances in instances.items():
+                # Only process apps that have Swaparr enabled for at least one instance
+                swaparr_enabled_for_app = any(instance.get("swaparr_enabled", False) for instance in app_instances)
+                
+                if not swaparr_enabled_for_app:
+                    continue  # Skip apps that don't have Swaparr enabled
+                
                 app_stats = {"error": None}
                 
                 try:
@@ -73,8 +80,8 @@ def get_status():
                 
                 app_statistics[app_name] = app_stats
                 
-    except Exception as e:
-        swaparr_logger.error(f"Error accessing database for statistics: {str(e)}")
+        except Exception as e:
+            swaparr_logger.error(f"Error accessing database for statistics: {str(e)}")
     
     # Get session statistics
     session_stats = get_session_stats()
@@ -91,7 +98,8 @@ def get_status():
                 {
                     "instance_name": instance.get("instance_name", "Unknown"),
                     "api_url": instance.get("api_url", "Not configured"),
-                    "enabled": instance.get("enabled", False)
+                    "enabled": instance.get("enabled", False),
+                    "swaparr_enabled": instance.get("swaparr_enabled", False)
                 }
                 for instance in app_instances
             ]

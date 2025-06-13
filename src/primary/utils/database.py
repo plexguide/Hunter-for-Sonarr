@@ -1075,19 +1075,12 @@ class HuntarrDatabase:
 
     def get_swaparr_removed_items(self, app_name: str) -> Dict[str, Any]:
         """Get removed items data for a specific Swaparr app"""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute('SELECT removed_items FROM swaparr_state WHERE app_name = ?', (app_name,))
-            row = cursor.fetchone()
-            return json.loads(row[0]) if row and row[0] else {}
+        data = self.get_swaparr_state_data(app_name, "removed_items")
+        return data if data is not None else {}
     
     def set_swaparr_removed_items(self, app_name: str, removed_items: Dict[str, Any]):
         """Set removed items data for a specific Swaparr app"""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute('''
-                INSERT OR REPLACE INTO swaparr_state (app_name, removed_items, updated_at)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
-            ''', (app_name, json.dumps(removed_items)))
-            conn.commit()
+        self.set_swaparr_state_data(app_name, "removed_items", removed_items)
 
     # Reset Request Management Methods (replaces file-based reset system)
     

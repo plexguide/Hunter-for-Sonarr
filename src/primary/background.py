@@ -665,7 +665,7 @@ def hourly_cap_scheduler_loop():
         # Initial check in case we're starting right at the top of an hour
         current_time = datetime.datetime.now()
         if current_time.minute == 0:
-            logger.info(f"Initial hourly reset triggered at {current_time.hour}:00")
+            logger.debug(f"Initial hourly reset triggered at {current_time.hour}:00")
             reset_hourly_caps()
         
         # Main monitoring loop
@@ -681,10 +681,10 @@ def hourly_cap_scheduler_loop():
                 # Check if it's the top of the hour (00 minute mark)
                 current_time = datetime.datetime.now()
                 if current_time.minute == 0:
-                    logger.info(f"Hourly reset triggered at {current_time.hour}:00")
+                    logger.debug(f"Hourly reset triggered at {current_time.hour}:00")
                     success = reset_hourly_caps()
                     if success:
-                        logger.info(f"Successfully reset hourly API caps at {current_time.hour}:00")
+                        logger.debug(f"Successfully reset hourly API caps at {current_time.hour}:00")
                     else:
                         logger.error(f"Failed to reset hourly API caps at {current_time.hour}:00")
                 

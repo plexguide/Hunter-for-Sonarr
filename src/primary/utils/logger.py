@@ -100,6 +100,9 @@ def setup_main_logger():
     # Reset handlers to avoid duplicates
     current_logger.handlers.clear()
     current_logger.setLevel(use_log_level)
+    
+    # Prevent propagation to root logger to avoid duplicate messages
+    current_logger.propagate = False
 
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)

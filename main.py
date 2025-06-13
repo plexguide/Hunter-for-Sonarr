@@ -34,8 +34,8 @@ class LocalTimeFormatter(logging.Formatter):
         super().__init__(*args, **kwargs)
         self.converter = time.localtime  # Use local time instead of UTC
 
-# Set up logging with local time formatter
-logging.basicConfig(level=log_level, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+# Disable basic logging to prevent duplicates - we use custom loggers
+# logging.basicConfig(level=log_level, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 # Apply local time converter to all existing handlers
 for handler in logging.root.handlers:

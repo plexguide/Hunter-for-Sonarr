@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial load of hourly cap data
     loadHourlyCapData();
     
-    // Set up polling to refresh the hourly cap data every 30 seconds
-    setInterval(loadHourlyCapData, 30000);
+    // Set up polling to refresh the hourly cap data every 2 minutes (reduced from 30 seconds)
+    setInterval(loadHourlyCapData, 120000);
 });
 
 /**

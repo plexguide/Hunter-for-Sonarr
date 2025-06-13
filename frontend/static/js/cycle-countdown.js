@@ -79,11 +79,11 @@ window.CycleCountdown = (function() {
                 clearInterval(refreshInterval);
             }
             
-            // Set up API sync every 10 seconds (not for display, just for accuracy)
+            // Set up API sync every 30 seconds (reduced from 10 seconds, not for display, just for accuracy)
             refreshInterval = setInterval(() => {
                 // Only refresh if not already fetching
                 if (!isFetchingData) {
-                    console.log('[CycleCountdown] API sync (every 10s) to maintain accuracy...');
+                    console.log('[CycleCountdown] API sync (every 30s) to maintain accuracy...');
                     fetchAllCycleData()
                         .then((data) => {
                             if (data && Object.keys(data).length > 0) {
@@ -95,9 +95,9 @@ window.CycleCountdown = (function() {
                             console.log('[CycleCountdown] API sync failed, timers continue with last known data');
                         });
                 }
-            }, 10000); // API sync every 10 seconds
+            }, 30000); // API sync every 30 seconds (reduced from 10 seconds)
             
-            console.log('[CycleCountdown] API sync interval started (10s) - timers run independently at 1s');
+            console.log('[CycleCountdown] API sync interval started (30s) - timers run independently at 1s');
         }
         
         // Start the refresh cycle

@@ -135,7 +135,7 @@ def check_hourly_reset():
     
     # Only reset at the top of the hour (00 minute mark)
     if current_time.minute == 0:
-        logger.info(f"Hour changed to {current_hour}:00, resetting hourly API caps")
+        logger.debug(f"Hour changed to {current_hour}:00, resetting hourly API caps")
         reset_hourly_caps()
         last_hour_checked = current_hour
 
@@ -462,7 +462,7 @@ def reset_hourly_caps() -> bool:
         try:
             db = get_database()
             db.reset_hourly_caps()
-            logger.info("Reset all hourly API caps")
+            logger.debug("Reset all hourly API caps")
             return True
         except Exception as e:
             logger.error(f"Error resetting hourly caps: {e}")
