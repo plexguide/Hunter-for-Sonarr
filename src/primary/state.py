@@ -7,7 +7,6 @@ Handles all persistence of program state using database
 import os
 import datetime
 import time
-import json
 from typing import List, Dict, Any, Optional
 from src.primary import settings_manager
 

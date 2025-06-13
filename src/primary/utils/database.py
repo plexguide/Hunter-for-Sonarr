@@ -400,26 +400,7 @@ class HuntarrDatabase:
                     except Exception as e:
                         logger.error(f"Failed to initialize {app_type} from defaults: {e}")
     
-    def backup_to_json(self, backup_dir: Path):
-        """Backup database configurations to JSON files"""
-        backup_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Backup app configs
-        for app_type in self.get_all_app_types():
-            config = self.get_app_config(app_type)
-            if config:
-                backup_file = backup_dir / f"{app_type}.json"
-                with open(backup_file, 'w') as f:
-                    json.dump(config, f, indent=2)
-                logger.info(f"Backed up {app_type} to {backup_file}")
-        
-        # Backup general settings
-        general_settings = self.get_general_settings()
-        if general_settings:
-            backup_file = backup_dir / "general.json"
-            with open(backup_file, 'w') as f:
-                json.dump(general_settings, f, indent=2)
-            logger.info(f"Backed up general settings to {backup_file}")
+
 
     # Stateful Management Methods
     
