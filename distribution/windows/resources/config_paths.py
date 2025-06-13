@@ -109,14 +109,8 @@ def get_path(*args):
     """Get a path relative to the config directory"""
     return CONFIG_PATH.joinpath(*args)
 
-def get_app_config_path(app_type):
-    """Get the path to an app's config file"""
-    return CONFIG_PATH / f"{app_type}.json"
-
 def get_reset_path(app_type):
     """Get the path to an app's reset file"""
     return RESET_DIR / f"{app_type}.reset"
 
-def get_eros_config_path():
-    """Get the Eros config file path"""
-    return CONFIG_PATH / "eros.json"
+# Legacy JSON config path functions removed - all settings now stored in database

@@ -377,15 +377,23 @@ def should_execute_schedule(schedule_entry):
         schedule_hour = schedule_entry.get("hour")
         schedule_minute = schedule_entry.get("minute")
         
-        # If not found, try nested format
+        # If not found, try nested format or string format
         if schedule_hour is None or schedule_minute is None:
-            schedule_hour = schedule_entry.get("time", {}).get("hour")
-            schedule_minute = schedule_entry.get("time", {}).get("minute")
+            time_value = schedule_entry.get("time")
+            if isinstance(time_value, dict):
+                # Nested object format: {"hour": 14, "minute": 30}
+                schedule_hour = time_value.get("hour")
+                schedule_minute = time_value.get("minute")
+            elif isinstance(time_value, str):
+                # String format: "14:30"
+                time_parts = time_value.split(":")
+                schedule_hour = int(time_parts[0])
+                schedule_minute = int(time_parts[1]) if len(time_parts) > 1 else 0
         
         # Convert to integers to ensure proper comparison
         schedule_hour = int(schedule_hour)
         schedule_minute = int(schedule_minute)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, IndexError):
         scheduler_logger.warning(f"Invalid schedule time format in entry: {schedule_entry}")
         return False
     
@@ -441,13 +449,8 @@ def check_and_execute_schedules():
         current_time = datetime.datetime.now(user_tz).strftime("%Y-%m-%d %H:%M:%S")
         scheduler_logger.debug(f"Checking schedules at {current_time} ({user_tz})")
         
-        # Check if schedule file exists and log its status
-        if not os.path.exists(SCHEDULE_FILE):
-            scheduler_logger.debug(f"Schedule file does not exist: {SCHEDULE_FILE}")
-            add_to_history({"action": "check"}, "debug", f"Schedule file not found at {SCHEDULE_FILE}")
-            return
-        
-        scheduler_logger.debug(f"Schedule file exists at {SCHEDULE_FILE} with size {os.path.getsize(SCHEDULE_FILE)} bytes")
+        # Load schedules from database
+        scheduler_logger.debug("Loading schedules from database")
         
         # Load the schedule
         schedule_data = load_schedule()

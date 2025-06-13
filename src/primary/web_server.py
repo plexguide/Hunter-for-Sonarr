@@ -766,7 +766,7 @@ def handle_app_settings(app_name):
 
 @app.route('/api/settings/theme', methods=['GET', 'POST'])
 def api_theme():
-    # Theme settings are handled separately, potentially in /config/ui.json
+    # Theme settings are handled separately, stored in database
     if request.method == 'GET':
         dark_mode = settings_manager.get_setting("ui", "dark_mode", False)
         return jsonify({"dark_mode": dark_mode})
