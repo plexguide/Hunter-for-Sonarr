@@ -291,26 +291,36 @@ def authenticate_request():
     health_check_path = "/api/health"
     ping_path = "/ping"
 
-    logger.debug(f"authenticate_request: checking path '{request.path}'")
+    # Check if this is a commonly polled API endpoint to reduce log verbosity
+    is_polling_endpoint = any(endpoint in request.path for endpoint in [
+        '/api/logs/', '/api/cycle/', '/api/hourly-caps', '/api/swaparr/status'
+    ])
+    
+    if not is_polling_endpoint:
+        logger.debug(f"authenticate_request: checking path '{request.path}'")
 
     # FIRST: Always allow setup and user page access - this handles returns from external auth like Plex
     if request.path in ['/setup', '/user']:
-        logger.debug(f"Allowing setup/user page access for path: {request.path}")
+        if not is_polling_endpoint:
+            logger.debug(f"Allowing setup/user page access for path: {request.path}")
         return None
 
     # Skip authentication for static files, API setup, health check path, and ping
     if request.path.startswith((static_path, api_setup_path)) or request.path in (favicon_path, health_check_path, ping_path):
-        logger.debug(f"Skipping authentication for path '{request.path}' (static/api-setup/health/ping)")
+        if not is_polling_endpoint:
+            logger.debug(f"Skipping authentication for path '{request.path}' (static/api-setup/health/ping)")
         return None
     
     # If no user exists, redirect to setup
     if not user_exists():
-        logger.debug(f"No user exists, redirecting to setup")
+        if not is_polling_endpoint:
+            logger.debug(f"No user exists, redirecting to setup")
         return redirect(url_for("common.setup"))
     
     # Skip authentication for login pages and Plex auth endpoints
     if request.path.startswith((login_path, api_login_path, api_auth_plex_path)):
-        logger.debug(f"Skipping authentication for login/plex path '{request.path}'")
+        if not is_polling_endpoint:
+            logger.debug(f"Skipping authentication for login/plex path '{request.path}'")
         return None
     
     # Load general settings
@@ -329,11 +339,12 @@ def authenticate_request():
         general_settings = settings
         local_access_bypass = general_settings.get("local_access_bypass", False)
         proxy_auth_bypass = general_settings.get("proxy_auth_bypass", False)
-        logger.debug(f"Local access bypass setting: {local_access_bypass}")
-        logger.debug(f"Proxy auth bypass setting: {proxy_auth_bypass}")
         
-        # Debug print all general settings
-        logger.debug(f"All general settings: {general_settings}")
+        # Log settings only for non-polling endpoints to reduce spam
+        if not is_polling_endpoint:
+            logger.debug(f"Local access bypass setting: {local_access_bypass}")
+            logger.debug(f"Proxy auth bypass setting: {proxy_auth_bypass}")
+            logger.debug(f"All general settings: {general_settings}")
     except Exception as e:
         logger.error(f"Error loading authentication bypass settings: {e}", exc_info=True)
     
@@ -343,7 +354,8 @@ def authenticate_request():
         return None
     
     remote_addr = request.remote_addr
-    logger.debug(f"Request IP address: {remote_addr}")
+    if not is_polling_endpoint:
+        logger.debug(f"Request IP address: {remote_addr}")
     
     if local_access_bypass:
         # Common local network IP ranges
@@ -395,28 +407,45 @@ def authenticate_request():
                     break
                     
         if is_local:
-            logger.debug(f"Local network access from {remote_addr} - Authentication bypassed! (Local Bypass Mode)")
+            if not is_polling_endpoint:
+                logger.debug(f"Local network access from {remote_addr} - Authentication bypassed! (Local Bypass Mode)")
             return None
         else:
-            logger.warning(f"Access from {remote_addr} is not recognized as local network - Authentication required")
+            if not is_polling_endpoint:
+                logger.warning(f"Access from {remote_addr} is not recognized as local network - Authentication required")
     else:
-        logger.debug("Local Bypass Mode is DISABLED - Authentication required")
+        if not is_polling_endpoint:
+            logger.debug("Local Bypass Mode is DISABLED - Authentication required")
     
     # Check for valid session
     session_id = session.get(SESSION_COOKIE_NAME)
     if session_id and verify_session(session_id):
-        logger.debug(f"Valid session found for path '{request.path}'")
+        if not is_polling_endpoint:
+            logger.debug(f"Valid session found for path '{request.path}'")
         return None
     
-    logger.debug(f"No valid session for path '{request.path}', session_id: {session_id}")
+    # Use less verbose logging for polling endpoints
+    if is_polling_endpoint:
+        # Only log occasionally for polling endpoints to reduce spam
+        import random
+        if random.random() < 0.1:  # Log only 10% of polling auth failures
+            logger.debug(f"No valid session for polling endpoint '{request.path}', session_id: {session_id}")
+    else:
+        logger.debug(f"No valid session for path '{request.path}', session_id: {session_id}")
     
     # For API calls, return 401 Unauthorized
     if request.path.startswith("/api/"):
-        logger.debug(f"Returning 401 for API path '{request.path}'")
+        # Return 401 with less verbose logging for polling endpoints
+        if is_polling_endpoint:
+            # Don't log every 401 for polling endpoints
+            pass
+        else:
+            logger.debug(f"Returning 401 for API path '{request.path}'")
         return {"error": "Unauthorized"}, 401
     
     # No valid session, redirect to login
-    logger.debug(f"Redirecting to login for path '{request.path}'")
+    if not is_polling_endpoint:
+        logger.debug(f"Redirecting to login for path '{request.path}'")
     return redirect(url_for("common.login_route"))
 
 def logout(session_id: str):
