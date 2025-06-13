@@ -21,29 +21,21 @@ class LogsDatabase:
     """Database manager for log storage"""
     
     def __init__(self):
-        print("LogsDatabase.__init__() starting...")
         self.db_path = self._get_database_path()
-        print(f"Database path set to: {self.db_path}")
         self.ensure_database_exists()
-        print("LogsDatabase.__init__() completed successfully")
     
     def _get_database_path(self) -> Path:
         """Get the path to the logs database file"""
-        print("_get_database_path() starting...")
         # Use simple fallback approach to avoid import issues
         import os
         config_dir = os.environ.get('CONFIG_DIR', '/config')
         db_path = Path(config_dir) / "logs.db"
-        print(f"Logs database path: {db_path}")
         return db_path
     
     def ensure_database_exists(self):
         """Create the logs database and tables if they don't exist"""
-        print("ensure_database_exists() starting...")
         try:
-            print(f"Attempting to connect to database at: {self.db_path}")
             with sqlite3.connect(self.db_path) as conn:
-                print("Database connection established successfully")
                 # Create logs table
                 conn.execute('''
                     CREATE TABLE IF NOT EXISTS logs (
@@ -64,7 +56,6 @@ class LogsDatabase:
                 conn.execute('CREATE INDEX IF NOT EXISTS idx_logs_app_level ON logs(app_type, level)')
                 
                 conn.commit()
-                print(f"Logs database initialized at: {self.db_path}")
         except Exception as e:
             print(f"Failed to initialize logs database: {e}")
             raise

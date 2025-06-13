@@ -285,128 +285,187 @@ window.LogsModule = {
         }
     },
     
-    // Connect to event source for streaming logs
+    // Connect to database-based logs API (replaces EventSource)
     connectEventSource: function(appType) {
-        // Close any existing event source
-        if (this.eventSources.logs) {
-            this.eventSources.logs.close();
+        // Clear any existing polling interval
+        if (this.logPollingInterval) {
+            clearInterval(this.logPollingInterval);
         }
         
-        try {
-            // Append the app type to the URL
-            const eventSource = new EventSource(`./logs?app=${appType}`);
-            
-            eventSource.onopen = () => {
-                if (this.elements.logConnectionStatus) {
-                    this.elements.logConnectionStatus.textContent = 'Connected';
-                    this.elements.logConnectionStatus.className = 'status-connected';
+        // Set connection status
+        if (this.elements.logConnectionStatus) {
+            this.elements.logConnectionStatus.textContent = 'Connecting...';
+            this.elements.logConnectionStatus.className = '';
+        }
+        
+        // Load initial logs
+        this.loadLogsFromAPI(appType);
+        
+        // Set up polling for new logs every 2 seconds
+        this.logPollingInterval = setInterval(() => {
+            this.loadLogsFromAPI(appType, true);
+        }, 2000);
+        
+        // Update connection status
+        if (this.elements.logConnectionStatus) {
+            this.elements.logConnectionStatus.textContent = 'Connected';
+            this.elements.logConnectionStatus.className = 'status-connected';
+        }
+    },
+    
+    // Load logs from the database API
+    loadLogsFromAPI: function(appType, isPolling = false) {
+        const apiUrl = appType === 'all' ? '/api/logs/system' : `/api/logs/${appType}`;
+        const limit = isPolling ? 20 : 100; // Load fewer logs when polling for updates
+        
+        HuntarrUtils.fetchWithTimeout(`${apiUrl}?limit=${limit}&offset=0`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.logs) {
+                    this.processLogsFromAPI(data.logs, appType, isPolling);
+                } else {
+                    console.error('[LogsModule] Failed to load logs:', data.error);
+                    if (this.elements.logConnectionStatus) {
+                        this.elements.logConnectionStatus.textContent = 'Error loading logs';
+                        this.elements.logConnectionStatus.className = 'status-error';
+                    }
                 }
-            };
+            })
+            .catch(error => {
+                console.error('[LogsModule] Error loading logs:', error);
+                if (this.elements.logConnectionStatus) {
+                    this.elements.logConnectionStatus.textContent = 'Connection error';
+                    this.elements.logConnectionStatus.className = 'status-error';
+                }
+            });
+    },
+    
+    // Process logs received from API
+    processLogsFromAPI: function(logs, appType, isPolling = false) {
+        if (!this.elements.logsContainer) return;
+        
+        // If not polling, clear existing logs first
+        if (!isPolling) {
+            this.elements.logsContainer.innerHTML = '';
+        }
+        
+        // Track existing log timestamps to avoid duplicates when polling
+        const existingTimestamps = new Set();
+        if (isPolling) {
+            const existingEntries = this.elements.logsContainer.querySelectorAll('.log-entry');
+            existingEntries.forEach(entry => {
+                const timestampElement = entry.querySelector('.log-timestamp');
+                if (timestampElement) {
+                    existingTimestamps.add(timestampElement.textContent.trim());
+                }
+            });
+        }
+        
+        logs.forEach(logString => {
+            try {
+                // Process clean log format - same as before
+                const logRegex = /^(?:\[[\w]+\]\s+)?([^|]+)\|([^|]+)\|([^|]+)\|(.*)$/;
+                const match = logString.match(logRegex);
+
+                if (!match) {
+                    return; // Skip non-clean log entries entirely
+                }
+                
+                // Extract log components from clean format
+                const timestamp = match[1];
+                const level = match[2]; 
+                const logAppType = match[3].toLowerCase();
+                const originalMessage = match[4];
+                
+                // Skip if we already have this log entry (when polling)
+                if (isPolling && existingTimestamps.has(timestamp)) {
+                    return;
+                }
+                
+                // Validate timestamp
+                if (!this.isValidTimestamp(timestamp)) {
+                    console.log('[LogsModule] Skipping log entry with invalid timestamp:', timestamp);
+                    return;
+                }
+                
+                // Check if this log should be displayed based on the selected app
+                const currentApp = this.currentLogApp;
+                const shouldDisplay = this.currentLogApp === 'all' || currentApp === logAppType;
+
+                if (!shouldDisplay) return;
+
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+
+                // Parse timestamp to extract date and time (ignore timezone for display)
+                let date = '';
+                let time = '';
+                
+                if (timestamp) {
+                    const parts = timestamp.split(' ');
+                    date = parts[0] || '';
+                    time = parts[1] || '';
+                }
+                
+                // Convert to user's timezone
+                const userTime = this.convertToUserTimezone(timestamp);
+                date = userTime.date;
+                time = userTime.time;
+                
+                // Clean the message - since we're now receiving clean logs from backend,
+                // minimal processing should be needed
+                let cleanMessage = originalMessage;
+                
+                // The backend clean logging system should already provide clean messages,
+                // but we'll keep a simple cleanup as a fallback for any edge cases
+                cleanMessage = cleanMessage.replace(/^\s*-\s*/, ''); // Remove any leading dashes
+                cleanMessage = cleanMessage.trim(); // Remove extra whitespace
+                
+                // Create level badge
+                const levelClass = level.toLowerCase();
+                let levelBadge = '';
+                
+                switch(levelClass) {
+                    case 'error':
+                        levelBadge = `<span class="log-level-badge log-level-error">Error</span>`;
+                        break;
+                    case 'warning':
+                    case 'warn':
+                        levelBadge = `<span class="log-level-badge log-level-warning">Warning</span>`;
+                        break;
+                    case 'info':
+                        levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
+                        break;
+                    case 'debug':
+                        levelBadge = `<span class="log-level-badge log-level-debug">Debug</span>`;
+                        break;
+                    case 'fatal':
+                    case 'critical':
+                        levelBadge = `<span class="log-level-badge log-level-fatal">Fatal</span>`;
+                        break;
+                    default:
+                        levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
+                }
+                
+                // Determine app source for display
+                let appSource = 'SYSTEM';
+                if (logAppType && logAppType !== 'system') {
+                    appSource = logAppType.toUpperCase();
+                }
+                
+                logEntry.innerHTML = `
+                    <div class="log-entry-row">
+                        <span class="log-timestamp">
+                            <span class="date">${date}</span>
+                            <span class="time">${time}</span>
+                        </span>
+                        ${levelBadge}
+                        <span class="log-source">${appSource}</span>
+                        <span class="log-message">${cleanMessage}</span>
+                    </div>
+                `;
+                logEntry.classList.add(`log-${levelClass}`);
             
-            eventSource.onmessage = (event) => {
-                if (!this.elements.logsContainer) return;
-                
-                try {
-                    const logString = event.data;
-                    
-                    // ONLY process clean log format - reject anything that doesn't match the pipe-separated format
-                    const logRegex = /^(?:\[[\w]+\]\s+)?([^|]+)\|([^|]+)\|([^|]+)\|(.*)$/;
-                    const match = logString.match(logRegex);
-
-                    if (!match) {
-                        return; // Skip non-clean log entries entirely
-                    }
-                    
-                    // Extract log components from clean format
-                    const timestamp = match[1];
-                    const level = match[2]; 
-                    const logAppType = match[3].toLowerCase();
-                    const originalMessage = match[4];
-                    
-                    // Validate timestamp
-                    if (!this.isValidTimestamp(timestamp)) {
-                        console.log('[LogsModule] Skipping log entry with invalid timestamp:', timestamp);
-                        return;
-                    }
-                    
-                    // Check if this log should be displayed based on the selected app
-                    const currentApp = this.currentLogApp;
-                    const shouldDisplay = this.currentLogApp === 'all' || currentApp === logAppType;
-
-                    if (!shouldDisplay) return;
-
-                    const logEntry = document.createElement('div');
-                    logEntry.className = 'log-entry';
-
-                    // Parse timestamp to extract date and time (ignore timezone for display)
-                    let date = '';
-                    let time = '';
-                    
-                    if (timestamp) {
-                        const parts = timestamp.split(' ');
-                        date = parts[0] || '';
-                        time = parts[1] || '';
-                    }
-                    
-                    // Convert to user's timezone
-                    const userTime = this.convertToUserTimezone(timestamp);
-                    date = userTime.date;
-                    time = userTime.time;
-                    
-                    // Clean the message - since we're now receiving clean logs from backend,
-                    // minimal processing should be needed
-                    let cleanMessage = originalMessage;
-                    
-                    // The backend clean logging system should already provide clean messages,
-                    // but we'll keep a simple cleanup as a fallback for any edge cases
-                    cleanMessage = cleanMessage.replace(/^\s*-\s*/, ''); // Remove any leading dashes
-                    cleanMessage = cleanMessage.trim(); // Remove extra whitespace
-                    
-                    // Create level badge
-                    const levelClass = level.toLowerCase();
-                    let levelBadge = '';
-                    
-                    switch(levelClass) {
-                        case 'error':
-                            levelBadge = `<span class="log-level-badge log-level-error">Error</span>`;
-                            break;
-                        case 'warning':
-                        case 'warn':
-                            levelBadge = `<span class="log-level-badge log-level-warning">Warning</span>`;
-                            break;
-                        case 'info':
-                            levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
-                            break;
-                        case 'debug':
-                            levelBadge = `<span class="log-level-badge log-level-debug">Debug</span>`;
-                            break;
-                        case 'fatal':
-                        case 'critical':
-                            levelBadge = `<span class="log-level-badge log-level-fatal">Fatal</span>`;
-                            break;
-                        default:
-                            levelBadge = `<span class="log-level-badge log-level-info">Information</span>`;
-                    }
-                    
-                    // Determine app source for display
-                    let appSource = 'SYSTEM';
-                    if (logAppType && logAppType !== 'system') {
-                        appSource = logAppType.toUpperCase();
-                    }
-                    
-                    logEntry.innerHTML = `
-                        <div class="log-entry-row">
-                            <span class="log-timestamp">
-                                <span class="date">${date}</span>
-                                <span class="time">${time}</span>
-                            </span>
-                            ${levelBadge}
-                            <span class="log-source">${appSource}</span>
-                            <span class="log-message">${cleanMessage}</span>
-                        </div>
-                    `;
-                    logEntry.classList.add(`log-${levelClass}`);
-                
                 // Add to logs container
                 this.insertLogEntryInOrder(logEntry);
                 
@@ -435,57 +494,21 @@ window.LogsModule = {
                     });
                 }
             } catch (error) {
-                console.error('[LogsModule] Error processing log message:', error, 'Data:', event.data);
+                console.error('[LogsModule] Error processing log message:', error, 'Data:', logString);
             }
-        };
-        
-        eventSource.onerror = (err) => {
-            console.warn(`[LogsModule] EventSource connection issue for app ${this.currentLogApp}:`, err);
-            if (this.elements.logConnectionStatus) {
-                this.elements.logConnectionStatus.textContent = 'Reconnecting...';
-                this.elements.logConnectionStatus.className = 'status-warning';
-            }
-            
-            // Only close if it's a permanent failure, not a temporary connection issue
-            if (eventSource.readyState === EventSource.CLOSED) {
-                console.error(`[LogsModule] EventSource permanently closed for app ${this.currentLogApp}`);
-                if (this.elements.logConnectionStatus) {
-                    this.elements.logConnectionStatus.textContent = 'Disconnected';
-                    this.elements.logConnectionStatus.className = 'status-error';
-                }
-            }
-            
-            // Auto-reconnect after a delay if the connection was lost
-            if (eventSource.readyState === EventSource.CLOSED) {
-                setTimeout(() => {
-                    if (this.currentLogApp === appType) {
-                        console.log(`[LogsModule] Attempting to reconnect to ${appType} logs...`);
-                        this.connectEventSource(appType);
-                    }
-                }, 5000); // Reconnect after 5 seconds
-            }
-        };
-        
-        eventSource.onclose = () => {
-            console.log(`[LogsModule] EventSource closed for app ${this.currentLogApp}`);
-            if (this.elements.logConnectionStatus) {
-                this.elements.logConnectionStatus.textContent = 'Disconnected';
-                this.elements.logConnectionStatus.className = 'status-disconnected';
-            }
-        };
-        
-        this.eventSources.logs = eventSource;
-    } catch (e) {
-        console.error(`[LogsModule] Failed to create EventSource for app ${appType}:`, e);
-        if (this.elements.logConnectionStatus) {
-            this.elements.logConnectionStatus.textContent = 'Failed to connect';
-            this.elements.logConnectionStatus.className = 'status-error';
-        }
-    }
-},
+        });
+    },
     
-    // Disconnect all event sources
+    // Disconnect all event sources (now handles polling intervals)
     disconnectAllEventSources: function() {
+        // Clear polling interval if it exists
+        if (this.logPollingInterval) {
+            clearInterval(this.logPollingInterval);
+            this.logPollingInterval = null;
+            console.log('[LogsModule] Cleared log polling interval');
+        }
+        
+        // Clear any remaining event sources (legacy)
         Object.keys(this.eventSources).forEach(key => {
             const source = this.eventSources[key];
             if (source) {
