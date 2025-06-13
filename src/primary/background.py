@@ -503,36 +503,26 @@ def app_specific_loop(app_type: str) -> None:
         # Use shorter sleep intervals and check for reset file
         wait_interval = 1  # Check every second to be more responsive
         elapsed = 0
-        # Use cross-platform path for reset file
-        from src.primary.utils.config_paths import get_reset_path
-        reset_file_path = get_reset_path(app_type)
-                
         while elapsed < sleep_seconds:
             # Check if stop event is set
             if stop_event.is_set():
                 app_logger.info("Stop event detected during sleep. Breaking out of sleep cycle.")
                 break
                         
-            # Check if reset file exists
-            if os.path.exists(reset_file_path):
-                try:
-                    # Read timestamp from the file (if it exists)
-                    with open(reset_file_path, 'r') as f:
-                        timestamp = f.read().strip()
-                    app_logger.info(f"!!! RESET FILE DETECTED !!! Manual cycle reset triggered for {app_type} (timestamp: {timestamp}). Starting new cycle immediately.")
-                        
-                    # Delete the reset file
-                    os.remove(reset_file_path)
-                    app_logger.info(f"Reset file removed for {app_type}. Starting new cycle now.")
+            # Check for database reset request
+            try:
+                from src.primary.utils.database import get_database
+                db = get_database()
+                reset_timestamp = db.get_pending_reset_request(app_type)
+                if reset_timestamp:
+                    app_logger.info(f"!!! RESET REQUEST DETECTED !!! Manual cycle reset triggered for {app_type} (timestamp: {reset_timestamp}). Starting new cycle immediately.")
+                    
+                    # Mark the reset request as processed
+                    db.mark_reset_request_processed(app_type)
+                    app_logger.info(f"Reset request processed for {app_type}. Starting new cycle now.")
                     break
-                except Exception as e:
-                    app_logger.error(f"Error processing reset file for {app_type}: {e}", exc_info=True)
-                    # Try to remove the file even if reading failed
-                    try:
-                        os.remove(reset_file_path)
-                    except:
-                        pass
-                    break
+            except Exception as e:
+                app_logger.error(f"Error checking reset request for {app_type}: {e}", exc_info=True)
                         
             # Sleep for a short interval
             stop_event.wait(wait_interval)
@@ -554,23 +544,18 @@ def reset_app_cycle(app_type: str) -> bool:
     Returns:
         bool: True if the reset was triggered, False if the app is not running
     """
-    logger.info(f"Manual cycle reset requested for {app_type} - Creating reset file")
+    logger.info(f"Manual cycle reset requested for {app_type} - Creating reset request")
     
-    # Create a reset file for this app using cross-platform paths
-    from src.primary.utils.config_paths import get_reset_path
-    
-    reset_file_path = get_reset_path(app_type)
+    # Create a reset request in the database
     try:
-        # Ensure directory exists
-        reset_file_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Write to the reset file
-        with open(reset_file_path, 'w') as f:
-            f.write(str(int(time.time())))
-        logger.info(f"Reset file created for {app_type} at {reset_file_path}. Cycle will reset on next check.")
-        return True
+        from src.primary.utils.database import get_database
+        db = get_database()
+        success = db.create_reset_request(app_type)
+        if success:
+            logger.info(f"Reset request created for {app_type}. Cycle will reset on next check.")
+        return success
     except Exception as e:
-        logger.error(f"Error creating reset file for {app_type}: {e}", exc_info=True)
+        logger.error(f"Error creating reset request for {app_type}: {e}", exc_info=True)
         return False
 
 def start_app_threads():
@@ -772,33 +757,24 @@ def swaparr_app_loop():
                 swaparr_logger.info(f"Next cycle will begin at {next_cycle_time.strftime('%Y-%m-%d %H:%M:%S')} ({user_tz})")
                 swaparr_logger.info(f"Sleep duration: {sleep_duration} seconds")
                 
-                # Sleep with responsiveness to stop events and reset files (like other apps)
-                from src.primary.utils.config_paths import get_reset_path
-                reset_file_path = get_reset_path("swaparr")
-                
+                # Sleep with responsiveness to stop events and reset requests (like other apps)
                 elapsed = 0
                 wait_interval = 5  # Check every 5 seconds for responsiveness
                 while elapsed < sleep_duration and not stop_event.is_set():
-                    # Check if reset file exists (same logic as other apps)
-                    if os.path.exists(reset_file_path):
-                        try:
-                            # Read timestamp from the file (if it exists)
-                            with open(reset_file_path, 'r') as f:
-                                timestamp = f.read().strip()
-                            swaparr_logger.info(f"!!! RESET FILE DETECTED !!! Manual cycle reset triggered for swaparr (timestamp: {timestamp}). Starting new cycle immediately.")
-                                
-                            # Delete the reset file
-                            os.remove(reset_file_path)
-                            swaparr_logger.info(f"Reset file removed for swaparr. Starting new cycle now.")
+                    # Check for database reset request (same logic as other apps)
+                    try:
+                        from src.primary.utils.database import get_database
+                        db = get_database()
+                        reset_timestamp = db.get_pending_reset_request("swaparr")
+                        if reset_timestamp:
+                            swaparr_logger.info(f"!!! RESET REQUEST DETECTED !!! Manual cycle reset triggered for swaparr (timestamp: {reset_timestamp}). Starting new cycle immediately.")
+                            
+                            # Mark the reset request as processed
+                            db.mark_reset_request_processed("swaparr")
+                            swaparr_logger.info(f"Reset request processed for swaparr. Starting new cycle now.")
                             break
-                        except Exception as e:
-                            swaparr_logger.error(f"Error processing reset file for swaparr: {e}", exc_info=True)
-                            # Try to remove the file even if reading failed
-                            try:
-                                os.remove(reset_file_path)
-                            except:
-                                pass
-                            break
+                    except Exception as e:
+                        swaparr_logger.error(f"Error checking reset request for swaparr: {e}", exc_info=True)
                     
                     # Check for stop event
                     if stop_event.is_set():

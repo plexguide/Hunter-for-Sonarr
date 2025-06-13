@@ -1113,27 +1113,19 @@ def reset_app_cycle(app_name):
             }), 400
         
     try:
-        # Trigger cycle reset for the app using a file-based approach
-        # Use cross-platform paths
-        from src.primary.utils.config_paths import RESET_DIR
-        import os
+        # Trigger cycle reset using database
+        from src.primary.utils.database import get_database
         
-        # Convert Path object to string for compatibility
-        reset_dir = str(RESET_DIR)
-        os.makedirs(reset_dir, exist_ok=True)
+        db = get_database()
+        success = db.create_reset_request(app_name)
         
-        # Create the reset file
-        reset_file = os.path.join(reset_dir, f"{app_name}.reset")
-        with open(reset_file, 'w') as f:
-            f.write(str(int(time.time())))  # Write current timestamp
-        
-        web_logger.info(f"Created reset file for {app_name} at {reset_file}")
-        success = True
+        if success:
+            web_logger.info(f"Created reset request for {app_name}")
+        else:
+            web_logger.error(f"Failed to create reset request for {app_name}")
     except Exception as e:
-        web_logger.error(f"Error creating reset file for {app_name}: {e}", exc_info=True)
-        # Even if there's an error creating the file, the cycle reset might still work
-        # as it's being detected in the background process, so we'll return success
-        success = True  # Changed from False to True to prevent 500 errors
+        web_logger.error(f"Error creating reset request for {app_name}: {e}", exc_info=True)
+        success = False
 
     if success:
         return jsonify({

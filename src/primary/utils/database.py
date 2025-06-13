@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Set
 from datetime import datetime
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +198,17 @@ class HuntarrDatabase:
                     two_fa_secret TEXT,
                     plex_token TEXT,
                     plex_user_data TEXT
+                )
+            ''')
+            
+            # Create reset_requests table for reset request management
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS reset_requests (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    app_type TEXT NOT NULL,
+                    timestamp INTEGER NOT NULL,
+                    processed INTEGER NOT NULL,
+                    processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
             
@@ -656,9 +668,6 @@ class HuntarrDatabase:
                          processed_info: str, operation_type: str = "missing", 
                          discovered: bool = False, date_time: int = None) -> Dict[str, Any]:
         """Add a new history entry to the database"""
-        import time
-        from datetime import datetime
-        
         if date_time is None:
             date_time = int(time.time())
         
@@ -693,8 +702,6 @@ class HuntarrDatabase:
     def get_history(self, app_type: str = None, search_query: str = None, 
                    page: int = 1, page_size: int = 20) -> Dict[str, Any]:
         """Get history entries with pagination and filtering"""
-        import time
-        
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             
@@ -1062,12 +1069,63 @@ class HuntarrDatabase:
 
     def get_swaparr_removed_items(self, app_name: str) -> Dict[str, Any]:
         """Get removed items data for a specific Swaparr app"""
-        data = self.get_swaparr_state_data(app_name, "removed_items")
-        return data if data is not None else {}
-
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute('SELECT removed_items FROM swaparr_state WHERE app_name = ?', (app_name,))
+            row = cursor.fetchone()
+            return json.loads(row[0]) if row and row[0] else {}
+    
     def set_swaparr_removed_items(self, app_name: str, removed_items: Dict[str, Any]):
         """Set removed items data for a specific Swaparr app"""
-        self.set_swaparr_state_data(app_name, "removed_items", removed_items)
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute('''
+                INSERT OR REPLACE INTO swaparr_state (app_name, removed_items, updated_at)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+            ''', (app_name, json.dumps(removed_items)))
+            conn.commit()
+
+    # Reset Request Management Methods (replaces file-based reset system)
+    
+    def create_reset_request(self, app_type: str) -> bool:
+        """Create a reset request for an app (replaces creating .reset files)"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute('''
+                    INSERT OR REPLACE INTO reset_requests (app_type, timestamp, processed)
+                    VALUES (?, ?, 0)
+                ''', (app_type, int(time.time())))
+                conn.commit()
+                logger.info(f"Created reset request for {app_type}")
+                return True
+        except Exception as e:
+            logger.error(f"Error creating reset request for {app_type}: {e}")
+            return False
+    
+    def get_pending_reset_request(self, app_type: str) -> Optional[int]:
+        """Check if there's a pending reset request for an app (replaces checking .reset files)"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute('''
+                SELECT timestamp FROM reset_requests 
+                WHERE app_type = ? AND processed = 0
+                ORDER BY timestamp DESC LIMIT 1
+            ''', (app_type,))
+            row = cursor.fetchone()
+            return row[0] if row else None
+    
+    def mark_reset_request_processed(self, app_type: str) -> bool:
+        """Mark a reset request as processed (replaces deleting .reset files)"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute('''
+                    UPDATE reset_requests 
+                    SET processed = 1, processed_at = CURRENT_TIMESTAMP
+                    WHERE app_type = ? AND processed = 0
+                ''', (app_type,))
+                conn.commit()
+                logger.info(f"Marked reset request as processed for {app_type}")
+                return True
+        except Exception as e:
+            logger.error(f"Error marking reset request as processed for {app_type}: {e}")
+            return False
 
     # User Management Methods
     def user_exists(self) -> bool:

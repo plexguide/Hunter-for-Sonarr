@@ -414,7 +414,6 @@ jobs:
           # Create config directory in user's Application Support
           mkdir -p "$HOME/Library/Application Support/Huntarr/config"
           mkdir -p "$HOME/Library/Application Support/Huntarr/config/logs"
-          mkdir -p "$HOME/Library/Application Support/Huntarr/config/reset"
           
           # Set permissions
           chmod -R 755 "$HOME/Library/Application Support/Huntarr"

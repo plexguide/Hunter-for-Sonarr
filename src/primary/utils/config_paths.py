@@ -38,11 +38,9 @@ try:
     
     # Define only the directories we actually use
     LOG_DIR = CONFIG_PATH / "logs"
-    RESET_DIR = CONFIG_PATH / "reset"
     
     # Create essential directories
     LOG_DIR.mkdir(exist_ok=True)
-    RESET_DIR.mkdir(exist_ok=True)
     
     print(f"Using configuration directory: {CONFIG_DIR}")
     # Check write permissions with a test file
@@ -71,10 +69,9 @@ except Exception as e:
 
 # Create standard directories - only the ones we actually use
 LOG_DIR = CONFIG_PATH / "logs"
-RESET_DIR = CONFIG_PATH / "reset"
 
 # Create all directories
-for dir_path in [LOG_DIR, RESET_DIR]:
+for dir_path in [LOG_DIR]:
     try:
         dir_path.mkdir(parents=True, exist_ok=True)
     except Exception as e:
@@ -90,8 +87,5 @@ def get_path(*args):
     """Get a path relative to the config directory"""
     return CONFIG_PATH.joinpath(*args)
 
-def get_reset_path(app_type):
-    """Get the path to an app's reset file"""
-    return RESET_DIR / f"{app_type}.reset"
-
 # Legacy JSON config path functions removed - all settings now stored in database
+# Reset file functions removed - all reset requests now stored in database
