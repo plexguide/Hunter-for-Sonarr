@@ -1962,6 +1962,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('.dashboard-grid').style.opacity = '1';
     }, 25);
     const sponsorContainer = document.getElementById('rotating-sponsor-content');
+    console.log('sponsorContainer:', sponsorContainer);
     let sponsors = [];
     let weightedSponsorPool = [];
     let currentSponsorIndex = 0;
@@ -1987,6 +1988,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Apply transition styles for smooth sponsor changes
     const avatarContainer = document.getElementById('sponsor-avatar-container');
     const descContainer = document.getElementById('rotating-sponsor-content');
+    console.log('avatarContainer:', avatarContainer);
+    console.log('descContainer:', descContainer);
     
     // Add transition effects but keep them faster
     avatarContainer.style.transition = 'opacity 0.15s ease';
@@ -2141,12 +2144,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Show placeholder immediately
+    console.log('About to display placeholder sponsor');
     displayPlaceholderSponsor();
+    console.log('Placeholder sponsor displayed');
 
     // Fetch sponsors from the API
     async function fetchSponsors() {
+        console.log('fetchSponsors function called');
         try {
             // Fetch in the background without waiting for visual updates
+            console.log('About to call HuntarrUtils.fetchWithTimeout');
             const response = await HuntarrUtils.fetchWithTimeout('/api/github_sponsors');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -2180,6 +2187,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initialize sponsors on page load
+    console.log('About to fetch sponsors');
     fetchSponsors();
 });
 </script>

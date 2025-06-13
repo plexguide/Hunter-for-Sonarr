@@ -1191,8 +1191,8 @@ def get_github_sponsors():
         current_app.logger.error(f"Error reading sponsors cache: {e}")
         # Continue to fetch fresh data
 
-    # Fetch from GitHub Pages manifest (no authentication needed)
-    manifest_url = "https://plexguide.github.io/Huntarr.io/manifest.json"
+    # Fetch from GitHub raw content since GitHub Pages isn't enabled
+    manifest_url = "https://raw.githubusercontent.com/plexguide/Huntarr.io/main/manifest.json"
     
     try:
         # Fetch the manifest with a reasonable timeout

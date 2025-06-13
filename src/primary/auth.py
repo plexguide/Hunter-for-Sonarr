@@ -305,8 +305,8 @@ def authenticate_request():
             logger.debug(f"Allowing setup/user page access for path: {request.path}")
         return None
 
-    # Skip authentication for static files, API setup, health check path, and ping
-    if request.path.startswith((static_path, api_setup_path)) or request.path in (favicon_path, health_check_path, ping_path):
+    # Skip authentication for static files, API setup, health check path, ping, and github sponsors
+    if request.path.startswith((static_path, api_setup_path)) or request.path in (favicon_path, health_check_path, ping_path, '/api/github_sponsors', '/api/sponsors/init'):
         if not is_polling_endpoint:
             logger.debug(f"Skipping authentication for path '{request.path}' (static/api-setup/health/ping)")
         return None
