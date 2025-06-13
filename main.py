@@ -138,6 +138,7 @@ try:
         huntarr_logger.warning(f"Failed to initialize database logging: {e}")
     
     huntarr_logger.info("Successfully imported application components.")
+    huntarr_logger.info("About to call main() function...")
 except ImportError as e:
     root_logger.critical(f"Fatal Error: Failed to import application components: {e}", exc_info=True)
     root_logger.critical("Please ensure the application structure is correct, dependencies are installed (`pip install -r requirements.txt`), and the script is run from the project root.")

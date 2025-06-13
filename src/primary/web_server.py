@@ -27,7 +27,7 @@ from flask import Flask, render_template, request, jsonify, Response, send_from_
 # Use only settings_manager
 from src.primary import settings_manager
 from src.primary.utils.logger import setup_main_logger, get_logger, LOG_DIR, update_logging_levels # Import get_logger, LOG_DIR, and update_logging_levels
-from src.primary.utils.clean_logger import CLEAN_LOG_FILES # Import clean log files
+# Clean logging is now database-only
 from src.primary.auth import (
     authenticate_request, user_exists, create_user, verify_user, create_session,
     logout, SESSION_COOKIE_NAME, is_2fa_enabled, generate_2fa_secret,
@@ -288,21 +288,7 @@ def inject_base_url():
 # Lock for accessing the log files
 log_lock = Lock()
 
-# Define known log files based on clean logger config
-KNOWN_LOG_FILES = {
-    "sonarr": CLEAN_LOG_FILES.get("sonarr"),
-    "radarr": CLEAN_LOG_FILES.get("radarr"),
-    "lidarr": CLEAN_LOG_FILES.get("lidarr"),
-    "readarr": CLEAN_LOG_FILES.get("readarr"),
-    "whisparr": CLEAN_LOG_FILES.get("whisparr"),
-    "eros": CLEAN_LOG_FILES.get("eros"),  # Added Eros to known log files
-    "swaparr": CLEAN_LOG_FILES.get("swaparr"),  # Added Swaparr to known log files
-    "system": CLEAN_LOG_FILES.get("system"), # Map 'system' to the clean huntarr log
-}
-# Filter out None values if an app log file doesn't exist
-KNOWN_LOG_FILES = {k: v for k, v in KNOWN_LOG_FILES.items() if v}
-
-ALL_APP_LOG_FILES = list(KNOWN_LOG_FILES.values()) # List of all individual log file paths
+# Log files are now handled by database-only logging system
 
 # Handle both root path and base URL root path
 @app.route('/')
@@ -321,8 +307,7 @@ def user():
 # Removed /settings and /logs routes if handled by index.html and JS routing
 # Keep /logs if it's the actual SSE endpoint
 
-@app.route('/logs')
-def logs_stream():
+# Old file-based logs route removed - using database-based logs now
     """
     Event stream for logs.
     Filter logs by app type using the 'app' query parameter.
@@ -562,6 +547,9 @@ def logs_stream():
     response.headers['Cache-Control'] = 'no-cache'
     response.headers['X-Accel-Buffering'] = 'no'  # Disable nginx buffering if using nginx
     return response
+
+# Legacy file-based logs route removed - now using database-based log routes in log_routes.py
+# The frontend should use /api/logs endpoints instead
 
 @app.route('/api/settings', methods=['GET'])
 def api_settings():

@@ -481,7 +481,7 @@ grep -r "functionName\|variableName" frontend/ --include="*.js"
 4. Add missing anchors or fix links
 
 ### Log Issues
-1. Check if logs exist: `docker exec huntarr cat /config/logs/[app].log`
+1. Check logs in database: `docker exec huntarr python3 -c "import sys; sys.path.insert(0, '/app/src'); from primary.utils.logs_database import get_logs_database; db = get_logs_database(); logs = db.get_logs(limit=10); [print(f'{log[\"timestamp\"]} - {log[\"app_type\"]} - {log[\"level\"]} - {log[\"message\"]}') for log in logs]"`
 2. Test backend streaming: `curl -N -s "http://localhost:9705/logs?app=[app]"`
 3. Check browser console for JavaScript errors
 4. Verify regex patterns in `new-main.js`

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Clean logging system for frontend consumption
-Creates clean, stripped log messages without redundant information
+Clean Logger for Huntarr
+Provides database-only logging with clean, formatted messages for the web interface.
 """
 
 import logging
@@ -13,173 +13,94 @@ from pathlib import Path
 from typing import Dict, Optional
 import pytz
 
-# Use the centralized path configuration
-from src.primary.utils.config_paths import LOG_DIR
-
-# Clean log files for frontend consumption
-CLEAN_LOG_FILES = {
-    "system": LOG_DIR / "clean_huntarr.log",
-    "sonarr": LOG_DIR / "clean_sonarr.log",
-    "radarr": LOG_DIR / "clean_radarr.log",
-    "lidarr": LOG_DIR / "clean_lidarr.log", 
-    "readarr": LOG_DIR / "clean_readarr.log",
-    "whisparr": LOG_DIR / "clean_whisparr.log",
-    "eros": LOG_DIR / "clean_eros.log",
-    "swaparr": LOG_DIR / "clean_swaparr.log",
-}
-
-def _get_user_timezone():
-    """Get the user's selected timezone from general settings"""
-    try:
-        from src.primary.utils.timezone_utils import get_user_timezone
-        return get_user_timezone()
-    except Exception:
-        return pytz.UTC
 
 class CleanLogFormatter(logging.Formatter):
     """
-    Custom formatter that creates clean log messages for frontend consumption.
-    Uses pipe separators for easy parsing: timestamp|level|app_type|message
-    All timestamps are stored in UTC for consistency.
+    Custom formatter that creates clean, readable log messages.
     """
     
     def __init__(self):
-        # No format needed as we'll build it manually
         super().__init__()
+        self.timezone = self._get_timezone()
     
-    def format(self, record):
-        """
-        Format the log record as: timestamp|level|app_type|clean_message
-        This format makes it easy for frontend to parse and display properly.
-        Timestamps are always stored in UTC.
-        """
-        # Get the original formatted message
-        original_message = record.getMessage()
-        
-        # Clean the message by removing redundant information
-        clean_message = self._clean_message(original_message, record.name, record.levelname)
-        
-        # Format timestamp in UTC (for consistent storage)
-        timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(record.created))
-        
-        # Determine app type from logger name
-        app_type = self._get_app_type(record.name)
-        
-        # Format as: timestamp|level|app_type|message
-        return f"{timestamp}|{record.levelname}|{app_type}|{clean_message}"
+    def _get_timezone(self):
+        """Get the configured timezone"""
+        try:
+            from src.primary.utils.timezone_utils import get_user_timezone
+            return get_user_timezone()
+        except ImportError:
+            # Fallback to UTC if timezone utils not available
+            return pytz.UTC
     
-    def _clean_message(self, message: str, logger_name: str, level: str) -> str:
-        """
-        Clean a log message by removing redundant information.
+    def _get_app_type_from_logger_name(self, logger_name: str) -> str:
+        """Extract app type from logger name"""
+        if not logger_name:
+            return "system"
         
-        Args:
-            message: Original log message
-            logger_name: Name of the logger (e.g., 'huntarr.sonarr')
-            level: Log level (DEBUG, INFO, etc.)
-            
-        Returns:
-            Cleaned message with redundant information removed
-        """
-        clean_msg = message
+        # Handle logger names like "huntarr.sonarr" or just "huntarr"
+        if "huntarr" in logger_name.lower():
+            parts = logger_name.split(".")
+            if len(parts) > 1:
+                return parts[-1]  # Return the last part (e.g., "sonarr")
+            else:
+                return "system"  # Just "huntarr" becomes "system"
         
-        # Remove timestamp patterns at the beginning
-        # Patterns: YYYY-MM-DD HH:MM:SS [Timezone]
-        clean_msg = re.sub(r'^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\s+[A-Za-z_/]+)?\s*-\s*', '', clean_msg)
+        # For other logger names, try to extract app type
+        known_apps = ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros", "swaparr"]
+        logger_lower = logger_name.lower()
+        for app in known_apps:
+            if app in logger_lower:
+                return app
         
-        # Remove logger name patterns
-        # e.g., "huntarr.sonarr - DEBUG -" or "huntarr -"
-        logger_pattern = logger_name.replace('.', r'\.')
-        clean_msg = re.sub(f'^{logger_pattern}\\s*-\\s*{level}\\s*-\\s*', '', clean_msg)
-        clean_msg = re.sub(f'^{logger_pattern}\\s*-\\s*', '', clean_msg)
+        return "system"
+    
+    def _clean_message(self, message: str) -> str:
+        """Clean and format the log message"""
+        if not message:
+            return ""
         
-        # Remove common redundant prefixes
+        # Remove ANSI color codes
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        message = ansi_escape.sub('', message)
+        
+        # Remove excessive whitespace
+        message = re.sub(r'\s+', ' ', message).strip()
+        
+        # Remove common prefixes that add noise
         prefixes_to_remove = [
-            r'^huntarr\.[a-zA-Z]+\s*-\s*(DEBUG|INFO|WARNING|ERROR|CRITICAL)\s*-\s*',
-            r'^huntarr\s*-\s*(DEBUG|INFO|WARNING|ERROR|CRITICAL)\s*-\s*',
-            r'^huntarr\.[a-zA-Z]+\s*-\s*',
-            r'^huntarr\s*-\s*',
-            r'^\[system\]\s*',
-            r'^\[sonarr\]\s*',
-            r'^\[radarr\]\s*',
-            r'^\[lidarr\]\s*',
-            r'^\[readarr\]\s*',
-            r'^\[whisparr\]\s*',
-            r'^\[eros\]\s*',
-            r'^\[swaparr\]\s*',
+            r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} ',  # Timestamp prefixes
+            r'^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] ',     # Bracketed timestamps
+            r'^INFO:',
+            r'^DEBUG:',
+            r'^WARNING:',
+            r'^ERROR:',
+            r'^CRITICAL:',
         ]
         
-        for pattern in prefixes_to_remove:
-            clean_msg = re.sub(pattern, '', clean_msg, flags=re.IGNORECASE)
+        for prefix_pattern in prefixes_to_remove:
+            message = re.sub(prefix_pattern, '', message)
         
-        # Remove any remaining timestamp patterns that might be in the middle
-        clean_msg = re.sub(r'\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\s+[A-Za-z_/]+)?\s*-\s*', '', clean_msg)
-        
-        # Clean up extra whitespace and dashes
-        clean_msg = re.sub(r'^\s*-\s*', '', clean_msg)  # Remove leading dashes
-        clean_msg = re.sub(r'\s+', ' ', clean_msg)      # Normalize whitespace
-        clean_msg = clean_msg.strip()                   # Remove leading/trailing whitespace
-        
-        # If the message is empty after cleaning, provide a fallback
-        if not clean_msg:
-            clean_msg = "Log message"
-            
-        return clean_msg
+        return message.strip()
     
-    def _get_app_type(self, logger_name: str) -> str:
-        """
-        Determine the app type from the logger name.
+    def format(self, record):
+        """Format the log record into a clean message"""
+        # Get timezone-aware timestamp
+        dt = datetime.fromtimestamp(record.created, tz=self.timezone)
+        timestamp_str = dt.strftime('%Y-%m-%d %H:%M:%S')
         
-        Args:
-            logger_name: Name of the logger (e.g., 'huntarr.sonarr')
-            
-        Returns:
-            App type (e.g., 'sonarr', 'system')
-        """
-        # Remove 'huntarr.' prefix if present
-        if logger_name.startswith('huntarr.'):
-            logger_name = logger_name[8:]
+        # Get app type from logger name
+        app_type = self._get_app_type_from_logger_name(record.name)
         
-        # Map logger name to app type
-        app_types = {
-            'sonarr': 'sonarr',
-            'radarr': 'radarr',
-            'lidarr': 'lidarr',
-            'readarr': 'readarr',
-            'whisparr': 'whisparr',
-            'eros': 'eros',
-            'swaparr': 'swaparr',
-        }
+        # Clean the message
+        clean_message = self._clean_message(record.getMessage())
         
-        return app_types.get(logger_name, 'system')
-
-
-class CleanLogHandler(logging.Handler):
-    """
-    Custom log handler that writes clean log messages to separate files.
-    """
-    
-    def __init__(self, log_file_path: Path):
-        super().__init__()
-        self.log_file_path = log_file_path
-        self.setFormatter(CleanLogFormatter())
-        
-        # Ensure the log directory exists
-        self.log_file_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    def emit(self, record):
-        """Write the log record to the clean log file."""
-        try:
-            msg = self.format(record)
-            with open(self.log_file_path, 'a', encoding='utf-8') as f:
-                f.write(msg + '\n')
-        except Exception:
-            self.handleError(record)
+        # Return formatted message: timestamp|level|app_type|message
+        return f"{timestamp_str}|{record.levelname}|{app_type}|{clean_message}"
 
 
 class DatabaseLogHandler(logging.Handler):
     """
-    Custom log handler that writes clean log messages directly to the logs database.
-    This replaces file-based logging for the web UI.
+    Custom log handler that writes clean log messages to the logs database.
     """
     
     def __init__(self, app_type: str):
@@ -190,7 +111,7 @@ class DatabaseLogHandler(logging.Handler):
     
     @property
     def logs_db(self):
-        """Lazy load the logs database to avoid circular imports"""
+        """Lazy load the logs database instance"""
         if self._logs_db is None:
             from src.primary.utils.logs_database import get_logs_database
             self._logs_db = get_logs_database()
@@ -230,16 +151,14 @@ class DatabaseLogHandler(logging.Handler):
             print(f"Error writing log to database: {e}")
 
 
-# Global clean handlers registry
-_clean_handlers: Dict[str, CleanLogHandler] = {}
+# Global database handlers registry
 _database_handlers: Dict[str, DatabaseLogHandler] = {}
 _setup_complete = False
 
 
 def setup_clean_logging():
     """
-    Set up clean logging handlers for all known logger types.
-    This creates both file handlers (for backward compatibility) and database handlers (for web UI).
+    Set up database logging handlers for all known logger types.
     This should be called once during application startup.
     """
     global _setup_complete
@@ -250,26 +169,19 @@ def setup_clean_logging():
     
     from src.primary.utils.logger import get_logger
     
-    # Set up clean handlers for each app type
-    for app_type, clean_log_file in CLEAN_LOG_FILES.items():
-        # File handler (existing functionality)
-        if app_type not in _clean_handlers:
-            clean_handler = CleanLogHandler(clean_log_file)
-            clean_handler.setLevel(logging.DEBUG)
-            _clean_handlers[app_type] = clean_handler
-        
-        # Database handler (new functionality)
+    # Known app types for Huntarr
+    app_types = ['system', 'sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros', 'swaparr']
+    
+    # Set up database handlers for each app type
+    for app_type in app_types:
+        # Database handler
         if app_type not in _database_handlers:
             database_handler = DatabaseLogHandler(app_type)
             database_handler.setLevel(logging.DEBUG)
             _database_handlers[app_type] = database_handler
         
-        # Get the logger for this app type and add both handlers
+        # Get the logger for this app type and add database handler
         logger = get_logger(app_type)
-        
-        # Add file handler if not already added
-        if _clean_handlers[app_type] not in logger.handlers:
-            logger.addHandler(_clean_handlers[app_type])
         
         # Add database handler if not already added
         if _database_handlers[app_type] not in logger.handlers:
@@ -278,31 +190,9 @@ def setup_clean_logging():
     _setup_complete = True
 
 
-def get_clean_log_file(app_type: str) -> Optional[Path]:
+def get_clean_log_file_path(app_type: str) -> Optional[Path]:
     """
-    Get the clean log file path for a specific app type.
-    
-    Args:
-        app_type: The app type (e.g., 'sonarr', 'system')
-        
-    Returns:
-        Path to the clean log file, or None if not found
+    Legacy function for backward compatibility.
+    Returns None since we no longer use file-based logging.
     """
-    return CLEAN_LOG_FILES.get(app_type)
-
-
-def cleanup_clean_logs():
-    """Remove all clean log handlers and close files."""
-    from src.primary.utils.logger import get_logger
-    
-    for app_type, handler in _clean_handlers.items():
-        if app_type == "system":
-            logger_name = "huntarr"
-        else:
-            logger_name = app_type
-            
-        logger = get_logger(logger_name)
-        logger.removeHandler(handler)
-        handler.close()
-    
-    _clean_handlers.clear()
+    return None

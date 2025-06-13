@@ -11,37 +11,39 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from contextlib import contextmanager
+import threading
 
-from src.primary.utils.logger import get_logger
-
-logger = get_logger(__name__)
+# Don't import logger here to avoid circular dependencies during initialization
+# from src.primary.utils.logger import get_logger
+# logger = get_logger(__name__)
 
 class LogsDatabase:
     """Database manager for log storage"""
     
     def __init__(self):
+        print("LogsDatabase.__init__() starting...")
         self.db_path = self._get_database_path()
+        print(f"Database path set to: {self.db_path}")
         self.ensure_database_exists()
+        print("LogsDatabase.__init__() completed successfully")
     
     def _get_database_path(self) -> Path:
         """Get the path to the logs database file"""
-        # Import CONFIG_DIR here to avoid circular imports
-        try:
-            from src.primary.utils.config_paths import CONFIG_DIR
-            db_path = Path(CONFIG_DIR) / "logs.db"
-        except ImportError:
-            # Fallback if config_paths is not available
-            import os
-            config_dir = os.environ.get('CONFIG_DIR', '/config')
-            db_path = Path(config_dir) / "logs.db"
-        
-        logger.info(f"Logs database path: {db_path}")
+        print("_get_database_path() starting...")
+        # Use simple fallback approach to avoid import issues
+        import os
+        config_dir = os.environ.get('CONFIG_DIR', '/config')
+        db_path = Path(config_dir) / "logs.db"
+        print(f"Logs database path: {db_path}")
         return db_path
     
     def ensure_database_exists(self):
         """Create the logs database and tables if they don't exist"""
+        print("ensure_database_exists() starting...")
         try:
+            print(f"Attempting to connect to database at: {self.db_path}")
             with sqlite3.connect(self.db_path) as conn:
+                print("Database connection established successfully")
                 # Create logs table
                 conn.execute('''
                     CREATE TABLE IF NOT EXISTS logs (
@@ -62,9 +64,9 @@ class LogsDatabase:
                 conn.execute('CREATE INDEX IF NOT EXISTS idx_logs_app_level ON logs(app_type, level)')
                 
                 conn.commit()
-                logger.info(f"Logs database initialized at: {self.db_path}")
+                print(f"Logs database initialized at: {self.db_path}")
         except Exception as e:
-            logger.error(f"Failed to initialize logs database: {e}")
+            print(f"Failed to initialize logs database: {e}")
             raise
     
     def insert_log(self, timestamp: datetime, level: str, app_type: str, message: str, logger_name: str = None):
@@ -110,7 +112,7 @@ class LogsDatabase:
                 
                 return [dict(row) for row in rows]
         except Exception as e:
-            logger.error(f"Error getting logs: {e}")
+            print(f"Error getting logs: {e}")
             return []
     
     def get_log_count(self, app_type: str = None, level: str = None, search: str = None) -> int:
@@ -135,7 +137,7 @@ class LogsDatabase:
                 cursor = conn.execute(query, params)
                 return cursor.fetchone()[0]
         except Exception as e:
-            logger.error(f"Error getting log count: {e}")
+            print(f"Error getting log count: {e}")
             return 0
     
     def cleanup_old_logs(self, days_to_keep: int = 30, max_entries_per_app: int = 10000):
@@ -169,11 +171,11 @@ class LogsDatabase:
                 conn.commit()
                 
                 if deleted_by_age > 0 or total_deleted_by_count > 0:
-                    logger.info(f"Cleaned up logs: {deleted_by_age} by age, {total_deleted_by_count} by count")
+                    print(f"Cleaned up logs: {deleted_by_age} by age, {total_deleted_by_count} by count")
                 
                 return deleted_by_age + total_deleted_by_count
         except Exception as e:
-            logger.error(f"Error cleaning up logs: {e}")
+            print(f"Error cleaning up logs: {e}")
             return 0
     
     def get_app_types(self) -> List[str]:
@@ -183,7 +185,7 @@ class LogsDatabase:
                 cursor = conn.execute("SELECT DISTINCT app_type FROM logs ORDER BY app_type")
                 return [row[0] for row in cursor.fetchall()]
         except Exception as e:
-            logger.error(f"Error getting app types: {e}")
+            print(f"Error getting app types: {e}")
             return []
     
     def get_log_levels(self) -> List[str]:
@@ -193,7 +195,7 @@ class LogsDatabase:
                 cursor = conn.execute("SELECT DISTINCT level FROM logs ORDER BY level")
                 return [row[0] for row in cursor.fetchall()]
         except Exception as e:
-            logger.error(f"Error getting log levels: {e}")
+            print(f"Error getting log levels: {e}")
             return []
     
     def clear_logs(self, app_type: str = None):
@@ -208,21 +210,25 @@ class LogsDatabase:
                 deleted_count = cursor.rowcount
                 conn.commit()
                 
-                logger.info(f"Cleared {deleted_count} logs" + (f" for {app_type}" if app_type else ""))
+                print(f"Cleared {deleted_count} logs" + (f" for {app_type}" if app_type else ""))
                 return deleted_count
         except Exception as e:
-            logger.error(f"Error clearing logs: {e}")
+            print(f"Error clearing logs: {e}")
             return 0
 
 
 # Global instance
 _logs_db = None
+_logs_db_lock = threading.Lock()
 
 def get_logs_database() -> LogsDatabase:
-    """Get the global logs database instance"""
+    """Get the global logs database instance (thread-safe singleton)"""
     global _logs_db
     if _logs_db is None:
-        _logs_db = LogsDatabase()
+        with _logs_db_lock:
+            # Double-check locking pattern
+            if _logs_db is None:
+                _logs_db = LogsDatabase()
     return _logs_db
 
 
@@ -239,11 +245,11 @@ def schedule_log_cleanup():
                 logs_db = get_logs_database()
                 deleted_count = logs_db.cleanup_old_logs(days_to_keep=30, max_entries_per_app=10000)
                 if deleted_count > 0:
-                    logger.info(f"Scheduled cleanup removed {deleted_count} old log entries")
+                    print(f"Scheduled cleanup removed {deleted_count} old log entries")
             except Exception as e:
-                logger.error(f"Error in scheduled log cleanup: {e}")
+                print(f"Error in scheduled log cleanup: {e}")
     
     # Start cleanup thread
     cleanup_thread = threading.Thread(target=cleanup_worker, daemon=True)
     cleanup_thread.start()
-    logger.info("Scheduled log cleanup thread started") 
+    print("Scheduled log cleanup thread started") 
