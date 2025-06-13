@@ -412,11 +412,10 @@ jobs:
           #!/bin/bash
           
           # Create config directory in user's Application Support
-          mkdir -p "$HOME/Library/Application Support/Huntarr/config"
-          mkdir -p "$HOME/Library/Application Support/Huntarr/config/settings"
-          mkdir -p "$HOME/Library/Application Support/Huntarr/config/stateful"
-          mkdir -p "$HOME/Library/Application Support/Huntarr/config/user"
-          mkdir -p "$HOME/Library/Application Support/Huntarr/config/logs"
+                      mkdir -p "$HOME/Library/Application Support/Huntarr/config"
+            mkdir -p "$HOME/Library/Application Support/Huntarr/config/settings"
+            mkdir -p "$HOME/Library/Application Support/Huntarr/config/user"
+            mkdir -p "$HOME/Library/Application Support/Huntarr/config/logs"
           
           # Set permissions
           chmod -R 755 "$HOME/Library/Application Support/Huntarr"

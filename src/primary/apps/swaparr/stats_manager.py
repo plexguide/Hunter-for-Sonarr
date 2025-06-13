@@ -2,33 +2,18 @@
 """
 Swaparr Statistics Manager
 Handles tracking, storing, and retrieving Swaparr-specific statistics
+Now uses SQLite database instead of JSON files for better performance and reliability.
 """
 
-import os
-import json
 import threading
 from typing import Dict, Any
 from src.primary.utils.logger import get_logger
-from src.primary.utils.config_paths import CONFIG_PATH
+from src.primary.utils.database import get_database
 
 logger = get_logger("swaparr_stats")
 
-# Path for Swaparr stats
-SWAPARR_STATS_DIR = os.path.join(str(CONFIG_PATH), "tally")
-SWAPARR_STATS_FILE = os.path.join(SWAPARR_STATS_DIR, "swaparr_stats.json")
-
 # Lock for thread-safe operations
 swaparr_stats_lock = threading.Lock()
-
-def ensure_swaparr_stats_dir():
-    """Ensure the Swaparr statistics directory exists"""
-    try:
-        os.makedirs(SWAPARR_STATS_DIR, exist_ok=True)
-        logger.debug(f"Swaparr stats directory ensured: {SWAPARR_STATS_DIR}")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to create Swaparr stats directory: {e}")
-        return False
 
 def get_default_swaparr_stats() -> Dict[str, int]:
     """Get the default Swaparr stats structure"""
@@ -41,40 +26,30 @@ def get_default_swaparr_stats() -> Dict[str, int]:
 
 def load_swaparr_stats() -> Dict[str, int]:
     """
-    Load Swaparr statistics from the stats file
+    Load Swaparr statistics from the database
     
     Returns:
         Dictionary containing Swaparr statistics
     """
-    if not ensure_swaparr_stats_dir():
-        logger.error("Cannot load Swaparr stats - no valid stats directory available")
-        return get_default_swaparr_stats()
-    
-    default_stats = get_default_swaparr_stats()
-    
     try:
-        if os.path.exists(SWAPARR_STATS_FILE):
-            logger.debug(f"Loading Swaparr stats from: {SWAPARR_STATS_FILE}")
-            with open(SWAPARR_STATS_FILE, 'r') as f:
-                stats = json.load(f)
-                
-            # Ensure all expected keys are present
-            for key in default_stats:
-                if key not in stats:
-                    stats[key] = default_stats[key]
-            
-            logger.debug(f"Loaded Swaparr stats: {stats}")
-            return stats
-        else:
-            logger.info(f"Swaparr stats file not found at {SWAPARR_STATS_FILE}, using default stats")
-        return default_stats
+        db = get_database()
+        stats = db.get_swaparr_stats()
+        
+        # Ensure all expected keys are present
+        default_stats = get_default_swaparr_stats()
+        for key in default_stats:
+            if key not in stats:
+                stats[key] = default_stats[key]
+        
+        logger.debug(f"Loaded Swaparr stats from database: {stats}")
+        return stats
     except Exception as e:
-        logger.error(f"Error loading Swaparr stats from {SWAPARR_STATS_FILE}: {e}")
-        return default_stats
+        logger.error(f"Error loading Swaparr stats from database: {e}")
+        return get_default_swaparr_stats()
 
 def save_swaparr_stats(stats: Dict[str, int]) -> bool:
     """
-    Save Swaparr statistics to the stats file
+    Save Swaparr statistics to the database
     
     Args:
         stats: Dictionary containing Swaparr statistics
@@ -82,25 +57,15 @@ def save_swaparr_stats(stats: Dict[str, int]) -> bool:
     Returns:
         True if successful, False otherwise
     """
-    if not ensure_swaparr_stats_dir():
-        logger.error("Cannot save Swaparr stats - no valid stats directory available")
-        return False
-    
     try:
-        logger.debug(f"Saving Swaparr stats to: {SWAPARR_STATS_FILE}")
-        # First write to a temp file, then move it to avoid partial writes
-        temp_file = f"{SWAPARR_STATS_FILE}.tmp"
-        with open(temp_file, 'w') as f:
-            json.dump(stats, f, indent=2)
-            f.flush()
-            os.fsync(f.fileno())
+        db = get_database()
+        for stat_key, value in stats.items():
+            db.set_swaparr_stat(stat_key, value)
         
-        # Move the temp file to the actual file
-        os.rename(temp_file, SWAPARR_STATS_FILE)
-        logger.debug("Swaparr stats saved successfully")
+        logger.debug(f"Saved Swaparr stats to database: {stats}")
         return True
     except Exception as e:
-        logger.error(f"Error saving Swaparr stats to {SWAPARR_STATS_FILE}: {e}")
+        logger.error(f"Error saving Swaparr stats to database: {e}")
         return False
 
 def increment_swaparr_stat(stat_type: str, count: int = 1) -> bool:
@@ -121,13 +86,10 @@ def increment_swaparr_stat(stat_type: str, count: int = 1) -> bool:
     
     with swaparr_stats_lock:
         try:
-            stats = load_swaparr_stats()
-            stats[stat_type] += count
-            
-            success = save_swaparr_stats(stats)
-            if success:
-                logger.debug(f"Incremented Swaparr {stat_type} by {count}. New value: {stats[stat_type]}")
-            return success
+            db = get_database()
+            db.increment_swaparr_stat(stat_type, count)
+            logger.debug(f"Incremented Swaparr {stat_type} by {count}")
+            return True
         except Exception as e:
             logger.error(f"Error incrementing Swaparr {stat_type}: {e}")
             return False

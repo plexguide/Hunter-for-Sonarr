@@ -20,7 +20,7 @@ from ..auth import (
 )
 from ..utils.logger import logger # Ensure logger is imported
 from .. import settings_manager # Import settings_manager
-from ..cycle_tracker import _SLEEP_DATA_PATH # Import sleep data path
+
 
 common_bp = Blueprint('common', __name__)
 
@@ -43,24 +43,33 @@ def logo_files(filename):
 
 @common_bp.route('/api/sleep.json', methods=['GET'])
 def api_get_sleep_json():
-    """API endpoint to directly serve the sleep.json file for frontend access"""
+    """API endpoint to serve sleep/cycle data from the database for frontend access"""
     try:
-        if os.path.exists(_SLEEP_DATA_PATH):
-            # Add CORS headers to allow any origin to access this resource
-            response = send_file(_SLEEP_DATA_PATH, mimetype='application/json')
-            response.headers.add('Access-Control-Allow-Origin', '*')
-            return response
-        else:
-            # If file doesn't exist, create it and return empty object
-            logger.info(f"[API] sleep.json not found at {_SLEEP_DATA_PATH}, creating it")
-            os.makedirs(os.path.dirname(_SLEEP_DATA_PATH), exist_ok=True)
-            with open(_SLEEP_DATA_PATH, 'w') as f:
-                json.dump({}, f, indent=2)
-            return jsonify({}), 200
+        from src.primary.utils.database import get_database
+        
+        db = get_database()
+        sleep_data = db.get_sleep_data()
+        
+        # Convert database format to frontend format
+        frontend_data = {}
+        for app_type, data in sleep_data.items():
+            frontend_data[app_type] = {
+                "next_cycle": data.get("next_cycle_time"),
+                "updated_at": data.get("last_cycle_end") or data.get("last_cycle_start"),
+                "cyclelock": data.get("cycle_lock", True)
+            }
+        
+        # Add CORS headers to allow any origin to access this resource
+        response = jsonify(frontend_data)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+        
     except Exception as e:
-        logger.error(f"Error serving sleep.json from {_SLEEP_DATA_PATH}: {e}")
+        logger.error(f"Error serving sleep data from database: {e}")
         # Return empty object instead of error to prevent UI breaking
-        return jsonify({}), 200
+        response = jsonify({})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 200
 
 # --- Authentication Routes --- #
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Scheduler Engine for Huntarr
-Handles execution of scheduled actions from schedule.json
+Handles execution of scheduled actions from database
 """
 
 import os
@@ -20,17 +20,14 @@ from src.primary.utils.logger import get_logger
 # Add import for stateful_manager's check_expiration
 from src.primary.stateful_manager import check_expiration as check_stateful_expiration
 
+# Import database
+from src.primary.utils.database import get_database
+
 # Initialize logger
 scheduler_logger = get_logger("scheduler")
 
 # Scheduler constants
 SCHEDULE_CHECK_INTERVAL = 60  # Check schedule every minute
-# Use the centralized path configuration
-from src.primary.utils.config_paths import SCHEDULER_DIR, CONFIG_PATH, SETTINGS_DIR
-
-# Convert Path object to string for compatibility with os.path functions
-SCHEDULE_DIR = str(SCHEDULER_DIR)
-SCHEDULE_FILE = os.path.join(SCHEDULE_DIR, "schedule.json")
 
 # Track last executed actions to prevent duplicates
 last_executed_actions = {}
@@ -52,53 +49,14 @@ def _get_user_timezone():
         return pytz.UTC
 
 def load_schedule():
-    """Load the schedule configuration from file"""
+    """Load the schedule configuration from database"""
     try:
-        os.makedirs(SCHEDULE_DIR, exist_ok=True)  # Ensure directory exists
-        
-        if os.path.exists(SCHEDULE_FILE):
-            try:
-                # Check if file is empty
-                if os.path.getsize(SCHEDULE_FILE) == 0:
-                    return {"global": [], "sonarr": [], "radarr": [], "lidarr": [], "readarr": [], "whisparr": [], "eros": []}
-                
-                # Attempt to load JSON
-                with open(SCHEDULE_FILE, 'r') as f:
-                    content = f.read()
-                    scheduler_logger.debug(f"Schedule file content (first 100 chars): {content[:100]}...")
-                    schedule_data = json.loads(content)
-                    
-                    # Ensure the schedule data has the expected structure
-                    for app_type in ["global", "sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros"]:
-                        if app_type not in schedule_data:
-                            schedule_data[app_type] = []
-                    
-                    return schedule_data
-            except json.JSONDecodeError as json_err:
-                scheduler_logger.error(f"Invalid JSON in schedule file: {json_err}")
-                scheduler_logger.error(f"Attempting to repair JSON file...")
-                
-                # Backup the corrupted file
-                backup_file = f"{SCHEDULE_FILE}.backup.{int(time.time())}"
-                os.rename(SCHEDULE_FILE, backup_file)
-                scheduler_logger.info(f"Backed up corrupted file to {backup_file}")
-                
-                # Create a new empty schedule file
-                default_schedule = {"global": [], "sonarr": [], "radarr": [], "lidarr": [], "readarr": [], "whisparr": [], "eros": []}
-                with open(SCHEDULE_FILE, 'w') as f:
-                    json.dump(default_schedule, f, indent=2)
-                scheduler_logger.info(f"Created new empty schedule file")
-                
-                return default_schedule
-        else:
-            # Create the default schedule file
-            default_schedule = {"global": [], "sonarr": [], "radarr": [], "lidarr": [], "readarr": [], "whisparr": [], "eros": []}
-            with open(SCHEDULE_FILE, 'w') as f:
-                json.dump(default_schedule, f, indent=2)
-            scheduler_logger.info(f"Created new schedule file with default structure")
-            return default_schedule
+        db = get_database()
+        schedule_data = db.get_schedules()
+        scheduler_logger.debug(f"Loaded {sum(len(schedules) for schedules in schedule_data.values())} schedules from database")
+        return schedule_data
     except Exception as e:
-        scheduler_logger.error(f"Error loading schedule: {e}")
+        scheduler_logger.error(f"Error loading schedule from database: {e}")
         scheduler_logger.error(traceback.format_exc())
         return {"global": [], "sonarr": [], "radarr": [], "lidarr": [], "readarr": [], "whisparr": [], "eros": []}
 

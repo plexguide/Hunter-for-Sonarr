@@ -39,19 +39,16 @@ try:
     # Define all app-specific directories
     USER_DIR = CONFIG_PATH / "user"
     LOG_DIR = CONFIG_PATH / "logs"
-    HISTORY_DIR = CONFIG_PATH / "history"
+
     SETTINGS_DIR = CONFIG_PATH
-    STATEFUL_DIR = CONFIG_PATH / "stateful"
+
     RESET_DIR = CONFIG_PATH / "reset"
-    SCHEDULER_DIR = CONFIG_PATH / "scheduler"
     
     # Create essential directories
     USER_DIR.mkdir(exist_ok=True)
     LOG_DIR.mkdir(exist_ok=True)
-    HISTORY_DIR.mkdir(exist_ok=True)
-    STATEFUL_DIR.mkdir(exist_ok=True)
+
     RESET_DIR.mkdir(exist_ok=True)
-    SCHEDULER_DIR.mkdir(exist_ok=True)
     print(f"Using configuration directory: {CONFIG_DIR}")
     # Check write permissions with a test file
     test_file = CONFIG_PATH / f"write_test_{int(time.time())}.tmp"
@@ -81,17 +78,15 @@ except Exception as e:
 LOG_DIR = CONFIG_PATH / "logs"
 SETTINGS_DIR = CONFIG_PATH / "settings"
 USER_DIR = CONFIG_PATH / "user"
-STATEFUL_DIR = CONFIG_PATH / "stateful"
-HISTORY_DIR = CONFIG_PATH / "history"
-SCHEDULER_DIR = CONFIG_PATH / "scheduler"
+
+
 RESET_DIR = CONFIG_PATH / "reset"  # Add reset directory
-TALLY_DIR = CONFIG_PATH / "tally"  # Add tally directory for stats
-EROS_DIR = CONFIG_PATH / "eros"  # Add Eros directory
+
 SWAPARR_DIR = CONFIG_PATH / "swaparr"  # Add Swaparr directory for state tracking
 
 # Create all directories
-for dir_path in [LOG_DIR, SETTINGS_DIR, USER_DIR, STATEFUL_DIR, HISTORY_DIR, 
-                SCHEDULER_DIR, RESET_DIR, TALLY_DIR, EROS_DIR, SWAPARR_DIR]:
+for dir_path in [LOG_DIR, SETTINGS_DIR, USER_DIR, 
+                RESET_DIR, SWAPARR_DIR]:
     try:
         dir_path.mkdir(parents=True, exist_ok=True)
     except Exception as e:
@@ -100,7 +95,7 @@ for dir_path in [LOG_DIR, SETTINGS_DIR, USER_DIR, STATEFUL_DIR, HISTORY_DIR,
 # Set environment variables for backwards compatibility
 os.environ["HUNTARR_CONFIG_DIR"] = str(CONFIG_PATH)
 os.environ["CONFIG_DIR"] = str(CONFIG_PATH)  # For backward compatibility
-os.environ["STATEFUL_DIR"] = str(STATEFUL_DIR)
+
 
 # Helper functions to get paths
 def get_path(*args):

@@ -76,16 +76,14 @@ except Exception as e:
 LOG_DIR = CONFIG_PATH / "logs"
 SETTINGS_DIR = CONFIG_PATH / "settings"
 USER_DIR = CONFIG_PATH / "user"
-STATEFUL_DIR = CONFIG_PATH / "stateful"
-HISTORY_DIR = CONFIG_PATH / "history"
-SCHEDULER_DIR = CONFIG_PATH / "scheduler"
+
+
 RESET_DIR = CONFIG_PATH / "reset"  # Add reset directory
-TALLY_DIR = CONFIG_PATH / "tally"  # Add tally directory for stats
-EROS_DIR = CONFIG_PATH / "eros"  # Add Eros directory
+
 
 # Create all directories with enhanced error reporting
-for dir_path in [LOG_DIR, SETTINGS_DIR, USER_DIR, STATEFUL_DIR, HISTORY_DIR, 
-                SCHEDULER_DIR, RESET_DIR, TALLY_DIR, EROS_DIR]:
+for dir_path in [LOG_DIR, SETTINGS_DIR, USER_DIR, 
+                RESET_DIR]:
     try:
         dir_path.mkdir(parents=True, exist_ok=True)
         
@@ -104,7 +102,7 @@ for dir_path in [LOG_DIR, SETTINGS_DIR, USER_DIR, STATEFUL_DIR, HISTORY_DIR,
 # Set environment variables for backwards compatibility
 os.environ["HUNTARR_CONFIG_DIR"] = str(CONFIG_PATH)
 os.environ["CONFIG_DIR"] = str(CONFIG_PATH)  # For backward compatibility
-os.environ["STATEFUL_DIR"] = str(STATEFUL_DIR)
+
 
 # Helper functions to get paths
 def get_path(*args):
