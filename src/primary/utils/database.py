@@ -23,14 +23,20 @@ class HuntarrDatabase:
         self.ensure_database_exists()
     
     def _get_database_path(self) -> Path:
-        """Get database path - use local data directory for development"""
-        # For local development, use data directory in project root
-        project_root = Path(__file__).parent.parent.parent.parent
-        data_dir = project_root / "data"
-        
-        # Ensure directory exists
-        data_dir.mkdir(parents=True, exist_ok=True)
-        return data_dir / "huntarr.db"
+        """Get database path - use /config for Docker, local data directory for development"""
+        # Check if running in Docker (config directory exists)
+        config_dir = Path("/config")
+        if config_dir.exists() and config_dir.is_dir():
+            # Running in Docker - use persistent config directory
+            return config_dir / "huntarr.db"
+        else:
+            # For local development, use data directory in project root
+            project_root = Path(__file__).parent.parent.parent.parent
+            data_dir = project_root / "data"
+            
+            # Ensure directory exists
+            data_dir.mkdir(parents=True, exist_ok=True)
+            return data_dir / "huntarr.db"
     
     def ensure_database_exists(self):
         """Create database and all tables if they don't exist"""
