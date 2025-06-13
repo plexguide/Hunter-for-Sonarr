@@ -30,7 +30,7 @@ window.LogsModule = {
         // Set immediate fallback to prevent warnings during loading
         this.userTimezone = this.userTimezone || 'UTC';
         
-        fetch('./api/settings')
+        HuntarrUtils.fetchWithTimeout('./api/settings')
             .then(response => response.json())
             .then(settings => {
                 this.userTimezone = settings.general?.timezone || 'UTC';

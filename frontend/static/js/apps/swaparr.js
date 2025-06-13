@@ -72,7 +72,7 @@
 
         loadStatistics: function() {
             // Load statistics from the API
-            fetch('./api/swaparr/status')
+            HuntarrUtils.fetchWithTimeout('./api/swaparr/status')
                 .then(response => response.json())
                 .then(data => {
                     if (data.session_statistics) {

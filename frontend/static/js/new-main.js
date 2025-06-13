@@ -41,6 +41,13 @@ let huntarrUI = {
     init: function() {
         console.log('[huntarrUI] Initializing UI...');
         
+        // Skip initialization on login page
+        const isLoginPage = document.querySelector('.login-container, #loginForm, .login-form');
+        if (isLoginPage) {
+            console.log('[huntarrUI] Login page detected, skipping full initialization');
+            return;
+        }
+        
         // Cache frequently used DOM elements
         this.cacheElements();
         

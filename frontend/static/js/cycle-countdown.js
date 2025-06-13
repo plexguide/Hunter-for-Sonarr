@@ -56,8 +56,12 @@ window.CycleCountdown = (function() {
         // First try to fetch from API
         console.log('[CycleCountdown] Fetching initial data from API...');
         fetchAllCycleData()
-            .then(() => {
-                console.log('[CycleCountdown] Initial data fetch successful');
+            .then((data) => {
+                if (data && Object.keys(data).length > 0) {
+                    console.log('[CycleCountdown] Initial data fetch successful');
+                } else {
+                    console.log('[CycleCountdown] No apps configured yet - countdown will activate when apps are set up');
+                }
                 // Success - data is processed in fetchAllCycleData
             })
             .catch((error) => {
@@ -81,8 +85,11 @@ window.CycleCountdown = (function() {
                 if (!isFetchingData) {
                     console.log('[CycleCountdown] API sync (every 10s) to maintain accuracy...');
                     fetchAllCycleData()
-                        .then(() => {
-                            console.log('[CycleCountdown] API sync completed, timers will self-correct');
+                        .then((data) => {
+                            if (data && Object.keys(data).length > 0) {
+                                console.log('[CycleCountdown] API sync completed, timers will self-correct');
+                            }
+                            // Don't log anything when no apps are configured - this is normal
                         })
                         .catch(() => {
                             console.log('[CycleCountdown] API sync failed, timers continue with last known data');
@@ -328,8 +335,9 @@ window.CycleCountdown = (function() {
                 
                 // Check if we got valid data
                 if (Object.keys(data).length === 0) {
-                    console.warn('[CycleCountdown] API returned no data');
-                    reject(new Error('No data from API'));
+                    // No data likely means no apps are configured yet - this is normal
+                    console.log('[CycleCountdown] No cycle data available (no apps configured yet)');
+                    resolve({}); // Resolve with empty data instead of rejecting
                     return;
                 }
                 
@@ -415,8 +423,9 @@ window.CycleCountdown = (function() {
                 if (dataProcessed) {
                     resolve(data);
                 } else {
-                    console.warn('[CycleCountdown] No valid app data found in API response');
-                    reject(new Error('No valid app data'));
+                    // No valid app data likely means no apps are configured yet - this is normal
+                    console.log('[CycleCountdown] No configured apps found in API response');
+                    resolve({}); // Resolve with empty data instead of rejecting
                 }
             })
             .catch(error => {
@@ -639,6 +648,13 @@ window.CycleCountdown = (function() {
     
     document.addEventListener('DOMContentLoaded', function() {
         console.log('[CycleCountdown] DOM loaded, checking page...');
+        
+        // Skip initialization on login page or if not authenticated
+        const isLoginPage = document.querySelector('.login-container, #loginForm, .login-form');
+        if (isLoginPage) {
+            console.log('[CycleCountdown] Login page detected, skipping initialization');
+            return;
+        }
         
         // Only initialize if we're on a page that has app status cards
         // Check for the home section or any app status elements
