@@ -72,18 +72,12 @@ except Exception as e:
     except Exception:
         pass
 
-# Create standard directories
+# Create standard directories - only the ones we actually use
 LOG_DIR = CONFIG_PATH / "logs"
-SETTINGS_DIR = CONFIG_PATH / "settings"
-USER_DIR = CONFIG_PATH / "user"
-
-
-RESET_DIR = CONFIG_PATH / "reset"  # Add reset directory
-
+RESET_DIR = CONFIG_PATH / "reset"
 
 # Create all directories with enhanced error reporting
-for dir_path in [LOG_DIR, SETTINGS_DIR, USER_DIR, 
-                RESET_DIR]:
+for dir_path in [LOG_DIR, RESET_DIR]:
     try:
         dir_path.mkdir(parents=True, exist_ok=True)
         

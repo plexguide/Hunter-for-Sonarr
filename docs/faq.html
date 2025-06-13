@@ -495,7 +495,8 @@ services:
 docker stop huntarr
 
 # Remove credentials file
-rm /path/to/huntarr/config/user/credentials.json
+                # Credentials are now stored in the database at /path/to/huntarr/data/huntarr.db
+                # To reset credentials, delete the database file or use the web interface
 
 # Start Huntarr
 docker start huntarr</code></pre>
@@ -513,7 +514,8 @@ docker start huntarr</code></pre>
                     <div class="faq-answer">
                         Same solution as password reset - remove the credentials file:
 
-                        <pre class="terminal"><code>rm /path/to/huntarr/config/user/credentials.json</code></pre>
+                        <pre class="terminal"><code># Credentials are now stored in the database at /path/to/huntarr/data/huntarr.db
+# To reset credentials, delete the database file or use the web interface</code></pre>
 
                         This will reset both password and 2FA settings.
                     </div>

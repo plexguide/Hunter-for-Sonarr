@@ -36,19 +36,14 @@ CONFIG_PATH = pathlib.Path(CONFIG_DIR)
 try:
     CONFIG_PATH.mkdir(parents=True, exist_ok=True)
     
-    # Define all app-specific directories
-    USER_DIR = CONFIG_PATH / "user"
+    # Define only the directories we actually use
     LOG_DIR = CONFIG_PATH / "logs"
-
-    SETTINGS_DIR = CONFIG_PATH
-
     RESET_DIR = CONFIG_PATH / "reset"
     
     # Create essential directories
-    USER_DIR.mkdir(exist_ok=True)
     LOG_DIR.mkdir(exist_ok=True)
-
     RESET_DIR.mkdir(exist_ok=True)
+    
     print(f"Using configuration directory: {CONFIG_DIR}")
     # Check write permissions with a test file
     test_file = CONFIG_PATH / f"write_test_{int(time.time())}.tmp"
@@ -74,19 +69,12 @@ except Exception as e:
     except:
         pass
 
-# Create standard directories
+# Create standard directories - only the ones we actually use
 LOG_DIR = CONFIG_PATH / "logs"
-SETTINGS_DIR = CONFIG_PATH / "settings"
-USER_DIR = CONFIG_PATH / "user"
-
-
-RESET_DIR = CONFIG_PATH / "reset"  # Add reset directory
-
-# SWAPARR_DIR removed - now using database for state tracking
+RESET_DIR = CONFIG_PATH / "reset"
 
 # Create all directories
-for dir_path in [LOG_DIR, SETTINGS_DIR, USER_DIR, 
-                RESET_DIR]:
+for dir_path in [LOG_DIR, RESET_DIR]:
     try:
         dir_path.mkdir(parents=True, exist_ok=True)
     except Exception as e:

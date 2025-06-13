@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
 # Create necessary directories
-RUN mkdir -p /config/settings /config/user /config/logs
+RUN mkdir -p /config/logs /config/reset
 RUN chmod -R 755 /config
 
 # Set environment variables
