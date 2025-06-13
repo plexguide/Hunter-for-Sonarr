@@ -3,7 +3,7 @@
 from flask import Blueprint, request, jsonify
 import datetime, os, requests
 # keys_manager import removed - using settings_manager instead
-from src.primary.state import get_state_file_path, reset_state_file
+from src.primary.state import reset_state_file
 from src.primary.utils.logger import get_logger, APP_LOG_FILES
 from src.primary.settings_manager import load_settings, get_ssl_verify_setting
 import traceback
@@ -17,9 +17,7 @@ from src.primary.utils.config_paths import CONFIG_PATH
 eros_bp = Blueprint('eros', __name__)
 eros_logger = get_logger("eros")
 
-# Make sure we're using the correct state files
-PROCESSED_MISSING_FILE = get_state_file_path("eros", "processed_missing") 
-PROCESSED_UPGRADES_FILE = get_state_file_path("eros", "processed_upgrades")
+# State management now handled directly through database calls
 
 def test_connection(url, api_key):
     # Validate URL format

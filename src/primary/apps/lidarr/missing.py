@@ -16,7 +16,7 @@ from src.primary.stats_manager import increment_stat
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.settings_manager import load_settings, get_advanced_setting
-from src.primary.state import get_state_file_path, check_state_reset
+from src.primary.state import check_state_reset
 import json
 import os
 

@@ -3,7 +3,7 @@
 from flask import Blueprint, request, jsonify
 import datetime, os, requests
 # keys_manager import removed - using settings_manager instead
-from src.primary.state import get_state_file_path, reset_state_file
+from src.primary.state import reset_state_file
 from src.primary.utils.logger import get_logger
 from src.primary.settings_manager import get_ssl_verify_setting
 import traceback
@@ -13,9 +13,7 @@ from urllib.parse import urlparse
 radarr_bp = Blueprint('radarr', __name__)
 radarr_logger = get_logger("radarr")
 
-# Make sure we're using the correct state files
-PROCESSED_MISSING_FILE = get_state_file_path("radarr", "processed_missing") 
-PROCESSED_UPGRADES_FILE = get_state_file_path("radarr", "processed_upgrades")
+# State management now handled directly through database calls
 
 @radarr_bp.route('/test-connection', methods=['POST'])
 def test_connection():

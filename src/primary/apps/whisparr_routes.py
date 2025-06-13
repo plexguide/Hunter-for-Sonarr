@@ -3,7 +3,7 @@
 from flask import Blueprint, request, jsonify
 import datetime, os, requests
 # keys_manager import removed - using settings_manager instead
-from src.primary.state import get_state_file_path, reset_state_file
+from src.primary.state import reset_state_file
 from src.primary.utils.logger import get_logger, APP_LOG_FILES
 from src.primary.settings_manager import get_ssl_verify_setting
 import traceback
@@ -14,9 +14,7 @@ from src.primary.apps.whisparr import api as whisparr_api
 whisparr_bp = Blueprint('whisparr', __name__)
 whisparr_logger = get_logger("whisparr")
 
-# Make sure we're using the correct state files
-PROCESSED_MISSING_FILE = get_state_file_path("whisparr", "processed_missing") 
-PROCESSED_UPGRADES_FILE = get_state_file_path("whisparr", "processed_upgrades")
+# State management now handled directly through database calls
 
 @whisparr_bp.route('/status', methods=['GET'])
 def get_status():
