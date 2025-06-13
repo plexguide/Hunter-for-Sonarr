@@ -159,6 +159,32 @@ class HuntarrDatabase:
                 )
             ''')
             
+            # Create state_data table for state management (processed IDs and reset times)
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS state_data (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    app_type TEXT NOT NULL,
+                    state_type TEXT NOT NULL,
+                    state_data TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(app_type, state_type)
+                )
+            ''')
+            
+            # Create swaparr_state table for Swaparr-specific state management
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS swaparr_state (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    app_name TEXT NOT NULL,
+                    state_type TEXT NOT NULL,
+                    state_data TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(app_name, state_type)
+                )
+            ''')
+            
             # Create indexes for better performance
             conn.execute('CREATE INDEX IF NOT EXISTS idx_app_configs_type ON app_configs(app_type)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_general_settings_key ON general_settings(setting_key)')
@@ -174,6 +200,8 @@ class HuntarrDatabase:
             conn.execute('CREATE INDEX IF NOT EXISTS idx_schedules_app_type ON schedules(app_type)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_schedules_enabled ON schedules(enabled)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_schedules_time ON schedules(time_hour, time_minute)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_state_data_app_type ON state_data(app_type, state_type)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_swaparr_state_app_name ON swaparr_state(app_name, state_type)')
             
             conn.commit()
             logger.info(f"Database initialized at: {self.db_path}")
@@ -929,6 +957,120 @@ class HuntarrDatabase:
                 logger.info(f"Updated schedule {schedule_id} enabled status to {enabled}")
             else:
                 logger.warning(f"Schedule {schedule_id} not found for update")
+
+    # State Management Methods
+    def get_state_data(self, app_type: str, state_type: str) -> Any:
+        """Get state data for a specific app type and state type"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute(
+                'SELECT state_data FROM state_data WHERE app_type = ? AND state_type = ?',
+                (app_type, state_type)
+            )
+            row = cursor.fetchone()
+            
+            if row:
+                try:
+                    return json.loads(row[0])
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse state data for {app_type}/{state_type}: {e}")
+                    return None
+            return None
+
+    def set_state_data(self, app_type: str, state_type: str, data: Any):
+        """Set state data for a specific app type and state type"""
+        data_json = json.dumps(data)
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                '''INSERT OR REPLACE INTO state_data 
+                   (app_type, state_type, state_data, updated_at) 
+                   VALUES (?, ?, ?, CURRENT_TIMESTAMP)''',
+                (app_type, state_type, data_json)
+            )
+            conn.commit()
+            logger.debug(f"Set state data for {app_type}/{state_type}")
+
+    def get_processed_ids_state(self, app_type: str, state_type: str) -> List[int]:
+        """Get processed IDs for a specific app type and state type (missing/upgrades)"""
+        data = self.get_state_data(app_type, state_type)
+        if data is None:
+            return []
+        if isinstance(data, list):
+            return data
+        logger.error(f"Invalid processed IDs data type for {app_type}/{state_type}: {type(data)}")
+        return []
+
+    def set_processed_ids_state(self, app_type: str, state_type: str, ids: List[int]):
+        """Set processed IDs for a specific app type and state type (missing/upgrades)"""
+        self.set_state_data(app_type, state_type, ids)
+
+    def add_processed_id_state(self, app_type: str, state_type: str, item_id: int):
+        """Add a single processed ID to a specific app type and state type"""
+        processed_ids = self.get_processed_ids_state(app_type, state_type)
+        if item_id not in processed_ids:
+            processed_ids.append(item_id)
+            self.set_processed_ids_state(app_type, state_type, processed_ids)
+
+    def clear_processed_ids_state(self, app_type: str):
+        """Clear all processed IDs for a specific app type"""
+        self.set_processed_ids_state(app_type, "processed_missing", [])
+        self.set_processed_ids_state(app_type, "processed_upgrades", [])
+
+    def get_last_reset_time_state(self, app_type: str) -> Optional[str]:
+        """Get the last reset time for a specific app type"""
+        return self.get_state_data(app_type, "last_reset")
+
+    def set_last_reset_time_state(self, app_type: str, reset_time: str):
+        """Set the last reset time for a specific app type"""
+        self.set_state_data(app_type, "last_reset", reset_time)
+
+    # Swaparr State Management Methods
+    def get_swaparr_state_data(self, app_name: str, state_type: str) -> Any:
+        """Get Swaparr state data for a specific app name and state type"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute(
+                'SELECT state_data FROM swaparr_state WHERE app_name = ? AND state_type = ?',
+                (app_name, state_type)
+            )
+            row = cursor.fetchone()
+            
+            if row:
+                try:
+                    return json.loads(row[0])
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse Swaparr state data for {app_name}/{state_type}: {e}")
+                    return None
+            return None
+
+    def set_swaparr_state_data(self, app_name: str, state_type: str, data: Any):
+        """Set Swaparr state data for a specific app name and state type"""
+        data_json = json.dumps(data)
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                '''INSERT OR REPLACE INTO swaparr_state 
+                   (app_name, state_type, state_data, updated_at) 
+                   VALUES (?, ?, ?, CURRENT_TIMESTAMP)''',
+                (app_name, state_type, data_json)
+            )
+            conn.commit()
+            logger.debug(f"Set Swaparr state data for {app_name}/{state_type}")
+
+    def get_swaparr_strike_data(self, app_name: str) -> Dict[str, Any]:
+        """Get strike data for a specific Swaparr app"""
+        data = self.get_swaparr_state_data(app_name, "strikes")
+        return data if data is not None else {}
+
+    def set_swaparr_strike_data(self, app_name: str, strike_data: Dict[str, Any]):
+        """Set strike data for a specific Swaparr app"""
+        self.set_swaparr_state_data(app_name, "strikes", strike_data)
+
+    def get_swaparr_removed_items(self, app_name: str) -> Dict[str, Any]:
+        """Get removed items data for a specific Swaparr app"""
+        data = self.get_swaparr_state_data(app_name, "removed_items")
+        return data if data is not None else {}
+
+    def set_swaparr_removed_items(self, app_name: str, removed_items: Dict[str, Any]):
+        """Set removed items data for a specific Swaparr app"""
+        self.set_swaparr_state_data(app_name, "removed_items", removed_items)
 
 # Global database instance
 _database_instance = None

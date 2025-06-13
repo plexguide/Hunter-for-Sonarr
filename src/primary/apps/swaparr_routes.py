@@ -11,11 +11,11 @@ from src.primary.settings_manager import load_settings, save_settings
 from src.primary.apps.swaparr.handler import (
     process_stalled_downloads, 
     get_session_stats, 
-    reset_session_stats,
-    SWAPARR_STATE_DIR
+    reset_session_stats
 )
 from src.primary.apps.swaparr import get_configured_instances, is_configured
 from src.primary.apps.swaparr.stats_manager import get_swaparr_stats, reset_swaparr_stats
+from src.primary.utils.database import get_database
 
 # Create the blueprint directly in this file
 swaparr_bp = Blueprint('swaparr', __name__)
@@ -28,65 +28,53 @@ def get_status():
     enabled = settings.get("enabled", False)
     configured = is_configured()
     
-    # Get strike statistics from all app state directories
+    # Get strike statistics from database for all configured apps
     app_statistics = {}
-    state_dir = SWAPARR_STATE_DIR
     
-    if os.path.exists(state_dir):
-        for app_name in os.listdir(state_dir):
-            app_dir = os.path.join(state_dir, app_name)
-            if os.path.isdir(app_dir):
-                # Load strike data
-                strike_file = os.path.join(app_dir, "strikes.json")
-                removed_file = os.path.join(app_dir, "removed_items.json")
-                
+    try:
+        db = get_database()
+        
+        # Get all configured instances to check for state data
+        if configured:
+            instances = get_configured_instances()
+            for app_name, app_instances in instances.items():
                 app_stats = {"error": None}
                 
                 try:
-                    # Strike data statistics
-                    if os.path.exists(strike_file):
-                        with open(strike_file, 'r') as f:
-                            strike_data = json.load(f)
-                            
-                        total_items = len(strike_data)
-                        removed_items = sum(1 for item in strike_data.values() if item.get("removed", False))
-                        striked_items = sum(1 for item in strike_data.values() 
-                                          if item.get("strikes", 0) > 0 and not item.get("removed", False))
-                        
-                        app_stats.update({
-                            "total_tracked": total_items,
-                            "currently_striked": striked_items,
-                            "removed_via_strikes": removed_items
-                        })
-                    else:
-                        app_stats.update({
-                            "total_tracked": 0,
-                            "currently_striked": 0,
-                            "removed_via_strikes": 0
-                        })
+                    # Load strike data from database
+                    strike_data = db.get_swaparr_strike_data(app_name)
                     
-                    # Removed items statistics
-                    if os.path.exists(removed_file):
-                        with open(removed_file, 'r') as f:
-                            removed_data = json.load(f)
+                    total_items = len(strike_data)
+                    removed_items = sum(1 for item in strike_data.values() if item.get("removed", False))
+                    striked_items = sum(1 for item in strike_data.values() 
+                                      if item.get("strikes", 0) > 0 and not item.get("removed", False))
+                    
+                    app_stats.update({
+                        "total_tracked": total_items,
+                        "currently_striked": striked_items,
+                        "removed_via_strikes": removed_items
+                    })
+                    
+                    # Load removed items data from database
+                    removed_data = db.get_swaparr_removed_items(app_name)
+                    
+                    app_stats["total_removed"] = len(removed_data)
+                    
+                    # Get removal reasons breakdown
+                    reasons = {}
+                    for item in removed_data.values():
+                        reason = item.get("reason", "Unknown")
+                        reasons[reason] = reasons.get(reason, 0) + 1
+                    app_stats["removal_reasons"] = reasons
                         
-                        app_stats["total_removed"] = len(removed_data)
-                        
-                        # Get removal reasons breakdown
-                        reasons = {}
-                        for item in removed_data.values():
-                            reason = item.get("reason", "Unknown")
-                            reasons[reason] = reasons.get(reason, 0) + 1
-                        app_stats["removal_reasons"] = reasons
-                    else:
-                        app_stats["total_removed"] = 0
-                        app_stats["removal_reasons"] = {}
-                        
-                except (json.JSONDecodeError, IOError) as e:
+                except Exception as e:
                     swaparr_logger.error(f"Error reading statistics for {app_name}: {str(e)}")
                     app_stats["error"] = str(e)
                 
                 app_statistics[app_name] = app_stats
+                
+    except Exception as e:
+        swaparr_logger.error(f"Error accessing database for statistics: {str(e)}")
     
     # Get session statistics
     session_stats = get_session_stats()
@@ -163,76 +151,58 @@ def reset_strikes():
     app_name = data.get('app_name')
     reset_removed = data.get('reset_removed', False)  # Option to also reset removed items
     
-    state_dir = SWAPARR_STATE_DIR
-    
-    if not os.path.exists(state_dir):
-        return jsonify({"success": True, "message": "No strike data to reset"})
-    
     try:
+        db = get_database()
+        
         if app_name:
             # Reset strikes for a specific app
-            app_dir = os.path.join(state_dir, app_name)
-            if os.path.exists(app_dir):
+            files_reset = []
+            
+            # Reset strikes
+            db.set_swaparr_strike_data(app_name, {})
+            files_reset.append("strikes")
+            
+            # Optionally reset removed items
+            if reset_removed:
+                db.set_swaparr_removed_items(app_name, {})
+                files_reset.append("removed_items")
+            
+            swaparr_logger.info(f"Reset {', '.join(files_reset)} for {app_name}")
+            return jsonify({
+                "success": True, 
+                "message": f"Reset {', '.join(files_reset)} for {app_name}",
+                "files_reset": files_reset
+            })
+        else:
+            # Reset strikes for all configured apps
+            configured = is_configured()
+            if not configured:
+                return jsonify({"success": True, "message": "No configured apps to reset"})
+            
+            instances = get_configured_instances()
+            apps_reset = []
+            
+            for app_name in instances.keys():
                 files_reset = []
                 
                 # Reset strikes
-                strike_file = os.path.join(app_dir, "strikes.json")
-                if os.path.exists(strike_file):
-                    os.remove(strike_file)
-                    files_reset.append("strikes")
+                db.set_swaparr_strike_data(app_name, {})
+                files_reset.append("strikes")
                 
                 # Optionally reset removed items
                 if reset_removed:
-                    removed_file = os.path.join(app_dir, "removed_items.json")
-                    if os.path.exists(removed_file):
-                        os.remove(removed_file)
-                        files_reset.append("removed_items")
+                    db.set_swaparr_removed_items(app_name, {})
+                    files_reset.append("removed_items")
                 
-                if files_reset:
-                    swaparr_logger.info(f"Reset {', '.join(files_reset)} for {app_name}")
-                    return jsonify({
-                        "success": True, 
-                        "message": f"Reset {', '.join(files_reset)} for {app_name}",
-                        "files_reset": files_reset
-                    })
-                else:
-                    return jsonify({"success": False, "message": f"No data found to reset for {app_name}"}), 404
-            else:
-                return jsonify({"success": False, "message": f"No data directory found for {app_name}"}), 404
-        else:
-            # Reset strikes for all apps
-            apps_reset = []
-            for app_name in os.listdir(state_dir):
-                app_dir = os.path.join(state_dir, app_name)
-                if os.path.isdir(app_dir):
-                    files_reset = []
-                    
-                    # Reset strikes
-                    strike_file = os.path.join(app_dir, "strikes.json")
-                    if os.path.exists(strike_file):
-                        os.remove(strike_file)
-                        files_reset.append("strikes")
-                    
-                    # Optionally reset removed items
-                    if reset_removed:
-                        removed_file = os.path.join(app_dir, "removed_items.json")
-                        if os.path.exists(removed_file):
-                            os.remove(removed_file)
-                            files_reset.append("removed_items")
-                    
-                    if files_reset:
-                        apps_reset.append(f"{app_name} ({', '.join(files_reset)})")
+                apps_reset.append(f"{app_name} ({', '.join(files_reset)})")
             
-            if apps_reset:
-                swaparr_logger.info(f"Reset data for apps: {apps_reset}")
-                return jsonify({
-                    "success": True, 
-                    "message": f"Reset data for {len(apps_reset)} apps",
-                    "apps_reset": apps_reset
-                })
-            else:
-                return jsonify({"success": True, "message": "No data found to reset"})
-    except IOError as e:
+            swaparr_logger.info(f"Reset data for apps: {apps_reset}")
+            return jsonify({
+                "success": True, 
+                "message": f"Reset data for {len(apps_reset)} apps",
+                "apps_reset": apps_reset
+            })
+    except Exception as e:
         swaparr_logger.error(f"Error during reset operation: {str(e)}")
         return jsonify({"success": False, "message": f"Error during reset: {str(e)}"}), 500
 

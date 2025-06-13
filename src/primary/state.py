@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 State management module for Huntarr
-Handles all persistence of program state
+Handles all persistence of program state using database
 """
 
 import os
@@ -11,11 +11,8 @@ import json
 from typing import List, Dict, Any, Optional
 from src.primary import settings_manager
 
-# Use the centralized path configuration
-from src.primary.utils.config_paths import CONFIG_PATH
-
-# Define the config directory - using cross-platform path
-CONFIG_DIR = str(CONFIG_PATH)  # Convert to string for compatibility
+# Import database
+from src.primary.utils.database import get_database
 
 # Get the logger at module level
 from src.primary.utils.logger import get_logger
@@ -23,28 +20,10 @@ logger = get_logger("huntarr")
 
 def get_state_file_path(app_type, state_name):
     """
-    Get the path to a state file for a specific app type and state name.
-    
-    Args:
-        app_type: The application type (sonarr, radarr, etc.)
-        state_name: The name of the state file
-        
-    Returns:
-        The path to the state file
+    Legacy function for backward compatibility.
+    Returns a fake path that can be used with the updated functions.
     """
-    # Define known app types
-    known_app_types = ["sonarr", "radarr", "lidarr", "readarr", "whisparr", "eros"]
-    
-    # If app_type is not in known types, log a warning but don't fail
-    if app_type not in known_app_types and app_type != "general":
-        logger.warning(f"get_state_file_path called with unexpected app_type: {app_type}")
-    
-    # Create the state directory if it doesn't exist
-    state_dir = os.path.join(CONFIG_DIR, "state", app_type)
-    os.makedirs(state_dir, exist_ok=True)
-    
-    # Return the path to the state file
-    return os.path.join(state_dir, f"{state_name}.json")
+    return f"/config/state/{app_type}/{state_name}.json"
 
 def get_last_reset_time(app_type: str = None) -> datetime.datetime:
     """
@@ -61,17 +40,16 @@ def get_last_reset_time(app_type: str = None) -> datetime.datetime:
         return datetime.datetime.now()
         
     current_app_type = app_type
-    reset_file = get_state_file_path(current_app_type, "last_reset")
     
     try:
-        if os.path.exists(reset_file):
-            with open(reset_file, "r") as f:
-                reset_time_str = f.read().strip()
-                return datetime.datetime.fromisoformat(reset_time_str)
+        db = get_database()
+        reset_time_str = db.get_last_reset_time_state(current_app_type)
+        if reset_time_str:
+            return datetime.datetime.fromisoformat(reset_time_str)
     except Exception as e:
         logger.error(f"Error reading last reset time for {current_app_type}: {e}")
     
-    # If no reset file exists, initialize it with current time and return current time
+    # If no reset time exists, initialize it with current time and return current time
     logger.info(f"No reset time found for {current_app_type}, initializing with current time")
     current_time = datetime.datetime.now()
     set_last_reset_time(current_time, current_app_type)
@@ -90,11 +68,10 @@ def set_last_reset_time(reset_time: datetime.datetime, app_type: str = None) -> 
         return
         
     current_app_type = app_type
-    reset_file = get_state_file_path(current_app_type, "last_reset")
     
     try:
-        with open(reset_file, "w") as f:
-            f.write(reset_time.isoformat())
+        db = get_database()
+        db.set_last_reset_time_state(current_app_type, reset_time.isoformat())
     except Exception as e:
         logger.error(f"Error writing last reset time for {current_app_type}: {e}")
 
@@ -159,23 +136,12 @@ def clear_processed_ids(app_type: str = None) -> None:
         
     current_app_type = app_type
     
-    missing_file = get_state_file_path(current_app_type, "processed_missing")
     try:
-        if os.path.exists(missing_file):
-            with open(missing_file, "w") as f:
-                f.write("[]")
-            logger.info(f"Cleared processed missing IDs for {current_app_type}")
+        db = get_database()
+        db.clear_processed_ids_state(current_app_type)
+        logger.info(f"Cleared processed IDs for {current_app_type}")
     except Exception as e:
-        logger.error(f"Error clearing processed missing IDs for {current_app_type}: {e}")
-    
-    upgrades_file = get_state_file_path(current_app_type, "processed_upgrades")
-    try:
-        if os.path.exists(upgrades_file):
-            with open(upgrades_file, "w") as f:
-                f.write("[]")
-            logger.info(f"Cleared processed upgrade IDs for {current_app_type}")
-    except Exception as e:
-        logger.error(f"Error clearing processed upgrade IDs for {current_app_type}: {e}")
+        logger.error(f"Error clearing processed IDs for {current_app_type}: {e}")
 
 def _get_user_timezone():
     """Get the user's selected timezone from general settings"""
@@ -240,58 +206,85 @@ def calculate_reset_time(app_type: str = None) -> str:
 
 def load_processed_ids(filepath: str) -> List[int]:
     """
-    Load processed IDs from a file.
+    Load processed IDs from database based on filepath pattern.
     
     Args:
-        filepath: The path to the file
+        filepath: The path to the file (used to determine app_type and state_type)
         
     Returns:
         A list of processed IDs
     """
     try:
-        if os.path.exists(filepath):
-            with open(filepath, "r") as f:
-                loaded_data = json.load(f)
-                if isinstance(loaded_data, list):
-                    return loaded_data
-                else:
-                    logger.error(f"Invalid data type loaded from {filepath}. Expected list, got {type(loaded_data)}. Returning empty list.")
-                    return []
+        # Extract app_type and state_type from filepath
+        # Expected pattern: /config/state/{app_type}/{state_type}.json
+        path_parts = filepath.replace('\\', '/').split('/')
+        if len(path_parts) >= 3 and 'state' in path_parts:
+            state_index = path_parts.index('state')
+            if state_index + 2 < len(path_parts):
+                app_type = path_parts[state_index + 1]
+                state_filename = path_parts[state_index + 2]
+                state_type = state_filename.replace('.json', '')
+                
+                db = get_database()
+                return db.get_processed_ids_state(app_type, state_type)
+        
+        logger.error(f"Could not parse app_type and state_type from filepath: {filepath}")
         return []
-    except json.JSONDecodeError as e:
-        logger.error(f"Error decoding JSON from {filepath}: {e}. Returning empty list.")
-        return [] # Ensure list is returned even on JSON error
     except Exception as e:
-        logger.error(f"Error loading processed IDs from {filepath}: {e}")
+        logger.error(f"Error loading processed IDs from database for {filepath}: {e}")
         return []
 
 def save_processed_ids(filepath: str, ids: List[int]) -> None:
     """
-    Save processed IDs to a file.
+    Save processed IDs to database based on filepath pattern.
     
     Args:
-        filepath: The path to the file
+        filepath: The path to the file (used to determine app_type and state_type)
         ids: The list of IDs to save
     """
     try:
-        with open(filepath, "w") as f:
-            json.dump(ids, f)
+        # Extract app_type and state_type from filepath
+        path_parts = filepath.replace('\\', '/').split('/')
+        if len(path_parts) >= 3 and 'state' in path_parts:
+            state_index = path_parts.index('state')
+            if state_index + 2 < len(path_parts):
+                app_type = path_parts[state_index + 1]
+                state_filename = path_parts[state_index + 2]
+                state_type = state_filename.replace('.json', '')
+                
+                db = get_database()
+                db.set_processed_ids_state(app_type, state_type, ids)
+                return
+        
+        logger.error(f"Could not parse app_type and state_type from filepath: {filepath}")
     except Exception as e:
-        logger.error(f"Error saving processed IDs to {filepath}: {e}")
+        logger.error(f"Error saving processed IDs to database for {filepath}: {e}")
 
 def save_processed_id(filepath: str, item_id: int) -> None:
     """
     Add a single ID to a processed IDs file.
     
     Args:
-        filepath: The path to the file
+        filepath: The path to the file (used to determine app_type and state_type)
         item_id: The ID to add
     """
-    processed_ids = load_processed_ids(filepath)
-    
-    if item_id not in processed_ids:
-        processed_ids.append(item_id)
-        save_processed_ids(filepath, processed_ids)
+    try:
+        # Extract app_type and state_type from filepath
+        path_parts = filepath.replace('\\', '/').split('/')
+        if len(path_parts) >= 3 and 'state' in path_parts:
+            state_index = path_parts.index('state')
+            if state_index + 2 < len(path_parts):
+                app_type = path_parts[state_index + 1]
+                state_filename = path_parts[state_index + 2]
+                state_type = state_filename.replace('.json', '')
+                
+                db = get_database()
+                db.add_processed_id_state(app_type, state_type, item_id)
+                return
+        
+        logger.error(f"Could not parse app_type and state_type from filepath: {filepath}")
+    except Exception as e:
+        logger.error(f"Error adding processed ID to database for {filepath}: {e}")
 
 def reset_state_file(app_type: str, state_type: str) -> bool:
     """
@@ -308,46 +301,64 @@ def reset_state_file(app_type: str, state_type: str) -> bool:
         logger.error("reset_state_file called without app_type.")
         return False
         
-    filepath = get_state_file_path(app_type, state_type)
-    
     try:
-        save_processed_ids(filepath, [])
-        logger.info(f"Reset {state_type} state file for {app_type}")
+        db = get_database()
+        db.set_processed_ids_state(app_type, state_type, [])
+        logger.info(f"Reset {state_type} state for {app_type}")
         return True
     except Exception as e:
-        logger.error(f"Error resetting {state_type} state file for {app_type}: {e}")
+        logger.error(f"Error resetting {state_type} state for {app_type}: {e}")
         return False
 
 def truncate_processed_list(filepath: str, max_items: int = 1000) -> None:
     """
     Truncate a processed IDs list to a maximum number of items.
-    This helps prevent the file from growing too large over time.
+    This helps prevent the database from growing too large over time.
     
     Args:
-        filepath: The path to the file
+        filepath: The path to the file (used to determine app_type and state_type)
         max_items: The maximum number of items to keep
     """
-    processed_ids = load_processed_ids(filepath)
-    
-    if len(processed_ids) > max_items:
-        processed_ids = processed_ids[-max_items:]
-        save_processed_ids(filepath, processed_ids)
-        logger.debug(f"Truncated {filepath} to {max_items} items")
+    try:
+        # Extract app_type and state_type from filepath
+        path_parts = filepath.replace('\\', '/').split('/')
+        if len(path_parts) >= 3 and 'state' in path_parts:
+            state_index = path_parts.index('state')
+            if state_index + 2 < len(path_parts):
+                app_type = path_parts[state_index + 1]
+                state_filename = path_parts[state_index + 2]
+                state_type = state_filename.replace('.json', '')
+                
+                db = get_database()
+                processed_ids = db.get_processed_ids_state(app_type, state_type)
+                
+                if len(processed_ids) > max_items:
+                    processed_ids = processed_ids[-max_items:]
+                    db.set_processed_ids_state(app_type, state_type, processed_ids)
+                    logger.debug(f"Truncated {app_type}/{state_type} to {max_items} items")
+                return
+        
+        logger.error(f"Could not parse app_type and state_type from filepath: {filepath}")
+    except Exception as e:
+        logger.error(f"Error truncating processed list for {filepath}: {e}")
 
 def init_state_files() -> None:
-    """Initialize state files for all app types"""
+    """Initialize state data for all app types in database"""
     app_types = settings_manager.KNOWN_APP_TYPES 
     
-    for app_type in app_types:
-        missing_file = get_state_file_path(app_type, "processed_missing")
-        upgrades_file = get_state_file_path(app_type, "processed_upgrades")
-        reset_file = get_state_file_path(app_type, "last_reset")
-        
-        for filepath in [missing_file, upgrades_file]:
-            if not os.path.exists(filepath):
-                save_processed_ids(filepath, [])
-        
-        if not os.path.exists(reset_file):
-             set_last_reset_time(datetime.datetime.fromtimestamp(0), app_type)
+    try:
+        db = get_database()
+        for app_type in app_types:
+            # Initialize processed IDs if they don't exist
+            if not db.get_processed_ids_state(app_type, "processed_missing"):
+                db.set_processed_ids_state(app_type, "processed_missing", [])
+            if not db.get_processed_ids_state(app_type, "processed_upgrades"):
+                db.set_processed_ids_state(app_type, "processed_upgrades", [])
+            
+            # Initialize reset time if it doesn't exist
+            if not db.get_last_reset_time_state(app_type):
+                db.set_last_reset_time_state(app_type, datetime.datetime.fromtimestamp(0).isoformat())
+    except Exception as e:
+        logger.error(f"Error initializing state data: {e}")
 
 init_state_files()

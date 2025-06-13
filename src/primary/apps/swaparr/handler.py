@@ -20,14 +20,11 @@ from typing import Dict, List, Any, Optional
 
 from src.primary.utils.logger import get_logger
 from src.primary.settings_manager import load_settings
-from src.primary.utils.config_paths import SWAPARR_DIR
+from src.primary.utils.database import get_database
 from src.primary.apps.swaparr.stats_manager import increment_swaparr_stat
 
 # Create logger
 swaparr_logger = get_logger("swaparr")
-
-# Use the centralized path configuration
-SWAPARR_STATE_DIR = str(SWAPARR_DIR)  # Convert to string for compatibility with os.path
 
 # Enhanced statistics tracking
 SWAPARR_STATS = {
@@ -65,67 +62,41 @@ def get_session_stats():
     stats_copy['apps_processed'] = list(stats_copy['apps_processed'])  # Convert set to list for JSON
     return stats_copy
 
-def ensure_state_directory(app_name):
-    """Ensure the state directory exists for tracking strikes for a specific app"""
-    app_state_dir = os.path.join(SWAPARR_STATE_DIR, app_name)
-    if not os.path.exists(app_state_dir):
-        os.makedirs(app_state_dir, exist_ok=True)
-        swaparr_logger.info(f"Created swaparr state directory for {app_name}: {app_state_dir}")
-    return app_state_dir
-
 def load_strike_data(app_name):
-    """Load strike data for a specific app"""
-    app_state_dir = ensure_state_directory(app_name)
-    strike_file = os.path.join(app_state_dir, "strikes.json")
-    
-    if not os.path.exists(strike_file):
-        return {}
-    
+    """Load strike data for a specific app from database"""
     try:
-        with open(strike_file, 'r') as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError) as e:
+        db = get_database()
+        return db.get_swaparr_strike_data(app_name)
+    except Exception as e:
         swaparr_logger.error(f"Error loading strike data for {app_name}: {str(e)}")
         SWAPARR_STATS['errors_encountered'] += 1
         return {}
 
 def save_strike_data(app_name, strike_data):
-    """Save strike data for a specific app"""
-    app_state_dir = ensure_state_directory(app_name)
-    strike_file = os.path.join(app_state_dir, "strikes.json")
-    
+    """Save strike data for a specific app to database"""
     try:
-        with open(strike_file, 'w') as f:
-            json.dump(strike_data, f, indent=2)
-    except IOError as e:
+        db = get_database()
+        db.set_swaparr_strike_data(app_name, strike_data)
+    except Exception as e:
         swaparr_logger.error(f"Error saving strike data for {app_name}: {str(e)}")
         SWAPARR_STATS['errors_encountered'] += 1
 
 def load_removed_items(app_name):
-    """Load list of permanently removed items"""
-    app_state_dir = ensure_state_directory(app_name)
-    removed_file = os.path.join(app_state_dir, "removed_items.json")
-    
-    if not os.path.exists(removed_file):
-        return {}
-    
+    """Load list of permanently removed items from database"""
     try:
-        with open(removed_file, 'r') as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError) as e:
+        db = get_database()
+        return db.get_swaparr_removed_items(app_name)
+    except Exception as e:
         swaparr_logger.error(f"Error loading removed items for {app_name}: {str(e)}")
         SWAPARR_STATS['errors_encountered'] += 1
         return {}
 
 def save_removed_items(app_name, removed_items):
-    """Save list of permanently removed items"""
-    app_state_dir = ensure_state_directory(app_name)
-    removed_file = os.path.join(app_state_dir, "removed_items.json")
-    
+    """Save list of permanently removed items to database"""
     try:
-        with open(removed_file, 'w') as f:
-            json.dump(removed_items, f, indent=2)
-    except IOError as e:
+        db = get_database()
+        db.set_swaparr_removed_items(app_name, removed_items)
+    except Exception as e:
         swaparr_logger.error(f"Error saving removed items for {app_name}: {str(e)}")
         SWAPARR_STATS['errors_encountered'] += 1
 

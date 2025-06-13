@@ -82,11 +82,11 @@ USER_DIR = CONFIG_PATH / "user"
 
 RESET_DIR = CONFIG_PATH / "reset"  # Add reset directory
 
-SWAPARR_DIR = CONFIG_PATH / "swaparr"  # Add Swaparr directory for state tracking
+# SWAPARR_DIR removed - now using database for state tracking
 
 # Create all directories
 for dir_path in [LOG_DIR, SETTINGS_DIR, USER_DIR, 
-                RESET_DIR, SWAPARR_DIR]:
+                RESET_DIR]:
     try:
         dir_path.mkdir(parents=True, exist_ok=True)
     except Exception as e:

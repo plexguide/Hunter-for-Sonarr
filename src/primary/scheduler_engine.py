@@ -14,7 +14,7 @@ from typing import Dict, List, Any
 import collections
 
 # Import settings_manager to handle cache refreshing
-from src.primary.settings_manager import clear_cache
+from src.primary.settings_manager import clear_cache, load_settings, save_settings
 
 from src.primary.utils.logger import get_logger
 # Add import for stateful_manager's check_expiration
@@ -129,10 +129,9 @@ def execute_action(action_entry):
                 try:
                     apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']
                     for app in apps:
-                        config_file = os.path.join(str(SETTINGS_DIR), f"{app}.json")
-                        if os.path.exists(config_file):
-                            with open(config_file, 'r') as f:
-                                config_data = json.load(f)
+                        # Load settings from database
+                        config_data = load_settings(app)
+                        if config_data:
                             # Update root level enabled field
                             config_data['enabled'] = False
                             # Also update enabled field in instances array if it exists
@@ -140,8 +139,8 @@ def execute_action(action_entry):
                                 for instance in config_data['instances']:
                                     if isinstance(instance, dict):
                                         instance['enabled'] = False
-                            with open(config_file, 'w') as f:
-                                json.dump(config_data, f, indent=2)
+                            # Save settings to database
+                            save_settings(app, config_data)
                             # Clear cache for this app to ensure the UI refreshes
                             clear_cache(app)
                     result_message = "All apps disabled successfully"
@@ -156,13 +155,12 @@ def execute_action(action_entry):
                 message = f"Executing disable action for {app_type}"
                 scheduler_logger.info(message)
                 try:
-                    # Extract base app name for config file access
+                    # Extract base app name for config access
                     base_app_name = get_base_app_name(app_type)
-                    config_file = os.path.join(str(SETTINGS_DIR), f"{base_app_name}.json")
                     
-                    if os.path.exists(config_file):
-                        with open(config_file, 'r') as f:
-                            config_data = json.load(f)
+                    # Load settings from database
+                    config_data = load_settings(base_app_name)
+                    if config_data:
                         # Update root level enabled field
                         config_data['enabled'] = False
                         # Also update enabled field in instances array if it exists
@@ -170,15 +168,15 @@ def execute_action(action_entry):
                             for instance in config_data['instances']:
                                 if isinstance(instance, dict):
                                     instance['enabled'] = False
-                        with open(config_file, 'w') as f:
-                            json.dump(config_data, f, indent=2)
+                        # Save settings to database
+                        save_settings(base_app_name, config_data)
                         # Clear cache for this app to ensure the UI refreshes
                         clear_cache(base_app_name)
                         result_message = f"{app_type} disabled successfully"
                         scheduler_logger.info(result_message)
                         add_to_history(action_entry, "success", result_message)
                     else:
-                        error_message = f"Config file not found for {app_type} at {config_file}"
+                        error_message = f"Settings not found for {app_type}"
                         scheduler_logger.error(error_message)
                         add_to_history(action_entry, "error", error_message)
                         return False
@@ -197,10 +195,9 @@ def execute_action(action_entry):
                 try:
                     apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']
                     for app in apps:
-                        config_file = os.path.join(str(SETTINGS_DIR), f"{app}.json")
-                        if os.path.exists(config_file):
-                            with open(config_file, 'r') as f:
-                                config_data = json.load(f)
+                        # Load settings from database
+                        config_data = load_settings(app)
+                        if config_data:
                             # Update root level enabled field
                             config_data['enabled'] = True
                             # Also update enabled field in instances array if it exists
@@ -208,8 +205,8 @@ def execute_action(action_entry):
                                 for instance in config_data['instances']:
                                     if isinstance(instance, dict):
                                         instance['enabled'] = True
-                            with open(config_file, 'w') as f:
-                                json.dump(config_data, f, indent=2)
+                            # Save settings to database
+                            save_settings(app, config_data)
                             # Clear cache for this app to ensure the UI refreshes
                             clear_cache(app)
                     result_message = "All apps enabled successfully"
@@ -224,13 +221,12 @@ def execute_action(action_entry):
                 message = f"Executing enable action for {app_type}"
                 scheduler_logger.info(message)
                 try:
-                    # Extract base app name for config file access
+                    # Extract base app name for config access
                     base_app_name = get_base_app_name(app_type)
-                    config_file = os.path.join(str(SETTINGS_DIR), f"{base_app_name}.json")
                     
-                    if os.path.exists(config_file):
-                        with open(config_file, 'r') as f:
-                            config_data = json.load(f)
+                    # Load settings from database
+                    config_data = load_settings(base_app_name)
+                    if config_data:
                         # Update root level enabled field
                         config_data['enabled'] = True
                         # Also update enabled field in instances array if it exists
@@ -238,15 +234,15 @@ def execute_action(action_entry):
                             for instance in config_data['instances']:
                                 if isinstance(instance, dict):
                                     instance['enabled'] = True
-                        with open(config_file, 'w') as f:
-                            json.dump(config_data, f, indent=2)
+                        # Save settings to database
+                        save_settings(base_app_name, config_data)
                         # Clear cache for this app to ensure the UI refreshes
                         clear_cache(base_app_name)
                         result_message = f"{app_type} enabled successfully"
                         scheduler_logger.info(result_message)
                         add_to_history(action_entry, "success", result_message)
                     else:
-                        error_message = f"Config file not found for {app_type} at {config_file}"
+                        error_message = f"Settings not found for {app_type}"
                         scheduler_logger.error(error_message)
                         add_to_history(action_entry, "error", error_message)
                         return False
@@ -272,13 +268,12 @@ def execute_action(action_entry):
                     try:
                         apps = ['sonarr', 'radarr', 'lidarr', 'readarr', 'whisparr', 'eros']
                         for app in apps:
-                            config_file = os.path.join(str(SETTINGS_DIR), f"{app}.json")
-                            if os.path.exists(config_file):
-                                with open(config_file, 'r') as f:
-                                    config_data = json.load(f)
+                            # Load settings from database
+                            config_data = load_settings(app)
+                            if config_data:
                                 config_data['hourly_cap'] = api_limit
-                                with open(config_file, 'w') as f:
-                                    json.dump(config_data, f, indent=2)
+                                # Save settings to database
+                                save_settings(app, config_data)
                         result_message = f"API cap set to {api_limit} for all apps"
                         scheduler_logger.info(result_message)
                         add_to_history(action_entry, "success", result_message)
@@ -291,21 +286,20 @@ def execute_action(action_entry):
                     message = f"Setting API cap for {app_type} to {api_limit}"
                     scheduler_logger.info(message)
                     try:
-                        # Extract base app name for config file access
+                        # Extract base app name for config access
                         base_app_name = get_base_app_name(app_type)
-                        config_file = os.path.join(str(SETTINGS_DIR), f"{base_app_name}.json")
                         
-                        if os.path.exists(config_file):
-                            with open(config_file, 'r') as f:
-                                config_data = json.load(f)
+                        # Load settings from database
+                        config_data = load_settings(base_app_name)
+                        if config_data:
                             config_data['hourly_cap'] = api_limit
-                            with open(config_file, 'w') as f:
-                                json.dump(config_data, f, indent=2)
+                            # Save settings to database
+                            save_settings(base_app_name, config_data)
                             result_message = f"API cap set to {api_limit} for {app_type}"
                             scheduler_logger.info(result_message)
                             add_to_history(action_entry, "success", result_message)
                         else:
-                            error_message = f"Config file not found for {app_type} at {config_file}"
+                            error_message = f"Settings not found for {app_type}"
                             scheduler_logger.error(error_message)
                             add_to_history(action_entry, "error", error_message)
                             return False
