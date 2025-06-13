@@ -105,9 +105,9 @@ jobs:
             ghcr.io/plexguide/huntarr:${{ steps.meta.outputs.VERSION }}
             ghcr.io/plexguide/huntarr:latest
       
-      # 7d) Build & Push for any other branch
-      - name: Build and Push (feature branch)
-        if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && steps.meta.outputs.IS_TAG != 'true' && github.event_name != 'pull_request'
+      # 7d) Build & Push for B8- branches (without latest tag)
+      - name: Build and Push (B8- branch)
+        if: startsWith(github.ref, 'refs/heads/B8-') && github.event_name != 'pull_request'
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -119,7 +119,21 @@ jobs:
             ghcr.io/plexguide/huntarr:${{ steps.meta.outputs.BRANCH }}
             ghcr.io/plexguide/huntarr:${{ github.sha }}
       
-      # 7e) Just build on pull requests
+      # 7e) Build & Push for any other branch (not B8-)
+      - name: Build and Push (feature branch)
+        if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && !startsWith(github.ref, 'refs/heads/B8-') && steps.meta.outputs.IS_TAG != 'true' && github.event_name != 'pull_request'
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            huntarr/huntarr:${{ steps.meta.outputs.BRANCH }}
+            huntarr/huntarr:${{ github.sha }}
+            ghcr.io/plexguide/huntarr:${{ steps.meta.outputs.BRANCH }}
+            ghcr.io/plexguide/huntarr:${{ github.sha }}
+      
+      # 7f) Just build on pull requests
       - name: Build (PR)
         if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v3
