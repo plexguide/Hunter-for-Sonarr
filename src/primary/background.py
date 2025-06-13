@@ -31,7 +31,7 @@ from src.primary.state import check_state_reset, calculate_reset_time
 from src.primary.stats_manager import check_hourly_cap_exceeded
 # Instance list generator has been removed
 from src.primary.scheduler_engine import start_scheduler, stop_scheduler
-from src.primary.migrate_configs import migrate_json_configs  # Import the migration function
+# Legacy JSON migration removed - all data now stored in database
 # from src.primary.utils.app_utils import get_ip_address # No longer used here
 
 # Global state for managing app threads and their status
@@ -867,13 +867,7 @@ def start_huntarr():
     """Main entry point for Huntarr background tasks."""
     logger.info(f"--- Starting Huntarr Background Tasks v{__version__} --- ")
     
-    # Run JSON configuration file migration
-    try:
-        logger.info("Checking for legacy JSON configuration files to migrate...")
-        migrate_json_configs()
-    except Exception as e:
-        logger.error(f"Error during configuration migration: {e}")
-        logger.debug(traceback.format_exc())
+    # Legacy JSON migration removed - all data now stored in database
     
     # Legacy migration removed - settings are now stored in database
     # Migration environment variable no longer used

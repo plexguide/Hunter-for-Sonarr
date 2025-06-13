@@ -185,37 +185,32 @@ def test_connection_endpoint():
 
 @eros_bp.route('/test-settings', methods=['GET'])
 def test_eros_settings():
-    """Debug endpoint to test Eros settings loading"""
+    """Debug endpoint to test Eros settings loading from database"""
     try:
-        # Directly read the settings file to bypass any potential caching
-        import json
-        import os
-        
-        # Check all possible settings locations using centralized config
-        possible_locations = [
-            os.path.join(str(CONFIG_PATH), "eros.json"),  # Cross-platform main config path
-            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "config", "eros.json")  # Relative path fallback
-        ]
-        
         results = {}
         
-        # Try all locations
-        for location in possible_locations:
-            results[location] = {"exists": os.path.exists(location)}
-            if os.path.exists(location):
-                try:
-                    with open(location, 'r') as f:
-                        results[location]["content"] = json.load(f)
-                except Exception as e:
-                    results[location]["error"] = str(e)
-        
-        # Also try loading via settings_manager
+        # Load settings from database via settings_manager
         try:
             from src.primary.settings_manager import load_settings
             settings = load_settings("eros")
-            results["settings_manager"] = settings
+            results["database_settings"] = settings
+            results["configured"] = bool(settings.get("url") and settings.get("api_key"))
         except Exception as e:
-            results["settings_manager_error"] = str(e)
+            results["database_error"] = str(e)
+            
+        # Check if any legacy JSON files exist (for migration info)
+        import os
+        legacy_locations = [
+            os.path.join(str(CONFIG_PATH), "eros.json"),
+            "/config/eros.json"
+        ]
+        
+        legacy_files = {}
+        for location in legacy_locations:
+            legacy_files[location] = {"exists": os.path.exists(location)}
+            
+        results["legacy_files"] = legacy_files
+        results["note"] = "Settings are now stored in database. Legacy JSON files are no longer used."
             
         return jsonify(results)
     except Exception as e:
