@@ -48,7 +48,7 @@ def process_missing_books(
     # Extract necessary settings
     api_url = app_settings.get("api_url", "").strip()
     api_key = app_settings.get("api_key", "").strip()
-    api_timeout = get_advanced_setting("api_timeout", 120)  # Use general.json value
+    api_timeout = get_advanced_setting("api_timeout", 120)  # Use database value
     instance_name = app_settings.get("instance_name", "Readarr Default")
     
     readarr_logger.info(f"Using API timeout of {api_timeout} seconds for Readarr")
@@ -57,7 +57,7 @@ def process_missing_books(
     skip_future_releases = app_settings.get("skip_future_releases", True)
     hunt_missing_books = app_settings.get("hunt_missing_books", 0)
     
-    # Use advanced settings from general.json for command operations
+    # Use advanced settings from database for command operations
     command_wait_delay = get_advanced_setting("command_wait_delay", 1)
     command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
 

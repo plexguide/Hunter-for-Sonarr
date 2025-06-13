@@ -330,7 +330,7 @@ def app_specific_loop(app_type: str) -> None:
             combined_settings = app_settings.copy() # Start with general settings
             combined_settings.update(instance_details) # Add/overwrite with instance specifics (name, url, key)
             
-            # Ensure settings from general.json are consistently used for all apps
+            # Ensure settings from database are consistently used for all apps
             combined_settings["api_timeout"] = settings_manager.get_advanced_setting("api_timeout", 120)
             combined_settings["command_wait_delay"] = settings_manager.get_advanced_setting("command_wait_delay", 1)
             combined_settings["command_wait_attempts"] = settings_manager.get_advanced_setting("command_wait_attempts", 600)

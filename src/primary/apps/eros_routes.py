@@ -198,18 +198,6 @@ def test_eros_settings():
         except Exception as e:
             results["database_error"] = str(e)
             
-        # Check if any legacy JSON files exist (for migration info)
-        import os
-        legacy_locations = [
-            os.path.join(str(CONFIG_PATH), "eros.json"),
-            "/config/eros.json"
-        ]
-        
-        legacy_files = {}
-        for location in legacy_locations:
-            legacy_files[location] = {"exists": os.path.exists(location)}
-            
-        results["legacy_files"] = legacy_files
         results["note"] = "Settings are now stored in database. Legacy JSON files are no longer used."
             
         return jsonify(results)
