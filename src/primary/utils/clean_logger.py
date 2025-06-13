@@ -176,33 +176,106 @@ class CleanLogHandler(logging.Handler):
             self.handleError(record)
 
 
+class DatabaseLogHandler(logging.Handler):
+    """
+    Custom log handler that writes clean log messages directly to the logs database.
+    This replaces file-based logging for the web UI.
+    """
+    
+    def __init__(self, app_type: str):
+        super().__init__()
+        self.formatter = CleanLogFormatter()
+        self._logs_db = None
+        self.app_type = app_type
+    
+    @property
+    def logs_db(self):
+        """Lazy load the logs database to avoid circular imports"""
+        if self._logs_db is None:
+            from src.primary.utils.logs_database import get_logs_database
+            self._logs_db = get_logs_database()
+        return self._logs_db
+    
+    def emit(self, record):
+        """Write the log record to the database"""
+        try:
+            # Use the clean formatter to get the clean message
+            clean_message = self.formatter.format(record)
+            
+            # Use the app_type from constructor, or detect from logger name
+            app_type = self.app_type
+            if not app_type:
+                # Fallback: detect from logger name
+                if hasattr(record, 'name'):
+                    if 'huntarr' in record.name.lower():
+                        if '.' in record.name:
+                            app_type = record.name.split('.')[-1]
+                        else:
+                            app_type = 'system'
+                    else:
+                        app_type = 'system'
+                else:
+                    app_type = 'system'
+            
+            # Insert into database
+            self.logs_db.insert_log(
+                timestamp=datetime.fromtimestamp(record.created),
+                level=record.levelname,
+                app_type=app_type,
+                message=clean_message,
+                logger_name=getattr(record, 'name', None)
+            )
+        except Exception as e:
+            # Don't use logger here to avoid infinite recursion
+            print(f"Error writing log to database: {e}")
+
+
 # Global clean handlers registry
 _clean_handlers: Dict[str, CleanLogHandler] = {}
+_database_handlers: Dict[str, DatabaseLogHandler] = {}
+_setup_complete = False
 
 
 def setup_clean_logging():
     """
     Set up clean logging handlers for all known logger types.
+    This creates both file handlers (for backward compatibility) and database handlers (for web UI).
     This should be called once during application startup.
     """
+    global _setup_complete
+    
+    # Prevent multiple setups
+    if _setup_complete:
+        return
+    
     from src.primary.utils.logger import get_logger
     
     # Set up clean handlers for each app type
     for app_type, clean_log_file in CLEAN_LOG_FILES.items():
+        # File handler (existing functionality)
         if app_type not in _clean_handlers:
-            # Create clean handler
             clean_handler = CleanLogHandler(clean_log_file)
             clean_handler.setLevel(logging.DEBUG)
             _clean_handlers[app_type] = clean_handler
-            
-            # Get the appropriate logger and add the clean handler
-            if app_type == "system":
-                logger_name = "huntarr"
-            else:
-                logger_name = app_type  # For app-specific loggers
-            
-            logger = get_logger(logger_name)
-            logger.addHandler(clean_handler)
+        
+        # Database handler (new functionality)
+        if app_type not in _database_handlers:
+            database_handler = DatabaseLogHandler(app_type)
+            database_handler.setLevel(logging.DEBUG)
+            _database_handlers[app_type] = database_handler
+        
+        # Get the logger for this app type and add both handlers
+        logger = get_logger(app_type)
+        
+        # Add file handler if not already added
+        if _clean_handlers[app_type] not in logger.handlers:
+            logger.addHandler(_clean_handlers[app_type])
+        
+        # Add database handler if not already added
+        if _database_handlers[app_type] not in logger.handlers:
+            logger.addHandler(_database_handlers[app_type])
+    
+    _setup_complete = True
 
 
 def get_clean_log_file(app_type: str) -> Optional[Path]:

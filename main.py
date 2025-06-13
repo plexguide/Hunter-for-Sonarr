@@ -128,6 +128,15 @@ try:
     setup_clean_logging()
     huntarr_logger.info("Clean logging system initialized for frontend consumption.")
     
+    # Initialize database logging system
+    try:
+        from primary.utils.logs_database import get_logs_database, schedule_log_cleanup
+        logs_db = get_logs_database()
+        schedule_log_cleanup()
+        huntarr_logger.info("Database logging system initialized with scheduled cleanup.")
+    except Exception as e:
+        huntarr_logger.warning(f"Failed to initialize database logging: {e}")
+    
     huntarr_logger.info("Successfully imported application components.")
 except ImportError as e:
     root_logger.critical(f"Fatal Error: Failed to import application components: {e}", exc_info=True)
