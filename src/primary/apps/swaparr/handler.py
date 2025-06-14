@@ -679,7 +679,7 @@ def run_swaparr():
     settings = load_settings("swaparr")
     
     if not settings or not settings.get("enabled", False):
-        swaparr_logger.debug("Swaparr is disabled, skipping processing")
+        # Swaparr is disabled - no need to log this repeatedly
         return
     
     swaparr_logger.info("Starting Swaparr stalled download detection cycle")

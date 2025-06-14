@@ -713,7 +713,7 @@ def swaparr_app_loop():
                 swaparr_settings = load_settings("swaparr")
                 
                 if not swaparr_settings or not swaparr_settings.get("enabled", False):
-                    swaparr_logger.debug("Swaparr is disabled, skipping processing")
+                    # Swaparr is disabled - no need to log this repeatedly
                     # Sleep for 30 seconds when disabled, then check again
                     if not stop_event.wait(30):
                         continue

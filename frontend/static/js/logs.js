@@ -301,16 +301,42 @@ window.LogsModule = {
         // Load initial logs
         this.loadLogsFromAPI(appType);
         
-        // Set up polling for new logs every 5 seconds (reduced from 2 seconds)
-        this.logPollingInterval = setInterval(() => {
-            this.loadLogsFromAPI(appType, true);
-        }, 5000);
+        // Set up polling with user's configured interval
+        this.setupLogPolling(appType);
         
         // Update connection status
         if (this.elements.logConnectionStatus) {
             this.elements.logConnectionStatus.textContent = 'Connected';
             this.elements.logConnectionStatus.className = 'status-connected';
         }
+    },
+    
+    // Set up log polling with user's configured interval
+    setupLogPolling: function(appType) {
+        // Fetch the log refresh interval from general settings
+        HuntarrUtils.fetchWithTimeout('/api/settings/general', {
+            method: 'GET'
+        })
+        .then(response => response.json())
+        .then(settings => {
+            // Use the configured interval, default to 30 seconds if not set
+            const intervalSeconds = settings.log_refresh_interval_seconds || 30;
+            const intervalMs = intervalSeconds * 1000;
+            
+            console.log(`[LogsModule] Setting up log polling with ${intervalSeconds} second interval`);
+            
+            // Set up polling for new logs using the configured interval
+            this.logPollingInterval = setInterval(() => {
+                this.loadLogsFromAPI(appType, true);
+            }, intervalMs);
+        })
+        .catch(error => {
+            console.error('[LogsModule] Error fetching log refresh interval, using default 30 seconds:', error);
+            // Fallback to 30 seconds if settings fetch fails
+            this.logPollingInterval = setInterval(() => {
+                this.loadLogsFromAPI(appType, true);
+            }, 30000);
+        });
     },
     
     // Load logs from the database API
@@ -360,14 +386,19 @@ window.LogsModule = {
             this.elements.logsContainer.innerHTML = '';
         }
         
-        // Track existing log timestamps to avoid duplicates when polling
-        const existingTimestamps = new Set();
+        // Track existing log entries to avoid duplicates when polling
+        // Use API timestamp + message for duplicate detection
+        const existingLogEntries = new Set();
         if (isPolling) {
             const existingEntries = this.elements.logsContainer.querySelectorAll('.log-entry');
             existingEntries.forEach(entry => {
+                const messageElement = entry.querySelector('.log-message');
                 const timestampElement = entry.querySelector('.log-timestamp');
-                if (timestampElement) {
-                    existingTimestamps.add(timestampElement.textContent.trim());
+                if (messageElement && timestampElement) {
+                    // Create a unique key using display timestamp + message
+                    const timestampText = timestampElement.textContent.trim().replace(/\s+/g, ' ');
+                    const messageText = messageElement.textContent.trim();
+                    existingLogEntries.add(`${timestampText}|${messageText}`);
                 }
             });
         }
@@ -388,8 +419,13 @@ window.LogsModule = {
                 const logAppType = match[3].toLowerCase();
                 const originalMessage = match[4];
                 
+                // Convert timestamp for display first
+                const userTime = this.convertToUserTimezone(timestamp);
+                const displayTimestamp = `${userTime.date} ${userTime.time}`;
+                
                 // Skip if we already have this log entry (when polling)
-                if (isPolling && existingTimestamps.has(timestamp)) {
+                // Use the display timestamp + message for duplicate detection
+                if (isPolling && existingLogEntries.has(`${displayTimestamp}|${originalMessage.trim()}`)) {
                     return;
                 }
                 
@@ -405,20 +441,9 @@ window.LogsModule = {
                 const logEntry = document.createElement('div');
                 logEntry.className = 'log-entry';
 
-                // Parse timestamp to extract date and time (ignore timezone for display)
-                let date = '';
-                let time = '';
-                
-                if (timestamp) {
-                    const parts = timestamp.split(' ');
-                    date = parts[0] || '';
-                    time = parts[1] || '';
-                }
-                
-                // Convert to user's timezone
-                const userTime = this.convertToUserTimezone(timestamp);
-                date = userTime.date;
-                time = userTime.time;
+                // Use the already converted timestamp
+                const date = userTime.date;
+                const time = userTime.time;
                 
                 // Clean the message - since we're now receiving clean logs from backend,
                 // minimal processing should be needed

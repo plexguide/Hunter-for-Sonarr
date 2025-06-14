@@ -297,7 +297,7 @@ def authenticate_request():
     ])
     
     if not is_polling_endpoint:
-        logger.debug(f"authenticate_request: checking path '{request.path}'")
+        pass  # Path checking debug removed to reduce log spam
 
     # FIRST: Always allow setup and user page access - this handles returns from external auth like Plex
     if request.path in ['/setup', '/user']:
@@ -351,7 +351,7 @@ def authenticate_request():
     
     remote_addr = request.remote_addr
     if not is_polling_endpoint:
-        logger.debug(f"Request IP address: {remote_addr}")
+        pass  # IP address debug removed to reduce log spam
     
     if local_access_bypass:
         # Common local network IP ranges

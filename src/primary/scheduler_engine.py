@@ -450,7 +450,7 @@ def check_and_execute_schedules():
         scheduler_logger.debug(f"Checking schedules at {current_time} ({user_tz})")
         
         # Load schedules from database
-        scheduler_logger.debug("Loading schedules from database")
+        # Loading schedules debug removed to reduce log spam
         
         # Load the schedule
         schedule_data = load_schedule()
@@ -510,10 +510,10 @@ def scheduler_loop():
     while not stop_event.is_set():
         try:
             # Check for stateful management expiration first
-            scheduler_logger.debug("Checking for stateful management expiration...")
+            # Stateful management check debug removed to reduce log spam
             check_stateful_expiration() # Call the imported function
             
-            scheduler_logger.debug("Checking and executing schedules...")
+            # Schedule execution debug removed to reduce log spam
             check_and_execute_schedules()
             
             # Sleep until the next check
