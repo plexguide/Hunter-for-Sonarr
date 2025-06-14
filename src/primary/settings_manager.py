@@ -192,6 +192,30 @@ def save_settings(app_name: str, settings_data: Dict[str, Any]) -> bool:
             settings_data['hourly_cap'] = 250
             settings_logger.warning(f"Hourly cap for {app_name} was {original_cap}, automatically reduced to maximum allowed value of 250")
     
+    # Validate and enforce minimum values (no negative numbers allowed)
+    numeric_fields = [
+        'sleep_duration', 'hourly_cap', 'hunt_missing_items', 'hunt_upgrade_items',
+        'hunt_missing_movies', 'hunt_upgrade_movies', 'hunt_missing_books', 'hunt_upgrade_books'
+    ]
+    
+    for field in numeric_fields:
+        if field in settings_data:
+            original_value = settings_data[field]
+            if isinstance(original_value, (int, float)) and original_value < 0:
+                settings_data[field] = 0
+                settings_logger.warning(f"{field} for {app_name} was {original_value}, automatically set to minimum allowed value of 0")
+    
+    # Also validate numeric fields in instances array
+    if 'instances' in settings_data and isinstance(settings_data['instances'], list):
+        for i, instance in enumerate(settings_data['instances']):
+            if isinstance(instance, dict):
+                for field in numeric_fields:
+                    if field in instance:
+                        original_value = instance[field]
+                        if isinstance(original_value, (int, float)) and original_value < 0:
+                            instance[field] = 0
+                            settings_logger.warning(f"{field} for {app_name} instance {i+1} was {original_value}, automatically set to minimum allowed value of 0")
+    
     try:
         db = get_database()
         
