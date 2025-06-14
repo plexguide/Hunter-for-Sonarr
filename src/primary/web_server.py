@@ -570,7 +570,7 @@ def save_general_settings():
     data = request.json
     
     # Debug: Log the incoming data to see if timezone is present
-    general_logger.info(f"Received general settings data: {data}")
+    general_logger.debug(f"Received general settings data: {data}")
     if 'timezone' in data:
         general_logger.info(f"Timezone setting found: {data.get('timezone')}")
     

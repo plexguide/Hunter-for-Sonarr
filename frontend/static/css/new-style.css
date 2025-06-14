@@ -2028,7 +2028,7 @@ input:checked + .toggle-slider:before {
 
 /* Operation Type Styles in History Table */
 .operation-missing {
-    background-color: #005a9e;
+    background-color: #8b1538;
     color: white;
     padding: 3px 8px;
     border-radius: 4px;

@@ -120,8 +120,8 @@ class DatabaseLogHandler(logging.Handler):
     def emit(self, record):
         """Write the log record to the database"""
         try:
-            # Use the clean formatter to get the clean message
-            clean_message = self.formatter.format(record)
+            # Get only the clean message part, not the full formatted string
+            clean_message = self.formatter._clean_message(record.getMessage())
             
             # Use the app_type from constructor, or detect from logger name
             app_type = self.app_type

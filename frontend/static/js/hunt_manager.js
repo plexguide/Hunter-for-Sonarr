@@ -227,9 +227,10 @@ const huntManagerModule = {
         const idCell = document.createElement('td');
         idCell.textContent = entry.media_id;
         
-        // Instance name
+        // App instance (formatted as "App Name (Instance Name)")
         const instanceCell = document.createElement('td');
-        instanceCell.textContent = entry.instance_name;
+        const appName = entry.app_type.charAt(0).toUpperCase() + entry.app_type.slice(1);
+        instanceCell.textContent = `${appName} (${entry.instance_name})`;
         
         // How long ago
         const timeCell = document.createElement('td');

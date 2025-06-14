@@ -77,7 +77,7 @@ def log_season_pack_upgrade(api_url: str, api_key: str, api_timeout: int, series
             season_id_num = f"{series_id}_{season_number}"
             
             # Create a descriptive name for the history entry
-            media_name = f"{series_title} - {season_id} - COMPLETE SEASON PACK"
+            media_name = f"{series_title} - {season_id}"
             
             # Log the season pack upgrade to history with normal 'upgrade' operation type
             log_processed_media("sonarr", media_name, season_id_num, instance_name, "upgrade")

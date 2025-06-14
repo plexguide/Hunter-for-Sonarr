@@ -182,8 +182,8 @@ def save_settings(app_name: str, settings_data: Dict[str, Any]) -> bool:
     
     # Debug: Log the data being saved, especially for general settings
     if app_name == 'general':
-        settings_logger.info(f"Saving general settings: {settings_data}")
-        settings_logger.info(f"Apprise URLs being saved: {settings_data.get('apprise_urls', 'NOT_FOUND')}")
+        settings_logger.debug(f"Saving general settings: {settings_data}")
+        settings_logger.debug(f"Apprise URLs being saved: {settings_data.get('apprise_urls', 'NOT_FOUND')}")
     
     try:
         db = get_database()
