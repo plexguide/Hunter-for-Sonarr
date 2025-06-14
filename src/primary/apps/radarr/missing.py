@@ -83,7 +83,7 @@ def process_missing_movies(
     command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
     
     radarr_logger.info(f"Hunt Missing Movies: {hunt_missing_movies}")
-    radarr_logger.info(f"Monitored Only: {monitored_only}")
+
     radarr_logger.info(f"Skip Future Releases: {skip_future_releases}")
     if app_settings.get('ignore_release_date', False):
         radarr_logger.info(f"⚠️  Ignore Release Date: ENABLED (will process movies regardless of release date)")

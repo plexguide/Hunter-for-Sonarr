@@ -22,7 +22,7 @@ def get_configured_instances():
     settings = load_settings("whisparr")
     instances = []
     # Use debug level to avoid log spam on new installations
-    whisparr_logger.debug(f"Loaded Whisparr settings for instance check: {settings}")
+    # whisparr_logger.debug(f"Loaded Whisparr settings for instance check: {settings}") # Removed verbose log
 
     if not settings:
         whisparr_logger.debug("No settings found for Whisparr")
@@ -30,14 +30,14 @@ def get_configured_instances():
 
     # Always use Whisparr V2 API
     # Use debug level to avoid log spam on new installations
-    whisparr_logger.debug("Using Whisparr V2 API exclusively")
+
 
     # Check if instances are configured
     if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
         # Use debug level to avoid log spam on new installations
         whisparr_logger.debug(f"Found 'instances' list with {len(settings['instances'])} items. Processing...")
         for idx, instance in enumerate(settings["instances"]):
-            whisparr_logger.debug(f"Checking instance #{idx}: {instance}")
+    
             # Enhanced validation
             api_url = instance.get("api_url", "").strip()
             api_key = instance.get("api_key", "").strip()
@@ -92,7 +92,7 @@ def get_configured_instances():
                     # For brand new installations, don't spam logs with warnings about default instances
                     if name == 'Default':
                         # Use debug level for default instances to avoid log spam on new installations
-                        whisparr_logger.debug(f"Skipping instance {name} due to missing API URL or API Key")
+                        pass
                     else:
                         # Still log warnings for non-default instances
                         whisparr_logger.warning(f"Skipping instance {name} due to missing API URL or API Key")

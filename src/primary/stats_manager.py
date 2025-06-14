@@ -91,7 +91,6 @@ def load_hourly_caps() -> Dict[str, Dict[str, int]]:
             if app not in caps:
                 caps[app] = default_caps[app]
         
-        logger.debug(f"Loaded hourly caps from database: {caps}")
         return caps
     except Exception as e:
         logger.error(f"Error loading hourly caps from database: {e}")

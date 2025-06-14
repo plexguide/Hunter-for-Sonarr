@@ -25,7 +25,7 @@ def get_configured_instances():
     if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
         # sonarr_logger.info(f"Found 'instances' list with {len(settings['instances'])} items. Processing...") # Removed verbose log
         for idx, instance in enumerate(settings["instances"]):
-            sonarr_logger.debug(f"Checking instance #{idx}: {instance}")
+    
             # Enhanced validation
             api_url = instance.get("api_url", "").strip()
             api_key = instance.get("api_key", "").strip()
@@ -42,7 +42,7 @@ def get_configured_instances():
             if is_enabled and api_url and api_key:
                 # Get the exact instance name as configured in the UI
                 instance_name = instance.get("name", "Default") 
-                sonarr_logger.debug(f"Using configured instance name: '{instance_name}' for Sonarr instance")
+    
                 
                 # Return only essential instance details including per-instance hunt values
                 instance_data = {
@@ -62,7 +62,7 @@ def get_configured_instances():
                 instance_name = instance.get('name', 'Unnamed')
                 if instance_name == 'Default':
                     # Use debug level for default instances to avoid log spam on new installations
-                    sonarr_logger.debug(f"Skipping instance '{instance_name}' due to missing API URL or key (URL: '{api_url}', Key Set: {bool(api_key)})")
+                    pass
                 else:
                     # Still log warnings for non-default instances
                     sonarr_logger.warning(f"Skipping instance '{instance_name}' due to missing API URL or key (URL: '{api_url}', Key Set: {bool(api_key)})")

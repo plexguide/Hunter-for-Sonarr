@@ -974,8 +974,6 @@ def api_get_hourly_caps():
             app_settings = load_settings(app)
             app_limits[app] = app_settings.get('hourly_cap', 20)  # Default to 20 if not set
         
-        web_logger.debug(f"Serving hourly caps data with app-specific limits: {app_limits}")
-        
         return jsonify({
             "success": True,
             "caps": caps,

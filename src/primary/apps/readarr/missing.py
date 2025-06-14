@@ -62,7 +62,7 @@ def process_missing_books(
     command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
 
     readarr_logger.info(f"Hunt Missing Books: {hunt_missing_books}")
-    readarr_logger.info(f"Monitored Only: {monitored_only}")
+
     readarr_logger.info(f"Skip Future Releases: {skip_future_releases}")
 
     if not api_url or not api_key:

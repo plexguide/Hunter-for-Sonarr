@@ -51,7 +51,7 @@ def arr_request(api_url: str, api_key: str, api_timeout: int, endpoint: str, met
         # Construct the full URL properly
         full_url = f"{api_url.rstrip('/')}/api/v3/{endpoint.lstrip('/')}"
         
-        radarr_logger.debug(f"Making {method} request to: {full_url}")
+    
         
         # Set up headers with the API key
         headers = {

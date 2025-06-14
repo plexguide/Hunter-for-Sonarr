@@ -26,7 +26,7 @@ def get_configured_instances():
     if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
         # readarr_logger.info(f"Found 'instances' list with {len(settings['instances'])} items. Processing...") # Removed verbose log
         for idx, instance in enumerate(settings["instances"]):
-            readarr_logger.debug(f"Checking instance #{idx}: {instance}")
+    
             # Enhanced validation
             api_url = instance.get("api_url", "").strip()
             api_key = instance.get("api_key", "").strip()
@@ -59,7 +59,7 @@ def get_configured_instances():
                 instance_name = instance.get('name', 'Unnamed')
                 if instance_name == 'Default':
                     # Use debug level for default instances to avoid log spam on new installations
-                    readarr_logger.debug(f"Skipping instance '{instance_name}' due to missing API URL or key (URL: '{api_url}', Key Set: {bool(api_key)})")
+                    pass
                 else:
                     # Still log warnings for non-default instances
                     readarr_logger.warning(f"Skipping instance '{instance_name}' due to missing API URL or key (URL: '{api_url}', Key Set: {bool(api_key)})")

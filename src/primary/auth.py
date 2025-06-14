@@ -307,8 +307,6 @@ def authenticate_request():
 
     # Skip authentication for static files, API setup, health check path, ping, and github sponsors
     if request.path.startswith((static_path, api_setup_path)) or request.path in (favicon_path, health_check_path, ping_path, '/api/github_sponsors', '/api/sponsors/init'):
-        if not is_polling_endpoint:
-            logger.debug(f"Skipping authentication for path '{request.path}' (static/api-setup/health/ping)")
         return None
     
     # If no user exists, redirect to setup
@@ -342,9 +340,7 @@ def authenticate_request():
         
         # Log settings only for non-polling endpoints to reduce spam
         if not is_polling_endpoint:
-            logger.debug(f"Local access bypass setting: {local_access_bypass}")
-            logger.debug(f"Proxy auth bypass setting: {proxy_auth_bypass}")
-            logger.debug(f"All general settings: {general_settings}")
+            pass  # Removed verbose auth setting logs
     except Exception as e:
         logger.error(f"Error loading authentication bypass settings: {e}", exc_info=True)
     
@@ -389,13 +385,11 @@ def authenticate_request():
             logger.debug(f"X-Forwarded-For header detected: {forwarded_for}")
             # Take the first IP in the chain which is typically the client's real IP
             possible_client_ip = forwarded_for.split(',')[0].strip()
-            logger.debug(f"Checking if forwarded IP {possible_client_ip} is local")
             
             # Check if this forwarded IP is a local network IP
             for network in local_networks:
                 if possible_client_ip == network or (network.endswith('.') and possible_client_ip.startswith(network)):
                     is_local = True
-                    logger.debug(f"Forwarded IP {possible_client_ip} is a local network IP (matches {network})")
                     break
         
         # Check if direct remote_addr is a local network IP if not already determined
@@ -403,7 +397,6 @@ def authenticate_request():
             for network in local_networks:
                 if remote_addr == network or (network.endswith('.') and remote_addr.startswith(network)):
                     is_local = True
-                    logger.debug(f"Direct IP {remote_addr} is a local network IP (matches {network})")
                     break
                     
         if is_local:

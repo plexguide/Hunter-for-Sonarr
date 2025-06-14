@@ -78,7 +78,6 @@ def app_specific_loop(app_type: str) -> None:
     try:
         # Import the main app module first to check for get_configured_instances
         app_module = importlib.import_module(f'src.primary.apps.{app_type}')
-        app_logger.debug(f"Attributes found in {app_module.__name__}: {dir(app_module)}")
         api_module = importlib.import_module(f'src.primary.apps.{app_type}.api')
         missing_module = importlib.import_module(f'src.primary.apps.{app_type}.missing')
         upgrade_module = importlib.import_module(f'src.primary.apps.{app_type}.upgrade')
@@ -86,9 +85,7 @@ def app_specific_loop(app_type: str) -> None:
         # Try to get the multi-instance function from the main app module
         try:
             get_instances_func = getattr(app_module, 'get_configured_instances')
-            app_logger.debug(f"Found 'get_configured_instances' in {app_module.__name__}")
         except AttributeError:
-            app_logger.debug(f"'get_configured_instances' not found in {app_module.__name__}. Assuming single instance mode.")
             get_instances_func = None # Explicitly set to None if not found
 
         check_connection = getattr(api_module, 'check_connection')
@@ -310,7 +307,7 @@ def app_specific_loop(app_type: str) -> None:
             # Get maximum_download_queue_size from general settings (still using minimum_download_queue_size key for backward compatibility)
             general_settings = settings_manager.load_settings('general')
             max_queue_size = general_settings.get("minimum_download_queue_size", -1)
-            app_logger.info(f"Using maximum download queue size: {max_queue_size} from general settings")
+    
             
             if max_queue_size >= 0:
                 try:

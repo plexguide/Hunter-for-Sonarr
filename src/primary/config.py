@@ -154,11 +154,7 @@ def log_configuration(app_name: str):
         min_queue_size = settings.get("minimum_download_queue_size", -1)
 
         log.info(f"Debug Mode: {debug_mode}")
-        log.info(f"Hunt Mode: {determine_hunt_mode(app_name)}")
-        log.info(f"Sleep Duration: {sleep_duration} seconds")
-        log.info(f"State Reset Interval: {state_reset_interval} hours")
-        log.info(f"Monitored Only: {monitored_only}")
-        log.info(f"Maximum Download Queue Size: {settings.get('minimum_download_queue_size', -1)}")
+            # Removed verbose configuration logging to reduce spam
 
         # App-specific settings logging
         if app_name == "sonarr":
@@ -176,10 +172,7 @@ def log_configuration(app_name: str):
             log.info(f"Hunt Missing Items: {settings.get('hunt_missing_items', 0)}")
             # Use hunt_upgrade_items
             log.info(f"Hunt Upgrade Items: {settings.get('hunt_upgrade_items', 0)}") 
-            log.info(f"Sleep Duration: {settings.get('sleep_duration', 900)} seconds")
-            log.info(f"State Reset Interval: {state_reset_interval} hours")
-            log.info(f"Monitored Only: {settings.get('monitored_only', True)}")
-            log.info(f"Maximum Download Queue Size: {settings.get('minimum_download_queue_size', -1)}")
+            # Removed verbose configuration logging to reduce spam
         elif app_name == "readarr":
             log.info(f"Hunt Missing Books: {settings.get('hunt_missing_books', 0)}")
             log.info(f"Hunt Upgrade Books: {settings.get('hunt_upgrade_books', 0)}")
