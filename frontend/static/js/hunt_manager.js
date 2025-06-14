@@ -351,19 +351,40 @@ const huntManagerModule = {
         let path;
         switch (appType.toLowerCase()) {
             case 'sonarr':
-                // Sonarr uses title-based slugs, not IDs
+                // Sonarr uses title-based slugs in format: /series/show-name-year
                 if (title) {
-                    // Extract series title (remove season/episode info)
-                    let seriesTitle = title.replace(/\s*-\s*S\d+E\d+.*$/, ''); // Remove - S01E01 and everything after
-                    seriesTitle = seriesTitle.replace(/\s*\(\d{4}\).*$/, ''); // Remove (2023) and anything after
+                    // Extract series title with year from hunt manager format
+                    // Example: "The Twilight Zone (1985) - Season 1 (contains 2 missing episodes)"
+                    // We want: "The Twilight Zone (1985)"
+                    let seriesTitle = title;
                     
+                    // Remove everything after " - " (season/episode info)
+                    if (seriesTitle.includes(' - ')) {
+                        seriesTitle = seriesTitle.split(' - ')[0];
+                    }
+                    
+                    // Generate Sonarr-compatible slug
                     const slug = seriesTitle
                         .toLowerCase()
                         .trim()
+                        // Replace parentheses with hyphens: "(1985)" becomes "-1985"
+                        .replace(/\s*\((\d{4})\)\s*/g, '-$1')
+                        // Remove other special characters except hyphens and spaces
                         .replace(/[^\w\s-]/g, '')
-                        .replace(/\s+/g, '-')
+                        // Replace multiple spaces with single space
+                        .replace(/\s+/g, ' ')
+                        // Replace spaces with hyphens
+                        .replace(/\s/g, '-')
+                        // Remove multiple consecutive hyphens
                         .replace(/-+/g, '-')
+                        // Remove leading/trailing hyphens
                         .replace(/^-|-$/g, '');
+                    
+                    console.log('Sonarr slug generation:', {
+                        originalTitle: title,
+                        extractedSeriesTitle: seriesTitle,
+                        generatedSlug: slug
+                    });
                     
                     path = `/series/${slug}`;
                 } else {
