@@ -9,7 +9,7 @@ import random
 from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.readarr import api as readarr_api
-from src.primary.stats_manager import increment_stat
+from src.primary.stats_manager import increment_stat, check_hourly_cap_exceeded
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.settings_manager import load_settings, get_advanced_setting
@@ -138,6 +138,15 @@ def process_missing_books(
         if stop_check():
             readarr_logger.info("Stop signal received, aborting Readarr missing cycle.")
             break
+        
+        # Check API limit before processing each book
+        try:
+            if check_hourly_cap_exceeded("readarr"):
+                readarr_logger.warning(f"🛑 Readarr API hourly limit reached - stopping missing books processing after {processed_count} books")
+                break
+        except Exception as e:
+            readarr_logger.error(f"Error checking hourly API cap: {e}")
+            # Continue processing if cap check fails - safer than stopping
 
         book_id = book.get("id")
         book_title = book.get("title", f"Unknown Book ID {book_id}")

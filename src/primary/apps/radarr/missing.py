@@ -11,7 +11,7 @@ import datetime
 from typing import List, Dict, Any, Set, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.radarr import api as radarr_api
-from src.primary.stats_manager import increment_stat_only
+from src.primary.stats_manager import increment_stat_only, check_hourly_cap_exceeded
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.settings_manager import load_settings, get_advanced_setting
@@ -218,6 +218,15 @@ def process_missing_movies(
         if stop_check():
             radarr_logger.info("Stop requested during processing. Aborting...")
             break
+        
+        # Check API limit before processing each movie
+        try:
+            if check_hourly_cap_exceeded("radarr"):
+                radarr_logger.warning(f"🛑 Radarr API hourly limit reached - stopping missing movies processing after {movies_processed} movies")
+                break
+        except Exception as e:
+            radarr_logger.error(f"Error checking hourly API cap: {e}")
+            # Continue processing if cap check fails - safer than stopping
             
         movie_id = movie.get("id")
         movie_title = movie.get("title", "Unknown Title")

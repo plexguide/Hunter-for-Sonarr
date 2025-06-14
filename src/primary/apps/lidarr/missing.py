@@ -12,7 +12,7 @@ import json
 from typing import Dict, Any, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.apps.lidarr import api as lidarr_api
-from src.primary.stats_manager import increment_stat
+from src.primary.stats_manager import increment_stat, check_hourly_cap_exceeded
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.settings_manager import load_settings, get_advanced_setting
@@ -214,6 +214,15 @@ def process_missing_albums(
                 if stop_check(): # Use the new stop_check function
                     lidarr_logger.warning("Shutdown requested during artist search trigger.")
                     break
+                
+                # Check API limit before processing each artist
+                try:
+                    if check_hourly_cap_exceeded("lidarr"):
+                        lidarr_logger.warning(f"🛑 Lidarr API hourly limit reached - stopping artist processing after {processed_count} artists")
+                        break
+                except Exception as e:
+                    lidarr_logger.error(f"Error checking hourly API cap: {e}")
+                    # Continue processing if cap check fails - safer than stopping
 
                 # Get artist name from cached details or first album
                 artist_name = f"Artist ID {artist_id}" # Default if name not found

@@ -14,7 +14,7 @@ from src.primary.utils.logger import get_logger
 from src.primary.apps.whisparr import api as whisparr_api
 from src.primary.settings_manager import load_settings, get_advanced_setting
 from src.primary.stateful_manager import is_processed, add_processed_id
-from src.primary.stats_manager import increment_stat
+from src.primary.stats_manager import increment_stat, check_hourly_cap_exceeded
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.state import check_state_reset
 
@@ -147,6 +147,15 @@ def process_missing_items(
         if stop_check():
             whisparr_logger.info("Stop requested during item processing. Aborting...")
             break
+        
+        # Check API limit before processing each item
+        try:
+            if check_hourly_cap_exceeded("whisparr"):
+                whisparr_logger.warning(f"🛑 Whisparr API hourly limit reached - stopping missing items processing after {items_processed} items")
+                break
+        except Exception as e:
+            whisparr_logger.error(f"Error checking hourly API cap: {e}")
+            # Continue processing if cap check fails - safer than stopping
         
         # Re-check limit in case it changed
         current_limit = app_settings.get("hunt_missing_items", app_settings.get("hunt_missing_scenes", 1))

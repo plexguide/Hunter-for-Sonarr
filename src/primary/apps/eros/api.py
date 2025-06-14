@@ -357,6 +357,17 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
     Returns:
         The command ID if the search command was triggered successfully, None otherwise
     """
+    
+    # Check API limit before making request
+    try:
+        from src.primary.stats_manager import check_hourly_cap_exceeded
+        if check_hourly_cap_exceeded("eros"):
+            eros_logger.warning(f"🛑 Eros API hourly limit reached - skipping item search for {len(item_ids)} items")
+            return None
+    except Exception as e:
+        eros_logger.error(f"Error checking hourly API cap: {e}")
+        # Continue with request if cap check fails - safer than skipping
+    
     try:
         if not item_ids:
             eros_logger.warning("No movie IDs provided for search.")
@@ -366,58 +377,11 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
 
         # Try several possible command formats, as the API might be in flux
         possible_commands = [
-            # Format 1: MoviesSearch with integer IDs (Radarr-like) and no auto-refresh
-            {
-                "name": "MoviesSearch",
-                "movieIds": item_ids,
-                "updateScheduledTask": False,
-                "runRefreshAfterSearch": False,
-                "sendUpdatesToClient": False
-            },
-            # Format 2: MovieSearch with integer IDs and no auto-refresh
-            {
-                "name": "MovieSearch",
-                "movieIds": item_ids,
-                "updateScheduledTask": False,
-                "runRefreshAfterSearch": False,
-                "sendUpdatesToClient": False
-            },
-            # Format 3: MoviesSearch with string IDs and no auto-refresh
-            {
-                "name": "MoviesSearch",
-                "movieIds": [str(id) for id in item_ids],
-                "updateScheduledTask": False,
-                "runRefreshAfterSearch": False,
-                "sendUpdatesToClient": False
-            },
-            # Format 4: MovieSearch with string IDs and no auto-refresh
-            {
-                "name": "MovieSearch",
-                "movieIds": [str(id) for id in item_ids],
-                "updateScheduledTask": False,
-                "runRefreshAfterSearch": False,
-                "sendUpdatesToClient": False
-            },
-            # Fallback to original formats if the above don't work
-            {
-                "name": "MoviesSearch",
-                "movieIds": item_ids
-            },
-            {
-                "name": "MovieSearch",
-                "movieIds": item_ids
-            },
-            {
-                "name": "MoviesSearch",
-                "movieIds": [str(id) for id in item_ids]
-            },
-            {
-                "name": "MovieSearch",
-                "movieIds": [str(id) for id in item_ids]
-            }
+            {"name": "MoviesSearch", "movieIds": item_ids},  # Standard movie search
+            {"name": "MovieSearch", "movieIds": item_ids},   # Alternative format
+            {"name": "EpisodeSearch", "episodeIds": item_ids}  # Fallback to episode format
         ]
         
-        # Command endpoint
         command_endpoint = "command"
         
         # Try each command format until one works
@@ -430,6 +394,15 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
             if response and "id" in response:
                 command_id = response["id"]
                 eros_logger.debug(f"Search command format {i+1} succeeded with ID {command_id}")
+                
+                # Increment API counter after successful request
+                try:
+                    from src.primary.stats_manager import increment_hourly_cap
+                    increment_hourly_cap("eros", 1)
+                    eros_logger.debug(f"Incremented Eros hourly API cap for item search ({len(item_ids)} items)")
+                except Exception as cap_error:
+                    eros_logger.error(f"Failed to increment hourly API cap for item search: {cap_error}")
+                
                 return command_id
                 
         # If we've tried all formats and none worked:

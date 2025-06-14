@@ -270,6 +270,17 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
     Returns:
         The command ID if the search command was triggered successfully, None otherwise
     """
+    
+    # Check API limit before making request
+    try:
+        from src.primary.stats_manager import check_hourly_cap_exceeded
+        if check_hourly_cap_exceeded("whisparr"):
+            whisparr_logger.warning(f"🛑 Whisparr API hourly limit reached - skipping item search for {len(item_ids)} items")
+            return None
+    except Exception as e:
+        whisparr_logger.error(f"Error checking hourly API cap: {e}")
+        # Continue with request if cap check fails - safer than skipping
+    
     try:
         whisparr_logger.debug(f"Searching for items with IDs: {item_ids}")
         
@@ -304,6 +315,15 @@ def item_search(api_url: str, api_key: str, api_timeout: int, item_ids: List[int
             if result and "id" in result:
                 command_id = result["id"]
                 whisparr_logger.debug(f"Search command triggered with ID {command_id}")
+                
+                # Increment API counter after successful request
+                try:
+                    from src.primary.stats_manager import increment_hourly_cap
+                    increment_hourly_cap("whisparr", 1)
+                    whisparr_logger.debug(f"Incremented Whisparr hourly API cap for item search ({len(item_ids)} items)")
+                except Exception as cap_error:
+                    whisparr_logger.error(f"Failed to increment hourly API cap for item search: {cap_error}")
+                
                 return command_id
             else:
                 whisparr_logger.error("Failed to trigger search command - no command ID returned")

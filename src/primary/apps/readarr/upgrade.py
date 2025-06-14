@@ -10,7 +10,7 @@ import datetime # Import the datetime module
 from typing import List, Dict, Any, Set, Callable, Union, Optional
 from src.primary.utils.logger import get_logger
 from src.primary.apps.readarr import api as readarr_api
-from src.primary.stats_manager import increment_stat
+from src.primary.stats_manager import increment_stat, check_hourly_cap_exceeded
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.state import check_state_reset
@@ -143,6 +143,15 @@ def process_cutoff_upgrades(
     processed_something = False
 
     book_ids_to_search = [book.get("id") for book in books_to_process]
+
+    # Check API limit before processing books
+    try:
+        if check_hourly_cap_exceeded("readarr"):
+            readarr_logger.warning(f"🛑 Readarr API hourly limit reached - stopping upgrade processing")
+            return False
+    except Exception as e:
+        readarr_logger.error(f"Error checking hourly API cap: {e}")
+        # Continue processing if cap check fails - safer than stopping
 
     # Mark books as processed BEFORE triggering any searches
     for book_id in book_ids_to_search:

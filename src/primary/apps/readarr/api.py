@@ -552,6 +552,17 @@ def get_author_details(api_url: str, api_key: str, author_id: int, api_timeout: 
 
 def search_books(api_url: str, api_key: str, book_ids: List[int], api_timeout: int = 120) -> Optional[Dict]:
     """Triggers a search for specific book IDs in Readarr."""
+    
+    # Check API limit before making request
+    try:
+        from src.primary.stats_manager import check_hourly_cap_exceeded
+        if check_hourly_cap_exceeded("readarr"):
+            logger.warning(f"🛑 Readarr API hourly limit reached - skipping book search for {len(book_ids)} books")
+            return None
+    except Exception as e:
+        logger.error(f"Error checking hourly API cap: {e}")
+        # Continue with request if cap check fails - safer than skipping
+    
     endpoint = f"{api_url}/api/v1/command" # This uses the full URL, not arr_request
     headers = {'X-Api-Key': api_key}
     payload = {
@@ -565,6 +576,15 @@ def search_books(api_url: str, api_key: str, book_ids: List[int], api_timeout: i
         command_data = response.json()
         command_id = command_data.get('id')
         logger.info(f"Successfully triggered BookSearch command for book IDs: {book_ids}. Command ID: {command_id}")
+        
+        # Increment API counter after successful request
+        try:
+            from src.primary.stats_manager import increment_hourly_cap
+            increment_hourly_cap("readarr", 1)
+            logger.debug(f"Incremented Readarr hourly API cap for book search ({len(book_ids)} books)")
+        except Exception as cap_error:
+            logger.error(f"Failed to increment hourly API cap for book search: {cap_error}")
+        
         return command_data # Return the full command object which includes the ID
     except requests.exceptions.RequestException as e:
         logger.error(f"Error triggering BookSearch command for book IDs {book_ids} via {endpoint}: {e}")

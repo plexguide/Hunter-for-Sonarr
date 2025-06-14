@@ -8,7 +8,7 @@ import random
 from typing import List, Dict, Any, Set, Callable, Union
 from src.primary.utils.logger import get_logger
 from src.primary.apps.sonarr import api as sonarr_api
-from src.primary.stats_manager import increment_stat
+from src.primary.stats_manager import increment_stat, check_hourly_cap_exceeded
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.settings_manager import get_advanced_setting, load_settings
@@ -190,10 +190,21 @@ def process_upgrade_seasons_mode(
     
     # Process each selected season
     for series_id, season_number, _, series_title in seasons_to_process:
-        if stop_check(): 
-            sonarr_logger.info("Stop requested during season processing.")
+        if stop_check():
+            sonarr_logger.info("Stop requested during upgrade processing.")
             break
+        
+        # Check API limit before processing each season
+        try:
+            if check_hourly_cap_exceeded("sonarr"):
+                sonarr_logger.warning(f"🛑 Sonarr API hourly limit reached - stopping upgrade season processing")
+                break
+        except Exception as e:
+            sonarr_logger.error(f"Error checking hourly API cap: {e}")
+            # Continue processing if cap check fails - safer than stopping
             
+        sonarr_logger.info(f"Processing season pack upgrade: {series_title} Season {season_number} ({episode_count} cutoff unmet episodes)")
+        
         episodes = series_season_episodes[series_id][season_number]
         episode_ids = [episode["id"] for episode in episodes]
         
@@ -542,6 +553,15 @@ def process_upgrade_episodes_mode(
         if stop_check():
             sonarr_logger.info("Stop requested. Aborting episode upgrade processing.")
             break
+        
+        # Check API limit before processing each episode
+        try:
+            if check_hourly_cap_exceeded("sonarr"):
+                sonarr_logger.warning(f"🛑 Sonarr API hourly limit reached - stopping episode upgrade processing after {processed_count} episodes")
+                break
+        except Exception as e:
+            sonarr_logger.error(f"Error checking hourly API cap: {e}")
+            # Continue processing if cap check fails - safer than stopping
         
         episode_id = episode.get('id')
         series_info = episode.get('series', {})

@@ -770,6 +770,17 @@ def search_episode(api_url: str, api_key: str, api_timeout: int, episode_ids: Li
     if not episode_ids:
         sonarr_logger.warning("No episode IDs provided for search.")
         return None
+    
+    # Check API limit before making request
+    try:
+        from src.primary.stats_manager import check_hourly_cap_exceeded
+        if check_hourly_cap_exceeded("sonarr"):
+            sonarr_logger.warning(f"🛑 Sonarr API hourly limit reached - skipping episode search for {len(episode_ids)} episodes")
+            return None
+    except Exception as e:
+        sonarr_logger.error(f"Error checking hourly API cap: {e}")
+        # Continue with request if cap check fails - safer than skipping
+    
     try:
         endpoint = f"{api_url}/api/v3/command"
         payload = {
@@ -780,6 +791,15 @@ def search_episode(api_url: str, api_key: str, api_timeout: int, episode_ids: Li
         response.raise_for_status()
         command_id = response.json().get('id')
         sonarr_logger.info(f"Triggered Sonarr search for episode IDs: {episode_ids}. Command ID: {command_id}")
+        
+        # Increment API counter after successful request
+        try:
+            from src.primary.stats_manager import increment_hourly_cap
+            increment_hourly_cap("sonarr", 1)
+            sonarr_logger.debug(f"Incremented Sonarr hourly API cap for episode search ({len(episode_ids)} episodes)")
+        except Exception as cap_error:
+            sonarr_logger.error(f"Failed to increment hourly API cap for episode search: {cap_error}")
+        
         return command_id
     except requests.exceptions.RequestException as e:
         sonarr_logger.error(f"Error triggering Sonarr search for episode IDs {episode_ids}: {e}")
@@ -878,6 +898,17 @@ def get_series_by_id(api_url: str, api_key: str, api_timeout: int, series_id: in
 
 def search_season(api_url: str, api_key: str, api_timeout: int, series_id: int, season_number: int) -> Optional[Union[int, str]]:
     """Trigger a search for a specific season in Sonarr."""
+    
+    # Check API limit before making request
+    try:
+        from src.primary.stats_manager import check_hourly_cap_exceeded
+        if check_hourly_cap_exceeded("sonarr"):
+            sonarr_logger.warning(f"🛑 Sonarr API hourly limit reached - skipping season search for series {series_id}, season {season_number}")
+            return None
+    except Exception as e:
+        sonarr_logger.error(f"Error checking hourly API cap: {e}")
+        # Continue with request if cap check fails - safer than skipping
+    
     try:
         endpoint = f"{api_url}/api/v3/command"
         payload = {

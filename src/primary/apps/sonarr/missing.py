@@ -12,7 +12,7 @@ from typing import List, Dict, Any, Optional, Callable
 from src.primary.utils.logger import get_logger
 from src.primary.settings_manager import load_settings, get_advanced_setting
 from src.primary.utils.history_utils import log_processed_media
-from src.primary.stats_manager import increment_stat, increment_stat_only
+from src.primary.stats_manager import increment_stat, increment_stat_only, check_hourly_cap_exceeded
 from src.primary.stateful_manager import is_processed, add_processed_id
 from src.primary.apps.sonarr import api as sonarr_api
 
@@ -201,6 +201,15 @@ def process_missing_seasons_packs_mode(
         if stop_check():
             sonarr_logger.info("Stop signal received, halting processing.")
             break
+        
+        # Check API limit before processing each season
+        try:
+            if check_hourly_cap_exceeded("sonarr"):
+                sonarr_logger.warning(f"🛑 Sonarr API hourly limit reached - stopping season pack processing after {processed_count} seasons")
+                break
+        except Exception as e:
+            sonarr_logger.error(f"Error checking hourly API cap: {e}")
+            # Continue processing if cap check fails - safer than stopping
             
         series_id = season['series_id']
         season_number = season['season_number']
@@ -240,7 +249,6 @@ def process_missing_seasons_packs_mode(
             
             # CRITICAL FIX: Use increment_stat_only to avoid double-counting API calls
             # The API call is already tracked in search_season(), so we only increment stats here
-            from src.primary.stats_manager import increment_stat_only
             for i in range(episode_count):
                 increment_stat_only("sonarr", "hunted")
             sonarr_logger.debug(f"Incremented sonarr hunted statistics for {episode_count} episodes in season pack (API call already tracked separately)")
@@ -320,11 +328,20 @@ def process_missing_shows_mode(
     # Process each show
     for show in shows_to_process:
         if stop_check():
-            sonarr_logger.info("Stop requested. Aborting show processing.")
+            sonarr_logger.info("Stop signal received, halting processing.")
             break
         
-        show_id = show.get('series_id')
-        show_title = show.get('series_title', 'Unknown Show')
+        # Check API limit before processing each show
+        try:
+            if check_hourly_cap_exceeded("sonarr"):
+                sonarr_logger.warning(f"🛑 Sonarr API hourly limit reached - stopping shows processing")
+                break
+        except Exception as e:
+            sonarr_logger.error(f"Error checking hourly API cap: {e}")
+            # Continue processing if cap check fails - safer than stopping
+            
+        show_id = show.get("series_id")
+        show_title = show.get("series_title", "Unknown Show")
         
         # Get missing episodes for this show
         missing_episodes = []
@@ -521,6 +538,15 @@ def process_missing_episodes_mode(
         if stop_check():
             sonarr_logger.info("Stop requested. Aborting episode processing.")
             break
+        
+        # Check API limit before processing each episode
+        try:
+            if check_hourly_cap_exceeded("sonarr"):
+                sonarr_logger.warning(f"🛑 Sonarr API hourly limit reached - stopping episodes processing after {processed_count} episodes")
+                break
+        except Exception as e:
+            sonarr_logger.error(f"Error checking hourly API cap: {e}")
+            # Continue processing if cap check fails - safer than stopping
         
         episode_id = episode.get('id')
         series_info = episode.get('series', {})

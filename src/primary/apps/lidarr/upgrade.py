@@ -11,7 +11,7 @@ from src.primary.utils.logger import get_logger
 from src.primary.apps.lidarr import api as lidarr_api
 from src.primary.utils.history_utils import log_processed_media
 from src.primary.stateful_manager import is_processed, add_processed_id
-from src.primary.stats_manager import increment_stat
+from src.primary.stats_manager import increment_stat, check_hourly_cap_exceeded
 from src.primary.settings_manager import load_settings, get_advanced_setting
 from src.primary.state import check_state_reset  # Add the missing import
 
@@ -139,14 +139,23 @@ def process_cutoff_upgrades(
                 lidarr_logger.info(f" {album_detail}")
 
         # Check stop event before triggering search
-        if stop_check and stop_check(): # Use the passed stop_check function
-            lidarr_logger.warning("Shutdown requested, stopping upgrade album search.")
-            return False # Return False as no search was triggered in this case
+        if stop_check(): # Use the new stop_check function
+            lidarr_logger.warning("Shutdown requested before album upgrade search trigger.")
+            return False
+        
+        # Check API limit before processing albums
+        try:
+            if check_hourly_cap_exceeded("lidarr"):
+                lidarr_logger.warning(f"🛑 Lidarr API hourly limit reached - stopping upgrade processing")
+                return False
+        except Exception as e:
+            lidarr_logger.error(f"Error checking hourly API cap: {e}")
+            # Continue processing if cap check fails - safer than stopping
 
-        # Mark albums as processed BEFORE triggering search
+        # Mark the albums as processed BEFORE triggering the search
         for album_id in album_ids_to_search:
-            add_processed_id("lidarr", instance_name, str(album_id))
-            lidarr_logger.debug(f"Added album ID {album_id} to processed list for {instance_name}")
+            success = add_processed_id("lidarr", instance_name, str(album_id))
+            lidarr_logger.debug(f"Added album ID {album_id} to processed list for {instance_name}, success: {success}")
 
         lidarr_logger.info(f"Triggering Album Search for {len(album_ids_to_search)} albums for upgrade on instance {instance_name}: {album_ids_to_search}")
         # Pass necessary details extracted above to the API function

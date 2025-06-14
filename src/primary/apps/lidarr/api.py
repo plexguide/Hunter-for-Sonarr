@@ -419,6 +419,16 @@ def search_albums(api_url: str, api_key: str, api_timeout: int, album_ids: List[
     if not album_ids:
         lidarr_logger.warning("No album IDs provided for search.")
         return None
+    
+    # Check API limit before making request
+    try:
+        from src.primary.stats_manager import check_hourly_cap_exceeded
+        if check_hourly_cap_exceeded("lidarr"):
+            lidarr_logger.warning(f"🛑 Lidarr API hourly limit reached - skipping album search for {len(album_ids)} albums")
+            return None
+    except Exception as e:
+        lidarr_logger.error(f"Error checking hourly API cap: {e}")
+        # Continue with request if cap check fails - safer than skipping
         
     payload = {
         "name": "AlbumSearch",
@@ -429,6 +439,15 @@ def search_albums(api_url: str, api_key: str, api_timeout: int, album_ids: List[
     if response and isinstance(response, dict) and 'id' in response:
         command_id = response.get('id')
         lidarr_logger.info(f"Triggered Lidarr AlbumSearch for album IDs: {album_ids}. Command ID: {command_id}")
+        
+        # Increment API counter after successful request
+        try:
+            from src.primary.stats_manager import increment_hourly_cap
+            increment_hourly_cap("lidarr", 1)
+            lidarr_logger.debug(f"Incremented Lidarr hourly API cap for album search ({len(album_ids)} albums)")
+        except Exception as cap_error:
+            lidarr_logger.error(f"Failed to increment hourly API cap for album search: {cap_error}")
+        
         return response # Return the full command object including ID
     else:
         lidarr_logger.error(f"Failed to trigger Lidarr AlbumSearch for album IDs {album_ids}. Response: {response}")
@@ -436,6 +455,17 @@ def search_albums(api_url: str, api_key: str, api_timeout: int, album_ids: List[
 
 def search_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int) -> Optional[Dict]:
     """Trigger a search for a specific artist in Lidarr."""
+    
+    # Check API limit before making request
+    try:
+        from src.primary.stats_manager import check_hourly_cap_exceeded
+        if check_hourly_cap_exceeded("lidarr"):
+            lidarr_logger.warning(f"🛑 Lidarr API hourly limit reached - skipping artist search for artist {artist_id}")
+            return None
+    except Exception as e:
+        lidarr_logger.error(f"Error checking hourly API cap: {e}")
+        # Continue with request if cap check fails - safer than skipping
+    
     payload = {
         "name": "ArtistSearch",
         "artistIds": [artist_id]
@@ -445,6 +475,15 @@ def search_artist(api_url: str, api_key: str, api_timeout: int, artist_id: int) 
     if response and isinstance(response, dict) and 'id' in response:
         command_id = response.get('id')
         lidarr_logger.info(f"Triggered Lidarr ArtistSearch for artist ID: {artist_id}. Command ID: {command_id}")
+        
+        # Increment API counter after successful request
+        try:
+            from src.primary.stats_manager import increment_hourly_cap
+            increment_hourly_cap("lidarr", 1)
+            lidarr_logger.debug(f"Incremented Lidarr hourly API cap for artist search (artist {artist_id})")
+        except Exception as cap_error:
+            lidarr_logger.error(f"Failed to increment hourly API cap for artist search: {cap_error}")
+        
         return response # Return the full command object
     else:
         lidarr_logger.error(f"Failed to trigger Lidarr ArtistSearch for artist ID {artist_id}. Response: {response}")
