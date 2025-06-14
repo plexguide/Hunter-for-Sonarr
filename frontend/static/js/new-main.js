@@ -138,7 +138,7 @@ let huntarrUI = {
         this.elements.navItems = document.querySelectorAll('.nav-item');
         this.elements.homeNav = document.getElementById('homeNav');
         this.elements.logsNav = document.getElementById('logsNav');
-        this.elements.historyNav = document.getElementById('historyNav');
+        this.elements.huntManagerNav = document.getElementById('huntManagerNav');
         this.elements.settingsNav = document.getElementById('settingsNav');
         this.elements.userNav = document.getElementById('userNav');
         
@@ -146,7 +146,7 @@ let huntarrUI = {
         this.elements.sections = document.querySelectorAll('.content-section');
         this.elements.homeSection = document.getElementById('homeSection');
         this.elements.logsSection = document.getElementById('logsSection');
-        this.elements.historySection = document.getElementById('historySection');
+        this.elements.huntManagerSection = document.getElementById('huntManagerSection');
         this.elements.settingsSection = document.getElementById('settingsSection');
         this.elements.schedulingSection = document.getElementById('schedulingSection');
         
@@ -536,12 +536,17 @@ let huntarrUI = {
                 console.log('[huntarrUI] Available window properties:', Object.keys(window).slice(0, 20));
             }
             console.log('[huntarrUI] === LOGS SECTION DEBUG END ===');
-        } else if (section === 'history' && this.elements.historySection) {
-            this.elements.historySection.classList.add('active');
-            this.elements.historySection.style.display = 'block';
-            if (this.elements.historyNav) this.elements.historyNav.classList.add('active');
-            newTitle = 'History';
-            this.currentSection = 'history';
+        } else if (section === 'hunt-manager' && document.getElementById('huntManagerSection')) {
+            document.getElementById('huntManagerSection').classList.add('active');
+            document.getElementById('huntManagerSection').style.display = 'block';
+            if (document.getElementById('huntManagerNav')) document.getElementById('huntManagerNav').classList.add('active');
+            newTitle = 'Hunt Manager';
+            this.currentSection = 'hunt-manager';
+            
+            // Load hunt manager data if the module exists
+            if (typeof huntManagerModule !== 'undefined') {
+                huntManagerModule.refresh();
+            }
         } else if (section === 'apps' && document.getElementById('appsSection')) {
             document.getElementById('appsSection').classList.add('active');
             document.getElementById('appsSection').style.display = 'block';

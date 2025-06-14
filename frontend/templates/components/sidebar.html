@@ -52,11 +52,11 @@
                 </div>
                 <span>Logs</span>
             </a>
-            <a href="./#history" class="nav-item" id="historyNav">
+            <a href="./#hunt-manager" class="nav-item" id="huntManagerNav">
                 <div class="nav-icon-wrapper">
-                    <i class="fas fa-history"></i>
+                    <i class="fas fa-crosshairs"></i>
                 </div>
-                <span>History</span>
+                <span>Hunt Manager</span>
             </a>
             <a href="./user" class="nav-item" id="userNav">
                 <div class="nav-icon-wrapper">
@@ -471,7 +471,7 @@
         
         // Set the appropriate nav item as active
         const selector = currentHash === '#home' ? '#homeNav' : 
-                         currentHash === '#history' ? '#historyNav' :
+                         currentHash === '#hunt-manager' ? '#huntManagerNav' :
                          currentHash === '#logs' ? '#logsNav' :
                          currentHash === '#apps' ? '#appsNav' :
                          currentHash === '#settings' ? '#settingsNav' :

@@ -134,21 +134,8 @@ class HuntarrDatabase:
                 )
             ''')
             
-            # Create history table for tracking processed media history
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS history (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    app_type TEXT NOT NULL,
-                    instance_name TEXT NOT NULL,
-                    media_id TEXT NOT NULL,
-                    processed_info TEXT NOT NULL,
-                    operation_type TEXT DEFAULT 'missing',
-                    discovered BOOLEAN DEFAULT FALSE,
-                    date_time INTEGER NOT NULL,
-                    date_time_readable TEXT NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
+            # History table moved to manager.db - remove this table if it exists
+            conn.execute('DROP TABLE IF EXISTS history')
             
             # Create schedules table for storing scheduled actions
             conn.execute('''
@@ -227,9 +214,6 @@ class HuntarrDatabase:
             conn.execute('CREATE INDEX IF NOT EXISTS idx_hourly_caps_app_type ON hourly_caps(app_type)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_sleep_data_app_type ON sleep_data(app_type)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_swaparr_stats_key ON swaparr_stats(stat_key)')
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_history_app_instance ON history(app_type, instance_name)')
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_history_date_time ON history(date_time)')
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_history_media_id ON history(media_id)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_schedules_app_type ON schedules(app_type)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_schedules_enabled ON schedules(enabled)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_schedules_time ON schedules(time_hour, time_minute)')
@@ -669,152 +653,7 @@ class HuntarrDatabase:
             ''', (stat_key, stat_key, increment))
             conn.commit()
 
-    # History Management Methods
-    def add_history_entry(self, app_type: str, instance_name: str, media_id: str, 
-                         processed_info: str, operation_type: str = "missing", 
-                         discovered: bool = False, date_time: int = None) -> Dict[str, Any]:
-        """Add a new history entry to the database"""
-        if date_time is None:
-            date_time = int(time.time())
-        
-        date_time_readable = datetime.fromtimestamp(date_time).strftime('%Y-%m-%d %H:%M:%S')
-        
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute('''
-                INSERT INTO history 
-                (app_type, instance_name, media_id, processed_info, operation_type, discovered, date_time, date_time_readable)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (app_type, instance_name, media_id, processed_info, operation_type, discovered, date_time, date_time_readable))
-            
-            entry_id = cursor.lastrowid
-            conn.commit()
-            
-            # Return the created entry
-            entry = {
-                "id": entry_id,
-                "app_type": app_type,
-                "instance_name": instance_name,
-                "media_id": media_id,
-                "processed_info": processed_info,
-                "operation_type": operation_type,
-                "discovered": discovered,
-                "date_time": date_time,
-                "date_time_readable": date_time_readable
-            }
-            
-            logger.info(f"Added history entry for {app_type}-{instance_name}: {processed_info}")
-            return entry
-
-    def get_history(self, app_type: str = None, search_query: str = None, 
-                   page: int = 1, page_size: int = 20) -> Dict[str, Any]:
-        """Get history entries with pagination and filtering"""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.row_factory = sqlite3.Row
-            
-            # Build the base query
-            where_conditions = []
-            params = []
-            
-            if app_type and app_type != "all":
-                where_conditions.append("app_type = ?")
-                params.append(app_type)
-            
-            if search_query and search_query.strip():
-                search_query = search_query.lower()
-                where_conditions.append("""
-                    (LOWER(processed_info) LIKE ? OR 
-                     LOWER(instance_name) LIKE ? OR 
-                     LOWER(media_id) LIKE ?)
-                """)
-                search_param = f"%{search_query}%"
-                params.extend([search_param, search_param, search_param])
-            
-            where_clause = ""
-            if where_conditions:
-                where_clause = "WHERE " + " AND ".join(where_conditions)
-            
-            # Get total count
-            count_query = f"SELECT COUNT(*) FROM history {where_clause}"
-            cursor = conn.execute(count_query, params)
-            total_entries = cursor.fetchone()[0]
-            
-            # Calculate pagination
-            total_pages = (total_entries + page_size - 1) // page_size if total_entries > 0 else 1
-            
-            # Adjust page if out of bounds
-            if page < 1:
-                page = 1
-            elif page > total_pages:
-                page = total_pages
-            
-            # Get paginated entries
-            offset = (page - 1) * page_size
-            entries_query = f"""
-                SELECT * FROM history {where_clause}
-                ORDER BY date_time DESC
-                LIMIT ? OFFSET ?
-            """
-            cursor = conn.execute(entries_query, params + [page_size, offset])
-            
-            entries = []
-            current_time = int(time.time())
-            
-            for row in cursor.fetchall():
-                entry = dict(row)
-                # Calculate "how long ago"
-                seconds_ago = current_time - entry["date_time"]
-                entry["how_long_ago"] = self._format_time_ago(seconds_ago)
-                entries.append(entry)
-            
-            return {
-                "entries": entries,
-                "total_entries": total_entries,
-                "total_pages": total_pages,
-                "current_page": page
-            }
-
-    def clear_history(self, app_type: str = None):
-        """Clear history entries"""
-        with sqlite3.connect(self.db_path) as conn:
-            if app_type and app_type != "all":
-                conn.execute("DELETE FROM history WHERE app_type = ?", (app_type,))
-                logger.info(f"Cleared history for {app_type}")
-            else:
-                conn.execute("DELETE FROM history")
-                logger.info("Cleared all history")
-            conn.commit()
-
-    def handle_instance_rename(self, app_type: str, old_instance_name: str, new_instance_name: str):
-        """Handle renaming of an instance by updating history entries"""
-        if old_instance_name == new_instance_name:
-            return True
-        
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute('''
-                UPDATE history 
-                SET instance_name = ?
-                WHERE app_type = ? AND instance_name = ?
-            ''', (new_instance_name, app_type, old_instance_name))
-            
-            updated_count = cursor.rowcount
-            conn.commit()
-            
-            logger.info(f"Updated {updated_count} history entries for {app_type}: {old_instance_name} -> {new_instance_name}")
-            return True
-
-    def _format_time_ago(self, seconds: int) -> str:
-        """Format seconds into human-readable time ago string"""
-        if seconds < 60:
-            return f"{seconds} seconds ago"
-        elif seconds < 3600:
-            minutes = seconds // 60
-            return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
-        elif seconds < 86400:
-            hours = seconds // 3600
-            return f"{hours} hour{'s' if hours != 1 else ''} ago"
-        else:
-            days = seconds // 86400
-            return f"{days} day{'s' if days != 1 else ''} ago"
+    # History methods moved to manager_database.py - Hunt Manager functionality
 
     # Scheduler methods
     def get_schedules(self, app_type: str = None) -> Dict[str, List[Dict[str, Any]]]:

@@ -300,13 +300,28 @@ def main():
     # Register cleanup handler
     atexit.register(cleanup_handler)
     
-    # Initialize database with default configurations
+    # Initialize databases with default configurations
     try:
         from primary.settings_manager import initialize_database
         initialize_database()
-        huntarr_logger.info("Database initialization completed successfully")
+        huntarr_logger.info("Main database initialization completed successfully")
+        
+        # Initialize manager database and migrate history if needed
+        from src.primary.utils.manager_database import get_manager_database
+        from src.primary.utils.database import get_database
+        manager_db = get_manager_database()
+        
+        # Attempt to migrate history from huntarr.db if it exists
+        main_db = get_database()
+        if hasattr(main_db, 'db_path'):
+            try:
+                manager_db.migrate_from_huntarr_db(main_db.db_path)
+                huntarr_logger.info("Hunt Manager database initialized and migration completed")
+            except Exception as migration_error:
+                huntarr_logger.warning(f"History migration completed with warnings: {migration_error}")
+        
     except Exception as e:
-        huntarr_logger.error(f"Failed to initialize database: {e}")
+        huntarr_logger.error(f"Failed to initialize databases: {e}")
         huntarr_logger.error("Application may not function correctly without database")
         # Continue anyway - the app might still work with defaults
 

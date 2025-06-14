@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-History Manager for Huntarr
-Handles storing and retrieving processed media history using SQLite database
+Hunt Manager for Huntarr
+Handles storing and retrieving processed media history using manager.db
 """
 
 import time
@@ -13,8 +13,8 @@ from typing import Dict, Any, Optional
 # Create a logger
 logger = logging.getLogger(__name__)
 
-# Import database
-from src.primary.utils.database import get_database
+# Import manager database
+from src.primary.utils.manager_database import get_manager_database
 
 # Lock to prevent race conditions during database operations
 history_locks = {
@@ -50,8 +50,8 @@ def add_history_entry(app_type, entry_data):
     # Thread-safe database operation
     with history_locks[app_type]:
         try:
-            db = get_database()
-            entry = db.add_history_entry(
+            manager_db = get_manager_database()
+            entry = manager_db.add_hunt_history_entry(
                 app_type=app_type,
                 instance_name=instance_name,
                 media_id=entry_data["id"],
@@ -97,8 +97,8 @@ def get_history(app_type, search_query=None, page=1, page_size=20):
         return {"entries": [], "total_entries": 0, "total_pages": 0, "current_page": 1}
     
     try:
-        db = get_database()
-        result = db.get_history(
+        manager_db = get_manager_database()
+        result = manager_db.get_hunt_history(
             app_type=app_type,
             search_query=search_query,
             page=page,
@@ -127,9 +127,9 @@ def clear_history(app_type):
         return False
     
     try:
-        db = get_database()
-        db.clear_history(app_type)
-        logger.info(f"Successfully cleared history for {app_type}")
+        manager_db = get_manager_database()
+        manager_db.clear_hunt_history(app_type)
+        logger.info(f"Successfully cleared hunt history for {app_type}")
         return True
         
     except Exception as e:
@@ -161,8 +161,8 @@ def handle_instance_rename(app_type, old_instance_name, new_instance_name):
     # Thread-safe operation
     with history_locks[app_type]:
         try:
-            db = get_database()
-            db.handle_instance_rename(app_type, old_instance_name, new_instance_name)
+            manager_db = get_manager_database()
+            manager_db.handle_instance_rename(app_type, old_instance_name, new_instance_name)
             return True
             
         except Exception as e:

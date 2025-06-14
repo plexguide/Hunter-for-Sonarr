@@ -270,7 +270,7 @@ app.register_blueprint(whisparr_bp, url_prefix='/api/whisparr')
 app.register_blueprint(eros_bp, url_prefix='/api/eros')
 app.register_blueprint(swaparr_bp, url_prefix='/api/swaparr')
 app.register_blueprint(stateful_api, url_prefix='/api/stateful')
-app.register_blueprint(history_blueprint, url_prefix='/api/history')
+app.register_blueprint(history_blueprint, url_prefix='/api/hunt-manager')
 app.register_blueprint(scheduler_api)
 app.register_blueprint(log_routes_bp)
 
