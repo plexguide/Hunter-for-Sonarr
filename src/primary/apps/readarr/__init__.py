@@ -91,7 +91,6 @@ def get_configured_instances():
             readarr_logger.warning("No API URL or key found in legacy configuration")
 
     # Use debug level to avoid spamming logs, especially with 0 instances
-    readarr_logger.debug(f"Found {len(instances)} configured and enabled Readarr instances")
     return instances
 
 __all__ = ["process_missing_books", "process_cutoff_upgrades", "get_configured_instances"]

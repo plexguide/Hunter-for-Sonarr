@@ -100,7 +100,6 @@ def get_configured_instances():
         eros_logger.debug("No instances array found in settings or it's empty")
     
     # Use debug level to avoid spamming logs, especially with 0 instances
-    eros_logger.debug(f"Found {len(instances)} configured and enabled Eros instances")
     return instances
 
 __all__ = ["process_missing_items", "process_missing_scenes", "process_cutoff_upgrades", "get_configured_instances"]
