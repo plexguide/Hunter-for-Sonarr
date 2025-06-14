@@ -131,9 +131,9 @@ const SettingsForms = {
                     <p class="setting-help" style="color: #cc7a00; font-weight: bold; display: ${settings.upgrade_mode === 'episodes' ? 'block' : 'none'};" id="episodes-upgrade-warning">⚠️ Episodes mode makes excessive API calls and does not support tagging. Use only for targeting specific episodes. Season Packs mode is strongly recommended.</p>
                 </div>
                 <div class="setting-item">
-                    <label for="sonarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                                        <input type="number" id="sonarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
-                    <p class="setting-help">Time in seconds between processing cycles</p>
+                    <label for="sonarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration (Minutes):</label>
+                                        <input type="number" id="sonarr_sleep_duration" name="sleep_duration" min="10" value="${settings.sleep_duration !== undefined ? Math.round(settings.sleep_duration / 60) : 15}">
+                    <p class="setting-help">Time in minutes between processing cycles (minimum 10 minutes)</p>
                 </div>
                 <div class="setting-item">
                     <label for="sonarr_hourly_cap"><a href="https://plexguide.github.io/Huntarr.io/apps/sonarr.html#search-settings" class="info-icon" title="Maximum API requests per hour for this app (20 is safe)" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
@@ -342,9 +342,9 @@ const SettingsForms = {
             <div class="settings-group">
                 <h3>Search Settings</h3>
                 <div class="setting-item">
-                    <label for="radarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                                        <input type="number" id="radarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
-                    <p class="setting-help">Time in seconds between processing cycles</p>
+                    <label for="radarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration (Minutes):</label>
+                                        <input type="number" id="radarr_sleep_duration" name="sleep_duration" min="10" value="${settings.sleep_duration !== undefined ? Math.round(settings.sleep_duration / 60) : 15}">
+                    <p class="setting-help">Time in minutes between processing cycles (minimum 10 minutes)</p>
                 </div>
                 <div class="setting-item">
                     <label for="radarr_hourly_cap"><a href="https://plexguide.github.io/Huntarr.io/apps/radarr.html#search-settings" class="info-icon" title="Maximum API requests per hour for this app" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
@@ -552,9 +552,9 @@ const SettingsForms = {
                 </div>
 
                 <div class="setting-item">
-                    <label for="lidarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                                        <input type="number" id="lidarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
-                    <p class="setting-help">Time in seconds between processing cycles</p>
+                    <label for="lidarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration (Minutes):</label>
+                                        <input type="number" id="lidarr_sleep_duration" name="sleep_duration" min="10" value="${settings.sleep_duration !== undefined ? Math.round(settings.sleep_duration / 60) : 15}">
+                    <p class="setting-help">Time in minutes between processing cycles (minimum 10 minutes)</p>
                 </div>
                 <div class="setting-item">
                     <label for="lidarr_hourly_cap"><a href="https://plexguide.github.io/Huntarr.io/apps/lidarr.html#search-settings" class="info-icon" title="Maximum API requests per hour for this app (20 is safe)" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
@@ -741,9 +741,9 @@ const SettingsForms = {
                 <h3>Search Settings</h3>
 
                 <div class="setting-item">
-                    <label for="readarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                    <input type="number" id="readarr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
-                    <p class="setting-help">Time in seconds between processing cycles</p>
+                    <label for="readarr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration (Minutes):</label>
+                    <input type="number" id="readarr_sleep_duration" name="sleep_duration" min="10" value="${settings.sleep_duration !== undefined ? Math.round(settings.sleep_duration / 60) : 15}">
+                    <p class="setting-help">Time in minutes between processing cycles (minimum 10 minutes)</p>
                 </div>
                 <div class="setting-item">
                     <label for="readarr_hourly_cap"><a href="https://plexguide.github.io/Huntarr.io/apps/readarr.html#search-settings" class="info-icon" title="Maximum API requests per hour for this app (20 is safe)" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
@@ -917,9 +917,9 @@ const SettingsForms = {
                 <h3>Search Settings</h3>
                 
                 <div class="setting-item">
-                <label for="whisparr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                                    <input type="number" id="whisparr_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
-                    <p class="setting-help">Time in seconds between processing cycles</p>
+                <label for="whisparr_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration (Minutes):</label>
+                                    <input type="number" id="whisparr_sleep_duration" name="sleep_duration" min="10" value="${settings.sleep_duration !== undefined ? Math.round(settings.sleep_duration / 60) : 15}">
+                    <p class="setting-help">Time in minutes between processing cycles (minimum 10 minutes)</p>
                 </div>
                 <div class="setting-item">
                     <label for="whisparr_hourly_cap"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#search-settings" class="info-icon" title="Maximum API requests per hour for this app (20 is safe)" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
@@ -1127,9 +1127,9 @@ const SettingsForms = {
                 </div>
 
                 <div class="setting-item">
-                    <label for="eros_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#sleep-duration" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration:</label>
-                    <input type="number" id="eros_sleep_duration" name="sleep_duration" min="60" value="${settings.sleep_duration !== undefined ? settings.sleep_duration : 900}">
-                    <p class="setting-help">Time in seconds between processing cycles</p>
+                    <label for="eros_sleep_duration"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#sleep-duration" class="info-icon" title="Learn more about sleep duration" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Sleep Duration (Minutes):</label>
+                    <input type="number" id="eros_sleep_duration" name="sleep_duration" min="10" value="${settings.sleep_duration !== undefined ? Math.round(settings.sleep_duration / 60) : 15}">
+                    <p class="setting-help">Time in minutes between processing cycles (minimum 10 minutes)</p>
                 </div>
                 <div class="setting-item">
                     <label for="eros_hourly_cap"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#api-cap" class="info-icon" title="Maximum API requests per hour for this app (20 is safe)" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>API Cap - Hourly:</label>
@@ -1400,16 +1400,13 @@ const SettingsForms = {
                         <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#sleep-duration" class="info-icon" title="Time between Swaparr cycles" target="_blank" rel="noopener">
                             <i class="fas fa-info-circle"></i>
                         </a>
-                        Sleep Duration:
+                        Sleep Duration (Minutes):
                     </label>
                     <div class="input-group" style="display: flex; align-items: center; gap: 10px;">
-                        <input type="number" id="swaparr_sleep_duration" value="${settings.sleep_duration || 900}" min="60" max="86400" style="width: 120px;">
-                        <span style="color: #9ca3af; font-size: 14px;">seconds</span>
-                        <span id="swaparrSleepDisplay" style="color: #6b7280; font-size: 13px; margin-left: 10px;">
-                            (${this.convertSecondsToReadable(settings.sleep_duration || 900)})
-                        </span>
+                        <input type="number" id="swaparr_sleep_duration" value="${settings.sleep_duration ? Math.round(settings.sleep_duration / 60) : 15}" min="10" max="1440" style="width: 120px;">
+                        <span style="color: #9ca3af; font-size: 14px;">minutes</span>
                     </div>
-                    <p class="setting-help">Time to wait between Swaparr processing cycles (default: 900 seconds / 15 minutes)</p>
+                    <p class="setting-help">Time to wait between Swaparr processing cycles (minimum 10 minutes, default: 15 minutes)</p>
                 </div>
                 
             </div>
@@ -1573,17 +1570,7 @@ const SettingsForms = {
         // Load Swaparr GitHub star count dynamically
         this.loadSwaparrStarCount();
         
-        // Add event listener for sleep duration display update
-        const sleepInput = container.querySelector('#swaparr_sleep_duration');
-        if (sleepInput) {
-            sleepInput.addEventListener('input', () => {
-                const display = container.querySelector('#swaparrSleepDisplay');
-                if (display) {
-                    const seconds = parseInt(sleepInput.value) || 900;
-                    display.textContent = `(${this.convertSecondsToReadable(seconds)})`;
-                }
-            });
-        }
+
         
         // Initialize tag systems
         this.initializeTagSystem(settings);
@@ -2071,7 +2058,7 @@ const SettingsForms = {
             if (appType === 'sonarr') {
                 settings.hunt_missing_mode = getInputValue('#sonarr-hunt-missing-mode', 'seasons_packs');
                 settings.upgrade_mode = getInputValue('#sonarr-upgrade-mode', 'seasons_packs');
-                settings.sleep_duration = getInputValue('#sonarr_sleep_duration', 900);
+                settings.sleep_duration = getInputValue('#sonarr_sleep_duration', 15) * 60; // Convert minutes to seconds
                 settings.hourly_cap = getInputValue('#sonarr_hourly_cap', 20);
                 settings.monitored_only = getInputValue('#sonarr_monitored_only', true);
                 settings.skip_future_episodes = getInputValue('#sonarr_skip_future_episodes', true);
@@ -2086,7 +2073,7 @@ const SettingsForms = {
 
             } 
             else if (appType === 'radarr') {
-                settings.sleep_duration = getInputValue('#radarr_sleep_duration', 900);
+                settings.sleep_duration = getInputValue('#radarr_sleep_duration', 15) * 60; // Convert minutes to seconds
                 settings.hourly_cap = getInputValue('#radarr_hourly_cap', 20);
                 settings.monitored_only = getInputValue('#radarr_monitored_only', true);
                 settings.skip_future_releases = getInputValue('#radarr_skip_future_releases', true);
@@ -2102,7 +2089,7 @@ const SettingsForms = {
             else if (appType === 'lidarr') {
                 settings.hunt_missing_mode = getInputValue('#lidarr_hunt_missing_mode', 'album');
                 settings.monitored_only = getInputValue('#lidarr_monitored_only', true);
-                settings.sleep_duration = getInputValue('#lidarr_sleep_duration', 900);
+                settings.sleep_duration = getInputValue('#lidarr_sleep_duration', 15) * 60; // Convert minutes to seconds
                 settings.hourly_cap = getInputValue('#lidarr_hourly_cap', 20);
                 settings.tag_processed_items = getInputValue('#lidarr_tag_processed_items', true);
                 
@@ -2117,7 +2104,7 @@ const SettingsForms = {
                 settings.skip_future_releases = getInputValue('#readarr_skip_future_releases', true);
                 settings.tag_processed_items = getInputValue('#readarr_tag_processed_items', true);
 
-                settings.sleep_duration = getInputValue('#readarr_sleep_duration', 900);
+                settings.sleep_duration = getInputValue('#readarr_sleep_duration', 15) * 60; // Convert minutes to seconds
                 settings.hourly_cap = getInputValue('#readarr_hourly_cap', 20);
                 
                 // Custom tags
@@ -2132,7 +2119,7 @@ const SettingsForms = {
                 settings.skip_future_releases = getInputValue('#whisparr_skip_future_releases', true);
                 settings.tag_processed_items = getInputValue('#whisparr_tag_processed_items', true);
 
-                settings.sleep_duration = getInputValue('#whisparr_sleep_duration', 900);
+                settings.sleep_duration = getInputValue('#whisparr_sleep_duration', 15) * 60; // Convert minutes to seconds
                 settings.hourly_cap = getInputValue('#whisparr_hourly_cap', 20);
                 
                 // Custom tags
@@ -2147,7 +2134,7 @@ const SettingsForms = {
                 settings.skip_future_releases = getInputValue('#eros_skip_future_releases', true);
                 settings.tag_processed_items = getInputValue('#eros_tag_processed_items', true);
 
-                settings.sleep_duration = getInputValue('#eros_sleep_duration', 900);
+                settings.sleep_duration = getInputValue('#eros_sleep_duration', 15) * 60; // Convert minutes to seconds
                 settings.hourly_cap = getInputValue('#eros_hourly_cap', 20);
                 
                 // Custom tags
@@ -2166,7 +2153,7 @@ const SettingsForms = {
                 settings.ignore_above_size = getInputValue('#swaparr_ignore_above_size', '25GB');
                 settings.remove_from_client = getInputValue('#swaparr_remove_from_client', true);
                 settings.dry_run = getInputValue('#swaparr_dry_run', false);
-                settings.sleep_duration = getInputValue('#swaparr_sleep_duration', 900);
+                settings.sleep_duration = getInputValue('#swaparr_sleep_duration', 15) * 60; // Convert minutes to seconds
                 
                 // Malicious file detection settings
                 settings.malicious_file_detection = getInputValue('#swaparr_malicious_detection', false);

@@ -194,9 +194,16 @@ def save_settings(app_name: str, settings_data: Dict[str, Any]) -> bool:
     
     # Validate and enforce minimum values (no negative numbers allowed)
     numeric_fields = [
-        'sleep_duration', 'hourly_cap', 'hunt_missing_items', 'hunt_upgrade_items',
+        'hourly_cap', 'hunt_missing_items', 'hunt_upgrade_items',
         'hunt_missing_movies', 'hunt_upgrade_movies', 'hunt_missing_books', 'hunt_upgrade_books'
     ]
+    
+    # Special validation for sleep_duration (minimum 600 seconds = 10 minutes)
+    if 'sleep_duration' in settings_data:
+        original_value = settings_data['sleep_duration']
+        if isinstance(original_value, (int, float)) and original_value < 600:
+            settings_data['sleep_duration'] = 600
+            settings_logger.warning(f"Sleep duration for {app_name} was {original_value} seconds, automatically set to minimum allowed value of 600 seconds (10 minutes)")
     
     for field in numeric_fields:
         if field in settings_data:
@@ -209,6 +216,13 @@ def save_settings(app_name: str, settings_data: Dict[str, Any]) -> bool:
     if 'instances' in settings_data and isinstance(settings_data['instances'], list):
         for i, instance in enumerate(settings_data['instances']):
             if isinstance(instance, dict):
+                # Special validation for sleep_duration in instances
+                if 'sleep_duration' in instance:
+                    original_value = instance['sleep_duration']
+                    if isinstance(original_value, (int, float)) and original_value < 600:
+                        instance['sleep_duration'] = 600
+                        settings_logger.warning(f"Sleep duration for {app_name} instance {i+1} was {original_value} seconds, automatically set to minimum allowed value of 600 seconds (10 minutes)")
+                
                 for field in numeric_fields:
                     if field in instance:
                         original_value = instance[field]
