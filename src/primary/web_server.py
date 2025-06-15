@@ -589,13 +589,20 @@ def save_general_settings():
             data['local_access_bypass'] = False
             data['proxy_auth_bypass'] = False
     
-    # Handle timezone changes automatically
+    # Handle timezone changes automatically with validation
     timezone_changed = False
     if 'timezone' in data:
         # Get current timezone setting to check if it changed
         current_settings = settings_manager.load_settings('general')
         current_timezone = current_settings.get('timezone', 'UTC')
         new_timezone = data.get('timezone', 'UTC')
+        
+        # Validate the new timezone
+        safe_timezone = settings_manager.get_safe_timezone(new_timezone)
+        if safe_timezone != new_timezone:
+            general_logger.warning(f"Invalid timezone '{new_timezone}' provided, using '{safe_timezone}' instead")
+            data['timezone'] = safe_timezone  # Update the data to save the safe timezone
+            new_timezone = safe_timezone
         
         if current_timezone != new_timezone:
             timezone_changed = True

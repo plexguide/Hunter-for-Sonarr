@@ -343,6 +343,54 @@ def apply_timezone(timezone: str) -> bool:
         settings_logger.error(f"Error setting timezone: {str(e)}")
         return False
 
+def validate_timezone(timezone_str: str) -> bool:
+    """
+    Validate if a timezone string is valid using pytz.
+    
+    Args:
+        timezone_str: The timezone string to validate (e.g., 'Europe/Bucharest')
+        
+    Returns:
+        bool: True if valid, False otherwise
+    """
+    if not timezone_str:
+        return False
+        
+    try:
+        import pytz
+        pytz.timezone(timezone_str)
+        return True
+    except pytz.UnknownTimeZoneError:
+        return False
+    except Exception as e:
+        settings_logger.warning(f"Error validating timezone {timezone_str}: {e}")
+        return False
+
+def get_safe_timezone(timezone_str: str, fallback: str = "UTC") -> str:
+    """
+    Get a safe timezone string, falling back to a default if invalid.
+    
+    Args:
+        timezone_str: The timezone string to validate
+        fallback: The fallback timezone if validation fails (default: UTC)
+        
+    Returns:
+        str: A valid timezone string
+    """
+    if validate_timezone(timezone_str):
+        return timezone_str
+    
+    if timezone_str != fallback:
+        settings_logger.warning(f"Invalid timezone '{timezone_str}', falling back to '{fallback}'")
+    
+    # Ensure fallback is also valid
+    if validate_timezone(fallback):
+        return fallback
+    
+    # Ultimate fallback to UTC if even the fallback is invalid
+    settings_logger.error(f"Fallback timezone '{fallback}' is also invalid, using UTC")
+    return "UTC"
+
 def initialize_timezone_from_env():
     """Initialize timezone setting from TZ environment variable if not already set."""
     try:
@@ -360,26 +408,32 @@ def initialize_timezone_from_env():
         if not current_timezone or current_timezone == "UTC":
             settings_logger.info(f"Initializing timezone from TZ environment variable: {tz_env}")
             
-            # Validate the timezone
-            try:
-                import pytz
-                pytz.timezone(tz_env)  # This will raise an exception if invalid
-                
-                # Update the settings
-                general_settings["timezone"] = tz_env
-                save_settings("general", general_settings)
-                
-                # Apply the timezone to the system
-                apply_timezone(tz_env)
-                
-                settings_logger.info(f"Successfully initialized timezone to {tz_env}")
-                
-            except pytz.UnknownTimeZoneError:
-                settings_logger.warning(f"Invalid timezone in TZ environment variable: {tz_env}, keeping UTC")
-            except Exception as e:
-                settings_logger.error(f"Error validating timezone {tz_env}: {e}")
+            # Use safe timezone validation
+            safe_timezone = get_safe_timezone(tz_env)
+            
+            if safe_timezone == tz_env:
+                settings_logger.info(f"TZ environment variable '{tz_env}' is valid")
+            else:
+                settings_logger.warning(f"TZ environment variable '{tz_env}' is invalid, using '{safe_timezone}' instead")
+            
+            # Update the settings with the safe timezone
+            general_settings["timezone"] = safe_timezone
+            save_settings("general", general_settings)
+            
+            # Apply the timezone to the system
+            apply_timezone(safe_timezone)
+            
+            settings_logger.info(f"Successfully initialized timezone to {safe_timezone}")
         else:
             settings_logger.info(f"Timezone already set in settings: {current_timezone}")
+            
+            # Validate the existing timezone setting
+            safe_timezone = get_safe_timezone(current_timezone)
+            if safe_timezone != current_timezone:
+                settings_logger.warning(f"Existing timezone setting '{current_timezone}' is invalid, updating to '{safe_timezone}'")
+                general_settings["timezone"] = safe_timezone
+                save_settings("general", general_settings)
+                apply_timezone(safe_timezone)
             
     except Exception as e:
         settings_logger.error(f"Error initializing timezone from environment: {e}")
