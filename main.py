@@ -151,6 +151,37 @@ except Exception as e:
 waitress_server = None
 shutdown_requested = threading.Event()
 
+def refresh_sponsors_on_startup():
+    """Refresh sponsors database from manifest.json on startup"""
+    import os
+    import json
+    
+    try:
+        # Get database instance
+        from src.primary.utils.database import get_database
+        db = get_database()
+        
+        # Path to manifest.json
+        manifest_path = os.path.join(os.path.dirname(__file__), 'manifest.json')
+        
+        if os.path.exists(manifest_path):
+            with open(manifest_path, 'r') as f:
+                manifest_data = json.load(f)
+            
+            sponsors_list = manifest_data.get('sponsors', [])
+            if sponsors_list:
+                # Clear existing sponsors and save new ones
+                db.save_sponsors(sponsors_list)
+                huntarr_logger.debug(f"Refreshed {len(sponsors_list)} sponsors from manifest.json")
+            else:
+                huntarr_logger.warning("No sponsors found in manifest.json")
+        else:
+            huntarr_logger.warning(f"manifest.json not found at {manifest_path}")
+            
+    except Exception as e:
+        huntarr_logger.error(f"Error refreshing sponsors on startup: {e}")
+        raise
+
 def run_background_tasks():
     """Runs the Huntarr background processing."""
     bg_logger = get_logger("HuntarrBackground") # Use app's logger
@@ -319,6 +350,13 @@ def main():
                 huntarr_logger.info("Hunt Manager database initialized and migration completed")
             except Exception as migration_error:
                 huntarr_logger.warning(f"History migration completed with warnings: {migration_error}")
+        
+        # Refresh sponsors from manifest.json on startup
+        try:
+            refresh_sponsors_on_startup()
+            huntarr_logger.info("Sponsors database refreshed from manifest.json")
+        except Exception as sponsor_error:
+            huntarr_logger.warning(f"Failed to refresh sponsors on startup: {sponsor_error}")
         
     except Exception as e:
         huntarr_logger.error(f"Failed to initialize databases: {e}")
