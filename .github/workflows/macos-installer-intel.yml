@@ -29,12 +29,14 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
+          architecture: 'x64'
       
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install py2app==0.28.6 pyinstaller==6.1.0
+          # Force x86_64 architecture for all pip installations
+          arch -x86_64 python -m pip install --upgrade pip
+          arch -x86_64 pip install -r requirements.txt
+          arch -x86_64 pip install py2app==0.28.6 pyinstaller==6.1.0
       
       - name: Extract metadata
         id: meta
@@ -384,7 +386,7 @@ jobs:
               console=True,
               disable_windowed_traceback=False,
               argv_emulation=True,
-              target_arch=None,
+              target_arch='x86_64',
               codesign_identity=None,
               entitlements_file=None,
               icon='frontend/static/logo/huntarr.icns',
@@ -422,7 +424,19 @@ jobs:
           EOF
 
       - name: Build macOS app bundle
-        run: python -m PyInstaller Huntarr.spec --clean --collect-all apprise
+        run: |
+          # Force x86_64 architecture for Intel build
+          arch -x86_64 python -m PyInstaller Huntarr.spec --clean --collect-all apprise
+          
+      - name: Verify architecture
+        run: |
+          # Verify the built binary is x86_64 (Intel)
+          echo "Checking architecture of built binary:"
+          file dist/Huntarr.app/Contents/MacOS/Huntarr
+          lipo -info dist/Huntarr.app/Contents/MacOS/Huntarr || echo "lipo command not available"
+          
+          # Also check with otool if available
+          otool -hv dist/Huntarr.app/Contents/MacOS/Huntarr | head -10 || echo "otool command not available"
 
       - name: Create PKG installer
         run: |
