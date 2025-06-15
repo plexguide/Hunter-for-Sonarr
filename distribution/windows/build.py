@@ -64,7 +64,8 @@ def build_exe():
     # Make sure we're in the project root directory when running PyInstaller
     # This helps with finding relative paths
     # Add the -y option to force overwrite of the output directory
-    result = run_command([sys.executable, "-m", "PyInstaller", "-y", str(spec_file)], cwd=str(ROOT_DIR))
+    # Add --collect-all apprise to bundle all apprise data files and dependencies
+    result = run_command([sys.executable, "-m", "PyInstaller", "-y", "--collect-all", "apprise", str(spec_file)], cwd=str(ROOT_DIR))
     
     if not result:
         print("ERROR: PyInstaller failed to build the executable")

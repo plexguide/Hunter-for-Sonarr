@@ -342,6 +342,26 @@ jobs:
                   'qrcode.image.pil',
                   'routes',
                   'main',
+                  # Apprise notification support
+                  'apprise',
+                  'apprise.common', 
+                  'apprise.conversion',
+                  'apprise.decorators',
+                  'apprise.locale',
+                  'apprise.logger',
+                  'apprise.manager',
+                  'apprise.utils',
+                  'apprise.URLBase',
+                  'apprise.AppriseAsset',
+                  'apprise.AppriseAttachment',
+                  'apprise.AppriseConfig',
+                  'apprise.cli',
+                  'apprise.config',
+                  'apprise.attachment',
+                  'apprise.plugins',
+                  'markdown',
+                  'yaml',
+                  'cryptography',
               ],
               hookspath=['hooks'],
               hooksconfig={},
@@ -406,7 +426,7 @@ jobs:
           EOF
 
       - name: Build macOS app bundle
-        run: python -m PyInstaller Huntarr.spec --clean
+        run: python -m PyInstaller Huntarr.spec --clean --collect-all apprise
 
       - name: Create PKG installer
         run: |
