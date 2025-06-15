@@ -188,7 +188,8 @@ def app_specific_loop(app_type: str) -> None:
             try:
                 instances_to_process = get_instances_func() # Call the dynamically loaded function
                 if instances_to_process:
-                    app_logger.info(f"Found {len(instances_to_process)} configured {app_type} instances to process")
+                    # Instance count logging removed to reduce log spam
+                    pass
                 else:
                     # No instances found via get_configured_instances
                     app_logger.warning(f"No configured {app_type} instances found. Skipping cycle.")

@@ -35,7 +35,7 @@ def get_configured_instances():
     # Check if instances are configured
     if "instances" in settings and isinstance(settings["instances"], list) and settings["instances"]:
         # Use debug level to avoid log spam on new installations
-        whisparr_logger.debug(f"Found 'instances' list with {len(settings['instances'])} items. Processing...")
+        # Instance count debug removed to reduce log spam
         for idx, instance in enumerate(settings["instances"]):
     
             # Enhanced validation
