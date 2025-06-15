@@ -121,7 +121,12 @@ class DatabaseLogHandler(logging.Handler):
         """Write the log record to the database"""
         try:
             # Get only the clean message part, not the full formatted string
-            clean_message = self.formatter._clean_message(record.getMessage())
+            # Check if formatter has _clean_message method (safety check)
+            if hasattr(self.formatter, '_clean_message'):
+                clean_message = self.formatter._clean_message(record.getMessage())
+            else:
+                # Fallback: use raw message if formatter doesn't have _clean_message
+                clean_message = record.getMessage()
             
             # Use the app_type from constructor, or detect from logger name
             app_type = self.app_type
