@@ -1175,17 +1175,10 @@ def get_github_sponsors():
             # Format sponsors for frontend (convert avatar_url to avatarUrl for consistency)
             formatted_sponsors = []
             for sponsor in sponsors:
-                # Fix avatar URL - use GitHub's avatar API with proper user ID
-                avatar_url = sponsor.get('avatar_url', '')
-                if not avatar_url or 'ui-avatars.com' in avatar_url:
-                    # Generate proper GitHub avatar URL
-                    login = sponsor.get('login', '')
-                    if login:
-                        avatar_url = f"https://github.com/{login}.png?size=200"
-                
+                # Use the avatar URL as-is from the database (it's already correct from GitHub)
                 formatted_sponsors.append({
                     'login': sponsor.get('login', ''),
-                    'avatarUrl': avatar_url,
+                    'avatarUrl': sponsor.get('avatar_url', ''),
                     'name': sponsor.get('name', sponsor.get('login', 'Unknown')),
                     'url': sponsor.get('url', '#'),
                     'category': sponsor.get('category', 'past'),
