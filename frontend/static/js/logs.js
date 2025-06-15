@@ -92,55 +92,30 @@ window.LogsModule = {
         }
     },
     
-    // Convert UTC timestamp to user's timezone
-    convertToUserTimezone: function(utcTimestamp) {
-        if (!utcTimestamp) {
-            console.debug('[LogsModule] No timestamp provided for conversion');
+    // Parse timestamp that's already converted to user's timezone by the backend
+    convertToUserTimezone: function(timestamp) {
+        if (!timestamp) {
+            console.debug('[LogsModule] No timestamp provided for parsing');
             return { date: '', time: '' };
         }
         
-        if (!this.userTimezone) {
-            // Set fallback if timezone not loaded yet
-            this.userTimezone = 'UTC';
-            console.debug('[LogsModule] Timezone not loaded yet, using UTC fallback');
-        }
-        
         try {
-            console.debug('[LogsModule] Converting timestamp:', utcTimestamp, 'from UTC to', this.userTimezone);
-            
-            // Parse UTC timestamp - ensure it's treated as UTC
-            const utcDate = new Date(utcTimestamp + ' UTC');
-            console.debug('[LogsModule] Parsed UTC date:', utcDate.toISOString());
-            
-            // Convert to user's timezone using toLocaleString
-            const userDateString = utcDate.toLocaleString("en-CA", {
-                timeZone: this.userTimezone,
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            });
-            
-            console.debug('[LogsModule] Converted to user timezone:', userDateString);
-            
-            // Parse the formatted string "2025-06-05, 14:09:54"
-            const [datePart, timePart] = userDateString.split(', ');
-            
-            const result = {
-                date: datePart,
-                time: timePart
-            };
-            
-            console.debug('[LogsModule] Final result:', result);
-            return result;
-            
+            // The backend already converts timestamps to user's timezone
+            // So we just need to parse the "YYYY-MM-DD HH:MM:SS" format
+            const parts = timestamp.split(' ');
+            if (parts.length >= 2) {
+                return {
+                    date: parts[0],
+                    time: parts[1]
+                };
+            } else {
+                // Fallback for unexpected format
+                return { date: timestamp, time: '' };
+            }
         } catch (error) {
-            console.warn('[LogsModule] Error converting timestamp to user timezone:', error);
+            console.warn('[LogsModule] Error parsing timestamp:', error);
             // Fallback to original timestamp
-            return { date: utcTimestamp?.split(' ')[0] || '', time: utcTimestamp?.split(' ')[1] || '' };
+            return { date: timestamp?.split(' ')[0] || '', time: timestamp?.split(' ')[1] || '' };
         }
     },
     
