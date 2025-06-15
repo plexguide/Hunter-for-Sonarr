@@ -574,33 +574,43 @@ def disable_2fa(password: str) -> bool:
 
 def disable_2fa_with_password_and_otp(username: str, password: str, otp_code: str) -> bool:
     """Disable 2FA for the specified user, requiring both password and OTP code."""
-    user_data = get_user_data() # Assuming this gets data for the logged-in user implicitly
-    
-    # 1. Verify Password
-    if not verify_password(user_data.get("password", ""), password):
-        logger.warning(f"Failed to disable 2FA for '{username}': Invalid password provided.")
-        return False
+    try:
+        db = get_database()
+        user_data = db.get_user_by_username(username)
         
-    # 2. Verify OTP Code against permanent secret
-    perm_secret = user_data.get("2fa_secret")
-    if not user_data.get("2fa_enabled") or not perm_secret:
-        logger.error(f"Failed to disable 2FA for '{username}': 2FA is not enabled or secret missing.")
-        # Should ideally not happen if called from the correct UI state, but good to check
-        return False 
+        if not user_data:
+            logger.warning(f"Failed to disable 2FA for '{username}': User not found.")
+            return False
         
-    totp = pyotp.TOTP(perm_secret)
-    if not totp.verify(otp_code):
-        logger.warning(f"Failed to disable 2FA for '{username}': Invalid OTP code provided.")
-        return False
-        
-    # 3. Both verified, proceed to disable
-    user_data["2fa_enabled"] = False
-    user_data["2fa_secret"] = None
-    if save_user_data(user_data):
-        logger.info(f"2FA disabled successfully for '{username}' after verifying password and OTP.")
-        return True
-    else:
-        logger.error(f"Failed to save user data after disabling 2FA for '{username}'.")
+        # 1. Verify Password (stored in plain text according to memories)
+        stored_password = user_data.get("password", "")
+        if stored_password != password:
+            logger.warning(f"Failed to disable 2FA for '{username}': Invalid password provided.")
+            return False
+            
+        # 2. Verify OTP Code against permanent secret
+        perm_secret = user_data.get("two_fa_secret")
+        if not user_data.get("two_fa_enabled") or not perm_secret:
+            logger.error(f"Failed to disable 2FA for '{username}': 2FA is not enabled or secret missing.")
+            # Should ideally not happen if called from the correct UI state, but good to check
+            return False 
+            
+        totp = pyotp.TOTP(perm_secret)
+        # Add time window tolerance for better compatibility
+        if not totp.verify(otp_code, valid_window=1):
+            logger.warning(f"Failed to disable 2FA for '{username}': Invalid OTP code provided.")
+            return False
+            
+        # 3. Both verified, proceed to disable
+        success = db.update_user_2fa(username, False, None)
+        if success:
+            logger.info(f"2FA disabled successfully for '{username}' after verifying password and OTP.")
+            return True
+        else:
+            logger.error(f"Failed to save user data after disabling 2FA for '{username}'.")
+            return False
+    except Exception as e:
+        logger.error(f"Error during 2FA disable for '{username}': {e}", exc_info=True)
         return False
 
 def change_username(current_username: str, new_username: str, password: str) -> bool:
