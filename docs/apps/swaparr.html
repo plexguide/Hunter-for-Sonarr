@@ -63,7 +63,12 @@
                 For Huntarr-related issues, use Huntarr's support channels.
             </div>
             
-            <p>Swaparr is an automated download monitoring and cleanup utility that works with your *arr applications (Sonarr, Radarr, Lidarr, etc.). It monitors your download queues and automatically removes stalled, failed, or problematic downloads to keep your automation running smoothly.</p>
+            <p>Swaparr is a stalled download cleaning utility for the *arr applications built into Huntarr. It provides basic features and easier configuration when compared to Cleanuperr.</p>
+            
+            <div class="alert alert-warning" style="margin: 20px 0; padding: 15px; background: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107;">
+                <strong><i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>Important Warning:</strong> 
+                Swaparr works on all downloads started via the *arr application, not only the ones scheduled by Huntarr. This results in stalled or otherwise flagged downloads being removed. If you want to keep these downloads, deactivate Swaparr for those downloads.
+            </div>
             
             <div class="alert alert-info" style="margin: 20px 0; padding: 15px; background: rgba(13, 202, 240, 0.1); border-left: 4px solid #0dcaf0;">
                 <strong><i class="fas fa-star" style="margin-right: 8px; color: #fbbf24;"></i>Project Credit:</strong> 
@@ -152,6 +157,18 @@
             
             <h3 id="sleep-duration"><i class="fas fa-moon" style="margin-right: 8px; color: #6c5ce7;"></i>Sleep Duration</h3>
             <p><strong>What it does:</strong> Time to wait between Swaparr processing cycles (default: 900 seconds / 15 minutes).</p>
+            
+            <div class="alert alert-info" style="margin: 15px 0; padding: 15px; background: rgba(13, 202, 240, 0.1); border-left: 4px solid #0dcaf0;">
+                <strong><i class="fas fa-clock" style="margin-right: 8px;"></i>Timing Example:</strong> 
+                Assume a download is stalled right from the beginning. Using the default values of Sleep Duration of 15 minutes and 3 strikes:
+                <br><br>
+                After 0-15 minutes (whenever Swaparr runs) the download is monitored by Swaparr. 15 minutes later there is no progress: <strong>strike 1</strong>; 15 minutes later: <strong>strike 2</strong>; further 15 minutes: <strong>strike 3</strong> and the download is removed.
+                <br><br>
+                In total it takes <strong>45-60 minutes</strong> (depending on the first run of Swaparr) to remove bad downloads.
+                <br><br>
+                <strong>Note:</strong> Bad downloads as specified by Swaparr's security features are removed immediately with the next scan.
+            </div>
+            
             <p><strong>How it affects performance:</strong></p>
             <ul>
                 <li><strong>Shorter intervals (5-10 min):</strong> Faster response to stalled downloads, more system load</li>
@@ -178,12 +195,18 @@
             <p><strong>What it does:</strong> File extensions to consider malicious and block immediately.</p>
             <p><strong>Default blocked extensions:</strong></p>
             <ul>
-                <li><strong>Executable files:</strong> .exe, .bat, .cmd, .com, .scr, .pif</li>
+                <li><strong>Executable files:</strong> .exe, .bat, .cmd, .com, .scr, .pif, .msi</li>
                 <li><strong>Script files:</strong> .vbs, .js, .jse, .wsf, .wsh</li>
-                <li><strong>Archive formats:</strong> .zipx (suspicious variant)</li>
+                <li><strong>Archive formats:</strong> .zipx, .arj, .ace, .001, .rar, .zip (suspicious variants and password-protected archives)</li>
+                <li><strong>Disc image files:</strong> .iso, .mdf, .vob (often used to distribute malware)</li>
                 <li><strong>Link files:</strong> .lnk (Windows shortcuts)</li>
                 <li><strong>Java archives:</strong> .jar (can contain malware)</li>
             </ul>
+            
+            <div class="alert alert-info" style="margin: 15px 0; padding: 15px; background: rgba(13, 202, 240, 0.1); border-left: 4px solid #0dcaf0;">
+                <strong><i class="fas fa-shield-alt" style="margin-right: 8px;"></i>Enhanced Protection:</strong> 
+                Adding extensions like .vob, .iso, .mdf, .msi, .arj, .ace, .001, .rar, and .zip to the Malicious File Extensions list helps cut down on failed imports significantly. These formats are commonly used on public anonymous trackers to distribute password-protected files and zip bombs, which can reduce failed imports from 30% to less than 5%.
+            </div>
             <p><strong>Customization:</strong> Use the tag input system to add or remove extensions. Type the extension (with or without the dot) and press Enter or click the + button.</p>
             
             <h3 id="suspicious-patterns"><i class="fas fa-search" style="margin-right: 8px; color: #f39c12;"></i>Suspicious Patterns</h3>
