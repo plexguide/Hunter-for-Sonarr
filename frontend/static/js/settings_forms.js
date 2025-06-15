@@ -1409,6 +1409,34 @@ const SettingsForms = {
                 </div>
                 
                 <div class="setting-item">
+                    <label for="swaparr_research_removed">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#research-removed" class="info-icon" title="Automatically blocklist and re-search removed downloads" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Re-Search Removed Download:
+                    </label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="swaparr_research_removed" ${settings.research_removed === true ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">When a download is removed, blocklist it in the *arr app and automatically search for alternatives (retry once)</p>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="swaparr_failed_import_detection">
+                        <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#failed-import-detection" class="info-icon" title="Automatically handle failed imports" target="_blank" rel="noopener">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        Handle Failed Imports:
+                    </label>
+                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
+                        <input type="checkbox" id="swaparr_failed_import_detection" ${settings.failed_import_detection === true ? 'checked' : ''}>
+                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
+                    </label>
+                    <p class="setting-help">Automatically detect failed imports, blocklist them, and search for alternatives</p>
+                </div>
+                
+                <div class="setting-item">
                     <label for="swaparr_dry_run">
                         <a href="https://plexguide.github.io/Huntarr.io/apps/swaparr.html#dry-run-mode" class="info-icon" title="Test mode - no actual removals" target="_blank" rel="noopener">
                             <i class="fas fa-info-circle"></i>
@@ -2196,6 +2224,8 @@ const SettingsForms = {
                 settings.max_download_time = getInputValue('#swaparr_max_download_time', '2h');
                 settings.ignore_above_size = getInputValue('#swaparr_ignore_above_size', '25GB');
                 settings.remove_from_client = getInputValue('#swaparr_remove_from_client', true);
+                settings.research_removed = getInputValue('#swaparr_research_removed', false);
+                settings.failed_import_detection = getInputValue('#swaparr_failed_import_detection', false);
                 settings.dry_run = getInputValue('#swaparr_dry_run', false);
                 settings.sleep_duration = getInputValue('#swaparr_sleep_duration', 15) * 60; // Convert minutes to seconds
                 

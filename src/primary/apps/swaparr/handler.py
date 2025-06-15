@@ -184,6 +184,38 @@ def check_quality_based_removal(item, settings):
     
     return False, None
 
+def check_for_failed_imports(item, settings):
+    """Check if download has failed import based on error patterns"""
+    if not settings.get("failed_import_detection", False):
+        return False, ""
+    
+    error_message = item.get("error_message", "").lower()
+    status = item.get("status", "").lower()
+    
+    # Common import failure indicators
+    import_failure_indicators = [
+        "import failed", "unable to import", "import error",
+        "no files found", "path not found", "access denied",
+        "disk full", "permission denied", "invalid path",
+        "file not found", "directory not found", "cannot import",
+        "import unsuccessful", "failed to import", "import aborted",
+        "insufficient space", "read-only", "network error",
+        "timeout", "connection lost", "corrupted", "invalid format",
+        "no space left", "operation not permitted", "input/output error"
+    ]
+    
+    # Check error message and status for failure patterns
+    for pattern in import_failure_indicators:
+        if pattern in error_message or pattern in status:
+            return True, f"Import failure detected: {pattern}"
+    
+    # Also check for specific status values that indicate import failures
+    failed_statuses = ["failed", "error", "warning"]
+    if status in failed_statuses and ("import" in error_message or "file" in error_message or "path" in error_message):
+        return True, f"Import failure status: {status}"
+    
+    return False, ""
+
 def parse_time_string_to_seconds(time_string):
     """Parse a time string like '2h', '30m', '1d' to seconds"""
     if not time_string:
@@ -349,8 +381,107 @@ def parse_queue_items(records, item_type, app_name):
     
     return queue_items
 
-def delete_download(app_name, api_url, api_key, download_id, remove_from_client=True, api_timeout=120):
-    """Delete a download from a Starr app"""
+def trigger_search_for_item(app_name, api_url, api_key, item, api_timeout=120):
+    """Trigger a search for the item that was removed"""
+    api_version_map = {
+        "radarr": "v3",
+        "sonarr": "v3", 
+        "lidarr": "v1",
+        "readarr": "v1",
+        "whisparr": "v3",
+        "eros": "v3"
+    }
+    
+    api_version = api_version_map.get(app_name, "v3")
+    headers = {'X-Api-Key': api_key, 'Content-Type': 'application/json'}
+    
+    try:
+        # Different apps have different search endpoints and payload structures
+        if app_name == "sonarr":
+            # For Sonarr, we need the series ID and episode IDs
+            series_id = item.get("seriesId")
+            episode_ids = item.get("episodeIds", [])
+            if series_id and episode_ids:
+                search_url = f"{api_url.rstrip('/')}/api/{api_version}/command"
+                payload = {
+                    "name": "EpisodeSearch",
+                    "seriesId": series_id,
+                    "episodeIds": episode_ids
+                }
+            else:
+                swaparr_logger.warning(f"Cannot trigger search for {item.get('name', 'unknown')} - missing series/episode IDs")
+                return False
+                
+        elif app_name == "radarr":
+            # For Radarr, we need the movie ID
+            movie_id = item.get("movieId")
+            if movie_id:
+                search_url = f"{api_url.rstrip('/')}/api/{api_version}/command"
+                payload = {
+                    "name": "MoviesSearch",
+                    "movieIds": [movie_id]
+                }
+            else:
+                swaparr_logger.warning(f"Cannot trigger search for {item.get('name', 'unknown')} - missing movie ID")
+                return False
+                
+        elif app_name == "lidarr":
+            # For Lidarr, we need the album ID
+            album_id = item.get("albumId")
+            if album_id:
+                search_url = f"{api_url.rstrip('/')}/api/{api_version}/command"
+                payload = {
+                    "name": "AlbumSearch",
+                    "albumIds": [album_id]
+                }
+            else:
+                swaparr_logger.warning(f"Cannot trigger search for {item.get('name', 'unknown')} - missing album ID")
+                return False
+                
+        elif app_name == "readarr":
+            # For Readarr, we need the book ID
+            book_id = item.get("bookId")
+            if book_id:
+                search_url = f"{api_url.rstrip('/')}/api/{api_version}/command"
+                payload = {
+                    "name": "BookSearch",
+                    "bookIds": [book_id]
+                }
+            else:
+                swaparr_logger.warning(f"Cannot trigger search for {item.get('name', 'unknown')} - missing book ID")
+                return False
+                
+        elif app_name in ["whisparr", "eros"]:
+            # For Whisparr/Eros, we need the movie ID (same structure as Radarr)
+            movie_id = item.get("movieId")
+            if movie_id:
+                search_url = f"{api_url.rstrip('/')}/api/{api_version}/command"
+                payload = {
+                    "name": "MoviesSearch", 
+                    "movieIds": [movie_id]
+                }
+            else:
+                swaparr_logger.warning(f"Cannot trigger search for {item.get('name', 'unknown')} - missing movie ID")
+                return False
+        else:
+            swaparr_logger.warning(f"Search not supported for app: {app_name}")
+            return False
+        
+        # Execute the search command
+        SWAPARR_STATS['api_calls_made'] += 1
+        response = requests.post(search_url, headers=headers, json=payload, timeout=api_timeout)
+        response.raise_for_status()
+        
+        swaparr_logger.info(f"Successfully triggered search for {item.get('name', 'unknown')} in {app_name}")
+        return True
+        
+    except requests.exceptions.RequestException as e:
+        swaparr_logger.error(f"Error triggering search for {item.get('name', 'unknown')} in {app_name}: {str(e)}")
+        SWAPARR_STATS['errors_encountered'] += 1
+        return False
+
+def delete_download(app_name, api_url, api_key, download_id, remove_from_client=True, item=None, trigger_search=False, api_timeout=120):
+    """Delete a download from a Starr app and optionally trigger a new search"""
     api_version_map = {
         "radarr": "v3",
         "sonarr": "v3",
@@ -371,6 +502,16 @@ def delete_download(app_name, api_url, api_key, download_id, remove_from_client=
         swaparr_logger.info(f"Successfully removed download {download_id} from {app_name}")
         SWAPARR_STATS['downloads_removed'] += 1
         increment_swaparr_stat("removals", 1)  # Track removals in persistent system
+        
+        # Trigger search if requested and item data is available
+        if trigger_search and item:
+            swaparr_logger.info(f"Triggering new search for removed download: {item.get('name', 'unknown')}")
+            search_success = trigger_search_for_item(app_name, api_url, api_key, item, api_timeout)
+            if search_success:
+                swaparr_logger.info(f"Successfully triggered search after removal for: {item.get('name', 'unknown')}")
+            else:
+                swaparr_logger.warning(f"Failed to trigger search after removal for: {item.get('name', 'unknown')}")
+        
         return True
     except requests.exceptions.RequestException as e:
         swaparr_logger.error(f"Error removing download {download_id} from {app_name}: {str(e)}")
@@ -436,7 +577,8 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                     swaparr_logger.warning(f"Found previously removed download that reappeared: {item['name']} (removed {days_since_removal} days ago)")
                     
                     if not settings.get("dry_run", False):
-                        if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True):
+                        # Don't trigger search for re-removed items (they were already searched before)
+                        if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True, item, False):
                             swaparr_logger.info(f"Re-removed previously removed download: {item['name']}")
                             # Update the removal time
                             removed_items[item_hash]["removed_time"] = datetime.utcnow().isoformat()
@@ -501,7 +643,9 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                 swaparr_logger.error(f"MALICIOUS CONTENT DETECTED: {item['name']} - {malicious_reason}")
                 
                 if not settings.get("dry_run", False):
-                    if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True):
+                    # Check if re-search is enabled for malicious removals
+                    trigger_search = settings.get("research_removed", False)
+                    if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True, item, trigger_search):
                         swaparr_logger.info(f"Successfully removed malicious download: {item['name']}")
                         
                         # Mark as removed to prevent reappearance
@@ -530,7 +674,9 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                 swaparr_logger.warning(f"QUALITY-BASED REMOVAL: {item['name']} - {quality_reason}")
                 
                 if not settings.get("dry_run", False):
-                    if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True):
+                    # Check if re-search is enabled for quality-based removals
+                    trigger_search = settings.get("research_removed", False)
+                    if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True, item, trigger_search):
                         swaparr_logger.info(f"Successfully removed quality-blocked download: {item['name']}")
                         
                         # Mark as removed to prevent reappearance
@@ -568,7 +714,9 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                 swaparr_logger.warning(f"AGE-BASED REMOVAL: {item['name']} - {age_reason}")
                 
                 if not settings.get("dry_run", False):
-                    if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True):
+                    # Check if re-search is enabled for age-based removals
+                    trigger_search = settings.get("research_removed", False)
+                    if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True, item, trigger_search):
                         swaparr_logger.info(f"Successfully removed age-expired download: {item['name']}")
                         
                         # Mark as removed to prevent reappearance
@@ -592,6 +740,37 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                 else:
                     swaparr_logger.info(f"DRY RUN: Would remove age-expired download: {item['name']} - {age_reason}")
                     item_state = f"Would Remove (Age: {age_reason})"
+                
+                continue  # Skip to next item - don't process further
+            
+            # Check for failed imports FOURTH - immediate removal and re-search
+            is_import_failed, import_reason = check_for_failed_imports(item, settings)
+            if is_import_failed:
+                swaparr_logger.warning(f"FAILED IMPORT DETECTED: {item['name']} - {import_reason}")
+                
+                if not settings.get("dry_run", False):
+                    # Always trigger search for failed imports (this is the main purpose)
+                    trigger_search = True
+                    if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True, item, trigger_search):
+                        swaparr_logger.info(f"Successfully removed failed import: {item['name']}")
+                        
+                        # Mark as removed to prevent reappearance
+                        removed_items[item_hash] = {
+                            "name": item["name"],
+                            "removed_time": datetime.utcnow().isoformat(),
+                            "reason": f"Failed Import: {import_reason}",
+                            "size": item["size"]
+                        }
+                        save_removed_items(app_name, removed_items)
+                        
+                        item_state = f"REMOVED (Failed Import: {import_reason})"
+                        
+                        # Track failed import removal statistics
+                        SWAPARR_STATS['import_failed_removed'] = SWAPARR_STATS.get('import_failed_removed', 0) + 1
+                        increment_swaparr_stat("import_failed_removals", 1)
+                else:
+                    swaparr_logger.info(f"DRY RUN: Would remove failed import: {item['name']} - {import_reason}")
+                    item_state = f"Would Remove (Failed Import: {import_reason})"
                 
                 continue  # Skip to next item - don't process further
             
@@ -629,7 +808,9 @@ def process_stalled_downloads(app_name, instance_name, instance_data, settings):
                     swaparr_logger.warning(f"Max strikes reached for {item['name']}, removing download")
                     
                     if not settings.get("dry_run", False):
-                        if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True):
+                        # Check if re-search is enabled for strike-based removals
+                        trigger_search = settings.get("research_removed", False)
+                        if delete_download(app_name, instance_data["api_url"], instance_data["api_key"], item["id"], True, item, trigger_search):
                             swaparr_logger.info(f"Successfully removed {item['name']} after {settings.get('max_strikes', 3)} strikes")
                             
                             # Keep the item in strike data for reference but mark as removed
