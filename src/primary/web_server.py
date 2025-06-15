@@ -1196,14 +1196,22 @@ def get_github_sponsors():
         current_app.logger.error(f"Error reading sponsors cache: {e}")
         # Continue to fetch fresh data
 
-    # Fetch from GitHub raw content since GitHub Pages isn't enabled
-    manifest_url = "https://raw.githubusercontent.com/plexguide/Huntarr.io/main/manifest.json"
+    # Try to use local manifest.json first, then fallback to GitHub
+    local_manifest_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'manifest.json')
     
     try:
-        # Fetch the manifest with a reasonable timeout
-        response = requests.get(manifest_url, timeout=10)
-        response.raise_for_status()
-        manifest_data = response.json()
+        # Try to read local manifest.json first
+        if os.path.exists(local_manifest_path):
+            current_app.logger.info(f"Using local manifest.json from {local_manifest_path}")
+            with open(local_manifest_path, 'r') as f:
+                manifest_data = json.load(f)
+        else:
+            # Fallback to GitHub raw content
+            manifest_url = "https://raw.githubusercontent.com/plexguide/Huntarr.io/main/manifest.json"
+            current_app.logger.info(f"Local manifest not found, fetching from {manifest_url}")
+            response = requests.get(manifest_url, timeout=10)
+            response.raise_for_status()
+            manifest_data = response.json()
         
         # Extract sponsors from manifest
         sponsors_list = manifest_data.get('sponsors', [])
