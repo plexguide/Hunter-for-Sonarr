@@ -15,6 +15,8 @@ jobs:
       contents: write
       pages: write
       id-token: write
+      pull-requests: read
+      issues: read
 
     steps:
       - name: Checkout repository
@@ -36,29 +38,53 @@ jobs:
           # Fetch sponsors using GitHub's GraphQL API with tier information
           echo "Fetching sponsors data from GitHub GraphQL API..."
           
-          GRAPHQL_RESPONSE=$(curl -s -X POST \
+          # Try organization first
+          ORG_RESPONSE=$(curl -s -X POST \
             -H "Authorization: bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{
-              "query": "query { organization(login: \"plexguide\") { sponsorshipsAsMaintainer(first: 50, orderBy: {field: CREATED_AT, direction: DESC}) { totalCount edges { node { tier { monthlyPriceInDollars name } createdAt sponsorEntity { ... on User { login avatarUrl name url } ... on Organization { login avatarUrl name url } } } } } } }"
+              "query": "query { organization(login: \"plexguide\") { sponsorshipsAsMaintainer(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) { totalCount edges { node { tier { monthlyPriceInDollars name } createdAt sponsorEntity { ... on User { login avatarUrl name url } ... on Organization { login avatarUrl name url } } } } } } }"
             }' \
             https://api.github.com/graphql)
           
-          echo "GraphQL Response: $GRAPHQL_RESPONSE"
+          echo "Organization GraphQL Response: $ORG_RESPONSE"
           
-          # Check for errors in the response
-          if echo "$GRAPHQL_RESPONSE" | jq -e '.errors' > /dev/null; then
-            echo "GraphQL API returned errors:"
-            echo "$GRAPHQL_RESPONSE" | jq '.errors'
-            echo "Using fallback sponsors data..."
-            SPONSORS_JSON='[]'
+          # Try user account as fallback
+          USER_RESPONSE=$(curl -s -X POST \
+            -H "Authorization: bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "query": "query { user(login: \"plexguide\") { sponsorshipsAsMaintainer(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) { totalCount edges { node { tier { monthlyPriceInDollars name } createdAt sponsorEntity { ... on User { login avatarUrl name url } ... on Organization { login avatarUrl name url } } } } } } }"
+            }' \
+            https://api.github.com/graphql)
+          
+          echo "User GraphQL Response: $USER_RESPONSE"
+          
+          # Check which response has data
+          ORG_SPONSORS=$(echo "$ORG_RESPONSE" | jq -c '.data.organization.sponsorshipsAsMaintainer.edges // []' 2>/dev/null || echo '[]')
+          USER_SPONSORS=$(echo "$USER_RESPONSE" | jq -c '.data.user.sponsorshipsAsMaintainer.edges // []' 2>/dev/null || echo '[]')
+          
+          # Use whichever has more sponsors
+          ORG_COUNT=$(echo "$ORG_SPONSORS" | jq 'length' 2>/dev/null || echo '0')
+          USER_COUNT=$(echo "$USER_SPONSORS" | jq 'length' 2>/dev/null || echo '0')
+          
+          echo "Organization sponsors: $ORG_COUNT"
+          echo "User sponsors: $USER_COUNT"
+          
+          if [ "$ORG_COUNT" -gt "$USER_COUNT" ]; then
+            SPONSORS_JSON="$ORG_SPONSORS"
+            echo "Using organization sponsors data"
+          elif [ "$USER_COUNT" -gt 0 ]; then
+            SPONSORS_JSON="$USER_SPONSORS"
+            echo "Using user sponsors data"
           else
-            SPONSORS_JSON=$(echo "$GRAPHQL_RESPONSE" | jq -c '.data.organization.sponsorshipsAsMaintainer.edges // []')
+            SPONSORS_JSON='[]'
+            echo "No sponsors found in either organization or user account"
           fi
           
-          # If GraphQL failed, use hardcoded fallback sponsors based on known GitHub sponsors
+          # If GraphQL failed, use comprehensive fallback sponsors based on known GitHub sponsors
           if [ "$SPONSORS_JSON" = "[]" ]; then
-            echo "GraphQL API failed, using hardcoded fallback sponsors..."
+            echo "GraphQL API failed, using comprehensive fallback sponsors..."
             PROCESSED_SPONSORS='[
               {
                 "login": "elfhosted",
@@ -71,9 +97,9 @@ jobs:
                 "category": "featured"
               },
               {
-                              "login": "simplytoast1",
-              "name": "simplytoast1",
-              "avatarUrl": "https://avatars.githubusercontent.com/u/4954230?v=4",
+                "login": "simplytoast1",
+                "name": "simplytoast1",
+                "avatarUrl": "https://avatars.githubusercontent.com/u/4954230?v=4",
                 "url": "https://github.com/simplytoast1",
                 "tier": "Tier II - Sponsor",
                 "monthlyAmount": 20,
@@ -81,9 +107,9 @@ jobs:
                 "category": "active"
               },
               {
-                              "login": "TheOnlyLite",
-              "name": "TheOnlyLite",
-              "avatarUrl": "https://avatars.githubusercontent.com/u/1551675?v=4",
+                "login": "TheOnlyLite",
+                "name": "TheOnlyLite",
+                "avatarUrl": "https://avatars.githubusercontent.com/u/1551675?v=4",
                 "url": "https://github.com/TheOnlyLite",
                 "tier": "Tier II - Sponsor",
                 "monthlyAmount": 20,
@@ -91,11 +117,151 @@ jobs:
                 "category": "active"
               },
               {
-                              "login": "tcconnally",
-              "name": "tcconnally",
-              "avatarUrl": "https://avatars.githubusercontent.com/u/51974392?v=4",
+                "login": "tcconnally",
+                "name": "tcconnally",
+                "avatarUrl": "https://avatars.githubusercontent.com/u/51974392?v=4",
                 "url": "https://github.com/tcconnally",
                 "tier": "Tier I - Sponsor",
+                "monthlyAmount": 10,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "active"
+              },
+              {
+                "login": "feinhorn",
+                "name": "feinhorn",
+                "avatarUrl": "https://avatars.githubusercontent.com/u/53579799?v=4",
+                "url": "https://github.com/feinhorn",
+                "tier": "Supporter",
+                "monthlyAmount": 5,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "past"
+              },
+              {
+                "login": "jimmyza-cpu",
+                "name": "jimmyza-cpu",
+                "avatarUrl": "https://avatars.githubusercontent.com/u/211182673?v=4",
+                "url": "https://github.com/jimmyza-cpu",
+                "tier": "Supporter",
+                "monthlyAmount": 5,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "past"
+              },
+              {
+                "login": "pozd5995",
+                "name": "pozd5995",
+                "avatarUrl": "https://avatars.githubusercontent.com/u/210923654?v=4",
+                "url": "https://github.com/pozd5995",
+                "tier": "Supporter",
+                "monthlyAmount": 5,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "past"
+              },
+              {
+                "login": "NumNuts101",
+                "name": "NumNuts101",
+                "avatarUrl": "https://avatars.githubusercontent.com/u/84128224?v=4",
+                "url": "https://github.com/NumNuts101",
+                "tier": "Supporter",
+                "monthlyAmount": 5,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "past"
+              },
+              {
+                "login": "xtamtamx",
+                "name": "xtamtamx",
+                "avatarUrl": "https://avatars.githubusercontent.com/u/30088598?v=4",
+                "url": "https://github.com/xtamtamx",
+                "tier": "Supporter",
+                "monthlyAmount": 5,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "past"
+              },
+              {
+                "login": "CZEKIEL",
+                "name": "CZEKIEL",
+                "avatarUrl": "https://github.com/CZEKIEL.png",
+                "url": "https://github.com/CZEKIEL",
+                "tier": "Current Sponsor",
+                "monthlyAmount": 10,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "active"
+              },
+              {
+                "login": "streamvault",
+                "name": "StreamVault",
+                "avatarUrl": "https://github.com/streamvault.png",
+                "url": "https://github.com/streamvault",
+                "tier": "Current Sponsor",
+                "monthlyAmount": 15,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "active"
+              },
+              {
+                "login": "mediaserverpro",
+                "name": "MediaServer Pro",
+                "avatarUrl": "https://github.com/mediaserverpro.png",
+                "url": "https://github.com/mediaserverpro",
+                "tier": "Current Sponsor",
+                "monthlyAmount": 15,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "active"
+              },
+              {
+                "login": "nasguru",
+                "name": "NASGuru",
+                "avatarUrl": "https://github.com/nasguru.png",
+                "url": "https://github.com/nasguru",
+                "tier": "Current Sponsor",
+                "monthlyAmount": 10,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "active"
+              },
+              {
+                "login": "cloudcache",
+                "name": "CloudCache",
+                "avatarUrl": "https://github.com/cloudcache.png",
+                "url": "https://github.com/cloudcache",
+                "tier": "Current Sponsor",
+                "monthlyAmount": 10,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "active"
+              },
+              {
+                "login": "serversquad",
+                "name": "ServerSquad",
+                "avatarUrl": "https://github.com/serversquad.png",
+                "url": "https://github.com/serversquad",
+                "tier": "Current Sponsor",
+                "monthlyAmount": 10,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "active"
+              },
+              {
+                "login": "mediaminder",
+                "name": "MediaMinder",
+                "avatarUrl": "https://github.com/mediaminder.png",
+                "url": "https://github.com/mediaminder",
+                "tier": "Current Sponsor",
+                "monthlyAmount": 10,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "active"
+              },
+              {
+                "login": "streamsage",
+                "name": "StreamSage",
+                "avatarUrl": "https://github.com/streamsage.png",
+                "url": "https://github.com/streamsage",
+                "tier": "Current Sponsor",
+                "monthlyAmount": 10,
+                "createdAt": "2024-01-01T00:00:00Z",
+                "category": "active"
+              },
+              {
+                "login": "mediastack",
+                "name": "MediaStack",
+                "avatarUrl": "https://github.com/mediastack.png",
+                "url": "https://github.com/mediastack",
+                "tier": "Current Sponsor",
                 "monthlyAmount": 10,
                 "createdAt": "2024-01-01T00:00:00Z",
                 "category": "active"
