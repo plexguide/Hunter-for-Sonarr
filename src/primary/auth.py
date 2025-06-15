@@ -94,6 +94,8 @@ def save_user_data(user_data: Dict[str, Any]) -> bool:
                     user_data.get('two_fa_enabled', existing_user.get('two_fa_enabled', False)),
                     user_data.get('two_fa_secret', existing_user.get('two_fa_secret'))
                 )
+            if 'temp_2fa_secret' in user_data:
+                success &= db.update_user_temp_2fa_secret(username, user_data.get('temp_2fa_secret'))
             if 'plex_token' in user_data or 'plex_user_data' in user_data:
                 success &= db.update_user_plex(
                     username,
@@ -508,28 +510,48 @@ def generate_2fa_secret(username: str) -> Tuple[str, str]:
 
 def verify_2fa_code(username: str, code: str, enable_on_verify: bool = False) -> bool:
     """Verify a 2FA code against the temporary secret"""
-    user_data = get_user_data()
-    temp_secret = user_data.get("temp_2fa_secret")
-    
-    if not temp_secret:
-        logger.warning(f"2FA verification attempt for '{username}' failed: No temporary secret found.")
-        return False
-    
-    totp = pyotp.TOTP(temp_secret)
-    if totp.verify(code):
-        logger.info(f"2FA code verified successfully for user '{username}'.")
-        if enable_on_verify:
-            user_data["2fa_enabled"] = True
-            user_data["2fa_secret"] = temp_secret
-            user_data.pop("temp_2fa_secret", None)
-            if save_user_data(user_data):
-                logger.info(f"2FA enabled permanently for user '{username}'.")
-            else:
-                logger.error(f"Failed to save user data after enabling 2FA for '{username}'.")
-                return False
-        return True
-    else:
-        logger.warning(f"Invalid 2FA code provided by user '{username}'.")
+    try:
+        db = get_database()
+        user_data = db.get_user_by_username(username)
+        
+        if not user_data:
+            logger.warning(f"2FA verification attempt for '{username}' failed: User not found.")
+            return False
+        
+        temp_secret = user_data.get("temp_2fa_secret")
+        
+        if not temp_secret:
+            logger.warning(f"2FA verification attempt for '{username}' failed: No temporary secret found.")
+            logger.debug(f"Available user data keys: {list(user_data.keys())}")
+            return False
+        
+        totp = pyotp.TOTP(temp_secret)
+        
+        # Add time window tolerance for better compatibility
+        if totp.verify(code, valid_window=1):
+            logger.info(f"2FA code verified successfully for user '{username}'.")
+            if enable_on_verify:
+                # Enable 2FA permanently
+                success = db.update_user_2fa(username, True, temp_secret)
+                if success:
+                    # Clear temporary secret
+                    clear_success = db.update_user_temp_2fa_secret(username, None)
+                    if clear_success:
+                        logger.info(f"2FA enabled permanently for user '{username}' and temporary secret cleared.")
+                    else:
+                        logger.warning(f"2FA enabled for user '{username}' but failed to clear temporary secret.")
+                else:
+                    logger.error(f"Failed to save user data after enabling 2FA for '{username}'.")
+                    return False
+            return True
+        else:
+            logger.warning(f"Invalid 2FA code provided by user '{username}'. Code: {code}")
+            # Add debugging info
+            current_code = totp.now()
+            logger.debug(f"Expected current code: {current_code}")
+            return False
+    except Exception as e:
+        logger.error(f"Error during 2FA verification for '{username}': {e}", exc_info=True)
         return False
 
 def disable_2fa(password: str) -> bool:

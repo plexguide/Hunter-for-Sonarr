@@ -189,10 +189,19 @@ class HuntarrDatabase:
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     two_fa_enabled BOOLEAN DEFAULT FALSE,
                     two_fa_secret TEXT,
+                    temp_2fa_secret TEXT,
                     plex_token TEXT,
                     plex_user_data TEXT
                 )
             ''')
+            
+            # Add temp_2fa_secret column if it doesn't exist (for existing databases)
+            try:
+                conn.execute('ALTER TABLE users ADD COLUMN temp_2fa_secret TEXT')
+                logger.info("Added temp_2fa_secret column to users table")
+            except sqlite3.OperationalError:
+                # Column already exists
+                pass
             
             # Create reset_requests table for reset request management
             conn.execute('''
@@ -1058,6 +1067,21 @@ class HuntarrDatabase:
                 return True
         except Exception as e:
             logger.error(f"Error updating 2FA for user {username}: {e}")
+            return False
+    
+    def update_user_temp_2fa_secret(self, username: str, temp_2fa_secret: str = None) -> bool:
+        """Update user temporary 2FA secret"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute('''
+                    UPDATE users SET temp_2fa_secret = ?, updated_at = CURRENT_TIMESTAMP 
+                    WHERE username = ?
+                ''', (temp_2fa_secret, username))
+                conn.commit()
+                logger.info(f"Updated temporary 2FA secret for user: {username}")
+                return True
+        except Exception as e:
+            logger.error(f"Error updating temporary 2FA secret for user {username}: {e}")
             return False
     
     def update_user_plex(self, username: str, plex_token: str = None, 
