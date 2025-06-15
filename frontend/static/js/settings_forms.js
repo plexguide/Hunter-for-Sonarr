@@ -946,26 +946,6 @@ const SettingsForms = {
                 </div>
             </div>
             
-            <div class="settings-group">
-                <h3>Additional Options</h3>
-                <div class="setting-item">
-                    <label for="whisparr_monitored_only"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#additional-options" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Monitored Only:</label>
-                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
-                        <input type="checkbox" id="whisparr_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
-                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
-                    </label>
-                    <p class="setting-help">Only search for monitored items</p>
-                </div>
-                <div class="setting-item">
-                    <label for="whisparr_skip_future_releases"><a href="https://plexguide.github.io/Huntarr.io/apps/whisparr.html#additional-options" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Releases:</label>
-                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
-                        <input type="checkbox" id="whisparr_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
-                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
-                    </label>
-                    <p class="setting-help">Skip searching for scenes with future release dates</p>
-                </div>
-            </div>
-            
             <div class="settings-group" id="whisparr-custom-tags" style="display: ${settings.tag_processed_items !== false ? 'block' : 'none'};">
                 <h3>Custom Tags</h3>
                 <div class="setting-item">
@@ -1153,26 +1133,6 @@ const SettingsForms = {
                     <p class="setting-help">Maximum API requests per hour (helps prevent rate limiting)</p>
                     <p class="setting-help" style="color: #cc7a00; font-weight: bold;">Maximum allowed: 250. Values above 250 will be automatically reduced to 250 when saved.</p>
                     <p class="setting-help" style="color: #cc0000; font-weight: bold;">Setting this too high will risk your accounts being banned! You have been warned!</p>
-                </div>
-            </div>
-            
-            <div class="settings-group">
-                <h3>Additional Options</h3>
-                <div class="setting-item">
-                    <label for="eros_monitored_only"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#monitored-only" class="info-icon" title="Learn more about monitored only option" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Monitored Only:</label>
-                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
-                        <input type="checkbox" id="eros_monitored_only" name="monitored_only" ${settings.monitored_only !== false ? 'checked' : ''}>
-                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
-                    </label>
-                    <p class="setting-help">Only search for monitored items</p>
-                </div>
-                <div class="setting-item">
-                    <label for="eros_skip_future_releases"><a href="https://plexguide.github.io/Huntarr.io/apps/eros.html#skip-future-releases" class="info-icon" title="Learn more about skipping future releases" target="_blank" rel="noopener"><i class="fas fa-info-circle"></i></a>Skip Future Releases:</label>
-                    <label class="toggle-switch" style="width:40px; height:20px; display:inline-block; position:relative;">
-                        <input type="checkbox" id="eros_skip_future_releases" name="skip_future_releases" ${settings.skip_future_releases !== false ? 'checked' : ''}>
-                        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#3d4353; border-radius:20px; transition:0.4s;"></span>
-                    </label>
-                    <p class="setting-help">Skip searching for scenes with future release dates</p>
                 </div>
             </div>
             
@@ -2150,6 +2110,7 @@ const SettingsForms = {
             else if (appType === 'lidarr') {
                 settings.hunt_missing_mode = getInputValue('#lidarr_hunt_missing_mode', 'album');
                 settings.monitored_only = getInputValue('#lidarr_monitored_only', true);
+                settings.skip_future_releases = getInputValue('#lidarr_skip_future_releases', true);
                 settings.sleep_duration = getInputValue('#lidarr_sleep_duration', 15) * 60; // Convert minutes to seconds
                 settings.hourly_cap = getInputValue('#lidarr_hourly_cap', 20);
                 settings.tag_processed_items = getInputValue('#lidarr_tag_processed_items', true);
