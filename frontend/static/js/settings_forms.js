@@ -2234,14 +2234,26 @@ const SettingsForms = {
                         <option value="Pacific/Honolulu" ${settings.timezone === 'Pacific/Honolulu' ? 'selected' : ''}>Hawaii Time (Pacific/Honolulu)</option>
                         <option value="America/Toronto" ${settings.timezone === 'America/Toronto' ? 'selected' : ''}>Eastern Canada (America/Toronto)</option>
                         <option value="America/Vancouver" ${settings.timezone === 'America/Vancouver' ? 'selected' : ''}>Pacific Canada (America/Vancouver)</option>
+                        <option value="America/Sao_Paulo" ${settings.timezone === 'America/Sao_Paulo' ? 'selected' : ''}>Brazil (America/Sao_Paulo)</option>
+                        <option value="America/Argentina/Buenos_Aires" ${settings.timezone === 'America/Argentina/Buenos_Aires' ? 'selected' : ''}>Argentina (America/Argentina/Buenos_Aires)</option>
+                        <option value="America/Mexico_City" ${settings.timezone === 'America/Mexico_City' ? 'selected' : ''}>Mexico (America/Mexico_City)</option>
                         <option value="Europe/London" ${settings.timezone === 'Europe/London' ? 'selected' : ''}>UK Time (Europe/London)</option>
                         <option value="Europe/Paris" ${settings.timezone === 'Europe/Paris' ? 'selected' : ''}>Central Europe (Europe/Paris)</option>
                         <option value="Europe/Berlin" ${settings.timezone === 'Europe/Berlin' ? 'selected' : ''}>Germany (Europe/Berlin)</option>
                         <option value="Europe/Amsterdam" ${settings.timezone === 'Europe/Amsterdam' ? 'selected' : ''}>Netherlands (Europe/Amsterdam)</option>
                         <option value="Europe/Rome" ${settings.timezone === 'Europe/Rome' ? 'selected' : ''}>Italy (Europe/Rome)</option>
                         <option value="Europe/Madrid" ${settings.timezone === 'Europe/Madrid' ? 'selected' : ''}>Spain (Europe/Madrid)</option>
+                        <option value="Europe/Stockholm" ${settings.timezone === 'Europe/Stockholm' ? 'selected' : ''}>Sweden (Europe/Stockholm)</option>
+                        <option value="Europe/Zurich" ${settings.timezone === 'Europe/Zurich' ? 'selected' : ''}>Switzerland (Europe/Zurich)</option>
+                        <option value="Africa/Cairo" ${settings.timezone === 'Africa/Cairo' ? 'selected' : ''}>Egypt (Africa/Cairo)</option>
+                        <option value="Africa/Johannesburg" ${settings.timezone === 'Africa/Johannesburg' ? 'selected' : ''}>South Africa (Africa/Johannesburg)</option>
+                        <option value="Asia/Dubai" ${settings.timezone === 'Asia/Dubai' ? 'selected' : ''}>UAE (Asia/Dubai)</option>
                         <option value="Asia/Tokyo" ${settings.timezone === 'Asia/Tokyo' ? 'selected' : ''}>Japan (Asia/Tokyo)</option>
+                        <option value="Asia/Seoul" ${settings.timezone === 'Asia/Seoul' ? 'selected' : ''}>South Korea (Asia/Seoul)</option>
                         <option value="Asia/Shanghai" ${settings.timezone === 'Asia/Shanghai' ? 'selected' : ''}>China (Asia/Shanghai)</option>
+                        <option value="Asia/Hong_Kong" ${settings.timezone === 'Asia/Hong_Kong' ? 'selected' : ''}>Hong Kong (Asia/Hong_Kong)</option>
+                        <option value="Asia/Singapore" ${settings.timezone === 'Asia/Singapore' ? 'selected' : ''}>Singapore (Asia/Singapore)</option>
+                        <option value="Asia/Bangkok" ${settings.timezone === 'Asia/Bangkok' ? 'selected' : ''}>Thailand (Asia/Bangkok)</option>
                         <option value="Asia/Kolkata" ${settings.timezone === 'Asia/Kolkata' ? 'selected' : ''}>India (Asia/Kolkata)</option>
                         <option value="Australia/Sydney" ${settings.timezone === 'Australia/Sydney' ? 'selected' : ''}>Australia East (Australia/Sydney)</option>
                         <option value="Australia/Perth" ${settings.timezone === 'Australia/Perth' ? 'selected' : ''}>Australia West (Australia/Perth)</option>

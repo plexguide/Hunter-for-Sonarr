@@ -1017,6 +1017,13 @@ let huntarrUI = {
                 // Store original settings for comparison
                 this.originalSettings = data;
                 
+                // Cache settings in localStorage for timezone access
+                try {
+                    localStorage.setItem('huntarr-settings-cache', JSON.stringify(data));
+                } catch (e) {
+                    console.warn('[huntarrUI] Failed to cache settings in localStorage:', e);
+                }
+                
                 // Populate each app's settings form
                 if (data.sonarr) this.populateSettingsForm('sonarr', data.sonarr);
                 if (data.radarr) this.populateSettingsForm('radarr', data.radarr);
@@ -2819,11 +2826,14 @@ let huntarrUI = {
     // Format date nicely with time, day, and relative time indication
     formatDateNicely: function(date) {
         if (!(date instanceof Date) || isNaN(date)) {
+            console.warn('[formatDateNicely] Invalid date provided:', date);
             return 'Invalid date';
         }
         
         // Get the user's configured timezone from settings or default to UTC
         const userTimezone = this.getUserTimezone();
+        
+        console.log(`[formatDateNicely] Formatting date ${date.toISOString()} for timezone: ${userTimezone}`);
         
         const options = { 
             weekday: 'short',
@@ -2832,10 +2842,20 @@ let huntarrUI = {
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
+            hour12: false, // Use 24-hour format (global world time)
             timeZone: userTimezone
         };
         
-        const formattedDate = date.toLocaleDateString(undefined, options);
+        let formattedDate;
+        try {
+            formattedDate = date.toLocaleDateString(undefined, options);
+            console.log(`[formatDateNicely] Formatted result: ${formattedDate}`);
+        } catch (error) {
+            console.error(`[formatDateNicely] Error formatting date with timezone ${userTimezone}:`, error);
+            // Fallback to UTC if timezone is invalid
+            const fallbackOptions = { ...options, timeZone: 'UTC' };
+            formattedDate = date.toLocaleDateString(undefined, fallbackOptions) + ' (UTC fallback)';
+        }
         
         // Add relative time indicator (e.g., "in 6 days" or "7 days ago")
         const now = new Date();
@@ -2859,13 +2879,44 @@ let huntarrUI = {
         // Assume UTC as default if no timezone is set
         const defaultTimezone = 'UTC';
         
-        // Try to get the timezone from the general settings
+        // Try multiple sources for the timezone setting
+        let timezone = null;
+        
+        // 1. Try to get from originalSettings.general
         if (this.originalSettings && this.originalSettings.general && this.originalSettings.general.timezone) {
-            return this.originalSettings.general.timezone;
+            timezone = this.originalSettings.general.timezone;
         }
         
-        // If no timezone is set in settings, return the default
-        return defaultTimezone;
+        // 2. Try to get from the timezone dropdown if it exists (for immediate updates)
+        if (!timezone) {
+            const timezoneSelect = document.getElementById('timezone');
+            if (timezoneSelect && timezoneSelect.value) {
+                timezone = timezoneSelect.value;
+            }
+        }
+        
+        // 3. Try to get from localStorage cache
+        if (!timezone) {
+            const cachedSettings = localStorage.getItem('huntarr-settings-cache');
+            if (cachedSettings) {
+                try {
+                    const parsed = JSON.parse(cachedSettings);
+                    if (parsed.general && parsed.general.timezone) {
+                        timezone = parsed.general.timezone;
+                    }
+                } catch (e) {
+                    console.warn('[getUserTimezone] Error parsing cached settings:', e);
+                }
+            }
+        }
+        
+        // 4. Fallback to default
+        if (!timezone) {
+            timezone = defaultTimezone;
+        }
+        
+        console.log(`[getUserTimezone] Using timezone: ${timezone}`);
+        return timezone;
     },
     
     // Reset stateful management - clear all processed IDs
