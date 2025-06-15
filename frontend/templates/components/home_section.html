@@ -1962,7 +1962,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('.dashboard-grid').style.opacity = '1';
     }, 25);
     const sponsorContainer = document.getElementById('rotating-sponsor-content');
-    console.log('sponsorContainer:', sponsorContainer);
     let sponsors = [];
     let weightedSponsorPool = [];
     let currentSponsorIndex = 0;
@@ -1988,8 +1987,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Apply transition styles for smooth sponsor changes
     const avatarContainer = document.getElementById('sponsor-avatar-container');
     const descContainer = document.getElementById('rotating-sponsor-content');
-    console.log('avatarContainer:', avatarContainer);
-    console.log('descContainer:', descContainer);
     
     // Add transition effects but keep them faster
     avatarContainer.style.transition = 'opacity 0.15s ease';
@@ -2079,19 +2076,36 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Helper function to update sponsor content
     function updateSponsorContent(sponsor, avatarContainer, descContainer) {
-        // Update avatar with enhanced styling
-        avatarContainer.innerHTML = `
-            <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
-                <img src="${sponsor.avatarUrl}" alt="${sponsor.name}'s avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">
-            </a>
-        `;
+        // Create elements without href to prevent prefetching, add click handlers instead
+        const avatarDiv = document.createElement('div');
+        avatarDiv.style.cssText = 'width: 100%; height: 100%; cursor: pointer; border-radius: 50%;';
+        avatarDiv.title = `Visit ${sponsor.name}'s GitHub profile`;
+        avatarDiv.onclick = function(e) {
+            e.preventDefault();
+            window.open(sponsor.url || '#', '_blank', 'noopener,noreferrer');
+        };
         
-        // Update name in the description area
-        descContainer.innerHTML = `
-            <a href="${sponsor.url || '#'}" target="_blank" title="Visit ${sponsor.name}'s GitHub profile">
-                ${sponsor.name}
-            </a>
-        `;
+        const avatarImg = document.createElement('img');
+        avatarImg.src = sponsor.avatarUrl;
+        avatarImg.alt = `${sponsor.name}'s avatar`;
+        avatarImg.style.cssText = 'width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;';
+        
+        avatarDiv.appendChild(avatarImg);
+        avatarContainer.innerHTML = '';
+        avatarContainer.appendChild(avatarDiv);
+        
+        // Create name element without href to prevent prefetching
+        const nameDiv = document.createElement('div');
+        nameDiv.textContent = sponsor.name;
+        nameDiv.style.cssText = 'cursor: pointer; color: inherit;';
+        nameDiv.title = `Visit ${sponsor.name}'s GitHub profile`;
+        nameDiv.onclick = function(e) {
+            e.preventDefault();
+            window.open(sponsor.url || '#', '_blank', 'noopener,noreferrer');
+        };
+        
+        descContainer.innerHTML = '';
+        descContainer.appendChild(nameDiv);
         
         // Add sponsor-icon class
         avatarContainer.classList.add('sponsor-icon');
@@ -2121,19 +2135,29 @@ document.addEventListener('DOMContentLoaded', function() {
         // Style the container directly and apply the styling immediately
         document.getElementById('sponsor-widget-container').style.visibility = 'visible';
         
-        // Create a solid orange-red circle with gold border exactly like image #2
-        avatarContainer.innerHTML = `
-            <a href="${placeholderSponsor.url}" target="_blank" title="Support ${placeholderSponsor.name}" class="sponsor-icon">
-                <div style="width: 100%; height: 100%; border-radius: 50%; background-color: #FF6347; border: 3px solid #ffb700; box-sizing: border-box;">
-                </div>
-            </a>
-        `;
+        // Create a solid orange-red circle with gold border exactly like image #2 (no href to prevent prefetching)
+        const placeholderDiv = document.createElement('div');
+        placeholderDiv.style.cssText = 'width: 100%; height: 100%; border-radius: 50%; background-color: #FF6347; border: 3px solid #ffb700; box-sizing: border-box; cursor: pointer;';
+        placeholderDiv.title = `Support ${placeholderSponsor.name}`;
+        placeholderDiv.onclick = function(e) {
+            e.preventDefault();
+            window.open(placeholderSponsor.url, '_blank', 'noopener,noreferrer');
+        };
         
-        descContainer.innerHTML = `
-            <a href="${placeholderSponsor.url}" target="_blank" title="Support us">
-                ${placeholderSponsor.name}
-            </a>
-        `;
+        avatarContainer.innerHTML = '';
+        avatarContainer.appendChild(placeholderDiv);
+        
+        const placeholderNameDiv = document.createElement('div');
+        placeholderNameDiv.textContent = placeholderSponsor.name;
+        placeholderNameDiv.style.cssText = 'cursor: pointer; color: inherit;';
+        placeholderNameDiv.title = 'Support us';
+        placeholderNameDiv.onclick = function(e) {
+            e.preventDefault();
+            window.open(placeholderSponsor.url, '_blank', 'noopener,noreferrer');
+        };
+        
+        descContainer.innerHTML = '';
+        descContainer.appendChild(placeholderNameDiv);
         
         // Add sponsor-icon class and show immediately
         avatarContainer.classList.add('sponsor-icon');
@@ -2144,16 +2168,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Show placeholder immediately
-    console.log('About to display placeholder sponsor');
     displayPlaceholderSponsor();
-    console.log('Placeholder sponsor displayed');
 
     // Fetch sponsors from the API
     async function fetchSponsors() {
-        console.log('fetchSponsors function called');
         try {
             // Fetch in the background without waiting for visual updates
-            console.log('About to call HuntarrUtils.fetchWithTimeout');
             const response = await HuntarrUtils.fetchWithTimeout('/api/github_sponsors');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -2187,7 +2207,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initialize sponsors on page load
-    console.log('About to fetch sponsors');
     fetchSponsors();
 });
 </script>

@@ -71,9 +71,9 @@ jobs:
                 "category": "featured"
               },
               {
-                "login": "simplytoast1",
-                "name": "simplytoast1",
-                "avatarUrl": "https://avatars.githubusercontent.com/u/simplytoast1?v=4",
+                              "login": "simplytoast1",
+              "name": "simplytoast1",
+              "avatarUrl": "https://avatars.githubusercontent.com/u/4954230?v=4",
                 "url": "https://github.com/simplytoast1",
                 "tier": "Tier II - Sponsor",
                 "monthlyAmount": 20,
@@ -81,9 +81,9 @@ jobs:
                 "category": "active"
               },
               {
-                "login": "TheOnlyLite",
-                "name": "TheOnlyLite",
-                "avatarUrl": "https://avatars.githubusercontent.com/u/TheOnlyLite?v=4",
+                              "login": "TheOnlyLite",
+              "name": "TheOnlyLite",
+              "avatarUrl": "https://avatars.githubusercontent.com/u/1551675?v=4",
                 "url": "https://github.com/TheOnlyLite",
                 "tier": "Tier II - Sponsor",
                 "monthlyAmount": 20,
@@ -91,9 +91,9 @@ jobs:
                 "category": "active"
               },
               {
-                "login": "tcconnally",
-                "name": "tcconnally",
-                "avatarUrl": "https://avatars.githubusercontent.com/u/tcconnally?v=4",
+                              "login": "tcconnally",
+              "name": "tcconnally",
+              "avatarUrl": "https://avatars.githubusercontent.com/u/51974392?v=4",
                 "url": "https://github.com/tcconnally",
                 "tier": "Tier I - Sponsor",
                 "monthlyAmount": 10,

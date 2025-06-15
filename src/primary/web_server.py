@@ -1186,24 +1186,24 @@ def get_github_sponsors():
                     'monthlyAmount': sponsor.get('monthly_amount', 0)
                 })
             
-            current_app.logger.info(f"Returning {len(formatted_sponsors)} sponsors from database")
+            current_app.logger.debug(f"Returning {len(formatted_sponsors)} sponsors from database")
             return jsonify(formatted_sponsors)
         
         # If no sponsors in database, try to populate from manifest
-        current_app.logger.info("No sponsors in database, attempting to populate from manifest")
+        current_app.logger.debug("No sponsors in database, attempting to populate from manifest")
         
         # Try to use local manifest.json first, then fallback to GitHub
         local_manifest_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'manifest.json')
         
         manifest_data = None
         if os.path.exists(local_manifest_path):
-            current_app.logger.info(f"Using local manifest.json from {local_manifest_path}")
+            current_app.logger.debug(f"Using local manifest.json from {local_manifest_path}")
             with open(local_manifest_path, 'r') as f:
                 manifest_data = json.load(f)
         else:
             # Fallback to GitHub raw content
             manifest_url = "https://raw.githubusercontent.com/plexguide/Huntarr.io/main/manifest.json"
-            current_app.logger.info(f"Local manifest not found, fetching from {manifest_url}")
+            current_app.logger.debug(f"Local manifest not found, fetching from {manifest_url}")
             response = requests.get(manifest_url, timeout=10)
             response.raise_for_status()
             manifest_data = response.json()
@@ -1213,7 +1213,7 @@ def get_github_sponsors():
             if sponsors_list:
                 # Save sponsors to database
                 db.save_sponsors(sponsors_list)
-                current_app.logger.info(f"Populated database with {len(sponsors_list)} sponsors from manifest")
+                current_app.logger.debug(f"Populated database with {len(sponsors_list)} sponsors from manifest")
                 
                 # Return the sponsors (recursively call this function to get formatted data)
                 return get_github_sponsors()
