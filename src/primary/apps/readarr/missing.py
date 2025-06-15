@@ -61,9 +61,7 @@ def process_missing_books(
     command_wait_delay = get_advanced_setting("command_wait_delay", 1)
     command_wait_attempts = get_advanced_setting("command_wait_attempts", 600)
 
-    readarr_logger.info(f"Hunt Missing Books: {hunt_missing_books}")
-
-    readarr_logger.info(f"Skip Future Releases: {skip_future_releases}")
+    # Configuration logging removed to reduce log spam
 
     if not api_url or not api_key:
         readarr_logger.error("API URL or Key not configured in settings. Cannot process missing books.")

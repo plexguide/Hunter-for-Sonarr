@@ -867,12 +867,8 @@ def start_huntarr():
     except Exception as e:
         logger.error(f"Failed to start schedule action engine: {e}")
         
-    # Log initial configuration for all known apps
-    for app_name in settings_manager.KNOWN_APP_TYPES: # Corrected attribute name
-        try:
-            config.log_configuration(app_name)
-        except Exception as e:
-            logger.error(f"Error logging initial configuration for {app_name}: {e}")
+    # Configuration logging has been disabled to reduce log spam
+    # Settings are loaded and used internally without verbose logging
 
     try:
         # Main loop: Start and monitor app threads
