@@ -65,8 +65,8 @@ jobs:
         python -m pip install -r requirements.txt
         python -m pip install pywin32
         
-        # Build with apprise support - use --collect-all apprise to fix attachment directory error
-        pyinstaller -y --collect-all apprise distribution/windows/huntarr.spec
+        # Build with apprise support (apprise data files are included in the spec file)
+        pyinstaller -y distribution/windows/huntarr.spec
         
         # Display contents of dist/Huntarr
         dir dist/Huntarr
