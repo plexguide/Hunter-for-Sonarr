@@ -1161,46 +1161,48 @@ def api_health_check():
 @app.route('/api/github_sponsors', methods=['GET'])
 def get_github_sponsors():
     """
-    Fetch sponsors from GitHub Pages manifest instead of hitting API directly.
-    This prevents rate limiting and timeout issues by using Matthieu's approach.
+    Get sponsors from database. If database is empty, try to populate from manifest or GitHub.
     """
-    # Setup cache directories - use cross-platform path configuration
-    from src.primary.utils.config_paths import get_path
-    CACHE_DIR = get_path('settings', 'sponsor')
-    SPONSORS_CACHE_FILE = os.path.join(CACHE_DIR, 'cache.json')
+    from src.primary.utils.database import get_database
     
-    # Ensure cache directory exists
     try:
-        os.makedirs(CACHE_DIR, exist_ok=True)
-        current_app.logger.info(f"Created or verified cache directory: {CACHE_DIR}")
-    except Exception as e:
-        current_app.logger.error(f"Failed to create cache directory {CACHE_DIR}: {e}")
-        # Continue anyway - we'll handle file write errors later
-    
-    # Check if valid cache exists (shorter cache time since manifest updates frequently)
-    try:
-        if os.path.exists(SPONSORS_CACHE_FILE):
-            with open(SPONSORS_CACHE_FILE, 'r') as f:
-                cache_data = json.load(f)
+        db = get_database()
+        
+        # Try to get sponsors from database first
+        sponsors = db.get_sponsors()
+        
+        if sponsors:
+            # Format sponsors for frontend (convert avatar_url to avatarUrl for consistency)
+            formatted_sponsors = []
+            for sponsor in sponsors:
+                # Fix avatar URL - use GitHub's avatar API with proper user ID
+                avatar_url = sponsor.get('avatar_url', '')
+                if not avatar_url or 'ui-avatars.com' in avatar_url:
+                    # Generate proper GitHub avatar URL
+                    login = sponsor.get('login', '')
+                    if login:
+                        avatar_url = f"https://github.com/{login}.png?size=200"
                 
-            # Check if the cache is still valid (shorter cache time for manifest)
-            cached_time = datetime.datetime.fromisoformat(cache_data.get('timestamp', ''))
-            cache_hours = cache_data.get('cache_hours', 2)  # Default to 2 hours if not set
+                formatted_sponsors.append({
+                    'login': sponsor.get('login', ''),
+                    'avatarUrl': avatar_url,
+                    'name': sponsor.get('name', sponsor.get('login', 'Unknown')),
+                    'url': sponsor.get('url', '#'),
+                    'category': sponsor.get('category', 'past'),
+                    'tier': sponsor.get('tier', 'Supporter'),
+                    'monthlyAmount': sponsor.get('monthly_amount', 0)
+                })
             
-            if datetime.datetime.now() - cached_time < datetime.timedelta(hours=cache_hours):
-                current_app.logger.info(f"Returning cached sponsors data (expires in {cache_hours} hours from {cached_time})")
-                return jsonify(cache_data.get('sponsors', []))
-            else:
-                current_app.logger.info(f"Cache expired after {cache_hours} hours. Fetching fresh sponsors data from manifest.")
-    except Exception as e:
-        current_app.logger.error(f"Error reading sponsors cache: {e}")
-        # Continue to fetch fresh data
-
-    # Try to use local manifest.json first, then fallback to GitHub
-    local_manifest_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'manifest.json')
-    
-    try:
-        # Try to read local manifest.json first
+            current_app.logger.info(f"Returning {len(formatted_sponsors)} sponsors from database")
+            return jsonify(formatted_sponsors)
+        
+        # If no sponsors in database, try to populate from manifest
+        current_app.logger.info("No sponsors in database, attempting to populate from manifest")
+        
+        # Try to use local manifest.json first, then fallback to GitHub
+        local_manifest_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'manifest.json')
+        
+        manifest_data = None
         if os.path.exists(local_manifest_path):
             current_app.logger.info(f"Using local manifest.json from {local_manifest_path}")
             with open(local_manifest_path, 'r') as f:
@@ -1213,61 +1215,22 @@ def get_github_sponsors():
             response.raise_for_status()
             manifest_data = response.json()
         
-        # Extract sponsors from manifest
-        sponsors_list = manifest_data.get('sponsors', [])
-        
-        # Ensure sponsors have the expected format with category information
-        formatted_sponsors = []
-        for sponsor in sponsors_list:
-            if isinstance(sponsor, dict):
-                formatted_sponsors.append({
-                    'login': sponsor.get('login', ''),
-                    'avatarUrl': sponsor.get('avatarUrl', ''),
-                    'name': sponsor.get('name', sponsor.get('login', 'Unknown')),
-                    'url': sponsor.get('url', '#'),
-                    'category': sponsor.get('category', 'past'),
-                    'tier': sponsor.get('tier', 'Supporter'),
-                    'monthlyAmount': sponsor.get('monthlyAmount', 0)
-                })
-        
-        # Generate cache time between 1-3 hours
-        import random  # Import here to ensure it's available
-        cache_hours = random.randint(1, 3)
-        
-        # Save to cache with timestamp and expiration
-        try:
-            with open(SPONSORS_CACHE_FILE, 'w') as f:
-                cache_data = {
-                    'timestamp': datetime.datetime.now().isoformat(),
-                    'cache_hours': cache_hours,
-                    'sponsors': formatted_sponsors,
-                    'manifest_version': manifest_data.get('version', 'unknown'),
-                    'manifest_updated': manifest_data.get('updated', 'unknown')
-                }
-                json.dump(cache_data, f)
+        if manifest_data:
+            sponsors_list = manifest_data.get('sponsors', [])
+            if sponsors_list:
+                # Save sponsors to database
+                db.save_sponsors(sponsors_list)
+                current_app.logger.info(f"Populated database with {len(sponsors_list)} sponsors from manifest")
                 
-            current_app.logger.info(f"Cached fresh sponsors data from manifest with {cache_hours} hour expiration. Found {len(formatted_sponsors)} sponsors.")
-        except Exception as cache_error:
-            current_app.logger.warning(f"Failed to cache sponsors data: {cache_error}")
-            # Continue without caching
+                # Return the sponsors (recursively call this function to get formatted data)
+                return get_github_sponsors()
         
-        return jsonify(formatted_sponsors)
-
-    except requests.exceptions.RequestException as e:
-        current_app.logger.error(f"Error fetching sponsors manifest: {e}")
-        # Try to return cached data even if expired as fallback
-        try:
-            if os.path.exists(SPONSORS_CACHE_FILE):
-                with open(SPONSORS_CACHE_FILE, 'r') as f:
-                    cache_data = json.load(f)
-                current_app.logger.info("Returning expired cache data as fallback")
-                return jsonify(cache_data.get('sponsors', []))
-        except Exception:
-            pass
-        # Return empty list if all else fails
+        # If all else fails, return empty list
+        current_app.logger.warning("No sponsors found in database or manifest")
         return jsonify([])
+
     except Exception as e:
-        current_app.logger.error(f"An unexpected error occurred while fetching sponsors: {e}")
+        current_app.logger.error(f"Error fetching sponsors: {e}")
         # Return empty list instead of 500 error to prevent UI issues
         return jsonify([])
 

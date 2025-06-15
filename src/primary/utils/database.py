@@ -195,6 +195,22 @@ class HuntarrDatabase:
                 )
             ''')
             
+            # Create sponsors table for GitHub sponsors data
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS sponsors (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    login TEXT NOT NULL UNIQUE,
+                    name TEXT NOT NULL,
+                    avatar_url TEXT NOT NULL,
+                    url TEXT NOT NULL,
+                    tier TEXT DEFAULT 'Supporter',
+                    monthly_amount INTEGER DEFAULT 0,
+                    category TEXT DEFAULT 'past',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
             # Add temp_2fa_secret column if it doesn't exist (for existing databases)
             try:
                 conn.execute('ALTER TABLE users ADD COLUMN temp_2fa_secret TEXT')
@@ -1122,6 +1138,56 @@ class HuntarrDatabase:
         except Exception as e:
             logger.error(f"Error updating Plex settings for user {username}: {e}")
             return False
+
+    def get_sponsors(self) -> List[Dict[str, Any]]:
+        """Get all sponsors from database"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute('''
+                SELECT login, name, avatar_url, url, tier, monthly_amount, category, updated_at
+                FROM sponsors 
+                ORDER BY monthly_amount DESC, name ASC
+            ''')
+            return [dict(row) for row in cursor.fetchall()]
+    
+    def save_sponsors(self, sponsors_data: List[Dict[str, Any]]):
+        """Save sponsors data to database, replacing existing data"""
+        with sqlite3.connect(self.db_path) as conn:
+            # Clear existing sponsors
+            conn.execute('DELETE FROM sponsors')
+            
+            # Insert new sponsors
+            for sponsor in sponsors_data:
+                conn.execute('''
+                    INSERT INTO sponsors (login, name, avatar_url, url, tier, monthly_amount, category)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    sponsor.get('login', ''),
+                    sponsor.get('name', sponsor.get('login', 'Unknown')),
+                    sponsor.get('avatarUrl', ''),
+                    sponsor.get('url', '#'),
+                    sponsor.get('tier', 'Supporter'),
+                    sponsor.get('monthlyAmount', 0),
+                    sponsor.get('category', 'past')
+                ))
+            
+            logger.info(f"Saved {len(sponsors_data)} sponsors to database")
+    
+    def add_sponsor(self, sponsor_data: Dict[str, Any]):
+        """Add or update a single sponsor"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute('''
+                INSERT OR REPLACE INTO sponsors (login, name, avatar_url, url, tier, monthly_amount, category)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                sponsor_data.get('login', ''),
+                sponsor_data.get('name', sponsor_data.get('login', 'Unknown')),
+                sponsor_data.get('avatarUrl', ''),
+                sponsor_data.get('url', '#'),
+                sponsor_data.get('tier', 'Supporter'),
+                sponsor_data.get('monthlyAmount', 0),
+                sponsor_data.get('category', 'past')
+            ))
 
 # Global database instance
 _database_instance = None

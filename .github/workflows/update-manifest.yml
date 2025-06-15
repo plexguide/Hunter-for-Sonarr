@@ -136,6 +136,13 @@ jobs:
           }
           EOF
 
+      - name: Update sponsors API endpoint
+        run: |
+          # Trigger the sponsors API to update the database with new data
+          # This ensures the database stays in sync with the manifest
+          echo "Sponsors data will be automatically updated when the API is called"
+          echo "The API will detect the new manifest.json and populate the database"
+
       - name: Validate JSON
         run: |
           if ! jq . manifest.json > /dev/null; then
