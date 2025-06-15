@@ -44,6 +44,11 @@ def build_exe():
     run_command([sys.executable, "-m", "pip", "install", "-r", str(ROOT_DIR / "requirements.txt")])
     run_command([sys.executable, "-m", "pip", "install", "pywin32"])
     
+    # Explicitly install apprise and its dependencies to ensure they're available
+    run_command([sys.executable, "-m", "pip", "install", "apprise==1.6.0"])
+    run_command([sys.executable, "-m", "pip", "install", "markdown==3.4.3"])
+    run_command([sys.executable, "-m", "pip", "install", "pyyaml==6.0"])
+    
     # Build using the spec file
     spec_file = SCRIPT_DIR / "huntarr.spec"
     
