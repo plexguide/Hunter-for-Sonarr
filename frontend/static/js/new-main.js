@@ -2082,12 +2082,11 @@ let huntarrUI = {
                 console.warn("  ⚠ userInfoContainer not found");
             }
             
-            // Hide user nav in sidebar
+            // Always show user nav in sidebar regardless of authentication mode
             if (userNav) {
-                userNav.style.display = 'none';
-                // Add !important inline style to ensure mobile view respects this
-                userNav.style.setProperty('display', 'none', 'important');
-                console.log("  • Hidden userNav");
+                userNav.style.display = '';
+                userNav.style.removeProperty('display'); // Remove any !important styles
+                console.log("  • User nav always visible (regardless of auth mode)");
             } else {
                 console.warn("  ⚠ userNav not found");
             }
