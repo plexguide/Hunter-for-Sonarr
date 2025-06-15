@@ -17,7 +17,7 @@ on:
 jobs:
   build-macos-intel-installer:
     name: Build macOS Intel Installer
-    runs-on: macos-latest
+    runs-on: macos-13
     
     steps:
       - name: Checkout code
@@ -29,14 +29,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-          architecture: 'x64'
       
       - name: Install dependencies
         run: |
-          # Force x86_64 architecture for all pip installations
-          arch -x86_64 python -m pip install --upgrade pip
-          arch -x86_64 pip install -r requirements.txt
-          arch -x86_64 pip install py2app==0.28.6 pyinstaller==6.1.0
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install py2app==0.28.6 pyinstaller==6.1.0
       
       - name: Extract metadata
         id: meta
@@ -445,8 +443,8 @@ jobs:
 
       - name: Build macOS app bundle
         run: |
-          # Force x86_64 architecture for Intel build
-          arch -x86_64 python -m PyInstaller Huntarr.spec --clean
+          # Build for Intel architecture using native x86_64 runner
+          python -m PyInstaller Huntarr.spec --clean
           
       - name: Verify architecture
         run: |
