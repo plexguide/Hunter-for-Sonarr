@@ -232,14 +232,41 @@ def setup():
 
 # --- User Management API Routes --- #
 
+def get_user_for_request():
+    """Get username for the current request, handling bypass modes"""
+    # First try to get username from session
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    username = get_username_from_session(session_token)
+    
+    if username:
+        return username
+    
+    # If no session username, check if we're in bypass mode
+    try:
+        from src.primary.settings_manager import load_settings
+        settings = load_settings("general")
+        local_access_bypass = settings.get("local_access_bypass", False)
+        proxy_auth_bypass = settings.get("proxy_auth_bypass", False)
+        
+        if proxy_auth_bypass or local_access_bypass:
+            # In bypass mode, get the first user from database
+            from src.primary.utils.database import get_database
+            db = get_database()
+            first_user = db.get_first_user()
+            if first_user:
+                return first_user.get('username')
+    except Exception as e:
+        logger.error(f"Error checking bypass mode for user request: {e}")
+    
+    return None
+
 @common_bp.route('/api/user/info', methods=['GET'])
 def get_user_info_route():
-    # Use session token to get username
-    session_token = request.cookies.get(SESSION_COOKIE_NAME)
-    username = get_username_from_session(session_token) # Use auth function
+    # Get username handling bypass modes
+    username = get_user_for_request()
 
     if not username:
-        logger.debug("Attempt to get user info failed: Not authenticated (no valid session).")
+        logger.debug("Attempt to get user info failed: Not authenticated and not in bypass mode.")
         return jsonify({"error": "Not authenticated"}), 401
 
     # Pass username to is_2fa_enabled
@@ -249,12 +276,11 @@ def get_user_info_route():
 
 @common_bp.route('/api/user/change-username', methods=['POST'])
 def change_username_route():
-    # Use session token to get username
-    session_token = request.cookies.get(SESSION_COOKIE_NAME)
-    current_username = get_username_from_session(session_token)
+    # Get username handling bypass modes
+    current_username = get_user_for_request()
 
     if not current_username:
-        logger.warning("Username change attempt failed: Not authenticated.")
+        logger.warning("Username change attempt failed: Not authenticated and not in bypass mode.")
         return jsonify({"error": "Not authenticated"}), 401
 
     data = request.json
@@ -284,12 +310,11 @@ def change_username_route():
 
 @common_bp.route('/api/user/change-password', methods=['POST'])
 def change_password_route():
-    # Use session token to get username - needed? change_password might not need it if single user
-    session_token = request.cookies.get(SESSION_COOKIE_NAME)
-    username = get_username_from_session(session_token) # Get username for logging
+    # Get username handling bypass modes
+    username = get_user_for_request()
 
-    if not username: # Check if session is valid even if function doesn't need username
-         logger.warning("Password change attempt failed: Not authenticated.")
+    if not username:
+         logger.warning("Password change attempt failed: Not authenticated and not in bypass mode.")
          return jsonify({"error": "Not authenticated"}), 401
 
     data = request.json
@@ -313,12 +338,11 @@ def change_password_route():
 
 @common_bp.route('/api/user/2fa/setup', methods=['POST'])
 def setup_2fa():
-    # Use session token to get username
-    session_token = request.cookies.get(SESSION_COOKIE_NAME)
-    username = get_username_from_session(session_token)
+    # Get username handling bypass modes
+    username = get_user_for_request()
 
     if not username:
-        logger.warning("2FA setup attempt failed: No username in session.") # Add logging
+        logger.warning("2FA setup attempt failed: Not authenticated and not in bypass mode.")
         return jsonify({"error": "Not authenticated"}), 401
 
     try:
@@ -335,12 +359,11 @@ def setup_2fa():
 
 @common_bp.route('/api/user/2fa/verify', methods=['POST'])
 def verify_2fa():
-    # Use session token to get username
-    session_token = request.cookies.get(SESSION_COOKIE_NAME)
-    username = get_username_from_session(session_token)
+    # Get username handling bypass modes
+    username = get_user_for_request()
 
     if not username:
-        logger.warning("2FA verify attempt failed: No username in session.") # Add logging
+        logger.warning("2FA verify attempt failed: Not authenticated and not in bypass mode.")
         return jsonify({"error": "Not authenticated"}), 401
 
     data = request.json
@@ -362,11 +385,11 @@ def verify_2fa():
 
 @common_bp.route('/api/user/2fa/disable', methods=['POST'])
 def disable_2fa_route():
-    session_token = request.cookies.get(SESSION_COOKIE_NAME)
-    username = get_username_from_session(session_token)
+    # Get username handling bypass modes
+    username = get_user_for_request()
 
     if not username:
-        logger.warning("2FA disable attempt failed: Not authenticated.")
+        logger.warning("2FA disable attempt failed: Not authenticated and not in bypass mode.")
         return jsonify({"error": "Not authenticated"}), 401
 
     data = request.json
@@ -396,10 +419,11 @@ def disable_2fa_route():
 # --- Theme Setting Route ---
 @common_bp.route('/api/settings/theme', methods=['POST'])
 def set_theme():
-    # Authentication check
-    session_token = request.cookies.get(SESSION_COOKIE_NAME)
-    if not verify_session(session_token):
-         logger.warning("Theme setting attempt failed: Not authenticated.")
+    # Get username handling bypass modes
+    username = get_user_for_request()
+    
+    if not username:
+         logger.warning("Theme setting attempt failed: Not authenticated and not in bypass mode.")
          return jsonify({"error": "Unauthorized"}), 401
 
     try:
@@ -412,7 +436,6 @@ def set_theme():
 
         # Here you would typically save this preference to a user profile or global setting
         # For now, just log it. A real implementation would persist this.
-        username = get_username_from_session(session_token) # Get username for logging
         logger.info(f"User '{username}' set dark mode preference to: {dark_mode}")
 
         # Example: Saving to a hypothetical global config (replace with actual persistence)

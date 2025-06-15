@@ -1003,6 +1003,26 @@ class HuntarrDatabase:
                 return user_data
             return None
     
+    def get_first_user(self) -> Optional[Dict[str, Any]]:
+        """Get the first user from the database (for bypass modes)"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute(
+                'SELECT * FROM users ORDER BY created_at ASC LIMIT 1'
+            )
+            row = cursor.fetchone()
+            
+            if row:
+                user_data = dict(row)
+                # Parse JSON fields
+                if user_data.get('plex_user_data'):
+                    try:
+                        user_data['plex_user_data'] = json.loads(user_data['plex_user_data'])
+                    except json.JSONDecodeError:
+                        user_data['plex_user_data'] = None
+                return user_data
+            return None
+    
     def create_user(self, username: str, password: str, two_fa_enabled: bool = False, 
                    two_fa_secret: str = None, plex_token: str = None, 
                    plex_user_data: Dict[str, Any] = None) -> bool:
